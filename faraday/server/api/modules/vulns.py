@@ -18,7 +18,7 @@ from flask_classful import route
 from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
@@ -550,7 +550,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         query = super(VulnerabilityView, self)._get_eagerloaded_query(
             *args, **kwargs)
-        joinedloads = [
+        options = [
             joinedload(Vulnerability.host)
             .load_only(Host.id)  # Only hostnames are needed
             .joinedload(Host.hostnames),
@@ -567,13 +567,18 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
-            joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
+
+        if flask.request.args.get('get_evidence'):
+            options.append(joinedload(VulnerabilityGeneric.evidence))
+        else:
+            options.append(noload(VulnerabilityGeneric.evidence))
+
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,
             [Vulnerability, VulnerabilityWeb]
-        ), *joinedloads)
+        ), *options)
 
     def _filter_query(self, query):
         query = super(VulnerabilityView, self)._filter_query(query)

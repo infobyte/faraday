@@ -306,6 +306,20 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_count(self, test_client, session, workspace,
+                                second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(30, workspace=workspace, os='Unix')
+
+        # This shouldn't be shown, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        session.commit()
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op":"eq", "val":"Unix"}}],'
+                              f'"offset":0, "limit":20}}')
+        assert res.status_code == 200
+        assert res.json['count'] == 30
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_filter_and_group_by_os(self, test_client, session, workspace, host_factory):
@@ -317,10 +331,9 @@ class TestHostAPI:
                               f'"order_by":[{{"field": "os", "direction": "desc"}}]}}')
         assert res.status_code == 200
         assert len(res.json['rows']) == 2
-        assert res.json['total_rows'] == 2
+        assert res.json['count'] == 2
         assert 'unix' in [row['value']['os'] for row in res.json['rows']]
         assert 'Unix' in [row['value']['os'] for row in res.json['rows']]
-
 
     def test_filter_by_os_like_ilike(self, test_client, session, workspace,
                                      second_workspace, host_factory):
@@ -442,6 +455,35 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_verify_severity_counts(self, test_client, session, workspace, host_factory, vulnerability_factory):
+        host = host_factory.create(workspace=workspace)
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='high')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='low')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='informational')
+
+        host2 = host_factory.create(workspace=workspace)
+        vulnerability_factory.create(service=None, host=host2, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host2, workspace=workspace, severity='critical')
+
+        session.commit()
+
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "ip", "op":"eq", "val":"{host.ip}"}}]}}')
+
+        assert res.status_code == 200
+
+        severities =  res.json['rows'][0]['value']['severity_counts']
+        assert severities['info'] == 1
+        assert severities['critical'] == 2
+        assert severities['high'] == 1
+        assert severities['med'] == 0
+        assert severities['low'] == 1
+        assert severities['unclassified'] == 0
+        assert severities['total'] == 5
+
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
@@ -453,7 +495,7 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url() + '?port=invalid_port')
         assert res.status_code == 200
-        assert res.json['total_rows'] == 0
+        assert res.json['count'] == 0
 
     def test_filter_restless_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):

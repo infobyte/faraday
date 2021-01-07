@@ -23,7 +23,7 @@ service_identity>=17.0.0
 SQLAlchemy>=1.2.0,<1.4.0
 tqdm>=4.15.0
 twisted>=18.9.0
-webargs>=6.0.0
+webargs>=7.0.0
 marshmallow-sqlalchemy
 filteralchemy-fork
 filedepot>=0.5.0
@@ -33,6 +33,6 @@ simplekv>=0.13.0
 Flask-KVSession-fork>=0.6.3
 distro>=1.4.0
 faraday-plugins>=1.0.1,<2.0.0
-apispec>=3.0.0
+apispec>=4.0.0
 apispec-webframeworks>=0.5.0
 pyyaml

@@ -6,6 +6,7 @@ import flask
 from flask import Blueprint
 from flask import current_app as app
 from itsdangerous import BadData, TimestampSigner
+from marshmallow import Schema
 from sqlalchemy.orm.exc import NoResultFound
 from faraday.server.models import Agent
 from faraday.server.api.base import GenericWorkspacedView
@@ -16,10 +17,23 @@ logger = logging.getLogger(__name__)
 websocket_auth_api = Blueprint('websocket_auth_api', __name__)
 
 
+class WebsocketWorkspaceAuthSchema(Schema):
+    pass
+
+
 class WebsocketWorkspaceAuthView(GenericWorkspacedView):
     route_base = 'websocket_token'
+    schema_class = WebsocketWorkspaceAuthSchema
 
     def post(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Token"]
+          responses:
+            200:
+              description: Ok
+        """
         workspace = self._get_workspace(workspace_name)
         signer = TimestampSigner(app.config['SECRET_KEY'], salt="websocket")
         token = signer.sign(str(workspace.id)).decode('utf-8')
@@ -31,6 +45,15 @@ WebsocketWorkspaceAuthView.register(websocket_auth_api)
 
 @websocket_auth_api.route('/v2/agent_websocket_token/', methods=['POST'])
 def agent_websocket_token():
+    """
+    ---
+    post:
+      tags: ["Token", "Agent"]
+      description: Gives a token to establish a websocket connection. For agents logic only
+      responses:
+        200:
+          description: Ok
+    """
     agent = require_agent_token()
     return flask.jsonify({"token": generate_agent_websocket_token(agent)})
 
@@ -78,5 +101,3 @@ def require_agent_token():
     except NoResultFound:
         flask.abort(403)
     return agent
-
-# I'm Py3

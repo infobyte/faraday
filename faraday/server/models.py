@@ -233,7 +233,8 @@ def count_vulnerability_severities(query: str,
                                    high: bool = False,
                                    medium: bool = False,
                                    low: bool = False,
-                                   unclassified: bool = False):
+                                   unclassified: bool = False,
+                                   host_vulns: bool = False):
     """
     We assume that vulnerability_SEVERITYNAME_count attr exists in the model passed by param
     :param query: Alchemy query to append options
@@ -276,12 +277,22 @@ def count_vulnerability_severities(query: str,
                     _make_vuln_count_property(None,
                                               extra_query=_extra_query,
                                               use_column_property=False,
-                                              get_hosts_vulns=False,
+                                              get_hosts_vulns=host_vulns,
                                               confirmed=confirmed)
                 )
             )
-    return query
 
+    query = query.options(
+        with_expression(
+            getattr(model, 'vulnerability_total_count'),
+            _make_vuln_count_property(None,
+                                      extra_query=extra_query,
+                                      use_column_property=False,
+                                      get_hosts_vulns=host_vulns,
+                                      confirmed=confirmed)
+        )
+    )
+    return query
 
 
 def _make_vuln_generic_count_by_severity(severity, tablename="host"):
@@ -770,6 +781,12 @@ class Command(Metadata):
     sum_created_vulnerability_unclassified = _make_created_objects_sum_joined('vulnerability',
                                                                               {'severity': '\'unclassified\''})
 
+    agent_execution = relationship(
+        'AgentExecution',
+        uselist=False,
+        back_populates="command"
+    )
+
     @property
     def parent(self):
         return
@@ -832,8 +849,8 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
-    vulnerability_info_count = query_expression()
-    vulnerability_med_count = query_expression()
+    vulnerability_informational_count = query_expression()
+    vulnerability_medium_count = query_expression()
     vulnerability_high_count = query_expression()
     vulnerability_critical_count = query_expression()
     vulnerability_low_count = query_expression()
@@ -856,7 +873,7 @@ class Host(Metadata):
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
             with_expression(
-                cls.vulnerability_info_count,
+                cls.vulnerability_informational_count,
                 _make_vuln_count_property(
                     type_=None,
                     confirmed = confirmed,
@@ -866,7 +883,7 @@ class Host(Metadata):
                 )
             ),
             with_expression(
-                cls.vulnerability_med_count,
+                cls.vulnerability_medium_count,
                 _make_vuln_count_property(
                     type_ = None,
                     confirmed = confirmed,
@@ -1191,6 +1208,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
         elif self.service is not None:
             return self.service.host.hostnames
         raise ValueError("Vulnerability has no service nor host")
+
+    @declared_attr
+    def service(cls):
+        return relationship('Service', backref=backref("vulnerabilitiesGeneric", cascade="all, delete-orphan"))
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -2250,6 +2271,13 @@ class AgentExecution(Metadata):
         backref=backref('agent_executions', cascade="all, delete-orphan"),
     )
     parameters_data = Column(JSONType, nullable=False)
+    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command = relationship(
+        'Command',
+        foreign_keys=[command_id],
+        backref=backref('agent_execution_id', cascade="all, delete-orphan")
+    )
+
 
     @property
     def parent(self):

@@ -2,18 +2,30 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 from flask import Blueprint, g
 from flask_security.utils import hash_data
 from flask import current_app as app
-
+from marshmallow import Schema
 
 from faraday.server.config import faraday_server
 from faraday.server.api.base import GenericView
 
 token_api = Blueprint('token_api', __name__)
 
+class EmptySchema(Schema):
+    pass
 
 class TokenAuthView(GenericView):
     route_base = 'token'
+    schema_class = EmptySchema
 
     def get(self):
+        """
+        ---
+        get:
+          tags: ["Token"]
+          description: Gets a new user token
+          responses:
+            200:
+              description: Ok
+        """
         user_id = g.user.id
         serializer = TimedJSONWebSignatureSerializer(
             app.config['SECRET_KEY'],

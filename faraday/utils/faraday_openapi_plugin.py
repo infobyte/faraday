@@ -66,8 +66,9 @@ Passing a method view function::
 
 
 """
+import os
 import re
-
+import logging
 from flask import current_app
 
 from apispec import BasePlugin, yaml_utils
@@ -79,6 +80,7 @@ from faraday.server.api.base import GenericView
 
 RE_URL = re.compile(r"<(?:[^:<>]+:)?([^<>]+)>")
 
+logger = logging.getLogger(__name__)
 
 class FaradayAPIPlugin(BasePlugin):
     """APISpec plugin for Flask"""
@@ -118,12 +120,13 @@ class FaradayAPIPlugin(BasePlugin):
             return self.flaskpath2openapi(rule.rule)
         view_instance = next(cl.cell_contents for cl in view.__closure__ if isinstance(cl.cell_contents, GenericView))
         if view_name in ['get', 'put', 'post', 'delete']:
-
             if view.__doc__:
                 if hasattr(view_instance.model_class, "__name__"):
                     class_model = view_instance.model_class.__name__
                 else:
                     class_model = 'No name'
+                #print(f'{view_name} / {class_model}')
+                logger.debug(f'{view_name} / {class_model} / {rule.methods} / {view_name} / {view_instance._get_schema_class().__name__}')
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
                     view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
                 )
@@ -135,10 +138,11 @@ class FaradayAPIPlugin(BasePlugin):
             else:
                 class_model = 'No name'
             for method in rule.methods:
-                operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
-                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
-                )
-
+                logger.debug(f'{view_name} / {class_model} / {rule.methods} / {method} / {view_instance._get_schema_class().__name__}')
+                if method not in ['HEAD', 'OPTIONS'] or os.environ.get("FULL_API_DOC", None):
+                    operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
+                        view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
+                    )
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
             for method in view.methods:
                 if method in rule.methods:

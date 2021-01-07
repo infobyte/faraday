@@ -49,11 +49,11 @@ class HostCountSchema(Schema):
     high = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_high_count')
     med = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_med_count')
+                              attribute='vulnerability_medium_count')
     low = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_low_count')
     info = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_info_count')
+                              attribute='vulnerability_informational_count')
     unclassified = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_unclassified_count')
     total = fields.Integer(dump_only=True, allow_none=False,
@@ -158,12 +158,46 @@ class HostsView(PaginatedMixin,
     def _get_base_query(self, workspace_name):
         return Host.query_with_count(None, None, workspace_name)
 
+    @route('/filter')
+    def filter(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Filter", "Host"]
+          description: Filters, sorts and groups hosts using a json with parameters. These parameters must be part of the model.
+          parameters:
+          - in: query
+            name: q
+            description: Recursive json with filters that supports operators. The json could also contain sort and group.
+          responses:
+            200:
+              description: Returns filtered, sorted and grouped results
+              content:
+                application/json:
+                  schema: FlaskRestlessSchema
+            400:
+              description: Invalid q was sent to the server
+        tags: ["Filter", "Host"]
+        responses:
+          200:
+            description: Ok
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
+
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
         """
         ---
         post:
-          tags: ["Vulns"]
+          tags: ["Bulk", "Host"]
           description: Creates hosts in bulk
           responses:
             201:
@@ -175,6 +209,10 @@ class HostsView(PaginatedMixin,
               description: Bad request
             403:
               description: Forbidden
+        tags: ["Bulk", "Host"]
+        responses:
+          200:
+            description: Ok
         """
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
@@ -224,6 +262,22 @@ class HostsView(PaginatedMixin,
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
+        """
+        ---
+        get:
+          tags: ["Host", "Service"]
+          summary: Get the services of a host
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: ServiceSchema
+        tags: ["Host", "Service"]
+        responses:
+          200:
+            description: Ok
+        """
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services)
 
@@ -232,7 +286,7 @@ class HostsView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Hosts"]
+          tags: ["Host"]
           summary: Counts Vulnerabilities per host
           responses:
             200:
@@ -240,6 +294,10 @@ class HostsView(PaginatedMixin,
               content:
                 application/json:
                   schema: HostCountSchema
+        tags: ["Host"]
+        responses:
+          200:
+            description: Ok
         """
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
@@ -260,6 +318,22 @@ class HostsView(PaginatedMixin,
 
     @route('/<host_id>/tools_history/')
     def tool_impacted_by_host(self, workspace_name, host_id):
+        """
+        ---
+        get:
+          tags: ["Host", "Command"]
+          summary: "Get the command impacted by a host"
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: CommandSchema
+        tags: ["Host", "Command"]
+        responses:
+          200:
+            description: Ok
+        """
         workspace = self._get_workspace(workspace_name)
         query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
                                                        CommandObject.object_type == 'host',
@@ -323,12 +397,30 @@ class HostsView(PaginatedMixin,
             })
         return {
             'rows': hosts,
-            'total_rows': (pagination_metadata and pagination_metadata.total
+            'count': (pagination_metadata and pagination_metadata.total
                            or len(hosts)),
         }
 
+    # TODO SCHEMA
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
+        """
+        ---
+        delete:
+          tags: ["Bulk", "Host"]
+          description: Delete hosts in bulk
+          responses:
+            200:
+              description: Ok
+            400:
+              description: Bad request
+            403:
+              description: Forbidden
+        tags: ["Bulk", "Host"]
+        responses:
+          200:
+            description: Ok
+        """
         workspace = self._get_workspace(workspace_name)
         json_request = flask.request.get_json()
         if not json_request:

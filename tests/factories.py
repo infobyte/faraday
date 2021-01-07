@@ -497,6 +497,11 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     workspace = factory.LazyAttribute(
         lambda agent_execution: agent_execution.executor.agent.workspaces[0]
     )
+    command = factory.SubFactory(
+        CommandFactory,
+        workspace=factory.SelfAttribute("..workspace"),
+        end_date=None
+    )
 
     class Meta:
         model = AgentExecution

@@ -172,43 +172,62 @@ class CreateTestsMixin:
 
 class UpdateTestsMixin:
 
-    def test_update_an_object(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_an_object(self, test_client, method):
         data = self.factory.build_dict(workspace=self.workspace)
-        res = test_client.put(self.url(self.first_object),
-                              data=data)
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=data)
         assert res.status_code == 200
         assert self.model.query.count() == OBJECT_COUNT
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
 
-    def test_update_an_object_readonly_fails(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_an_object_readonly_fails(self, test_client, method):
         self.workspace.readonly = True
         db.session.commit()
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
             old_field = getattr(self.objects[0], unique_field)
             old_id = getattr(self.objects[0], 'id')
-            res = test_client.put(self.url(self.first_object), data=data)
+            if method == "PUT":
+                res = test_client.put(self.url(self.first_object), data=data)
+            elif method == "PATCH":
+                res = test_client.patch(self.url(self.first_object), data=data)
             db.session.commit()
             assert res.status_code == 403
             assert self.model.query.count() == OBJECT_COUNT
             assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
 
-    def test_update_inactive_fails(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_inactive_fails(self, test_client, method):
         self.workspace.deactivate()
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
-        res = test_client.put(self.url(self.first_object),
-                               data=data)
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=data)
         assert res.status_code == 403
         assert self.model.query.count() == OBJECT_COUNT
 
-    def test_update_fails_with_existing(self, test_client, session):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_fails_with_existing(self, test_client, session, method):
         for unique_field in self.unique_fields:
-            data = self.factory.build_dict()
-            data[unique_field] = getattr(self.objects[1], unique_field)
-            res = test_client.put(self.url(self.first_object), data=data)
+            unique_field_value = getattr(self.objects[1], unique_field)
+            if method == "PUT":
+                data = self.factory.build_dict()
+                data[unique_field] = unique_field_value
+                res = test_client.put(self.url(self.first_object), data=data)
+            elif method == "PATCH":
+                res = test_client.put(self.url(self.first_object), data={unique_field:unique_field_value})
             assert res.status_code == 409
             assert self.model.query.count() == OBJECT_COUNT
 
@@ -217,12 +236,17 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
 
-    def test_update_cant_change_id(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_cant_change_id(self, test_client, method):
         raw_json = self.factory.build_dict(workspace=self.workspace)
         expected_id = self.first_object.id
         raw_json['id'] = 100000
-        res = test_client.put(self.url(self.first_object),
-                              data=raw_json)
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=raw_json)
+        if method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=raw_json)
         assert res.status_code == 200
         assert res.json['id'] == expected_id
 

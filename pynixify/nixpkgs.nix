@@ -50,9 +50,9 @@ let
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/ee27c439178fe7a30f5edcbe2f08f381ba30493c.tar.gz";
+        "https://github.com/infobyte/nixpkgs/archive/98720fe237de55ca5779af5ee07407d0947b8deb.tar.gz";
       sha256 =
-        "1gmkg0ql311zrm10zapshldwfb66zvwbl6a2hxhdcvr98nkj7lys";
+        "1zfc84xg7xa70v3gfqn1wgzq0rn8fwna9bmmyi9720vs0bzkdj86";
     };
 
   packageOverrides =

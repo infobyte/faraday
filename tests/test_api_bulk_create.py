@@ -41,6 +41,7 @@ vuln_data = {
     'refs': ['CVE-1234'],
     'tool': 'some_tool',
     'data': 'test data',
+    'custom_fields': {}
 }
 
 vuln_web_data = {

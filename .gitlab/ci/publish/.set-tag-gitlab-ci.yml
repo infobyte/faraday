@@ -6,10 +6,10 @@ tag_on_github:
       - git config remote.github.url >/dev/null || git remote add github https://${GH_TOKEN}@github.com/infobyte/faraday.git
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - CHANGELOG/check_pre_tag.py
-      - git push github white/dev:master
-      - git tag v$IMAGE_TAG -m "$(cat CHANGELOG/$FARADAY_VERSION/white.md)"
+      - git push github $CI_COMMIT_TAG:master
+      - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/white.md)"
       - git push github v$FARADAY_VERSION
-      - scripts/github_release.py
+      - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
     rules:
       - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
         when: on_success

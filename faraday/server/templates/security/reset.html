@@ -1,0 +1,25 @@
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+{% block content %}
+{% include "security/_messages.html" %}
+<div id="login-main">
+    <div id="login-container" class="">
+        <section id="main" class="">
+            <form action="{{ url_for_security('reset_password', token=reset_password_token) }}" method="POST" name="reset_password_form">
+                  {{ reset_password_form.hidden_tag() }}
+                <div id="form-signin">
+                    <img src="/images/logo-faraday.svg" class="height-39px">
+                            <h3 class="clear-margin-bottom margin-top-22px">{{ _('Reset password') }}</h3>
+                    <div class="form-input margin-top-30px" style="position:relative;">
+                          {{ render_field_with_errors(reset_password_form.password) }}
+                    </div>
+                    <div class="form-input margin-top-30px" style="position:relative;">
+                          {{ render_field_with_errors(reset_password_form.password_confirm) }}
+                    </div>
+                </div><!-- .form-signin -->
+                <button class="btn-frd btn-xl bg-blue btn-block" style="background-color: #00a8e1" type="submit">Reset Password</button>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -90,6 +90,9 @@ class FlaskRestlessFilterSchema(Schema):
                     if not isinstance(filter_['val'], str):
                         raise ValidationError('Relationship attribute to compare to must be a string')
                     return [filter_]
+            # has and any should be used with fields that has a relationship with other table
+            if filter_['op'].lower() in ['has', 'any']:
+                return [filter_]
             else:
                 raise ValidationError('Field does not support in operator')
 

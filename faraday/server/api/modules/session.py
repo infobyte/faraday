@@ -13,6 +13,15 @@ session_api = Blueprint('session_api', __name__)
 
 @session_api.route('/session')
 def session_info():
+    """
+    ---
+    get:
+      tags: ["Informational"]
+      description: Gives info about the current session
+      responses:
+        200:
+          description: Ok
+    """
     user = flask.g.user
     data = user.get_security_payload()
     data['csrf_token'] = generate_csrf()

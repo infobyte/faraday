@@ -1412,3 +1412,9 @@ a {
     text-overflow: ellipsis;
     overflow: hidden;
 }
+
+.forgot-password{
+    margin-top: 10px;
+    text-align: center;
+    padding-bottom: 10px;
+}

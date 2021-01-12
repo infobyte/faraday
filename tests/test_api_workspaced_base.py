@@ -117,7 +117,7 @@ class CreateTestsMixin:
                                data=data)
         assert res.status_code == 201, (res.status_code, res.data)
         assert self.model.query.count() == OBJECT_COUNT + 1
-        object_id = res.json['id']
+        object_id = res.json.get('id', res.json['_id'])
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
 
@@ -176,7 +176,7 @@ class UpdateTestsMixin:
         data = self.factory.build_dict(workspace=self.workspace)
         res = test_client.put(self.url(self.first_object),
                               data=data)
-        assert res.status_code == 200
+        assert res.status_code == 200, (res.status_code, res.data)
         assert self.model.query.count() == OBJECT_COUNT
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
@@ -223,8 +223,9 @@ class UpdateTestsMixin:
         raw_json['id'] = 100000
         res = test_client.put(self.url(self.first_object),
                               data=raw_json)
-        assert res.status_code == 200
-        assert res.json['id'] == expected_id
+        assert res.status_code == 200, (res.status_code, res.data)
+        object_id = res.json.get('id', res.json['_id'])
+        assert object_id == expected_id
 
 
 class CountTestsMixin:
@@ -245,7 +246,7 @@ class CountTestsMixin:
                 grouped += 1
             creators.append(obj['creator_id'])
 
-        assert grouped == 1
+        assert grouped == 1, (res)
         assert creators == sorted(creators)
 
     def test_count_descending(self, test_client, session, user_factory):
@@ -265,7 +266,7 @@ class CountTestsMixin:
                 grouped += 1
             creators.append(obj['creator_id'])
 
-        assert grouped == 1
+        assert grouped == 1, res
         assert creators == sorted(creators, reverse=True)
 
 
@@ -355,3 +356,7 @@ class ReadOnlyMultiWorkspacedAPITests(ListTestsMixin,
         res = test_client.get(self.url())
         assert res.status_code == 200
         assert len(res.json['data']) == OBJECT_COUNT
+
+class ReadWriteMultiWorkspacedAPITests(ReadOnlyMultiWorkspacedAPITests,
+                                       ReadWriteTestsMixin):
+    pass

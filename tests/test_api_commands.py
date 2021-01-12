@@ -12,7 +12,7 @@ import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
+from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests
 from faraday.server.models import (
     Command,
     Workspace,
@@ -30,7 +30,7 @@ from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandOb
 # and https://github.com/pytest-dev/pytest/issues/568 for more information
 
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(ReadOnlyAPITests):
+class TestListCommandView(ReadWriteAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'

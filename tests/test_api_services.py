@@ -16,7 +16,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from tests.test_api_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests
 from faraday.server.models import (
     Service
 )
@@ -24,7 +24,7 @@ from tests.factories import HostFactory, EmptyCommandFactory
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestListServiceView(ReadOnlyAPITests):
+class TestListServiceView(ReadWriteAPITests):
     model = Service
     factory = factories.ServiceFactory
     api_endpoint = 'services'
@@ -73,6 +73,10 @@ class TestListServiceView(ReadOnlyAPITests):
         assert service.name == "ftp"
         assert service.port == 21
         assert service.host is host
+
+    @pytest.mark.skip  # more detailed test above
+    def test_create_succeeds(self, test_client):
+        pass
 
     def test_create_fails_with_invalid_status(self, test_client,
                                               host, session):

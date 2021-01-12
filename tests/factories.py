@@ -12,6 +12,7 @@ import factory
 import datetime
 import itertools
 import unicodedata
+import time
 
 import pytz
 from factory import SubFactory
@@ -186,6 +187,14 @@ class ServiceFactory(WorkspaceObjectFactory):
         model = Service
         sqlalchemy_session = db.session
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super(ServiceFactory, cls).build_dict(**kwargs)
+        ret['host_id'] = ret['host'].id
+        ret['ports'] = [ret['port']]
+        ret.pop('host')
+        return ret
+
 
 class SourceCodeFactory(WorkspaceObjectFactory):
     filename = FuzzyText()
@@ -195,7 +204,7 @@ class SourceCodeFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-class CustomFieldsSchemaFactory(factory.alchemy.SQLAlchemyModelFactory):
+class CustomFieldsSchemaFactory(FaradayFactory):
 
     class Meta:
         model = CustomFieldsSchema
@@ -207,6 +216,15 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     description = FuzzyText()
     creator = factory.SubFactory(UserFactory)
     severity = FuzzyChoice(['critical', 'high'])
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super(VulnerabilityGenericFactory, cls).build_dict(**kwargs)
+        if ret['type'] == 'vulnerability':
+            ret['type'] = 'Vulnerability'
+        else:
+            ret['type'] = 'VulnerabilityWeb'
+        return ret
 
 
 class HasParentHostOrService:
@@ -287,6 +305,7 @@ class VulnerabilityFactory(HasParentHostOrService,
 
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
+    type = "vulnerability"
 
     class Meta:
         model = Vulnerability
@@ -297,6 +316,7 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
     parameter_name = FuzzyText()
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
+    type = "vulnerability_web"
 
     class Meta:
         model = VulnerabilityWeb
@@ -323,6 +343,13 @@ class VulnerabilityTemplateFactory(FaradayFactory):
     class Meta:
         model = VulnerabilityTemplate
         sqlalchemy_session = db.session
+
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super(VulnerabilityTemplateFactory, cls).build_dict(**kwargs)
+        ret['exploitation'] = ret['severity']
+        return ret
 
 
 class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
@@ -381,6 +408,16 @@ class CommandFactory(WorkspaceObjectFactory):
                 command=self,
                 workspace=self.workspace
             )
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        # Ugly hack to JSON-serialize datetimes
+        ret = super(CommandFactory, cls).build_dict(**kwargs)
+        ret['itime'] = time.mktime(ret['start_date'].utctimetuple())
+        ret['duration'] = (ret['end_date'] - ret['start_date']).seconds + ((ret['end_date'] - ret['start_date']).microseconds / 1000000.0)
+        ret.pop('start_date')
+        ret.pop('end_date')
+        return ret
 
 
 class EmptyCommandFactory(WorkspaceObjectFactory):
@@ -469,7 +506,6 @@ class AgentFactory(FaradayFactory):
         else:
             self.workspaces.append(WorkspaceFactory())
             self.workspaces.append(WorkspaceFactory())
-
 
     class Meta:
         model = Agent

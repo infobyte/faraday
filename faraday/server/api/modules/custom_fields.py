@@ -42,4 +42,3 @@ class CustomFieldsSchemaView(ReadWriteView):
         return super(CustomFieldsSchemaView, self)._update_object(obj, data)
 
 CustomFieldsSchemaView.register(custom_fields_schema_api)
-# I'm Py3

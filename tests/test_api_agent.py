@@ -10,8 +10,8 @@ import pytest
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadOnlyAPITests
-from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT
+from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 
@@ -228,11 +228,32 @@ class TestAgentCreationAPI():
         assert res.status_code == 400
 
 
-class TestAgentWithWorkspacesAPIGeneric(ReadOnlyAPITests):
+class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentWithWorkspacesView
     api_endpoint = 'agents'
+
+    def test_create_succeeds(self, test_client):
+        with pytest.raises(AssertionError) as exc_info:
+            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_succeeds(test_client)
+        assert '405' in exc_info.value.args[0]
+
+    def test_create_fails_with_empty_dict(self, test_client):
+        with pytest.raises(AssertionError) as exc_info:
+            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_fails_with_empty_dict(test_client)
+        assert '405' in exc_info.value.args[0]
+
+    def test_update_an_object(self, test_client):
+        build_dict = self.factory.build_dict()
+        build_dict['workspaces'] = [workspace.name for workspace in self.first_object.workspaces]
+        res = test_client.put(self.url(self.first_object),
+                              data=build_dict)
+        assert res.status_code == 200, (res.status_code, res.json)
+        assert self.model.query.count() == OBJECT_COUNT
+        for updated_field in self.update_fields:
+            assert res.json[updated_field] == getattr(self.first_object,
+                                                        updated_field)
 
     def workspaced_url(self, workspace, obj= None):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
@@ -392,6 +413,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadOnlyAPITests):
             json=payload
         )
         assert res.status_code == 404
+
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     model = Agent

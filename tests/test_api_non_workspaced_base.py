@@ -82,14 +82,14 @@ class CreateTestsMixin:
     def test_create_succeeds(self, test_client):
         res = test_client.post(self.url(),
                                data=self.factory.build_dict())
-        assert res.status_code == 201
+        assert res.status_code == 201, (res.status_code, res.json)
         assert self.model.query.count() == OBJECT_COUNT + 1
         object_id = res.json['id']
         self.model.query.get(object_id)
 
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})
-        assert res.status_code == 400
+        assert res.status_code == 400, (res.status_code, res.json)
 
     def test_create_fails_with_existing(self, session, test_client):
         for unique_field in self.unique_fields:
@@ -105,7 +105,7 @@ class UpdateTestsMixin:
     def test_update_an_object(self, test_client):
         res = test_client.put(self.url(self.first_object),
                               data=self.factory.build_dict())
-        assert res.status_code == 200
+        assert res.status_code == 200, (res.status_code, res.json)
         assert self.model.query.count() == OBJECT_COUNT
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
@@ -122,7 +122,7 @@ class UpdateTestsMixin:
     def test_update_an_object_fails_with_empty_dict(self, test_client):
         """To do this the user should use a PATCH request"""
         res = test_client.put(self.url(self.first_object), data={})
-        assert res.status_code == 400
+        assert res.status_code == 400, (res.status_code, res.json)
 
 
 class DeleteTestsMixin:

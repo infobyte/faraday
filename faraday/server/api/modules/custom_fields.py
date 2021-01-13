@@ -2,6 +2,7 @@
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from flask import Blueprint
+from marshmallow import fields
 
 from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
@@ -14,6 +15,14 @@ custom_fields_schema_api = Blueprint('custom_fields_schema_api', __name__)
 
 
 class CustomFieldsSchemaSchema(AutoSchema):
+
+    id = fields.Integer(dump_only=True, attribute='id')
+    field_name = fields.String(attribute='field_name', required=True)
+    field_type = fields.String(attribute='field_type', required=True)
+    field_metadata = fields.Dict(attribute='field_metadata')
+    field_display_name = fields.String(attribute='field_display_name', required=True)
+    field_order = fields.Integer(attribute='field_order', required=True)
+    table_name = fields.String(attribute='table_name', required=True)
 
     class Meta:
         model = CustomFieldsSchema

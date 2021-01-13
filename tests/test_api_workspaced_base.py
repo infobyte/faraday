@@ -117,7 +117,7 @@ class CreateTestsMixin:
                                data=data)
         assert res.status_code == 201, (res.status_code, res.data)
         assert self.model.query.count() == OBJECT_COUNT + 1
-        object_id = res.json.get('id', res.json['_id'])
+        object_id = res.json.get('id') or res.json['_id']
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
 
@@ -224,7 +224,7 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object),
                               data=raw_json)
         assert res.status_code == 200, (res.status_code, res.data)
-        object_id = res.json.get('id', res.json['_id'])
+        object_id = res.json.get('id') or res.json['_id']
         assert object_id == expected_id
 
 

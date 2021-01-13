@@ -17,8 +17,9 @@ comment_api = Blueprint('comment_api', __name__)
 
 class CommentSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
-    object_id = fields.Integer(attribute='object_id')
-    object_type = fields.String(attribute='object_type', validate=OneOf(['host', 'service', 'comment']))
+    object_id = fields.Integer(attribute='object_id', required=True)
+    object_type = fields.String(attribute='object_type', validate=OneOf(['host', 'service', 'comment']), required=True)
+    text = fields.String(attribute='text', required=True)
 
     class Meta:
         model = Comment

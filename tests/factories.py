@@ -206,6 +206,12 @@ class SourceCodeFactory(WorkspaceObjectFactory):
 
 class CustomFieldsSchemaFactory(FaradayFactory):
 
+    field_name = FuzzyText()
+    field_type = FuzzyText()
+    field_display_name = FuzzyText()
+    field_order = FuzzyInteger(1, 10)
+    table_name = FuzzyText()
+
     class Meta:
         model = CustomFieldsSchema
         sqlalchemy_session = db.session
@@ -443,9 +449,21 @@ class CommentFactory(WorkspaceObjectFactory):
         A command without command objects.
     """
     text = FuzzyText()
-    object_id = FuzzyInteger(1)
+    object_id = FuzzyInteger(1, 10000)
     object_type = FuzzyChoice(['host', 'service', 'comment'])
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        # The host, service or comment must be created
+        ret = super(CommentFactory, cls).build_dict(**kwargs)
+        workspace = kwargs['workspace']
+        if ret['object_type'] == 'host':
+            HostFactory.create(workspace=workspace, id=ret['object_id'])
+        elif ret['object_type'] == 'service':
+            ServiceFactory.create(workspace=workspace, id=ret['object_id'])
+        elif ret['object_type'] == 'service':
+            cls.create(workspace=workspace, id=ret['object_id'])
+        return ret
 
     class Meta:
         model = Comment

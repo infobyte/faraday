@@ -231,8 +231,16 @@ class UpdateTestsMixin:
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
 
+        factory_kwargs = {}
+        for extra_filter in self.view_class.count_extra_filters:
+            field = extra_filter.left.name
+            value = extra_filter.right.effective_value
+            setattr(self.first_object, field, value)
+            factory_kwargs[field] = value
+
         session.add(self.factory.create(creator=self.first_object.creator,
-                                        workspace=self.first_object.workspace))
+                                  workspace=self.first_object.workspace,
+                                  **factory_kwargs))
 
         session.commit()
         res = test_client.get(self.url() + "count/?group_by=creator_id")
@@ -251,8 +259,16 @@ class CountTestsMixin:
 
     def test_count_descending(self, test_client, session, user_factory):
 
+        factory_kwargs = {}
+        for extra_filter in self.view_class.count_extra_filters:
+            field = extra_filter.left.name
+            value = extra_filter.right.effective_value
+            setattr(self.first_object, field, value)
+            factory_kwargs[field] = value
+
         session.add(self.factory.create(creator=self.first_object.creator,
-                                        workspace=self.first_object.workspace))
+                                        workspace=self.first_object.workspace,
+                                        **factory_kwargs))
 
         session.commit()
         res = test_client.get(self.url() + "count/?group_by=creator_id&order=desc")

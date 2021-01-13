@@ -325,6 +325,3 @@ class TestListServiceView(ReadWriteAPITests):
         res = test_client.post(self.url(), data=data)
         print(res.data)
         assert res.status_code == 400
-
-
-# I'm Py3

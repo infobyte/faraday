@@ -29,7 +29,7 @@ class CommandSchema(AutoSchema):
     def load_itime(self, value):
         try:
             return datetime.datetime.fromtimestamp(value)
-        except ValueError as e:
+        except ValueError:
             raise ValidationError('Invalid Itime Value')
 
     def get_itime(self, obj):

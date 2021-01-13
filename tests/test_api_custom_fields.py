@@ -47,7 +47,7 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
         data = {
             u'field_name': u'cvss 2',
             u'field_type': 'int',
-            u'talbe_name': 'sarasa',
+            u'table_name': 'sarasa',
             u'field_display_name': u'CVSS new',
             u'field_order': 1
         }
@@ -76,7 +76,5 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
         res = test_client.get(self.url())  # '/v2/custom_fields_schema/')
         assert res.status_code == 200
         assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
-                u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
+                u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': ['Male', 'Female'],
                 u'field_order': 1} in res.json
-
-# I'm Py3

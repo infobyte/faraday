@@ -44,6 +44,7 @@ from flask_sqlalchemy import (
 )
 
 from depot.fields.sqlalchemy import UploadedFileField
+from sqlalchemy.sql.functions import count
 
 from faraday.server.fields import JSONType
 from flask_security import (
@@ -1192,6 +1193,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
             object_id=self.id,
             object_type='vulnerability'
         )
+
+    @property
+    def attachments_count(self):
+        return db.session.query(func.count(File.id)).filter_by(
+            object_id=self.id,
+            object_type='vulnerability'
+        ).scalar()
 
     @hybrid_property
     def target(self):

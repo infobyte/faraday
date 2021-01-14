@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Vuln', ['BASEURL', '$q', 'ServerAPI', 'attachmentsFact', 
+    .factory('Vuln', ['BASEURL', '$q', 'ServerAPI', 'attachmentsFact',
     function(BASEURL, $q, ServerAPI, attachmentsFact) {
         Vuln = function(ws, data) {
             var now = new Date(),
@@ -48,6 +48,7 @@ angular.module('faradayApp')
             this.status = "opened";
             this.policyviolations = "";
             this.custom_fields = {};
+            this.attachments_count = 0;
 
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -60,7 +61,7 @@ angular.module('faradayApp')
         var public_properties = [
             '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution',
             'impact', 'name', 'owned', 'policyviolations', 'refs', 'resolution',
-            'severity', 'status', 'custom_fields', 'external_id'
+            'severity', 'status', 'custom_fields', 'external_id', 'attachments_count'
         ];
 
         var saved_properties = public_properties.concat(
@@ -114,7 +115,7 @@ angular.module('faradayApp')
                     vuln._attachments = {};
 
                     // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
-                    // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
+                    // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments
                     // old attachments are of type Object and they represent a Stub, nothing should be done to them
                     for(var name in data._attachments) {
                         if(data._attachments.hasOwnProperty(name)) {

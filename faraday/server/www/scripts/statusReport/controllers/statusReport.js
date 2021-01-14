@@ -295,7 +295,7 @@ angular.module("faradayApp")
                 "status_code":      false,
                 "request":          false,
                 "refs":             false,
-                "evidence":         false,
+                "evidences":        false,
                 "hostnames":        true,
                 "impact":           false,
                 "method":           false,
@@ -330,7 +330,7 @@ angular.module("faradayApp")
                     "status_code":      "90",
                     "request":          "90",
                     "refs":             "20",
-                    "_attachments":     "100",
+                    "evidences":        "100",
                     "impact":           "90",
                     "method":           "90",
                     "params":           "90",
@@ -463,7 +463,6 @@ angular.module("faradayApp")
             $templateCache.put('ui-grid/selectionSelectAllButtons',
                 "<div class=\"ui-grid-selection-row-header-buttons \" ng-class=\"{'ui-grid-all-selected': grid.selection.selectAll}\" ng-if=\"grid.options.enableSelectAll\"><input style=\"margin: 0; vertical-align: middle\" type=\"checkbox\" ng-model=\"grid.selection.selectAll\" ng-click=\"grid.selection.selectAll=!grid.selection.selectAll;headerButtonClick($event)\"></div>"
             );
-
             $scope.gridOptions.columnDefs.push({ name : 'severity',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
@@ -569,12 +568,12 @@ angular.module("faradayApp")
                 visible: $scope.columns["refs"],
                 enableSorting: false,
             });
-            $scope.gridOptions.columnDefs.push({ name : '_attachments',
-                displayName: "evidence",
+            $scope.gridOptions.columnDefs.push({ name : 'attachments_count',
+                displayName: "evidences",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/evidencecolumn.html',
                 headerCellTemplate: header,
-                sort: getColumnSort('_attachments'),
-                visible: $scope.columns["evidence"],
+                sort: getColumnSort('evidences'),
+                visible: $scope.columns["evidences"],
             });
             $scope.gridOptions.columnDefs.push({ name : 'impact',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',

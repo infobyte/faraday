@@ -50,9 +50,10 @@ class GenericAPITest:
         return url
 
 
+@pytest.mark.usefixtures('logged_user')
 class ListTestsMixin:
 
-    def test_list_retrieves_all_items_from(self, test_client):
+    def test_list_retrieves_all_items_from(self, test_client, logged_user):
         res = test_client.get(self.url())
         assert res.status_code == 200
         if 'rows' in res.json:
@@ -61,10 +62,10 @@ class ListTestsMixin:
             assert len(res.json) == OBJECT_COUNT
 
 
-
+@pytest.mark.usefixtures('logged_user')
 class RetrieveTestsMixin:
 
-    def test_retrieve_one_object(self, test_client):
+    def test_retrieve_one_object(self, test_client, logged_user):
         res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
         assert isinstance(res.json, dict)
@@ -100,9 +101,10 @@ class CreateTestsMixin:
             assert self.model.query.count() == OBJECT_COUNT
 
 
+@pytest.mark.usefixtures('logged_user')
 class UpdateTestsMixin:
 
-    def test_update_an_object(self, test_client):
+    def test_update_an_object(self, test_client, logged_user):
         res = test_client.put(self.url(self.first_object),
                               data=self.factory.build_dict())
         assert res.status_code == 200, (res.status_code, res.json)
@@ -119,15 +121,16 @@ class UpdateTestsMixin:
             assert res.status_code == 400
             assert self.model.query.count() == OBJECT_COUNT
 
-    def test_update_an_object_fails_with_empty_dict(self, test_client):
+    def test_update_an_object_fails_with_empty_dict(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400, (res.status_code, res.json)
 
 
+@pytest.mark.usefixtures('logged_user')
 class DeleteTestsMixin:
 
-    def test_delete(self, test_client):
+    def test_delete(self, test_client, logged_user):
         res = test_client.delete(self.url(self.first_object))
         assert res.status_code == 204  # No content
         assert was_deleted(self.first_object)

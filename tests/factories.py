@@ -450,8 +450,7 @@ class CommentFactory(WorkspaceObjectFactory):
     """
     text = FuzzyText()
     object_id = FuzzyInteger(1, 10000)
-#    object_type = FuzzyChoice(['host', 'service', 'comment'])
-    object_type = FuzzyChoice(['comment'])
+    object_type = FuzzyChoice(['host', 'service', 'comment'])
 
     @classmethod
     def build_dict(cls, **kwargs):

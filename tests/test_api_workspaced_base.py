@@ -113,10 +113,11 @@ class CreateTestsMixin:
 
     def test_create_succeeds(self, test_client):
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.post(self.url(),
                                data=data)
         assert res.status_code == 201, (res.status_code, res.data)
-        assert self.model.query.count() == OBJECT_COUNT + 1
+        assert self.model.query.count() == count + 1
         object_id = res.json.get('id') or res.json['_id']
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
@@ -125,21 +126,23 @@ class CreateTestsMixin:
         self.workspace.readonly = True
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.post(self.url(),
                                data=data)
         db.session.commit()
         assert res.status_code == 403
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
 
 
     def test_create_inactive_fails(self, test_client):
         self.workspace.deactivate()
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.post(self.url(),
                                data=data)
         assert res.status_code == 403, (res.status_code, res.data)
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
 
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})
@@ -174,10 +177,11 @@ class UpdateTestsMixin:
 
     def test_update_an_object(self, test_client):
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.put(self.url(self.first_object),
                               data=data)
         assert res.status_code == 200, (res.status_code, res.data)
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
@@ -199,10 +203,11 @@ class UpdateTestsMixin:
         self.workspace.deactivate()
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.put(self.url(self.first_object),
                                data=data)
         assert res.status_code == 403
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
 
     def test_update_fails_with_existing(self, test_client, session):
         for unique_field in self.unique_fields:

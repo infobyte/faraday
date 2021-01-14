@@ -133,7 +133,7 @@ class DeleteTestsMixin:
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
 
-    @pytest.mark.parametrize('object_id', [123, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [12300, -1, 'xxx', u'áá'])
     def test_delete_non_existent_raises_404(self, test_client,
                                             object_id):
         res = test_client.delete(self.url(object_id))

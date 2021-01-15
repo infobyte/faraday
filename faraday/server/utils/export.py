@@ -43,8 +43,6 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
-    hosts_data = {}
-    services_data = {}
     comments_dict = {}
     hosts_ids = set()
     services_ids = set()
@@ -57,7 +55,9 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             services_ids.add(vuln['parent'])
         vulns_ids.add(vuln['_id'])
 
-    comments = db.session.query(Comment).filter(Comment.object_type == 'vulnerability').filter(Comment.object_id.in_(vulns_ids)).all()
+    comments = db.session.query(Comment)\
+        .filter(Comment.object_type == 'vulnerability')\
+        .filter(Comment.object_id.in_(vulns_ids)).all()
     for comment in comments:
         if comment.object_id in comments_dict:
             comments_dict[comment.object_id].append(comment.text)

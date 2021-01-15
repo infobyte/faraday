@@ -244,17 +244,6 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
             super(TestAgentWithWorkspacesAPIGeneric, self).test_create_fails_with_empty_dict(test_client)
         assert '405' in exc_info.value.args[0]
 
-    def test_update_an_object(self, test_client):
-        build_dict = self.factory.build_dict()
-        build_dict['workspaces'] = [workspace.name for workspace in self.first_object.workspaces]
-        res = test_client.put(self.url(self.first_object),
-                              data=build_dict)
-        assert res.status_code == 200, (res.status_code, res.json)
-        assert self.model.query.count() == OBJECT_COUNT
-        for updated_field in self.update_fields:
-            assert res.json[updated_field] == getattr(self.first_object,
-                                                        updated_field)
-
     def workspaced_url(self, workspace, obj= None):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
         if obj is not None:

@@ -308,7 +308,6 @@ def create_app(db_connection_string=None, testing=None):
         #For testing porpouse
         'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,
-        'SECURITY_RECOVERABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
         'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
@@ -382,12 +381,6 @@ def create_app(db_connection_string=None, testing=None):
 
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
-
-    # For password recovery of Flask Security
-    app.view_functions['security.forgot_password'].is_public = True
-    app.view_functions['security.reset_password'].is_public = True
-
-
     app.debug = faraday.server.config.is_debug_mode()
     minify_json_output(app)
 

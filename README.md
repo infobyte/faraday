@@ -118,7 +118,7 @@ Read more about the [Faraday Plugin](https://github.com/infobyte/faraday/wiki/fa
 ### CSV Exporting
 
 Faraday supports CSV Exporting from its WEB UI.
-[More information](Exporting-the-information)
+[More information](https://github.com/infobyte/faraday/wiki/CSV-Exporter)
 
 ## Links
 

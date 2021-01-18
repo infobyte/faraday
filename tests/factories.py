@@ -308,8 +308,8 @@ class HasParentHostOrService:
         return ret
 
 
-class VulnerabilityFactory(HasParentHostOrService,
-                           VulnerabilityGenericFactory):
+class VulnerabilityFactory(VulnerabilityGenericFactory,
+                           HasParentHostOrService):
 
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))

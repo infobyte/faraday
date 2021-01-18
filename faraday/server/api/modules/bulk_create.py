@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
+import string
 
 import flask
 import sqlalchemy
@@ -319,7 +320,8 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             vuln_data['tool'] = command.tool
         else:
             vuln_data['tool'] = 'Web UI'
-
+    vuln_data['request'] = ''.join([x for x in vuln_data.pop('request', '') if x in string.printable])
+    vuln_data['response'] = ''.join([x for x in vuln_data.pop('response', '') if x in string.printable])
     run_date_string = vuln_data.pop('run_date', None)
     if run_date_string:
         try:

@@ -8,6 +8,7 @@ import logging
 from base64 import b64encode, b64decode
 from json.decoder import JSONDecodeError
 from pathlib import Path
+import string
 
 import flask
 import wtforms
@@ -492,6 +493,10 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
+        if 'request' in data:
+            data['request'] = ''.join([x for x in data.pop('request', '') if x in string.printable])
+        if 'response' in data:
+            data['response'] = ''.join([x for x in data.pop('response', '') if x in string.printable])
         try:
             obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         except TypeError:

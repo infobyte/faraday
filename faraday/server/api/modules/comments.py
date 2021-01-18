@@ -6,7 +6,7 @@ from marshmallow import fields, ValidationError
 from marshmallow.validate import OneOf
 
 
-from faraday.server.models import db, Host, Service
+from faraday.server.models import db, Host, Service, VulnerabilityGeneric
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
@@ -18,7 +18,9 @@ comment_api = Blueprint('comment_api', __name__)
 class CommentSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     object_id = fields.Integer(attribute='object_id', required=True)
-    object_type = fields.String(attribute='object_type', validate=OneOf(['host', 'service', 'comment']), required=True)
+    object_type = fields.String(attribute='object_type',
+                                validate=OneOf(['host', 'service', 'comment', 'vulnerability']),
+                                required=True)
     text = fields.String(attribute='text', required=True)
 
     class Meta:
@@ -34,6 +36,7 @@ class CommentCreateMixing(CreateWorkspacedMixin):
         model = {
             'host': Host,
             'service': Service,
+            'vulnerability': VulnerabilityGeneric,
             'comment': Comment
         }
         obj = db.session.query(model[data['object_type']]).get(

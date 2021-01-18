@@ -175,8 +175,12 @@ class CreateTestsMixin:
 
 class UpdateTestsMixin:
 
+    def control_cant_change_data(self, data: dict) -> dict:
+        return data
+
     def test_update_an_object(self, test_client):
         data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
         count = self.model.query.count()
         res = test_client.put(self.url(self.first_object),
                               data=data)
@@ -224,6 +228,7 @@ class UpdateTestsMixin:
 
     def test_update_cant_change_id(self, test_client):
         raw_json = self.factory.build_dict(workspace=self.workspace)
+        raw_json = self.control_cant_change_data(raw_json)
         expected_id = self.first_object.id
         raw_json['id'] = 100000
         res = test_client.put(self.url(self.first_object),

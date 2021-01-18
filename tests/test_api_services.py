@@ -30,6 +30,11 @@ class TestListServiceView(ReadWriteAPITests):
     api_endpoint = 'services'
     view_class = ServiceView
 
+    def control_cant_change_data(self, data: dict):
+        if 'parent' in data:
+            data['parent'] = self.first_object.host_id
+        return data
+
     def test_service_list_backwards_compatibility(self, test_client,
                                                   second_workspace, session):
         self.factory.create(workspace=second_workspace)

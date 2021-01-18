@@ -118,7 +118,20 @@ class WorkspaceObjectFactory(FaradayFactory):
         return ret
 
 
+class FuzzyIncrementalInteger(BaseFuzzyAttribute):
+    """Like a FuzzyInteger, but tries to prevent generating duplicated
+    values"""
+
+    def __init__(self, low, high, **kwargs):
+        self.iterator = itertools.cycle(range(low, high - 1))
+        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
+
+    def fuzz(self):
+        return next(self.iterator)
+
+
 class HostFactory(WorkspaceObjectFactory):
+    id = FuzzyIncrementalInteger(1, 65535)
     ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
@@ -162,18 +175,6 @@ class ReferenceTemplateFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class FuzzyIncrementalInteger(BaseFuzzyAttribute):
-    """Like a FuzzyInteger, but tries to prevent generating duplicated
-    values"""
-
-    def __init__(self, low, high, **kwargs):
-        self.iterator = itertools.cycle(range(low, high - 1))
-        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
-
-    def fuzz(self):
-        return next(self.iterator)
-
-
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
@@ -190,7 +191,8 @@ class ServiceFactory(WorkspaceObjectFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         ret = super(ServiceFactory, cls).build_dict(**kwargs)
-        ret['host_id'] = ret['host'].id
+        ret['host'].workspace = kwargs['workspace']
+        ret['parent'] = ret['host'].id
         ret['ports'] = [ret['port']]
         ret.pop('host')
         return ret

@@ -7,6 +7,7 @@ import string
 from datetime import datetime
 from functools import partial
 from random import SystemRandom
+import string
 
 from sqlalchemy import (
     Boolean,
@@ -1238,6 +1239,15 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
+
+    def __init__(self, *args, **kwargs):
+        # Sanitize some fields on creation
+        if 'request' in kwargs:
+            kwargs['request'] = ''.join([x for x in kwargs['request'] if x in string.printable])
+        if 'response' in kwargs:
+            kwargs['response'] = ''.join([x for x in kwargs['response'] if x in string.printable])
+        super().__init__(*args, **kwargs)
+
 
     @declared_attr
     def service_id(cls):

@@ -113,7 +113,7 @@ class WorkspaceObjectFactory(FaradayFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(WorkspaceObjectFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         del ret['workspace']  # It is passed in the URL, not in POST data
         return ret
 
@@ -225,17 +225,8 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     creator = factory.SubFactory(UserFactory)
     severity = FuzzyChoice(['critical', 'high'])
 
-    @classmethod
-    def build_dict(cls, **kwargs):
-        ret = super(VulnerabilityGenericFactory, cls).build_dict(**kwargs)
-        if ret['type'] == 'vulnerability':
-            ret['type'] = 'Vulnerability'
-        else:
-            ret['type'] = 'VulnerabilityWeb'
-        return ret
 
-
-class HasParentHostOrService:
+class HasParentHostOrService(WorkspaceObjectFactory):
     """
     Mixins for objects that must have either a host or a service,
     but ont both, as a parent.
@@ -277,7 +268,7 @@ class HasParentHostOrService:
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(HasParentHostOrService, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         service = ret.pop('service')
         host = ret.pop('host')
         if host is not None:
@@ -315,6 +306,13 @@ class VulnerabilityFactory(VulnerabilityGenericFactory,
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
     type = "vulnerability"
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super().build_dict(**kwargs)
+        assert ret['type'] == 'vulnerability'
+        ret['type'] = 'Vulnerability'
+        return ret
+
     class Meta:
         model = Vulnerability
         sqlalchemy_session = db.session
@@ -325,6 +323,14 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     parameter_name = FuzzyText()
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
     type = "vulnerability_web"
+
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super(VulnerabilityWebFactory, cls).build_dict(**kwargs)
+        assert ret['type'] == 'vulnerability_web'
+        ret['type'] = 'VulnerabilityWeb'
+        return ret
 
     class Meta:
         model = VulnerabilityWeb

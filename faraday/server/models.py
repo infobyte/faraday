@@ -7,7 +7,6 @@ import string
 from datetime import datetime
 from functools import partial
 from random import SystemRandom
-import string
 
 from sqlalchemy import (
     Boolean,

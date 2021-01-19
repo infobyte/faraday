@@ -70,7 +70,7 @@ class RetrieveTestsMixin:
         assert res.status_code == 200
         assert isinstance(res.json, dict)
 
-    @pytest.mark.parametrize('object_id', [123, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', u'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
         url = self.url(object_id)

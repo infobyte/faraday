@@ -244,12 +244,11 @@ class HasParentHostOrService(WorkspaceObjectFactory):
                 raise ValueError('You should pass both service and host and '
                                  'set one of them to None to prevent random '
                                  'stuff to happen')
-        return super(HasParentHostOrService, cls).attributes(create, extra)
+        return super().attributes(create, extra)
 
     @classmethod
     def _after_postgeneration(cls, obj, create, results=None):
-        super(HasParentHostOrService, cls)._after_postgeneration(
-            obj, create, results)
+        super()._after_postgeneration(obj, create, results)
         if isinstance(obj, dict):
             # This happens when built with build_dict
             if obj['host'] and obj['service']:
@@ -265,6 +264,9 @@ class HasParentHostOrService(WorkspaceObjectFactory):
                 obj.host = None
             else:
                 obj.service = None
+            session = cls._meta.sqlalchemy_session
+            session.add(obj)
+            session.commit()
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -520,6 +522,7 @@ class NoteFactory(FaradayFactory):
 class AgentFactory(FaradayFactory):
     name = FuzzyText()
     active = True
+    id = FuzzyIncrementalInteger(1, 10000)
 
     @factory.post_generation
     def workspaces(self, create, extracted, **kwargs):

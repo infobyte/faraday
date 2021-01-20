@@ -895,8 +895,8 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
 def test_sanitize_request_and_response(session, workspace, host):
     invalid_request_text = 'GET /exampla.do HTTP/1.0\n  \x89\n\x1a  SOME_TEXT'
     invalid_response_text = '<html> \x89\n\x1a  SOME_TEXT</html>'
-    sanitized_request_text = ''.join([x for x in invalid_request_text if x in string.printable])
-    sanitized_response_text = ''.join([x for x in invalid_response_text if x in string.printable])
+    sanitized_request_text = 'GET /exampla.do HTTP/1.0\n  \n  SOME_TEXT'
+    sanitized_response_text = '<html> \n  SOME_TEXT</html>'
     host_data_ = host_data.copy()
     service_data_ = service_data.copy()
     vuln_web_data_ = vuln_web_data.copy()

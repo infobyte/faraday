@@ -44,6 +44,7 @@ from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 
 logger = logging.getLogger(__name__)
+audit_logger = logging.getLogger('audit')
 
 
 def setup_storage_path():
@@ -257,6 +258,10 @@ def expire_session(app, user):
     session.destroy()
     KVSessionExtension(app=app).cleanup_sessions(app)
 
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_logout_at = datetime.datetime.now()
+    audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
+
 
 def user_logged_in_succesfull(app, user):
     user_agent = request.headers.get('User-Agent')
@@ -272,6 +277,11 @@ def user_logged_in_succesfull(app, user):
     # cleanup old sessions
     logger.debug("Cleanup sessions")
     KVSessionExtension(app=app).cleanup_sessions(app)
+
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_login_at = datetime.datetime.now()
+    audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
+
 
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__, static_folder=None)

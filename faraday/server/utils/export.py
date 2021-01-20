@@ -124,7 +124,6 @@ def _build_vuln_data(vuln, custom_fields_columns):
         object_id=vuln['_id']).all()
     for comment in comments:
         comments_list.append(comment.text)
-    vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
     vuln_date = vuln['metadata']['create_time']
     if vuln['service']:
         service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
@@ -146,7 +145,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
         "severity": vuln.get('severity', None),
         "service": vuln_service,
         "target": vuln.get('target', None),
-        "desc": vuln_description,
+        "desc": vuln.get('description', None),
         "status": vuln.get('status', None),
         "hostnames": vuln_hostnames,
         "comments": comments_list,

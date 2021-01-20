@@ -145,7 +145,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
         "severity": vuln.get('severity', None),
         "service": vuln_service,
         "target": vuln.get('target', None),
-        "desc": vuln['description'],
+        "desc": vuln.get('description', None),
         "status": vuln.get('status', None),
         "hostnames": vuln_hostnames,
         "comments": comments_list,

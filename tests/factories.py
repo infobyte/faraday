@@ -575,7 +575,7 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
         lambda agent_execution: agent_execution.executor.agent.workspaces[0]
     )
     command = factory.SubFactory(
-        CommandFactory,
+        EmptyCommandFactory,
         workspace=factory.SelfAttribute("..workspace"),
         end_date=None
     )

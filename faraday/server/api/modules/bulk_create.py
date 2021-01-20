@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
+
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound

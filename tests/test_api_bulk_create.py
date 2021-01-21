@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import string
 
 import pytest
 from marshmallow import ValidationError
@@ -890,6 +891,31 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
             headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 403
+
+def test_sanitize_request_and_response(session, workspace, host):
+    invalid_request_text = 'GET /exampla.do HTTP/1.0\n  \x89\n\x1a  SOME_TEXT'
+    invalid_response_text = '<html> \x89\n\x1a  SOME_TEXT</html>'
+    sanitized_request_text = 'GET /exampla.do HTTP/1.0\n  \n  SOME_TEXT'
+    sanitized_response_text = '<html> \n  SOME_TEXT</html>'
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_web_data_ = vuln_web_data.copy()
+    vuln_web_data_['name'] = 'test'
+    vuln_web_data_['severity'] = 'low'
+    vuln_web_data_['request'] = invalid_request_text
+    vuln_web_data_['response'] = invalid_response_text
+    service_data_['vulnerabilities'] = [vuln_web_data_]
+    host_data_['services'] = [service_data_]
+    command = new_empty_command(workspace)
+    bc.bulk_create(
+        workspace,
+        command,
+        dict(command=command_data, hosts=[host_data_])
+    )
+    vuln = VulnerabilityWeb.query.filter(VulnerabilityWeb.workspace == workspace).one()
+    assert vuln.request == sanitized_request_text
+    assert vuln.response == sanitized_response_text
+
 
 @pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_raises_400_with_no_data(

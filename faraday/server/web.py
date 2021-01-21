@@ -142,6 +142,11 @@ class WebServer:
         factory.protocol = BroadcastServerProtocol
         return factory
 
+    def __stop_all_threads(self):
+        if self.raw_report_processor.is_alive():
+            self.raw_report_processor.stop()
+        self.ping_home_thread.stop()
+
     def install_signal(self):
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
             signal(sig, SIG_DFL)
@@ -150,10 +155,7 @@ class WebServer:
         def signal_handler(*args):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
-            # teardown()
-            if self.raw_report_processor.isAlive():
-                self.raw_report_processor.stop()
-            self.ping_home_thread.stop()
+            self.__stop_all_threads()
 
         log_path = CONST_FARADAY_HOME_PATH / 'logs' / 'access-logging.log'
         site = twisted.web.server.Site(self.__root_resource,
@@ -209,15 +211,11 @@ class WebServer:
 
         except error.CannotListenError as e:
             logger.error(e)
-            if self.raw_report_processor.is_alive():
-                self.raw_report_processor.stop()
-            self.ping_home_thread.stop()
+            self.__stop_all_threads()
             sys.exit(1)
 
         except Exception as e:
             logger.exception('Something went wrong when trying to setup the Web UI')
-            if self.raw_report_processor.is_alive():
-                self.raw_report_processor.stop()
-            self.ping_home_thread.stop()
+            self.__stop_all_threads()
             sys.exit(1)
 # I'm Py3

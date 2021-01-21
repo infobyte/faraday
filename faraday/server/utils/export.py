@@ -144,7 +144,6 @@ def _build_services_data(services_ids):
 
 def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
     comments_list = comments_dict[vuln['_id']] if vuln['_id'] in comments_dict else []
-    vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
     vuln_date = vuln['metadata']['create_time']
     if vuln['service']:
         service_fields = ["status", "protocol", "name", "summary", "version", "ports"]

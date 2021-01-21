@@ -209,10 +209,15 @@ class WebServer:
 
         except error.CannotListenError as e:
             logger.error(e)
+            if self.raw_report_processor.is_alive():
+                self.raw_report_processor.stop()
+            self.ping_home_thread.stop()
             sys.exit(1)
-
 
         except Exception as e:
             logger.exception('Something went wrong when trying to setup the Web UI')
+            if self.raw_report_processor.is_alive():
+                self.raw_report_processor.stop()
+            self.ping_home_thread.stop()
             sys.exit(1)
 # I'm Py3

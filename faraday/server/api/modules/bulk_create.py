@@ -277,12 +277,34 @@ def _create_command_object_for(ws, created, obj, command):
     db.session.commit()
 
 
+def _update_service(service: Service, service_data: dict) -> Service:
+    keys = ['version', 'description', 'name', 'status', 'owned']
+    updated = False
+
+    for key in keys:
+        if key == 'owned':
+            value = service_data.get(key, False)
+        else:
+            value = service_data.get(key, '')
+        if value != getattr(service, key):
+            setattr(service, key, value)
+            updated = True
+
+    if updated:
+        service.update_date = datetime.now()
+
+    return service
+
+
 def _create_service(ws, host, service_data, command=None):
     service_data = service_data.copy()
     vulns = service_data.pop('vulnerabilities')
     creds = service_data.pop('credentials')
     service_data['host'] = host
     (created, service) = get_or_create(ws, Service, service_data)
+
+    if not created:
+        service = _update_service(service, service_data)
     db.session.commit()
 
     if command is not None:

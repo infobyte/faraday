@@ -43,7 +43,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
-    comments_dict = {}
+    comments_dict = dict()
     hosts_ids = set()
     services_ids = set()
     vulns_ids = set()
@@ -66,8 +66,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
 
     services_data = _build_services_data(services_ids)
 
-    for service_id in services_data:
-        hosts_ids.add(services_data[service_id]['service_parent_id'])
+    hosts_ids.update({elem['service_parent_id'] for elem in services_data.values()})
 
     hosts_data = _build_hosts_data(hosts_ids)
 

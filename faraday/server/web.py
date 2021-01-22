@@ -216,6 +216,7 @@ class WebServer:
 
         except Exception as e:
             logger.exception('Something went wrong when trying to setup the Web UI')
+            logger.exception(e)
             self.__stop_all_threads()
             sys.exit(1)
 # I'm Py3

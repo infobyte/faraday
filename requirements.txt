@@ -10,7 +10,7 @@ flask-classful>=0.14
 email_validator
 WTForms>=2.1
 flask-login>=0.5.0
-Flask-Security-Too>=3.4.4
+Flask-Security-Too>=3.4.4,<4.0.0
 marshmallow>=3.0.0
 Pillow>=4.2.1
 psycopg2

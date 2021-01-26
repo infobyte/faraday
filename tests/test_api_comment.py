@@ -8,16 +8,16 @@ See the file 'doc/LICENSE' for the license information
 from faraday.server.api.modules.comments import CommentView
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
-from tests.test_api_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests
 from tests import factories
 
 
-class TestCredentialsAPIGeneric(ReadOnlyAPITests):
+class TestCommentAPIGeneric(ReadWriteAPITests):
     model = Comment
     factory = factories.CommentFactory
     view_class = CommentView
     api_endpoint = 'comment'
-    update_fields = ['username', 'password']
+    update_fields = ['text']
 
     def _create_raw_comment(self, object_type, object_id):
         return {

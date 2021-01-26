@@ -16,7 +16,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests, v3_url
 from faraday.server.models import (
     Service
 )
@@ -230,12 +230,17 @@ class TestListServiceView(ReadWriteAPITests):
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.port == 221
 
-    def test_update_cant_change_id(self, test_client, session):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_cant_change_id(self, test_client, session, method):
         service = self.factory()
         host = HostFactory.create()
         session.commit()
         raw_data = self._raw_put_data(service.id)
-        res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        if method == "PUT":
+            res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        if method == "PATCH":
+            res = test_client.patch(v3_url(self, service, workspace=service.workspace), data=raw_data)
+
         assert res.status_code == 200, res.json
         assert res.json['id'] == service.id
 

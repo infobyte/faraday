@@ -103,9 +103,10 @@ class TestSearchFilterAPI(ReadWriteAPITests):
         res = test_client.delete(self.url(user_filter))
         assert res.status_code == 404
 
-    def test_update_an_object(self, test_client, logged_user):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_an_object(self, test_client, logged_user, method):
         self.first_object.creator = logged_user
-        super(TestSearchFilterAPI, self).test_update_an_object(test_client, logged_user)
+        super(TestSearchFilterAPI, self).test_update_an_object(test_client, logged_user, method)
 
     def test_update_an_object_fails_with_empty_dict(self, test_client, logged_user):
         self.first_object.creator = logged_user

@@ -16,6 +16,15 @@ API_PREFIX = '/v2/'
 OBJECT_COUNT = 5
 
 
+def v3_url(test_suite, obj=None, **kwargs):
+    ## TODO v3 just in PATCH with no / in the end. Remove after all v3 released
+    if obj is None:
+        obj = test_suite.first_object
+    url = test_suite.url(obj, **kwargs)
+    if url[-1] == "/":
+        url = url[:-1]
+    return url.replace("v2", "v3")
+
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
 
@@ -104,20 +113,32 @@ class CreateTestsMixin:
 @pytest.mark.usefixtures('logged_user')
 class UpdateTestsMixin:
 
-    def test_update_an_object(self, test_client, logged_user):
-        res = test_client.put(self.url(self.first_object),
-                              data=self.factory.build_dict())
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_an_object(self, test_client, logged_user, method):
+        data = self.factory.build_dict()
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            res = test_client.patch(v3_url(self),
+                                    data=data)
         assert res.status_code == 200, (res.status_code, res.json)
         assert self.model.query.count() == OBJECT_COUNT
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
                                                         updated_field)
 
-    def test_update_fails_with_existing(self, test_client, session):
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_fails_with_existing(self, test_client, session, method):
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
             data[unique_field] = getattr(self.objects[1], unique_field)
-            res = test_client.put(self.url(self.first_object), data=data)
+            if method == "PUT":
+                res = test_client.put(self.url(self.first_object),
+                                      data=data)
+            elif method == "PATCH":
+                res = test_client.patch(v3_url(self),
+                                        data=data)
             assert res.status_code == 400
             assert self.model.query.count() == OBJECT_COUNT
 

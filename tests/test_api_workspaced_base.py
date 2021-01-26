@@ -19,6 +19,15 @@ API_PREFIX = '/v2/ws/'
 OBJECT_COUNT = 5
 
 
+def v3_url(test_suite, obj=None, **kwargs):
+    ## TODO v3 just in PATCH with no / in the end. Remove after all v3 released
+    if obj is None:
+        obj = test_suite.first_object
+    url = test_suite.url(obj, **kwargs)
+    if url[-1] == "/":
+        url = url[:-1]
+    return url.replace("v2", "v3")
+
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
 
@@ -187,7 +196,7 @@ class UpdateTestsMixin:
             res = test_client.put(self.url(self.first_object),
                                   data=data)
         elif method == "PATCH":
-            res = test_client.patch(self.url(self.first_object),
+            res = test_client.patch(v3_url(self),
                                     data=data)
         assert res.status_code == 200
         assert self.model.query.count() == count
@@ -206,7 +215,7 @@ class UpdateTestsMixin:
             if method == "PUT":
                 res = test_client.put(self.url(self.first_object), data=data)
             elif method == "PATCH":
-                res = test_client.patch(self.url(self.first_object), data=data)
+                res = test_client.patch(v3_url(self), data=data)
             db.session.commit()
             assert res.status_code == 403
             assert self.model.query.count() == OBJECT_COUNT
@@ -222,7 +231,7 @@ class UpdateTestsMixin:
             res = test_client.put(self.url(self.first_object),
                                   data=data)
         elif method == "PATCH":
-            res = test_client.patch(self.url(self.first_object),
+            res = test_client.patch(v3_url(self),
                                     data=data)
         assert res.status_code == 403
         assert self.model.query.count() == count
@@ -236,7 +245,7 @@ class UpdateTestsMixin:
                 data[unique_field] = unique_field_value
                 res = test_client.put(self.url(self.first_object), data=data)
             elif method == "PATCH":
-                res = test_client.put(self.url(self.first_object), data={unique_field:unique_field_value})
+                res = test_client.put(v3_url(self), data={unique_field:unique_field_value})
             assert res.status_code == 409
             assert self.model.query.count() == OBJECT_COUNT
 
@@ -255,7 +264,7 @@ class UpdateTestsMixin:
             res = test_client.put(self.url(self.first_object),
                                   data=raw_json)
         if method == "PATCH":
-            res = test_client.patch(self.url(self.first_object),
+            res = test_client.patch(v3_url(self),
                                     data=raw_json)
         assert res.status_code == 200, (res.status_code, res.data)
         object_id = res.json.get('id') or res.json['_id']

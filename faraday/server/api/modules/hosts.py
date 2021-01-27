@@ -24,7 +24,9 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-    FilterWorkspacedMixin)
+    FilterWorkspacedMixin,
+    PatchableWorkspacedMixin
+)
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
@@ -356,7 +358,7 @@ class HostsView(PaginatedMixin,
         db.session.commit()
         return host
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         try:
             hostnames = data.pop('hostnames')
         except KeyError:
@@ -440,5 +442,9 @@ class HostsView(PaginatedMixin,
         return flask.jsonify(response)
 
 
+class HostsV3View(HostsView, PatchableWorkspacedMixin):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
 HostsView.register(host_api)
-# I'm Py3
+HostsV3View.register(host_api)

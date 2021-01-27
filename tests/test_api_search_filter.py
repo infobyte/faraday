@@ -115,3 +115,8 @@ class TestSearchFilterAPI(ReadWriteAPITests):
     def test_delete(self, test_client, logged_user):
         self.first_object.creator = logged_user
         super(TestSearchFilterAPI, self).test_delete(test_client, logged_user)
+
+    def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
+        self.first_object.creator = logged_user
+        super(TestSearchFilterAPI, self).test_patch_update_an_object_does_not_fail_with_partial_data(test_client,
+                                                                                                     logged_user)

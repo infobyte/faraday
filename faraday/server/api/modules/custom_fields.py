@@ -8,6 +8,7 @@ from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
+    PatchableMixin,
 )
 
 
@@ -41,7 +42,7 @@ class CustomFieldsSchemaView(ReadWriteView):
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         """
             Field name must be read only
         """
@@ -50,4 +51,11 @@ class CustomFieldsSchemaView(ReadWriteView):
                 data.pop(read_only_key)
         return super(CustomFieldsSchemaView, self)._update_object(obj, data)
 
+
+class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin):
+    route_prefix = '/v3'
+    trailing_slash = False
+
+
 CustomFieldsSchemaView.register(custom_fields_schema_api)
+CustomFieldsSchemaV3View.register(custom_fields_schema_api)

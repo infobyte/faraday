@@ -35,7 +35,9 @@ from faraday.server.api.base import (
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage,
-    CountMultiWorkspacedMixin)
+    CountMultiWorkspacedMixin,
+    PatchableWorkspacedMixin
+)
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
     db,
@@ -47,7 +49,8 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
-    VulnerabilityGeneric, User,
+    VulnerabilityGeneric,
+    User
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -530,8 +533,8 @@ class VulnerabilityView(PaginatedMixin,
                 content=faraday_file,
             )
 
-    def _update_object(self, obj, data):
-        data.pop('type') # It's forbidden to change vuln type!
+    def _update_object(self, obj, data, **kwargs):
+        data.pop('type', '') # It's forbidden to change vuln type!
         data.pop('tool', '')
         return super(VulnerabilityView, self)._update_object(obj, data)
 
@@ -1082,6 +1085,26 @@ class VulnerabilityView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-VulnerabilityView.register(vulns_api)
+class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
 
-# I'm Py3
+    @route('/<int:vuln_id>/attachment', methods=['POST'])
+    def post_attachment(self, workspace_name, vuln_id):
+        super(VulnerabilityV3View, self).post_attachment(workspace_name, vuln_id)
+
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
+    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
+        super(VulnerabilityV3View, self).get_attachment(workspace_name, vuln_id, attachment_filename)
+
+    @route('/<int:vuln_id>/attachments', methods=['GET'])
+    def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        super(VulnerabilityV3View, self).get_attachments_by_vuln(workspace_name, vuln_id)
+
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
+    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+        super(VulnerabilityV3View, self).delete_attachment(workspace_name, vuln_id, attachment_filename)
+
+
+VulnerabilityView.register(vulns_api)
+VulnerabilityV3View.register(vulns_api)

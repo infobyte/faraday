@@ -245,7 +245,7 @@ class UpdateTestsMixin:
                 data[unique_field] = unique_field_value
                 res = test_client.put(self.url(self.first_object), data=data)
             elif method == "PATCH":
-                res = test_client.put(v3_url(self), data={unique_field:unique_field_value})
+                res = test_client.patch(v3_url(self), data={unique_field: unique_field_value})
             assert res.status_code == 409
             assert self.model.query.count() == OBJECT_COUNT
 
@@ -253,6 +253,11 @@ class UpdateTestsMixin:
         """To do this the user should use a PATCH request"""
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
+
+    def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client):
+        """To do this the user should use a PATCH request"""
+        res = test_client.patch(v3_url(self), data={})
+        assert res.status_code == 200, (res.status_code, res.json)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, method):

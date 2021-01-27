@@ -147,6 +147,11 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400, (res.status_code, res.json)
 
+    def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
+        """To do this the user should use a PATCH request"""
+        res = test_client.patch(v3_url(self), data={})
+        assert res.status_code == 200, (res.status_code, res.json)
+
 
 @pytest.mark.usefixtures('logged_user')
 class DeleteTestsMixin:

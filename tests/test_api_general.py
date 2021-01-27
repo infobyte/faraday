@@ -20,3 +20,24 @@ def test_options(test_client):
         if 'OPTIONS' in rule.methods:
             res = test_client.options(replace_placeholders(rule.rule))
             assert res.status_code == 200, rule.rule
+
+
+def test_v3_endpoints():
+    rules = list(
+        filter(lambda rule: rule.rule.startswith("/v3") and rule.rule.endswith("/"), app.url_map.iter_rules())
+    )
+    assert len(rules) == 0, [rule.rule for rule in rules]
+
+
+def test_v2_in_v3_endpoints():
+    rules_v2 = set(
+        map(
+            lambda rule: rule.rule.replace("v2", "v3").rstrip("/"),
+            filter(lambda rule: rule.rule.startswith("/v2"), app.url_map.iter_rules())
+        )
+    )
+    rules = set(
+        map(lambda rule: rule.rule, filter(lambda rule: rule.rule.startswith("/v3"), app.url_map.iter_rules()))
+    )
+    difference = rules_v2.difference(rules)  # We can have extra endpoints in v3 (like all the PATCHS)
+    assert len(difference) == 0, difference

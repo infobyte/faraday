@@ -40,7 +40,13 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
         return {"token": token}
 
 
+class WebsocketWorkspaceAuthV3View(WebsocketWorkspaceAuthView):
+    route_prefix = "/v3/ws/<workspace_name>/"
+    trailing_slash = False
+
+
 WebsocketWorkspaceAuthView.register(websocket_auth_api)
+WebsocketWorkspaceAuthV3View.register(websocket_auth_api)
 
 
 @websocket_auth_api.route('/v2/agent_websocket_token/', methods=['POST'])
@@ -58,7 +64,16 @@ def agent_websocket_token():
     return flask.jsonify({"token": generate_agent_websocket_token(agent)})
 
 
+@websocket_auth_api.route('/v3/agent_websocket_token', methods=['POST'])
+def agent_websocket_token_w3():
+    agent_websocket_token()
+
+
+agent_websocket_token_w3.__doc__ = agent_websocket_token.__doc__
+
+
 agent_websocket_token.is_public = True
+agent_websocket_token_w3.is_public = True
 
 
 def generate_agent_websocket_token(agent):

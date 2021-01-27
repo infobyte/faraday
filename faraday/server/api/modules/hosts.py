@@ -42,7 +42,6 @@ host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-
 class HostCountSchema(Schema):
     host_id = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='id')
@@ -261,7 +260,6 @@ class HostsView(PaginatedMixin,
             logger.error("Error parsing hosts CSV (%s)", e)
             abort(400, f"Error parsing hosts CSV ({e})")
 
-
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
         """
@@ -445,6 +443,27 @@ class HostsView(PaginatedMixin,
 class HostsV3View(HostsView, PatchableWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
+
+    @route('/<host_id>/services')
+    def service_list(self, workspace_name, host_id):
+        super(HostsV3View, self).service_list(workspace_name, host_id)
+
+    @route('/<host_id>/tools_history')
+    def tool_impacted_by_host(self, workspace_name, host_id):
+        super(HostsV3View, self).tool_impacted_by_host(workspace_name, host_id)
+
+    @route('/bulk_create', methods=['POST'])
+    def bulk_create(self, workspace_name):
+        super(HostsV3View, self).bulk_create(workspace_name)
+
+    @route('/countVulns')
+    def count_vulns(self, workspace_name):
+        super(HostsV3View, self).count_vulns()
+
+    service_list.__doc__ = HostsView.service_list.__doc__
+    tool_impacted_by_host.__doc__ = HostsView.tool_impacted_by_host.__doc__
+    bulk_create.__doc__ = HostsView.bulk_create.__doc__
+    count_vulns.__doc__ = HostsView.count_vulns.__doc__
 
 HostsView.register(host_api)
 HostsV3View.register(host_api)

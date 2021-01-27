@@ -66,7 +66,12 @@ class AgentAuthTokenView(GenericView):
             {'token': faraday_server.agent_token})
 
 
+class AgentAuthTokenV3View(AgentAuthTokenView):
+    route_prefix = '/v3'
+    trailing_slash = False
+
 AgentAuthTokenView.register(agent_auth_token_api)
+AgentAuthTokenV3View.register(agent_auth_token_api)
 
 
 # I'm Py3

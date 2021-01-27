@@ -14,8 +14,10 @@ token_api = Blueprint('token_api', __name__)
 
 audit_logger = logging.getLogger('audit')
 
+
 class EmptySchema(Schema):
     pass
+
 
 class TokenAuthView(GenericView):
     route_base = 'token'
@@ -44,4 +46,10 @@ class TokenAuthView(GenericView):
         return serializer.dumps({'user_id': user_id, "validation_check": hashed_data}).decode('utf-8')
 
 
+class TokenAuthV3View(TokenAuthView):
+    route_prefix = '/v3'
+    trailing_slash = False
+
+
 TokenAuthView.register(token_api)
+TokenAuthV3View.register(token_api)

@@ -47,6 +47,14 @@ def export_data(workspace_name):
         abort(400, "Invalid format.")
 
 
+@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
+def export_data_v3(workspace_name):
+    export_data(workspace_name)
+
+
+export_data_v3.__doc__ = export_data.__doc__
+
+
 def xml_metasploit_format(workspace):
     root = Element('MetasploitV4')
     hosts_tag = SubElement(root, 'hosts')

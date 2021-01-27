@@ -343,5 +343,6 @@ class WorkspaceV3View(WorkspaceView, PatchableMixin):
     route_prefix = 'v3/'
     trailing_slash = False
 
+
 WorkspaceView.register(workspace_api)
 WorkspaceV3View.register(workspace_api)

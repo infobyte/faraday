@@ -46,6 +46,7 @@ bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
 logger = logging.getLogger(__name__)
 
+
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
     class Meta(vulns.VulnerabilitySchema.Meta):
         extra_fields = ('run_date',)
@@ -519,4 +520,11 @@ class BulkCreateView(GenericWorkspacedView):
 
     post.is_public = True
 
+
+class BulkCreateV3View(BulkCreateView):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
+
 BulkCreateView.register(bulk_create_api)
+BulkCreateV3View.register(bulk_create_api)

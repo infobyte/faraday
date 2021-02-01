@@ -2005,6 +2005,7 @@ class TagObject(db.Model):
 class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
+    comment_type = Column(Enum(['system', 'user'], name='comment_types'), nullable=False)
 
     text = BlankColumn(Text)
 

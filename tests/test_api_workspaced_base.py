@@ -23,10 +23,11 @@ def v3_url(test_suite, obj=None, **kwargs):
     ## TODO v3 just in PATCH with no / in the end. Remove after all v3 released
     if obj is None:
         obj = test_suite.first_object
-    url = test_suite.url(obj, **kwargs)
-    if url[-1] == "/":
+    url: str = test_suite.url(obj, **kwargs)
+    if url.endswith("/"):
         url = url[:-1]
-    return url.replace("v2", "v3")
+    return url.replace("v2", "v3", 1)
+
 
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:

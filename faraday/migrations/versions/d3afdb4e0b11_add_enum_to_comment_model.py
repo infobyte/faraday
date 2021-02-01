@@ -22,7 +22,8 @@ def upgrade():
         'comment_type',
         sa.Enum(('system', 'user'), name='comment_types'),
         nullable=False,
-        server_default='user'))
+        server_default='user',
+        default='user'))
 
 
 def downgrade():

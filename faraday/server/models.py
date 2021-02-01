@@ -2010,7 +2010,7 @@ class TagObject(db.Model):
 class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
-    comment_type = Column(Enum(*COMMENT_TYPES, name='comment_types'), nullable=False)
+    comment_type = Column(Enum(*COMMENT_TYPES, name='comment_types'), nullable=False, default='user')
 
     text = BlankColumn(Text)
 

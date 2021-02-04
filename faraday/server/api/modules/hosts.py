@@ -25,7 +25,8 @@ from faraday.server.api.base import (
     FilterAlchemyMixin,
     FilterSetMeta,
     FilterWorkspacedMixin,
-    PatchableWorkspacedMixin
+    PatchableWorkspacedMixin,
+    BulkDeleteWorkspacedMixin
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -440,7 +441,7 @@ class HostsView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-class HostsV3View(HostsView, PatchableWorkspacedMixin):
+class HostsV3View(HostsView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 
@@ -460,10 +461,17 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin):
     def count_vulns(self, workspace_name):
         super(HostsV3View, self).count_vulns()
 
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
+        return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+
     service_list.__doc__ = HostsView.service_list.__doc__
     tool_impacted_by_host.__doc__ = HostsView.tool_impacted_by_host.__doc__
     bulk_create.__doc__ = HostsView.bulk_create.__doc__
     count_vulns.__doc__ = HostsView.count_vulns.__doc__
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+
 
 HostsView.register(host_api)
 HostsV3View.register(host_api)

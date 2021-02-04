@@ -7,7 +7,8 @@ from datetime import datetime
 from flask import Blueprint
 from marshmallow import fields
 
-from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin, PatchableWorkspacedMixin
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin, PatchableWorkspacedMixin, \
+    BulkDeleteWorkspacedMixin
 from faraday.server.models import Command
 from faraday.server.schemas import PrimaryKeyRelatedField
 
@@ -90,7 +91,7 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
         }
 
 
-class ActivityFeedV3View(ActivityFeedView, PatchableWorkspacedMixin):
+class ActivityFeedV3View(ActivityFeedView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 

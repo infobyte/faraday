@@ -9,7 +9,13 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load, ValidationError
 
-from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin, PatchableWorkspacedMixin
+from faraday.server.api.base import (
+    AutoSchema,
+    ReadWriteWorkspacedView,
+    PaginatedMixin,
+    PatchableWorkspacedMixin,
+    BulkDeleteWorkspacedMixin
+)
 from faraday.server.models import Command, Workspace
 from faraday.server.schemas import MutableField, PrimaryKeyRelatedField, SelfNestedField, MetadataSchema
 
@@ -139,7 +145,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         return flask.jsonify(command_obj)
 
 
-class CommandV3View(CommandView, PatchableWorkspacedMixin):
+class CommandV3View(CommandView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 

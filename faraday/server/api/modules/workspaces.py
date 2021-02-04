@@ -24,7 +24,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin, BulkDeleteMixin
 
 logger = logging.getLogger(__name__)
 
@@ -197,7 +197,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 workspace_name=object_id)
         return query
 
-    def _get_object(self, object_id, eagerload=False, **kwargs):
+    def _get_object_query(self, query, eagerload=False, **kwargs):
         """
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
@@ -210,8 +210,6 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         if status and status in Vulnerability.STATUSES:
             extra_query = f"status='{status}'"
 
-        self._validate_object_id(object_id)
-        query = db.session.query(Workspace).filter_by(name=object_id)
         if active is not None:
             query = query.filter_by(active=active)
         query = query.options(
@@ -248,7 +246,20 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                ),
             )
         query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
+        return query
 
+    def _get_objects(self, object_ids, eagerload=False, **kwargs):
+        for object_id in object_ids:
+            self._validate_object_id(object_id)
+        query = db.session.query(Workspace).filter(Workspace.name.in_(object_ids))
+        query = self._get_object_query(query, eagerload, **kwargs)
+        return query.all()
+
+    def _get_object(self, object_id, eagerload=False, **kwargs):
+
+        self._validate_object_id(object_id)
+        query = db.session.query(Workspace).filter_by(name=object_id)
+        query = self._get_object_query(query, eagerload, **kwargs)
         try:
             obj = query.one()
         except NoResultFound:
@@ -339,7 +350,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         return self._get_object(workspace_id).readonly
 
 
-class WorkspaceV3View(WorkspaceView, PatchableMixin):
+class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin):
     route_prefix = 'v3/'
     trailing_slash = False
 

@@ -12,7 +12,8 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterAlchemyMixin,
     InvalidUsage,
-    PatchableWorkspacedMixin
+    PatchableWorkspacedMixin,
+    BulkDeleteWorkspacedMixin
 )
 from faraday.server.models import Credential, Host, Service, Workspace, db
 from faraday.server.schemas import MutableField, SelfNestedField, MetadataSchema
@@ -131,7 +132,7 @@ class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         }
 
 
-class CredentialV3View(CredentialView, PatchableWorkspacedMixin):
+class CredentialV3View(CredentialView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 

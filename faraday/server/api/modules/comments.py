@@ -10,7 +10,7 @@ from faraday.server.models import db, Host, Service, VulnerabilityGeneric
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    InvalidUsage, CreateWorkspacedMixin, GenericWorkspacedView, PatchableWorkspacedMixin)
+    InvalidUsage, CreateWorkspacedMixin, GenericWorkspacedView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin)
 from faraday.server.models import Comment
 comment_api = Blueprint('comment_api', __name__)
 
@@ -84,12 +84,12 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
         return res
 
 
-class CommentV3View(CommentView, PatchableWorkspacedMixin):
+class CommentV3View(CommentView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 
 
-class UniqueCommentV3View(UniqueCommentView, PatchableWorkspacedMixin):
+class UniqueCommentV3View(UniqueCommentView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 

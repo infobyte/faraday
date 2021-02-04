@@ -9,6 +9,7 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
     PatchableMixin,
+    BulkDeleteMixin
 )
 
 
@@ -52,7 +53,7 @@ class CustomFieldsSchemaView(ReadWriteView):
         return super(CustomFieldsSchemaView, self)._update_object(obj, data)
 
 
-class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin):
+class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin, BulkDeleteMixin):
     route_prefix = '/v3'
     trailing_slash = False
 

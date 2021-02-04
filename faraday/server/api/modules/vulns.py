@@ -36,7 +36,8 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     InvalidUsage,
     CountMultiWorkspacedMixin,
-    PatchableWorkspacedMixin
+    PatchableWorkspacedMixin,
+    BulkDeleteWorkspacedMixin
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -1085,7 +1086,7 @@ class VulnerabilityView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin):
+class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 
@@ -1113,12 +1114,18 @@ class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin):
     def top_users(self, workspace_name):
         super(VulnerabilityV3View, self).top_users(workspace_name)
 
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        # TODO REVISE ORIGINAL METHOD
+        return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+
     post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__
     delete_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     export_csv.__doc__ = VulnerabilityView.post_attachment.__doc__
     top_users.__doc__ = VulnerabilityView.post_attachment.__doc__
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
 
 
 VulnerabilityView.register(vulns_api)

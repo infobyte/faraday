@@ -338,9 +338,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert set(res.json['scope']) == set(desired_scope)
         assert set(s.name for s in workspace.scope) == set(desired_scope)
 
-    @pytest.mark.skip  # TODO fix fox sqlite
-    def test_list_retrieves_all_items_from(self, test_client):
-        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client)
+    @pytest.mark.skip_sql_dialect('sqlite')
+    def test_list_retrieves_all_items_from(self, test_client, logged_user):
+        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client, logged_user)
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False
@@ -379,3 +379,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.post('/v2/ws/', data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.skip_sql_dialect('sqlite')
+    def test_bulk_delete(self, test_client, session):
+        super(TestWorkspaceAPI, self).test_bulk_delete(test_client)

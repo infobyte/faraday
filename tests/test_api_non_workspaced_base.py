@@ -16,11 +16,15 @@ API_PREFIX = '/v2/'
 OBJECT_COUNT = 5
 
 
-def v3_url(test_suite, obj=None, **kwargs):
+def v3_url(test_suite, obj=None, root_api=False, **kwargs):
     ## TODO v3 just in PATCH with no / in the end. Remove after all v3 released
-    if obj is None:
-        obj = test_suite.first_object
-    url = test_suite.url(obj, **kwargs)
+    if root_api:
+        url: str = test_suite.url(**kwargs)
+    else:
+        if obj is None:
+            obj = test_suite.first_object
+        url: str = test_suite.url(obj, **kwargs)
+
     if url[-1] == "/":
         url = url[:-1]
     return url.replace("v2", "v3")
@@ -168,6 +172,20 @@ class DeleteTestsMixin:
         res = test_client.delete(self.url(object_id))
         assert res.status_code == 404  # No content
         assert self.model.query.count() == OBJECT_COUNT
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete(self, test_client):
+
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+
+        data = {"ids": all_objs_id}
+        res = test_client.delete(v3_url(self, root_api=True), data=data)
+        assert res.status_code == 204  # No content
+        for obj in all_objs:
+            assert was_deleted(obj)
+        assert self.model.query.count() == 0
+
 
 
 class ReadWriteTestsMixin(ListTestsMixin,

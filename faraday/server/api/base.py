@@ -282,6 +282,24 @@ class GenericView(FlaskView):
             flask.abort(404, f'Object with id "{object_id}" not found')
         return obj
 
+
+    def _get_objects(self, object_ids, eagerload=False, **kwargs):
+        """
+        Given the object_id and extra route params, get an instance of
+        ``self.model_class``
+        """
+        for object_id in object_ids:
+            self._validate_object_id(object_id)
+        if eagerload:
+            query = self._get_eagerloaded_query(**kwargs)
+        else:
+            query = self._get_base_query(**kwargs)
+        try:
+            objs = query.filter(self._get_lookup_field().in_(object_ids)).all()
+        except NoResultFound:
+            flask.abort(404, f'Object with id "{object_ids}" not found')
+        return objs
+
     def _dump(self, obj, route_kwargs, **kwargs):
         """Serializes an object with the Marshmallow schema class
         returned by ``self._get_schema_class()``. Any passed kwargs
@@ -1300,6 +1318,42 @@ class DeleteMixin:
         db.session.commit()
 
 
+class BulkDeleteMixin:
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        #TODO BULK_DELETE_SCHEMA
+        if 'ids' not in flask.request.json:
+            flask.abort(400)
+        objs = self._get_objects(flask.request.json['ids'], **kwargs)
+        self._perform_bulk_delete(objs, **kwargs)
+        return None, 204
+
+    def _perform_bulk_delete(self, objs, workspace_name=None):
+        # It IS better to use something like
+        # ```
+        # deleted = model_class.query.filter(model_class.id.in_(ids))/
+        # .delete(synchronize_session='fetch')
+        #
+        # db.session.commit()
+        # response = {'deleted': deleted}
+        # return flask.jsonify(response)
+        # ```
+        # TODO BUT FOR THIS THE ON CASCADE MUST BE SET BOTH IN THE DB AS IN THE CODE
+        for obj in objs:
+            db.session.delete(obj)
+        db.session.commit()
+
+
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
     def delete(self, object_id, workspace_name=None):
@@ -1331,6 +1385,29 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
         return super(DeleteWorkspacedMixin, self)._perform_delete(
             obj, workspace_name)
+
+
+class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        return super(BulkDeleteWorkspacedMixin, self).bulk_delete(workspace_name=workspace_name)
+
+    def _perform_bulk_delete(self, objs, workspace_name=None):
+        with db.session.no_autoflush:
+            for obj in objs:
+                obj.workspace = self._get_workspace(workspace_name)
+
+        return super(BulkDeleteWorkspacedMixin, self)._perform_bulk_delete(objs, workspace_name)
 
 
 class CountWorkspacedMixin:

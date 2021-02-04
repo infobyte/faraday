@@ -120,3 +120,9 @@ class TestSearchFilterAPI(ReadWriteAPITests):
         self.first_object.creator = logged_user
         super(TestSearchFilterAPI, self).test_patch_update_an_object_does_not_fail_with_partial_data(test_client,
                                                                                                      logged_user)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete(self, test_client, logged_user):
+        for obj in self.model.query.all():
+            obj.creator = logged_user
+        super(TestSearchFilterAPI, self).test_bulk_delete(test_client)

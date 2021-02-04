@@ -9,6 +9,7 @@ from faraday.server.api.base import (
     ReadWriteView,
     AutoSchema,
     PatchableMixin,
+    BulkDeleteMixin
 )
 
 searchfilter_api = Blueprint('searchfilter_api', __name__)
@@ -34,7 +35,7 @@ class SearchFilterView(ReadWriteView):
         return query.filter(SearchFilter.creator_id == g.user.id)
 
 
-class SearchFilterV3View(SearchFilterView, PatchableMixin):
+class SearchFilterV3View(SearchFilterView, PatchableMixin, BulkDeleteMixin):
     route_prefix = 'v3/'
     trailing_slash = False
 

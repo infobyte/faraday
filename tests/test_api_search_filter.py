@@ -26,6 +26,7 @@ class TestSearchFilterAPI(ReadWriteAPITests):
     factory = SearchFilterFactory
     api_endpoint = 'searchfilter'
     view_class = SearchFilterView
+    patchable_fields = ['name']
 
     pytest.fixture(autouse=True)
 
@@ -127,6 +128,6 @@ class TestSearchFilterAPIV3(TestSearchFilterAPI, PatchableTestsMixin):
     def test_update_an_object(self, test_client, logged_user, method):
         super(TestSearchFilterAPIV3, self).test_update_an_object(test_client, logged_user, method)
 
-    def test_update_an_object_fails_with_empty_dict(self, test_client, logged_user):
+    def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         self.first_object.creator = logged_user
         super(TestSearchFilterAPIV3, self).test_update_an_object_fails_with_empty_dict(test_client, logged_user)

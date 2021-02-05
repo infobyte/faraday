@@ -16,7 +16,7 @@ except ImportError:
 import pytest
 import json
 
-from faraday.server.api.modules.services import ServiceView
+from faraday.server.api.modules.services import ServiceView, ServiceV3View
 from tests import factories
 from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
@@ -31,6 +31,7 @@ class TestListServiceView(ReadWriteAPITests):
     factory = factories.ServiceFactory
     api_endpoint = 'services'
     view_class = ServiceView
+    patchable_fields = ['name']
 
     def control_cant_change_data(self, data: dict):
         if 'parent' in data:
@@ -340,6 +341,8 @@ class TestListServiceView(ReadWriteAPITests):
 
 
 class TestListServiceViewV3(TestListServiceView, PatchableTestsMixin):
+    view_class = ServiceV3View
+
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestListServiceViewV3, self).url(obj, workspace))
 

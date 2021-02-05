@@ -5,6 +5,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from tests.utils.url import v2_to_v3
+
 """Tests for many API endpoints that do not depend on workspace_name"""
 try:
     from urllib import urlencode
@@ -16,7 +18,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests, v3_url
+from tests.test_api_workspaced_base import ReadWriteAPITests, v3_url, PatchableTestsMixin
 from faraday.server.models import (
     Service
 )
@@ -230,7 +232,7 @@ class TestListServiceView(ReadWriteAPITests):
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.port == 221
 
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    @pytest.mark.parametrize("method", ["PUT"])
     def test_update_cant_change_id(self, test_client, session, method):
         service = self.factory()
         host = HostFactory.create()
@@ -239,7 +241,7 @@ class TestListServiceView(ReadWriteAPITests):
         if method == "PUT":
             res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
         if method == "PATCH":
-            res = test_client.patch(v3_url(self, service, workspace=service.workspace), data=raw_data)
+            res = test_client.patch(self.url(service, workspace=service.workspace), data=raw_data)
 
         assert res.status_code == 200, res.json
         assert res.json['id'] == service.id
@@ -335,3 +337,12 @@ class TestListServiceView(ReadWriteAPITests):
         res = test_client.post(self.url(), data=data)
         print(res.data)
         assert res.status_code == 400
+
+
+class TestListServiceViewV3(TestListServiceView, PatchableTestsMixin):
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestListServiceViewV3, self).url(obj, workspace))
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_cant_change_id(self, test_client, session, method):
+        super(TestListServiceViewV3, self).test_update_cant_change_id(test_client, session, method)

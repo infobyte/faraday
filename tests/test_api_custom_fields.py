@@ -2,12 +2,14 @@
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
     CustomFieldsSchema
 )
+from tests.utils.url import v2_to_v3
+
 
 @pytest.mark.usefixtures('logged_user')
 class TestVulnerabilityCustomFields(ReadWriteAPITests):
@@ -29,7 +31,7 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
         session.add(add_text_field)
         session.commit()
 
-        res = test_client.get(self.url()) # '/v2/custom_fields_schema/')
+        res = test_client.get(self.url())
         assert res.status_code == 200
         assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None, u'field_order': 1} in res.json
 
@@ -73,8 +75,13 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
         session.add(add_choice_field)
         session.commit()
 
-        res = test_client.get(self.url())  # '/v2/custom_fields_schema/')
+        res = test_client.get(self.url())
         assert res.status_code == 200
         assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
                 u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
                 u'field_order': 1} in res.json
+
+
+class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, PatchableTestsMixin):
+    def url(self, obj=None):
+        return v2_to_v3(super(TestVulnerabilityCustomFieldsV3, self).url(obj))

@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from tests.utils.url import v2_to_v3
 
 """Tests for many API endpoints that do not depend on workspace_name"""
 import datetime
@@ -12,7 +13,7 @@ import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests
+from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
     Command,
     Workspace,
@@ -35,6 +36,9 @@ class TestListCommandView(ReadWriteAPITests):
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
+
+    def check_url(self, url):
+        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.usefixtures('mock_envelope_list')
@@ -411,10 +415,10 @@ class TestListCommandView(ReadWriteAPITests):
         )
         session.commit()
 
-        res = test_client.get(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
+        res = test_client.get(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 200
 
-        res = test_client.delete(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
+        res = test_client.delete(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 204
 
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
@@ -441,4 +445,10 @@ class TestListCommandView(ReadWriteAPITests):
 
         assert res.status_code == 400
 
-# I'm Py3
+
+class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestListCommandViewV3, self).url(obj, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)

@@ -10,6 +10,8 @@ from io import BytesIO
 
 import pytz
 
+from tests.utils.url import v2_to_v3
+
 try:
     import urlparse
     from urllib import urlencode
@@ -26,7 +28,7 @@ from tests import factories
 from tests.test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
-    PaginationTestsMixin,
+    PaginationTestsMixin, PatchableTestsMixin,
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView
@@ -38,6 +40,9 @@ SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
 
 @pytest.mark.usefixtures('database', 'logged_user')
 class TestHostAPI:
+
+    def check_url(self, url):
+        return url
 
     @pytest.fixture(autouse=True)
     def load_workspace_with_hosts(self, database, session, workspace, host_factory):
@@ -734,7 +739,7 @@ class TestHostAPI:
             'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
-        res = test_client.post(f'/v2/ws/{ws.name}/hosts/bulk_create/',
+        res = test_client.post(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_create/'),
                                data=data, headers=headers, use_json_data=False)
         assert res.status_code == 200
         assert res.json['hosts_created'] == expected_created_hosts
@@ -749,7 +754,7 @@ class TestHostAPI:
         hosts_ids = [host_1.id, host_2.id]
         request_data = {'hosts_ids': hosts_ids}
 
-        delete_response = test_client.delete(f'/v2/ws/{ws.name}/hosts/bulk_delete/', data=request_data)
+        delete_response = test_client.delete(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'), data=request_data)
 
         deleted_hosts = delete_response.json['deleted_hosts']
         host_count_after_delete = db.session.query(Host).filter(
@@ -764,7 +769,7 @@ class TestHostAPI:
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': []}
 
-        delete_response = test_client.delete(f'/v2/ws/{ws.name}/hosts/bulk_delete/', data=request_data)
+        delete_response = test_client.delete(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'), data=request_data)
 
         assert delete_response.status_code == 400
 
@@ -777,7 +782,7 @@ class TestHostAPI:
 
         # Try to delete workspace_2's host from workspace_1
         request_data = {'hosts_ids': [host_of_ws_2.id]}
-        url = f'/v2/ws/{workspace_1.name}/hosts/bulk_delete/'
+        url = self.check_url(f'/v2/ws/{workspace_1.name}/hosts/bulk_delete/')
         delete_response = test_client.delete(url, data=request_data)
 
         assert delete_response.json['deleted_hosts'] == 0
@@ -785,7 +790,7 @@ class TestHostAPI:
     def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': [-1, 'test']}
-        delete_response = test_client.delete(f'/v2/ws/{ws.name}/hosts/bulk_delete/', data=request_data)
+        delete_response = test_client.delete(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'), data=request_data)
 
         assert delete_response.json['deleted_hosts'] == 0
 
@@ -800,11 +805,19 @@ class TestHostAPI:
         headers = [('content-type', 'text/xml')]
 
         delete_response = test_client.delete(
-            f'/v2/ws/{ws.name}/hosts/bulk_delete/',
+            self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'),
             data=request_data,
             headers=headers)
 
         assert delete_response.status_code == 400
+
+
+class TestHostAPIV3(TestHostAPI):
+    def url(self, host=None, workspace=None):
+        return v2_to_v3(super(TestHostAPIV3, self).url(host, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
@@ -988,7 +1001,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             "os":"Unknown",
         }
 
-        res = test_client.put(f'v2/ws/{host.workspace.name}/hosts/{host.id}/', data=data)
+        res = test_client.put(self.url(host, workspace=host.workspace), data=data)
         assert res.status_code == 200
 
         assert session.query(Hostname).filter_by(host=host).count() == 1
@@ -1078,6 +1091,11 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             assert index_in_hosts_ids == index_in_response_hosts
 
 
+class TestHostAPIGenericV3(TestHostAPIGeneric, PatchableTestsMixin):
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestHostAPIGenericV3, self).url(obj, workspace))
+
+
 def host_json():
     return st.fixed_dictionaries(
         {
@@ -1123,4 +1141,13 @@ def test_hypothesis(host_with_hostnames, test_client, session):
                                data=raw_data)
         assert res.status_code in [201, 400, 409]
 
+    @given(HostData)
+    def send_api_request_v3(raw_data):
+
+        ws_name = host_with_hostnames.workspace.name
+        res = test_client.post(f'/v3/ws/{ws_name}/vulns',
+                               data=raw_data)
+        assert res.status_code in [201, 400, 409]
+
     send_api_request()
+    send_api_request_v3()

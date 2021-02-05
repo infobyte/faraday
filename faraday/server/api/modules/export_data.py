@@ -49,7 +49,7 @@ def export_data(workspace_name):
 
 @export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data_v3(workspace_name):
-    export_data(workspace_name)
+    return export_data(workspace_name)
 
 
 export_data_v3.__doc__ = export_data.__doc__

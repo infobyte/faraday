@@ -24,6 +24,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
     view_class = CredentialView
     api_endpoint = 'credential'
     update_fields = ['username', 'password']
+    patchable_fields = update_fields
 
     def test_get_list_backwards_compatibility(self, test_client, session, second_workspace):
         cred = self.factory.create(workspace=second_workspace)
@@ -144,7 +145,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 
         raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=43)
 
-        res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
+        res = test_client.put(self.url(credential, workspace=credential.workspace), data=raw_data)
         assert res.status_code == 400
 
     def test_create_with_invalid_parent_type(
@@ -179,7 +180,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         raw_data = self._generate_raw_update_data(
             'Name1', 'Username2', 'Password3', parent_id=credential.host.id)
 
-        res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
+        res = test_client.put(self.url(credential, workspace=credential.workspace), data=raw_data)
         assert res.status_code == 200
         assert res.json['username'] == u'Username2'
         assert res.json['password'] == u'Password3'
@@ -271,3 +272,9 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, PatchableTestsMixin):
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestCredentialsAPIGenericV3, self).url(obj, workspace))
+
+    def test_count(self, test_client, session, user_factory, api_v='v3'):
+        super(TestCredentialsAPIGenericV3, self).test_count(test_client, session, user_factory, api_v)
+
+    def test_count_descending(self, test_client, session, user_factory, api_v='v3'):
+        super(TestCredentialsAPIGenericV3, self).test_count_descending(test_client, session, user_factory, api_v)

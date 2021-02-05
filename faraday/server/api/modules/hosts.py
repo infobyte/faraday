@@ -446,19 +446,19 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin):
 
     @route('/<host_id>/services')
     def service_list(self, workspace_name, host_id):
-        super(HostsV3View, self).service_list(workspace_name, host_id)
+        return super(HostsV3View, self).service_list(workspace_name, host_id)
 
     @route('/<host_id>/tools_history')
     def tool_impacted_by_host(self, workspace_name, host_id):
-        super(HostsV3View, self).tool_impacted_by_host(workspace_name, host_id)
+        return super(HostsV3View, self).tool_impacted_by_host(workspace_name, host_id)
 
     @route('/bulk_create', methods=['POST'])
     def bulk_create(self, workspace_name):
-        super(HostsV3View, self).bulk_create(workspace_name)
+        return super(HostsV3View, self).bulk_create(workspace_name)
 
     @route('/countVulns')
     def count_vulns(self, workspace_name):
-        super(HostsV3View, self).count_vulns()
+        return super(HostsV3View, self).count_vulns()
 
     service_list.__doc__ = HostsView.service_list.__doc__
     tool_impacted_by_host.__doc__ = HostsView.tool_impacted_by_host.__doc__

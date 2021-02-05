@@ -31,7 +31,7 @@ def show_info():
 
 @info_api.route('/v3/info', methods=['GET'])
 def show_info_v3():
-    show_info()
+    return show_info()
 
 
 show_info_v3.__doc__ = show_info.__doc__

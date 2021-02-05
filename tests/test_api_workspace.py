@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 import time
 import pytest
+from posixpath import join as urljoin
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
@@ -21,26 +22,43 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     api_endpoint = 'ws'
     lookup_field = 'name'
     view_class = WorkspaceView
+    patchable_fields = ['name']
+
+    def check_url(self, url):
+        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                f'filter?q={{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 1
         assert res.json[0]['name'] == self.first_object.name
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name_zero_results_found(self, test_client):
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                'filter?q={"filters":[{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}]}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 0
 
     def test_filter_restless_by_description(self, test_client):
         self.first_object.description = "this is a new description"
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                f'filter?q={{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}'
+                ']}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 1
         assert res.json[0]['description'] == self.first_object.description
@@ -70,8 +88,13 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         session.commit()
 
         self.first_object.description = "this is a new description"
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                f'filter?q={{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}'
+                ']}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 1
         assert res.json[0]['description'] == self.first_object.description
@@ -383,5 +406,37 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
 
 class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
+
+    def check_url(self, url):
+        return v2_to_v3(url)
+
     def url(self, obj=None):
         return v2_to_v3(super(TestWorkspaceAPIV3, self).url(obj))
+
+    def test_workspace_activation(self, test_client, workspace, session):
+        workspace.active = False
+        session.add(workspace)
+        session.commit()
+        res = test_client.patch(self.url(workspace), data={'active': True})
+        assert res.status_code == 200
+
+        res = test_client.get(self.url(workspace))
+        active = res.json.get('active')
+        assert active == True
+
+        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
+        assert active_query == True
+
+    def test_workspace_deactivation(self, test_client, workspace, session):
+        workspace.active = True
+        session.add(workspace)
+        session.commit()
+        res = test_client.patch(self.url(workspace), data={'active': False})
+        assert res.status_code == 200
+
+        res = test_client.get(self.url(workspace))
+        active = res.json.get('active')
+        assert active == False
+
+        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
+        assert active_query == False

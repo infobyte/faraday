@@ -12,7 +12,7 @@ from tests.test_api_workspaced_base import (
     ReadWriteAPITests,
     PatchableTestsMixin,
 )
-from faraday.server.api.modules.credentials import CredentialView
+from faraday.server.api.modules.credentials import CredentialView, CredentialV3View
 from faraday.server.models import Credential
 from tests.factories import HostFactory, ServiceFactory
 from tests.utils.url import v2_to_v3
@@ -270,11 +270,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 
 
 class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, PatchableTestsMixin):
+    view_class = CredentialV3View
+
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestCredentialsAPIGenericV3, self).url(obj, workspace))
-
-    def test_count(self, test_client, session, user_factory, api_v='v3'):
-        super(TestCredentialsAPIGenericV3, self).test_count(test_client, session, user_factory, api_v)
-
-    def test_count_descending(self, test_client, session, user_factory, api_v='v3'):
-        super(TestCredentialsAPIGenericV3, self).test_count_descending(test_client, session, user_factory, api_v)

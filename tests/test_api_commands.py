@@ -19,7 +19,7 @@ from faraday.server.models import (
     Command,
     Workspace,
     Vulnerability)
-from faraday.server.api.modules.commandsrun import CommandView
+from faraday.server.api.modules.commandsrun import CommandView, CommandV3View
 from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
@@ -450,14 +450,10 @@ class TestListCommandView(ReadWriteAPITests):
 
 
 class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
+    view_class = CommandV3View
+
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestListCommandViewV3, self).url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)
-
-    def test_count(self, test_client, session, user_factory, api_v='v3'):
-        super(TestListCommandViewV3, self).test_count(test_client, session, user_factory, api_v)
-
-    def test_count_descending(self, test_client, session, user_factory, api_v='v3'):
-        super(TestListCommandViewV3, self).test_count_descending(test_client, session, user_factory, api_v)

@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from faraday.server.api.modules.comments import CommentView
+from faraday.server.api.modules.comments import CommentView, CommentV3View
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
 from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
@@ -130,14 +130,10 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
 
 
 class TestCommentAPIGenericV3(TestCommentAPIGeneric, PatchableTestsMixin):
+    view_class = CommentV3View
+
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestCommentAPIGenericV3, self).url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)
-
-    def test_count(self, test_client, session, user_factory, api_v='v3'):
-        super(TestCommentAPIGenericV3, self).test_count(test_client, session, user_factory, api_v)
-
-    def test_count_descending(self, test_client, session, user_factory, api_v='v3'):
-        super(TestCommentAPIGenericV3, self).test_count_descending(test_client, session, user_factory, api_v)

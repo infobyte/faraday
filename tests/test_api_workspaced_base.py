@@ -297,7 +297,7 @@ class PatchableTestsMixin(UpdateTestsMixin):
         super(PatchableTestsMixin, self).test_update_cant_change_id(test_client, method)
 
 class CountTestsMixin:
-    def test_count(self, test_client, session, user_factory, api_v='v2'):
+    def test_count(self, test_client, session, user_factory):
 
         factory_kwargs = {}
         for extra_filter in self.view_class.count_extra_filters:
@@ -312,7 +312,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        if api_v == 'v2':
+        if self.view_class.route_prefix.startswith("/v2"):
             res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id"))
         else:
             res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
@@ -330,7 +330,7 @@ class CountTestsMixin:
         assert grouped == 1, (res)
         assert creators == sorted(creators)
 
-    def test_count_descending(self, test_client, session, user_factory, api_v='v2'):
+    def test_count_descending(self, test_client, session, user_factory):
 
         factory_kwargs = {}
         for extra_filter in self.view_class.count_extra_filters:
@@ -345,7 +345,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        if api_v == 'v2':
+        if self.view_class.route_prefix.startswith("/v2"):
             res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id&order=desc"))
         else:
             res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))

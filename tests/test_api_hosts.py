@@ -26,7 +26,7 @@ from tests.test_api_workspaced_base import (
     PaginationTestsMixin, PatchableTestsMixin,
 )
 from faraday.server.models import db, Host, Hostname
-from faraday.server.api.modules.hosts import HostsView
+from faraday.server.api.modules.hosts import HostsView, HostsV3View
 from tests.factories import HostFactory, CommandFactory, \
     EmptyCommandFactory, WorkspaceFactory
 
@@ -1138,14 +1138,10 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
 
 class TestHostAPIGenericV3(TestHostAPIGeneric, PatchableTestsMixin):
+    view_class = HostsV3View
+
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestHostAPIGenericV3, self).url(obj, workspace))
-
-    def test_count(self, test_client, session, user_factory, api_v='v3'):
-        super(TestHostAPIGenericV3, self).test_count(test_client, session, user_factory, api_v)
-
-    def test_count_descending(self, test_client, session, user_factory, api_v='v3'):
-        super(TestHostAPIGenericV3, self).test_count_descending(test_client, session, user_factory, api_v)
 
 
 def host_json():

@@ -18,7 +18,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests, v3_url, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
     Service
 )

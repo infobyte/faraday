@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from builtins import str
+from posixpath import join as urljoin
 
 from tests.utils.url import v2_to_v3
 
@@ -19,13 +20,6 @@ from tests.test_api_pagination import PaginationTestsMixin as \
 
 API_PREFIX = '/v2/ws/'
 OBJECT_COUNT = 5
-
-
-def v3_url(test_suite, obj=None, **kwargs):
-    ## TODO v3 just in PATCH with no / in the end. Remove after all v3 released
-    if obj is None:
-        obj = test_suite.first_object
-    return v2_to_v3(test_suite.url(obj, **kwargs))
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -303,7 +297,7 @@ class PatchableTestsMixin(UpdateTestsMixin):
         super(PatchableTestsMixin, self).test_update_cant_change_id(test_client, method)
 
 class CountTestsMixin:
-    def test_count(self, test_client, session, user_factory):
+    def test_count(self, test_client, session, user_factory, api_v='v2'):
 
         factory_kwargs = {}
         for extra_filter in self.view_class.count_extra_filters:
@@ -317,7 +311,12 @@ class CountTestsMixin:
                                   **factory_kwargs))
 
         session.commit()
-        res = test_client.get(self.url() + "count/?group_by=creator_id")
+
+        if api_v == 'v2':
+            res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id"))
+        else:
+            res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
+
         assert res.status_code == 200, res.json
         res = res.get_json()
 
@@ -331,7 +330,7 @@ class CountTestsMixin:
         assert grouped == 1, (res)
         assert creators == sorted(creators)
 
-    def test_count_descending(self, test_client, session, user_factory):
+    def test_count_descending(self, test_client, session, user_factory, api_v='v2'):
 
         factory_kwargs = {}
         for extra_filter in self.view_class.count_extra_filters:
@@ -345,7 +344,12 @@ class CountTestsMixin:
                                         **factory_kwargs))
 
         session.commit()
-        res = test_client.get(self.url() + "count/?group_by=creator_id&order=desc")
+
+        if api_v == 'v2':
+            res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id&order=desc"))
+        else:
+            res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))
+
         assert res.status_code == 200, res.json
         res = res.get_json()
 

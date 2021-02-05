@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 from tests.utils.url import v2_to_v3
 
 """Tests for many API endpoints that do not depend on workspace_name"""
+from posixpath import join as urljoin
 import datetime
 import pytest
 import time
@@ -36,6 +37,7 @@ class TestListCommandView(ReadWriteAPITests):
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
+    patchable_fields = ["ip"]
 
     def check_url(self, url):
         return url
@@ -96,7 +98,8 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=command.workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
 
         assert list(filter(lambda stats: stats['_id'] == command.id, res.json)) == [
@@ -153,7 +156,7 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [
                             {u'_id': command.id,
@@ -202,7 +205,7 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [{
             u'_id': command.id,
@@ -268,7 +271,7 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         raw_first_command = list(filter(lambda comm: comm['_id'] == commands[0].id, res.json))
 
@@ -421,7 +424,7 @@ class TestListCommandView(ReadWriteAPITests):
         res = test_client.delete(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 204
 
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         command_history = list(filter(lambda hist: hist['_id'] == command.id, res.json))
         assert len(command_history)
@@ -452,3 +455,9 @@ class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
 
     def check_url(self, url):
         return v2_to_v3(url)
+
+    def test_count(self, test_client, session, user_factory, api_v='v3'):
+        super(TestListCommandViewV3, self).test_count(test_client, session, user_factory, api_v)
+
+    def test_count_descending(self, test_client, session, user_factory, api_v='v3'):
+        super(TestListCommandViewV3, self).test_count_descending(test_client, session, user_factory, api_v)

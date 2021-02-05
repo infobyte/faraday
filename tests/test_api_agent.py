@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 from unittest import mock
+from posixpath import join as urljoin
 import pytest
 
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
@@ -251,6 +252,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
     factory = factories.AgentFactory
     view_class = AgentWithWorkspacesView
     api_endpoint = 'agents'
+    patchable_fields = ['name']
 
     def test_create_succeeds(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
@@ -433,6 +435,9 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     view_class = AgentView
     api_endpoint = 'agents'
 
+    def check_url(self, url):
+        return url
+
     def test_get_workspaced(self, test_client, session):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
@@ -479,7 +484,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'csrf_token': csrf_token
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -489,7 +494,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         session.add(agent)
         session.commit()
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             data='[" broken]"{'
         )
         assert res.status_code == 400
@@ -511,7 +516,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             ('content-type', 'text/html'),
         ]
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             data=payload,
             headers=headers)
         assert res.status_code == 400
@@ -530,7 +535,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -551,7 +556,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            self.url(agent.id) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 200
@@ -569,7 +574,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'executorData': '[][dassa',
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -583,7 +588,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'executorData': '',
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -592,3 +597,6 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
 class TestAgentAPIV3(TestAgentAPI):
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestAgentAPIV3, self).url(obj, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)

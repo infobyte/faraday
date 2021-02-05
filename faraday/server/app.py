@@ -419,6 +419,7 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_api.AgentCreationView:post'].is_public = True
+    app.view_functions['agent_api.AgentCreationV3View:post'].is_public = True
 
     return app
 

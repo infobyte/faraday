@@ -1112,7 +1112,7 @@ class UpdateMixin:
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         """Commit the SQLAlchemy session, check for updating conflicts"""
         try:
             db.session.add(obj)
@@ -1175,8 +1175,8 @@ class PatchableMixin:
                                 flask.request)
         # just in case an schema allows id as writable.
         data.pop('id', None)
-        self._update_object(obj, data, partial = True)
-        self._perform_update(object_id, obj, data, **kwargs)
+        self._update_object(obj, data, partial=True)
+        self._perform_update(object_id, obj, data, partial=True, **kwargs)
 
         return self._dump(obj, kwargs), 200
 
@@ -1223,7 +1223,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         """
         return super(UpdateWorkspacedMixin, self).put(object_id, workspace_name=workspace_name)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
 

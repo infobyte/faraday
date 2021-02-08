@@ -515,7 +515,10 @@ class VulnerabilityView(PaginatedMixin,
         return obj
 
     def _process_attachments(self, obj, attachments):
-        old_attachments = db.session.query(File).filter_by(
+        old_attachments = db.session.query(File).options(
+            joinedload(File.creator),
+            joinedload(File.update_user)
+        ).filter_by(
             object_id=obj.id,
             object_type='vulnerability',
         )
@@ -538,11 +541,12 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('tool', '')
         return super(VulnerabilityView, self)._update_object(obj, data)
 
-    def _perform_update(self, object_id, obj, data, workspace_name):
-        attachments = data.pop('_attachments', {})
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+        attachments = data.pop('_attachments', None if partial else {})
         obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
-        self._process_attachments(obj, attachments)
+        if attachments is not None:
+            self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
 

@@ -37,7 +37,7 @@ class TestWebsocketBroadcastServerProtocol:
         session.commit()
 
         headers = {"Authorization": f"Agent {agent.token}"}
-        token = test_client.post(self.check_url('v2/agent_websocket_token/'), headers=headers).json['token']
+        token = test_client.post(self.check_url('/v2/agent_websocket_token/'), headers=headers).json['token']
         return token
 
     def test_join_agent_message_with_invalid_token_fails(self, session, proto, test_client):

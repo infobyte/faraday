@@ -43,7 +43,7 @@ class TestFileUpload:
 
         assert res.status_code == 200
         assert len(REPORTS_QUEUE.queue) == 1
-        queue_elem = REPORTS_QUEUE.queue[0]
+        queue_elem = REPORTS_QUEUE.get_nowait()
         assert queue_elem[0] == ws.name
         assert queue_elem[3].lower() == "nmap"
         assert queue_elem[4] == logged_user.id

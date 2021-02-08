@@ -58,6 +58,10 @@ class TestLicensesAPIV3(TestLicensesAPI, PatchableTestsMixin):
     def url(self, obj=None):
         return v2_to_v3(super(TestLicensesAPIV3, self).url(obj))
 
+    @pytest.mark.skip(reason="Not a license actually test")
+    def test_envelope_list(self, test_client, app):
+        pass
+
 
 def license_json():
     return st.fixed_dictionaries(

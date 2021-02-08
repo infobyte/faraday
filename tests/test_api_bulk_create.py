@@ -629,7 +629,7 @@ class TestBulkCreateAPI:
     def test_bulk_create_endpoint(self, session, workspace, test_client, logged_user):
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_ = host_data.copy()
         service_data_ = service_data.copy()
         service_data_['vulnerabilities'] = [vuln_data]
@@ -664,7 +664,7 @@ class TestBulkCreateAPI:
     def test_bulk_create_endpoint_run_over_closed_vuln(self, session, workspace, test_client):
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_ = host_data.copy()
         host_data_['vulnerabilities'] = [vuln_data]
         res = test_client.post(url, data=dict(hosts=[host_data_]))
@@ -676,7 +676,7 @@ class TestBulkCreateAPI:
         assert host.ip == "127.0.0.1"
         assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
         assert vuln.status == "open"
-        close_url = self.check_url(f"v2/ws/{workspace.name}/vulns/{vuln.id}/")
+        close_url = self.check_url(f"/v2/ws/{workspace.name}/vulns/{vuln.id}/")
         res = test_client.get(close_url)
         vuln_data_del = res.json
         vuln_data_del["status"] = "closed"
@@ -694,21 +694,21 @@ class TestBulkCreateAPI:
 
     @pytest.mark.usefixtures('logged_user')
     def test_bulk_create_endpoint_without_host_ip(self, session, workspace, test_client):
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_ = host_data.copy()
         host_data_.pop('ip')
         res = test_client.post(url, data=dict(hosts=[host_data_]))
         assert res.status_code == 400
 
     def test_bulk_create_endpoints_fails_without_auth(self, session, workspace, test_client):
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         res = test_client.post(url, data=dict(hosts=[host_data]))
         assert res.status_code == 401
         assert count(Host, workspace) == 0
 
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         res = test_client.post(
             url,
             data=dict(hosts=[host_data]),
@@ -729,7 +729,7 @@ class TestBulkCreateAPI:
         session.add(agent)
         session.commit()
         assert agent.token
-        url = self.check_url(f'v2/ws/{second_workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{second_workspace.name}/bulk_create/')
         res = test_client.post(
             url,
             data=dict(hosts=[host_data]),
@@ -744,7 +744,7 @@ class TestBulkCreateAPI:
         session.add(agent)
         session.commit()
         assert agent.token
-        url = self.check_url("v2/ws/im_a_incorrect_ws/bulk_create/")
+        url = self.check_url("/v2/ws/im_a_incorrect_ws/bulk_create/")
         res = test_client.post(
             url,
             data=dict(hosts=[host_data]),
@@ -760,7 +760,7 @@ class TestBulkCreateAPI:
         session.commit()
         for workspace in agent.workspaces:
             assert count(Host, workspace) == 0
-            url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+            url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
                 data=dict(hosts=[host_data]),
@@ -822,7 +822,7 @@ class TestBulkCreateAPI:
 
             initial_host_count = Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count()
             assert count(Command, workspace) == 1
-            url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+            url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
                 data=dict(**data_kwargs),
@@ -880,7 +880,7 @@ class TestBulkCreateAPI:
             session.commit()
             assert count(Host, workspace) == 0
             assert count(Command, workspace) == 1
-            url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+            url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
                 data=dict(hosts=[host_data], execution_id=agent_execution.id),
@@ -909,7 +909,7 @@ class TestBulkCreateAPI:
         session.commit()
         for workspace in agent.workspaces:
 
-            url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+            url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
                 data=dict(hosts=[host_data]),
@@ -924,7 +924,7 @@ class TestBulkCreateAPI:
             session.add(workspace)
         session.commit()
         for workspace in agent.workspaces:
-            url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+            url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
                 data=dict(hosts=[host_data]),
@@ -934,7 +934,7 @@ class TestBulkCreateAPI:
 
     @pytest.mark.usefixtures('logged_user')
     def test_bulk_create_endpoint_raises_400_with_no_data(self, session, test_client, workspace):
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         res = test_client.post(
             url,
             data="",
@@ -947,7 +947,7 @@ class TestBulkCreateAPI:
     def test_bulk_create_endpoint_with_vuln_run_date(self, session, workspace, test_client):
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         run_date = datetime.now(timezone.utc) - timedelta(days=30)
         host_data_copy = host_data.copy()
         vuln_data_copy = vuln_data.copy()
@@ -964,7 +964,7 @@ class TestBulkCreateAPI:
     def test_bulk_create_endpoint_with_vuln_future_run_date(self, session, workspace, test_client):
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         run_date = datetime.now(timezone.utc) + timedelta(days=10)
         host_data_copy = host_data.copy()
         vuln_data_copy = vuln_data.copy()
@@ -982,7 +982,7 @@ class TestBulkCreateAPI:
     def test_bulk_create_endpoint_with_invalid_vuln_run_date(self, session, workspace, test_client):
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_copy = host_data.copy()
         vuln_data_copy = vuln_data.copy()
         vuln_data_copy['run_date'] = "INVALID_VALUE"
@@ -996,7 +996,7 @@ class TestBulkCreateAPI:
                                                                        logged_user):
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_ = host_data.copy()
         host_data_['services'] = [service_data]
         host_data_['credentials'] = [credential_data]
@@ -1022,7 +1022,7 @@ class TestBulkCreateAPI:
 
         assert count(Host, workspace) == 0
         assert count(VulnerabilityGeneric, workspace) == 0
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_ = host_data.copy()
         service_data_ = service_data.copy()
         vuln_data_ = vuln_data.copy()
@@ -1059,7 +1059,7 @@ class TestBulkCreateAPI:
 
     @pytest.mark.usefixtures('logged_user')
     def test_vuln_web_cannot_have_host_parent(self, session, workspace, test_client, logged_user):
-        url = self.check_url(f'v2/ws/{workspace.name}/bulk_create/')
+        url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
         host_data_ = host_data.copy()
         vuln_web_data_ = vuln_web_data.copy()
         vuln_web_data_['severity'] = "high"

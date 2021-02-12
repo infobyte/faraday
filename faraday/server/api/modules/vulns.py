@@ -455,6 +455,7 @@ class VulnerabilityView(PaginatedMixin,
     sort_model_class = VulnerabilityWeb  # It has all the fields
     sort_pass_silently = True  # For compatibility with the Web UI
     order_field = desc(VulnerabilityGeneric.confirmed), VulnerabilityGeneric.severity, VulnerabilityGeneric.create_date
+    get_joinedloads = [Vulnerability.evidence, Vulnerability.creator]
 
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
@@ -837,9 +838,9 @@ class VulnerabilityView(PaginatedMixin,
             if offset:
                 vulns = vulns.offset(offset)
 
-            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
+            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(
                 vulns.all())
-            return json.loads(vulns), total_vulns.count()
+            return vulns, total_vulns.count()
         else:
             vulns = self._generate_filter_query(
                 VulnerabilityGeneric,

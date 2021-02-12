@@ -76,6 +76,11 @@ OBJECT_TYPES = [
     'task',
 ]
 
+COMMENT_TYPES = [
+    'system',
+    'user'
+]
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -1239,6 +1244,15 @@ class Vulnerability(VulnerabilityGeneric):
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
 
+    def __init__(self, *args, **kwargs):
+        # Sanitize some fields on creation
+        if 'request' in kwargs:
+            kwargs['request'] = ''.join([x for x in kwargs['request'] if x in string.printable])
+        if 'response' in kwargs:
+            kwargs['response'] = ''.join([x for x in kwargs['response'] if x in string.printable])
+        super().__init__(*args, **kwargs)
+
+
     @declared_attr
     def service_id(cls):
         return VulnerabilityGeneric.__table__.c.get(
@@ -1996,6 +2010,7 @@ class TagObject(db.Model):
 class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
+    comment_type = Column(Enum(*COMMENT_TYPES, name='comment_types'), nullable=False, default='user')
 
     text = BlankColumn(Text)
 

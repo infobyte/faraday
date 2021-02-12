@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import string
 
 import pytest
 from marshmallow import ValidationError
@@ -891,6 +892,31 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
         )
         assert res.status_code == 403
 
+def test_sanitize_request_and_response(session, workspace, host):
+    invalid_request_text = 'GET /exampla.do HTTP/1.0\n  \x89\n\x1a  SOME_TEXT'
+    invalid_response_text = '<html> \x89\n\x1a  SOME_TEXT</html>'
+    sanitized_request_text = 'GET /exampla.do HTTP/1.0\n  \n  SOME_TEXT'
+    sanitized_response_text = '<html> \n  SOME_TEXT</html>'
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_web_data_ = vuln_web_data.copy()
+    vuln_web_data_['name'] = 'test'
+    vuln_web_data_['severity'] = 'low'
+    vuln_web_data_['request'] = invalid_request_text
+    vuln_web_data_['response'] = invalid_response_text
+    service_data_['vulnerabilities'] = [vuln_web_data_]
+    host_data_['services'] = [service_data_]
+    command = new_empty_command(workspace)
+    bc.bulk_create(
+        workspace,
+        command,
+        dict(command=command_data, hosts=[host_data_])
+    )
+    vuln = VulnerabilityWeb.query.filter(VulnerabilityWeb.workspace == workspace).one()
+    assert vuln.request == sanitized_request_text
+    assert vuln.response == sanitized_response_text
+
+
 @pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_raises_400_with_no_data(
         session, test_client, workspace):
@@ -1032,3 +1058,27 @@ def test_vuln_web_cannot_have_host_parent(session, workspace, test_client, logge
         data=dict(hosts=[host_data_], command=command_data)
     )
     assert res.status_code == 400
+
+
+def test_bulk_create_update_service(session, service):
+    session.add(service)
+    session.commit()
+    new_service_version = f"{service.name}_changed"
+    new_service_name = f"{service.name}_changed"
+    new_service_description = f"{service.description}_changed"
+    new_service_owned = not service.owned
+    data = {
+        "version": new_service_version,
+        "name": new_service_name,
+        "description": new_service_description,
+        "port": service.port,
+        "protocol": service.protocol,
+        "owned": new_service_owned,
+    }
+    data = bc.BulkServiceSchema().load(data)
+    bc._create_service(service.workspace, service.host, data)
+    assert count(Service, service.host.workspace) == 1
+    assert service.version == new_service_version
+    assert service.name == new_service_name
+    assert service.description == new_service_description
+    assert service.owned == new_service_owned

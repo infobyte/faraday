@@ -2,7 +2,7 @@
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadOnlyAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
@@ -10,7 +10,7 @@ from faraday.server.models import (
 )
 
 @pytest.mark.usefixtures('logged_user')
-class TestVulnerabilityCustomFields(ReadOnlyAPITests):
+class TestVulnerabilityCustomFields(ReadWriteAPITests):
     model = CustomFieldsSchema
     factory = CustomFieldsSchemaFactory
     api_endpoint = 'custom_fields_schema'
@@ -47,7 +47,7 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         data = {
             u'field_name': u'cvss 2',
             u'field_type': 'int',
-            u'talbe_name': 'sarasa',
+            u'table_name': 'sarasa',
             u'field_display_name': u'CVSS new',
             u'field_order': 1
         }
@@ -78,5 +78,3 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
                 u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
                 u'field_order': 1} in res.json
-
-# I'm Py3

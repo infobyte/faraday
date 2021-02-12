@@ -10,8 +10,8 @@ import pytest
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadOnlyAPITests
-from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT
+from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 
@@ -228,11 +228,21 @@ class TestAgentCreationAPI():
         assert res.status_code == 400
 
 
-class TestAgentWithWorkspacesAPIGeneric(ReadOnlyAPITests):
+class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentWithWorkspacesView
     api_endpoint = 'agents'
+
+    def test_create_succeeds(self, test_client):
+        with pytest.raises(AssertionError) as exc_info:
+            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_succeeds(test_client)
+        assert '405' in exc_info.value.args[0]
+
+    def test_create_fails_with_empty_dict(self, test_client):
+        with pytest.raises(AssertionError) as exc_info:
+            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_fails_with_empty_dict(test_client)
+        assert '405' in exc_info.value.args[0]
 
     def workspaced_url(self, workspace, obj= None):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
@@ -392,6 +402,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadOnlyAPITests):
             json=payload
         )
         assert res.status_code == 404
+
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     model = Agent

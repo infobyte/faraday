@@ -21,7 +21,7 @@
 , flask
 , flask-classful
 , flask-kvsession-fork
-, flask-security
+, flask-security-too
 , flask_login
 , flask_sqlalchemy
 , hypothesis
@@ -83,7 +83,7 @@ buildPythonPackage rec {
       email_validator
       wtforms
       flask_login
-      flask-security
+      flask-security-too
       marshmallow
       pillow
       psycopg2

@@ -121,7 +121,7 @@ class Api:
     def login(self, username, password):
         auth = {"email": username, "password": password}
         try:
-            resp = self.requests.post(self.base + 'login', json=auth)
+            resp = self.requests.post(self.base + 'login', data=auth, use_json_data=False)
             if resp.status_code not in [200, 302]:
                 logger.info("Invalid credentials")
                 return None

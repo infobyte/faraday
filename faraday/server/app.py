@@ -306,11 +306,12 @@ def create_app(db_connection_string=None, testing=None):
     login_failed_message = ("Invalid username or password", 'error')
 
     app.config.update({
+        'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
         'SECURITY_PASSWORD_SINGLE_HASH': True,
         'WTF_CSRF_ENABLED': False,
         'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
         'SECURITY_POST_LOGIN_VIEW': '/_api/session',
-        'SECURITY_POST_LOGOUT_VIEW': '/_api/login',
+        'SECURITY_POST_LOGOUT_VIEW': '/_api/logout',
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',
         'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
         'SECURITY_POST_RESET_VIEW': '/',

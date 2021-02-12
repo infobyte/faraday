@@ -557,7 +557,7 @@ class ExecutorFactory(FaradayFactory):
     name = FuzzyText()
     agent = factory.SubFactory(AgentFactory)
     parameters_metadata = factory.LazyAttribute(
-        lambda e: str({"param_name": False})
+        lambda e: {"param_name": False}
     )
     class Meta:
         model = Executor

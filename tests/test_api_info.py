@@ -16,6 +16,11 @@ class TestAPIInfoEndpoint:
         assert response.status_code == 200
         assert response.json['Faraday Server'] == 'Running'
 
+    def test_api_info_v3(self, test_client):
+        response = test_client.get('v3/info')
+        assert response.status_code == 200
+        assert response.json['Faraday Server'] == 'Running'
+
     def test_get_config(self, test_client):
         res = test_client.get('/config')
         assert res.status_code == 200

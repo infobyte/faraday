@@ -10,7 +10,7 @@ from faraday.server.models import db, Host, Service, VulnerabilityGeneric
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    InvalidUsage, CreateWorkspacedMixin, GenericWorkspacedView)
+    InvalidUsage, CreateWorkspacedMixin, GenericWorkspacedView, PatchableWorkspacedMixin)
 from faraday.server.models import Comment
 comment_api = Blueprint('comment_api', __name__)
 
@@ -55,6 +55,7 @@ class CommentView(CommentCreateMixing, ReadWriteWorkspacedView):
     schema_class = CommentSchema
     order_field = 'create_date'
 
+
 class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
     """
         This view is used by the plugin engine to avoid duplicate comments
@@ -82,6 +83,18 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
         res = super(UniqueCommentView, self)._perform_create(data, workspace_name)
         return res
 
+
+class CommentV3View(CommentView, PatchableWorkspacedMixin):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
+
+class UniqueCommentV3View(UniqueCommentView, PatchableWorkspacedMixin):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
+
 CommentView.register(comment_api)
 UniqueCommentView.register(comment_api)
-# I'm Py3
+CommentV3View.register(comment_api)
+UniqueCommentV3View.register(comment_api)

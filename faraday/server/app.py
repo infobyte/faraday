@@ -284,7 +284,25 @@ def user_logged_in_succesfull(app, user):
 
 
 def create_app(db_connection_string=None, testing=None):
-    app = Flask(__name__, static_folder=None)
+
+    class CustomFlask(Flask):
+        SKIP_RULES = [  # These endpoints will be removed for v3
+            '/v3/ws/<workspace_name>/hosts/bulk_delete/',
+            '/v3/ws/<workspace_name>/vulns/bulk_delete/',
+            '/v3/ws/<workspace_id>/change_readonly/',
+            '/v3/ws/<workspace_id>/deactivate/',
+            '/v3/ws/<workspace_id>/activate/',
+        ]
+
+        def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
+            # Flask registers views when an application starts
+            # do not add view from SKIP_VIEWS
+            for rule_ in CustomFlask.SKIP_RULES:
+                if rule_ == rule:
+                    return
+            return super(CustomFlask, self).add_url_rule(rule, endpoint, view_func, **options)
+
+    app = CustomFlask(__name__, static_folder=None)
 
     try:
         secret_key = faraday.server.config.faraday_server.secret_key
@@ -402,6 +420,7 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_api.AgentCreationView:post'].is_public = True
+    app.view_functions['agent_api.AgentCreationV3View:post'].is_public = True
 
     return app
 

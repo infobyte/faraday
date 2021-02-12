@@ -49,4 +49,11 @@ class PreferencesView(GenericView):
         """
         return jsonify({'preferences': g.user.preferences}), 200
 
+
+class PreferencesV3View(PreferencesView):
+    route_prefix = '/v3'
+    trailing_slash = False
+
+
 PreferencesView.register(preferences_api)
+PreferencesV3View.register(preferences_api)

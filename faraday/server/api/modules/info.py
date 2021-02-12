@@ -29,6 +29,14 @@ def show_info():
     return response
 
 
+@info_api.route('/v3/info', methods=['GET'])
+def show_info_v3():
+    return show_info()
+
+
+show_info_v3.__doc__ = show_info.__doc__
+
+
 @info_api.route('/config')
 def get_config():
     """
@@ -42,5 +50,7 @@ def get_config():
     """
     return flask.jsonify(gen_web_config())
 
+
 get_config.is_public = True
 show_info.is_public = True
+show_info_v3.is_public = True

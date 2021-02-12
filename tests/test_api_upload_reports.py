@@ -14,10 +14,14 @@ from tests.factories import WorkspaceFactory
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 
 from faraday.server.models import Host, Service, Command
+from tests.utils.url import v2_to_v3
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestFileUpload():
+class TestFileUpload:
+
+    def check_url(self, url):
+        return url
 
     def test_file_upload(self, test_client, session, csrf_token, logged_user):
         ws = WorkspaceFactory.create(name="abc")
@@ -33,13 +37,13 @@ class TestFileUpload():
         }
 
         res = test_client.post(
-                f'/v2/ws/{ws.name}/upload_report',
+                self.check_url(f'/v2/ws/{ws.name}/upload_report'),
                 data=data,
                 use_json_data=False)
 
         assert res.status_code == 200
         assert len(REPORTS_QUEUE.queue) == 1
-        queue_elem = REPORTS_QUEUE.queue[0]
+        queue_elem = REPORTS_QUEUE.get_nowait()
         assert queue_elem[0] == ws.name
         assert queue_elem[3].lower() == "nmap"
         assert queue_elem[4] == logged_user.id
@@ -65,17 +69,14 @@ class TestFileUpload():
         assert service
         assert service.creator_id == logged_user_id
 
-
     def test_no_file_in_request(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
 
-        res = test_client.post(
-                f'/v2/ws/{ws.name}/upload_report')
+        res = test_client.post(self.check_url(f'/v2/ws/{ws.name}/upload_report'))
 
         assert res.status_code == 400
-
 
     def test_request_without_csrf_token(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
@@ -91,7 +92,7 @@ class TestFileUpload():
         }
 
         res = test_client.post(
-                f'/v2/ws/{ws.name}/upload_report',
+                self.check_url(f'/v2/ws/{ws.name}/upload_report'),
                 data=data,
                 use_json_data=False)
 
@@ -112,8 +113,14 @@ class TestFileUpload():
             'csrf_token': csrf_token
         }
         res = test_client.post(
-                f'/v2/ws/{ws.name}/upload_report',
+                self.check_url(f'/v2/ws/{ws.name}/upload_report'),
                 data=data,
-                use_json_data=False)
+                use_json_data=False
+        )
 
         assert res.status_code == 404
+
+
+class TestFileUploadV3(TestFileUpload):
+    def check_url(self, url):
+        return v2_to_v3(url)

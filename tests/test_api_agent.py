@@ -5,15 +5,17 @@ See the file 'doc/LICENSE' for the license information
 """
 
 from unittest import mock
+from posixpath import join as urljoin
 import pytest
 
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, PatchableTestsMixin
 from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
+from tests.utils.url import v2_to_v3
 
 
 def http_req(method, client, endpoint, json_dict, expected_status_codes, follow_redirects=False):
@@ -53,26 +55,29 @@ def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestAgentAuthTokenAPIGeneric():
+class TestAgentAuthTokenAPIGeneric:
+
+    def check_url(self, url):
+        return url
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_token(self, faraday_server_config, test_client, session):
         faraday_server_config.agent_token = None
-        res = test_client.get('/v2/agent_token/')
+        res = test_client.get(self.check_url('/v2/agent_token/'))
         assert 'token' in res.json
         assert len(res.json['token'])
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_token_without_csrf_fails(self, faraday_server_config, test_client, session):
         faraday_server_config.agent_token = None
-        res = test_client.post('/v2/agent_token/')
+        res = test_client.post(self.check_url('/v2/agent_token/'))
         assert res.status_code == 403
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_new_agent_token(self, faraday_server_config, test_client, session, csrf_token):
         faraday_server_config.agent_token = None
         headers = {'Content-type': 'multipart/form-data'}
-        res = test_client.post('/v2/agent_token/',
+        res = test_client.post(self.check_url('/v2/agent_token/'),
                                data={"csrf_token": csrf_token},
                                headers=headers,
                                use_json_data=False)
@@ -80,7 +85,16 @@ class TestAgentAuthTokenAPIGeneric():
         assert len(res.json['token'])
 
 
-class TestAgentCreationAPI():
+@pytest.mark.usefixtures('logged_user')
+class TestAgentAuthTokenAPIGenericV3(TestAgentAuthTokenAPIGeneric):
+    def check_url(self, url):
+        return v2_to_v3(url)
+
+
+class TestAgentCreationAPI:
+
+    def check_url(self, url):
+        return url
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     @pytest.mark.usefixtures('ignore_nplusone')
@@ -100,7 +114,7 @@ class TestAgentCreationAPI():
             workspaces=[workspace, other_workspace]
         )
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 201, (res.json, raw_data)
         assert len(session.query(Agent).all()) == initial_agent_count + 1
         assert workspace.name in res.json['workspaces']
@@ -127,7 +141,7 @@ class TestAgentCreationAPI():
         )
         # /v2/agent_registration/
         res = test_client.post(
-            '/v2/agent_registration/',
+            self.check_url('/v2/agent_registration/'),
             data=raw_data
         )
         assert res.status_code == 400
@@ -147,7 +161,7 @@ class TestAgentCreationAPI():
             workspaces=[workspace]
         )
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 401
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
@@ -163,7 +177,7 @@ class TestAgentCreationAPI():
             workspaces=[workspace],
         )
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 400
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
@@ -173,7 +187,7 @@ class TestAgentCreationAPI():
         logout(test_client, [302])
         raw_data = {"PEPE": 'INVALID'}
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 400
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
@@ -190,7 +204,7 @@ class TestAgentCreationAPI():
             workspaces=[]
         )
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 400
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
@@ -208,7 +222,7 @@ class TestAgentCreationAPI():
         )
         raw_data["workspaces"] = ["donotexist"]
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 404
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
@@ -224,8 +238,13 @@ class TestAgentCreationAPI():
             token='sarasa'
         )
         # /v2/agent_registration/
-        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
         assert res.status_code == 400
+
+
+class TestAgentCreationAPIV3(TestAgentCreationAPI):
+    def check_url(self, url):
+        return v2_to_v3(url)
 
 
 class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
@@ -233,6 +252,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
     factory = factories.AgentFactory
     view_class = AgentWithWorkspacesView
     api_endpoint = 'agents'
+    patchable_fields = ['name']
 
     def test_create_succeeds(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
@@ -404,11 +424,19 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 404
 
 
+class TestAgentWithWorkspacesAPIGenericV3(TestAgentWithWorkspacesAPIGeneric, PatchableTestsMixin):
+    def url(self, obj=None):
+        return v2_to_v3(super(TestAgentWithWorkspacesAPIGenericV3, self).url(obj))
+
+
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentView
     api_endpoint = 'agents'
+
+    def check_url(self, url):
+        return url
 
     def test_get_workspaced(self, test_client, session):
         workspace = WorkspaceFactory.create()
@@ -456,7 +484,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'csrf_token': csrf_token
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -466,7 +494,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         session.add(agent)
         session.commit()
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             data='[" broken]"{'
         )
         assert res.status_code == 400
@@ -488,7 +516,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             ('content-type', 'text/html'),
         ]
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             data=payload,
             headers=headers)
         assert res.status_code == 400
@@ -507,7 +535,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -528,7 +556,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            self.url(agent.id) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 200
@@ -546,7 +574,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'executorData': '[][dassa',
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
@@ -560,7 +588,15 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'executorData': '',
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            self.check_url(urljoin(self.url(agent), 'run/')),
             json=payload
         )
         assert res.status_code == 400
+
+
+class TestAgentAPIV3(TestAgentAPI):
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestAgentAPIV3, self).url(obj, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)

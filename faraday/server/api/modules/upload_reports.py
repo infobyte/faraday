@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
 report_analyzer = ReportAnalyzer(plugins_manager)
 
+
 @gzipped
 @upload_api.route('/v2/ws/<workspace>/upload_report', methods=['POST'])
 def file_upload(workspace=None):
@@ -124,3 +125,26 @@ def file_upload(workspace=None):
                 )
     else:
         abort(make_response(jsonify(message="Missing report file"), 400))
+
+
+@gzipped
+@upload_api.route('/v3/ws/<workspace>/upload_report', methods=['POST'])
+def file_upload_v3(workspace=None):
+    """
+    ---
+    post:
+      tags: ["Workspace", "File"]
+      description: Upload a report file to create data within the given workspace
+      responses:
+        201:
+          description: Created
+        400:
+          description: Bad request
+        403:
+          description: Forbidden
+    tags: ["Workspace", "File"]
+    responses:
+      200:
+        description: Ok
+    """
+    return file_upload(workspace)

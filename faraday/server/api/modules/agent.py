@@ -19,7 +19,8 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-    ReadOnlyMultiWorkspacedView
+    ReadOnlyMultiWorkspacedView,
+    PatchableMixin
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
@@ -97,6 +98,7 @@ class AgentCreationSchema(Schema):
             'workspaces',
         )
 
+
 class AgentCreationView(CreateMixin, GenericView):
     """
     ---
@@ -168,6 +170,11 @@ class AgentCreationView(CreateMixin, GenericView):
         return agent
 
 
+class AgentCreationV3View(AgentCreationView):
+    route_prefix = '/v3'
+    trailing_slash = False
+
+
 class ExecutorDataSchema(Schema):
     executor = fields.String(default=None)
     args = fields.Dict(default=None)
@@ -201,7 +208,7 @@ class AgentWithWorkspacesView(UpdateMixin,
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         """Perform changes in the selected object
 
         It modifies the attributes of the SQLAlchemy model to match
@@ -211,9 +218,10 @@ class AgentWithWorkspacesView(UpdateMixin,
         with some specific field. Typically the new method should call
         this one to handle the update of the rest of the fields.
         """
-        workspace_names = data.pop('workspaces')
+        workspace_names = data.pop('workspaces', '')
+        partial = False if 'partial' not in kwargs else kwargs['partial']
 
-        if len(workspace_names) == 0:
+        if len(workspace_names) == 0 and not partial:
             abort(
                 make_response(
                     jsonify(
@@ -241,6 +249,11 @@ class AgentWithWorkspacesView(UpdateMixin,
         obj.workspaces = workspaces
 
         return obj
+
+
+class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin):
+    route_prefix = '/v3'
+    trailing_slash = False
 
 
 class AgentView(ReadOnlyMultiWorkspacedView):
@@ -337,6 +350,26 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             })
 
 
+class AgentV3View(AgentView):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
+    @route('/<int:agent_id>', methods=['DELETE'])
+    def remove_workspace(self, workspace_name, agent_id):
+        # This endpoint is not an exception for V3, overrides logic of DELETE
+        return super(AgentV3View, self).remove_workspace(workspace_name, agent_id)
+
+    @route('/<int:agent_id>/run', methods=['POST'])
+    def run_agent(self, workspace_name, agent_id):
+        return super(AgentV3View, self).run_agent(workspace_name, agent_id)
+
+    remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
+    run_agent.__doc__ = AgentView.run_agent.__doc__
+
+
 AgentWithWorkspacesView.register(agent_api)
+AgentWithWorkspacesV3View.register(agent_api)
 AgentCreationView.register(agent_api)
+AgentCreationV3View.register(agent_api)
 AgentView.register(agent_api)
+AgentV3View.register(agent_api)

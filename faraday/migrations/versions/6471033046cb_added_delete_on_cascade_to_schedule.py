@@ -17,6 +17,8 @@ depends_on = None
 
 
 def upgrade():
+    op.drop_constraint('executor_agent_id_fkey', 'executor')
+    op.drop_constraint('agent_schedule_executor_id_fkey', 'agent_schedule')
 
     op.create_foreign_key(
         'executor_agent_id_fkey',
@@ -36,3 +38,15 @@ def upgrade():
 def downgrade():
     op.drop_constraint('executor_agent_id_fkey', 'executor')
     op.drop_constraint('agent_schedule_executor_id_fkey', 'agent_schedule')
+
+    op.create_foreign_key(
+        'executor_agent_id_fkey',
+        'executor',
+        'agent', ['agent_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'agent_schedule_executor_id_fkey',
+        'agent_schedule',
+        'executor', ['executor_id'], ['id']
+    )

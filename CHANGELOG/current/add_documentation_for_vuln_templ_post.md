@@ -1,1 +1,0 @@
-Added documentation for VulnerabilityTemplate POST endpoint

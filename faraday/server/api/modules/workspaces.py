@@ -77,7 +77,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
-    active = fields.Boolean(dump_only=True)
+    active = fields.Boolean()
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)

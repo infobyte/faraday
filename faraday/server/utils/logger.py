@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 import faraday.server.config
 import errno
+import os
 
 from syslog_rfc5424_formatter import RFC5424Formatter
 from faraday.server.config import CONST_FARADAY_HOME_PATH
@@ -30,8 +31,9 @@ def setup_logging():
         formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
     setup_console_logging(formatter)
 
-    setup_file_logging(formatter, LOG_FILE)
-    setup_file_logging(formatter, AUDIT_LOG_FILE, 'audit')
+    if not os.environ.get("FARADAY_DISABLE_LOGS"):
+        setup_file_logging(formatter, LOG_FILE)
+        setup_file_logging(formatter, AUDIT_LOG_FILE, 'audit')
 
 
 def setup_console_logging(formatter):

@@ -66,7 +66,7 @@ def agent_websocket_token():
 
 @websocket_auth_api.route('/v3/agent_websocket_token', methods=['POST'])
 def agent_websocket_token_w3():
-    agent_websocket_token()
+    return agent_websocket_token()
 
 
 agent_websocket_token_w3.__doc__ = agent_websocket_token.__doc__

@@ -151,11 +151,11 @@ class CommandV3View(CommandView, PatchableWorkspacedMixin, BulkDeleteWorkspacedM
 
     @route('/activity_feed')
     def activity_feed(self, workspace_name):
-        super(CommandV3View, self).activity_feed(workspace_name)
+        return super(CommandV3View, self).activity_feed(workspace_name)
 
     @route('/last', methods=['GET'])
     def last_command(self, workspace_name):
-        super(CommandV3View, self).last_command(workspace_name)
+        return super(CommandV3View, self).last_command(workspace_name)
 
     activity_feed.__doc__ = CommandView.activity_feed.__doc__
     last_command.__doc__ = CommandView.last_command.__doc__

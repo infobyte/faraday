@@ -147,4 +147,4 @@ def file_upload_v3(workspace=None):
       200:
         description: Ok
     """
-    file_upload(workspace)
+    return file_upload(workspace)

@@ -76,6 +76,11 @@ OBJECT_TYPES = [
     'task',
 ]
 
+COMMENT_TYPES = [
+    'system',
+    'user'
+]
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -2005,6 +2010,7 @@ class TagObject(db.Model):
 class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
+    comment_type = Column(Enum(*COMMENT_TYPES, name='comment_types'), nullable=False, default='user')
 
     text = BlankColumn(Text)
 

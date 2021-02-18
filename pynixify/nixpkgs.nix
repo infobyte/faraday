@@ -97,9 +97,9 @@ let
         ./packages/flask-kvsession-fork
         { };
 
-      flask-security =
+      flask-security-too =
         self.callPackage
-        ./packages/flask-security
+        ./packages/flask-security-too
         { };
 
       simplekv =

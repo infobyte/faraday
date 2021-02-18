@@ -146,11 +146,11 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
-        super(PatchableTestsMixin, self).test_update_an_object(test_client, logged_user, method)
+        super().test_update_an_object(test_client, logged_user, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_fails_with_existing(self, test_client, session, method):
-        super(PatchableTestsMixin, self).test_update_fails_with_existing(test_client, session, method)
+        super().test_update_fails_with_existing(test_client, session, method)
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""
@@ -173,6 +173,10 @@ class DeleteTestsMixin:
         res = test_client.delete(self.url(object_id))
         assert res.status_code == 404  # No content
         assert self.model.query.count() == OBJECT_COUNT
+
+
+@pytest.mark.usefixtures('logged_user')
+class BulkDeleteTestsMixin:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_delete(self, test_client):
@@ -206,4 +210,11 @@ class ReadWriteAPITests(ReadWriteTestsMixin,
 class ReadOnlyAPITests(ListTestsMixin,
                        RetrieveTestsMixin,
                        GenericAPITest):
+    pass
+
+
+class V3TestMixin(
+    PatchableTestsMixin,
+    BulkDeleteTestsMixin
+):
     pass

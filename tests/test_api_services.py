@@ -18,7 +18,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView, ServiceV3View
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, V3TestMixin
 from faraday.server.models import (
     Service
 )
@@ -340,7 +340,7 @@ class TestListServiceView(ReadWriteAPITests):
         assert res.status_code == 400
 
 
-class TestListServiceViewV3(TestListServiceView, PatchableTestsMixin):
+class TestListServiceViewV3(TestListServiceView, V3TestMixin):
     view_class = ServiceV3View
 
     def url(self, obj=None, workspace=None):

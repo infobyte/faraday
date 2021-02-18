@@ -273,19 +273,19 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_an_object(test_client, method)
+        super().test_update_an_object(test_client, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object_readonly_fails(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_an_object_readonly_fails(test_client, method)
+        super().test_update_an_object_readonly_fails(test_client, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_inactive_fails(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_inactive_fails(test_client, method)
+        super().test_update_inactive_fails(test_client, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_fails_with_existing(self, test_client, session, method):
-        super(PatchableTestsMixin, self).test_update_fails_with_existing(test_client, session, method)
+        super().test_update_fails_with_existing(test_client, session, method)
 
     def test_update_an_object_fails_with_empty_dict(self, test_client):
         """To do this the user should use a PATCH request"""
@@ -294,7 +294,8 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_cant_change_id(test_client, method)
+        super().test_update_cant_change_id(test_client, method)
+
 
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
@@ -372,20 +373,6 @@ class DeleteTestsMixin:
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
 
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_bulk_delete(self, test_client):
-        all_objs = self.model.query.all()
-        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
-
-        res = test_client.delete(self.url(), data={})
-        assert res.status_code == 400
-        data = {"ids": all_objs_id}
-        res = test_client.delete(self.url(), data=data)
-        assert res.status_code == 204  # No content
-        for obj in all_objs:
-            assert was_deleted(obj)
-        assert self.model.query.count() == 0
-
     def test_delete_readonly_fails(self, test_client, session):
         self.workspace.readonly = True
         session.commit()
@@ -409,6 +396,24 @@ class DeleteTestsMixin:
         assert res.status_code == 404  # No content
         assert not was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT
+
+
+@pytest.mark.usefixtures('logged_user')
+class BulkDeleteTestsMixin:
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete(self, test_client):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+
+        res = test_client.delete(self.url(), data={})
+        assert res.status_code == 400
+        data = {"ids": all_objs_id}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 204  # No content
+        for obj in all_objs:
+            assert was_deleted(obj)
+        assert self.model.query.count() == 0
 
 
 class PaginationTestsMixin(OriginalPaginationTestsMixin):
@@ -466,4 +471,11 @@ class ReadOnlyMultiWorkspacedAPITests(ListTestsMixin,
 
 class ReadWriteMultiWorkspacedAPITests(ReadOnlyMultiWorkspacedAPITests,
                                        ReadWriteTestsMixin):
+    pass
+
+
+class V3TestMixin(
+    PatchableTestsMixin,
+    BulkDeleteTestsMixin
+):
     pass

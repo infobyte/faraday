@@ -14,7 +14,7 @@ import pytz
 from hypothesis import given, strategies as st
 
 from tests import factories
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX, V3TestMixin
 from faraday.server.models import (
     License,
 )
@@ -55,7 +55,7 @@ class TestLicensesAPI(ReadWriteAPITests):
         assert res.json['notes'] == 'A great note. License'
 
 
-class TestLicensesAPIV3(TestLicensesAPI, PatchableTestsMixin):
+class TestLicensesAPIV3(TestLicensesAPI, V3TestMixin):
     def url(self, obj=None):
         return v2_to_v3(super(TestLicensesAPIV3, self).url(obj))
 

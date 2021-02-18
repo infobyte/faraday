@@ -10,7 +10,7 @@ from random import randrange
 import pytest
 
 from tests.factories import SearchFilterFactory, UserFactory, SubFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, V3TestMixin
 from tests.test_api_agent import logout, http_req
 from tests.conftest import login_as
 from faraday.server.models import SearchFilter
@@ -118,15 +118,9 @@ class TestSearchFilterAPI(ReadWriteAPITests):
         self.first_object.creator = logged_user
         super(TestSearchFilterAPI, self).test_delete(test_client, logged_user)
 
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_bulk_delete(self, test_client, logged_user):
-        for obj in self.model.query.all():
-            obj.creator = logged_user
-        super(TestSearchFilterAPI, self).test_bulk_delete(test_client)
-
 
 @pytest.mark.usefixtures('logged_user')
-class TestSearchFilterAPIV3(TestSearchFilterAPI, PatchableTestsMixin):
+class TestSearchFilterAPIV3(TestSearchFilterAPI, V3TestMixin):
     def url(self, obj=None):
         return v2_to_v3(super(TestSearchFilterAPIV3, self).url(obj))
 
@@ -137,4 +131,10 @@ class TestSearchFilterAPIV3(TestSearchFilterAPI, PatchableTestsMixin):
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         self.first_object.creator = logged_user
         super(TestSearchFilterAPIV3, self).test_patch_update_an_object_does_not_fail_with_partial_data(test_client,
-                                                                                                     logged_user)
+                                                                                                       logged_user)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete(self, test_client, logged_user):
+        for obj in self.model.query.all():
+            obj.creator = logged_user
+        super().test_bulk_delete(test_client)

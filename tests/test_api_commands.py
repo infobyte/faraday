@@ -14,7 +14,7 @@ import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests, V3TestMixin
 from faraday.server.models import (
     Command,
     Workspace,
@@ -449,7 +449,7 @@ class TestListCommandView(ReadWriteAPITests):
         assert res.status_code == 400
 
 
-class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
+class TestListCommandViewV3(TestListCommandView, V3TestMixin):
     view_class = CommandV3View
 
     def url(self, obj=None, workspace=None):

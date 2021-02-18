@@ -23,7 +23,8 @@ from tests import factories
 from tests.test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
-    PaginationTestsMixin, PatchableTestsMixin,
+    PaginationTestsMixin,
+    V3TestMixin,
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView, HostsV3View
@@ -1137,7 +1138,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             assert index_in_hosts_ids == index_in_response_hosts
 
 
-class TestHostAPIGenericV3(TestHostAPIGeneric, PatchableTestsMixin):
+class TestHostAPIGenericV3(TestHostAPIGeneric, V3TestMixin):
     view_class = HostsV3View
 
     def url(self, obj=None, workspace=None):

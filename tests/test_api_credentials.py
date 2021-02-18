@@ -10,7 +10,7 @@ import pytest
 from tests import factories
 from tests.test_api_workspaced_base import (
     ReadWriteAPITests,
-    PatchableTestsMixin,
+    V3TestMixin,
 )
 from faraday.server.api.modules.credentials import CredentialView, CredentialV3View
 from faraday.server.models import Credential
@@ -269,7 +269,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         assert sorted(credentials_target) == [v['value']['target'] for v in response.json['rows']]
 
 
-class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, PatchableTestsMixin):
+class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, V3TestMixin):
     view_class = CredentialV3View
 
     def url(self, obj=None, workspace=None):

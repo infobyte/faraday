@@ -11,7 +11,7 @@ from posixpath import join as urljoin
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, V3TestMixin
 from tests import factories
 from tests.utils.url import v2_to_v3
 
@@ -410,7 +410,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         super(TestWorkspaceAPI, self).test_bulk_delete(test_client)
 
 
-class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
+class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):
 
     def check_url(self, url):
         return v2_to_v3(url)

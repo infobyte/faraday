@@ -11,7 +11,7 @@ import pytest
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, V3TestMixin
 from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
@@ -424,7 +424,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 404
 
 
-class TestAgentWithWorkspacesAPIGenericV3(TestAgentWithWorkspacesAPIGeneric, PatchableTestsMixin):
+class TestAgentWithWorkspacesAPIGenericV3(TestAgentWithWorkspacesAPIGeneric, V3TestMixin):
     def url(self, obj=None):
         return v2_to_v3(super(TestAgentWithWorkspacesAPIGenericV3, self).url(obj))
 

@@ -2,7 +2,7 @@
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, V3TestMixin
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
@@ -83,6 +83,6 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
                 u'field_order': 1} in res.json
 
 
-class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, PatchableTestsMixin):
+class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, V3TestMixin):
     def url(self, obj=None):
         return v2_to_v3(super(TestVulnerabilityCustomFieldsV3, self).url(obj))

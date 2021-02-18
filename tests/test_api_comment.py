@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 from faraday.server.api.modules.comments import CommentView, CommentV3View
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
-from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, V3TestMixin
 from tests import factories
 from tests.utils.url import v2_to_v3
 
@@ -129,7 +129,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         assert expected == [comment['text'] for comment in get_comments.json]
 
 
-class TestCommentAPIGenericV3(TestCommentAPIGeneric, PatchableTestsMixin):
+class TestCommentAPIGenericV3(TestCommentAPIGeneric, V3TestMixin):
     view_class = CommentV3View
 
     def url(self, obj=None, workspace=None):

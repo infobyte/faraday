@@ -22,7 +22,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     api_endpoint = 'ws'
     lookup_field = 'name'
     view_class = WorkspaceView
-    patchable_fields = ['name']
+    patchable_fields = ['description']
 
     def check_url(self, url):
         return url
@@ -403,11 +403,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    @pytest.mark.skip_sql_dialect('sqlite')
-    def test_bulk_delete(self, test_client, session):
-        super(TestWorkspaceAPI, self).test_bulk_delete(test_client)
 
 
 class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):

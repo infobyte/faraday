@@ -100,6 +100,7 @@ class UserFactory(FaradayFactory):
 class WorkspaceFactory(FaradayFactory):
 
     name = FuzzyText(chars=string.ascii_lowercase+string.digits)
+    description = FuzzyText()
     creator = factory.SubFactory(UserFactory)
 
     class Meta:

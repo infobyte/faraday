@@ -24,7 +24,8 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin, BulkDeleteMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin, BulkDeleteMixin, \
+    BulkUpdateMixin
 
 logger = logging.getLogger(__name__)
 
@@ -248,13 +249,6 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
         return query
 
-    def _get_objects(self, object_ids, eagerload=False, **kwargs):
-        for object_id in object_ids:
-            self._validate_object_id(object_id)
-        query = db.session.query(Workspace).filter(Workspace.name.in_(object_ids))
-        query = self._get_object_query(query, eagerload, **kwargs)
-        return query.all()
-
     def _get_object(self, object_id, eagerload=False, **kwargs):
 
         self._validate_object_id(object_id)
@@ -350,10 +344,19 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         return self._get_object(workspace_id).readonly
 
 
-class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin):
+class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
     route_prefix = 'v3/'
     trailing_slash = False
 
+    # We should want this, we should use _get_base_query, but for some cases as workspace, it needs a refactor first
+
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.name.in_(ids))
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.name.in_(ids))
 
 WorkspaceView.register(workspace_api)
 WorkspaceV3View.register(workspace_api)

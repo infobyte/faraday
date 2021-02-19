@@ -21,7 +21,8 @@ from faraday.server.api.base import (
     GenericView,
     ReadOnlyMultiWorkspacedView,
     PatchableMixin,
-    BulkDeleteMixin
+    BulkDeleteMixin,
+    BulkUpdateMixin
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
@@ -252,7 +253,7 @@ class AgentWithWorkspacesView(UpdateMixin,
         return obj
 
 
-class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin, BulkDeleteMixin):
+class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
     route_prefix = '/v3'
     trailing_slash = False
 

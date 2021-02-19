@@ -282,24 +282,6 @@ class GenericView(FlaskView):
             flask.abort(404, f'Object with id "{object_id}" not found')
         return obj
 
-
-    def _get_objects(self, object_ids, eagerload=False, **kwargs):
-        """
-        Given the object_id and extra route params, get an instance of
-        ``self.model_class``
-        """
-        for object_id in object_ids:
-            self._validate_object_id(object_id)
-        if eagerload:
-            query = self._get_eagerloaded_query(**kwargs)
-        else:
-            query = self._get_base_query(**kwargs)
-        try:
-            objs = query.filter(self._get_lookup_field().in_(object_ids)).all()
-        except NoResultFound:
-            flask.abort(404, f'Object with id "{object_ids}" not found')
-        return objs
-
     def _dump(self, obj, route_kwargs, **kwargs):
         """Serializes an object with the Marshmallow schema class
         returned by ``self._get_schema_class()``. Any passed kwargs
@@ -1198,6 +1180,45 @@ class PatchableMixin:
 
         return self._dump(obj, kwargs), 200
 
+
+class BulkUpdateMixin:
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['PATCH'])
+    def bulk_update(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Update a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        #TODO BULK_UPDATE_SCHEMA
+        if 'ids' not in flask.request.json:
+            flask.abort(400)
+        data = self._parse_data(self._get_schema_instance(kwargs, partial=True),
+                                flask.request)
+        # just in case an schema allows id as writable.
+        data.pop('id', None)
+        data.pop('ids', None)
+
+        return self._perform_bulk_update(flask.request.json['ids'], data, **kwargs), 200
+
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.id.in_(ids))
+
+    def _perform_bulk_update(self, ids, data, **kwargs):
+        if len(data) > 0:
+            updated = self._bulk_update_query(ids, **kwargs).update(data, synchronize_session='fetch')
+        else:
+            updated = 0
+        db.session.commit()
+        response = {'updated': updated}
+        return flask.jsonify(response)
+
+
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<workspace_name>/<route_base>/<id>/ route
 
@@ -1343,7 +1364,6 @@ class BulkDeleteMixin:
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
     def _perform_bulk_delete(self, ids, **kwargs):
-        t = self._bulk_delete_query(ids, **kwargs)
         deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
         db.session.commit()
         response = {'deleted': deleted}

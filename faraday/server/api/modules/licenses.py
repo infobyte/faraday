@@ -9,7 +9,8 @@ from faraday.server.api.base import (
     ReadWriteView,
     AutoSchema,
     PatchableMixin,
-    BulkDeleteMixin
+    BulkDeleteMixin,
+    BulkUpdateMixin
 )
 from faraday.server.schemas import (
     StrictDateTimeField,
@@ -38,7 +39,7 @@ class LicenseView(ReadWriteView):
     schema_class = LicenseSchema
 
 
-class LicenseV3View(LicenseView, PatchableMixin, BulkDeleteMixin):
+class LicenseV3View(LicenseView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
     route_prefix = 'v3/'
     trailing_slash = False
 

@@ -19,7 +19,7 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
     #unique_fields = ['ip']
     #update_fields = ['ip', 'description', 'os']
     view_class = CustomFieldsSchemaView
-    patchable_fields = ['field_name']
+    patchable_fields = ['field_display_name']
 
     def test_custom_fields_data(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(

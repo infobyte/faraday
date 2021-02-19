@@ -10,7 +10,12 @@ from faraday.server.models import db, Host, Service, VulnerabilityGeneric
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    InvalidUsage, CreateWorkspacedMixin, GenericWorkspacedView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin)
+    InvalidUsage,
+    CreateWorkspacedMixin,
+    GenericWorkspacedView,
+    PatchableWorkspacedMixin,
+    BulkDeleteWorkspacedMixin
+)
 from faraday.server.models import Comment
 comment_api = Blueprint('comment_api', __name__)
 

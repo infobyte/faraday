@@ -35,7 +35,7 @@ class TestLicensesAPI(ReadWriteAPITests):
     factory = factories.LicenseFactory
     api_endpoint = 'licenses'
     view_class = LicenseView
-    patchable_fields = ["products"]
+    patchable_fields = ["product"]
 
     def test_envelope_list(self, test_client, app):
         LicenseEnvelopedView.register(app)

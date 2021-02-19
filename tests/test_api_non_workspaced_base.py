@@ -176,34 +176,45 @@ class BulkUpdateTestsMixin:
 
         res = test_client.patch(self.url(), data={})
         assert res.status_code == 400
-        patch_data = {"ids": all_objs_id, "update_data": data}
-        res = test_client.patch(self.url(), data=patch_data)
+        data["ids"] = all_objs_id
+        res = test_client.patch(self.url(), data=data)
 
         assert res.status_code == 200, (res.status_code, res.json)
         assert self.model.query.count() == OBJECT_COUNT
+        assert res.json['updated'] == len(all_objs)
         for obj in self.model.query.all():
             if ignored_obj.id == obj.id:
-                assert any([data[updated_field] != getattr(obj, updated_field) for updated_field in data])
+                assert any(
+                    [
+                        data[updated_field] != getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
             else:
-                assert all([data[updated_field] == getattr(obj, updated_field) for updated_field in data])
+                assert all(
+                    [
+                        data[updated_field] == getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
 
     def test_bulk_update_fails_with_existing(self, test_client, session):
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
             data[unique_field] = getattr(self.objects[3], unique_field)
-            patch_data = {
-                "ids": [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)],
-                "update_data": data
-            }
-            res = test_client.patch(self.url(), data=patch_data)
+            data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)],
+            res = test_client.patch(self.url(), data=data)
             assert res.status_code == 400
             assert self.model.query.count() == OBJECT_COUNT
+            assert res.json['updated'] == 0
 
     def test_patch_bulk_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""
         all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
-        res = test_client.patch(self.url(), data={"ids": all_objs_id, "update_data": {}})
+        res = test_client.patch(self.url(), data={"ids": all_objs_id})
         assert res.status_code == 200, (res.status_code, res.json)
+        assert res.json['updated'] == 0
+
 
 
 @pytest.mark.usefixtures('logged_user')

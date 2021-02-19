@@ -401,18 +401,55 @@ class DeleteTestsMixin:
 @pytest.mark.usefixtures('logged_user')
 class BulkDeleteTestsMixin:
 
+    def get_all_objs_and_ids(self):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+        return all_objs, all_objs_id
+
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_delete(self, test_client):
-        all_objs = self.model.query.all()
-        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        ignored_obj = all_objs[-1]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
 
         res = test_client.delete(self.url(), data={})
         assert res.status_code == 400
         data = {"ids": all_objs_id}
         res = test_client.delete(self.url(), data=data)
-        assert res.status_code == 204  # No content
-        for obj in all_objs:
-            assert was_deleted(obj)
+        assert res.status_code == 200
+        assert all([was_deleted(obj) for obj in all_objs])
+        assert res.json['deleted'] == len(all_objs)
+        assert not was_deleted(ignored_obj)
+        assert self.model.query.count() == 1
+
+    def test_bulk_delete_readonly_fails(self, test_client, session):
+        self.workspace.readonly = True
+        session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = {"ids": all_objs_id}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 403  # No content
+        assert not any([was_deleted(obj) for obj in all_objs])
+        assert self.model.query.count() == OBJECT_COUNT
+
+    def test_delete_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = {"ids": all_objs_id}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 403  # No content
+        assert not any([was_deleted(obj) for obj in all_objs])
+        assert self.model.query.count() == OBJECT_COUNT
+
+    def test_delete_from_other_workspace_fails(self, test_client):
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+
+        data = {"ids": all_objs_id + [10000000]}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 204
+        assert all([was_deleted(obj) for obj in all_objs])
+        assert res.json['deleted'] == len(all_objs)
         assert self.model.query.count() == 0
 
 

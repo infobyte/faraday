@@ -1334,24 +1334,20 @@ class BulkDeleteMixin:
         #TODO BULK_DELETE_SCHEMA
         if 'ids' not in flask.request.json:
             flask.abort(400)
-        objs = self._get_objects(flask.request.json['ids'], **kwargs)
-        self._perform_bulk_delete(objs, **kwargs)
-        return None, 204
+        #objs = self._get_objects(flask.request.json['ids'], **kwargs)
+        #self._perform_bulk_delete(objs, **kwargs)
+        return self._perform_bulk_delete(flask.request.json['ids'], **kwargs), 200
 
-    def _perform_bulk_delete(self, objs, workspace_name=None):
-        # It IS better to use something like
-        # ```
-        # deleted = model_class.query.filter(model_class.id.in_(ids))/
-        # .delete(synchronize_session='fetch')
-        #
-        # db.session.commit()
-        # response = {'deleted': deleted}
-        # return flask.jsonify(response)
-        # ```
-        # TODO BUT FOR THIS THE ON CASCADE MUST BE SET BOTH IN THE DB AS IN THE CODE
-        for obj in objs:
-            db.session.delete(obj)
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.id.in_(ids))
+
+    def _perform_bulk_delete(self, ids, **kwargs):
+        t = self._bulk_delete_query(ids, **kwargs)
+        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
         db.session.commit()
+        response = {'deleted': deleted}
+        return flask.jsonify(response)
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
@@ -1402,13 +1398,9 @@ class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
         """
         return super(BulkDeleteWorkspacedMixin, self).bulk_delete(workspace_name=workspace_name)
 
-    def _perform_bulk_delete(self, objs, workspace_name=None):
-        with db.session.no_autoflush:
-            for obj in objs:
-                obj.workspace = self._get_workspace(workspace_name)
-
-        return super(BulkDeleteWorkspacedMixin, self)._perform_bulk_delete(objs, workspace_name)
-
+    def _bulk_delete_query(self, ids, **kwargs):
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return super()._bulk_delete_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 class CountWorkspacedMixin:
     """Add GET /<workspace_name>/<route_base>/count/ route

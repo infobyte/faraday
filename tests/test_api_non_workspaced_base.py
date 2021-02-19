@@ -183,14 +183,18 @@ class BulkDeleteTestsMixin:
 
         all_objs = self.model.query.all()
         all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        ignored_obj = all_objs[-1]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
 
+        res = test_client.delete(self.url(), data={})
+        assert res.status_code == 400
         data = {"ids": all_objs_id}
         res = test_client.delete(self.url(), data=data)
-        assert res.status_code == 204  # No content
-        for obj in all_objs:
-            assert was_deleted(obj)
-        assert self.model.query.count() == 0
-
+        assert res.status_code == 200
+        assert all([was_deleted(obj) for obj in all_objs])
+        assert res.json['deleted'] == len(all_objs)
+        assert not was_deleted(ignored_obj)
+        assert self.model.query.count() == 1
 
 
 class ReadWriteTestsMixin(ListTestsMixin,

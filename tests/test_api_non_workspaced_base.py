@@ -159,6 +159,54 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
 
 @pytest.mark.usefixtures('logged_user')
+class BulkUpdateTestsMixin:
+
+    @staticmethod
+    def control_data(test_suite, data: dict) -> dict:
+        return PatchableTestsMixin.control_data(test_suite, data)
+
+    def test_bulk_update_an_object(self, test_client, logged_user):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        ignored_obj = all_objs[-1]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
+
+        data = self.factory.build_dict()
+        data = BulkUpdateTestsMixin.control_data(self, data)
+
+        res = test_client.patch(self.url(), data={})
+        assert res.status_code == 400
+        patch_data = {"ids": all_objs_id, "update_data": data}
+        res = test_client.patch(self.url(), data=patch_data)
+
+        assert res.status_code == 200, (res.status_code, res.json)
+        assert self.model.query.count() == OBJECT_COUNT
+        for obj in self.model.query.all():
+            if ignored_obj.id == obj.id:
+                assert any([data[updated_field] != getattr(obj, updated_field) for updated_field in data])
+            else:
+                assert all([data[updated_field] == getattr(obj, updated_field) for updated_field in data])
+
+    def test_bulk_update_fails_with_existing(self, test_client, session):
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            data[unique_field] = getattr(self.objects[3], unique_field)
+            patch_data = {
+                "ids": [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)],
+                "update_data": data
+            }
+            res = test_client.patch(self.url(), data=patch_data)
+            assert res.status_code == 400
+            assert self.model.query.count() == OBJECT_COUNT
+
+    def test_patch_bulk_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
+        """To do this the user should use a PATCH request"""
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        res = test_client.patch(self.url(), data={"ids": all_objs_id, "update_data": {}})
+        assert res.status_code == 200, (res.status_code, res.json)
+
+
+@pytest.mark.usefixtures('logged_user')
 class DeleteTestsMixin:
 
     def test_delete(self, test_client, logged_user):
@@ -219,6 +267,7 @@ class ReadOnlyAPITests(ListTestsMixin,
 
 class V3TestMixin(
     PatchableTestsMixin,
-    BulkDeleteTestsMixin
+    BulkDeleteTestsMixin,
+    BulkUpdateTestsMixin
 ):
     pass

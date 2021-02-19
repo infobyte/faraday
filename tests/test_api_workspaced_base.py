@@ -202,18 +202,17 @@ class UpdateTestsMixin:
     def test_update_an_object_readonly_fails(self, test_client, method):
         self.workspace.readonly = True
         db.session.commit()
-        for unique_field in self.unique_fields:
-            data = self.factory.build_dict()
-            old_field = getattr(self.objects[0], unique_field)
-            old_id = getattr(self.objects[0], 'id')
-            if method == "PUT":
-                res = test_client.put(self.url(self.first_object), data=data)
-            elif method == "PATCH":
-                res = test_client.patch(self.url(self.first_object), data=data)
-            db.session.commit()
-            assert res.status_code == 403
-            assert self.model.query.count() == OBJECT_COUNT
-            assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
+
+        data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=data)
+        assert res.status_code == 403
+        assert self.model.query.count() == count
 
     @pytest.mark.parametrize("method", ["PUT"])
     def test_update_inactive_fails(self, test_client, method):
@@ -287,7 +286,7 @@ class PatchableTestsMixin(UpdateTestsMixin):
     def test_update_fails_with_existing(self, test_client, session, method):
         super().test_update_fails_with_existing(test_client, session, method)
 
-    def test_update_an_object_fails_with_empty_dict(self, test_client):
+    def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client):
         """To do this the user should use a PATCH request"""
         res = test_client.patch(self.url(self.first_object), data={})
         assert res.status_code == 200, (res.status_code, res.json)
@@ -295,6 +294,96 @@ class PatchableTestsMixin(UpdateTestsMixin):
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, method):
         super().test_update_cant_change_id(test_client, method)
+
+
+@pytest.mark.usefixtures('logged_user')
+class BulkUpdateTestsMixin:
+
+    @staticmethod
+    def control_data(test_suite, data: dict) -> dict:
+        return PatchableTestsMixin.control_data(test_suite, data)
+
+    def get_all_objs_and_ids(self):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+        return all_objs, all_objs_id
+
+    def test_bulk_update_an_object(self, test_client, logged_user):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        ignored_obj = all_objs[-1]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
+
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
+        count = self.model.query.count()
+        data = BulkUpdateTestsMixin.control_data(self, data)
+
+        res = test_client.patch(self.url(), data={})
+        assert res.status_code == 400
+        patch_data = {"ids": all_objs_id, "update_data": data}
+        res = test_client.patch(self.url(), data=patch_data)
+
+        assert res.status_code == 200, (res.status_code, res.json)
+        assert self.model.query.count() == count
+        for obj in self.model.query.all():
+            if ignored_obj.id == obj.id:
+                assert any([data[updated_field] != getattr(obj, updated_field) for updated_field in data])
+            else:
+                assert all([data[updated_field] == getattr(obj, updated_field) for updated_field in data])
+
+    def test_bulk_update_an_object_readonly_fails(self, test_client):
+        self.workspace.readonly = True
+        db.session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        count = self.model.query.count()
+        patch_data = {"ids": all_objs_id, "update_data": data}
+        res = test_client.patch(self.url(), data=patch_data)
+        assert res.status_code == 403
+        assert self.model.query.count() == count
+
+    def test_bulk_update_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        count = self.model.query.count()
+        patch_data = {"ids": all_objs_id, "update_data": data}
+        res = test_client.patch(self.url(), data=patch_data)
+        assert res.status_code == 403
+        assert self.model.query.count() == count
+
+    def test_bulk_update_fails_with_existing(self, test_client, session):
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            data[unique_field] = getattr(self.objects[3], unique_field)
+            patch_data = {
+                "ids": [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)],
+                "update_data": data
+            }
+            res = test_client.patch(self.url(), data=patch_data)
+            assert res.status_code == 400
+            assert self.model.query.count() == OBJECT_COUNT
+
+    def test_bulk_update_cant_change_id(self, test_client):
+        raw_json = self.factory.build_dict(workspace=self.workspace)
+        raw_json = self.control_cant_change_data(raw_json)
+        raw_json['id'] = 100000
+        expected_id = self.first_object.id
+        res = test_client.patch(self.url(), data={"ids": [expected_id], "update_data":raw_json})
+        assert res.status_code == 200, (res.status_code, res.data)
+        assert self.model.query.filter(self.view_class.id == 100000).first() is None
+
+    def test_patch_bulk_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
+        """To do this the user should use a PATCH request"""
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        res = test_client.patch(self.url(), data={"ids": all_objs_id, "update_data": {}})
+        assert res.status_code == 200, (res.status_code, res.json)
 
 
 class CountTestsMixin:
@@ -513,6 +602,7 @@ class ReadWriteMultiWorkspacedAPITests(ReadOnlyMultiWorkspacedAPITests,
 
 class V3TestMixin(
     PatchableTestsMixin,
-    BulkDeleteTestsMixin
+    BulkDeleteTestsMixin,
+    BulkUpdateTestsMixin
 ):
     pass

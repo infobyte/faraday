@@ -22,6 +22,7 @@
 , flask-classful
 , flask-kvsession-fork
 , flask-security
+, flask-socketio
 , flask_login
 , flask_sqlalchemy
 , hypothesis
@@ -109,6 +110,7 @@ buildPythonPackage rec {
       apispec
       apispec-webframeworks
       pyyaml
+      flask-socketio
     ];
   checkInputs =
     [

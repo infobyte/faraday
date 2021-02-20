@@ -67,6 +67,11 @@ let
         ./packages/apispec-webframeworks
         { };
 
+      bidict =
+        self.callPackage
+        ./packages/bidict
+        { };
+
       faraday-plugins =
         self.callPackage
         ./packages/faraday-plugins
@@ -100,6 +105,21 @@ let
       flask-security =
         self.callPackage
         ./packages/flask-security
+        { };
+
+      flask-socketio =
+        self.callPackage
+        ./packages/flask-socketio
+        { };
+
+      python-engineio =
+        self.callPackage
+        ./packages/python-engineio
+        { };
+
+      python-socketio =
+        self.callPackage
+        ./packages/python-socketio
         { };
 
       simplekv =

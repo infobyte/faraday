@@ -115,6 +115,8 @@ class ConfigSection:
             section = storage
         elif section_name == 'logger':
             section = logger_config
+        elif section_name == 'limiter':
+            section = limiter_config
         elif section_name == 'smtp':
             section = smtp
         else:
@@ -130,6 +132,12 @@ class DatabaseConfigObject(ConfigSection):
 class DashboardConfigObject(ConfigSection):
     def __init__(self):
         self.show_vulns_by_price = False
+
+
+class LimiterConfigObject(ConfigSection):
+    def __init__(self):
+        self.enabled = False
+        self.login_limit = "10/minutes"
 
 
 class FaradayServerConfigObject(ConfigSection):
@@ -203,6 +211,7 @@ websocket_ssl = WebsocketSSLConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
 smtp = SmtpConfigObject()
+limiter_config = LimiterConfigObject()
 
 parse_and_bind_configuration()
 

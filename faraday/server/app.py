@@ -7,6 +7,8 @@ import datetime
 
 import pyotp
 import requests
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from random import SystemRandom
 
@@ -365,6 +367,19 @@ def create_app(db_connection_string=None, testing=None):
         db,
         user_model=User,
         role_model=None)  # We won't use flask security roles feature
+
+    from faraday.server.api.modules.agent import agent_creation_api  # pylint: disable=import-outside-toplevel
+
+    app.limiter = Limiter(
+        app,
+        key_func=get_remote_address,
+        default_limits=[]
+    )
+    if not testing:
+        app.limiter.limit(faraday.server.config.limiter_config.login_limit)(agent_creation_api)
+
+    app.register_blueprint(agent_creation_api)
+
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
@@ -381,7 +396,7 @@ def create_app(db_connection_string=None, testing=None):
     register_blueprints(app)
     register_handlers(app)
 
-    app.view_functions['agent_api.AgentCreationView:post'].is_public = True
+    app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
 
     return app
 

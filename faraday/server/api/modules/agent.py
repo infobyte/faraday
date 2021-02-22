@@ -30,6 +30,7 @@ from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
+agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
 
@@ -339,5 +340,5 @@ class AgentView(ReadOnlyMultiWorkspacedView):
 
 
 AgentWithWorkspacesView.register(agent_api)
-AgentCreationView.register(agent_api)
 AgentView.register(agent_api)
+AgentCreationView.register(agent_creation_api)

@@ -115,6 +115,8 @@ class ConfigSection:
             section = storage
         elif section_name == 'logger':
             section = logger_config
+        elif section_name == 'smtp':
+            section = smtp
         else:
             return
         section.parse(__parser)
@@ -182,6 +184,11 @@ class SmtpConfigObject(ConfigSection):
         self.ssl = False
         self.certfile = None
         self.keyfile = None
+        self.enabled = False
+
+    def is_enabled(self):
+        return self.enabled is True
+
 
 class StorageConfigObject(ConfigSection):
     def __init__(self):

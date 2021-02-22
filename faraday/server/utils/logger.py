@@ -5,11 +5,13 @@ import logging
 import logging.handlers
 import faraday.server.config
 import errno
+import os
 
 from syslog_rfc5424_formatter import RFC5424Formatter
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'faraday-server.log'
+AUDIT_LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'audit.log'
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
@@ -26,10 +28,12 @@ def setup_logging():
     if faraday.server.config.logger_config.use_rfc5424_formatter:
         formatter = RFC5424Formatter()
     else:
-
         formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
     setup_console_logging(formatter)
-    setup_file_logging(formatter)
+
+    if not os.environ.get("FARADAY_DISABLE_LOGS"):
+        setup_file_logging(formatter, LOG_FILE)
+        setup_file_logging(formatter, AUDIT_LOG_FILE, 'audit')
 
 
 def setup_console_logging(formatter):
@@ -40,19 +44,20 @@ def setup_console_logging(formatter):
     LVL_SETTABLE_HANDLERS.append(console_handler)
 
 
-def setup_file_logging(formatter):
-    create_logging_path()
+def setup_file_logging(formatter, log_file, log_name=None):
+    create_logging_path(log_file)
     file_handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE, maxBytes=MAX_LOG_FILE_SIZE, backupCount=MAX_LOG_FILE_BACKUP_COUNT)
+        log_file, maxBytes=MAX_LOG_FILE_SIZE, backupCount=MAX_LOG_FILE_BACKUP_COUNT)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(faraday.server.config.LOGGING_LEVEL)
-    add_handler(file_handler)
+    add_handler(file_handler, log_name)
     LVL_SETTABLE_HANDLERS.append(file_handler)
 
 
-def add_handler(handler):
-    logger = logging.getLogger()
+def add_handler(handler, log_name=None):
+    logger = logging.getLogger(log_name)
     logger.addHandler(handler)
+    logger.propagate = False
     LOGGING_HANDLERS.append(handler)
 
 
@@ -62,12 +67,13 @@ def set_logging_level(level):
         handler.setLevel(level)
 
 
-def create_logging_path():
+def create_logging_path(path_file):
     try:
-        LOG_FILE.parent.mkdir(parents=True)
+        path_file.parent.mkdir(parents=True)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
 
 setup_logging()
 

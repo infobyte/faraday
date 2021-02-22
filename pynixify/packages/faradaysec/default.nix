@@ -21,8 +21,8 @@
 , flask
 , flask-classful
 , flask-kvsession-fork
-, flask-login
-, flask-security
+, flask-security-too
+, flask_login
 , flask_sqlalchemy
 , hypothesis
 , lib
@@ -59,7 +59,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "3.12";
+    "3.14.1";
 
   src =
     lib.cleanSource
@@ -82,8 +82,8 @@ buildPythonPackage rec {
       flask-classful
       email_validator
       wtforms
-      flask-login
-      flask-security
+      flask_login
+      flask-security-too
       marshmallow
       pillow
       psycopg2
@@ -112,8 +112,6 @@ buildPythonPackage rec {
     ];
   checkInputs =
     [
-      pytest
-      flask
       flask
       factory_boy
       pylint

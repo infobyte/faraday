@@ -12,9 +12,14 @@ from tests.factories import (WorkspaceFactory,
                              EmptyCommandFactory,
                              HostFactory,
                              CommandObjectFactory)
+from tests.utils.url import v2_to_v3
+
 
 @pytest.mark.usefixtures('logged_user')
-class TestActivityFeed():
+class TestActivityFeed:
+
+    def check_url(self, url):
+        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_activity_feed(self, test_client, session):
@@ -25,7 +30,7 @@ class TestActivityFeed():
         session.commit()
 
         res = test_client.get(
-            f'/v2/ws/{ws.name}/activities/'
+            self.check_url(f'/v2/ws/{ws.name}/activities/')
             )
 
         assert res.status_code == 200
@@ -52,7 +57,7 @@ class TestActivityFeed():
         }
 
         res = test_client.put(
-                f'/v2/ws/{ws.name}/activities/{command.id}/',
+                self.check_url(f'/v2/ws/{ws.name}/activities/{command.id}/'),
                 data=data,
             )
         assert res.status_code == 200
@@ -131,7 +136,7 @@ class TestActivityFeed():
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(f'/v2/ws/{command.workspace.name}/activities/')
+        res = test_client.get(self.check_url(f'/v2/ws/{command.workspace.name}/activities/'))
         assert res.status_code == 200
         assert res.json['activities'][0]['vulnerabilities_count'] == 8
         assert res.json['activities'][0]['criticalIssue'] == 1
@@ -140,3 +145,8 @@ class TestActivityFeed():
         assert res.json['activities'][0]['lowIssue'] == 1
         assert res.json['activities'][0]['infoIssue'] == 2
         assert res.json['activities'][0]['unclassifiedIssue'] == 1
+
+
+class TestActivityFeedV3(TestActivityFeed):
+    def check_url(self, url):
+        return v2_to_v3(url)

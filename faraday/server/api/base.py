@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import json
 import logging
 from json import JSONDecodeError
+from typing import Tuple
 
 import flask
 import sqlalchemy
@@ -22,11 +23,12 @@ from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
+from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
 
-from faraday.server.models import Workspace, db, Command, CommandObject
+from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -297,7 +299,7 @@ class GenericView(FlaskView):
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
         """
-        return FlaskParser().parse(schema, request, location="json",
+        return FlaskParser(unknown=EXCLUDE).parse(schema, request, location="json",
                                    *args, **kwargs)
 
     @classmethod
@@ -459,6 +461,17 @@ class ListMixin:
         return self.order_field
 
     def index(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Get a list of {class_model}."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         order_field = self._get_order_field(**kwargs)
         if order_field is not None:
@@ -595,29 +608,26 @@ class FilterAlchemyMixin:
 
 
 class FilterWorkspacedMixin(ListMixin):
-    """Add filter endpoint for searching on any objects columns
+    """Add filter endpoint for searching on any workspaced objects columns
     """
-
     @route('/filter')
     def filter(self, workspace_name):
         """
         ---
-            tags: ["filter"]
-            summary: Filters, sorts and groups objects using a json with parameters.
-            parameters:
-            - in: query
-              name: q
-              description: recursive json with filters that supports operators. The json could also contain sort and group
-
-            responses:
-              200:
-                description: return filtered, sorted and grouped results
-                content:
-                  application/json:
-                    schema: FlaskRestlessSchema
-              400:
-                description: invalid q was sent to the server
-
+        tags: [Filter, {tag_name}]
+        description: Filters, sorts and groups workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: invalid q was sent to the server
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name)
@@ -628,15 +638,20 @@ class FilterWorkspacedMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, workspace):
-        objs = search(db.session,
+    def _generate_filter_query(self, filters, workspace, severity_count=False):
+        filter_query = search(db.session,
                        self.model_class,
                        filters)
 
-        objs = objs.filter(self.model_class.workspace == workspace)
-        return objs
+        filter_query = filter_query.filter(self.model_class.workspace == workspace)
 
-    def _filter(self, filters, workspace_name):
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=True)
+
+        return filter_query
+
+    def _filter(self, filters, workspace_name, severity_count=False):
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -653,30 +668,121 @@ class FilterWorkspacedMixin(ListMixin):
             if 'limit' in filters:
                 limit = filters.pop('limit') # we need to remove pagination, since
 
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
-                workspace
+                workspace,
+                severity_count=severity_count
             )
-
+            count = filter_query.count()
             if limit:
-                objs = objs.limit(limit)
+                filter_query = filter_query.limit(limit)
             if offset:
-                objs = objs.offset(offset)
-            count = objs.count()
-            objs = self.schema_class(**marshmallow_params).dumps(objs.all())
+                filter_query = filter_query.offset(offset)
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
                 workspace,
             )
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in objs.all()]
-            vulns_data = []
+            rows = [list(zip(column_names, row)) for row in filter_query.all()]
+            data = []
             for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
+                data.append({field[0]: field[1] for field in row})
 
-            return vulns_data, len(rows)
+            return data, len(rows)
+
+
+class FilterMixin(ListMixin):
+    """Add filter endpoint for searching on any non workspaced objects columns
+    """
+
+    @route('/filter')
+    def filter(self):
+        """
+        ---
+        tags: ["Filter", {tag_name}]
+        description: Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: Recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: Returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: Invalid q was sent to the server
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters)
+
+        class PageMeta:
+            total = 0
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
+
+    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
+        filter_query = search(db.session,
+                      self.model_class,
+                      filters)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=host_vulns)
+
+        return filter_query
+
+    def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
+                severity_count=False, host_vulns=False) -> Tuple[list, int]:
+        marshmallow_params = {'many': True, 'context': {}}
+        try:
+            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        if 'group_by' not in filters:
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit') # we need to remove pagination, since
+
+            filter_query = self._generate_filter_query(
+                filters,
+                severity_count=severity_count,
+                host_vulns=host_vulns
+            )
+
+            if extra_alchemy_filters is not None:
+                filter_query = filter_query.filter(extra_alchemy_filters)
+            if limit:
+                filter_query = filter_query.limit(limit)
+            if offset:
+                filter_query = filter_query.offset(offset)
+            count = filter_query.count()
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            return json.loads(objs), count
+        else:
+            filter_query = self._generate_filter_query(
+                filters,
+            )
+            if extra_alchemy_filters is not None:
+                filter_query += filter_query.filter(extra_alchemy_filters)
+
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
+            rows = [list(zip(column_names, row)) for row in filter_query.all()]
+            data = []
+            for row in rows:
+                data.append({field[0]: field[1] for field in row})
+
+            return data, len(rows)
 
 
 class ListWorkspacedMixin(ListMixin):
@@ -988,12 +1094,12 @@ class UpdateMixin:
                                 flask.request)
         # just in case an schema allows id as writable.
         data.pop('id', None)
-        self._update_object(obj, data)
+        self._update_object(obj, data, partial=False)
         self._perform_update(object_id, obj, data, **kwargs)
 
         return self._dump(obj, kwargs), 200
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         """Perform changes in the selected object
 
         It modifies the attributes of the SQLAlchemy model to match
@@ -1006,7 +1112,7 @@ class UpdateMixin:
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         """Commit the SQLAlchemy session, check for updating conflicts"""
         try:
             db.session.add(obj)
@@ -1031,6 +1137,48 @@ class UpdateMixin:
                 raise
         return obj
 
+
+class PatchableMixin:
+    # TODO must be used with a UpdateMixin, when v2 be deprecated, add patch() to that Mixin
+
+    def patch(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        obj = self._get_object(object_id, **kwargs)
+        context = {'updating': True, 'object': obj}
+        data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
+                                flask.request)
+        # just in case an schema allows id as writable.
+        data.pop('id', None)
+        self._update_object(obj, data, partial=True)
+        self._perform_update(object_id, obj, data, partial=True, **kwargs)
+
+        return self._dump(obj, kwargs), 200
 
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<workspace_name>/<route_base>/<id>/ route
@@ -1075,7 +1223,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         """
         return super(UpdateWorkspacedMixin, self).put(object_id, workspace_name=workspace_name)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
 
@@ -1085,6 +1233,45 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
             object_id, obj, data, workspace_name)
+
+
+class PatchableWorkspacedMixin(PatchableMixin):
+    # TODO must be used with a UpdateWorkspacedMixin, when v2 be deprecated, add patch() to that Mixin
+
+    def patch(self, object_id, workspace_name=None):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(PatchableWorkspacedMixin, self).patch(object_id, workspace_name=workspace_name)
 
 
 class DeleteMixin:
@@ -1162,6 +1349,19 @@ class CountWorkspacedMixin:
     count_extra_filters = []
 
     def count(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Group {class_model} by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            404:
+              description: group_by is not specified
+        """
         res = {
             'groups': [],
             'total_count': 0
@@ -1232,6 +1432,30 @@ class CountMultiWorkspacedMixin:
     count_extra_filters = []
 
     def count_multi_workspace(self, **kwargs):
+        """
+        ---
+          tags: [{tag_name}]
+          summary: "Count {class_model} by multiples workspaces"
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            400:
+              description: No workspace passed or group_by is not specified
+        """
+        #"""head:
+        #  tags: [{tag_name}]
+        #   responses:
+        #     200:
+        #       description: Ok
+        # options:
+        #   tags: [{tag_name}]
+        #   responses:
+        #     200:
+        #       description: Ok
+        # """
         res = {
             'groups': defaultdict(dict),
             'total_count': 0

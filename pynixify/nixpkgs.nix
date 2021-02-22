@@ -50,9 +50,9 @@ let
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/468cb72902f321e860447fc58f2fc2672782c05b.tar.gz";
+        "https://github.com/infobyte/nixpkgs/archive/98720fe237de55ca5779af5ee07407d0947b8deb.tar.gz";
       sha256 =
-        "0w3dszxxi3d92dkm9picavawc97b42y72gxh6v4j48ablylmkann";
+        "1zfc84xg7xa70v3gfqn1wgzq0rn8fwna9bmmyi9720vs0bzkdj86";
     };
 
   packageOverrides =
@@ -97,24 +97,9 @@ let
         ./packages/flask-kvsession-fork
         { };
 
-      flask-login =
+      flask-security-too =
         self.callPackage
-        ./packages/flask-login
-        { };
-
-      flask-security =
-        self.callPackage
-        ./packages/flask-security
-        { };
-
-      nplusone =
-        self.callPackage
-        ./packages/nplusone
-        { };
-
-      pytest-factoryboy =
-        self.callPackage
-        ./packages/pytest-factoryboy
+        ./packages/flask-security-too
         { };
 
       simplekv =
@@ -130,11 +115,6 @@ let
       webargs =
         self.callPackage
         ./packages/webargs
-        { };
-
-      werkzeug =
-        self.callPackage
-        ./packages/werkzeug
         { };
 
     };

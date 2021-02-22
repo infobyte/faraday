@@ -18,11 +18,13 @@ from autobahn.twisted.websocket import (
     listenWS
 )
 
+from flask_mail import Mail
+
 from OpenSSL.SSL import Error as SSLError
 
 import faraday.server.config
 
-from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
 from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
@@ -34,6 +36,13 @@ from faraday.server.websocket_factories import (
 
 
 app = create_app()  # creates a Flask(__name__) app
+# After 'Create app'
+app.config['MAIL_SERVER'] = smtp.host
+app.config['MAIL_PORT'] = smtp.port
+app.config['MAIL_USE_SSL'] = smtp.ssl
+app.config['MAIL_USERNAME'] = smtp.username
+app.config['MAIL_PASSWORD'] = smtp.password
+mail = Mail(app)
 logger = logging.getLogger(__name__)
 
 
@@ -133,6 +142,11 @@ class WebServer:
         factory.protocol = BroadcastServerProtocol
         return factory
 
+    def __stop_all_threads(self):
+        if self.raw_report_processor.is_alive():
+            self.raw_report_processor.stop()
+        self.ping_home_thread.stop()
+
     def install_signal(self):
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
             signal(sig, SIG_DFL)
@@ -141,10 +155,7 @@ class WebServer:
         def signal_handler(*args):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
-            # teardown()
-            if self.raw_report_processor.isAlive():
-                self.raw_report_processor.stop()
-            self.ping_home_thread.stop()
+            self.__stop_all_threads()
 
         log_path = CONST_FARADAY_HOME_PATH / 'logs' / 'access-logging.log'
         site = twisted.web.server.Site(self.__root_resource,
@@ -200,10 +211,12 @@ class WebServer:
 
         except error.CannotListenError as e:
             logger.error(e)
+            self.__stop_all_threads()
             sys.exit(1)
-
 
         except Exception as e:
             logger.exception('Something went wrong when trying to setup the Web UI')
+            logger.exception(e)
+            self.__stop_all_threads()
             sys.exit(1)
 # I'm Py3

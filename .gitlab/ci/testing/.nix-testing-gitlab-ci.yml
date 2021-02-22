@@ -1,0 +1,106 @@
+
+pylint:
+    tags:
+        - faradaytests
+    image: nixorg/nix
+    stage: testing  # This should be after build_and_push_to_cachix to improve performance
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-shell --command "pylint --rcfile=.pylintrc faraday" | tee pylint.txt
+        - nix-env -if pynixify/nixpkgs.nix -A gnused
+        - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
+          #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+    artifacts:
+        paths:
+            - pylint.svg
+            - pylint3.svg
+    rules:
+        - if: $BUILD_TEST
+          when: never
+        - if: '$CI_COMMIT_TAG'
+          when: never
+        - if: '$FULL_TEST || $DAILY_TEST'
+          when: on_success
+        - when: on_success
+
+.postgresql_test_nix_base:
+    tags:
+        - faradaytests
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
+        - export LC_ALL=C.UTF-8
+        - export LANG=C.UTF-8
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        - mkdir run_from
+        - nix-shell --command "cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB"
+    artifacts:
+        when: on_failure
+        paths:
+            - ~/.faraday/logs/faraday-server.log
+    needs:
+      - job: build_and_push_to_cachix
+        artifacts: false
+  # Speed up tests
+    rules:
+      - if: $BUILD_TEST
+        when: never
+      - if: '$FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - if: '$CI_COMMIT_TAG'
+        when: never
+      - when: on_success
+
+.sqlite_test_nix_base:
+    tags:
+        - faradaytests
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
+        - export LC_ALL=C.UTF-8
+        - export LANG=C.UTF-8
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        - mkdir run_from
+        - nix-shell --command "cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings"
+    artifacts:
+        when: on_failure
+        paths:
+            - dist/*
+    needs:
+      - job: build_and_push_to_cachix
+        artifacts: false
+    rules:
+        - if: $BUILD_TEST
+          when: never
+        - if: '$CI_COMMIT_TAG'
+          when: never
+        - if: '$FULL_TEST || $DAILY_TEST'
+          when: on_success
+        - when: on_success
+
+sqlite_test_nix:
+    extends: .sqlite_test_nix_base
+    image: nixorg/nix
+
+
+postgresql_test_nix:
+    extends: .postgresql_test_nix_base
+    image: nixorg/nix

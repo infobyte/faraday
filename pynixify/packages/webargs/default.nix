@@ -12,7 +12,7 @@ buildPythonPackage rec {
   pname =
     "webargs";
   version =
-    "6.1.1";
+    "7.0.1";
 
   src =
     fetchPypi {
@@ -20,7 +20,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "02sdrr1w8x4wgx9yq8p6d690jfnivmjmnpzssq7fmzbsjzfwlbj1";
+        "07fr5hzffnqaw05ykrabn1kpqzi03g60yi49924glj7kx4y8hg9g";
     };
 
   propagatedBuildInputs =
@@ -35,7 +35,7 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, webapp2, Falcon, and aiohttp.";
+        "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, Falcon, and aiohttp.";
       homepage =
         "https://github.com/marshmallow-code/webargs";
     };

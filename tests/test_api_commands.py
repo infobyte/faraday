@@ -5,19 +5,21 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from tests.utils.url import v2_to_v3
 
 """Tests for many API endpoints that do not depend on workspace_name"""
+from posixpath import join as urljoin
 import datetime
 import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
+from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
     Command,
     Workspace,
     Vulnerability)
-from faraday.server.api.modules.commandsrun import CommandView
+from faraday.server.api.modules.commandsrun import CommandView, CommandV3View
 from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
@@ -30,11 +32,15 @@ from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandOb
 # and https://github.com/pytest-dev/pytest/issues/568 for more information
 
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(ReadOnlyAPITests):
+class TestListCommandView(ReadWriteAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
+    patchable_fields = ["ip"]
+
+    def check_url(self, url):
+        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.usefixtures('mock_envelope_list')
@@ -65,6 +71,7 @@ class TestListCommandView(ReadOnlyAPITests):
                 u'tool',
                 u'import_source',
                 u'creator',
+                u'metadata'
             ]
             assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())
@@ -91,7 +98,8 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=command.workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
 
         assert list(filter(lambda stats: stats['_id'] == command.id, res.json)) == [
@@ -148,7 +156,7 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [
                             {u'_id': command.id,
@@ -197,7 +205,7 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [{
             u'_id': command.id,
@@ -263,7 +271,7 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         raw_first_command = list(filter(lambda comm: comm['_id'] == commands[0].id, res.json))
 
@@ -309,6 +317,7 @@ class TestListCommandView(ReadOnlyAPITests):
                                        u'vulnerabilities_count': 1,
                                        u'criticalIssue': 0}
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_sub_second_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 248433),
@@ -318,6 +327,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 0.442406
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_more_than_one_second_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 29, 20, 248433),
@@ -327,6 +337,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 1.442406
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_more_than_one_minute_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 248433),
@@ -336,6 +347,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 61.442406
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_more_than_one_day_none_end_date_command_returns_msg(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 0),
@@ -345,6 +357,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'].lower() == "timeout"
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_less_than_one_day_none_end_date_command_returns_msg(self, test_client):
         command = self.factory(
             start_date=datetime.datetime.now(),
@@ -405,13 +418,13 @@ class TestListCommandView(ReadOnlyAPITests):
         )
         session.commit()
 
-        res = test_client.get(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
+        res = test_client.get(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 200
 
-        res = test_client.delete(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
+        res = test_client.delete(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 204
 
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         command_history = list(filter(lambda hist: hist['_id'] == command.id, res.json))
         assert len(command_history)
@@ -435,4 +448,12 @@ class TestListCommandView(ReadOnlyAPITests):
 
         assert res.status_code == 400
 
-# I'm Py3
+
+class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
+    view_class = CommandV3View
+
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestListCommandViewV3, self).url(obj, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)

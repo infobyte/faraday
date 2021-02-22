@@ -1,0 +1,15 @@
+deploy_to_dev_environment:
+    stage: deploy
+    variables:
+      FARADAY_DEB_NAME: faraday-server-community_amd64.deb
+      DEPLOY_TO_DEV_ENV: "True"
+    trigger:
+      project: faradaysec/devops
+      strategy: depend
+    rules:
+      - if: $DEPLOY_TO_DEV
+        when: on_success
+      - if: '$BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: manual
+        allow_failure: true
+      - when: never

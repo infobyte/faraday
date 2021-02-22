@@ -1,13 +1,67 @@
-IMPORTANT
-===========
-
-Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.
-Make sure you run ```./manage.py migrate``` the first time after an update!
-
-
 New features in the latest update
 =====================================
 
+
+3.14.1 [Feb 17th, 2021]:
+---
+ * ADD forgot password
+ * ADD update services by bulk_create
+ * ADD FARADAY_DISABLE_LOGS varibale to disable logs to filesystem
+ * ADD security logs in `audit.log` file
+ * UPD security dependency Flask-Security-Too v3.4.4
+ * MOD rename total_rows field in filter host response
+ * MOD improved Export cvs performance by reducing the number of queries
+ * MOD sanitize the content of vulns' request and response
+ * MOD dont strip new line in description when exporting csv
+ * MOD improved threads management on exception
+ * MOD improved performance on vulnerability filter
+ * MOD improved [API documentation](www.api.faradaysec.com)
+ * FIX upload a report with invalid custom fields
+ * ADD v3 API, which includes:
+    * All endpoints ends without `/`
+    * `PATCH {model}/id` endpoints
+    * Bulk update via PATCH `{model}` endpoints
+    * Bulk delete via DELETE `{model}` endpoints
+    * Endpoints removed:
+      * `/v2/ws/<workspace_id>/activate/`
+      * `/v2/ws/<workspace_id>/change_readonly/`
+      * `/v2/ws/<workspace_id>/deactivate/`
+      * `/v2/ws/<workspace_name>/hosts/bulk_delete/`
+      * `/v2/ws/<workspace_name>/vulns/bulk_delete/`
+    * Endpoints updated:
+      * `/v2/ws/<workspace_name>/vulns/<int:vuln_id>/attachments/` => \
+        `/v3/ws/<workspace_name>/vulns/<int:vuln_id>/attachment`
+
+3.14.0 [Dec 23th, 2020]:
+---
+ * ADD RESTless filter to multiples views, improving the searchs
+ * ADD "extras" modal in options menu, linking to other Faraday resources
+ * ADD `import vulnerability templates` command to faraday-manage
+ * ADD `generate nginx config` command to faraday-manage
+ * ADD vulnerabilities severities count to host
+ * ADD Active Agent columns to workspace
+ * ADD critical vulns count to workspace
+ * ADD `Remember me` login option
+ * ADD distinguish host flag
+ * ADD a create_date field to comments
+ * FIX to use new webargs version
+ * FIX Custom Fields view in KB (Vulnerability Templates)
+ * FIX bug on filter endpoint for vulnerabilities with offset and limit parameters
+ * FIX bug raising `403 Forbidden` HTTP error when the first workspace was not active
+ * FIX bug when changing the token expiration change
+ * FIX bug in Custom Fields type Choice when choice name is too long.
+ * FIX Vulnerability Filter endpoint Performance improvement using joinedload. Removed several nplusone uses
+ * MOD Updating the template.ini for new installations
+ * MOD Improve SMTP configuration
+ * MOD The agent now indicates how much time it had run (faraday-agent-dispatcher v1.4.0)
+ * MOD Type "Vulnerability Web" cannot have "Host" type as a parent when creating data in bulk
+ * MOD Expiration default time from 1 month to 12 hour
+ * MOD Improve data reference when uploading a new report
+ * MOD Refactor Knowledge Base's bulk create to take to take also multiple creation from vulns in status report.
+ * MOD All HTTP OPTIONS endpoints are now public
+ * MOD Change documentation and what's new links in about
+ * REMOVE Flask static endpoint
+ * REMOVE of our custom logger
 
 3.12 [Sep 3rd, 2020]:
 ---
@@ -52,6 +106,7 @@ New features in the latest update
  * Add creator information when uploading reports or using de bulk create api
  * Add feature to disable rules in the searcher
  * Add API endpoint to export Faraday data to Metasploit XML format
+ * Change websocket url route from / to /websockets
  * Use run date instead of creation date when plugins report specifies it
  * Improve knowledge base UX
  * Improve workspace table and status report table UX.

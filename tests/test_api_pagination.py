@@ -108,6 +108,3 @@ class PaginationTestsMixin:
         res = test_client.get(self.page_url(1, 5))
         assert res.status_code == 200
         assert len(res.json['data']) == 0
-
-
-# I'm Py3

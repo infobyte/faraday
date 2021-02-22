@@ -27,6 +27,7 @@ from flask_security.utils import (
     get_message,
     verify_and_update_password,
     verify_hash)
+
 from flask_kvsession import KVSessionExtension
 from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator
@@ -43,6 +44,7 @@ from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 
 logger = logging.getLogger(__name__)
+audit_logger = logging.getLogger('audit')
 
 
 def setup_storage_path():
@@ -89,6 +91,8 @@ def register_blueprints(app):
     from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
+    #Custom reset password
+    from faraday.server.api.modules.auth import auth # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -114,6 +118,7 @@ def register_blueprints(app):
     app.register_blueprint(searchfilter_api)
     app.register_blueprint(preferences_api)
     app.register_blueprint(export_data_api)
+    app.register_blueprint(auth)
 
 
 def check_testing_configuration(testing, app):
@@ -253,6 +258,10 @@ def expire_session(app, user):
     session.destroy()
     KVSessionExtension(app=app).cleanup_sessions(app)
 
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_logout_at = datetime.datetime.now()
+    audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
+
 
 def user_logged_in_succesfull(app, user):
     user_agent = request.headers.get('User-Agent')
@@ -269,8 +278,31 @@ def user_logged_in_succesfull(app, user):
     logger.debug("Cleanup sessions")
     KVSessionExtension(app=app).cleanup_sessions(app)
 
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_login_at = datetime.datetime.now()
+    audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
+
+
 def create_app(db_connection_string=None, testing=None):
-    app = Flask(__name__)
+
+    class CustomFlask(Flask):
+        SKIP_RULES = [  # These endpoints will be removed for v3
+            '/v3/ws/<workspace_name>/hosts/bulk_delete/',
+            '/v3/ws/<workspace_name>/vulns/bulk_delete/',
+            '/v3/ws/<workspace_id>/change_readonly/',
+            '/v3/ws/<workspace_id>/deactivate/',
+            '/v3/ws/<workspace_id>/activate/',
+        ]
+
+        def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
+            # Flask registers views when an application starts
+            # do not add view from SKIP_VIEWS
+            for rule_ in CustomFlask.SKIP_RULES:
+                if rule_ == rule:
+                    return
+            return super(CustomFlask, self).add_url_rule(rule, endpoint, view_func, **options)
+
+    app = CustomFlask(__name__, static_folder=None)
 
     try:
         secret_key = faraday.server.config.faraday_server.secret_key
@@ -292,16 +324,23 @@ def create_app(db_connection_string=None, testing=None):
     login_failed_message = ("Invalid username or password", 'error')
 
     app.config.update({
+        'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
         'SECURITY_PASSWORD_SINGLE_HASH': True,
         'WTF_CSRF_ENABLED': False,
         'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
         'SECURITY_POST_LOGIN_VIEW': '/_api/session',
-        'SECURITY_POST_LOGOUT_VIEW': '/_api/login',
+        'SECURITY_POST_LOGOUT_VIEW': '/_api/logout',
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',
+        'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
+        'SECURITY_POST_RESET_VIEW': '/',
+        'SECURITY_SEND_PASSWORD_RESET_EMAIL':True,
+        #For testing porpouse
+        'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
         'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
+
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.
@@ -340,7 +379,7 @@ def create_app(db_connection_string=None, testing=None):
     if not DepotManager.get('default'):
         if testing:
             DepotManager.configure('default', {
-                'depot.storage_path': '/tmp'
+                'depot.storage_path': '/tmp'  # nosec
             })
         else:
             DepotManager.configure('default', {
@@ -371,7 +410,6 @@ def create_app(db_connection_string=None, testing=None):
 
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
-
     app.debug = faraday.server.config.is_debug_mode()
     minify_json_output(app)
 
@@ -382,6 +420,7 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_api.AgentCreationView:post'].is_public = True
+    app.view_functions['agent_api.AgentCreationV3View:post'].is_public = True
 
     return app
 

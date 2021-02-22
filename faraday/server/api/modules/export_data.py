@@ -14,6 +14,16 @@ logger = logging.getLogger(__name__)
 
 @export_data_api.route('/v2/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data(workspace_name):
+    """
+    ---
+    get:
+      tags: ["File","Workspace"]
+      description: Exports all the workspace data in a XML file
+      responses:
+        200:
+          description: Ok
+    """
+
     workspace = Workspace.query.filter_by(name=workspace_name).first()
     if not workspace:
         logger.error("No such workspace. Please, specify a valid workspace.")
@@ -35,6 +45,14 @@ def export_data(workspace_name):
     else:
         logger.error("Invalid format. Please, specify a valid format.")
         abort(400, "Invalid format.")
+
+
+@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
+def export_data_v3(workspace_name):
+    return export_data(workspace_name)
+
+
+export_data_v3.__doc__ = export_data.__doc__
 
 
 def xml_metasploit_format(workspace):

@@ -35,7 +35,9 @@ from faraday.server.api.base import (
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage,
-    CountMultiWorkspacedMixin)
+    CountMultiWorkspacedMixin,
+    PatchableWorkspacedMixin
+)
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
     db,
@@ -47,7 +49,8 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
-    VulnerabilityGeneric, User,
+    VulnerabilityGeneric,
+    User
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -457,6 +460,7 @@ class VulnerabilityView(PaginatedMixin,
     sort_model_class = VulnerabilityWeb  # It has all the fields
     sort_pass_silently = True  # For compatibility with the Web UI
     order_field = desc(VulnerabilityGeneric.confirmed), VulnerabilityGeneric.severity, VulnerabilityGeneric.create_date
+    get_joinedloads = [Vulnerability.evidence, Vulnerability.creator]
 
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
@@ -513,7 +517,10 @@ class VulnerabilityView(PaginatedMixin,
         return obj
 
     def _process_attachments(self, obj, attachments):
-        old_attachments = db.session.query(File).filter_by(
+        old_attachments = db.session.query(File).options(
+            joinedload(File.creator),
+            joinedload(File.update_user)
+        ).filter_by(
             object_id=obj.id,
             object_type='vulnerability',
         )
@@ -531,16 +538,17 @@ class VulnerabilityView(PaginatedMixin,
                 content=faraday_file,
             )
 
-    def _update_object(self, obj, data):
-        data.pop('type') # It's forbidden to change vuln type!
+    def _update_object(self, obj, data, **kwargs):
+        data.pop('type', '') # It's forbidden to change vuln type!
         data.pop('tool', '')
         return super(VulnerabilityView, self)._update_object(obj, data)
 
-    def _perform_update(self, object_id, obj, data, workspace_name):
-        attachments = data.pop('_attachments', {})
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+        attachments = data.pop('_attachments', None if partial else {})
         obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
-        self._process_attachments(obj, attachments)
+        if attachments is not None:
+            self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
 
@@ -624,7 +632,24 @@ class VulnerabilityView(PaginatedMixin,
         }
 
     def count(self, **kwargs):
-        """Override to change severity values"""
+        """
+        ---
+        get:
+          tags: ["Vulnerability"]
+          summary: "Group vulnerabilities by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: VulnerabilityWeb
+            404:
+              description: group_by is not specified
+        tags: ["Vulnerability"]
+        responses:
+          200:
+            description: Ok
+        """
         res = super(VulnerabilityView, self).count(**kwargs)
 
         def convert_group(group):
@@ -644,6 +669,19 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
+        """
+        ---
+        post:
+          tags: ["Vulnerability", "File"]
+          description: Creates a new attachment in the vuln
+          responses:
+            201:
+              description: Created
+        tags: ["Vulnerability", "File"]
+        responses:
+          200:
+            description: Ok
+        """
 
         try:
             validate_csrf(request.form.get('csrf_token'))
@@ -678,22 +716,25 @@ class VulnerabilityView(PaginatedMixin,
     def filter(self, workspace_name):
         """
         ---
-            tags: ["vulnerability", "filter"]
-            summary: Filters, sorts and groups vulnerabilities using a json with parameters.
-            parameters:
-            - in: query
-              name: q
-              description: recursive json with filters that supports operators. The json could also contain sort and group
-
-            responses:
-              200:
-                description: return filtered, sorted and grouped vulnerabilities
-                content:
-                  application/json:
-                    schema: FlaskRestlessSchema
-              400:
-                description: invalid q was sent to the server
-
+        get:
+          tags: ["Filter", "Vulnerability"]
+          description: Filters, sorts and groups vulnerabilities using a json with parameters. These parameters must be part of the model.
+          parameters:
+          - in: query
+            name: q
+            description: Recursive json with filters that supports operators. The json could also contain sort and group.
+          responses:
+            200:
+              description: Returns filtered, sorted and grouped results
+              content:
+                application/json:
+                  schema: FlaskRestlessSchema
+            400:
+              description: Invalid q was sent to the server
+        tags: ["Filter", "Vulnerability"]
+        responses:
+          200:
+            description: Ok
         """
         filters = request.args.get('q')
         filtered_vulns, count = self._filter(filters, workspace_name)
@@ -806,9 +847,9 @@ class VulnerabilityView(PaginatedMixin,
             if offset:
                 vulns = vulns.offset(offset)
 
-            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
+            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(
                 vulns.all())
-            return json.loads(vulns), total_vulns.count()
+            return vulns, total_vulns.count()
         else:
             vulns = self._generate_filter_query(
                 VulnerabilityGeneric,
@@ -827,6 +868,19 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
+        """
+        ---
+        get:
+          tags: ["Vulnerability", "File"]
+          description: Get a vuln attachment
+          responses:
+            200:
+              description: Ok
+        tags: ["Vulnerability", "File"]
+        responses:
+          200:
+            description: Ok
+        """
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
@@ -860,7 +914,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vulns"]
+          tags: ["Vulnerability", "File"]
           description: Gets an attachment for a vulnerability
           responses:
             200:
@@ -872,6 +926,10 @@ class VulnerabilityView(PaginatedMixin,
               description: Workspace disabled or no permission
             404:
               description: Not Found
+        tags: ["Vulnerability", "File"]
+        responses:
+          200:
+            description: Ok
         """
         workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
@@ -892,6 +950,15 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+        """
+        ---
+        delete:
+          tags: ["Vulnerability", "File"]
+          description: Remove a vuln attachment
+          responses:
+            200:
+              description: Ok
+        """
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(
             VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name).first()
@@ -913,6 +980,19 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Vulnerability", "File"]
+          description: Get a CSV file with all vulns from a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Vulnerability", "File"]
+        responses:
+          200:
+            description: Ok
+        """
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q', '{}')
         custom_fields_columns = []
@@ -938,6 +1018,23 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
+        """
+        ---
+        delete:
+          tags: ["Bulk", "Vulnerability"]
+          description: Delete vulnerabilities in bulk
+          responses:
+            200:
+              description: Ok
+            400:
+              description: Bad request
+            403:
+              description: Forbidden
+        tags: ["Bulk", "Vulnerability"]
+        responses:
+          200:
+            description: Ok
+        """
         workspace = self._get_workspace(workspace_name)
         json_quest = request.get_json()
         vulnerability_ids = json_quest.get('vulnerability_ids', [])
@@ -966,12 +1063,16 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vulns"]
+          tags: ["Vulnerability"]
           params: limit
           description: Gets a list of top users having account its uploaded vulns
           responses:
             200:
               description: List of top users
+        tags: ["Vulnerability"]
+        responses:
+          200:
+            description: Ok
         """
         limit = flask.request.args.get('limit', 1)
         workspace = self._get_workspace(workspace_name)
@@ -990,6 +1091,41 @@ class VulnerabilityView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-VulnerabilityView.register(vulns_api)
+class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
 
-# I'm Py3
+    @route('/<int:vuln_id>/attachment', methods=['POST'])
+    def post_attachment(self, workspace_name, vuln_id):
+        return super(VulnerabilityV3View, self).post_attachment(workspace_name, vuln_id)
+
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
+    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
+        return super(VulnerabilityV3View, self).get_attachment(workspace_name, vuln_id, attachment_filename)
+
+    @route('/<int:vuln_id>/attachment', methods=['GET'])
+    def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        return super(VulnerabilityV3View, self).get_attachments_by_vuln(workspace_name, vuln_id)
+
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
+    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+        return super(VulnerabilityV3View, self).delete_attachment(workspace_name, vuln_id, attachment_filename)
+
+    @route('/export_csv', methods=['GET'])
+    def export_csv(self, workspace_name):
+        return super(VulnerabilityV3View, self).export_csv(workspace_name)
+
+    @route('/top_users', methods=['GET'])
+    def top_users(self, workspace_name):
+        return super(VulnerabilityV3View, self).top_users(workspace_name)
+
+    post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
+    get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
+    get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__
+    delete_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
+    export_csv.__doc__ = VulnerabilityView.post_attachment.__doc__
+    top_users.__doc__ = VulnerabilityView.post_attachment.__doc__
+
+
+VulnerabilityView.register(vulns_api)
+VulnerabilityV3View.register(vulns_api)

@@ -16,14 +16,15 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, _make_active_agents_count_property
+from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, \
+    _make_active_agents_count_property, count_vulnerability_severities
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,18 @@ class WorkspaceSummarySchema(Schema):
                                 attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_standard_count')
+    critical_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_critical_count')
+    info_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_informational_count')
+    high_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_high_count')
+    medium_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_medium_count')
+    low_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_low_count')
+    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
@@ -54,7 +67,9 @@ class WorkspaceDurationSchema(Schema):
 class WorkspaceSchema(AutoSchema):
 
     name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0, error="ERORROROR"))
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0,
+                                                  error="The workspace name must validate with the regex "
+                                                        "^[a-z0-9][a-z0-9\\_\\$\\(\\)\\+\\-\\/]*$"))
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -62,7 +77,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
-    active = fields.Boolean(dump_only=True)
+    active = fields.Boolean()
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)
@@ -92,7 +107,7 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
-class WorkspaceView(ReadWriteView):
+class WorkspaceView(ReadWriteView, FilterMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -101,6 +116,22 @@ class WorkspaceView(ReadWriteView):
     order_field = Workspace.name.asc()
 
     def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of workspaces."
+            tags: ["Workspace"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: WorkspaceSchema
+          tags: ["Workspace"]
+          responses:
+            200:
+              description: Ok
+        """
         query = self._get_base_query()
         objects = []
         for workspace_stat in query:
@@ -116,6 +147,37 @@ class WorkspaceView(ReadWriteView):
                     workspace_stat_dict['scope'].append({'name': scope})
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
+
+    @route('/filter')
+    def filter(self):
+        """
+        ---
+            tags: ["Filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _get_querystring_boolean_field(self, field_name, default=None):
         try:
@@ -185,6 +247,7 @@ class WorkspaceView(ReadWriteView):
                    _make_active_agents_count_property(),
                ),
             )
+        query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
 
         try:
             obj = query.one()
@@ -206,7 +269,7 @@ class WorkspaceView(ReadWriteView):
         db.session.commit()
         return workspace
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
         return super(WorkspaceView, self)._update_object(obj, data)
@@ -220,22 +283,66 @@ class WorkspaceView(ReadWriteView):
 
     @route('/<workspace_id>/activate/', methods=["PUT"])
     def activate(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Activate a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
         return changed
 
     @route('/<workspace_id>/deactivate/', methods=["PUT"])
     def deactivate(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Deactivate a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         changed = self._get_object(workspace_id).deactivate()
         db.session.commit()
         return changed
 
     @route('/<workspace_id>/change_readonly/', methods=["PUT"])
     def change_readonly(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Change readonly workspace's status
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
         return self._get_object(workspace_id).readonly
 
 
+class WorkspaceV3View(WorkspaceView, PatchableMixin):
+    route_prefix = 'v3/'
+    trailing_slash = False
+
+
 WorkspaceView.register(workspace_api)
-# I'm Py3
+WorkspaceV3View.register(workspace_api)

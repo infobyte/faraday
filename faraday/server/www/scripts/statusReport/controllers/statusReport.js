@@ -798,8 +798,8 @@ angular.module("faradayApp")
         $scope.saveAsModel = function() {
             var self = this;
             var selected = $scope.getCurrentSelection();
-            var promises = [];
             try {
+                var vulnsToSend = [];
                 selected.forEach(function(vuln) {
                     let vulnCopy = angular.copy(vuln);
                     vulnCopy.data = '';
@@ -807,16 +807,75 @@ angular.module("faradayApp")
                     vulnCopy.description = vuln.desc;
                     vulnCopy.desc_summary = vuln.desc;
                     vulnCopy.references = vuln.refs;
-                    promises.push(self.vulnModelsManager.create(vulnCopy, true));
+                    vulnsToSend.push(vulnCopy);
                 });
-                $q.all(promises).then(function(success) {
-                    commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);
-                }, function(failedMessage) {
-                    commonsFact.showMessage(failedMessage);
-                });
+                if(vulnsToSend.length > 1) {
+                    self.vulnModelsManager.bulkCreate(vulnsToSend).then(
+                        function(response) {
+                            var message = _saveAsModelMessage(response.data)
+                            commonsFact.showMessage(message, true);
+                        }, function(response) {
+                            var message = "Error creating vulnerability templates.\n\n";
+                            if(response.status === 400 && response.data.message)
+                                message += response.data.message;
+                            else
+                                message += _saveAsModelMessage(response.data);
+                            commonsFact.showMessage(message);
+                        }
+                    );
+                } else {
+                    self.vulnModelsManager.create(vulnsToSend[0], true).then(
+                        function(vuln) {
+                            var message = "The following vulnerability was created as template:\n\n";
+                            message += "\tId: " + vuln.id.toString() + ". " + "Name: " + vuln.name;
+                            commonsFact.showMessage(message, true);
+                        }, function(response) {
+                            commonsFact.showMessage(response);
+                        }
+                    );
+                }
             } catch(err) {
                 commonsFact.showMessage("Something failed when creating some of the templates.");
             }
+        };
+
+        var _saveAsModelMessage = function(data) {
+            var message = "";
+            var vulnsCreated = data.vulns_created;
+            if(vulnsCreated.length > 0) {
+                message += "The following vulnerabilities were created as templates:\n";
+                vulnsCreated.forEach(function (vuln) {
+                    if (vuln[0])
+                        message += "\n\tId: " + vuln[0].toString() + ". "
+                    message += "Name: " + vuln[1]
+                })
+                message += "\n\n"
+            }
+
+            var vulnsWithErrors = data.vulns_with_errors;
+            if(vulnsWithErrors.length > 0) {
+                message += "The following vulnerabilities couldn't be created as templates:\n";
+                vulnsWithErrors.forEach(function (vuln) {
+                    if (vuln[0])
+                        message += "\n\tId: " + vuln[0].toString() + ". "
+                    message += "Name: " + vuln[1]
+                })
+                message += "\n\n"
+            }
+
+            var vulnsWithConflict = data.vulns_with_conflict;
+            if(vulnsWithConflict.length > 0) {
+                message += "The following vulnerabilities generated conflicts when Faraday tried " +
+                           "to create them as templates, this means that their vulnerability " +
+                           "templates already exist:\n";
+                vulnsWithConflict.forEach(function (vuln) {
+                    if (vuln[0])
+                        message += "\n\tId: " + vuln[0].toString() + ". ";
+                    message += "Name: " + vuln[1];
+                })
+                message += "\n\n"
+            }
+            return message
         };
 
         $scope.selectAll = function() {

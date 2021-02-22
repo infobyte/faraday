@@ -5,19 +5,24 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from faraday.server.api.modules.comments import CommentView
+from faraday.server.api.modules.comments import CommentView, CommentV3View
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
-from tests.test_api_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from tests import factories
+from tests.utils.url import v2_to_v3
 
 
-class TestCredentialsAPIGeneric(ReadOnlyAPITests):
+class TestCommentAPIGeneric(ReadWriteAPITests):
     model = Comment
     factory = factories.CommentFactory
     view_class = CommentView
     api_endpoint = 'comment'
-    update_fields = ['username', 'password']
+    update_fields = ['text']
+    patchable_fields = ['text']
+
+    def check_url(self, url):
+        return url
 
     def _create_raw_comment(self, object_type, object_id):
         return {
@@ -87,7 +92,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 201
         assert len(session.query(Comment).all()) == initial_comment_count + 1
 
-        url = self.url(workspace=self.workspace).strip('/') + '_unique/'
+        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique/')
         res = test_client.post(url, data=raw_comment)
         assert res.status_code == 409
         assert 'object' in res.json
@@ -102,7 +107,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         session.commit()
         initial_comment_count = len(session.query(Comment).all())
         raw_comment = self._create_raw_comment('service', service.id)
-        url = self.url(workspace=self.workspace).strip('/') + '_unique/'
+        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique/')
         res = test_client.post(url,
                                data=raw_comment)
         assert res.status_code == 201
@@ -122,3 +127,13 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         get_comments = test_client.get(self.url(workspace=workspace))
         expected = ['first', 'second', 'third','fourth']
         assert expected == [comment['text'] for comment in get_comments.json]
+
+
+class TestCommentAPIGenericV3(TestCommentAPIGeneric, PatchableTestsMixin):
+    view_class = CommentV3View
+
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestCommentAPIGenericV3, self).url(obj, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)

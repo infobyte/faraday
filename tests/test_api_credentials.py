@@ -10,10 +10,12 @@ import pytest
 from tests import factories
 from tests.test_api_workspaced_base import (
     ReadWriteAPITests,
+    PatchableTestsMixin,
 )
-from faraday.server.api.modules.credentials import CredentialView
+from faraday.server.api.modules.credentials import CredentialView, CredentialV3View
 from faraday.server.models import Credential
 from tests.factories import HostFactory, ServiceFactory
+from tests.utils.url import v2_to_v3
 
 
 class TestCredentialsAPIGeneric(ReadWriteAPITests):
@@ -22,6 +24,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
     view_class = CredentialView
     api_endpoint = 'credential'
     update_fields = ['username', 'password']
+    patchable_fields = update_fields
 
     def test_get_list_backwards_compatibility(self, test_client, session, second_workspace):
         cred = self.factory.create(workspace=second_workspace)
@@ -142,7 +145,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 
         raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=43)
 
-        res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
+        res = test_client.put(self.url(credential, workspace=credential.workspace), data=raw_data)
         assert res.status_code == 400
 
     def test_create_with_invalid_parent_type(
@@ -177,7 +180,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         raw_data = self._generate_raw_update_data(
             'Name1', 'Username2', 'Password3', parent_id=credential.host.id)
 
-        res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
+        res = test_client.put(self.url(credential, workspace=credential.workspace), data=raw_data)
         assert res.status_code == 200
         assert res.json['username'] == u'Username2'
         assert res.json['password'] == u'Password3'
@@ -264,4 +267,10 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=asc")
         assert response.status_code == 200
         assert sorted(credentials_target) == [v['value']['target'] for v in response.json['rows']]
-# I'm Py3
+
+
+class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, PatchableTestsMixin):
+    view_class = CredentialV3View
+
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super(TestCredentialsAPIGenericV3, self).url(obj, workspace))

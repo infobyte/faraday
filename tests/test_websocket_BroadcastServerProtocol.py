@@ -5,16 +5,7 @@ from faraday.server.websocket_factories import WorkspaceServerFactory, \
     update_executors, BroadcastServerProtocol
 
 from tests.factories import AgentFactory, ExecutorFactory
-
-
-def _join_agent(test_client, session):
-    agent = AgentFactory.create(token='pepito')
-    session.add(agent)
-    session.commit()
-
-    headers = {"Authorization": f"Agent {agent.token}"}
-    token = test_client.post('v2/agent_websocket_token/', headers=headers).json['token']
-    return token
+from tests.utils.url import v2_to_v3
 
 
 class TransportMock:
@@ -37,6 +28,18 @@ def proto():
 
 class TestWebsocketBroadcastServerProtocol:
 
+    def check_url(self, url):
+        return url
+
+    def _join_agent(self, test_client, session):
+        agent = AgentFactory.create(token='pepito')
+        session.add(agent)
+        session.commit()
+
+        headers = {"Authorization": f"Agent {agent.token}"}
+        token = test_client.post(self.check_url('/v2/agent_websocket_token/'), headers=headers).json['token']
+        return token
+
     def test_join_agent_message_with_invalid_token_fails(self, session, proto, test_client):
         message = '{"action": "JOIN_AGENT", "token": "pepito" }'
         assert not proto.onMessage(message, False)
@@ -46,12 +49,12 @@ class TestWebsocketBroadcastServerProtocol:
         assert not proto.onMessage(message, False)
 
     def test_join_agent_message_with_valid_token(self, session, proto, workspace, test_client):
-        token = _join_agent(test_client, session)
+        token = self._join_agent(test_client, session)
         message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
         assert proto.onMessage(message, False)
 
     def test_leave_agent_happy_path(self, session, proto, workspace, test_client):
-        token = _join_agent(test_client, session)
+        token = self._join_agent(test_client, session)
         message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
         assert proto.onMessage(message, False)
 
@@ -59,7 +62,7 @@ class TestWebsocketBroadcastServerProtocol:
         assert proto.onMessage(message, False)
 
     def test_agent_status(self, session, proto, workspace, test_client):
-        token = _join_agent(test_client, session)
+        token = self._join_agent(test_client, session)
         agent = Agent.query.one()
         assert not agent.is_online
         message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
@@ -69,6 +72,11 @@ class TestWebsocketBroadcastServerProtocol:
         message = '{"action": "LEAVE_AGENT"}'
         assert proto.onMessage(message, False)
         assert not agent.is_online
+
+
+class TestWebsocketBroadcastServerProtocolV3(TestWebsocketBroadcastServerProtocol):
+    def check_url(self, url):
+        return v2_to_v3(url)
 
 
 class TestCheckExecutors:

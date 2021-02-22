@@ -24,7 +24,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
-    active = fields.Boolean(dump_only=True)
+    active = fields.Boolean()
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)
@@ -269,7 +269,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         db.session.commit()
         return workspace
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
         return super(WorkspaceView, self)._update_object(obj, data)
@@ -339,5 +339,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         return self._get_object(workspace_id).readonly
 
 
+class WorkspaceV3View(WorkspaceView, PatchableMixin):
+    route_prefix = 'v3/'
+    trailing_slash = False
+
+
 WorkspaceView.register(workspace_api)
-# I'm Py3
+WorkspaceV3View.register(workspace_api)

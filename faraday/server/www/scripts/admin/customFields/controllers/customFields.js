@@ -103,7 +103,7 @@ angular.module('faradayApp')
                 if ($scope.selected_cf.field_order === null)
                     $scope.selected_cf.field_order = getMaxOrder() + 1;
 
-                if($scope.selected_cf.field_metadata.length === 0){
+                if(!$scope.selected_cf.field_metadata || $scope.selected_cf.field_metadata.length === 0){
                     $scope.selected_cf.field_metadata = null;
                 }
 
@@ -119,7 +119,7 @@ angular.module('faradayApp')
 
 
             $scope.updateCustomCustomField = function () {
-                 if($scope.selected_cf.field_metadata.length === 0){
+                 if(!$scope.selected_cf.field_metadata || $scope.selected_cf.field_metadata.length === 0){
                     $scope.selected_cf.field_metadata = null;
                 }
 

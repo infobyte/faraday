@@ -673,12 +673,11 @@ class FilterWorkspacedMixin(ListMixin):
                 workspace,
                 severity_count=severity_count
             )
-
+            count = filter_query.count()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
-            count = filter_query.count()
             objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
@@ -1095,12 +1094,12 @@ class UpdateMixin:
                                 flask.request)
         # just in case an schema allows id as writable.
         data.pop('id', None)
-        self._update_object(obj, data)
+        self._update_object(obj, data, partial=False)
         self._perform_update(object_id, obj, data, **kwargs)
 
         return self._dump(obj, kwargs), 200
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         """Perform changes in the selected object
 
         It modifies the attributes of the SQLAlchemy model to match
@@ -1113,7 +1112,7 @@ class UpdateMixin:
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         """Commit the SQLAlchemy session, check for updating conflicts"""
         try:
             db.session.add(obj)
@@ -1138,6 +1137,48 @@ class UpdateMixin:
                 raise
         return obj
 
+
+class PatchableMixin:
+    # TODO must be used with a UpdateMixin, when v2 be deprecated, add patch() to that Mixin
+
+    def patch(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        obj = self._get_object(object_id, **kwargs)
+        context = {'updating': True, 'object': obj}
+        data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
+                                flask.request)
+        # just in case an schema allows id as writable.
+        data.pop('id', None)
+        self._update_object(obj, data, partial=True)
+        self._perform_update(object_id, obj, data, partial=True, **kwargs)
+
+        return self._dump(obj, kwargs), 200
 
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<workspace_name>/<route_base>/<id>/ route
@@ -1182,7 +1223,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         """
         return super(UpdateWorkspacedMixin, self).put(object_id, workspace_name=workspace_name)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
 
@@ -1192,6 +1233,45 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
             object_id, obj, data, workspace_name)
+
+
+class PatchableWorkspacedMixin(PatchableMixin):
+    # TODO must be used with a UpdateWorkspacedMixin, when v2 be deprecated, add patch() to that Mixin
+
+    def patch(self, object_id, workspace_name=None):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(PatchableWorkspacedMixin, self).patch(object_id, workspace_name=workspace_name)
 
 
 class DeleteMixin:

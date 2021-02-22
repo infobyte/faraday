@@ -5,6 +5,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from tests.utils.url import v2_to_v3
+
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest
@@ -12,7 +14,7 @@ import pytz
 from hypothesis import given, strategies as st
 
 from tests import factories
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX, PatchableTestsMixin
 from faraday.server.models import (
     License,
 )
@@ -32,8 +34,7 @@ class TestLicensesAPI(ReadWriteAPITests):
     model = License
     factory = factories.LicenseFactory
     api_endpoint = 'licenses'
-    # unique_fields = ['ip']
-    # update_fields = ['ip', 'description', 'os']
+    patchable_fields = ["products"]
 
     def test_envelope_list(self, test_client, app):
         LicenseEnvelopedView.register(app)
@@ -51,6 +52,15 @@ class TestLicensesAPI(ReadWriteAPITests):
         res = test_client.get(self.url(obj=lic))
         assert res.status_code == 200
         assert res.json['notes'] == 'A great note. License'
+
+
+class TestLicensesAPIV3(TestLicensesAPI, PatchableTestsMixin):
+    def url(self, obj=None):
+        return v2_to_v3(super(TestLicensesAPIV3, self).url(obj))
+
+    @pytest.mark.skip(reason="Not a license actually test")
+    def test_envelope_list(self, test_client, app):
+        pass
 
 
 def license_json():
@@ -86,7 +96,12 @@ def test_hypothesis_license(test_client, session):
         res = test_client.post('v2/licenses/', data=raw_data)
         assert res.status_code in [201, 400, 409]
 
+    @given(LicenseData)
+    def send_api_request_v3(raw_data):
+        raw_data['start'] = pytz.UTC.localize(raw_data['start']).isoformat()
+        raw_data['end'] = pytz.UTC.localize(raw_data['end']).isoformat()
+        res = test_client.post('v3/licenses/', data=raw_data)
+        assert res.status_code in [201, 400, 409]
+
     send_api_request()
-
-
-# I'm Py3
+    send_api_request_v3()

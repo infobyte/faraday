@@ -6,6 +6,9 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from builtins import str
+from posixpath import join as urljoin
+
+from tests.utils.url import v2_to_v3
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
@@ -101,7 +104,7 @@ class RetrieveTestsMixin:
         res = test_client.get(self.url(self.first_object, second_workspace))
         assert res.status_code == 404
 
-    @pytest.mark.parametrize('object_id', [12345, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', u'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
         url = self.url(object_id)
@@ -113,11 +116,12 @@ class CreateTestsMixin:
 
     def test_create_succeeds(self, test_client):
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.post(self.url(),
                                data=data)
         assert res.status_code == 201, (res.status_code, res.data)
-        assert self.model.query.count() == OBJECT_COUNT + 1
-        object_id = res.json['id']
+        assert self.model.query.count() == count + 1
+        object_id = res.json.get('id') or res.json['_id']
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
 
@@ -125,21 +129,23 @@ class CreateTestsMixin:
         self.workspace.readonly = True
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.post(self.url(),
                                data=data)
         db.session.commit()
         assert res.status_code == 403
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
 
 
     def test_create_inactive_fails(self, test_client):
         self.workspace.deactivate()
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
         res = test_client.post(self.url(),
                                data=data)
         assert res.status_code == 403, (res.status_code, res.data)
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
 
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})
@@ -172,43 +178,68 @@ class CreateTestsMixin:
 
 class UpdateTestsMixin:
 
-    def test_update_an_object(self, test_client):
+    def control_cant_change_data(self, data: dict) -> dict:
+        return data
+
+    @pytest.mark.parametrize("method", ["PUT"])
+    def test_update_an_object(self, test_client, method):
         data = self.factory.build_dict(workspace=self.workspace)
-        res = test_client.put(self.url(self.first_object),
-                              data=data)
+        data = self.control_cant_change_data(data)
+        count = self.model.query.count()
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            data = PatchableTestsMixin.control_data(self, data)
+            res = test_client.patch(self.url(self.first_object), data=data)
         assert res.status_code == 200
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
 
-    def test_update_an_object_readonly_fails(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT"])
+    def test_update_an_object_readonly_fails(self, test_client, method):
         self.workspace.readonly = True
         db.session.commit()
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
             old_field = getattr(self.objects[0], unique_field)
             old_id = getattr(self.objects[0], 'id')
-            res = test_client.put(self.url(self.first_object), data=data)
+            if method == "PUT":
+                res = test_client.put(self.url(self.first_object), data=data)
+            elif method == "PATCH":
+                res = test_client.patch(self.url(self.first_object), data=data)
             db.session.commit()
             assert res.status_code == 403
             assert self.model.query.count() == OBJECT_COUNT
             assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
 
-    def test_update_inactive_fails(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT"])
+    def test_update_inactive_fails(self, test_client, method):
         self.workspace.deactivate()
         db.session.commit()
         data = self.factory.build_dict(workspace=self.workspace)
-        res = test_client.put(self.url(self.first_object),
-                               data=data)
+        count = self.model.query.count()
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=data)
         assert res.status_code == 403
-        assert self.model.query.count() == OBJECT_COUNT
+        assert self.model.query.count() == count
 
-    def test_update_fails_with_existing(self, test_client, session):
+    @pytest.mark.parametrize("method", ["PUT"])
+    def test_update_fails_with_existing(self, test_client, session, method):
         for unique_field in self.unique_fields:
-            data = self.factory.build_dict()
-            data[unique_field] = getattr(self.objects[1], unique_field)
-            res = test_client.put(self.url(self.first_object), data=data)
+            unique_field_value = getattr(self.objects[1], unique_field)
+            if method == "PUT":
+                data = self.factory.build_dict()
+                data[unique_field] = unique_field_value
+                res = test_client.put(self.url(self.first_object), data=data)
+            elif method == "PATCH":
+                res = test_client.patch(self.url(self.first_object), data={unique_field: unique_field_value})
             assert res.status_code == 409
             assert self.model.query.count() == OBJECT_COUNT
 
@@ -217,24 +248,75 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
 
-    def test_update_cant_change_id(self, test_client):
+    @pytest.mark.parametrize("method", ["PUT"])
+    def test_update_cant_change_id(self, test_client, method):
         raw_json = self.factory.build_dict(workspace=self.workspace)
+        raw_json = self.control_cant_change_data(raw_json)
         expected_id = self.first_object.id
         raw_json['id'] = 100000
-        res = test_client.put(self.url(self.first_object),
-                              data=raw_json)
-        assert res.status_code == 200
-        assert res.json['id'] == expected_id
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=raw_json)
+        if method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=raw_json)
+        assert res.status_code == 200, (res.status_code, res.data)
+        object_id = res.json.get('id') or res.json['_id']
+        assert object_id == expected_id
 
+
+class PatchableTestsMixin(UpdateTestsMixin):
+
+    @staticmethod
+    def control_data(test_suite, data: dict) -> dict:
+        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_an_object(self, test_client, method):
+        super(PatchableTestsMixin, self).test_update_an_object(test_client, method)
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_an_object_readonly_fails(self, test_client, method):
+        super(PatchableTestsMixin, self).test_update_an_object_readonly_fails(test_client, method)
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_inactive_fails(self, test_client, method):
+        super(PatchableTestsMixin, self).test_update_inactive_fails(test_client, method)
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_fails_with_existing(self, test_client, session, method):
+        super(PatchableTestsMixin, self).test_update_fails_with_existing(test_client, session, method)
+
+    def test_update_an_object_fails_with_empty_dict(self, test_client):
+        """To do this the user should use a PATCH request"""
+        res = test_client.patch(self.url(self.first_object), data={})
+        assert res.status_code == 200, (res.status_code, res.json)
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
+    def test_update_cant_change_id(self, test_client, method):
+        super(PatchableTestsMixin, self).test_update_cant_change_id(test_client, method)
 
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
 
+        factory_kwargs = {}
+        for extra_filter in self.view_class.count_extra_filters:
+            field = extra_filter.left.name
+            value = extra_filter.right.effective_value
+            setattr(self.first_object, field, value)
+            factory_kwargs[field] = value
+
         session.add(self.factory.create(creator=self.first_object.creator,
-                                        workspace=self.first_object.workspace))
+                                  workspace=self.first_object.workspace,
+                                  **factory_kwargs))
 
         session.commit()
-        res = test_client.get(self.url() + "count/?group_by=creator_id")
+
+        if self.view_class.route_prefix.startswith("/v2"):
+            res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id"))
+        else:
+            res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
+
         assert res.status_code == 200, res.json
         res = res.get_json()
 
@@ -245,16 +327,29 @@ class CountTestsMixin:
                 grouped += 1
             creators.append(obj['creator_id'])
 
-        assert grouped == 1
+        assert grouped == 1, (res)
         assert creators == sorted(creators)
 
     def test_count_descending(self, test_client, session, user_factory):
 
+        factory_kwargs = {}
+        for extra_filter in self.view_class.count_extra_filters:
+            field = extra_filter.left.name
+            value = extra_filter.right.effective_value
+            setattr(self.first_object, field, value)
+            factory_kwargs[field] = value
+
         session.add(self.factory.create(creator=self.first_object.creator,
-                                        workspace=self.first_object.workspace))
+                                        workspace=self.first_object.workspace,
+                                        **factory_kwargs))
 
         session.commit()
-        res = test_client.get(self.url() + "count/?group_by=creator_id&order=desc")
+
+        if self.view_class.route_prefix.startswith("/v2"):
+            res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id&order=desc"))
+        else:
+            res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))
+
         assert res.status_code == 200, res.json
         res = res.get_json()
 
@@ -265,7 +360,7 @@ class CountTestsMixin:
                 grouped += 1
             creators.append(obj['creator_id'])
 
-        assert grouped == 1
+        assert grouped == 1, res
         assert creators == sorted(creators, reverse=True)
 
 
@@ -355,3 +450,7 @@ class ReadOnlyMultiWorkspacedAPITests(ListTestsMixin,
         res = test_client.get(self.url())
         assert res.status_code == 200
         assert len(res.json['data']) == OBJECT_COUNT
+
+class ReadWriteMultiWorkspacedAPITests(ReadOnlyMultiWorkspacedAPITests,
+                                       ReadWriteTestsMixin):
+    pass

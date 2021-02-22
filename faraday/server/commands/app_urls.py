@@ -4,17 +4,17 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
 from faraday.server.web import app
-from faraday import __version__ as f_version
 import json
 
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(format="yaml", server="localhost", no_servers=False):
+def openapi_format(format="yaml", server="localhost", no_servers=False, return_tags=False):
     extra_specs = {'info': {
         'description': 'The Faraday REST API enables you to interact with '
                        '[our server](https://github.com/infobyte/faraday).\n'
@@ -47,9 +47,25 @@ def openapi_format(format="yaml", server="localhost", no_servers=False):
     }
     spec.components.response("UnauthorizedError", response_401_unauthorized)
 
+    tags = set()
+
     with app.test_request_context():
-        for endpoint in app.view_functions:
-            spec.path(view=app.view_functions[endpoint], app=app)
+        for endpoint in app.view_functions.values():
+            spec.path(view=endpoint, app=app)
+
+        # Set up global tags
+        spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.SafeLoader)
+        for path_value in spec_yaml["paths"].values():
+            for data_value in path_value.values():
+                if 'tags' in data_value and any(data_value['tags']):
+                    for tag in data_value['tags']:
+                        tags.add(tag)
+        for tag in sorted(tags):
+            spec.tag({'name': tag})
+
+        if return_tags:
+            return sorted(tags)
+
         if format.lower() == "yaml":
             print(spec.to_yaml())
         else:

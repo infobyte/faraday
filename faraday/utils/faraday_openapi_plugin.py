@@ -125,6 +125,7 @@ class FaradayAPIPlugin(BasePlugin):
                     class_model = view_instance.model_class.__name__
                 else:
                     class_model = 'No name'
+                #print(f'{view_name} / {class_model}')
                 logger.debug(f'{view_name} / {class_model} / {rule.methods} / {view_name} / {view_instance._get_schema_class().__name__}')
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
                     view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)

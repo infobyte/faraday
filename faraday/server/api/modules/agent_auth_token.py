@@ -46,6 +46,11 @@ class AgentAuthTokenView(GenericView):
              'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval})
 
 
+class AgentAuthTokenV3View(AgentAuthTokenView):
+    route_prefix = '/v3'
+    trailing_slash = False
+
 AgentAuthTokenView.register(agent_auth_token_api)
+AgentAuthTokenV3View.register(agent_auth_token_api)
 
 # I'm Py3

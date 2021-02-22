@@ -52,5 +52,3 @@ class AgentAuthTokenV3View(AgentAuthTokenView):
 
 AgentAuthTokenView.register(agent_auth_token_api)
 AgentAuthTokenV3View.register(agent_auth_token_api)
-
-# I'm Py3

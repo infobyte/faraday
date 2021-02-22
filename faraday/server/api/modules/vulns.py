@@ -292,7 +292,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool'
+            'status_code', 'custom_fields', 'external_id', 'tool',
+            'cve', 'cwe', 'owasp', 'cvss_v2', 'cvss_v3',
         )
 
 

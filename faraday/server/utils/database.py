@@ -318,3 +318,16 @@ def is_unique_constraint_violation(exception):
         return True
     assert isinstance(exception.orig.pgcode, str)
     return exception.orig.pgcode == UNIQUE_VIOLATION
+
+
+NOT_NULL_VIOLATION = '23502'
+
+
+def not_null_constraint_violation(exception):
+    from faraday.server.models import db # pylint:disable=import-outside-toplevel
+    if db.engine.dialect.name != 'postgresql':
+        # Not implemened for RDMS other than postgres, we can live without
+        # this since it is just an extra check
+        return True
+    assert isinstance(exception.orig.pgcode, str)
+    return exception.orig.pgcode == NOT_NULL_VIOLATION

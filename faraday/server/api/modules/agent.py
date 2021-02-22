@@ -134,7 +134,7 @@ class AgentCreationView(CreateMixin, GenericView):
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
             abort(401, "Invalid Token")
-        if not pyotp.TOTP(faraday_server.agent_registration_secret, digits=25).verify(token, valid_window=1):
+        if not pyotp.TOTP(faraday_server.agent_registration_secret).verify(token, valid_window=1):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')

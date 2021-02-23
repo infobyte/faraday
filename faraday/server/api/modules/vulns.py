@@ -37,7 +37,8 @@ from faraday.server.api.base import (
     InvalidUsage,
     CountMultiWorkspacedMixin,
     PatchableWorkspacedMixin,
-    BulkDeleteWorkspacedMixin
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -1090,7 +1091,8 @@ class VulnerabilityView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
+class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin,
+                          BulkUpdateWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 

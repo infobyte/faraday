@@ -260,6 +260,19 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             flask.abort(404, f'Object with name "{object_id}" not found')
         return obj
 
+    def _get_objects(self, object_ids, eagerload=False, **kwargs):
+
+        for object_id in object_ids:
+            self._validate_object_id(object_id)
+
+        query = db.session.query(Workspace).filter(self._get_lookup_field().in_(object_ids))
+        query = self._get_object_query(query, eagerload, **kwargs)
+        try:
+            objs = query.all()
+        except NoResultFound:
+            flask.abort(404, f'Object with name "{object_id}" not found')
+        return objs
+
     def _perform_create(self, data, **kwargs):
         start_date = data.get("start_date", None)
         end_date = data.get("end_date", None)

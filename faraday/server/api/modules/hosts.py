@@ -26,7 +26,8 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterWorkspacedMixin,
     PatchableWorkspacedMixin,
-    BulkDeleteWorkspacedMixin
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -441,7 +442,7 @@ class HostsView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-class HostsV3View(HostsView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin):
+class HostsV3View(HostsView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 

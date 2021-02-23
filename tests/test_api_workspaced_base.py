@@ -268,7 +268,10 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @staticmethod
     def control_data(test_suite, data: dict) -> dict:
-        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
+        return {
+            key: value for (key, value) in data.items()
+            if key in test_suite.patchable_fields
+        }
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, method):
@@ -301,7 +304,12 @@ class BulkUpdateTestsMixin:
 
     @staticmethod
     def control_data(test_suite, data: dict) -> dict:
-        return PatchableTestsMixin.control_data(test_suite, data)
+        return {
+            key: value for (key, value) in data.items()
+            if key in PatchableTestsMixin.control_data(test_suite, data)
+            and key not in test_suite.unique_fields
+        }
+
 
     def get_all_objs_and_ids(self):
         all_objs = self.model.query.all()
@@ -326,11 +334,22 @@ class BulkUpdateTestsMixin:
 
         assert res.status_code == 200, (res.status_code, res.json)
         assert self.model.query.count() == count
+        assert res.json['updated'] == len(all_objs)
         for obj in self.model.query.all():
             if ignored_obj.id == obj.id:
-                assert any([data[updated_field] != getattr(obj, updated_field) for updated_field in data])
+                assert any(
+                    [
+                        data[updated_field] != getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
             else:
-                assert all([data[updated_field] == getattr(obj, updated_field) for updated_field in data])
+                assert all(
+                    [
+                        data[updated_field] == getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
 
     def test_bulk_update_an_object_readonly_fails(self, test_client):
         self.workspace.readonly = True
@@ -358,13 +377,17 @@ class BulkUpdateTestsMixin:
         assert res.status_code == 403
         assert self.model.query.count() == count
 
-    def test_bulk_update_fails_with_existing(self, test_client, session):
+    @pytest.mark.parametrize('existing', (True, False))
+    def test_bulk_update_fails_with_repeated_unique(self, test_client, session, existing):
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
-            data[unique_field] = getattr(self.objects[3], unique_field)
-            data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)]
+            if existing:
+                data[unique_field] = getattr(self.objects[3], unique_field)
+                data["ids"] = [getattr(self.objects[0], self.view_class.lookup_field)]
+            else:
+                data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)]
             res = test_client.patch(self.url(), data=data)
-            assert res.status_code == 400
+            assert res.status_code == 409
             assert self.model.query.count() == OBJECT_COUNT
 
     def test_bulk_update_cant_change_id(self, test_client):
@@ -375,7 +398,7 @@ class BulkUpdateTestsMixin:
         raw_json["ids"] = [expected_id]
         res = test_client.patch(self.url(), data=raw_json)
         assert res.status_code == 200, (res.status_code, res.data)
-        assert self.model.query.filter(self.view_class.id == 100000).first() is None
+        assert self.model.query.filter(self.model.id == 100000).first() is None
 
     def test_patch_bulk_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""

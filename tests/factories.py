@@ -307,7 +307,6 @@ class VulnerabilityFactory(VulnerabilityGenericFactory,
 
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
-    description = FuzzyText()
     type = "vulnerability"
 
     @classmethod

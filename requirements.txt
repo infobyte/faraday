@@ -37,3 +37,4 @@ apispec>=4.0.0
 apispec-webframeworks>=0.5.0
 pyyaml
 pyotp>=2.2.7
+Flask-Limiter

@@ -21,6 +21,7 @@
 , flask
 , flask-classful
 , flask-kvsession-fork
+, flask-limiter
 , flask-security-too
 , flask_login
 , flask_sqlalchemy
@@ -111,6 +112,7 @@ buildPythonPackage rec {
       apispec-webframeworks
       pyyaml
       pyotp
+      flask-limiter
     ];
   checkInputs =
     [

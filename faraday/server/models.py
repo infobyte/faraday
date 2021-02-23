@@ -1049,23 +1049,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     response = BlankColumn(Text)
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
-    cvss_v2 = BlankColumn(Text)
-    cvss_v3 = BlankColumn(Text)
-
-    @property
-    def cve(self):
-        return [reference_instance.name for reference_instance in self.reference_instances
-                if "cve" in reference_instance.name.lower()]
-
-    @property
-    def cwe(self):
-        return [reference_instance.name for reference_instance in self.reference_instances
-                if "cwe" in reference_instance.name.lower()]
-
-    @property
-    def owasp(self):
-        return [reference_instance.name for reference_instance in self.reference_instances
-                if "owasp" in reference_instance.name.lower()]
 
     vulnerability_duplicate_id = Column(
                         Integer,

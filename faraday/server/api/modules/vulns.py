@@ -124,6 +124,10 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
+    owasp = fields.Method(serialize='get_owasp_refs', default=[])
+    cve = fields.Method(serialize='get_cve_refs', default=[])
+    cwe = fields.Method(serialize='get_cwe_refs', default=[])
+    cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -170,11 +174,23 @@ class VulnerabilitySchema(AutoSchema):
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss_v2', 'cvss_v2', 'cwe', 'cve', 'owasp'
+            'cvss', 'cwe', 'cve', 'owasp',
             )
 
     def get_type(self, obj):
         return obj.__class__.__name__
+
+    def get_owasp_refs(self, obj):
+        return [reference for reference in obj.references if 'owasp' in reference.lower()]
+
+    def get_cwe_refs(self, obj):
+        return [reference for reference in obj.references if 'cwe' in reference.lower()]
+
+    def get_cve_refs(self, obj):
+        return [reference for reference in obj.references if 'cve' in reference.lower()]
+
+    def get_cvss_refs(self, obj):
+        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     def get_attachments(self, obj):
         res = {}

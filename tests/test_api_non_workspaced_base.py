@@ -168,7 +168,6 @@ class BulkUpdateTestsMixin:
     def test_bulk_update_an_object(self, test_client, logged_user):
         all_objs = self.model.query.all()
         all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
-        ignored_obj = all_objs[-1]
         all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
 
         data = self.factory.build_dict()
@@ -183,7 +182,7 @@ class BulkUpdateTestsMixin:
         assert self.model.query.count() == OBJECT_COUNT
         assert res.json['updated'] == len(all_objs)
         for obj in self.model.query.all():
-            if ignored_obj.id == obj.id:
+            if getattr(obj, self.view_class.lookup_field) not in all_objs_id:
                 assert any(
                     [
                         data[updated_field] != getattr(obj, updated_field)

@@ -309,7 +309,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss_v2', 'cvss_v3',
+            'cve', 'cwe', 'owasp', 'cvss',
         )
 
 

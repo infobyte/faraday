@@ -1125,6 +1125,12 @@ class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDelet
         # TODO REVISE ORIGINAL METHOD
         return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
 
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        query = VulnerabilityWeb.query.filter(VulnerabilityWeb.id.in_(ids))
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return query.filter(self.model_class.workspace_id == workspace.id)
+
     post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__

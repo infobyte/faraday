@@ -5,6 +5,7 @@ import logging
 import string
 import datetime
 
+import bleach
 import requests
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from random import SystemRandom
@@ -283,6 +284,10 @@ def user_logged_in_succesfull(app, user):
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
 
 
+def uia_username_mapper(identity):
+    return bleach.clean(identity, strip=True)
+
+
 def create_app(db_connection_string=None, testing=None):
 
     class CustomFlask(Flask):
@@ -327,7 +332,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
         'SECURITY_PASSWORD_SINGLE_HASH': True,
         'WTF_CSRF_ENABLED': False,
-        'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': [{'username': {'mapper': uia_username_mapper}}],
         'SECURITY_POST_LOGIN_VIEW': '/_api/session',
         'SECURITY_POST_LOGOUT_VIEW': '/_api/logout',
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',

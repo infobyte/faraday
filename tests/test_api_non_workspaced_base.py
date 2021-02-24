@@ -240,7 +240,7 @@ class BulkDeleteTestsMixin:
     def test_bulk_delete(self, test_client):
 
         all_objs = self.model.query.all()
-        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
         ignored_obj = all_objs[-1]
         all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
 
@@ -253,6 +253,27 @@ class BulkDeleteTestsMixin:
         assert res.json['deleted'] == len(all_objs)
         assert not was_deleted(ignored_obj)
         assert self.model.query.count() == 1
+
+    def test_bulk_delete_invalid_ids(self, test_client):
+        request_data = {'ids': [-1, 'test']}
+        count = self.model.query.count()
+        res = test_client.delete(self.url(), data=request_data)
+        assert res.status_code == 200
+        assert res.json['deleted'] == 0
+        assert self.model.query.count() == count
+
+    def test_bulk_delete_wrong_content_type(self, test_client):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+        count = self.model.query.count()
+
+        request_data = {'ids': all_objs_id}
+        headers = [('content-type', 'text/xml')]
+
+        res = test_client.delete(self.url(), data=request_data, headers=headers)
+        assert res.status_code == 400
+        assert self.model.query.count() == count
+        assert all([not was_deleted(obj) for obj in all_objs])
 
 
 class ReadWriteTestsMixin(ListTestsMixin,

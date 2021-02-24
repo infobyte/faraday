@@ -1420,7 +1420,7 @@ class BulkDeleteMixin:
               description: Ok
         """
         #TODO BULK_DELETE_SCHEMA
-        if 'ids' not in flask.request.json:
+        if not flask.request.json or 'ids' not in flask.request.json:
             flask.abort(400)
         #objs = self._get_objects(flask.request.json['ids'], **kwargs)
         #self._perform_bulk_delete(objs, **kwargs)

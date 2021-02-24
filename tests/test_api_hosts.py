@@ -845,23 +845,23 @@ class TestHostAPIV3(TestHostAPI):
     def services_url(self, host, workspace=None):
         return self.url(host, workspace) + '/services'
 
-    @pytest.mark.skip(reason="To be reimplemented")
+    @pytest.mark.skip(reason="Reimplemented in generic test")
     def test_bulk_delete_hosts(self, test_client, session):
         pass
 
-    @pytest.mark.skip(reason="To be reimplemented")
+    @pytest.mark.skip(reason="Reimplemented in generic test")
     def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
         pass
 
-    @pytest.mark.skip(reason="To be reimplemented")
+    @pytest.mark.skip(reason="Reimplemented in generic test")
     def test_bulk_delete_hosts_from_another_workspace(self, test_client, session):
         pass
 
-    @pytest.mark.skip(reason="To be reimplemented")
+    @pytest.mark.skip(reason="Reimplemented in generic test")
     def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
         pass
 
-    @pytest.mark.skip(reason="To be reimplemented")
+    @pytest.mark.skip(reason="Reimplemented in generic test")
     def test_bulk_delete_hosts_wrong_content_type(self, test_client, session):
         pass
 

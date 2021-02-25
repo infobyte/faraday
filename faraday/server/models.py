@@ -210,7 +210,7 @@ def _make_vuln_count_property(type_=None, confirmed=None,
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
-    elif confirmed == False:
+    elif confirmed == False:  # noqa E712
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
@@ -735,10 +735,10 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
     for attr, filter_value in join_filters.items():
         where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
-        select([func.sum(CommandObject.created)]). \
-            select_from(table('command_object')). \
-            select_from(table('vulnerability')). \
-            where(text(' and '.join(where_conditions)))
+        select([func.sum(CommandObject.created)])
+            .select_from(table('command_object'))
+            .select_from(table('vulnerability'))
+            .where(text(' and '.join(where_conditions)))
     )
 
 
@@ -1204,7 +1204,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     @property
     def has_duplicate(self):
-        return self.vulnerability_duplicate_id == None
+        return self.vulnerability_duplicate_id is None
 
     @property
     def hostnames(self):
@@ -2388,4 +2388,4 @@ event.listen(
 )
 
 # We have to import this after all models are defined
-import faraday.server.events # pylint: disable=unused-import
+import faraday.server.events  # noqa F401

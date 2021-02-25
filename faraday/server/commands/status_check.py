@@ -136,20 +136,19 @@ def print_postgresql_status():
     exit_code = 0
     result = check_postgres()
 
-
-    if result == False:
-        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
-            .format(red=Fore.RED, white=Fore.WHITE))
+    if not result:
+        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'
+              .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code
-    elif result == None:
-        print('[{red}-{white}] Database not initialized. Execute: faraday-manage initdb'\
-            .format(red=Fore.RED, white=Fore.WHITE))
+    elif result is None:
+        print('[{red}-{white}] Database not initialized. Execute: faraday-manage initdb'
+              .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code
     elif int(result[1][0])<90400:
-        print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
-            format(red=Fore.RED, white=Fore.WHITE))
+        print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'
+              .format(red=Fore.RED, white=Fore.WHITE))
     elif result:
         print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL is running and up to date')
         return exit_code
@@ -162,15 +161,15 @@ def print_postgresql_other_status():
     lock_status = check_locks_postgresql()
     if lock_status:
         print(f'[{Fore.YELLOW}-{Fore.WHITE}] Warning: PostgreSQL lock detected.')
-    elif lock_status == False:
+    elif not lock_status:
         print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL lock not detected. ')
-    elif lock_status == None:
+    elif lock_status is None:
         pass
 
     encoding = check_postgresql_encoding()
     if encoding:
         print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL encoding: {encoding}')
-    elif encoding == None:
+    elif encoding is None:
         pass
 
 
@@ -199,11 +198,13 @@ def print_config_status():
         print(f'[{Fore.RED}-{Fore.WHITE}] /.faraday/storage -> Permission denied')
 
     if check_open_ports():
-        print("[{green}+{white}] Port {PORT} in {ad} is open"\
-            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address))
+        print("[{green}+{white}] Port {PORT} in {ad} is open"
+              .format(PORT=faraday.server.config.faraday_server.port,
+                      green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address))
     else:
-        print("[{red}-{white}] Port {PORT} in {ad} is not open"\
-            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address))
+        print("[{red}-{white}] Port {PORT} in {ad} is not open"
+              .format(PORT=faraday.server.config.faraday_server.port,
+                      red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address))
 
 
 def full_status_check():

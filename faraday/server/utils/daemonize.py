@@ -159,8 +159,8 @@ def stop_server(port):
         logger.info("Faraday Server stopped successfully")
     except OSError as err:
         if err.errno == errno.EPERM:
-            logger.error("Couldn't stop Faraday Server. User doesn't"\
-                "have enough permissions")
+            logger.error("Couldn't stop Faraday Server. User doesn't"
+                         "have enough permissions")
             return False
         else:
             raise err
@@ -182,8 +182,8 @@ def is_server_running(port):
             remove_pid_file(port)
             return None
         elif err.errno == errno.EPERM:
-            logger.warning("Server is running BUT the current user"\
-                "doesn't have enough access to operate with it")
+            logger.warning("Server is running BUT the current user"
+                           "doesn't have enough access to operate with it")
             return pid
         else:
             raise
@@ -200,9 +200,9 @@ def get_server_pid(port):
         try:
             pid = int(pid_file.readline())
         except ValueError:
-            logger.warning('PID file was found but is corrupted. '\
-                'Assuming server is not running. Please check manually'\
-                'if Faraday Server is effectively running')
+            logger.warning('PID file was found but is corrupted. '
+                           'Assuming server is not running. Please check manually'
+                           'if Faraday Server is effectively running')
             remove_pid_file(port)
             return None
 

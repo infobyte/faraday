@@ -112,8 +112,8 @@ def _sub_operator(model, argument, fieldname):
 #: be described by the strings ``'=='``, ``'eq'``, ``'equals'``, etc.
 OPERATORS = {
     # Operators which accept a single argument.
-    'is_null': lambda f: f == None,
-    'is_not_null': lambda f: f != None,
+    'is_null': lambda f: f is None,
+    'is_not_null': lambda f: f is not None,
     'desc': lambda f: f.desc,
     'asc': lambda f: f.asc,
     # Operators which accept two arguments.

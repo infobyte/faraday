@@ -15,7 +15,6 @@ import unicodedata
 import time
 
 import pytz
-from factory import SubFactory
 from factory.fuzzy import (
     BaseFuzzyAttribute,
     FuzzyChoice,

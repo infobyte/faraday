@@ -11,8 +11,8 @@ import pytest
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, PatchableTestsMixin
-from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 from tests.utils.url import v2_to_v3

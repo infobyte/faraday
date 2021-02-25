@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-import string
 
 import pytest
 from marshmallow import ValidationError
@@ -428,10 +427,10 @@ def test_updates_command_object(session, workspace):
     service = host.services[0]
     vuln_host = Vulnerability.query.filter(
         Vulnerability.workspace == workspace,
-        Vulnerability.service == None).one()
+        Vulnerability.service == None).one()  # noqa: E711
     vuln_service = Vulnerability.query.filter(
         Vulnerability.workspace == workspace,
-        Vulnerability.host == None).one()
+        Vulnerability.host == None).one()  # noqa: E711
     vuln_web = VulnerabilityWeb.query.filter(
         VulnerabilityWeb.workspace == workspace).one()
     host_cred = Credential.query.filter(
@@ -458,7 +457,7 @@ def test_updates_command_object(session, workspace):
             CommandObject.command == command,
             CommandObject.object_type == table_name,
             CommandObject.object_id == obj.id,
-            CommandObject.created_persistent == True,
+            CommandObject.created_persistent == True,  # noqa E712
         ).one()
 
 
@@ -567,7 +566,7 @@ def test_creates_command_object_on_duplicates(
             CommandObject.command == new_command,
             CommandObject.object_type == table_name,
             CommandObject.object_id == obj.id,
-            CommandObject.created_persistent == False,
+            CommandObject.created_persistent == False,  # noqa E712
         ).one()
 
 

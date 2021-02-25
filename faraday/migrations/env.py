@@ -5,7 +5,6 @@ from faraday.server.web import app
 from faraday.server.models import db
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
 # this is the Alembic Config object, which provides

@@ -6,7 +6,6 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 from faraday.server.models import User
 from faraday.server.web import app
 from tests import factories
-from tests.conftest import logged_user, login_as
 from tests.utils.url import v2_to_v3
 
 

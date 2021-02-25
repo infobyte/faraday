@@ -14,7 +14,6 @@ from faraday.server.api.modules.hosts import HostsView
 from tests.test_api_workspaced_base import (
     ReadOnlyAPITests)
 from tests import factories
-from tests.factories import WorkspaceFactory
 
 @pytest.mark.parametrize(
     "with_host_vulns,with_service_vulns", [[True, False],

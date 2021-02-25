@@ -15,7 +15,7 @@ from tests.utils.url import v2_to_v3
 from urllib.parse import urlencode
 from random import choice
 from sqlalchemy.orm.util import was_deleted
-from hypothesis import given, assume, settings, strategies as st
+from hypothesis import given, strategies as st
 
 import pytest
 
@@ -27,8 +27,7 @@ from tests.test_api_workspaced_base import (
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView, HostsV3View
-from tests.factories import HostFactory, CommandFactory, \
-    EmptyCommandFactory, WorkspaceFactory
+from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second

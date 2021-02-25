@@ -8,13 +8,12 @@ See the file 'doc/LICENSE' for the license information
 from builtins import str
 from posixpath import join as urljoin
 
-from tests.utils.url import v2_to_v3
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
-from faraday.server.models import db, Workspace, Credential
+from faraday.server.models import db
 from tests.test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 

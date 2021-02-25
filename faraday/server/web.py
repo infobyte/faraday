@@ -25,7 +25,6 @@ from OpenSSL.SSL import Error as SSLError
 import faraday.server.config
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
-from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app

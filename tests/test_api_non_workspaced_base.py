@@ -7,8 +7,6 @@ See the file 'doc/LICENSE' for the license information
 '''
 from builtins import str
 
-from tests.utils.url import v2_to_v3
-
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
 import pytest

@@ -5,11 +5,8 @@ See the file 'doc/LICENSE' for the license information
 """
 from __future__ import print_function
 from __future__ import absolute_import
-from builtins import range
 
 import flask
-from flask_login import current_user
-from marshmallow import Schema, fields
 
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
@@ -18,23 +15,13 @@ import re
 import logging
 
 from flask import current_app as app
-from flask import abort, Blueprint, jsonify, g, request, make_response
-from flask_security.confirmable import requires_confirmation
-from flask_security.forms import LoginForm, ChangePasswordForm
-from flask_security.datastore import SQLAlchemyUserDatastore
-from flask_security.utils import (
-    get_message,
-    get_identity_attributes,
-)
-from flask_security.signals import password_reset, reset_password_instructions_sent
+from flask import Blueprint, request, make_response
+from flask_security.signals import reset_password_instructions_sent
 from faraday.server import config
 
 from flask_security.recoverable import generate_reset_password_token, update_password
 from flask_security.views import anonymous_user_required
-from werkzeug.middleware.proxy_fix import ProxyFix
-#from flask_security.recoverable import _security
-from flask_security.utils import do_flash, send_mail, \
-    config_value, get_token_status, verify_hash
+from flask_security.utils import send_mail, config_value, get_token_status, verify_hash
 from flask_security.forms import ResetPasswordForm
 
 from faraday.server.models import User

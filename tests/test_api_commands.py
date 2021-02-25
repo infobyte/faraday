@@ -14,13 +14,11 @@ import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
     Command,
-    Workspace,
     Vulnerability)
 from faraday.server.api.modules.commandsrun import CommandView, CommandV3View
-from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
 

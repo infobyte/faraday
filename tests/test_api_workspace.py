@@ -231,7 +231,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=0',
         '?confirmed=false'
     ])
-    def test_vuln_count_confirmed(self,
+    def test_vuln_count_confirmed_2(self,
                                   vulnerability_factory,
                                   test_client,
                                   session,
@@ -375,10 +375,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
-        assert active == True
+        assert active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
+        assert active_query
 
     def test_workspace_deactivation(self, test_client, workspace, session):
         workspace.active = True
@@ -389,10 +389,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
-        assert active == False
+        assert not active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
+        assert not active_query
 
     def test_create_fails_with_start_date_greater_than_end_date(self,
                                                            session,
@@ -422,10 +422,10 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
 
         res = test_client.get(self.url(workspace))
         active = res.json.get('active')
-        assert active == True
+        assert active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
+        assert active_query
 
     def test_workspace_deactivation(self, test_client, workspace, session):
         workspace.active = True
@@ -436,7 +436,7 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
 
         res = test_client.get(self.url(workspace))
         active = res.json.get('active')
-        assert active == False
+        assert not active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
+        assert not active_query

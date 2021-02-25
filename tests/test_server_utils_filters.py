@@ -4,7 +4,6 @@ from marshmallow.exceptions import ValidationError
 
 from faraday.server.utils.filters import FilterSchema
 from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.models import VulnerabilityWeb
 
 
 class TestFilters:

@@ -115,15 +115,6 @@ angular.module('faradayApp')
                 }
             };
 
-            $scope.refreshToken = function () {
-                agentFact.getNewAgentToken().then(
-                    function (response) {
-                        $scope.agentToken = response.data;
-                    }, function (error) {
-                        console.log(error);
-                    });
-            };
-
              $scope.runAgent = function (agentId) {
                  $scope.disableExecute = true;
 	             let executorData = {

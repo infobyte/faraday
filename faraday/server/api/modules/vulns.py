@@ -1122,12 +1122,24 @@ class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDelet
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):
-        # TODO REVISE ORIGINAL METHOD
-        return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+        #TODO BULK_DELETE_SCHEMA
+        if not flask.request.json or 'severities' not in flask.request.json:
+            return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+        return self._perform_bulk_delete(flask.request.json['severities'], by='severity',
+                                         workspace_name=workspace_name, **kwargs), 200
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         query = VulnerabilityWeb.query.filter(VulnerabilityWeb.id.in_(ids))
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return query.filter(self.model_class.workspace_id == workspace.id)
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        if kwargs.get("by", "id") != "severity":
+            query = self.model_class.query.filter(self.model_class.id.in_(ids))
+        else:
+            query = self.model_class.query.filter(self.model_class.severity.in_(ids))
         workspace = self._get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 

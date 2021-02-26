@@ -86,3 +86,32 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
 class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, V3TestMixin):
     def url(self, obj=None):
         return v2_to_v3(super(TestVulnerabilityCustomFieldsV3, self).url(obj))
+
+    def test_custom_fields_field_name_cant_be_changed(self, session, test_client):
+        super().test_custom_fields_field_name_cant_be_changed(session, test_client)
+        add_text_field = session.query(CustomFieldsSchema).filter_by(field_name='cvss').first()
+
+        def check_patch(data):
+            res = test_client.patch(self.url(add_text_field.id), data=data)
+
+            custom_field_obj = session.query(CustomFieldsSchema).filter_by(id=add_text_field.id).first()
+            assert custom_field_obj.field_name == 'cvss'
+            assert custom_field_obj.table_name == 'vulnerability'
+            assert custom_field_obj.field_type == 'str'
+            assert custom_field_obj.field_display_name == 'CVSS new'
+            assert res.status_code == 200
+
+            data['ids'] = [add_text_field.id]
+
+            res = test_client.patch(self.url(), data=data)
+
+            custom_field_obj = session.query(CustomFieldsSchema).filter_by(id=add_text_field.id).first()
+            assert custom_field_obj.field_name == 'cvss'
+            assert custom_field_obj.table_name == 'vulnerability'
+            assert custom_field_obj.field_type == 'str'
+            assert custom_field_obj.field_display_name == 'CVSS new'
+            assert res.status_code == 200
+
+        check_patch({'field_name': 'cvss 2'})
+        check_patch({'table_name': 'sarasa'})
+        check_patch({'field_type': 'int'})

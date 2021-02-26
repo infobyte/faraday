@@ -44,18 +44,16 @@ class CustomFieldsSchemaView(ReadWriteView):
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
 
-    @staticmethod
-    def _check_read_only_data(data):
+    def _check_post_only_data(self, data):
         for read_only_key in ['field_name', 'table_name', 'field_type']:
-            if read_only_key in data:
-                data.pop(read_only_key)
+            data.pop(read_only_key, None)
         return data
 
     def _update_object(self, obj, data, **kwargs):
         """
             Field name must be read only
         """
-        data = self._check_read_only_data(data)
+        data = self._check_post_only_data(data)
         return super(CustomFieldsSchemaView, self)._update_object(obj, data)
 
 
@@ -64,7 +62,7 @@ class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin, BulkDelet
     trailing_slash = False
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
-        data = self._check_read_only_data(data)
+        data = self._check_post_only_data(data)
         return super()._perform_bulk_update(ids, data, workspace_name=None, **kwargs)
 
 

@@ -81,6 +81,26 @@ COMMENT_TYPES = [
     'user'
 ]
 
+NOTIFICATION_METHODS = [
+    'mail',
+    'webhook',
+    'websocket'
+]
+
+NOTIFICATION_EVENTS = [
+    'new_workspace',
+    'new_agent',
+    'new_user',
+    'new_agent_scan',
+    'new_report_scan',
+    'new_vulnerability'
+]
+
+NOTIFICATION_LEVELS = [
+    'workspace',
+    'user'
+]
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -2090,11 +2110,51 @@ class ExecutiveReport(Metadata):
         )
 
 
+class NotificationMethod(db.Model):
+    __tablename__ = 'notification_method'
+    id = Column(Integer, primary_key=True)
+    method = Column(Enum(*NOTIFICATION_METHODS, name="notification_methods"))
+    method_configuration = Column(String, nullable=False)
+
+
+class NotificationConfig(db.Model):
+    __tablename__ = 'notification_config'
+    id = Column(Integer, primary_key=True)
+    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
+    method_id = Column(Integer, ForeignKey('notification_method.id'), index=True, nullable=False)
+    method = relationship(
+        'NotificationMethod',
+        backref=backref('notification_method', cascade="all, delete-orphan"),
+    )
+    level = Column(Enum(*NOTIFICATION_LEVELS, name="notification_levels"))
+
+
+# IMHO, This should be called Notification but it's already defined
+class NotificationEvent(db.Model):
+    __tablename__ = 'notification_event'
+    id = Column(Integer, primary_key=True)
+    event = Column(Enum(*NOTIFICATION_EVENTS, name="notificaion_events"))
+    notification_text = Column(Text, nullable=False)
+    mark_read = Column(Boolean, default=False, index=True)
+    create_date = Column(DateTime, default=datetime.utcnow)
+
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_event', cascade="all, delete-orphan")
+    )
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('notification_event', cascade="all, delete-orphan")
+    )
+
+
 class Notification(db.Model):
 
     __tablename__ = 'notification'
     id = Column(Integer, primary_key=True)
-
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
     user_notified = relationship(
         'User',

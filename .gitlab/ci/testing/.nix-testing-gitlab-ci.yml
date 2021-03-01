@@ -3,7 +3,7 @@ pylint:
     tags:
         - faradaytests
     image: nixorg/nix
-    stage: testing  # This should be after build_and_push_to_cachix to improve performance
+    stage: test  # This should be after build_and_push_to_cachix to improve performance
     script:
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
@@ -30,7 +30,7 @@ pylint:
 .postgresql_test_nix_base:
     tags:
         - faradaytests
-    stage: testing
+    stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - nix-env -if pynixify/nixpkgs.nix -A cachix
@@ -65,7 +65,7 @@ pylint:
 .sqlite_test_nix_base:
     tags:
         - faradaytests
-    stage: testing
+    stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - nix-env -if pynixify/nixpkgs.nix -A cachix

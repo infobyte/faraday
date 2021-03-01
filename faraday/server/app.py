@@ -144,7 +144,7 @@ def register_handlers(app):
         try:
             data = serialized.loads(token)
             user_id = data["user_id"]
-            user = User.query.filter_by(id=user_id).first()
+            user = User.query.filter_by(fs_uniquifier=user_id).first()
             if not user or not verify_hash(data['validation_check'], user.password):
                 logger.warn('Invalid authentication token. token invalid after password change')
                 return None
@@ -185,7 +185,7 @@ def register_handlers(app):
             logged_in = '_user_id' in flask.session
             user_id = session.get("_user_id")
             if logged_in:
-                user = User.query.filter_by(id=user_id).first()
+                user = User.query.filter_by(fs_uniquifier=user_id).first()
 
         if logged_in:
             assert user

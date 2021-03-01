@@ -543,9 +543,15 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     def test_happy_path_valid_json(self, test_client, session, csrf_token):
         agent = AgentFactory.create(workspaces=[self.workspace])
         executor = ExecutorFactory.create(agent=agent)
+        executor2 = ExecutorFactory.create(agent=agent)
 
         session.add(executor)
         session.commit()
+
+        assert agent.last_run is None
+        assert executor.last_run is None
+        assert executor2.last_run is None
+
         payload = {
             'csrf_token': csrf_token,
             'executorData': {
@@ -563,6 +569,10 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         command_id = res.json["command_id"]
         command = Command.query.filter(Command.workspace_id == self.workspace.id).one()
         assert command_id == command.id
+        assert agent.last_run is not None
+        assert executor.last_run is not None
+        assert executor2.last_run is None
+        assert agent.last_run == executor.last_run
 
     def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token,
                                                          session, test_client):

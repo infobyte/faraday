@@ -2278,7 +2278,7 @@ class Agent(Metadata):
         if execs:
             _last_run = None
             for exe in execs:
-                if _last_run is None or _last_run - exe.last_run <= timedelta():
+                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
                     _last_run = exe.last_run
             return _last_run
         return None

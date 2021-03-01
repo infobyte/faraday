@@ -455,7 +455,7 @@ class CustomLoginForm(LoginForm):
             return False
         self.email.data = remove_null_caracters(self.email.data)
 
-        self.user = _datastore.get_user(self.email.data)
+        self.user = _datastore.find_user(username=self.email.data)
 
         if self.user is None:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])

@@ -8,7 +8,7 @@ from tests.utils.url import v2_to_v3
 
 
 pytest.fixture('logged_user')
-class TestPreferences(GenericAPITest):
+class TestPreferences(GenericAPITest): # noqa E302
     model = User
     factory = UserFactory
     api_endpoint = 'preferences'

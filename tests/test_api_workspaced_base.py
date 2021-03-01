@@ -89,6 +89,7 @@ class ListTestsMixin:
         res = test_client.get(self.url())
         assert res.status_code == 200
 
+
 class RetrieveTestsMixin:
 
     def test_retrieve_one_object(self, test_client):
@@ -295,6 +296,7 @@ class PatchableTestsMixin(UpdateTestsMixin):
     def test_update_cant_change_id(self, test_client, method):
         super(PatchableTestsMixin, self).test_update_cant_change_id(test_client, method)
 
+
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
 
@@ -449,6 +451,7 @@ class ReadOnlyMultiWorkspacedAPITests(ListTestsMixin,
         res = test_client.get(self.url())
         assert res.status_code == 200
         assert len(res.json['data']) == OBJECT_COUNT
+
 
 class ReadWriteMultiWorkspacedAPITests(ReadOnlyMultiWorkspacedAPITests,
                                        ReadWriteTestsMixin):

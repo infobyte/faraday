@@ -15,6 +15,7 @@ from sqlalchemy.orm.util import was_deleted
 API_PREFIX = '/v2/'
 OBJECT_COUNT = 5
 
+
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
 

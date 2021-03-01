@@ -53,6 +53,7 @@ from faraday.server.models import (
     Action,
     RuleAction)
 
+
 # Make partials for start and end date. End date must be after start date
 def FuzzyStartTime():
     return (
@@ -61,6 +62,7 @@ def FuzzyStartTime():
         datetime.datetime.now() - datetime.timedelta(days=20),
         )
     )
+
 
 def FuzzyEndTime():
     return (

@@ -32,6 +32,7 @@ from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
 
+
 @pytest.mark.usefixtures('database', 'logged_user')
 class TestHostAPI:
 

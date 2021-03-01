@@ -15,6 +15,7 @@ from tests.test_api_workspaced_base import (
     ReadOnlyAPITests)
 from tests import factories
 
+
 @pytest.mark.parametrize(
     "with_host_vulns,with_service_vulns", [[True, False],
                                            [False, True],
@@ -131,6 +132,7 @@ HOST_NOT_TO_QUERY_AMOUNT = 2
 SERVICE_BY_HOST = 3
 VULN_BY_HOST = 2
 VULN_BY_SERVICE = 1
+
 
 class TestHostAPI(ReadOnlyAPITests):
     model = Host

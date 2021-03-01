@@ -15,8 +15,10 @@ try:
 except ImportError as e:
     from urllib.parse import urlencode
 
+
 def with_0_and_n_objects(n=10):
     return pytest.mark.parametrize('object_count', [0, n])
+
 
 class PaginationTestsMixin:
 

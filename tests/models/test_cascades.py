@@ -18,6 +18,7 @@ from faraday.server.models import (
     WorkspacePermission,
 )
 
+
 def test_delete_user(workspace, session):
     assert workspace.creator
     session.commit()

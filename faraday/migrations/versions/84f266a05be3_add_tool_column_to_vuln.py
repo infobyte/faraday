@@ -26,12 +26,11 @@ def upgrade():
     )
     conn = op.get_bind()
     conn.execute("""UPDATE vulnerability
-SET tool=SUBQUERY.tool   
+SET tool=SUBQUERY.tool
 FROM (select v.id, c.tool from vulnerability v, command_object co, command c where v.id = co.object_id and co.object_type = 'vulnerability' and co.command_id = c.id) AS SUBQUERY
 WHERE vulnerability.id=SUBQUERY.id""")
     conn.execute("UPDATE vulnerability set tool='Web UI' where tool=''")
-    
+
 
 def downgrade():
     op.drop_column('vulnerability','tool')
-    

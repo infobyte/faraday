@@ -71,11 +71,10 @@ _regex = re.compile(
     re.VERBOSE | re.IGNORECASE,
 )
 
+
 def isPEP440(arg):
     return not _regex.match(arg) is None
 
+
 def test_exists_and_content():
     assert isPEP440(__version__)
-
-
-# I'm Py3

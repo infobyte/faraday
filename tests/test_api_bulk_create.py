@@ -115,6 +115,7 @@ def test_create_host_add_hostnames(session, workspace):
     assert host.ip == "127.0.0.1"
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org", "test3.org"}
 
+
 def test_create_existing_host(session, host):
     session.add(host)
     session.commit()
@@ -159,6 +160,7 @@ def test_create_existing_service(session, service):
     data = bc.BulkServiceSchema().load(data)
     bc._create_service(service.workspace, service.host, data)
     assert count(Service, service.host.workspace) == 1
+
 
 def test_create_host_vuln(session, host):
     data = bc.VulnerabilitySchema().load(vuln_data)
@@ -238,6 +240,7 @@ def test_creates_vuln_with_command_object_without_tool(session, service):
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
     assert vuln.tool == command_data['tool']
+
 
 def test_cannot_create_host_vulnweb(session, host):
     data = vuln_data.copy()

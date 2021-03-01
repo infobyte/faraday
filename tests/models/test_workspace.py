@@ -119,4 +119,3 @@ def test_vuln_no_count(workspace, second_workspace, database):
     assert workspace.vulnerability_code_count is None
     assert workspace.vulnerability_standard_count is None
     assert workspace.vulnerability_total_count is None
-# I'm Py3

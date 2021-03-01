@@ -2,29 +2,23 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ Babel
-, buildPythonPackage
+{ buildPythonPackage
 , email_validator
 , fetchPypi
 , flask
-, flask-babelex
 , flask_login
-, flask_mail
 , flask_principal
 , flask_wtf
 , itsdangerous
 , lib
 , passlib
-, pytestrunner
-, twine
-, wheel
 }:
 
 buildPythonPackage rec {
   pname =
     "flask-security-too";
   version =
-    "3.4.5";
+    "4.0.0";
 
   src =
     fetchPypi {
@@ -33,24 +27,15 @@ buildPythonPackage rec {
       pname =
         "Flask-Security-Too";
       sha256 =
-        "19cdad65bxs23zz5hmr41s12359ija3p2kk0mbf9jsk1swg0b7d0";
+        "11sd8sk9ym0n9m9h3gqwrrq03070zj0pwwkx040vzahgzrva182a";
     };
 
-  buildInputs =
-    [
-      Babel
-      pytestrunner
-      twine
-      wheel
-    ];
   propagatedBuildInputs =
     [
       flask
       flask_login
-      flask_mail
       flask_principal
       flask_wtf
-      flask-babelex
       email_validator
       itsdangerous
       passlib

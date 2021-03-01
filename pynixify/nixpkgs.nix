@@ -67,6 +67,11 @@ let
         ./packages/apispec-webframeworks
         { };
 
+      bleach =
+        self.callPackage
+        ./packages/bleach
+        { };
+
       faraday-plugins =
         self.callPackage
         ./packages/faraday-plugins

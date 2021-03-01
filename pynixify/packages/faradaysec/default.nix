@@ -7,6 +7,7 @@
 , apispec-webframeworks
 , autobahn
 , bcrypt
+, bleach
 , buildPythonPackage
 , click
 , colorama
@@ -84,6 +85,7 @@ buildPythonPackage rec {
       wtforms
       flask_login
       flask-security-too
+      bleach
       marshmallow
       pillow
       psycopg2

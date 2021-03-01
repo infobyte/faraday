@@ -2,25 +2,19 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ beautifulsoup4
-, buildPythonPackage
-, click
-, colorama
-, dateutil
+{ buildPythonPackage
 , fetchPypi
-, html2text
 , lib
-, lxml
-, pytz
-, requests
-, simplejson
+, packaging
+, six
+, webencodings
 }:
 
 buildPythonPackage rec {
   pname =
-    "faraday-plugins";
+    "bleach";
   version =
-    "1.4.1";
+    "3.3.0";
 
   src =
     fetchPypi {
@@ -28,20 +22,14 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0jnacy9q4yv8b4hrld21qcdwsypbzndm1j9i4rwfi1lyvs78yqmp";
+        "0cx4jyvd7hlaiiq2cq6vps689b978w3kyqqrvkckvs75743igcwq";
     };
 
   propagatedBuildInputs =
     [
-      click
-      simplejson
-      requests
-      lxml
-      html2text
-      beautifulsoup4
-      pytz
-      dateutil
-      colorama
+      packaging
+      six
+      webencodings
     ];
 
   # TODO FIXME
@@ -51,6 +39,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Faraday plugins package";
+        "An easy safelist-based HTML-sanitizing tool.";
+      homepage =
+        "https://github.com/mozilla/bleach";
     };
 }

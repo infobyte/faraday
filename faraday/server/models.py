@@ -4,7 +4,7 @@
 import logging
 import operator
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 from random import SystemRandom
 
@@ -2190,6 +2190,7 @@ class Executor(Metadata):
         backref=backref('executors', cascade="all, delete-orphan"),
     )
     parameters_metadata = Column(JSONType, nullable=False, default={})
+    last_run = Column(DateTime)
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -2270,6 +2271,17 @@ class Agent(Metadata):
                 return 'offline'
         else:
             return 'paused'
+
+    @property
+    def last_run(self):
+        execs = db.session.query(Executor).filter_by(agent_id=self.id)
+        if execs:
+            _last_run = None
+            for exe in execs:
+                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
+                    _last_run = exe.last_run
+            return _last_run
+        return None
 
 
 class AgentExecution(Metadata):

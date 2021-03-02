@@ -40,12 +40,14 @@ class ExecutorSchema(AutoSchema):
     )
     id = fields.Integer(dump_only=True)
     name = fields.String(dump_only=True)
+    last_run = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Executor
         fields = (
             'id',
             'name',
+            'last_run',
             'parameters_metadata',
         )
 
@@ -59,6 +61,7 @@ class AgentSchema(AutoSchema):
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
+    last_run = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Agent
@@ -73,7 +76,8 @@ class AgentSchema(AutoSchema):
             'token',
             'is_online',
             'active',
-            'executors'
+            'executors',
+            'last_run'
         )
 
 
@@ -330,6 +334,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 parameters_data=executor_data["args"],
                 command=command
             )
+            executor.last_run = datetime.utcnow()
             db.session.add(agent_execution)
             db.session.commit()
 

@@ -107,10 +107,6 @@ class ConfigSection:
             section = faraday_server
         elif section_name == 'ldap':
             section = ldap
-        elif section_name == 'ssl':
-            section = ssl
-        elif section_name == 'websocket_ssl':
-            section = websocket_ssl
         elif section_name == 'storage':
             section = storage
         elif section_name == 'logger':
@@ -159,20 +155,6 @@ class LDAPConfigObject(ConfigSection):
         self.use_start_tls = None
 
 
-class SSLConfigObject(ConfigSection):
-    def __init__(self):
-        self.certificate = None
-        self.keyfile = None
-        self.port = None
-        self.enabled = False
-
-
-class WebsocketSSLConfigObject(ConfigSection):
-    def __init__(self):
-        self.keyfile = None
-        self.certificate = None
-        self.enabled = False
-
 
 class SmtpConfigObject(ConfigSection):
     def __init__(self):
@@ -203,8 +185,6 @@ database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
-ssl = SSLConfigObject()
-websocket_ssl = WebsocketSSLConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
 smtp = SmtpConfigObject()
@@ -220,7 +200,6 @@ def gen_web_config():
         'lic_db': CONST_LICENSES_DB,
         'vuln_model_db': CONST_VULN_MODEL_DB,
         'show_vulns_by_price': dashboard.show_vulns_by_price,
-        'websocket_ssl': websocket_ssl.enabled,
         'websocket_port': faraday_server.websocket_port,
     }
     return doc

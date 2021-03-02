@@ -74,13 +74,13 @@ def upgrade():
 
     op.create_foreign_key(
         'notification_event_user_id_fkey',
-        'notification',
+        'notification_event',
         'faraday_user', ['user_notified_id'], ['id']
     )
 
     op.create_foreign_key(
         'notification_event_workspace_id_fkey',
-        'notification',
+        'notification_event',
         'workspace', ['workspace_id'], ['id']
     )
 
@@ -88,7 +88,7 @@ def upgrade():
 def downgrade():
     op.drop_table('notification_event')
     op.drop_table('notification_config')
-    op.drop_table('notification_types')
+    op.drop_table('notification_method')
     op.execute('DROP TYPE notification_events')
-    op.execute('DROP TYPE notification_type')
+    op.execute('DROP TYPE notification_methods')
     op.execute('DROP TYPE notification_levels')

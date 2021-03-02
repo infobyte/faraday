@@ -6,6 +6,7 @@ from datetime import datetime
 import flask
 import logging
 
+import pyotp
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -30,6 +31,7 @@ from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
+agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
 
@@ -133,10 +135,10 @@ class AgentCreationView(CreateMixin, GenericView):
 
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
-        if not faraday_server.agent_token:
+        if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
             abort(401, "Invalid Token")
-        if token != faraday_server.agent_token:
+        if not pyotp.TOTP(faraday_server.agent_registration_secret).verify(token, valid_window=1):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')
@@ -374,7 +376,7 @@ class AgentV3View(AgentView):
 
 AgentWithWorkspacesView.register(agent_api)
 AgentWithWorkspacesV3View.register(agent_api)
-AgentCreationView.register(agent_api)
-AgentCreationV3View.register(agent_api)
+AgentCreationView.register(agent_creation_api)
+AgentCreationV3View.register(agent_creation_api)
 AgentView.register(agent_api)
 AgentV3View.register(agent_api)

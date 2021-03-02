@@ -111,6 +111,8 @@ class ConfigSection:
             section = storage
         elif section_name == 'logger':
             section = logger_config
+        elif section_name == 'limiter':
+            section = limiter_config
         elif section_name == 'smtp':
             section = smtp
         else:
@@ -128,6 +130,12 @@ class DashboardConfigObject(ConfigSection):
         self.show_vulns_by_price = False
 
 
+class LimiterConfigObject(ConfigSection):
+    def __init__(self):
+        self.enabled = False
+        self.login_limit = "10/minutes"
+
+
 class FaradayServerConfigObject(ConfigSection):
     def __init__(self):
         self.bind_address = None
@@ -136,7 +144,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.websocket_port = None
         self.session_timeout = 12
         self.api_token_expiration = 43200  # Default as 12 hs
-        self.agent_token = None
+        self.agent_registration_secret = None
         self.debug = False
         self.custom_plugins_folder = None
 
@@ -188,6 +196,7 @@ ldap = LDAPConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
 smtp = SmtpConfigObject()
+limiter_config = LimiterConfigObject()
 
 parse_and_bind_configuration()
 

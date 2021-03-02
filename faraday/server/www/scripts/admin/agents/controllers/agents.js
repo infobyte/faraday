@@ -10,12 +10,14 @@ angular.module('faradayApp')
         'Notification',
         '$routeParams',
         '$uibModal',
+        '$timeout',
         function ($scope,
                   agentFact,
                   workspacesFact,
                   Notification,
                   $routeParams,
-                  $uibModal
+                  $uibModal,
+                  $timeout
                   ) {
             $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;
@@ -64,11 +66,11 @@ angular.module('faradayApp')
                 getAgents();
             };
 
-
             var getToken = function () {
                 agentFact.getAgentToken($scope.workspace).then(
                     function (response) {
                         $scope.agentToken = response.data;
+                        $timeout(() => getToken(), response.data.expires_in*1000);
                     }, function (error) {
                         console.log(error);
                     });
@@ -111,15 +113,6 @@ angular.module('faradayApp')
                         break;
                     }
                 }
-            };
-
-            $scope.refreshToken = function () {
-                agentFact.getNewAgentToken().then(
-                    function (response) {
-                        $scope.agentToken = response.data;
-                    }, function (error) {
-                        console.log(error);
-                    });
             };
 
              $scope.runAgent = function (agentId) {

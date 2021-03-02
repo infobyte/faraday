@@ -975,8 +975,12 @@ ul#nav-tabs-container {
 
 .agent-token-container {
     font-size: 1.5em;
-    margin-right: 20px;
     padding: 12px;
+}
+
+.agent-token-container strong {
+    font-size: 16px;
+    margin-right: 0.5em;
 }
 
 #agent-table td {

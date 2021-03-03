@@ -11,6 +11,7 @@ import flask
 
 session_api = Blueprint('session_api', __name__)
 
+
 @session_api.route('/session')
 def session_info():
     """

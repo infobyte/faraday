@@ -13,4 +13,3 @@ def changes_password(username, password):
             print("Password changed succesfully")
         else:
             print("User not found in Faraday's Database")
-# I'm Py3

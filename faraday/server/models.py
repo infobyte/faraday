@@ -567,6 +567,7 @@ class CustomAssociationSet(_AssociationSet):
             for new_value in self._create(value):
                 self.col.add(new_value)
 
+
 def _build_associationproxy_creator(model_class_name):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation with the

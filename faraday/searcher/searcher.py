@@ -33,6 +33,7 @@ logger = logging.getLogger('Faraday searcher')
 threshold = 0.75
 min_weight = 0.3
 
+
 def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
 

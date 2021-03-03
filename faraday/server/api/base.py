@@ -1180,6 +1180,7 @@ class PatchableMixin:
 
         return self._dump(obj, kwargs), 200
 
+
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<workspace_name>/<route_base>/<id>/ route
 
@@ -1588,6 +1589,7 @@ class AutoSchema(Schema, metaclass=ModelSchemaMeta):
     def __init__(self, *args, **kwargs):
         super(AutoSchema, self).__init__(*args, **kwargs)
         self.unknown = EXCLUDE
+
 
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.

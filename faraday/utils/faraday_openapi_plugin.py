@@ -82,6 +82,7 @@ RE_URL = re.compile(r"<(?:[^:<>]+:)?([^<>]+)>")
 
 logger = logging.getLogger(__name__)
 
+
 class FaradayAPIPlugin(BasePlugin):
     """APISpec plugin for Flask"""
 

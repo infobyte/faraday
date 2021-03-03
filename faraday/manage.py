@@ -57,6 +57,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 #logger = logging.getLogger(__name__)
 
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
@@ -190,11 +191,13 @@ def validate_email(ctx, param, value):
     # Also validate that the email doesn't exist in the database
     return validate_user_unique_field(ctx, param, value)
 
+
 @click.command(help="List Available Plugins")
 def list_plugins():
     plugins_manager = PluginsManager()
     for _, plugin in plugins_manager.get_plugins():
         click.echo(f"{plugin.id}")
+
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -236,6 +239,7 @@ def create_tables():
         click.echo(click.style(
             'Tables created successfully!',
             fg='green', bold=True))
+
 
 @click.command(help="Generates a .zip file with technical information")
 def support():
@@ -296,6 +300,7 @@ def rename_user(current_username, new_username):
         sys.exit(1)
     else:
         change_username.change_username(current_username, new_username)
+
 
 @click.command(help="Generate nginx config")
 @click.option('--fqdn', prompt='Server FQDN', help='The FQDN of your faraday server', type=str, show_default=True)

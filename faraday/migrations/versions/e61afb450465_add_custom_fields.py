@@ -28,6 +28,7 @@ def upgrade():
                  'field_display_name TEXT)'
                  )
 
+
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE vulnerability DROP COLUMN custom_fields')

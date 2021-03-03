@@ -190,6 +190,8 @@ def is_server_running(port):
     else:
         return pid
 
+
+
 def get_server_pid(port):
     if not Path(str(FARADAY_SERVER_PID_FILE).format(port)).exists():
         return None

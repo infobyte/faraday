@@ -46,9 +46,11 @@ include:
   - local: .gitlab/ci/publish/.set-tag-gitlab-ci.yml
   - local: .gitlab/ci/publish/.docker-publish-gitlab-ci.yml
 
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
 stages:
     - pre_testing
-    - testing
+    - test
     - post_testing
     - pre_build
     - build

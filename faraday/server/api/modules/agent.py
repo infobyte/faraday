@@ -6,6 +6,7 @@ from datetime import datetime
 import flask
 import logging
 
+import pyotp
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -30,6 +31,7 @@ from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
+agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +42,14 @@ class ExecutorSchema(AutoSchema):
     )
     id = fields.Integer(dump_only=True)
     name = fields.String(dump_only=True)
+    last_run = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Executor
         fields = (
             'id',
             'name',
+            'last_run',
             'parameters_metadata',
         )
 
@@ -59,6 +63,7 @@ class AgentSchema(AutoSchema):
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
+    last_run = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Agent
@@ -73,7 +78,8 @@ class AgentSchema(AutoSchema):
             'token',
             'is_online',
             'active',
-            'executors'
+            'executors',
+            'last_run'
         )
 
 
@@ -129,10 +135,10 @@ class AgentCreationView(CreateMixin, GenericView):
 
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
-        if not faraday_server.agent_token:
+        if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
             abort(401, "Invalid Token")
-        if token != faraday_server.agent_token:
+        if not pyotp.TOTP(faraday_server.agent_registration_secret).verify(token, valid_window=1):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')
@@ -330,6 +336,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 parameters_data=executor_data["args"],
                 command=command
             )
+            executor.last_run = datetime.utcnow()
             db.session.add(agent_execution)
             db.session.commit()
 
@@ -369,7 +376,7 @@ class AgentV3View(AgentView):
 
 AgentWithWorkspacesView.register(agent_api)
 AgentWithWorkspacesV3View.register(agent_api)
-AgentCreationView.register(agent_api)
-AgentCreationV3View.register(agent_api)
+AgentCreationView.register(agent_creation_api)
+AgentCreationV3View.register(agent_creation_api)
 AgentView.register(agent_api)
 AgentV3View.register(agent_api)

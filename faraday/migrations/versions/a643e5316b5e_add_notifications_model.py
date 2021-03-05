@@ -32,18 +32,13 @@ NOTIFICATION_EVENTS = [
     'new_vulnerability'
 ]
 
-NOTIFICATION_LEVELS = [
-    'workspace',
-    'user'
-]
-
-
 def upgrade():
     op.create_table(
         'notification_method',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('method', sa.Enum(*NOTIFICATION_METHODS, name='notification_methods'), nullable=False),
         sa.Column('method_configuration', sa.String, nullable=False),
+        sa.Column('user_notified_id', sa.Integer),
     )
 
     op.create_table(
@@ -51,7 +46,7 @@ def upgrade():
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('event', sa.Enum(*NOTIFICATION_EVENTS, name='notification_events'), nullable=False),
         sa.Column('method_id', sa.Integer),
-        sa.Column('level', sa.Enum(*NOTIFICATION_LEVELS, name='notification_levels'), nullable=False)
+        sa.Column('active', sa.Boolean(), default=True)
     )
 
     op.create_table(
@@ -61,9 +56,6 @@ def upgrade():
         sa.Column('notification_text', sa.Text()),
         sa.Column('mark_read', sa.Boolean(), default=False),
         sa.Column('create_date', sa.DateTime(), default=datetime.now()),
-        sa.Column('user_notified_id', sa.Integer),
-        sa.Column('workspace_id', sa.Integer),
-        # TODO: check default in bool and mark_read
     )
 
     op.create_foreign_key(
@@ -73,15 +65,9 @@ def upgrade():
     )
 
     op.create_foreign_key(
-        'notification_event_user_id_fkey',
-        'notification_event',
+        'notification_method_user_notified_id_fkey',
+        'notification_method',
         'faraday_user', ['user_notified_id'], ['id']
-    )
-
-    op.create_foreign_key(
-        'notification_event_workspace_id_fkey',
-        'notification_event',
-        'workspace', ['workspace_id'], ['id']
     )
 
 
@@ -91,4 +77,3 @@ def downgrade():
     op.drop_table('notification_method')
     op.execute('DROP TYPE notification_events')
     op.execute('DROP TYPE notification_methods')
-    op.execute('DROP TYPE notification_levels')

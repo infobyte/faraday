@@ -8,7 +8,6 @@ Create Date: 2019-11-28 15:19:31.097481+00:00
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = '84f266a05be3'
 down_revision = 'a39a3a6e3f99'
@@ -18,12 +17,12 @@ depends_on = None
 
 def upgrade():
     op.add_column('vulnerability', sa.Column(
-            'tool',
-            sa.Text(),
-            nullable=False,
-            server_default=""
-        )
+        'tool',
+        sa.Text(),
+        nullable=False,
+        server_default=""
     )
+                  )
     conn = op.get_bind()
     conn.execute("""UPDATE vulnerability
 SET tool=SUBQUERY.tool
@@ -33,4 +32,4 @@ WHERE vulnerability.id=SUBQUERY.id""")
 
 
 def downgrade():
-    op.drop_column('vulnerability','tool')
+    op.drop_column('vulnerability', 'tool')

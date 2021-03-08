@@ -248,8 +248,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
     def test_create_fails_with_valid_duration(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        end_date = start_date+86400000
+        start_date = int(time.time()) * 1000
+        end_date = start_date + 86400000
         duration = {'start_date': start_date, 'end_date': end_date}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
         res = test_client.post(self.url(), data=raw_data)
@@ -295,8 +295,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                                                 session,
                                                                 test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        duration = {'start_date': start_date, 'end_date': start_date-86400000}
+        start_date = int(time.time()) * 1000
+        duration = {'start_date': start_date, 'end_date': start_date - 86400000}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400

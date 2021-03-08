@@ -128,7 +128,7 @@ class AgentCreationView(CreateMixin, GenericView):
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _perform_create(self,  data, **kwargs):
+    def _perform_create(self, data, **kwargs):
         token = data.pop('token')
         if not faraday_server.agent_token:
             # someone is trying to use the token, but no token was generated yet.

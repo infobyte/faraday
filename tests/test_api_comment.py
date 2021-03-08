@@ -125,7 +125,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         factories.CommentFactory.create(workspace=workspace, text='third')
         factories.CommentFactory.create(workspace=workspace, text='fourth')
         get_comments = test_client.get(self.url(workspace=workspace))
-        expected = ['first', 'second', 'third','fourth']
+        expected = ['first', 'second', 'third', 'fourth']
         assert expected == [comment['text'] for comment in get_comments.json]
 
 

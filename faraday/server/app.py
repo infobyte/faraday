@@ -333,7 +333,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',
         'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
         'SECURITY_POST_RESET_VIEW': '/',
-        'SECURITY_SEND_PASSWORD_RESET_EMAIL':True,
+        'SECURITY_SEND_PASSWORD_RESET_EMAIL': True,
         #For testing porpouse
         'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,

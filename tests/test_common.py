@@ -6,14 +6,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-
 from faraday.server.models import Host, Service, Vulnerability
 import random
 
 
 def new_random_workspace_name():
     return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90)
-                                ], 10 ))).lower()
+                                                  ], 10))).lower()
 
 
 def create_host(self, host_name="pepito", os="linux"):
@@ -26,10 +25,10 @@ def create_interface(self, host, iname="coqiuto", mac="00:03:00:03:04:04"):
     raise NotImplementedError()
 
 
-def create_service(self, host, interface, service_name = "coquito"):
+def create_service(self, host, interface, service_name="coquito"):
     service = Service(service_name)
     self.model_controller.addServiceToInterfaceSYNC(host.getID(),
-                                interface.getID(), service)
+                                                    interface.getID(), service)
     return service
 
 

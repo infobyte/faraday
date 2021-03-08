@@ -264,7 +264,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
             super(TestAgentWithWorkspacesAPIGeneric, self).test_create_fails_with_empty_dict(test_client)
         assert '405' in exc_info.value.args[0]
 
-    def workspaced_url(self, workspace, obj= None):
+    def workspaced_url(self, workspace, obj=None):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
         if obj is not None:
             id_ = str(obj.id) if isinstance(obj, self.model) else str(obj)
@@ -395,7 +395,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count
 
-    def test_run_fails(self, test_client, session,csrf_token):
+    def test_run_fails(self, test_client, session, csrf_token):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         other_workspace = WorkspaceFactory.create()

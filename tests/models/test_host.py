@@ -193,7 +193,7 @@ class TestHostAPI(ReadOnlyAPITests):
 
     # This test the api endpoint for some of the host in the ws, with existing other host in other ws and ask for the
     # other hosts and test the api endpoint for all of the host in the ws, retrieving all host when none is required
-    @pytest.mark.parametrize('querystring', [ 'countVulns/?hosts={}', 'countVulns/',
+    @pytest.mark.parametrize('querystring', ['countVulns/?hosts={}', 'countVulns/',
     ])
     def test_vuln_count_ignore_other_ws(self,
                         vulnerability_factory,

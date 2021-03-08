@@ -86,7 +86,7 @@ class TestLogin:
         session.commit()
 
         serializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=500, salt="token")
-        token = serializer.dumps({ 'user_id': alice.id})
+        token = serializer.dumps({'user_id': alice.id})
 
         headers = {'Authorization': b'Token ' + token}
 

@@ -33,7 +33,7 @@ from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation
-    )
+)
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
 
@@ -300,7 +300,7 @@ class GenericView(FlaskView):
         deserialization
         """
         return FlaskParser(unknown=EXCLUDE).parse(schema, request, location="json",
-                                   *args, **kwargs)
+                                                  *args, **kwargs)
 
     @classmethod
     def register(cls, app, *args, **kwargs):
@@ -309,7 +309,7 @@ class GenericView(FlaskView):
         super(GenericView, cls).register(app, *args, **kwargs)
 
         @app.errorhandler(422)
-        def handle_error(err): # pylint: disable=unused-variable
+        def handle_error(err):  # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -322,7 +322,7 @@ class GenericView(FlaskView):
             }), 400
 
         @app.errorhandler(409)
-        def handle_conflict(err): # pylint: disable=unused-variable
+        def handle_conflict(err):  # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc', None) or getattr(err, 'description', None)
             if exc:
@@ -333,19 +333,20 @@ class GenericView(FlaskView):
             return flask.jsonify(messages), 409
 
         @app.errorhandler(InvalidUsage)
-        def handle_invalid_usage(error): # pylint: disable=unused-variable
+        def handle_invalid_usage(error):  # pylint: disable=unused-variable
             response = flask.jsonify(error.to_dict())
             response.status_code = error.status_code
             return response
 
         # @app.errorhandler(404)
-        def handle_not_found(err): # pylint: disable=unused-variable
+        def handle_not_found(err):  # pylint: disable=unused-variable
             response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
             return flask.jsonify(response), 404
 
         @app.errorhandler(500)
-        def handle_server_error(err): # pylint: disable=unused-variable
-            response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
+        def handle_server_error(err):  # pylint: disable=unused-variable
+            response = {'success': False,
+                        'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
             return flask.jsonify(response), 500
 
 
@@ -584,7 +585,7 @@ class PaginatedMixin:
 
             try:
                 per_page = int(flask.request.args[
-                    self.per_page_parameter_name])
+                                   self.per_page_parameter_name])
             except (TypeError, ValueError):
                 flask.abort(404, 'Invalid per_page value')
 
@@ -610,6 +611,7 @@ class FilterAlchemyMixin:
 class FilterWorkspacedMixin(ListMixin):
     """Add filter endpoint for searching on any workspaced objects columns
     """
+
     @route('/filter')
     def filter(self, workspace_name):
         """
@@ -634,14 +636,15 @@ class FilterWorkspacedMixin(ListMixin):
 
         class PageMeta:
             total = 0
+
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters, workspace, severity_count=False):
         filter_query = search(db.session,
-                       self.model_class,
-                       filters)
+                              self.model_class,
+                              filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
 
@@ -666,7 +669,7 @@ class FilterWorkspacedMixin(ListMixin):
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit') # we need to remove pagination, since
+                limit = filters.pop('limit')  # we need to remove pagination, since
 
             filter_query = self._generate_filter_query(
                 filters,
@@ -722,14 +725,15 @@ class FilterMixin(ListMixin):
 
         class PageMeta:
             total = 0
+
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
         filter_query = search(db.session,
-                      self.model_class,
-                      filters)
+                              self.model_class,
+                              filters)
 
         if severity_count and 'group_by' not in filters:
             filter_query = count_vulnerability_severities(filter_query, self.model_class,
@@ -752,7 +756,7 @@ class FilterMixin(ListMixin):
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit') # we need to remove pagination, since
+                limit = filters.pop('limit')  # we need to remove pagination, since
 
             filter_query = self._generate_filter_query(
                 filters,
@@ -818,6 +822,7 @@ class RetrieveMixin:
 
 class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
+
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
     def get(self, object_id, workspace_name=None):
@@ -961,7 +966,8 @@ class CommandMixin():
             command_id = None
 
         if command_id:
-            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
+            command = db.session.query(Command).filter(Command.id == command_id,
+                                                       Command.workspace == obj.workspace).first()
             if command is None:
                 raise InvalidUsage('Command not found.')
             # if the object is created and updated in the same command
@@ -1277,6 +1283,7 @@ class PatchableWorkspacedMixin(PatchableMixin):
 
 class DeleteMixin:
     """Add DELETE /<id>/ route"""
+
     def delete(self, object_id, **kwargs):
         """
         ---
@@ -1303,8 +1310,8 @@ class DeleteMixin:
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
-    def delete(self, object_id, workspace_name=None):
 
+    def delete(self, object_id, workspace_name=None):
         """
           ---
             tags: ["{tag_name}"]
@@ -1389,12 +1396,12 @@ class CountWorkspacedMixin:
 
         count = self._filter_query(
             db.session.query(self.model_class)
-            .join(Workspace)
-            .group_by(group_by)
-            .filter(Workspace.name == workspace_name,
-                    *self.count_extra_filters))
+                .join(Workspace)
+                .group_by(group_by)
+                .filter(Workspace.name == workspace_name,
+                        *self.count_extra_filters))
 
-        #order
+        # order
         order_by = group_by
         if sort_dir == 'desc':
             count = count.order_by(desc(order_by))
@@ -1446,7 +1453,7 @@ class CountMultiWorkspacedMixin:
             400:
               description: No workspace passed or group_by is not specified
         """
-        #"""head:
+        # """head:
         #  tags: [{tag_name}]
         #   responses:
         #     200:
@@ -1490,15 +1497,15 @@ class CountMultiWorkspacedMixin:
         grouped_attr = getattr(self.model_class, group_by)
 
         q = db.session.query(
-                Workspace.name,
-                grouped_attr,
-                func.count(grouped_attr)
-            )\
-            .join(Workspace)\
-            .group_by(grouped_attr, Workspace.name)\
+            Workspace.name,
+            grouped_attr,
+            func.count(grouped_attr)
+        ) \
+            .join(Workspace) \
+            .group_by(grouped_attr, Workspace.name) \
             .filter(Workspace.name.in_(workspace_names_list))
 
-        #order
+        # order
         order_by = grouped_attr
         if sort_dir == 'desc':
             q = q.order_by(desc(Workspace.name), desc(order_by))
@@ -1544,6 +1551,7 @@ class CustomModelConverter(ModelConverter):
     Model converter that automatically sets minimum length
     validators to not blankable fields
     """
+
     def _add_column_kwargs(self, kwargs, column):
         super(CustomModelConverter, self)._add_column_kwargs(kwargs, column)
         if not column.info.get('allow_blank', True):
@@ -1570,6 +1578,8 @@ def old_isoformat(dt, *args, **kwargs):
     else:
         dt = dt.astimezone(datetime.timezone.utc)
     return dt.isoformat(*args, **kwargs)
+
+
 fields.DateTime.SERIALIZATION_FUNCS['iso'] = old_isoformat
 
 

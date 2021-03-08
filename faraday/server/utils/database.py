@@ -196,7 +196,7 @@ def _group_concat_postgresql(element, compiler, **kw):
 class BooleanToIntColumn(expression.FunctionElement):
 
     def __init__(self, expression):
-        super(BooleanToIntColumn, self).__init__()
+        super().__init__()
         self.expression_str = expression
 
 

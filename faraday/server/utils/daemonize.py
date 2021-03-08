@@ -96,7 +96,7 @@ def createDaemon():
             # based systems).  This second fork guarantees that the child is no
             # longer a session leader, preventing the daemon from ever acquiring
             # a controlling terminal.
-            pid = os.fork()	# Fork a second child.
+            pid = os.fork()  # Fork a second child.
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
@@ -110,7 +110,7 @@ def createDaemon():
             os.umask(UMASK)
         else:
             # exit() or _exit()?  See below.
-            os._exit(0)	 # Exit parent (the first child) of the second child.
+            os._exit(0)  # Exit parent (the first child) of the second child.
     else:
         # exit() or _exit()?
         # _exit is like exit(), but it doesn't call any functions registered
@@ -119,7 +119,7 @@ def createDaemon():
         # streams to be flushed twice and any temporary files may be unexpectedly
         # removed.  It's therefore recommended that child branches of a fork()
         # and the parent branch(es) of a daemon use _exit().
-        os._exit(0)	 # Exit parent of the first child.
+        os._exit(0)  # Exit parent of the first child.
 
     # NOTE(mrocha): Since we need all file descriptors opened during server
     # setup (i.e.: databases sessions, logging, socket connections, etc.), we
@@ -189,7 +189,6 @@ def is_server_running(port):
             raise
     else:
         return pid
-
 
 
 def get_server_pid(port):

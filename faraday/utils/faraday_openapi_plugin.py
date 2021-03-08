@@ -126,10 +126,12 @@ class FaradayAPIPlugin(BasePlugin):
                     class_model = view_instance.model_class.__name__
                 else:
                     class_model = 'No name'
-                #print(f'{view_name} / {class_model}')
-                logger.debug(f'{view_name} / {class_model} / {rule.methods} / {view_name} / {view_instance._get_schema_class().__name__}')
+                # print(f'{view_name} / {class_model}')
+                logger.debug(
+                    f'{view_name} / {class_model} / {rule.methods} / {view_name} / {view_instance._get_schema_class().__name__}')
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
-                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
+                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__,
+                                        class_model=class_model, tag_name=class_model)
                 )
         elif hasattr(view, "__doc__"):
             if not view.__doc__:
@@ -139,10 +141,12 @@ class FaradayAPIPlugin(BasePlugin):
             else:
                 class_model = 'No name'
             for method in rule.methods:
-                logger.debug(f'{view_name} / {class_model} / {rule.methods} / {method} / {view_instance._get_schema_class().__name__}')
+                logger.debug(
+                    f'{view_name} / {class_model} / {rule.methods} / {method} / {view_instance._get_schema_class().__name__}')
                 if method not in ['HEAD', 'OPTIONS'] or os.environ.get("FULL_API_DOC", None):
                     operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
-                        view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
+                        view.__doc__.format(schema_class=view_instance._get_schema_class().__name__,
+                                            class_model=class_model, tag_name=class_model)
                     )
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
             for method in view.methods:

@@ -33,7 +33,6 @@ from faraday.server.websocket_factories import (
     BroadcastServerProtocol
 )
 
-
 app = create_app()  # creates a Flask(__name__) app
 # After 'Create app'
 app.config['MAIL_SERVER'] = smtp.host
@@ -84,9 +83,9 @@ class WebServer:
     def __init__(self):
         self.__ssl_enabled = faraday.server.config.ssl.enabled
         logger.info('Starting web server at %s://%s:%s/',
-            'https' if self.__ssl_enabled else 'http',
-            faraday.server.config.faraday_server.bind_address,
-            faraday.server.config.ssl.port if self.__ssl_enabled else faraday.server.config.faraday_server.port)
+                    'https' if self.__ssl_enabled else 'http',
+                    faraday.server.config.faraday_server.bind_address,
+                    faraday.server.config.ssl.port if self.__ssl_enabled else faraday.server.config.faraday_server.port)
         self.__websocket_ssl_enabled = faraday.server.config.websocket_ssl.enabled
         self.__websocket_port = faraday.server.config.faraday_server.websocket_port or 9000
         self.__config_server()
@@ -103,7 +102,7 @@ class WebServer:
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            sys.exit(1) # Abort web-server startup
+            sys.exit(1)  # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -185,23 +184,27 @@ class WebServer:
 
                 try:
                     contextFactory = ssl.DefaultOpenSSLContextFactory(
-                            faraday.server.config.websocket_ssl.keyfile.strip('\''),
-                            faraday.server.config.websocket_ssl.certificate.strip('\'')
+                        faraday.server.config.websocket_ssl.keyfile.strip('\''),
+                        faraday.server.config.websocket_ssl.certificate.strip('\'')
                     )
 
-                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
+                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address,
+                             contextFactory=contextFactory)
 
                 except SSLError as e:
-                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')
+                    logger.error(
+                        'Could not start websockets due to a SSL Config error. Some web functionality will not be available')
                 except error.CannotListenError:
-                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                    logger.warn(
+                        'Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
                     logger.warn(f'Could not start websocket, error: {ex}')
             else:
                 try:
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
                 except error.CannotListenError:
-                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                    logger.warn(
+                        'Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
                     logger.warn(f'Could not start websocket, error: {ex}')
             logger.info('Faraday Server is ready')

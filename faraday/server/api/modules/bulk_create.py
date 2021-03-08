@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
-
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
@@ -68,6 +67,7 @@ class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
 class PolymorphicVulnerabilityField(fields.Field):
     """Used like a nested field with many objects, but it decides which
     schema to use based on the type of each vuln"""
+
     def __init__(self, *args, **kwargs):
         super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
@@ -473,7 +473,7 @@ class BulkCreateView(GenericWorkspacedView):
 
             data["command"] = {
                 'id': agent_execution.command.id,
-                'tool': agent.name, # Agent name
+                'tool': agent.name,  # Agent name
                 'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',

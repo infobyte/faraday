@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -18,7 +18,6 @@ OBJECT_COUNT = 5
 
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
-
     model = None
     factory = None
     api_endpoint = None

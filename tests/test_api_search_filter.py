@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -14,7 +14,6 @@ from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTests
 from tests.test_api_agent import logout
 from tests.conftest import login_as
 from faraday.server.models import SearchFilter
-
 
 from faraday.server.api.modules.search_filter import SearchFilterView
 from tests.utils.url import v2_to_v3

@@ -54,14 +54,12 @@ vuln_web_data = {
     'status_code': 200,
 }
 
-
 credential_data = {
     'name': 'test credential',
     'description': 'test',
     'username': 'admin',
     'password': '12345',
 }
-
 
 command_data = {
     'tool': 'pytest',
@@ -217,7 +215,7 @@ def test_creates_vuln_with_command_object_with_tool(session, service):
         dict(
             command=command_data,
             hosts=[host_data_]
-            )
+        )
     )
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
@@ -832,7 +830,8 @@ class TestBulkCreateAPI:
             )
             assert res.status_code == 400
 
-            assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+            assert Host.query.filter(
+                Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
             assert count(Command, workspace) == 1
             data_kwargs["execution_id"] = extra_agent_execution.id
             res = test_client.post(
@@ -841,7 +840,8 @@ class TestBulkCreateAPI:
                 headers=[("authorization", f"agent {agent.token}")]
             )
             assert res.status_code == 400
-            assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+            assert Host.query.filter(
+                Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
             assert count(Command, workspace) == 1
             data_kwargs["execution_id"] = agent_execution.id
             res = test_client.post(
@@ -910,7 +910,6 @@ class TestBulkCreateAPI:
             session.add(workspace)
         session.commit()
         for workspace in agent.workspaces:
-
             url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
@@ -1003,7 +1002,7 @@ class TestBulkCreateAPI:
         host_data_['services'] = [service_data]
         host_data_['credentials'] = [credential_data]
         host_data_['vulnerabilities'] = [vuln_data]
-        host_data_['default_gateway'] = ["localhost"] # Can not be a list
+        host_data_['default_gateway'] = ["localhost"]  # Can not be a list
         res = test_client.post(url, data=dict(hosts=[host_data_]))
         assert res.status_code == 400, res.json
         assert count(Host, workspace) == 0

@@ -561,6 +561,7 @@ class ExecutorFactory(FaradayFactory):
     parameters_metadata = factory.LazyAttribute(
         lambda e: {"param_name": False}
     )
+
     class Meta:
         model = Executor
         sqlalchemy_session = db.session

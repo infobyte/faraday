@@ -280,7 +280,7 @@ class Filter:
 class JunctionFilter(Filter):
     def __init__(self, *subfilters):
         self.subfilters = subfilters
-    def __iter__(self):
+    def __iter__(self): # noqa
         return iter(self.subfilters)
 
 

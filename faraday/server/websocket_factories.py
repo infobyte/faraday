@@ -30,9 +30,7 @@ from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
 
-
 logger = logging.getLogger(__name__)
-
 
 connected_agents = {}
 
@@ -52,7 +50,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         return (protocol, headers)
 
     def onMessage(self, payload, is_binary):
-        from faraday.server.web import app # pylint:disable=import-outside-toplevel
+        from faraday.server.web import app  # pylint:disable=import-outside-toplevel
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify

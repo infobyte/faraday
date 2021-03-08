@@ -15,7 +15,4 @@ def error_response(e):
         'messages': 'error',
     }), 500
 
-
-
-
-#.register(commandsrun_api)
+# .register(commandsrun_api)

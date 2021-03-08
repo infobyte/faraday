@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 '''
 from builtins import str
 from posixpath import join as urljoin
-
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
@@ -23,7 +22,6 @@ OBJECT_COUNT = 5
 
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
-
     model = None
     factory = None
     api_endpoint = None
@@ -66,10 +64,11 @@ class ListTestsMixin:
     @pytest.fixture
     def mock_envelope_list(self, monkeypatch):
         assert self.view_class is not None, 'You must define view_class ' \
-            'in order to use ListTestsMixin or PaginationTestsMixin'
+                                            'in order to use ListTestsMixin or PaginationTestsMixin'
 
         def _envelope_list(_, objects, pagination_metadata=None):
             return {"data": objects}
+
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 
     @pytest.mark.usefixtures('mock_envelope_list')
@@ -135,7 +134,6 @@ class CreateTestsMixin:
         db.session.commit()
         assert res.status_code == 403
         assert self.model.query.count() == count
-
 
     def test_create_inactive_fails(self, test_client):
         self.workspace.deactivate()
@@ -308,8 +306,8 @@ class CountTestsMixin:
             factory_kwargs[field] = value
 
         session.add(self.factory.create(creator=self.first_object.creator,
-                                  workspace=self.first_object.workspace,
-                                  **factory_kwargs))
+                                        workspace=self.first_object.workspace,
+                                        **factory_kwargs))
 
         session.commit()
 
@@ -365,7 +363,6 @@ class CountTestsMixin:
         assert creators == sorted(creators, reverse=True)
 
 
-
 class DeleteTestsMixin:
 
     def test_delete(self, test_client):
@@ -391,7 +388,7 @@ class DeleteTestsMixin:
         assert self.model.query.count() == OBJECT_COUNT
 
     def test_delete_from_other_workspace_fails(self, test_client,
-                                                    second_workspace):
+                                               second_workspace):
         res = test_client.delete(self.url(self.first_object,
                                           workspace=second_workspace))
         assert res.status_code == 404  # No content

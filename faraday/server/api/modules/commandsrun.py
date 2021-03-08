@@ -41,7 +41,7 @@ class CommandSchema(AutoSchema):
         if obj.end_date:
             return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
         else:
-            if (datetime.datetime.now() - obj.start_date).total_seconds() > 86400:# 86400 is 1d TODO BY CONFIG
+            if (datetime.datetime.now() - obj.start_date).total_seconds() > 86400:  # 86400 is 1d TODO BY CONFIG
                 return 'Timeout'
             return 'In progress'
 
@@ -120,7 +120,8 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             200:
                description: Last executed command or an empty json
         """
-        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc()).first()
+        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(
+            Command.start_date.desc()).first()
         command_obj = {}
         if command:
             command_obj = {

@@ -10,14 +10,16 @@ import re
 import sys
 import platform
 import logging
+
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
     from getpass import getuser
+
     try:
         FARADAY_GROUP = "faraday"
         faraday_group = grp.getgrnam(FARADAY_GROUP)
-        #The current user may be different from the logged user
+        # The current user may be different from the logged user
         current_user = getuser()
         if current_user != 'root' and faraday_group.gr_gid not in os.getgroups():
             print(f"\n\nUser ({os.getlogin()}) must be in the '{FARADAY_GROUP}' group.")
@@ -52,10 +54,10 @@ from faraday.server.web import app
 from faraday_plugins.plugins.manager import PluginsManager
 from flask_security.utils import hash_password
 
-
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-#logger = logging.getLogger(__name__)
+
+# logger = logging.getLogger(__name__)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -81,7 +83,6 @@ def openapi_yaml(server, no_servers):
     openapi_format(format="yaml", server=server, no_servers=no_servers)
 
 
-
 @click.command(help="Import Vulnerability templates")
 @click.option('--language', required=False, default='en')
 @click.option('--list-languages', is_flag=True)
@@ -91,15 +92,15 @@ def import_vulnerability_templates(language, list_languages):
 
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
 @click.option(
-        '--choose-password', is_flag=True, default=False,
-        help=('Instead of using a random password for the user "faraday", '
-              'ask for the desired one')
-        )
+    '--choose-password', is_flag=True, default=False,
+    help=('Instead of using a random password for the user "faraday", '
+          'ask for the desired one')
+)
 @click.option(
-        '--password', type=str, default=False,
-        help=('Instead of using a random password for the user "faraday", '
-              'use the one provided')
-        )
+    '--password', type=str, default=False,
+    help=('Instead of using a random password for the user "faraday", '
+          'use the one provided')
+)
 def initdb(choose_password, password):
     with app.app_context():
         InitDB().run(choose_password=choose_password, faraday_user_password=password)
@@ -130,7 +131,6 @@ def sql_shell():
 @click.option('--check_dependencies', default=False, is_flag=True)
 @click.option('--check_config', default=False, is_flag=True)
 def status_check(check_postgresql, check_faraday, check_dependencies, check_config):
-
     selected = False
     exit_code = 0
     if check_postgresql:
@@ -207,7 +207,8 @@ def list_plugins():
 def create_superuser(username, email, password):
     with app.app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
-            print("Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
+            print(
+                "Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
             sys.exit(1)
 
         app.user_datastore.create_user(username=username,
@@ -222,7 +223,7 @@ def create_superuser(username, email, password):
 
 
 @click.command(help="Create database tables. Requires a functional "
-               "PostgreSQL database configured in the server.ini")
+                    "PostgreSQL database configured in the server.ini")
 def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
@@ -247,18 +248,18 @@ def support():
 
 
 @click.command(
-        context_settings={"ignore_unknown_options": True},
-        help='Migrates database schema. If the target revision '
-        'is not specified, use "head" when upgrading and "-1" when '
-        'downgrading')
+    context_settings={"ignore_unknown_options": True},
+    help='Migrates database schema. If the target revision '
+         'is not specified, use "head" when upgrading and "-1" when '
+         'downgrading')
 @click.option(
-        '--downgrade',
-        help="Perform a downgrade migration instead of an upgrade one",
-        is_flag=True)
+    '--downgrade',
+    help="Perform a downgrade migration instead of an upgrade one",
+    is_flag=True)
 @click.argument(
-        'revision',
-        required=False,
-        )
+    'revision',
+    required=False,
+)
 def migrate(downgrade, revision):
     try:
         revision = revision or ("-1" if downgrade else "head")
@@ -295,7 +296,7 @@ def delete_custom_field():
 @click.option('--current_username', required=True, prompt=True)
 @click.option('--new_username', required=True, prompt=True)
 def rename_user(current_username, new_username):
-    if(current_username == new_username):
+    if (current_username == new_username):
         print("\nERROR: Usernames must be different.")
         sys.exit(1)
     else:
@@ -307,11 +308,13 @@ def rename_user(current_username, new_username):
 @click.option('--port', prompt='Faraday port', help='Faraday listening port', type=int, default=5985)
 @click.option('--ws-port', prompt='Faraday Websocket port', help='Faraday websocket listening port', type=int,
               default=9000, show_default=True)
-@click.option('--ssl-certificate', prompt='SSL Certificate Path', help='SSL Certificate Path', type=click.Path(exists=True))
+@click.option('--ssl-certificate', prompt='SSL Certificate Path', help='SSL Certificate Path',
+              type=click.Path(exists=True))
 @click.option('--ssl-key', prompt='SSL Key Path', help='SSL Key Path', type=click.Path(exists=True))
 @click.option('--multitenant-url', help='URL for multitenant config', type=str)
 def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url):
     nginx_config.generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url)
+
 
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -331,10 +334,7 @@ cli.add_command(openapi_yaml)
 cli.add_command(generate_nginx_config)
 cli.add_command(import_vulnerability_templates)
 
-
 if __name__ == '__main__':
-
     cli()
-
 
 # I'm Py3

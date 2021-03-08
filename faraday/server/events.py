@@ -88,15 +88,15 @@ def update_object_event(mapper, connection, instance):
 
 def after_insert_check_child_has_same_workspace(mapper, connection, inserted_instance):
     if inserted_instance.parent:
-        assert (inserted_instance.workspace ==
-                inserted_instance.parent.workspace), \
+        assert (inserted_instance.workspace
+                == inserted_instance.parent.workspace), \
                 "Conflicting workspace assignation for objects. " \
                 "This should never happen!!!"
 
 
 
-        assert (inserted_instance.workspace_id ==
-                inserted_instance.parent.workspace_id), \
+        assert (inserted_instance.workspace_id
+                == inserted_instance.parent.workspace_id), \
                 "Conflicting workspace_id assignation for objects. " \
                 "This should never happen!!!"
 

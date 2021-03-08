@@ -443,8 +443,8 @@ class VulnerabilityFilterSet(FilterSet):
 
         if command_id:
             # query = query.filter(CommandObject.command_id == int(command_id))
-            query = query.filter(VulnerabilityGeneric.creator_command_id ==
-                                 int(command_id))  # TODO migration: handle invalid int()
+            query = query.filter(VulnerabilityGeneric.creator_command_id
+                                 == int(command_id))  # TODO migration: handle invalid int()
         return query
 
 

@@ -379,10 +379,10 @@ class HostsView(PaginatedMixin,
                 Service.name.ilike(like_term))
             match_os = Host.os.ilike(like_term)
             match_hostname = Host.hostnames.any(Hostname.name.ilike(like_term))
-            query = query.filter(match_ip |
-                                 match_service_name |
-                                 match_os |
-                                 match_hostname)
+            query = query.filter(match_ip
+                                 | match_service_name
+                                 | match_os
+                                 | match_hostname)
         return query
 
     def _envelope_list(self, objects, pagination_metadata=None):

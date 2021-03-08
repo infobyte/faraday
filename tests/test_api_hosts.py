@@ -901,8 +901,8 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             session.flush()
             expected_ids.append(host.id)
         session.commit()
-        res = test_client.get(self.url(workspace=second_workspace) +
-                              '?sort=services&sort_dir=asc')
+        res = test_client.get(self.url(workspace=second_workspace)
+                              + '?sort=services&sort_dir=asc')
         assert res.status_code == 200
         assert [h['_id'] for h in res.json['data']] == expected_ids
 
@@ -923,8 +923,8 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
                 session.add(host)
                 session.commit()
                 expected.append(host)  # Put it on the end
-        res = test_client.get(self.url(workspace=second_workspace) +
-                              '?sort=metadata.update_time&sort_dir=asc')
+        res = test_client.get(self.url(workspace=second_workspace)
+                              + '?sort=metadata.update_time&sort_dir=asc')
         assert res.status_code == 200, res.data
         assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
 

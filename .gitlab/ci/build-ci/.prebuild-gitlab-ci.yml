@@ -2,8 +2,10 @@
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-angular.git frontend
     - cd frontend
-    - (git branch -a | grep $CI_COMMIT_REF_NAME) && export REPORT_REF=$CI_COMMIT_REF_NAME || export REPORT_REF=white/dev
-    - (git branch -a | grep $ANGULAR_REF) && export REPORT_REF=$ANGULAR_REF || export REPORT_REF=$REPORT_REF
+    - (git branch -a | grep $CI_COMMIT_REF_NAME) && export REPORT_REF=$CI_COMMIT_REF_NAME || export FRONT_REF=white/dev
+    - (git branch -a | grep $ANGULAR_REF) && export REPORT_REF=$ANGULAR_REF || export FRONT_REF=$FRONT_REF
+    - echo $FRONT_REF
+    - git checkout $FRONT_REF
     - cd ..
     - rm faraday/server/www
     - mv frontend/www/ faraday/server/www/

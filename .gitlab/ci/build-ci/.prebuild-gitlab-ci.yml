@@ -1,6 +1,10 @@
 .clone_and_replace_www:
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-angular.git frontend
+    - cd frontend
+    - git checkout $CI_COMMIT_REF_NAME
+    - git checkout $ANGULAR_REF
+    - cd ..
     - rm faraday/server/www
     - mv frontend/www/ faraday/server/www/
     - rm -fr frontend

@@ -329,7 +329,6 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
     type = "vulnerability_web"
 
-
     @classmethod
     def build_dict(cls, **kwargs):
         ret = super(VulnerabilityWebFactory, cls).build_dict(**kwargs)
@@ -362,7 +361,6 @@ class VulnerabilityTemplateFactory(FaradayFactory):
     class Meta:
         model = VulnerabilityTemplate
         sqlalchemy_session = db.session
-
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -485,7 +483,6 @@ class CommentFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-
 class LicenseFactory(FaradayFactory):
     product = FuzzyText()
     start_date = FuzzyStartTime()
@@ -587,7 +584,6 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     class Meta:
         model = AgentExecution
         sqlalchemy_session = db.session
-
 
 
 class SearchFilterFactory(FaradayFactory):

@@ -77,7 +77,6 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 400
         assert res.json == {u'message': u"Can't comment inexistent object"}
 
-
     def test_create_unique_comment_for_plugins(self, session, test_client):
         """
 

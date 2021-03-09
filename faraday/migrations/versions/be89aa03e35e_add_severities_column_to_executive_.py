@@ -21,7 +21,6 @@ def upgrade():
     conn.execute('ALTER TABLE executive_report ADD COLUMN filter JSONB')
 
 
-
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE executive_report DROP COLUMN filter')

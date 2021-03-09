@@ -112,7 +112,6 @@ class TestLogin:
         cookies = [cookie.name for cookie in test_client.cookie_jar]
         assert "faraday_session_2" not in cookies
 
-
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()

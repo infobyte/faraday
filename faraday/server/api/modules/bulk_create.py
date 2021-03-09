@@ -495,7 +495,6 @@ class BulkCreateView(GenericWorkspacedView):
             _update_command(command, data['command'])
             db.session.flush()
 
-
         else:
             workspace = self._get_workspace(workspace_name)
             creator_user = flask.g.user

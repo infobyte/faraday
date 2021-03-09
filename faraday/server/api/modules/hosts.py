@@ -135,7 +135,6 @@ class HostFilterSet(FilterSet):
     port = ServicePortFilter(fields.Str())
 
 
-
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView,

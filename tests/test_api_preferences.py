@@ -38,7 +38,6 @@ class TestPreferences(GenericAPITest): # noqa E302
         assert response.status_code == 200
         assert response.json['preferences'] == preferences
 
-
     def test_add_invalid_preference(self, test_client):
         preferences = {'field1': 1, 'field2': 'str1'}
         data = {'p': preferences}

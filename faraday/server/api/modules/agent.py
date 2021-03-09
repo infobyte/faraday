@@ -156,7 +156,6 @@ class AgentCreationView(CreateMixin, GenericView):
             dict_["name"] for dict_ in workspace_names
         ]
 
-
         workspaces = list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names

@@ -199,6 +199,7 @@ class LoggerConfig(ConfigSection):
     def __init__(self):
         self.use_rfc5424_formatter = False
 
+
 database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()

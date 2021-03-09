@@ -465,5 +465,6 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin):
     bulk_create.__doc__ = HostsView.bulk_create.__doc__
     count_vulns.__doc__ = HostsView.count_vulns.__doc__
 
+
 HostsView.register(host_api)
 HostsV3View.register(host_api)

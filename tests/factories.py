@@ -72,6 +72,7 @@ def FuzzyEndTime():
         )
     )
 
+
 all_unicode = ''.join(chr(i) for i in range(65536))
 UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')
 

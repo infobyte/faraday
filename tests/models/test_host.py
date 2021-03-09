@@ -127,6 +127,7 @@ class TestUpdateHostnames:
         assert len(host.hostnames) == 1
         assert host.hostnames[0].name == 'y'
 
+
 HOST_TO_QUERY_AMOUNT = 3
 HOST_NOT_TO_QUERY_AMOUNT = 2
 SERVICE_BY_HOST = 3

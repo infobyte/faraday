@@ -139,5 +139,6 @@ class ServiceV3View(ServiceView, PatchableWorkspacedMixin):
     route_prefix = '/v3/ws/<workspace_name>/'
     trailing_slash = False
 
+
 ServiceView.register(services_api)
 ServiceV3View.register(services_api)

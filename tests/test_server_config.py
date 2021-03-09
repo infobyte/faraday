@@ -35,6 +35,7 @@ def test_copy_default_config_to_local_does_not_exist(copyfile):
     assert copy_default_config_to_local() is None
     assert not copyfile.called
 
+
 VERSION_PATTERN = r"""
     v?
     (?:

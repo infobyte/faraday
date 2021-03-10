@@ -31,5 +31,3 @@ class ImportTests(unittest.TestCase):
     def test_storage(self):
         from faraday.server.config import storage
         self.path = storage.path
-
-# noqa

@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from marshmallow import ValidationError
+from sqlalchemy import true, null, false
+
 from faraday.server.models import (
     db,
     Command,
@@ -428,10 +430,10 @@ def test_updates_command_object(session, workspace):
     service = host.services[0]
     vuln_host = Vulnerability.query.filter(
         Vulnerability.workspace == workspace,
-        Vulnerability.service == None).one()  # noqa: E711
+        Vulnerability.service == null()).one()
     vuln_service = Vulnerability.query.filter(
         Vulnerability.workspace == workspace,
-        Vulnerability.host == None).one()  # noqa: E711
+        Vulnerability.host == null()).one()
     vuln_web = VulnerabilityWeb.query.filter(
         VulnerabilityWeb.workspace == workspace).one()
     host_cred = Credential.query.filter(
@@ -458,7 +460,7 @@ def test_updates_command_object(session, workspace):
             CommandObject.command == command,
             CommandObject.object_type == table_name,
             CommandObject.object_id == obj.id,
-            CommandObject.created_persistent == True,  # noqa E712
+            CommandObject.created_persistent == true(),
         ).one()
 
 
@@ -567,7 +569,7 @@ def test_creates_command_object_on_duplicates(
             CommandObject.command == new_command,
             CommandObject.object_type == table_name,
             CommandObject.object_id == obj.id,
-            CommandObject.created_persistent == False,  # noqa E712
+            CommandObject.created_persistent == false(),
         ).one()
 
 

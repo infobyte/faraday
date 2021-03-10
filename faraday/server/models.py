@@ -210,7 +210,7 @@ def _make_vuln_count_property(type_=None, confirmed=None,
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
-    elif confirmed == False:  # noqa E712
+    elif not confirmed:
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead

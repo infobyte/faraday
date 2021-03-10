@@ -7,8 +7,8 @@ from faraday.server.api.modules.preferences import PreferencesView
 from tests.utils.url import v2_to_v3
 
 
-pytest.fixture('logged_user')
-class TestPreferences(GenericAPITest): # noqa E302
+@pytest.fixture('logged_user')
+class TestPreferences(GenericAPITest):
     model = User
     factory = UserFactory
     api_endpoint = 'preferences'

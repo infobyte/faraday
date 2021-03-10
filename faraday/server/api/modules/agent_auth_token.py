@@ -1,22 +1,22 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import flask
+import datetime
+
 from flask import Blueprint
-from flask_wtf.csrf import validate_csrf
-from wtforms import ValidationError
 from marshmallow import fields, Schema
 from faraday.server.api.base import (
     GenericView,
 )
 from faraday.server.config import faraday_server
-
+import pyotp
 
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
 
 
 class AgentAuthTokenSchema(Schema):
     token = fields.String(required=True)
+    expires_in = fields.Float(required=True)
 
 
 class AgentAuthTokenView(GenericView):
@@ -27,7 +27,7 @@ class AgentAuthTokenView(GenericView):
         """
           ---
           get:
-            summary: "Get a token to register new agents."
+            summary: "Get the current TOTP token to register new agents."
             tags: ["Agent"]
             responses:
               200:
@@ -40,30 +40,10 @@ class AgentAuthTokenView(GenericView):
             200:
               description: Ok
         """
+        totp = pyotp.TOTP(faraday_server.agent_registration_secret)
         return AgentAuthTokenSchema().dump(
-            {'token': faraday_server.agent_token})
-
-    def post(self):
-        """
-          ---
-          post:
-            summary: "Generate a new token to register new agents."
-            tags: ["Agent"]
-            responses:
-              200:
-                description: Ok
-                content:
-                  application/json:
-                    schema: AgentAuthTokenSchema
-        """
-        from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
-        try:
-            validate_csrf(flask.request.form.get('csrf_token'))
-        except ValidationError:
-            flask.abort(403)
-        save_new_agent_creation_token()
-        return AgentAuthTokenSchema().dump(
-            {'token': faraday_server.agent_token})
+            {'token': totp.now(),
+             'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval})
 
 
 class AgentAuthTokenV3View(AgentAuthTokenView):
@@ -73,6 +53,3 @@ class AgentAuthTokenV3View(AgentAuthTokenView):
 
 AgentAuthTokenView.register(agent_auth_token_api)
 AgentAuthTokenV3View.register(agent_auth_token_api)
-
-
-# I'm Py3

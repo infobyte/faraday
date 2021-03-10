@@ -2,6 +2,15 @@ New features in the latest update
 =====================================
 
 
+3.14.2 [Feb 26th, 2021]:
+---
+ * ADD New plugins:
+    * microsoft baseline security analyzer
+    * nextnet
+    * openscap
+ * FIX old versions of Nessus plugins bugs
+
+
 3.14.1 [Feb 17th, 2021]:
 ---
  * ADD forgot password

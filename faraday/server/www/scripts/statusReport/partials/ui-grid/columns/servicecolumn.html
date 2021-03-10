@@ -1,6 +1,0 @@
-<div ng-if="row.entity._id != undefined">
-    <div class='ui-grid-cell-contents'>
-        <a href="{{grid.appScope.hash}}/search/service={{row.entity.service.name}}" append-search-param="service={{row.entity.service.name}}">{{COL_FIELD}}</a>
-    </div>
-</div>
-<div ng-if='row.groupHeader && col.grouping.groupPriority !== undefined' class='ui-grid-cell-contents white-space'>{{COL_FIELD}}</div>

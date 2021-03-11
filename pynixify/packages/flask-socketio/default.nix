@@ -2,46 +2,33 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ beautifulsoup4
-, buildPythonPackage
-, click
-, colorama
-, dateutil
+{ buildPythonPackage
 , fetchPypi
-, html2text
+, flask
 , lib
-, lxml
-, pytz
-, requests
-, simplejson
+, python-socketio
 }:
 
 buildPythonPackage rec {
   pname =
-    "faraday-plugins";
+    "flask-socketio";
   version =
-    "1.4.2";
+    "5.0.1";
 
   src =
     fetchPypi {
       inherit
-        pname
         version;
+      pname =
+        "Flask-SocketIO";
       sha256 =
-        "1c5zapkbfgpc8nxc7icck97f610xf4r72anh8wpac8c7r1zcy0hb";
+        "09r2gpj2nbn72v2zaf6xsvlazln77pgqzp2pg2021nja47sijhsw";
     };
 
   propagatedBuildInputs =
     [
-      click
-      simplejson
-      requests
-      lxml
-      html2text
-      beautifulsoup4
-      pytz
-      dateutil
-      colorama
+      flask
+      python-socketio
     ];
 
   # TODO FIXME
@@ -51,6 +38,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Faraday plugins package";
+        "Socket.IO integration for Flask applications";
+      homepage =
+        "http://github.com/miguelgrinberg/Flask-SocketIO/";
     };
 }

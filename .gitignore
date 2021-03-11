@@ -79,3 +79,6 @@ reports/executive/outputs/scope.docx
 # Editable install hoook
 _install
 faraday_plugins/
+
+# Backup de scripts de migracion autogenerados
+*.py.bkp

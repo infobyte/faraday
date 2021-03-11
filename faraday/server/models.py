@@ -2109,7 +2109,7 @@ class NotificationMethod(db.Model):
     __tablename__ = 'notification_method'
     id = Column(Integer, primary_key=True)
     method = Column(Enum(*NOTIFICATION_METHODS, name="notification_methods"))
-    method_configuration = Column(String, nullable=False) # Esto tendria que tener otro nombre porque no tiene nada que ver con la notificationconfig. puede prestarse a confusion.
+    method_configuration = Column(String, nullable=False) #Si no es ws tiene algo. Puede haber un mail cualquiera / url (webhook). Si en la conf dice user entonces lo busca en user_asdf. Esto tendria que tener otro nombre porque no tiene nada que ver con la notificationconfig. puede prestarse a confusion.
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
     user_notified = relationship(
         'User',
@@ -2129,14 +2129,37 @@ class NotificationConfig(db.Model):
     active = Column(Boolean, default=True, index=True)
 
 
-# IMHO, This should be called Notification but it's already defined
 class NotificationEvent(db.Model):
     __tablename__ = 'notification_event'
     id = Column(Integer, primary_key=True)
     event = Column(Enum(*NOTIFICATION_EVENTS, name="notificaion_events"))
-    notification_text = Column(Text, nullable=False)
-    mark_read = Column(Boolean, default=False, index=True)
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
+    notification_data = Column(JSONType, nullable=False)
     create_date = Column(DateTime, default=datetime.utcnow)
+
+    def parent(self):
+        pass
+
+# TODO: TO BE RENAMED
+class Notification2(db.Model):
+    """
+        Se genera en base al notification event y la config.
+    """
+    __tablename__ = 'notification2'
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
+    event = relationship(
+        'NotificationEvent',
+        backref=backref('notification2', cascade="all, delete-orphan"),
+    )
+    config_id = Column(Integer, ForeignKey('notification_config.id'), index=True, nullable=False)
+    config = relationship(
+        'NotificationConfig',
+        backref=backref('notification2', cascade="all, delete-orphan"),
+    )
+    notification_text = Column(Text, nullable=False) # Calculado del json del event
+    mark_read = Column(Boolean, default=False, index=True)
 
 
 class Notification(db.Model):

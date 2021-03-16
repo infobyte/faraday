@@ -7,7 +7,10 @@ import datetime
 
 from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, rooms, disconnect
 
+import pyotp
 import requests
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from random import SystemRandom
 
@@ -247,16 +250,15 @@ def save_new_secret_key(app):
         config.write(configfile)
 
 
-def save_new_agent_creation_token():
+def save_new_agent_creation_token_secret():
     assert LOCAL_CONFIG_FILE.exists()
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
-    rng = SystemRandom()
-    agent_token = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
-    config.set('faraday_server', 'agent_token', agent_token)
+    registration_secret = pyotp.random_base32()
+    config.set('faraday_server', 'agent_registration_secret', registration_secret)
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
-    faraday.server.config.faraday_server.agent_token = agent_token
+    faraday.server.config.faraday_server.agent_registration_secret = registration_secret
 
 
 def expire_session(app, user):
@@ -324,8 +326,8 @@ def create_app(db_connection_string=None, testing=None):
         else:
             app.config['SECRET_KEY'] = secret_key
 
-    if faraday.server.config.faraday_server.agent_token is None:
-        save_new_agent_creation_token()
+    if faraday.server.config.faraday_server.agent_registration_secret is None:
+        save_new_agent_creation_token_secret()
 
     login_failed_message = ("Invalid username or password", 'error')
 
@@ -335,7 +337,6 @@ def create_app(db_connection_string=None, testing=None):
         'WTF_CSRF_ENABLED': False,
         'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
         'SECURITY_POST_LOGIN_VIEW': '/_api/session',
-        'SECURITY_POST_LOGOUT_VIEW': '/_api/logout',
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',
         'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
         'SECURITY_POST_RESET_VIEW': '/',
@@ -410,6 +411,19 @@ def create_app(db_connection_string=None, testing=None):
         db,
         user_model=User,
         role_model=None)  # We won't use flask security roles feature
+
+    from faraday.server.api.modules.agent import agent_creation_api  # pylint: disable=import-outside-toplevel
+
+    app.limiter = Limiter(
+        app,
+        key_func=get_remote_address,
+        default_limits=[]
+    )
+    if not testing:
+        app.limiter.limit(faraday.server.config.limiter_config.login_limit)(agent_creation_api)
+
+    app.register_blueprint(agent_creation_api)
+
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
@@ -425,8 +439,8 @@ def create_app(db_connection_string=None, testing=None):
     register_blueprints(app)
     register_handlers(app)
 
-    app.view_functions['agent_api.AgentCreationView:post'].is_public = True
-    app.view_functions['agent_api.AgentCreationV3View:post'].is_public = True
+    app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
+    app.view_functions['agent_creation_api.AgentCreationV3View:post'].is_public = True
 
     socketio.init_app(app)
     return app

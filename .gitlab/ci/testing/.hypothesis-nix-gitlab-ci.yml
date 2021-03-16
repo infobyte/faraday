@@ -2,7 +2,7 @@ test_hypothesis:
     tags:
         - hypothesis
     image: nixorg/nix
-    stage: testing
+    stage: test
     allow_failure: true
     script:
         - nix-env -if pynixify/nixpkgs.nix -A cachix

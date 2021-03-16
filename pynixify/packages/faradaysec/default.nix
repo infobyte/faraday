@@ -21,6 +21,7 @@
 , flask
 , flask-classful
 , flask-kvsession-fork
+, flask-limiter
 , flask-security-too
 , flask-socketio
 , flask_login
@@ -36,6 +37,7 @@
 , pyasn1
 , pylint
 , pyopenssl
+, pyotp
 , pytest
 , pytest-factoryboy
 , pytestcov
@@ -60,7 +62,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "3.14.1";
+    "3.14.2";
 
   src =
     lib.cleanSource
@@ -111,6 +113,8 @@ buildPythonPackage rec {
       apispec-webframeworks
       pyyaml
       flask-socketio
+      pyotp
+      flask-limiter
     ];
   checkInputs =
     [

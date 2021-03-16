@@ -458,30 +458,42 @@ class CustomLoginForm(LoginForm):
 
     def validate(self):
 
+        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        time_now = datetime.datetime.now()
+
         # Use super of LoginForm, not super of CustomLoginForm, since I
         # want to skip the LoginForm validate logic
         if not super(LoginForm, self).validate():
+            audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             return False
         self.email.data = remove_null_caracters(self.email.data)
 
         self.user = _datastore.get_user(self.email.data)
 
         if self.user is None:
+            audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                                 f"Reason: [Invalid Username]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
 
         self.user.password = remove_null_caracters(self.user.password)
         if not self.user.password:
+            audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                                 f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
         self.password.data = remove_null_caracters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
+            audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                                 f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
         # if requires_confirmation(self.user):
         #     self.email.errors.append(get_message('CONFIRMATION_REQUIRED')[0])
         #     return False
         if not self.user.is_active:
+            audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                                 f"Reason: [Disabled Account]")
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True

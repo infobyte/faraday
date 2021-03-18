@@ -1383,9 +1383,8 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref=backref("policy_violationvulnerability_associations", cascade="all, delete-orphan"),
-                                 foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
+    vulnerability = relationship("Vulnerability", backref=backref("policy_violation_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
 
 
 class ReferenceTemplateVulnerabilityAssociation(db.Model):
@@ -1402,9 +1401,8 @@ class ReferenceTemplateVulnerabilityAssociation(db.Model):
     )
     vulnerability = relationship(
         "VulnerabilityTemplate",
-        backref=backref('reference_template_vulnerability_associations',
-                        cascade="all, delete-orphan"),
-        foreign_keys=[vulnerability_id]
+        foreign_keys=[vulnerability_id],
+        backref=backref('reference_template_vulnerability_associations', cascade="all, delete-orphan")
     )
 
 
@@ -1415,9 +1413,8 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolationTemplate", backref="policy_violation_template_associations", foreign_keys=[policy_violation_id])
-    vulnerability = relationship("VulnerabilityTemplate", backref=backref("policy_violation_template_vulnerability_associations", cascade="all, delete-orphan"),
-                                 foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolationTemplate", backref=backref("policy_violation_template_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
+    vulnerability = relationship("VulnerabilityTemplate", backref=backref("policy_violation_template_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):

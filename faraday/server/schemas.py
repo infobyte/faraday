@@ -39,7 +39,7 @@ class JSTimestampField(fields.Integer):
 class FaradayCustomField(fields.Field):
     def __init__(self, table_name='vulnerability', *args, **kwargs):
         self.table_name = table_name
-        super(FaradayCustomField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if not value:
@@ -103,7 +103,7 @@ class PrimaryKeyRelatedField(fields.Field):
     def __init__(self, field_name='id', *args, **kwargs):
         self.field_name = field_name
         self.many = kwargs.get('many', False)
-        super(PrimaryKeyRelatedField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj):
         if self.many:
@@ -133,7 +133,7 @@ class SelfNestedField(fields.Field):
 
     def __init__(self, target_schema, *args, **kwargs):
         self.target_schema = target_schema
-        super(SelfNestedField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj):
         return self.target_schema.dump(obj)
@@ -168,7 +168,7 @@ class MutableField(fields.Field):
         if kwargs.get('required'):
             self.read_field.required = self.write_field.required = True
 
-        super(MutableField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _serialize(self, value, attr, obj):
 
@@ -186,7 +186,7 @@ class MutableField(fields.Field):
 
     def _add_to_schema(self, field_name, schema):
         # Propagate to child fields
-        super(MutableField, self)._add_to_schema(field_name, schema)
+        super()._add_to_schema(field_name, schema)
         self.read_field._add_to_schema(field_name, schema)
         self.write_field._add_to_schema(field_name, schema)
 
@@ -198,7 +198,7 @@ class SeverityField(fields.String):
     """
 
     def _serialize(self, value, attr, obj):
-        ret = super(SeverityField, self)._serialize(value, attr, obj)
+        ret = super()._serialize(value, attr, obj)
         if ret == 'medium':
             return 'med'
         elif ret == 'informational':
@@ -206,7 +206,7 @@ class SeverityField(fields.String):
         return ret
 
     def _deserialize(self, value, attr, data, **kwargs):
-        ret = super(SeverityField, self)._serialize(value, attr, data)
+        ret = super()._serialize(value, attr, data)
         if ret == 'med':
             return 'medium'
         elif ret == 'info':
@@ -225,7 +225,7 @@ class NullToBlankString(fields.String):
     """
 
     def __init__(self, *args, **kwargs):
-        super(NullToBlankString, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Always make the field nullable because it is translated
         self.allow_none = True
         self.default = ''
@@ -276,14 +276,14 @@ class StrictDateTimeField(fields.DateTime):
     # TODO migration: write me some tests!!!
 
     def __init__(self, load_as_tz_aware=False, *args, **kwargs):
-        super(StrictDateTimeField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.load_as_tz_aware = load_as_tz_aware
 
     def _deserialize(self, value, attr, data, **kwargs):
         if isinstance(value, datetime.datetime):
             date = value
         else:
-            date = super(StrictDateTimeField, self)._deserialize(value, attr, data)
+            date = super()._deserialize(value, attr, data)
         if self.load_as_tz_aware:
             # If datetime is TZ naive, set UTC timezone
             if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:

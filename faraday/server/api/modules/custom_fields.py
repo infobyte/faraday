@@ -49,7 +49,7 @@ class CustomFieldsSchemaView(ReadWriteView):
         for read_only_key in ['field_name', 'table_name', 'field_type']:
             if read_only_key in data:
                 data.pop(read_only_key)
-        return super(CustomFieldsSchemaView, self)._update_object(obj, data)
+        return super()._update_object(obj, data)
 
 
 class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin):

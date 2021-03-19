@@ -25,6 +25,7 @@
 , flask-limiter
 , flask-security-too
 , flask_login
+, flask_mail
 , flask_sqlalchemy
 , hypothesis
 , lib
@@ -115,6 +116,7 @@ buildPythonPackage rec {
       pyyaml
       pyotp
       flask-limiter
+      flask_mail
     ];
   checkInputs =
     [

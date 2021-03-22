@@ -929,7 +929,10 @@ class CreateMixin:
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
             if not is_unique_constraint_violation(ex):
-                raise
+                if not_null_constraint_violation(ex):
+                    flask.abort(make_response({'message': 'Be sure to send all required parameters.'}, 400))
+                else:
+                    raise
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:

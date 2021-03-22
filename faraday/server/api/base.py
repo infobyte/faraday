@@ -1230,11 +1230,19 @@ class BulkUpdateMixin:
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
+    def _pre_bulk_update(self, data, **kwargs):
+        return {}
+
+    def _post_bulk_update(self, ids, extracted_data):
+        pass
+
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         try:
             if len(data) > 0:
+                post_bulk_update_data = self._pre_bulk_update(data, **kwargs)
                 updated = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs) \
                     .update(data, synchronize_session='fetch')
+                self._post_bulk_update(ids, post_bulk_update_data)
             else:
                 updated = 0
             db.session.commit()

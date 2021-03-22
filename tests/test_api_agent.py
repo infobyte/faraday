@@ -425,6 +425,76 @@ class TestAgentWithWorkspacesAPIGenericV3(TestAgentWithWorkspacesAPIGeneric, V3T
     def url(self, obj=None):
         return v2_to_v3(super(TestAgentWithWorkspacesAPIGenericV3, self).url(obj))
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_agent_add_a_workspace(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        agent1 = AgentFactory.create(workspaces=[workspace],
+                                    active=True)
+        agent2 = AgentFactory.create(workspaces=[workspace],
+                                     active=True)
+        session.commit()
+        data = {"ids": [agent1.id, agent2.id], "workspaces": [workspace.name, other_workspace.name]}
+
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 2
+        for agent in [agent1, agent2]:
+            workspaces = Agent.query.get(agent.id).workspaces
+            assert len(workspaces) == 2
+            assert workspace in workspaces
+            assert other_workspace in workspaces
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_agent_do_not_pass_workspaces(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        agent = AgentFactory.create(workspaces=[workspace],
+                                    active=True)
+        session.commit()
+        data = {"ids": [agent.id], "name": "ASDADSASD"}
+
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 1
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 1
+        assert workspace in workspaces
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_agent_add_a_inexistent_workspace(self, test_client,
+                                                     session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        agent = AgentFactory.create(workspaces=[workspace],
+                                    active=True)
+        session.commit()
+        data = {"ids": [agent.id], "workspaces": [workspace.name, "do_not_exist"]}
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 404
+        assert not res.is_json
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 1
+        assert workspace in workspaces
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_agent_delete_a_workspace(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        agent = AgentFactory.create(workspaces=[workspace, other_workspace],
+                                    active=True)
+        session.commit()
+        data = {"ids": [agent.id], "workspaces": [workspace.name]}
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 1
+        assert workspaces[0] == workspace
+
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     model = Agent

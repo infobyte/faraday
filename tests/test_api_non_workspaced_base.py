@@ -214,6 +214,24 @@ class BulkUpdateTestsMixin:
         assert res.status_code == 200, (res.status_code, res.json)
         assert res.json['updated'] == 0
 
+    def test_bulk_update_invalid_ids(self, test_client):
+        data = self.factory.build_dict()
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        data['ids'] = [-1, 'test']
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 0
+
+    def test_bulk_update_wrong_content_type(self, test_client):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+
+        request_data = {'ids': all_objs_id}
+        headers = [('content-type', 'text/xml')]
+
+        res = test_client.patch(self.url(), data=request_data, headers=headers)
+        assert res.json['updated'] == 0
+        assert res.status_code == 400
 
 
 @pytest.mark.usefixtures('logged_user')

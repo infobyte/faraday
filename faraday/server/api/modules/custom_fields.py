@@ -54,7 +54,7 @@ class CustomFieldsSchemaView(ReadWriteView):
             Field name must be read only
         """
         data = self._check_post_only_data(data)
-        return super(CustomFieldsSchemaView, self)._update_object(obj, data)
+        return super()._update_object(obj, data)
 
 
 class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):

@@ -52,7 +52,7 @@ class CommentCreateMixing(CreateWorkspacedMixin):
             raise InvalidUsage('Can\'t comment inexistent object')
         if obj.workspace != workspace:
             raise InvalidUsage('Can\'t comment object of another workspace')
-        return super(CommentCreateMixing, self)._perform_create(data, workspace_name)
+        return super()._perform_create(data, workspace_name)
 
 
 class CommentView(CommentCreateMixing, ReadWriteWorkspacedView):
@@ -86,7 +86,7 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
                     'object': self.schema_class().dump(comment),
                 }
             ))
-        res = super(UniqueCommentView, self)._perform_create(data, workspace_name)
+        res = super()._perform_create(data, workspace_name)
         return res
 
 

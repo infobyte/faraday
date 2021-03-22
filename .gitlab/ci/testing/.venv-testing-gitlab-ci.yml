@@ -1,7 +1,7 @@
 .unit_tests_base:
     tags:
         - faradaytests
-    stage: testing
+    stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - export LC_ALL=C.UTF-8

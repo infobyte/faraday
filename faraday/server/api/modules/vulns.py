@@ -441,7 +441,7 @@ class VulnerabilityFilterSet(FilterSet):
                 pass
         request.args = ImmutableMultiDict(new_args)
 
-        query = super(VulnerabilityFilterSet, self).filter()
+        query = super().filter()
 
         if command_id:
             # query = query.filter(CommandObject.command_id == int(command_id))
@@ -480,12 +480,10 @@ class VulnerabilityView(PaginatedMixin,
 
     def _validate_uniqueness(self, obj, object_id=None):
         unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
-        super(VulnerabilityView, self)._validate_uniqueness(
-            obj, object_id, unique_fields)
+        super()._validate_uniqueness(obj, object_id, unique_fields)
 
     def _get_schema_instance(self, route_kwargs, **kwargs):
-        schema = super(VulnerabilityView, self)._get_schema_instance(
-            route_kwargs, **kwargs)
+        schema = super()._get_schema_instance(route_kwargs, **kwargs)
 
         return schema
 
@@ -499,7 +497,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         try:
-            obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+            obj = super()._perform_create(data, **kwargs)
         except TypeError:
             # TypeError is raised when trying to instantiate an sqlalchemy model
             # with invalid attributes, for example VulnerabilityWeb with host_id
@@ -541,11 +539,11 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '') # It's forbidden to change vuln type!
         data.pop('tool', '')
-        return super(VulnerabilityView, self)._update_object(obj, data)
+        return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         attachments = data.pop('_attachments', None if partial else {})
-        obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
+        obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:
             self._process_attachments(obj, attachments)
@@ -558,7 +556,7 @@ class VulnerabilityView(PaginatedMixin,
         This is too complex to get_joinedloads so I have to
         override the function
         """
-        query = super(VulnerabilityView, self)._get_eagerloaded_query(
+        query = super()._get_eagerloaded_query(
             *args, **kwargs)
         joinedloads = [
             joinedload(Vulnerability.host)
@@ -586,7 +584,7 @@ class VulnerabilityView(PaginatedMixin,
         ), *joinedloads)
 
     def _filter_query(self, query):
-        query = super(VulnerabilityView, self)._filter_query(query)
+        query = super()._filter_query(query)
         search_term = flask.request.args.get('search', None)
         if search_term is not None:
             # TODO migration: add more fields to free text search
@@ -650,7 +648,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        res = super(VulnerabilityView, self).count(**kwargs)
+        res = super().count(**kwargs)
 
         def convert_group(group):
             group = group.copy()
@@ -1098,27 +1096,27 @@ class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDelet
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
-        return super(VulnerabilityV3View, self).post_attachment(workspace_name, vuln_id)
+        return super().post_attachment(workspace_name, vuln_id)
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super(VulnerabilityV3View, self).get_attachment(workspace_name, vuln_id, attachment_filename)
+        return super().get_attachment(workspace_name, vuln_id, attachment_filename)
 
     @route('/<int:vuln_id>/attachment', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
-        return super(VulnerabilityV3View, self).get_attachments_by_vuln(workspace_name, vuln_id)
+        return super().get_attachments_by_vuln(workspace_name, vuln_id)
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super(VulnerabilityV3View, self).delete_attachment(workspace_name, vuln_id, attachment_filename)
+        return super().delete_attachment(workspace_name, vuln_id, attachment_filename)
 
     @route('/export_csv', methods=['GET'])
     def export_csv(self, workspace_name):
-        return super(VulnerabilityV3View, self).export_csv(workspace_name)
+        return super().export_csv(workspace_name)
 
     @route('/top_users', methods=['GET'])
     def top_users(self, workspace_name):
-        return super(VulnerabilityV3View, self).top_users(workspace_name)
+        return super().top_users(workspace_name)
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):

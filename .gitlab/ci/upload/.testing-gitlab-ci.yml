@@ -1,7 +1,7 @@
 qa_integration:
     stage: upload_testing
     variables:
-      REMOTE_BRANCH: $CI_COMMIT_BRANCH
+      REMOTE_BRANCH: $CI_COMMIT_REF_NAME
       MAIN_COMMIT_SHA: $CI_COMMIT_SHA
     trigger:
         project: faradaysec/qa/automation

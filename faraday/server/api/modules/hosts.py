@@ -246,7 +246,7 @@ class HostsView(PaginatedMixin,
                     hostnames = parse_hosts(host_dict.pop('hostnames'))
                     other_fields = {'owned': False, 'mac': u'00:00:00:00:00:00', 'default_gateway_ip': u'None'}
                     host_dict.update(other_fields)
-                    host = super(HostsView, self)._perform_create(host_dict, workspace_name)
+                    host = super()._perform_create(host_dict, workspace_name)
                     host.workspace = workspace
                     for name in hostnames:
                         get_or_create(db.session, Hostname, name=name, host=host, workspace=host.workspace)
@@ -351,7 +351,7 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
-        host = super(HostsView, self)._perform_create(data, **kwargs)
+        host = super()._perform_create(data, **kwargs)
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name, host=host,
                           workspace=host.workspace)
@@ -369,10 +369,10 @@ class HostsView(PaginatedMixin,
         # A commit is required here, otherwise it breaks (i'm not sure why)
         db.session.commit()
 
-        return super(HostsView, self)._update_object(obj, data)
+        return super()._update_object(obj, data)
 
     def _filter_query(self, query):
-        query = super(HostsView, self)._filter_query(query)
+        query = super()._filter_query(query)
         search_term = flask.request.args.get('search', None)
         if search_term is not None:
             like_term = '%' + search_term + '%'
@@ -448,19 +448,19 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin
 
     @route('/<host_id>/services')
     def service_list(self, workspace_name, host_id):
-        return super(HostsV3View, self).service_list(workspace_name, host_id)
+        return super().service_list(workspace_name, host_id)
 
     @route('/<host_id>/tools_history')
     def tool_impacted_by_host(self, workspace_name, host_id):
-        return super(HostsV3View, self).tool_impacted_by_host(workspace_name, host_id)
+        return super().tool_impacted_by_host(workspace_name, host_id)
 
     @route('/bulk_create', methods=['POST'])
     def bulk_create(self, workspace_name):
-        return super(HostsV3View, self).bulk_create(workspace_name)
+        return super().bulk_create(workspace_name)
 
     @route('/countVulns')
     def count_vulns(self, workspace_name):
-        return super(HostsV3View, self).count_vulns()
+        return super().count_vulns()
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):

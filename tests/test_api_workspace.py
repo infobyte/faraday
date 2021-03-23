@@ -11,6 +11,7 @@ from posixpath import join as urljoin
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
+from tests.factories import WorkspaceFactory
 from tests.test_api_non_workspaced_base import ReadWriteAPITests, V3TestMixin
 from tests import factories
 from tests.utils.url import v2_to_v3
@@ -440,3 +441,22 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
         assert active_query == False
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_with_scope(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        desired_scope = [
+            'www.google.com',
+            '127.0.0.1'
+        ]
+        raw_data = {"ids": [self.first_object.name, workspace.name], 'scope': desired_scope}
+        res = test_client.patch(self.url(), data=raw_data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 2
+        assert set(s.name for s in workspace.scope) == set(desired_scope)
+        assert set(s.name for s in self.first_object.scope) == set(desired_scope)
+        raw_data = {"ids": [self.first_object.name], 'name': self.first_object.name+"a"}
+        res = test_client.patch(self.url(), data=raw_data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 1
+        assert set(s.name for s in self.first_object.scope) == set(desired_scope)

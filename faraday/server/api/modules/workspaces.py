@@ -371,5 +371,17 @@ class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin, BulkUpdate
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.name.in_(ids))
 
+    def _pre_bulk_update(self, data, **kwargs):
+        scope = data.pop('scope', None)
+        if scope is not None:
+            return {"scope": scope}
+        return {}
+
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        if "scope" in extracted_data:
+            for obj in self._bulk_update_query(ids).all():
+                obj.set_scope(extracted_data["scope"])
+
+
 WorkspaceView.register(workspace_api)
 WorkspaceV3View.register(workspace_api)

@@ -32,7 +32,8 @@ from faraday.server.models import Workspace, db, Command, CommandObject, count_v
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation
+    is_unique_constraint_violation,
+    not_null_constraint_violation
     )
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
@@ -930,7 +931,7 @@ class CreateMixin:
         except sqlalchemy.exc.IntegrityError as ex:
             if not is_unique_constraint_violation(ex):
                 if not_null_constraint_violation(ex):
-                    flask.abort(make_response({'message': 'Be sure to send all required parameters.'}, 400))
+                    flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
                 else:
                     raise
             db.session.rollback()

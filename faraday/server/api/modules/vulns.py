@@ -734,7 +734,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        filters = request.args.get('q')
+        filters = request.args.get('q', '{}')
         filtered_vulns, count = self._filter(filters, workspace_name)
 
         class PageMeta:

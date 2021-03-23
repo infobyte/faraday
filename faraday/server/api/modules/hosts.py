@@ -467,6 +467,17 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
         return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
 
+    def _pre_bulk_update(self, data, **kwargs):
+        hostnames = data.pop('hostnames', None)
+        if hostnames is not None:
+            return {"hostnames": hostnames}
+        return {}
+
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        if "hostnames" in extracted_data:
+            for obj in self._bulk_update_query(ids, **kwargs).all():
+                obj.set_hostnames(extracted_data["hostnames"])
+
     service_list.__doc__ = HostsView.service_list.__doc__
     tool_impacted_by_host.__doc__ = HostsView.tool_impacted_by_host.__doc__
     bulk_create.__doc__ = HostsView.bulk_create.__doc__

@@ -1144,6 +1144,35 @@ class TestHostAPIGenericV3(TestHostAPIGeneric, V3TestMixin):
     def url(self, obj=None, workspace=None):
         return v2_to_v3(super(TestHostAPIGenericV3, self).url(obj, workspace))
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_host_with_hostnames(self, test_client, session,
+                                        host_with_hostnames):
+        session.commit()
+        data = {
+            "ids": [host_with_hostnames.id, self.first_object.id],
+            "hostnames": ["other.com", "test.com"],
+        }
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json["updated"] == 2
+        expected = {"other.com", "test.com"}
+        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
+        assert set(hn.name for hn in self.first_object.hostnames) == expected
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_host_without_hostnames(self, test_client, session,
+                                                host_with_hostnames):
+        session.commit()
+        expected = set(hn.name for hn in host_with_hostnames.hostnames)
+        data = {
+            "ids": [host_with_hostnames.id],
+            "os": "NotAnOS"
+        }
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json["updated"] == 1
+        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
+
 
 def host_json():
     return st.fixed_dictionaries(

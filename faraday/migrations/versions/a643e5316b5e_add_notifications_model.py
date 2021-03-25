@@ -85,7 +85,7 @@ def upgrade():
         sa.Column('event_id', sa.Integer),
         sa.Column('config_id', sa.Integer),
         sa.Column('mark_read', sa.Boolean),
-        sa.Column('notification_text', sa.String(256), nullable=False)
+        # sa.Column('notification_text', sa.String(256), nullable=False)
     )
 
     op.create_foreign_key(

@@ -2158,7 +2158,7 @@ class Notification2(db.Model):
         'NotificationConfig',
         backref=backref('notification2', cascade="all, delete-orphan"),
     )
-    notification_text = Column(Text, nullable=False) # Calculado del json del event
+    # notification_text = Column(Text, nullable=False) # Calculado del json del event
     mark_read = Column(Boolean, default=False, index=True)
 
 

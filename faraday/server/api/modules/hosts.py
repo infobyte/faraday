@@ -469,9 +469,10 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin
 
     def _pre_bulk_update(self, data, **kwargs):
         hostnames = data.pop('hostnames', None)
+        ans_data = super()._pre_bulk_update(data, **kwargs)
         if hostnames is not None:
-            return {"hostnames": hostnames}
-        return {}
+            ans_data["hostnames"] = hostnames
+        return ans_data
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
         if "hostnames" in extracted_data:

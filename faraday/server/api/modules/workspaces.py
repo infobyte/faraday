@@ -373,9 +373,10 @@ class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin, BulkUpdate
 
     def _pre_bulk_update(self, data, **kwargs):
         scope = data.pop('scope', None)
+        ans_data = super()._pre_bulk_update(data, **kwargs)
         if scope is not None:
-            return {"scope": scope}
-        return {}
+            ans_data["scope"] = scope
+        return ans_data
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
         if "scope" in extracted_data:

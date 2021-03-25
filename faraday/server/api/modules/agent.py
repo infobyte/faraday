@@ -264,10 +264,12 @@ class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin, BulkDel
     trailing_slash = False
 
     def _pre_bulk_update(self, data, **kwargs):
+        ans_data = dict()
         if "workspaces" in data:
             workspaces = self._get_workspaces_from_data(data, **kwargs)
-            return {"workspaces": workspaces}
-        return {}
+            ans_data["workspaces"] = workspaces
+        ans_data.update(super()._pre_bulk_update(data, **kwargs))
+        return ans_data
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
         if "workspaces" in extracted_data:

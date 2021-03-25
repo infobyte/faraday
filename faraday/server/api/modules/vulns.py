@@ -1141,6 +1141,13 @@ class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDelet
         workspace = self._get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
+    def _pre_bulk_update(self, data, **kwargs):
+        data.pop('type', '') # It's forbidden to change vuln type!
+        data.pop('tool', '')
+        # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
+        data.pop('_attachments', [])
+        return super()._pre_bulk_update(data, **kwargs)
+
     post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
     get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__

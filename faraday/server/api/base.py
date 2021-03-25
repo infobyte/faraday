@@ -27,6 +27,7 @@ from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
+import flask_login
 
 from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
 from faraday.server.schemas import NullToBlankString
@@ -912,7 +913,8 @@ class CreateMixin:
                                 flask.request)
         data.pop('id', None)
         created = self._perform_create(data, **kwargs)
-        created.creator = g.user
+        if not flask_login.current_user.is_anonymous:
+            created.creator = flask_login.current_user
         db.session.commit()
         return self._dump(created, kwargs), 201
 

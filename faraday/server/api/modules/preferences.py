@@ -2,6 +2,7 @@ from faraday.server.api.base import GenericView
 from faraday.server.models import User, db
 from flask import Blueprint, request, jsonify, g, abort
 from marshmallow import Schema, fields
+import flask_login
 
 preferences_api = Blueprint('preferences_api', __name__)
 
@@ -25,7 +26,7 @@ class PreferencesView(GenericView):
             200:
               description: Ok
         """
-        user = g.user
+        user = flask_login.current_user
 
         if request.json and 'preferences' not in request.json:
             abort(400)
@@ -47,7 +48,7 @@ class PreferencesView(GenericView):
             200:
               description: Ok
         """
-        return jsonify({'preferences': g.user.preferences}), 200
+        return jsonify({'preferences': flask_login.current_user.preferences}), 200
 
 
 class PreferencesV3View(PreferencesView):

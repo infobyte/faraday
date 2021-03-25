@@ -192,7 +192,7 @@ class GenericView(FlaskView):
         """
         return getattr(self.model_class, self.lookup_field)
 
-    def _validate_object_id(self, object_id):
+    def _validate_object_id(self, object_id, raise_error=True):
         """
         By default, it validates the value of the lookup field set by the user
         in the URL by calling ``self.lookup_field_type(object_id)``.
@@ -202,7 +202,10 @@ class GenericView(FlaskView):
         try:
             self.lookup_field_type(object_id)
         except ValueError:
-            flask.abort(404, 'Invalid format of lookup field')
+            if raise_error:
+                flask.abort(404, 'Invalid format of lookup field')
+            return False
+        return True
 
     def _get_base_query(self):
         """Return the initial query all views should use
@@ -287,9 +290,7 @@ class GenericView(FlaskView):
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
-        for object_id in object_ids:
-            self._validate_object_id(object_id)
-
+        object_ids = [object_id for object_id in object_ids if self._validate_object_id(object_id, raise_error=False)]
         if eagerload:
             query = self._get_eagerloaded_query(**kwargs)
         else:
@@ -297,7 +298,7 @@ class GenericView(FlaskView):
         try:
             obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
         except NoResultFound:
-            flask.abort(404, f'Object with id "{object_id}" not found')
+            return []
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -1238,7 +1239,7 @@ class BulkUpdateMixin:
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         try:
-            if len(data) > 0:
+            if len(data) > 0 and len(ids) > 0:
                 post_bulk_update_data = self._pre_bulk_update(data, **kwargs)
                 updated = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs) \
                     .update(data, synchronize_session='fetch')

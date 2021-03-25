@@ -406,12 +406,16 @@ class BulkUpdateTestsMixin:
         assert res.status_code == 200, (res.status_code, res.json)
 
     def test_bulk_update_invalid_ids(self, test_client):
-        data = self.factory.build_dict()
+        data = self.factory.build_dict(workspace=self.workspace)
         data = BulkUpdateTestsMixin.control_data(self, data)
         data['ids'] = [-1, 'test']
         res = test_client.patch(self.url(), data=data)
         assert res.status_code == 200
         assert res.json['updated'] == 0
+        data['ids'] = [-1, 'test', self.first_object.__getattribute__(self.view_class.lookup_field)]
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 1
 
     def test_bulk_update_wrong_content_type(self, test_client):
         all_objs = self.model.query.all()

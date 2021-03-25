@@ -1213,7 +1213,7 @@ class BulkUpdateMixin:
               description: Ok
         """
         #TODO BULK_UPDATE_SCHEMA
-        if 'ids' not in flask.request.json:
+        if not flask.request.json or 'ids' not in flask.request.json:
             flask.abort(400)
         ids = flask.request.json['ids']
         objects = self._get_objects(ids, **kwargs)

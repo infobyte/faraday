@@ -269,7 +269,7 @@ class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin, BulkDel
             return {"workspaces": workspaces}
         return {}
 
-    def _post_bulk_update(self, ids, extracted_data):
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
         if "workspaces" in extracted_data:
             for obj in self._bulk_update_query(ids).all():
                 obj.workspaces = extracted_data["workspaces"]

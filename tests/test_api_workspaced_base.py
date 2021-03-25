@@ -421,7 +421,6 @@ class BulkUpdateTestsMixin:
         headers = [('content-type', 'text/xml')]
 
         res = test_client.patch(self.url(), data=request_data, headers=headers)
-        assert res.json['updated'] == 0
         assert res.status_code == 400
 
 

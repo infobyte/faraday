@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 class CleanHttpHeadersResource(Resource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(CleanHttpHeadersResource, self).render(request)
+        return super().render(request)
 
 
 class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
@@ -52,7 +52,7 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         return ForbiddenResource()
 
     def render(self, request):
-        ret = super(FileWithoutDirectoryListing, self).render(request)
+        ret = super().render(request)
         if self.type == 'text/html':
             request.responseHeaders.addRawHeader('Content-Security-Policy',
                                                  'frame-ancestors \'self\'')
@@ -63,13 +63,13 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
 class FaradayWSGIResource(WSGIResource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(FaradayWSGIResource, self).render(request)
+        return super().render(request)
 
 
 class FaradayRedirectResource(Redirect):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(FaradayRedirectResource, self).render(request)
+        return super().render(request)
 
 
 class WebServer:

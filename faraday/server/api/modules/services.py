@@ -132,7 +132,7 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         port_number = data.get("port", "1")
         if not port_number.isdigit():
             abort(make_response(jsonify(message="Invalid Port number"), 400))
-        return super(ServiceView, self)._perform_create(data, **kwargs)
+        return super()._perform_create(data, **kwargs)
 
 
 class ServiceV3View(ServiceView, PatchableWorkspacedMixin):

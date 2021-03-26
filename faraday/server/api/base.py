@@ -375,7 +375,7 @@ class GenericWorkspacedView(GenericView):
         return ws
 
     def _get_base_query(self, workspace_name):
-        base = super(GenericWorkspacedView, self)._get_base_query()
+        base = super()._get_base_query()
         return base.join(Workspace).filter(
             Workspace.id == self._get_workspace(workspace_name).id)
 
@@ -397,7 +397,7 @@ class GenericWorkspacedView(GenericView):
         return context
 
     def before_request(self, name, *args, **kwargs):
-        sup = super(GenericWorkspacedView, self)
+        sup = super()
         if hasattr(sup, 'before_request'):
             sup.before_request(name, *args, **kwargs)
         if (self._get_workspace(kwargs['workspace_name']).readonly
@@ -591,7 +591,7 @@ class PaginatedMixin:
 
             pagination_metadata = query.paginate(page=page, per_page=per_page, error_out=False)
             return pagination_metadata.items, pagination_metadata
-        return super(PaginatedMixin, self)._paginate(query)
+        return super()._paginate(query)
 
 
 class FilterAlchemyMixin:
@@ -848,7 +848,7 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(RetrieveWorkspacedMixin, self).get(object_id, workspace_name=workspace_name)
+        return super().get(object_id, workspace_name=workspace_name)
 
 
 class RetrieveMultiWorkspacedMixin(RetrieveWorkspacedMixin):
@@ -1030,7 +1030,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(CreateWorkspacedMixin, self).post(workspace_name=workspace_name)
+        return super().post(workspace_name=workspace_name)
 
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
@@ -1228,7 +1228,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(UpdateWorkspacedMixin, self).put(object_id, workspace_name=workspace_name)
+        return super().put(object_id, workspace_name=workspace_name)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         # # Make sure that if I created new objects, I had properly commited them
@@ -1238,8 +1238,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
             obj.workspace = self._get_workspace(workspace_name)
 
         self._set_command_id(obj, False)
-        return super(UpdateWorkspacedMixin, self)._perform_update(
-            object_id, obj, data, workspace_name)
+        return super()._perform_update(object_id, obj, data, workspace_name)
 
 
 class PatchableWorkspacedMixin(PatchableMixin):
@@ -1278,7 +1277,7 @@ class PatchableWorkspacedMixin(PatchableMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(PatchableWorkspacedMixin, self).patch(object_id, workspace_name=workspace_name)
+        return super().patch(object_id, workspace_name=workspace_name)
 
 
 class DeleteMixin:
@@ -1331,14 +1330,13 @@ class DeleteWorkspacedMixin(DeleteMixin):
               204:
                 description: The resource was deleted successfully
         """
-        return super(DeleteWorkspacedMixin, self).delete(object_id, workspace_name=workspace_name)
+        return super().delete(object_id, workspace_name=workspace_name)
 
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
 
-        return super(DeleteWorkspacedMixin, self)._perform_delete(
-            obj, workspace_name)
+        return super()._perform_delete(obj, workspace_name)
 
 
 class CountWorkspacedMixin:
@@ -1553,14 +1551,14 @@ class CustomModelConverter(ModelConverter):
     """
 
     def _add_column_kwargs(self, kwargs, column):
-        super(CustomModelConverter, self)._add_column_kwargs(kwargs, column)
+        super()._add_column_kwargs(kwargs, column)
         if not column.info.get('allow_blank', True):
             kwargs['validate'].append(Length(min=1))
 
 
 class CustomModelSchemaOpts(ModelSchemaOpts):
     def __init__(self, *args, **kwargs):
-        super(CustomModelSchemaOpts, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.model_converter = CustomModelConverter
 
 
@@ -1597,7 +1595,7 @@ class AutoSchema(Schema, metaclass=ModelSchemaMeta):
     TYPE_MAPPING[str] = NullToBlankString
 
     def __init__(self, *args, **kwargs):
-        super(AutoSchema, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.unknown = EXCLUDE
 
 
@@ -1607,8 +1605,7 @@ class FilterAlchemyModelConverter(ModelConverter):
     It is used to make filteralchemy support not nullable columns"""
 
     def _add_column_kwargs(self, kwargs, column):
-        super(FilterAlchemyModelConverter, self)._add_column_kwargs(kwargs,
-                                                                    column)
+        super()._add_column_kwargs(kwargs, column)
         kwargs['required'] = False
 
 

@@ -107,7 +107,7 @@ class CustomEngineConnector(_EngineConnector):
             return self._engine
 
         # Call original metohd and register events
-        rv = super(CustomEngineConnector, self).get_engine()
+        rv = super().get_engine()
         if uri.startswith('sqlite://'):
             with self._lock:
                 @event.listens_for(rv, "connect")
@@ -530,7 +530,7 @@ class CustomAssociationSet(_AssociationSet):
         else:
             getter, setter = parent._default_getset(parent.collection_class)
 
-        super(CustomAssociationSet, self).__init__(
+        super().__init__(
             lazy_collection, creator, getter, setter, parent)
 
     def _create(self, value):
@@ -707,7 +707,7 @@ class CommandObject(db.Model):
                                            "flushing the session"
             kwargs['object_id'] = object_.id
             kwargs['object_type'] = object_type
-        return super(CommandObject, self).__init__(**kwargs)
+        return super().__init__(**kwargs)
 
 
 def _make_created_objects_sum(object_type_filter):
@@ -1311,8 +1311,7 @@ class ReferenceTemplate(Metadata):
     )
 
     def __init__(self, name=None, **kwargs):
-        super(ReferenceTemplate, self).__init__(name=name,
-                                                **kwargs)
+        super().__init__(name=name, **kwargs)
 
 
 class Reference(Metadata):
@@ -1338,9 +1337,7 @@ class Reference(Metadata):
     )
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
-        super(Reference, self).__init__(name=name,
-                                        workspace_id=workspace_id,
-                                        **kwargs)
+        super().__init__(name=name, workspace_id=workspace_id, **kwargs)
 
     @property
     def parent(self):
@@ -1423,8 +1420,7 @@ class PolicyViolationTemplate(Metadata):
     )
 
     def __init__(self, name=None, **kwargs):
-        super(PolicyViolationTemplate, self).__init__(name=name,
-                                                      **kwargs)
+        super().__init__(name=name, **kwargs)
 
 
 class PolicyViolation(Metadata):
@@ -1453,9 +1449,7 @@ class PolicyViolation(Metadata):
     )
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
-        super(PolicyViolation, self).__init__(name=name,
-                                              workspace_id=workspace_id,
-                                              **kwargs)
+        super().__init__(name=name, workspace_id=workspace_id, **kwargs)
 
     @property
     def parent(self):
@@ -1795,7 +1789,7 @@ class User(db.Model, UserMixin):
             kwargs.pop('roles')
         except KeyError:
             pass
-        super(User, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
         return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"

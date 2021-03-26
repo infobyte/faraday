@@ -147,6 +147,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.agent_registration_secret = None
         self.debug = False
         self.custom_plugins_folder = None
+        self.ignore_info_severity = False
 
 
 class LDAPConfigObject(ConfigSection):

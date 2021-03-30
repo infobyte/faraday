@@ -69,7 +69,7 @@ class PolymorphicVulnerabilityField(fields.Field):
     """Used like a nested field with many objects, but it decides which
     schema to use based on the type of each vuln"""
     def __init__(self, *args, **kwargs):
-        super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
         self.vuln_schema = VulnerabilitySchema()
         self.vulnweb_schema = BulkVulnerabilityWebSchema()

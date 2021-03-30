@@ -302,7 +302,7 @@ def create_app(db_connection_string=None, testing=None):
             for rule_ in CustomFlask.SKIP_RULES:
                 if rule_ == rule:
                     return
-            return super(CustomFlask, self).add_url_rule(rule, endpoint, view_func, **options)
+            return super().add_url_rule(rule, endpoint, view_func, **options)
 
     app = CustomFlask(__name__, static_folder=None)
 

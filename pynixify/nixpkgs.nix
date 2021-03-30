@@ -102,6 +102,11 @@ let
         ./packages/flask-security-too
         { };
 
+      pyotp =
+        self.callPackage
+        ./packages/pyotp
+        { };
+
       simplekv =
         self.callPackage
         ./packages/simplekv

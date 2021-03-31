@@ -38,8 +38,8 @@ New features in the latest update
  * ADD v3 API, which includes:
     * All endpoints ends without `/`
     * `PATCH {model}/id` endpoints
-    * Bulk update via PATCH `{model}` endpoints
-    * Bulk delete via DELETE `{model}` endpoints
+    * ~~Bulk update via PATCH `{model}` endpoints~~ In a future release
+    * ~~Bulk delete via DELETE `{model}` endpoints~~ In a future release
     * Endpoints removed:
       * `/v2/ws/<workspace_id>/activate/`
       * `/v2/ws/<workspace_id>/change_readonly/`

@@ -48,7 +48,7 @@ from faraday.server.commands import change_username
 from faraday.server.commands import nginx_config
 from faraday.server.commands import import_vulnerability_template
 from faraday.server.models import db, User
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday_plugins.plugins.manager import PluginsManager
 from flask_security.utils import hash_password
 
@@ -100,7 +100,7 @@ def import_vulnerability_templates(language, list_languages):
               'use the one provided')
         )
 def initdb(choose_password, password):
-    with app.app_context():
+    with get_app().app_context():
         InitDB().run(choose_password=choose_password, faraday_user_password=password)
 
 
@@ -168,7 +168,7 @@ def change_password(username, password):
 
 
 def validate_user_unique_field(ctx, param, value):
-    with app.app_context():
+    with get_app().app_context():
         try:
             if User.query.filter_by(**{param.name: value}).count():
                 raise click.ClickException("User already exists")
@@ -202,12 +202,12 @@ def list_plugins():
 @click.option('--password', prompt=True, hide_input=True,
               confirmation_prompt=True)
 def create_superuser(username, email, password):
-    with app.app_context():
+    with get_app().app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
             print("Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
             sys.exit(1)
 
-        app.user_datastore.create_user(username=username,
+        get_app().user_datastore.create_user(username=username,
                                        email=email,
                                        password=hash_password(password),
                                        role='admin',
@@ -221,7 +221,7 @@ def create_superuser(username, email, password):
 @click.command(help="Create database tables. Requires a functional "
                "PostgreSQL database configured in the server.ini")
 def create_tables():
-    with app.app_context():
+    with get_app().app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
         if not conn_string:

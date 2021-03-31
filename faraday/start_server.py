@@ -16,7 +16,7 @@ import faraday.server.utils.logger
 import faraday.server.web
 from faraday.server.models import db, Workspace
 from faraday.server.utils import daemonize
-from faraday.server.web import app
+from faraday.server.web import get_app
 from alembic.script import ScriptDirectory
 from alembic.config import Config
 
@@ -48,7 +48,7 @@ def run_server(args):
 
 
 def check_postgresql():
-    with app.app_context():
+    with get_app().app_context():
         try:
             if not db.session.query(Workspace).count():
                 logger.warning('No workspaces found')
@@ -73,7 +73,7 @@ def check_alembic_version():
     script = ScriptDirectory.from_config(config)
 
     head_revision = script.get_current_head()
-    with app.app_context():
+    with get_app().app_context():
         try:
             conn = db.session.connection()
         except ImportError:

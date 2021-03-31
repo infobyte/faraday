@@ -34,15 +34,8 @@ from faraday.server.websocket_factories import (
     BroadcastServerProtocol
 )
 
+APP = None
 
-app = create_app()  # creates a Flask(__name__) app
-# After 'Create app'
-app.config['MAIL_SERVER'] = smtp.host
-app.config['MAIL_PORT'] = smtp.port
-app.config['MAIL_USE_SSL'] = smtp.ssl
-app.config['MAIL_USERNAME'] = smtp.username
-app.config['MAIL_PASSWORD'] = smtp.password
-mail = Mail(app)
 logger = logging.getLogger(__name__)
 
 
@@ -115,7 +108,7 @@ class WebServer:
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
 
     def __build_api_resource(self):
-        return FaradayWSGIResource(reactor, reactor.getThreadPool(), app)
+        return FaradayWSGIResource(reactor, reactor.getThreadPool(), get_app())
 
     def __build_websockets_resource(self):
         websocket_port = int(faraday.server.config.faraday_server.websocket_port)
@@ -181,4 +174,20 @@ class WebServer:
             logger.exception(e)
             self.__stop_all_threads()
             sys.exit(1)
-# I'm Py3
+
+
+def get_app():
+    global APP
+    if not APP:
+        app = create_app()  # creates a Flask(__name__) app
+        # After 'Create app'
+        app.config['MAIL_SERVER'] = smtp.host
+        app.config['MAIL_PORT'] = smtp.port
+        app.config['MAIL_USE_SSL'] = smtp.ssl
+        app.config['MAIL_USERNAME'] = smtp.username
+        app.config['MAIL_PASSWORD'] = smtp.password
+        mail = Mail(app)
+        #global APP
+        APP = app
+    return APP
+

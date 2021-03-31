@@ -177,7 +177,7 @@ class WebServer:
 
 
 def get_app():
-    global APP
+    global APP # pylint: disable=W0603
     if not APP:
         app = create_app()  # creates a Flask(__name__) app
         # After 'Create app'

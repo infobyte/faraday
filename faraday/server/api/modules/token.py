@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from itsdangerous import TimedJSONWebSignatureSerializer
-from flask import Blueprint, g, request
+from flask import Blueprint, request
 from flask_security.utils import hash_data
 from flask import current_app as app
 from marshmallow import Schema

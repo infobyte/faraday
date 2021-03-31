@@ -18,7 +18,7 @@ import re
 import logging
 
 from flask import current_app as app
-from flask import abort, Blueprint, jsonify, g, request, make_response
+from flask import abort, Blueprint, jsonify, request, make_response
 from flask_security.confirmable import requires_confirmation
 from flask_security.forms import LoginForm, ChangePasswordForm
 from flask_security.datastore import SQLAlchemyUserDatastore

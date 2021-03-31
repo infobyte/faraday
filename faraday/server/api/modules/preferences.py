@@ -1,6 +1,6 @@
 from faraday.server.api.base import GenericView
 from faraday.server.models import User, db
-from flask import Blueprint, request, jsonify, g, abort
+from flask import Blueprint, request, jsonify, abort
 from marshmallow import Schema, fields
 import flask_login
 

@@ -13,7 +13,6 @@ import flask
 import sqlalchemy
 import datetime
 from collections import defaultdict
-from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError

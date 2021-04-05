@@ -33,7 +33,7 @@ class TokenAuthView(GenericView):
             200:
               description: Ok
         """
-        user_id = g.user.id
+        user_id = g.user.fs_uniquifier
         serializer = TimedJSONWebSignatureSerializer(
             app.config['SECRET_KEY'],
             salt="api_token",

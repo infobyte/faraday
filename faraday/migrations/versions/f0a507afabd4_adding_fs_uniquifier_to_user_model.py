@@ -1,7 +1,7 @@
 """adding fs uniquifier to user model
 
 Revision ID: f0a507afabd4
-Revises: 6471033046cb
+Revises: a4def820a5bb
 Create Date: 2021-02-24 22:08:24.237037+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f0a507afabd4'
-down_revision = '077b7c925ded'
+down_revision = 'a4def820a5bb'
 branch_labels = None
 depends_on = None
 

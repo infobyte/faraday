@@ -2,7 +2,8 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ buildPythonPackage
+{ blinker
+, buildPythonPackage
 , email_validator
 , fetchPypi
 , flask
@@ -18,7 +19,7 @@ buildPythonPackage rec {
   pname =
     "flask-security-too";
   version =
-    "4.0.0";
+    "4.0.1";
 
   src =
     fetchPypi {
@@ -27,7 +28,7 @@ buildPythonPackage rec {
       pname =
         "Flask-Security-Too";
       sha256 =
-        "11sd8sk9ym0n9m9h3gqwrrq03070zj0pwwkx040vzahgzrva182a";
+        "1q7izrmz84wwhmzs39zgjvr90vb22z3szsm8mp3a3qnb1377z5n2";
     };
 
   propagatedBuildInputs =
@@ -39,6 +40,7 @@ buildPythonPackage rec {
       email_validator
       itsdangerous
       passlib
+      blinker
     ];
 
   # TODO FIXME

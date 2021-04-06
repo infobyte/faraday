@@ -2187,7 +2187,7 @@ class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
         'polymorphic_identity': NOTIFICATION_METHODS[2]
     }
 
-"""
+
 class NotificationEvent(db.Model):
     __tablename__ = 'notification_event'
     id = Column(Integer, primary_key=True)
@@ -2201,23 +2201,23 @@ class NotificationEvent(db.Model):
         pass
 
 
-# TODO: TO BE RENAMED
-class Notification2(db.Model):
-    __tablename__ = 'notification2'
+# TODO: TO BE RENAMED, maybe
+# TODO: Las notificaciones de mails no habria que guardarlas, no?
+class NotificationSent(db.Model):
+    __tablename__ = 'notification_sent'
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
     event = relationship(
         'NotificationEvent',
-        backref=backref('notification2', cascade="all, delete-orphan"),
+        backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
-    config_id = Column(Integer, ForeignKey('notification_config.id'), index=True, nullable=False)
-    config = relationship(
-        'NotificationConfig',
-        backref=backref('notification2', cascade="all, delete-orphan"),
+    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), index=True, nullable=False)
+    notification_subscription_config = relationship(
+        'NotificationSubscriptionBaseConfig',
+        backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
-    # notification_text = Column(Text, nullable=False) # Calculado del json del event
-    mark_read = Column(Boolean, default=False, index=True)
-"""
+    mark_read = Column(Boolean, default=False, index=True) # mark read? is read? was read? index?
+
 
 class Notification(db.Model):
 

@@ -1904,6 +1904,7 @@ class TaskTemplate(TaskABC):
     __mapper_args__ = {
         'concrete': True
     }
+
     template = relationship(
         'MethodologyTemplate',
         backref=backref('tasks', cascade="all, delete-orphan"))
@@ -2105,6 +2106,7 @@ class ExecutiveReport(Metadata):
         )
 
 
+"""
 class NotificationMethod(db.Model):
     __tablename__ = 'notification_method'
     id = Column(Integer, primary_key=True)
@@ -2127,12 +2129,75 @@ class NotificationConfig(db.Model):
         backref=backref('notification_method', cascade="all, delete-orphan"),
     )
     active = Column(Boolean, default=True, index=True)
+"""
+
+# Deberia heredar de metadata me parece :?
+class NotificationSubscription(Metadata):
+    __tablename__ = 'notification_subscription'
+    id = Column(Integer, primary_key=True)
+    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
+    global_subscription = Column(Boolean, default=False)
 
 
+class NotificationSubscriptionBaseConfig(db.Model):
+    __tablename__ = 'notification_subscription_base_config'
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey('notification_subscription.id'), index=True, nullable=False)
+    subscription = relationship(
+        'NotificationSubscription',
+        backref=backref('notification_subscription_config', cascade="all, delete-orphan")
+    )
+    active = Column(Boolean, default=True)
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+
+class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
+    __tablename__ = 'notification_subscription_mail_config'
+    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'),primary_key=True)
+    email = Column(String(50), nullable=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_subscription_mail_config', cascade="all, delete-orphan")
+    )
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[0]
+    }
+
+    #TODO get from, to, subject, body method
+
+
+class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig):
+    __tablename__ = 'notification_subscription_websocket_config'
+    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'),  primary_key=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_subscription_websocket_config', cascade="all, delete-orphan")
+    )
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[1]
+    }
+
+
+class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
+    __tablename__ = 'notification_subscription_webhook_config'
+    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
+    url = Column(String(50), nullable=True)
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[2]
+    }
+
+"""
 class NotificationEvent(db.Model):
     __tablename__ = 'notification_event'
     id = Column(Integer, primary_key=True)
-    event = Column(Enum(*NOTIFICATION_EVENTS, name="notificaion_events"))
+    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
     notification_data = Column(JSONType, nullable=False)
@@ -2141,11 +2206,9 @@ class NotificationEvent(db.Model):
     def parent(self):
         pass
 
+
 # TODO: TO BE RENAMED
 class Notification2(db.Model):
-    """
-        Se genera en base al notification event y la config.
-    """
     __tablename__ = 'notification2'
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
@@ -2160,7 +2223,7 @@ class Notification2(db.Model):
     )
     # notification_text = Column(Text, nullable=False) # Calculado del json del event
     mark_read = Column(Boolean, default=False, index=True)
-
+"""
 
 class Notification(db.Model):
 

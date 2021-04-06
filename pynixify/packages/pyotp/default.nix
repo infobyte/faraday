@@ -2,25 +2,16 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ beautifulsoup4
-, buildPythonPackage
-, click
-, colorama
-, dateutil
+{ buildPythonPackage
 , fetchPypi
-, html2text
 , lib
-, lxml
-, pytz
-, requests
-, simplejson
 }:
 
 buildPythonPackage rec {
   pname =
-    "faraday-plugins";
+    "pyotp";
   version =
-    "1.4.4";
+    "2.6.0";
 
   src =
     fetchPypi {
@@ -28,21 +19,8 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0bcm4c0f9lhp48bzbn408m648w3b3wiq9xvfgs82kxkf6kas7q4z";
+        "0cn4z5nv526f0l7v131piysiy9hhgbacfqd9kmmnl6qc1vadz3fj";
     };
-
-  propagatedBuildInputs =
-    [
-      click
-      simplejson
-      requests
-      lxml
-      html2text
-      beautifulsoup4
-      pytz
-      dateutil
-      colorama
-    ];
 
   # TODO FIXME
   doCheck =
@@ -51,6 +29,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Faraday plugins package";
+        "Python One Time Password Library";
+      homepage =
+        "https://github.com/pyotp/pyotp";
     };
 }

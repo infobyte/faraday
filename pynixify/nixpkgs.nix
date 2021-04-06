@@ -122,6 +122,11 @@ let
         ./packages/python-socketio
         { };
 
+      pyotp =
+        self.callPackage
+        ./packages/pyotp
+        { };
+
       simplekv =
         self.callPackage
         ./packages/simplekv

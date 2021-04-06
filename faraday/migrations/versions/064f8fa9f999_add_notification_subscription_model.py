@@ -13,7 +13,7 @@ from depot.fields.sqlalchemy import UploadedFileField
 
 # revision identifiers, used by Alembic.
 revision = '064f8fa9f999'
-down_revision = '077b7c925ded'
+down_revision = '6471033046cb'
 branch_labels = None
 depends_on = None
 

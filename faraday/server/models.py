@@ -2123,6 +2123,10 @@ class NotificationSubscriptionBaseConfig(db.Model):
         'polymorphic_identity': 'base'
     }
 
+    @property
+    def dst(self):
+        pass
+
 
 class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
     __tablename__ = 'notification_subscription_mail_config'
@@ -2133,9 +2137,17 @@ class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
         'User',
         backref=backref('notification_subscription_mail_config', cascade="all, delete-orphan")
     )
+
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[0]
     }
+
+    @property
+    def dst(self):
+        if self.email:
+            return self.email
+        else:
+            return self.user_notified.email
 
 
 class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig):
@@ -2150,6 +2162,10 @@ class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig
         'polymorphic_identity': NOTIFICATION_METHODS[1]
     }
 
+    @property
+    def dst(self):
+        return self.user_notified.username
+
 
 class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
     __tablename__ = 'notification_subscription_webhook_config'
@@ -2158,6 +2174,10 @@ class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[2]
     }
+
+    @property
+    def dst(self):
+        return self.url
 
 
 class NotificationEvent(db.Model):

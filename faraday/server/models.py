@@ -2100,32 +2100,6 @@ class ExecutiveReport(Metadata):
         )
 
 
-"""
-class NotificationMethod(db.Model):
-    __tablename__ = 'notification_method'
-    id = Column(Integer, primary_key=True)
-    method = Column(Enum(*NOTIFICATION_METHODS, name="notification_methods"))
-    method_configuration = Column(String, nullable=False) #Si no es ws tiene algo. Puede haber un mail cualquiera / url (webhook). Si en la conf dice user entonces lo busca en user_asdf. Esto tendria que tener otro nombre porque no tiene nada que ver con la notificationconfig. puede prestarse a confusion.
-    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
-    user_notified = relationship(
-        'User',
-        backref=backref('notification_event', cascade="all, delete-orphan")
-    )
-
-
-class NotificationConfig(db.Model):
-    __tablename__ = 'notification_config'
-    id = Column(Integer, primary_key=True)
-    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
-    method_id = Column(Integer, ForeignKey('notification_method.id'), index=True, nullable=False)
-    method = relationship(
-        'NotificationMethod',
-        backref=backref('notification_method', cascade="all, delete-orphan"),
-    )
-    active = Column(Boolean, default=True, index=True)
-"""
-
-# Deberia heredar de metadata me parece :?
 class NotificationSubscription(Metadata):
     __tablename__ = 'notification_subscription'
     id = Column(Integer, primary_key=True)
@@ -2163,8 +2137,6 @@ class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
         'polymorphic_identity': NOTIFICATION_METHODS[0]
     }
 
-    #TODO get from, to, subject, body method
-
 
 class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig):
     __tablename__ = 'notification_subscription_websocket_config'
@@ -2201,8 +2173,6 @@ class NotificationEvent(db.Model):
         pass
 
 
-# TODO: TO BE RENAMED, maybe
-# TODO: Las notificaciones de mails no habria que guardarlas, no?
 class NotificationSent(db.Model):
     __tablename__ = 'notification_sent'
     id = Column(Integer, primary_key=True)
@@ -2216,7 +2186,7 @@ class NotificationSent(db.Model):
         'NotificationSubscriptionBaseConfig',
         backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
-    mark_read = Column(Boolean, default=False, index=True) # mark read? is read? was read? index?
+    mark_read = Column(Boolean, default=False, index=True)# mark read? is read? was read? index?
 
 
 class Notification(db.Model):

@@ -60,7 +60,7 @@ class CustomClient(FlaskClient):
         from flask import _app_ctx_stack
         _app_ctx_stack.top.sqlalchemy_queries = []
 
-        ret = super(CustomClient, self).open(*args, **kwargs)
+        ret = super().open(*args, **kwargs)
         #Now set in flask 1.0
         #if ret.headers.get('content-type') == 'application/json':
         #    try:

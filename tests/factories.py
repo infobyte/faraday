@@ -124,7 +124,7 @@ class FuzzyIncrementalInteger(BaseFuzzyAttribute):
 
     def __init__(self, low, high, **kwargs):
         self.iterator = itertools.cycle(range(low, high - 1))
-        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fuzz(self):
         return next(self.iterator)

@@ -364,7 +364,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
     @pytest.mark.skip  # TODO fix fox sqlite
     def test_list_retrieves_all_items_from(self, test_client):
-        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client)
+        super().test_list_retrieves_all_items_from(test_client)
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False
@@ -411,7 +411,7 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
         return v2_to_v3(url)
 
     def url(self, obj=None):
-        return v2_to_v3(super(TestWorkspaceAPIV3, self).url(obj))
+        return v2_to_v3(super().url(obj))
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False

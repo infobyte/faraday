@@ -836,7 +836,7 @@ class TestHostAPI:
 
 class TestHostAPIV3(TestHostAPI):
     def url(self, host=None, workspace=None):
-        return v2_to_v3(super(TestHostAPIV3, self).url(host, workspace))
+        return v2_to_v3(super().url(host, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)
@@ -1141,7 +1141,7 @@ class TestHostAPIGenericV3(TestHostAPIGeneric, PatchableTestsMixin):
     view_class = HostsV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestHostAPIGenericV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
 
 def host_json():

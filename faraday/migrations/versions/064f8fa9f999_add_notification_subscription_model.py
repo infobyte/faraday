@@ -32,6 +32,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['update_user_id'], ['faraday_user.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
+
     op.create_table('notification_subscription_base_config',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('subscription_id', sa.Integer(), nullable=False),
@@ -41,6 +42,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_notification_subscription_base_config_subscription_id'), 'notification_subscription_base_config', ['subscription_id'], unique=False)
+
     op.create_table('notification_subscription_mail_config',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=50), nullable=True),
@@ -50,12 +52,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_notification_subscription_mail_config_user_notified_id'), 'notification_subscription_mail_config', ['user_notified_id'], unique=False)
+
     op.create_table('notification_subscription_webhook_config',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('url', sa.String(length=50), nullable=True),
+    sa.Column('url', sa.String(length=50), nullable=False),
     sa.ForeignKeyConstraint(['id'], ['notification_subscription_base_config.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+
     op.create_table('notification_subscription_websocket_config',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_notified_id', sa.Integer(), nullable=False),

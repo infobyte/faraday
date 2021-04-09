@@ -34,7 +34,7 @@ from faraday.server.websocket_factories import (
     BroadcastServerProtocol
 )
 
-APP = None
+FARADAY_APP = None
 
 logger = logging.getLogger(__name__)
 
@@ -177,8 +177,8 @@ class WebServer:
 
 
 def get_app():
-    global APP # pylint: disable=W0603
-    if not APP:
+    global FARADAY_APP # pylint: disable=W0603
+    if not FARADAY_APP:
         app = create_app()  # creates a Flask(__name__) app
         # After 'Create app'
         app.config['MAIL_SERVER'] = smtp.host
@@ -188,6 +188,6 @@ def get_app():
         app.config['MAIL_PASSWORD'] = smtp.password
         mail = Mail(app)
         #global APP
-        APP = app
-    return APP
+        FARADAY_APP = app
+    return FARADAY_APP
 

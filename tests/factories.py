@@ -124,7 +124,7 @@ class FuzzyIncrementalInteger(BaseFuzzyAttribute):
 
     def __init__(self, low, high, **kwargs):
         self.iterator = itertools.cycle(range(low, high - 1))
-        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fuzz(self):
         return next(self.iterator)
@@ -190,7 +190,7 @@ class ServiceFactory(WorkspaceObjectFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(ServiceFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['host'].workspace = kwargs['workspace']
         ret['parent'] = ret['host'].id
         ret['ports'] = [ret['port']]
@@ -330,7 +330,7 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(VulnerabilityWebFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         assert ret['type'] == 'vulnerability_web'
         ret['type'] = 'VulnerabilityWeb'
         return ret
@@ -364,7 +364,7 @@ class VulnerabilityTemplateFactory(FaradayFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(VulnerabilityTemplateFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['exploitation'] = ret['severity']
         return ret
 
@@ -429,7 +429,7 @@ class CommandFactory(WorkspaceObjectFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # Ugly hack to JSON-serialize datetimes
-        ret = super(CommandFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['itime'] = time.mktime(ret['start_date'].utctimetuple())
         ret['duration'] = (ret['end_date'] - ret['start_date']).seconds + ((ret['end_date'] - ret['start_date']).microseconds / 1000000.0)
         ret.pop('start_date')
@@ -466,7 +466,7 @@ class CommentFactory(WorkspaceObjectFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # The host, service or comment must be created
-        ret = super(CommentFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         workspace = kwargs['workspace']
         if ret['object_type'] == 'host':
             HostFactory.create(workspace=workspace, id=ret['object_id'])
@@ -497,7 +497,7 @@ class LicenseFactory(FaradayFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # Ugly hack to JSON-serialize datetimes
-        ret = super(LicenseFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['start'] = ret['start_date'].isoformat()
         ret['end'] = ret['end_date'].isoformat()
         ret.pop('start_date')
@@ -547,7 +547,7 @@ class AgentFactory(FaradayFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        return super(AgentFactory, cls).build_dict(**kwargs)
+        return super().build_dict(**kwargs)
 
     class Meta:
         model = Agent

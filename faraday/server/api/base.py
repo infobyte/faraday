@@ -306,7 +306,7 @@ class GenericView(FlaskView):
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
         400 instead of 409"""
-        super(GenericView, cls).register(app, *args, **kwargs)
+        super().register(app, *args, **kwargs)
 
         @app.errorhandler(422)
         def handle_error(err): # pylint: disable=unused-variable

@@ -1,7 +1,7 @@
 import sys
 import click
 
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday.server.models import (
     db,
     CustomFieldsSchema
@@ -10,12 +10,12 @@ from faraday.server.utils.database import get_or_create
 
 
 def add_custom_field_main():
-    with app.app_context():
+    with get_app().app_context():
         add_custom_field_wizard()
 
 
 def delete_custom_field_main():
-    with app.app_context():
+    with get_app().app_context():
         delete_custom_field_wizard()
 
 

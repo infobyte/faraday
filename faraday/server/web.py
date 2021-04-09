@@ -187,7 +187,6 @@ def get_app():
         app.config['MAIL_USERNAME'] = smtp.username
         app.config['MAIL_PASSWORD'] = smtp.password
         mail = Mail(app)
-        #global APP
         FARADAY_APP = app
     return FARADAY_APP
 

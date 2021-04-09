@@ -239,7 +239,7 @@ def bulk_create(ws: Workspace,
         logger.info(f"Needs to create {total_hosts} hosts...")
         for i, host in enumerate(data['hosts']):
             _create_host(ws, host, command)
-            logger.info(f"Host {i+1} of {total_hosts} created, remaining {total_hosts - i - 1}")
+            logger.debug(f"Host {i+1} of {total_hosts} created, remaining {total_hosts - i - 1}")
         logger.info("Create Hosts process finished")
 
     if 'command' in data and set_end_date:
@@ -276,7 +276,7 @@ def _create_host(ws, host_data, command=None):
         logger.info(f"Needs to create {total_services} services...")
         for i, service_data in enumerate(services):
             _create_service(ws, host, service_data, command)
-            logger.info(f"Service {i + 1} of {total_services} created, remaining {total_services - i - 1}")
+            logger.debug(f"Service {i + 1} of {total_services} created, remaining {total_services - i - 1}")
         logger.info("Create Services process finished")
 
     total_vulns = len(vulns)
@@ -284,7 +284,7 @@ def _create_host(ws, host_data, command=None):
         logger.info(f"Needs to create {total_vulns} vulns...")
         for i, vuln_data in enumerate(vulns):
             _create_hostvuln(ws, host, vuln_data, command)
-            logger.info(f"Vuln {i + 1} of {total_vulns} created, remaining {total_vulns - i - 1}")
+            logger.debug(f"Vuln {i + 1} of {total_vulns} created, remaining {total_vulns - i - 1}")
         logger.info("Create Vulns process finished")
 
     total_credentials = len(credentials)
@@ -292,7 +292,7 @@ def _create_host(ws, host_data, command=None):
         logger.info(f"Needs to create {total_credentials} credentials...")
         for i, cred_data in enumerate(credentials):
             _create_credential(ws, cred_data, command, host=host)
-            logger.info(f"Credential {i + 1} of {total_credentials} created, remaining {total_credentials - i - 1}")
+            logger.debug(f"Credential {i + 1} of {total_credentials} created, remaining {total_credentials - i - 1}")
         logger.info("Create Credential process finished")
 
 

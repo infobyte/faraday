@@ -8,6 +8,7 @@ from flask import jsonify, Blueprint
 from flask_wtf.csrf import generate_csrf
 from faraday.server.api.base import get_user_permissions
 import flask
+import flask_login
 
 session_api = Blueprint('session_api', __name__)
 
@@ -22,7 +23,7 @@ def session_info():
         200:
           description: Ok
     """
-    user = flask.g.user
+    user = flask_login.current_user
     data = user.get_security_payload()
     data['csrf_token'] = generate_csrf()
     data['preferences'] = user.preferences

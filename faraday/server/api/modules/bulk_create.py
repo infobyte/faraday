@@ -342,11 +342,23 @@ def _create_service(ws, host, service_data, command=None):
     if command is not None:
         _create_command_object_for(ws, created, service, command)
 
-    for vuln_data in vulns:
-        _create_servicevuln(ws, service, vuln_data, command)
+    total_service_vulns = len(vulns)
+    if total_service_vulns > 0:
+        logger.info(f"Needs to create {total_service_vulns} service vulns...")
+        for i, vuln_data in enumerate(vulns):
+            _create_servicevuln(ws, service, vuln_data, command)
+            logger.debug(
+                f"Service vuln {i + 1} of {total_service_vulns} created, remaining {total_service_vulns - i - 1}")
+        logger.info("Create service vulns process finished")
 
-    for cred_data in creds:
-        _create_credential(ws, cred_data, command, service=service)
+    total_service_creds = len(creds)
+    if total_service_creds > 0:
+        logger.info(f"Needs to create {total_service_creds} service credentials...")
+        for i, cred_data in enumerate(creds):
+            _create_credential(ws, cred_data, command, service=service)
+            logger.debug(
+                f"Service credential {i + 1} of {total_service_creds} created, remaining {total_service_creds - i - 1}")
+        logger.info("Create service credentials process finished")
 
 
 def _create_vuln(ws, vuln_data, command=None, **kwargs):

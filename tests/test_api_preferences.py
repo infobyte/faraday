@@ -46,4 +46,4 @@ class TestPreferences(GenericAPITest):
 
 class TestPreferencesV3(TestPreferences):
     def url(self, obj=None):
-        return v2_to_v3(super(TestPreferencesV3, self).url(obj))
+        return v2_to_v3(super().url(obj))

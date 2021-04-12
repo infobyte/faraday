@@ -1772,8 +1772,9 @@ class User(db.Model, UserMixin):
     role = Column(Enum(*ROLES, name='user_roles'),
                   nullable=False, default='client')
     _otp_secret = Column(
-        String(16),
-        name="otp_secret", nullable=True)
+        String(32),
+        name="otp_secret", nullable=True
+    )
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
     preferences = Column(JSONType, nullable=True, default={})
 

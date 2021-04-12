@@ -32,7 +32,7 @@ class TestSearchFilterAPI(ReadWriteAPITests):
     def test_list_retrieves_all_items_from(self, test_client, logged_user):
         for searchfilter in SearchFilter.query.all():
             searchfilter.creator = logged_user
-        super(TestSearchFilterAPI, self).test_list_retrieves_all_items_from(test_client, logged_user)
+        super().test_list_retrieves_all_items_from(test_client, logged_user)
 
     def test_list_retrieves_all_items_from_logger_user(self, test_client, session, logged_user):
         user_filter = SearchFilterFactory.create(creator=logged_user)
@@ -47,7 +47,7 @@ class TestSearchFilterAPI(ReadWriteAPITests):
 
     def test_retrieve_one_object(self, test_client, logged_user):
         self.first_object.creator = logged_user
-        super(TestSearchFilterAPI, self).test_retrieve_one_object(test_client, logged_user)
+        super().test_retrieve_one_object(test_client, logged_user)
 
     def test_retrieve_one_object_from_logged_user(self, test_client, session, logged_user):
 
@@ -107,26 +107,26 @@ class TestSearchFilterAPI(ReadWriteAPITests):
     @pytest.mark.parametrize("method", ["PUT"])
     def test_update_an_object(self, test_client, logged_user, method):
         self.first_object.creator = logged_user
-        super(TestSearchFilterAPI, self).test_update_an_object(test_client, logged_user, method)
+        super().test_update_an_object(test_client, logged_user, method)
 
     def test_update_an_object_fails_with_empty_dict(self, test_client, logged_user):
         self.first_object.creator = logged_user
-        super(TestSearchFilterAPI, self).test_update_an_object_fails_with_empty_dict(test_client, logged_user)
+        super().test_update_an_object_fails_with_empty_dict(test_client, logged_user)
 
     def test_delete(self, test_client, logged_user):
         self.first_object.creator = logged_user
-        super(TestSearchFilterAPI, self).test_delete(test_client, logged_user)
+        super().test_delete(test_client, logged_user)
 
 
 @pytest.mark.usefixtures('logged_user')
 class TestSearchFilterAPIV3(TestSearchFilterAPI, PatchableTestsMixin):
     def url(self, obj=None):
-        return v2_to_v3(super(TestSearchFilterAPIV3, self).url(obj))
+        return v2_to_v3(super().url(obj))
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
-        super(TestSearchFilterAPIV3, self).test_update_an_object(test_client, logged_user, method)
+        super().test_update_an_object(test_client, logged_user, method)
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         self.first_object.creator = logged_user
-        super(TestSearchFilterAPIV3, self).test_update_an_object_fails_with_empty_dict(test_client, logged_user)
+        super().test_update_an_object_fails_with_empty_dict(test_client, logged_user)

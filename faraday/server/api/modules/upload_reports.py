@@ -5,6 +5,7 @@ import string
 import random
 import logging
 from datetime import datetime
+import flask_login
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
@@ -15,7 +16,6 @@ from flask import (
     jsonify,
     Blueprint,
 )
-import flask
 
 from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
@@ -118,7 +118,7 @@ def file_upload(workspace=None):
                         command.id,
                         file_path,
                         plugin.id,
-                        flask.g.user.id
+                        flask_login.current_user.id
                     )
                 )
                 return make_response(

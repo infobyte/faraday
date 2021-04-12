@@ -271,19 +271,19 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_an_object(test_client, method)
+        super().test_update_an_object(test_client, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object_readonly_fails(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_an_object_readonly_fails(test_client, method)
+        super().test_update_an_object_readonly_fails(test_client, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_inactive_fails(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_inactive_fails(test_client, method)
+        super().test_update_inactive_fails(test_client, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_fails_with_existing(self, test_client, session, method):
-        super(PatchableTestsMixin, self).test_update_fails_with_existing(test_client, session, method)
+        super().test_update_fails_with_existing(test_client, session, method)
 
     def test_update_an_object_fails_with_empty_dict(self, test_client):
         """To do this the user should use a PATCH request"""
@@ -292,7 +292,7 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, method):
-        super(PatchableTestsMixin, self).test_update_cant_change_id(test_client, method)
+        super().test_update_cant_change_id(test_client, method)
 
 
 class CountTestsMixin:

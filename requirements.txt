@@ -11,7 +11,7 @@ email_validator
 WTForms>=2.1
 flask-login>=0.5.0
 Flask-Security-Too>=3.4.4,<4.0.0
-marshmallow>=3.0.0
+marshmallow>=3.0.0,<3.11.0
 Pillow>=4.2.1
 psycopg2
 pgcli
@@ -32,9 +32,9 @@ syslog-rfc5424-formatter>=1.1.1
 simplekv>=0.13.0
 Flask-KVSession-fork>=0.6.3
 distro>=1.4.0
-faraday-plugins>=1.4.3,<2.0.0
+faraday-plugins>=1.4.4,<2.0.0
 apispec>=4.0.0
 apispec-webframeworks>=0.5.0
 pyyaml
-pyotp>=2.2.7
+pyotp>=2.6.0
 Flask-Limiter

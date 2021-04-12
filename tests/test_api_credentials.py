@@ -271,4 +271,4 @@ class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, PatchableTestsMixin
     view_class = CredentialV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestCredentialsAPIGenericV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))

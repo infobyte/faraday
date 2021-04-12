@@ -343,8 +343,8 @@ class TestListServiceViewV3(TestListServiceView, PatchableTestsMixin):
     view_class = ServiceV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestListServiceViewV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, session, method):
-        super(TestListServiceViewV3, self).test_update_cant_change_id(test_client, session, method)
+        super().test_update_cant_change_id(test_client, session, method)

@@ -132,7 +132,7 @@ class TestCommentAPIGenericV3(TestCommentAPIGeneric, PatchableTestsMixin):
     view_class = CommentV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestCommentAPIGenericV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)

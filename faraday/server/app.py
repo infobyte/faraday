@@ -17,6 +17,7 @@ from faraday.server.models import User
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
+import flask_login
 from flask import Flask, session, g, request
 from flask.json import JSONEncoder
 from flask_sqlalchemy import get_debug_queries
@@ -157,10 +158,8 @@ def register_handlers(app):
         except BadSignature:
             return None  # invalid token
 
-    @app.before_request
-    def default_login_required():  # pylint:disable=unused-variable
-        view = app.view_functions.get(flask.request.endpoint)
-
+    @app.login_manager.request_loader
+    def load_user_from_request(request):
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
             header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
             try:
@@ -174,36 +173,32 @@ def register_handlers(app):
                 if not user:
                     logger.warn('Invalid authentication token.')
                     flask.abort(401)
-                logged_in = True
+                else:
+                    return user
             elif auth_type == 'agent':
                 # Don't handle the agent logic here, do it in another
                 # before_request handler
-                logged_in = False
+                return None
+            elif auth_type == "basic":
+                username = flask.request.authorization.get('username', '')
+                password = flask.request.authorization.get('password', '')
+                user = User.query.filter_by(username=username).first()
+                if user and user.verify_and_update_password(password):
+                    return user
             else:
                 logger.warn("Invalid authorization type")
                 flask.abort(401)
-        else:
-            # TODO use public flask_login functions
-            logged_in = '_user_id' in flask.session
-            user_id = session.get("_user_id")
-            if logged_in:
-                user = User.query.filter_by(id=user_id).first()
 
-        if logged_in:
-            assert user
+        # finally, return None if both methods did not login the user
+        return None
 
-        if not logged_in and not getattr(view, 'is_public', False) \
+    @app.before_request
+    def default_login_required():  # pylint:disable=unused-variable
+        view = app.view_functions.get(flask.request.endpoint)
+
+        if flask_login.current_user.is_anonymous and not getattr(view, 'is_public', False) \
                 and flask.request.method != 'OPTIONS':
             flask.abort(401)
-
-        g.user = None
-        if logged_in:
-            g.user = user
-            if user is None:
-                logger.warn(f"Unknown user id {session['_user_id']}")
-                del flask.session['_user_id']
-                flask.abort(401)  # 403 would be better but breaks the web ui
-                return
 
     @app.before_request
     def load_g_custom_fields():  # pylint:disable=unused-variable

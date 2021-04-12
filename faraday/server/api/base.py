@@ -13,7 +13,6 @@ import flask
 import sqlalchemy
 import datetime
 from collections import defaultdict
-from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
@@ -27,6 +26,7 @@ from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
+import flask_login
 
 from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
 from faraday.server.schemas import NullToBlankString
@@ -306,7 +306,7 @@ class GenericView(FlaskView):
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
         400 instead of 409"""
-        super(GenericView, cls).register(app, *args, **kwargs)
+        super().register(app, *args, **kwargs)
 
         @app.errorhandler(422)
         def handle_error(err):  # pylint: disable=unused-variable
@@ -917,7 +917,8 @@ class CreateMixin:
                                 flask.request)
         data.pop('id', None)
         created = self._perform_create(data, **kwargs)
-        created.creator = g.user
+        if not flask_login.current_user.is_anonymous:
+            created.creator = flask_login.current_user
         db.session.commit()
         return self._dump(created, kwargs), 201
 

@@ -11,7 +11,7 @@ from colorama import init
 from colorama import Fore
 
 import faraday.server.config
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday.server.models import db
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils.daemonize import is_server_running
@@ -38,7 +38,7 @@ def check_open_ports():
 
 
 def check_postgres():
-    with app.app_context():
+    with get_app().app_context():
         try:
             result = (
                 db.session.query("version()").one(), db.session.query("current_setting('server_version_num')").one())
@@ -50,7 +50,7 @@ def check_postgres():
 
 
 def check_locks_postgresql():
-    with app.app_context():
+    with get_app().app_context():
         psql_status = check_postgres()
         if psql_status:
             result = db.engine.execute("""SELECT blocked_locks.pid     AS blocked_pid,
@@ -86,7 +86,7 @@ def check_locks_postgresql():
 
 
 def check_postgresql_encoding():
-    with app.app_context():
+    with get_app().app_context():
         psql_status = check_postgres()
         if psql_status:
             encoding = db.engine.execute("SHOW SERVER_ENCODING").first()[0]

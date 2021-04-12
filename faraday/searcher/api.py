@@ -10,7 +10,7 @@ logger = logging.getLogger('Faraday searcher')
 
 class ApiError(Exception):
     def __init__(self, message):
-        super(ApiError, self).__init__(message)
+        super().__init__(message)
 
 
 class Structure:

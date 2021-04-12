@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
-
+import time
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
@@ -223,31 +223,30 @@ def bulk_create(ws: Workspace,
                 data: dict,
                 data_already_deserialized: bool = False,
                 set_end_date: bool = True):
+
+    logger.info("Init bulk create process")
+    start_time = time.time()
+
     if not data_already_deserialized:
-        logger.info("Deserialization data...")
         schema = BulkCreateSchema()
         data = schema.load(data)
-        logger.info("Data deserialized")
 
     if 'command' in data:
-        logger.info("Updating command...")
         command = _update_command(command, data['command'])
-        logger.info("Command updated")
 
     total_hosts = len(data['hosts'])
     if total_hosts > 0:
-        logger.info(f"Needs to create {total_hosts} hosts...")
+        logger.debug(f"Needs to create {total_hosts} hosts...")
         for i, host in enumerate(data['hosts']):
             _create_host(ws, host, command)
-            logger.debug(f"Host {i+1} of {total_hosts} created, remaining {total_hosts - i - 1}")
-        logger.info("Create Hosts process finished")
 
     if 'command' in data and set_end_date:
-        logger.info("Setting command end date...")
         command.end_date = datetime.now() if command.end_date is None else \
             command.end_date
         db.session.commit()
-        logger.info("Updating command end date finished")
+
+    total_secs = round(time.time() - start_time, 2)
+    logger.info(f"Finish bulk create process. Total time: {total_secs} secs")
 
 
 def _update_command(command: Command, command_data: dict):
@@ -267,33 +266,25 @@ def _create_host(ws, host_data, command=None):
     db.session.commit()
 
     if command is not None:
-        logger.info("Creating command...")
         _create_command_object_for(ws, created, host, command)
-        logger.info("Command created")
 
     total_services = len(services)
     if total_services > 0:
-        logger.info(f"Needs to create {total_services} services...")
+        logger.debug(f"Needs to create {total_services} services...")
         for i, service_data in enumerate(services):
             _create_service(ws, host, service_data, command)
-            logger.debug(f"Service {i + 1} of {total_services} created, remaining {total_services - i - 1}")
-        logger.info("Create Services process finished")
 
     total_vulns = len(vulns)
     if total_vulns > 0:
-        logger.info(f"Needs to create {total_vulns} vulns...")
+        logger.debug(f"Needs to create {total_vulns} vulns...")
         for i, vuln_data in enumerate(vulns):
             _create_hostvuln(ws, host, vuln_data, command)
-            logger.debug(f"Vuln {i + 1} of {total_vulns} created, remaining {total_vulns - i - 1}")
-        logger.info("Create Vulns process finished")
 
     total_credentials = len(credentials)
     if total_credentials > 0:
-        logger.info(f"Needs to create {total_credentials} credentials...")
+        logger.debug(f"Needs to create {total_credentials} credentials...")
         for i, cred_data in enumerate(credentials):
             _create_credential(ws, cred_data, command, host=host)
-            logger.debug(f"Credential {i + 1} of {total_credentials} created, remaining {total_credentials - i - 1}")
-        logger.info("Create Credential process finished")
 
 
 def _create_command_object_for(ws, created, obj, command):
@@ -344,21 +335,15 @@ def _create_service(ws, host, service_data, command=None):
 
     total_service_vulns = len(vulns)
     if total_service_vulns > 0:
-        logger.info(f"Needs to create {total_service_vulns} service vulns...")
+        logger.debug(f"Needs to create {total_service_vulns} service vulns...")
         for i, vuln_data in enumerate(vulns):
             _create_servicevuln(ws, service, vuln_data, command)
-            logger.debug(
-                f"Service vuln {i + 1} of {total_service_vulns} created, remaining {total_service_vulns - i - 1}")
-        logger.info("Create service vulns process finished")
 
     total_service_creds = len(creds)
     if total_service_creds > 0:
-        logger.info(f"Needs to create {total_service_creds} service credentials...")
+        logger.debug(f"Needs to create {total_service_creds} service credentials...")
         for i, cred_data in enumerate(creds):
             _create_credential(ws, cred_data, command, service=service)
-            logger.debug(
-                f"Service credential {i + 1} of {total_service_creds} created, remaining {total_service_creds - i - 1}")
-        logger.info("Create service credentials process finished")
 
 
 def _create_vuln(ws, vuln_data, command=None, **kwargs):

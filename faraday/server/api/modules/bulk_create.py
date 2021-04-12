@@ -237,7 +237,7 @@ def bulk_create(ws: Workspace,
     total_hosts = len(data['hosts'])
     if total_hosts > 0:
         logger.debug(f"Needs to create {total_hosts} hosts...")
-        for i, host in enumerate(data['hosts']):
+        for host in data['hosts']:
             _create_host(ws, host, command)
 
     if 'command' in data and set_end_date:
@@ -271,19 +271,19 @@ def _create_host(ws, host_data, command=None):
     total_services = len(services)
     if total_services > 0:
         logger.debug(f"Needs to create {total_services} services...")
-        for i, service_data in enumerate(services):
+        for service_data in services:
             _create_service(ws, host, service_data, command)
 
     total_vulns = len(vulns)
     if total_vulns > 0:
         logger.debug(f"Needs to create {total_vulns} vulns...")
-        for i, vuln_data in enumerate(vulns):
+        for vuln_data in vulns:
             _create_hostvuln(ws, host, vuln_data, command)
 
     total_credentials = len(credentials)
     if total_credentials > 0:
         logger.debug(f"Needs to create {total_credentials} credentials...")
-        for i, cred_data in enumerate(credentials):
+        for cred_data in credentials:
             _create_credential(ws, cred_data, command, host=host)
 
 
@@ -336,13 +336,13 @@ def _create_service(ws, host, service_data, command=None):
     total_service_vulns = len(vulns)
     if total_service_vulns > 0:
         logger.debug(f"Needs to create {total_service_vulns} service vulns...")
-        for i, vuln_data in enumerate(vulns):
+        for vuln_data in vulns:
             _create_servicevuln(ws, service, vuln_data, command)
 
     total_service_creds = len(creds)
     if total_service_creds > 0:
         logger.debug(f"Needs to create {total_service_creds} service credentials...")
-        for i, cred_data in enumerate(creds):
+        for cred_data in creds:
             _create_credential(ws, cred_data, command, service=service)
 
 

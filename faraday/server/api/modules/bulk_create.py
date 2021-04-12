@@ -245,8 +245,8 @@ def bulk_create(ws: Workspace,
             command.end_date
         db.session.commit()
 
-    total_secs = round(time.time() - start_time, 2)
-    logger.info(f"Finish bulk create process. Total time: {total_secs} secs")
+    total_secs = time.time() - start_time
+    logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} secs")
 
 
 def _update_command(command: Command, command_data: dict):

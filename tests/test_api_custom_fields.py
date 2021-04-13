@@ -85,4 +85,4 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
 
 class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, PatchableTestsMixin):
     def url(self, obj=None):
-        return v2_to_v3(super(TestVulnerabilityCustomFieldsV3, self).url(obj))
+        return v2_to_v3(super().url(obj))

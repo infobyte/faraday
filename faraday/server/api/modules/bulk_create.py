@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Type, Optional
 
 import time
+import flask_login
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
@@ -461,7 +462,7 @@ class BulkCreateView(GenericWorkspacedView):
         """
         data = self._parse_data(self._get_schema_instance({}), flask.request)
 
-        if flask.g.user is None:
+        if flask_login.current_user.is_anonymous:
             agent = require_agent_token()
             workspace = self._get_workspace(workspace_name)
 
@@ -526,7 +527,7 @@ class BulkCreateView(GenericWorkspacedView):
 
         else:
             workspace = self._get_workspace(workspace_name)
-            creator_user = flask.g.user
+            creator_user = flask_login.current_user
             data = add_creator(data, creator_user)
 
             if 'command' in data:

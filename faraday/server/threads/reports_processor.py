@@ -37,8 +37,8 @@ class ReportsManager(Thread):
                             report_json: dict,
                             user_id: int):
         logger.info("Send Report data to workspace [%s]", workspace_name)
-        from faraday.server.web import app  # pylint:disable=import-outside-toplevel
-        with app.app_context():
+        from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
+        with get_app().app_context():
             ws = Workspace.query.filter_by(name=workspace_name).one()
             command = Command.query.filter_by(id=command_id).one()
             user = User.query.filter_by(id=user_id).one()

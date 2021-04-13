@@ -47,7 +47,7 @@ class TestListCommandView(ReadWriteAPITests):
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):
-        super(TestListCommandView, self).test_list_retrieves_all_items_from_workspace(test_client, second_workspace, session)
+        super().test_list_retrieves_all_items_from_workspace(test_client, second_workspace, session)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_backwards_compatibility_list(self, test_client, second_workspace, session):
@@ -78,7 +78,7 @@ class TestListCommandView(ReadWriteAPITests):
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_can_list_readonly(self, test_client, session):
-        super(TestListCommandView, self).test_can_list_readonly(test_client, session)
+        super().test_can_list_readonly(test_client, session)
 
     def test_activity_feed(self, session, test_client):
         command = self.factory.create()
@@ -453,7 +453,7 @@ class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
     view_class = CommandV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestListCommandViewV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)

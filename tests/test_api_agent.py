@@ -253,12 +253,12 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
 
     def test_create_succeeds(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
-            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_succeeds(test_client)
+            super().test_create_succeeds(test_client)
         assert '405' in exc_info.value.args[0]
 
     def test_create_fails_with_empty_dict(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
-            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_fails_with_empty_dict(test_client)
+            super().test_create_fails_with_empty_dict(test_client)
         assert '405' in exc_info.value.args[0]
 
     def workspaced_url(self, workspace, obj= None):
@@ -423,7 +423,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
 
 class TestAgentWithWorkspacesAPIGenericV3(TestAgentWithWorkspacesAPIGeneric, PatchableTestsMixin):
     def url(self, obj=None):
-        return v2_to_v3(super(TestAgentWithWorkspacesAPIGenericV3, self).url(obj))
+        return v2_to_v3(super().url(obj))
 
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
@@ -603,7 +603,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
 
 class TestAgentAPIV3(TestAgentAPI):
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestAgentAPIV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)

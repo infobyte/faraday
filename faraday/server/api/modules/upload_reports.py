@@ -5,6 +5,7 @@ import string
 import random
 import logging
 from datetime import datetime
+import flask_login
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
@@ -116,7 +117,7 @@ def file_upload(workspace=None):
                         command.id,
                         file_path,
                         plugin.id,
-                        flask.g.user.id
+                        flask_login.current_user.id
                     )
                 )
                 return make_response(

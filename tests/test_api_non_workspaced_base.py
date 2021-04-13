@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -6,8 +6,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from builtins import str
-
-from tests.utils.url import v2_to_v3
 
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
@@ -17,9 +15,9 @@ from sqlalchemy.orm.util import was_deleted
 API_PREFIX = '/v2/'
 OBJECT_COUNT = 5
 
+
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
-
     model = None
     factory = None
     api_endpoint = None

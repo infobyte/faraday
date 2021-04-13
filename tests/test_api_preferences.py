@@ -1,5 +1,3 @@
-import pytest
-
 from tests.test_api_non_workspaced_base import GenericAPITest
 from tests.factories import UserFactory
 from faraday.server.models import User
@@ -7,7 +5,7 @@ from faraday.server.api.modules.preferences import PreferencesView
 from tests.utils.url import v2_to_v3
 
 
-pytest.fixture('logged_user')
+# pytest.fixture('logged_user')
 class TestPreferences(GenericAPITest):
     model = User
     factory = UserFactory
@@ -37,7 +35,6 @@ class TestPreferences(GenericAPITest):
 
         assert response.status_code == 200
         assert response.json['preferences'] == preferences
-
 
     def test_add_invalid_preference(self, test_client):
         preferences = {'field1': 1, 'field2': 'str1'}

@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -8,13 +8,11 @@ See the file 'doc/LICENSE' for the license information
 from builtins import str
 from posixpath import join as urljoin
 
-from tests.utils.url import v2_to_v3
-
 """Generic tests for APIs prefixed with a workspace_name"""
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
-from faraday.server.models import db, Workspace, Credential
+from faraday.server.models import db
 from tests.test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 
@@ -24,7 +22,6 @@ OBJECT_COUNT = 5
 
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
-
     model = None
     factory = None
     api_endpoint = None
@@ -67,10 +64,11 @@ class ListTestsMixin:
     @pytest.fixture
     def mock_envelope_list(self, monkeypatch):
         assert self.view_class is not None, 'You must define view_class ' \
-            'in order to use ListTestsMixin or PaginationTestsMixin'
+                                            'in order to use ListTestsMixin or PaginationTestsMixin'
 
         def _envelope_list(_, objects, pagination_metadata=None):
             return {"data": objects}
+
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 
     @pytest.mark.usefixtures('mock_envelope_list')
@@ -89,6 +87,7 @@ class ListTestsMixin:
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
+
 
 class RetrieveTestsMixin:
 
@@ -135,7 +134,6 @@ class CreateTestsMixin:
         db.session.commit()
         assert res.status_code == 403
         assert self.model.query.count() == count
-
 
     def test_create_inactive_fails(self, test_client):
         self.workspace.deactivate()
@@ -296,6 +294,7 @@ class PatchableTestsMixin(UpdateTestsMixin):
     def test_update_cant_change_id(self, test_client, method):
         super().test_update_cant_change_id(test_client, method)
 
+
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
 
@@ -307,8 +306,8 @@ class CountTestsMixin:
             factory_kwargs[field] = value
 
         session.add(self.factory.create(creator=self.first_object.creator,
-                                  workspace=self.first_object.workspace,
-                                  **factory_kwargs))
+                                        workspace=self.first_object.workspace,
+                                        **factory_kwargs))
 
         session.commit()
 
@@ -364,7 +363,6 @@ class CountTestsMixin:
         assert creators == sorted(creators, reverse=True)
 
 
-
 class DeleteTestsMixin:
 
     def test_delete(self, test_client):
@@ -390,7 +388,7 @@ class DeleteTestsMixin:
         assert self.model.query.count() == OBJECT_COUNT
 
     def test_delete_from_other_workspace_fails(self, test_client,
-                                                    second_workspace):
+                                               second_workspace):
         res = test_client.delete(self.url(self.first_object,
                                           workspace=second_workspace))
         assert res.status_code == 404  # No content
@@ -450,6 +448,7 @@ class ReadOnlyMultiWorkspacedAPITests(ListTestsMixin,
         res = test_client.get(self.url())
         assert res.status_code == 200
         assert len(res.json['data']) == OBJECT_COUNT
+
 
 class ReadWriteMultiWorkspacedAPITests(ReadOnlyMultiWorkspacedAPITests,
                                        ReadWriteTestsMixin):

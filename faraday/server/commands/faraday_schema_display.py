@@ -25,7 +25,7 @@ class DatabaseSchema():
     def _draw_entity_diagrama(self):
         # create the pydot graph object by autoloading all tables via a bound metadata object
         try:
-            from sqlalchemy_schemadisplay import create_schema_graph # pylint:disable=import-outside-toplevel
+            from sqlalchemy_schemadisplay import create_schema_graph  # pylint:disable=import-outside-toplevel
         except ImportError:
             print('Please install sqlalchemy_schemadisplay with "pip install sqlalchemy_schemadisplay"')
             sys.exit(1)
@@ -44,11 +44,10 @@ class DatabaseSchema():
                 sys.exit(1)
             raise
 
-
     def _draw_uml_class_diagram(self):
         # lets find all the mappers in our model
         try:
-            from sqlalchemy_schemadisplay import create_uml_graph # pylint:disable=import-outside-toplevel
+            from sqlalchemy_schemadisplay import create_uml_graph  # pylint:disable=import-outside-toplevel
         except ImportError:
             print('Please install sqlalchemy_schemadisplay with "pip install sqlalchemy_schemadisplay"')
             sys.exit(1)

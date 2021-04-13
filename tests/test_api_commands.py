@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -14,13 +14,11 @@ import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
     Command,
-    Workspace,
     Vulnerability)
 from faraday.server.api.modules.commandsrun import CommandView, CommandV3View
-from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
 
@@ -116,19 +114,19 @@ class TestListCommandView(ReadWriteAPITests):
              u'criticalIssue': 0}]
 
         assert list(filter(lambda stats: stats['_id'] == another_command.id,
-                      res.json)) == [{
-                        u'_id': another_command.id,
-                        u'command': another_command.command,
-                        u'import_source': u'shell',
-                        u'tool': another_command.tool,
-                        u'user': another_command.user,
-                        u'date': time.mktime(
-                            another_command.start_date.timetuple()) * 1000,
-                        u'params': another_command.params,
-                        u'hosts_count': 0,
-                        u'services_count': 0,
-                        u'vulnerabilities_count': 0,
-                        u'criticalIssue': 0}]
+                           res.json)) == [{
+            u'_id': another_command.id,
+            u'command': another_command.command,
+            u'import_source': u'shell',
+            u'tool': another_command.tool,
+            u'user': another_command.user,
+            u'date': time.mktime(
+                another_command.start_date.timetuple()) * 1000,
+            u'params': another_command.params,
+            u'hosts_count': 0,
+            u'services_count': 0,
+            u'vulnerabilities_count': 0,
+            u'criticalIssue': 0}]
 
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -159,18 +157,18 @@ class TestListCommandView(ReadWriteAPITests):
         res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [
-                            {u'_id': command.id,
-                             u'command': command.command,
-                             u'import_source': u'shell',
-                             u'tool': command.tool,
-                             u'user': command.user,
-                             u'date': time.mktime(command.start_date.timetuple()) * 1000,
-                             u'params': command.params,
-                             u'hosts_count': 1,
-                             u'services_count': 0,
-                             u'vulnerabilities_count': 2,
-                             u'criticalIssue': 1}
-                            ]
+            {u'_id': command.id,
+             u'command': command.command,
+             u'import_source': u'shell',
+             u'tool': command.tool,
+             u'user': command.user,
+             u'date': time.mktime(command.start_date.timetuple()) * 1000,
+             u'params': command.params,
+             u'hosts_count': 1,
+             u'services_count': 0,
+             u'vulnerabilities_count': 2,
+             u'criticalIssue': 1}
+        ]
 
     def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -292,30 +290,31 @@ class TestListCommandView(ReadWriteAPITests):
         for in_the_middle_command in in_the_middle_commands:
             raw_in_the_middle_command = list(filter(lambda comm: comm['_id'] == in_the_middle_command.id, res.json))
             assert raw_in_the_middle_command.pop() == {u'_id': in_the_middle_command.id,
-                                       u'command': in_the_middle_command.command,
-                                       u'import_source': u'shell',
-                                       u'user': in_the_middle_command.user,
-                                       u'date': time.mktime(in_the_middle_command.start_date.timetuple()) * 1000,
-                                       u'params': in_the_middle_command.params,
-                                       u'hosts_count': 0,
-                                       u'tool': in_the_middle_command.tool,
-                                       u'services_count': 0,
-                                       u'vulnerabilities_count': 0,
-                                       u'criticalIssue': 0}
+                                                       u'command': in_the_middle_command.command,
+                                                       u'import_source': u'shell',
+                                                       u'user': in_the_middle_command.user,
+                                                       u'date': time.mktime(
+                                                           in_the_middle_command.start_date.timetuple()) * 1000,
+                                                       u'params': in_the_middle_command.params,
+                                                       u'hosts_count': 0,
+                                                       u'tool': in_the_middle_command.tool,
+                                                       u'services_count': 0,
+                                                       u'vulnerabilities_count': 0,
+                                                       u'criticalIssue': 0}
 
         # new command must create new service and vuln
         raw_last_command = list(filter(lambda comm: comm['_id'] == last_command.id, res.json))
         assert raw_last_command.pop() == {u'_id': last_command.id,
-                                       u'command': last_command.command,
-                                       u'import_source': u'shell',
-                                       u'user': last_command.user,
-                                       u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
-                                       u'params': last_command.params,
-                                       u'hosts_count': 0,
-                                       u'tool': last_command.tool,
-                                       u'services_count': 1,
-                                       u'vulnerabilities_count': 1,
-                                       u'criticalIssue': 0}
+                                          u'command': last_command.command,
+                                          u'import_source': u'shell',
+                                          u'user': last_command.user,
+                                          u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
+                                          u'params': last_command.params,
+                                          u'hosts_count': 0,
+                                          u'tool': last_command.tool,
+                                          u'services_count': 1,
+                                          u'vulnerabilities_count': 1,
+                                          u'criticalIssue': 0}
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_sub_second_command_returns_correct_duration_value(self, test_client):
@@ -368,7 +367,7 @@ class TestListCommandView(ReadWriteAPITests):
         assert res.json['commands'][0]['value']['duration'].lower() == "in progress"
 
     def test_create_command(self, test_client):
-        raw_data ={
+        raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': None,
@@ -433,7 +432,7 @@ class TestListCommandView(ReadWriteAPITests):
         assert command_history['tool'] == 'test'
 
     def test_year_is_out_range(self, test_client):
-        raw_data ={
+        raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': None,

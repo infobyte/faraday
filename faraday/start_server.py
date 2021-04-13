@@ -103,6 +103,7 @@ def check_alembic_version():
                     "normal user, consider reporting this bug back to us"
                     )
 
+
 def main():
     os.chdir(faraday.server.config.FARADAY_BASE)
     check_alembic_version()

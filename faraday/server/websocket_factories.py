@@ -32,7 +32,6 @@ from faraday.server.events import changes_queue
 
 logger = logging.getLogger(__name__)
 
-
 connected_agents = {}
 
 
@@ -150,7 +149,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                         else:
                             agent_execution.successful = message.get('successful', None)
                             agent_execution.running = message.get('running', None)
-                            agent_execution.message = message.get('message','')
+                            agent_execution.message = message.get('message', '')
                             db.session.commit()
                     else:
                         logger.exception(

@@ -2,7 +2,6 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import sys
-import functools
 import logging
 from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
@@ -20,12 +19,9 @@ from autobahn.twisted.websocket import (
 
 from flask_mail import Mail
 
-from OpenSSL.SSL import Error as SSLError
-
 import faraday.server.config
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
-from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
@@ -76,7 +72,8 @@ class WebServer:
     WEB_UI_LOCAL_PATH = faraday.server.config.FARADAY_BASE / 'server/www'
 
     def __init__(self):
-        logger.info(f'Starting web server at http://'
+
+        logger.info('Starting web server at http://'
                     f'{faraday.server.config.faraday_server.bind_address}:'
                     f'{faraday.server.config.faraday_server.port}/')
         self.__websocket_port = faraday.server.config.faraday_server.websocket_port or 9000
@@ -91,7 +88,7 @@ class WebServer:
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            sys.exit(1) # Abort web-server startup
+            sys.exit(1)  # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -177,7 +174,7 @@ class WebServer:
 
 
 def get_app():
-    global FARADAY_APP # pylint: disable=W0603
+    global FARADAY_APP  # pylint: disable=W0603
     if not FARADAY_APP:
         app = create_app()  # creates a Flask(__name__) app
         # After 'Create app'
@@ -189,4 +186,3 @@ def get_app():
         mail = Mail(app)
         FARADAY_APP = app
     return FARADAY_APP
-

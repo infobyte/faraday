@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 ###
-## Faraday Penetration Test IDE
-## Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
-## See the file 'doc/LICENSE' for the license information
+# Faraday Penetration Test IDE
+# Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
+# See the file 'doc/LICENSE' for the license information
 ###
 from builtins import str
 
@@ -32,6 +32,7 @@ logger = logging.getLogger('Faraday searcher')
 
 threshold = 0.75
 min_weight = 0.3
+
 
 def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
@@ -692,7 +693,7 @@ class Searcher:
                     else:
                         self.api.set_array(field, value, add=to_add, key=key, object=vuln)
                         action = 'Adding %s to %s list in vulnerability %s with id %s' % (
-                        value, key, vuln.name, vuln.id)
+                            value, key, vuln.name, vuln.id)
                         if not to_add:
                             action = 'Removing %s from %s list in vulnerability %s with id %s' % (
                                 value, key, vuln.name, vuln.id)
@@ -830,7 +831,7 @@ def main(workspace, server_address, user, password, output, email_sender,
         smtp_ssl=ssl
     )
 
-    for d in [output, 'log/']: # TODO CHANGE THIS
+    for d in [output, 'log/']:  # TODO CHANGE THIS
         if not Path(d):
             Path(d).mkdir(parents=True)
 

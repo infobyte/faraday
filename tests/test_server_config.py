@@ -35,6 +35,7 @@ def test_copy_default_config_to_local_does_not_exist(copyfile):
     assert copy_default_config_to_local() is None
     assert not copyfile.called
 
+
 VERSION_PATTERN = r"""
     v?
     (?:
@@ -71,11 +72,10 @@ _regex = re.compile(
     re.VERBOSE | re.IGNORECASE,
 )
 
+
 def isPEP440(arg):
     return not _regex.match(arg) is None
 
+
 def test_exists_and_content():
     assert isPEP440(__version__)
-
-
-# I'm Py3

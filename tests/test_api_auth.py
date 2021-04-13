@@ -129,7 +129,6 @@ class TestBasicAuth:
         res = test_client.get(self.check_url('/v2/agents/'), headers=headers)
         assert res.status_code == 401
 
-
     def test_basic_auth_valid_credentials(self, test_client, session):
         """
             Use of valid Basic Auth credentials

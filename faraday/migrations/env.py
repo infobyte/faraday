@@ -1,11 +1,10 @@
 
 import logging
 import faraday.server.config
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday.server.models import db
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
 # this is the Alembic Config object, which provides
@@ -62,7 +61,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    with app.app_context():
+    with get_app().app_context():
         connectable = db.engine
 
         with connectable.connect() as connection:
@@ -73,6 +72,7 @@ def run_migrations_online():
 
             with context.begin_transaction():
                 context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

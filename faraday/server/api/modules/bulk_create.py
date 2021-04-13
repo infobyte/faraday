@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
-
+import flask_login
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
@@ -68,6 +68,7 @@ class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
 class PolymorphicVulnerabilityField(fields.Field):
     """Used like a nested field with many objects, but it decides which
     schema to use based on the type of each vuln"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
@@ -433,7 +434,7 @@ class BulkCreateView(GenericWorkspacedView):
         """
         data = self._parse_data(self._get_schema_instance({}), flask.request)
 
-        if flask.g.user is None:
+        if flask_login.current_user.is_anonymous:
             agent = require_agent_token()
             workspace = self._get_workspace(workspace_name)
 
@@ -473,7 +474,7 @@ class BulkCreateView(GenericWorkspacedView):
 
             data["command"] = {
                 'id': agent_execution.command.id,
-                'tool': agent.name, # Agent name
+                'tool': agent.name,  # Agent name
                 'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
@@ -495,10 +496,9 @@ class BulkCreateView(GenericWorkspacedView):
             _update_command(command, data['command'])
             db.session.flush()
 
-
         else:
             workspace = self._get_workspace(workspace_name)
-            creator_user = flask.g.user
+            creator_user = flask_login.current_user
             data = add_creator(data, creator_user)
 
             if 'command' in data:

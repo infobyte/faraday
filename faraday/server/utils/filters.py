@@ -28,6 +28,7 @@ VALID_OPERATORS = set(OPERATORS.keys()) - set(['desc', 'asc'])
 
 logger = logging.getLogger(__name__)
 
+
 class FlaskRestlessFilterSchema(Schema):
     name = fields.String(required=True)
     val = fields.Raw(required=True)
@@ -175,22 +176,25 @@ class FlaskRestlessVulnerabilityFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return VulnerabilityWeb
 
+
 class FlaskRestlessVulnerabilityTemplateFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return VulnerabilityTemplate
+
 
 class FlaskRestlessHostFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return Host
 
+
 class FlaskRestlessWorkspaceFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return Workspace
 
+
 class FlaskRestlessUserFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return User
-
 
 
 class FlaskRestlessOperator(Schema):

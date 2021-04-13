@@ -189,4 +189,3 @@ def get_app():
         mail = Mail(app)
         FARADAY_APP = app
     return FARADAY_APP
-

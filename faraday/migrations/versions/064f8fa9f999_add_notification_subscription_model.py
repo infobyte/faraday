@@ -42,6 +42,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_notification_subscription_base_config_subscription_id'), 'notification_subscription_base_config', ['subscription_id'], unique=False)
+    op.create_unique_constraint('uix_subscriptionid_type', 'notification_subscription_base_config', ['subscription_id', 'type'])
 
     op.create_table('notification_subscription_mail_config',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -78,6 +79,7 @@ def downgrade():
     op.drop_table('notification_subscription_webhook_config')
     op.drop_index(op.f('ix_notification_subscription_mail_config_user_notified_id'), table_name='notification_subscription_mail_config')
     op.drop_table('notification_subscription_mail_config')
+    op.drop_constraint('uix_subscriptionid_type', 'notification_subscription_base_config', type_='unique')
     op.drop_index(op.f('ix_notification_subscription_base_config_subscription_id'), table_name='notification_subscription_base_config')
     op.drop_table('notification_subscription_base_config')
     op.drop_table('notification_subscription')

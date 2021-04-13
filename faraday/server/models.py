@@ -2123,6 +2123,10 @@ class NotificationSubscriptionBaseConfig(db.Model):
         'polymorphic_identity': 'base'
     }
 
+    __table_args__ = (
+        UniqueConstraint('subscription_id', 'type', name='uix_subscriptionid_type'),
+    )
+
     @property
     def dst(self):
         pass

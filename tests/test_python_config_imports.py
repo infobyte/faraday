@@ -28,11 +28,6 @@ class ImportTests(unittest.TestCase):
         self.use_ldaps = ldap.use_ldaps
         self.use_start_tls = ldap.use_start_tls
 
-
     def test_storage(self):
         from faraday.server.config import storage
         self.path = storage.path
-
-
-
-# I'm Py3

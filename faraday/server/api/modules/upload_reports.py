@@ -16,7 +16,6 @@ from flask import (
     jsonify,
     Blueprint,
 )
-import flask
 
 from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
@@ -76,7 +75,7 @@ def file_upload(workspace=None):
     if report_file:
 
         chars = string.ascii_uppercase + string.digits
-        random_prefix = ''.join(random.choice(chars) for x in range(12)) # nosec
+        random_prefix = ''.join(random.choice(chars) for x in range(12))  # nosec
         raw_report_filename = f'{random_prefix}_{secure_filename(report_file.filename)}'
 
         try:
@@ -87,7 +86,9 @@ def file_upload(workspace=None):
         except AttributeError:
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
-            abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
+            abort(make_response(
+                jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"),
+                500))
         else:
             logger.info(f"Get plugin for file: {file_path}")
             plugin = report_analyzer.get_plugin(file_path)

@@ -33,7 +33,7 @@ class JSTimestampField(fields.Integer):
 
     def _deserialize(self, value, attr, data, **kwargs):
         if value is not None and value:
-            return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
+            return datetime.datetime.fromtimestamp(self._validated(value) / 1e3)
 
 
 class FaradayCustomField(fields.Field):

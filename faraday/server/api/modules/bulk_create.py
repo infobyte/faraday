@@ -68,6 +68,7 @@ class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
 class PolymorphicVulnerabilityField(fields.Field):
     """Used like a nested field with many objects, but it decides which
     schema to use based on the type of each vuln"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
@@ -473,7 +474,7 @@ class BulkCreateView(GenericWorkspacedView):
 
             data["command"] = {
                 'id': agent_execution.command.id,
-                'tool': agent.name, # Agent name
+                'tool': agent.name,  # Agent name
                 'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
@@ -494,7 +495,6 @@ class BulkCreateView(GenericWorkspacedView):
 
             _update_command(command, data['command'])
             db.session.flush()
-
 
         else:
             workspace = self._get_workspace(workspace_name)

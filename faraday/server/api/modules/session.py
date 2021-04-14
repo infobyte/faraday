@@ -7,10 +7,10 @@ See the file 'doc/LICENSE' for the license information
 from flask import jsonify, Blueprint
 from flask_wtf.csrf import generate_csrf
 from faraday.server.api.base import get_user_permissions
-import flask
 import flask_login
 
 session_api = Blueprint('session_api', __name__)
+
 
 @session_api.route('/session')
 def session_info():

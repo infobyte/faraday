@@ -21,7 +21,7 @@ def test_child_parent_verification_event_fails(session, workspace,
 
     assert session.query(Host).filter(
             Workspace.id == workspace.id
-        ).first() == None
+        ).first() is None
 
 
 def test_child_parent_verification_event_succeeds(session, workspace):
@@ -55,7 +55,7 @@ def test_child_parent_verification_event_succeds_update(session, workspace):
 
 def test_child_parent_verification_event_changing_id_fails(session, workspace,
                                                            second_workspace):
-    
+
     session.add(workspace)
     session.add(second_workspace)
     session.commit()
@@ -65,7 +65,7 @@ def test_child_parent_verification_event_changing_id_fails(session, workspace,
     service = ServiceFactory.build(host=host, workspace_id=second_workspace.id)
 
     session.add(service)
-   
+
     with pytest.raises(AssertionError):
         session.commit()
 

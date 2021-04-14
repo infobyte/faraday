@@ -35,6 +35,7 @@ agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
 
+
 class ExecutorSchema(AutoSchema):
 
     parameters_metadata = fields.Dict(
@@ -133,7 +134,7 @@ class AgentCreationView(CreateMixin, GenericView):
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _perform_create(self,  data, **kwargs):
+    def _perform_create(self, data, **kwargs):
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
@@ -160,7 +161,6 @@ class AgentCreationView(CreateMixin, GenericView):
         workspace_names = [
             dict_["name"] for dict_ in workspace_names
         ]
-
 
         workspaces = list(
             self._get_workspace(workspace_name)

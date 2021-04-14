@@ -4,7 +4,6 @@ from marshmallow.exceptions import ValidationError
 
 from faraday.server.utils.filters import FilterSchema
 from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.models import VulnerabilityWeb
 
 
 class TestFilters:
@@ -20,10 +19,10 @@ class TestFilters:
 
     def test_restless_using_order_by(self):
         test_filter = {
-            "order_by":[
-                {"field":"host__vulnerability_critical_generic_count"},
-                {"field":"host__vulnerability_high_generic_count"},
-                {"field":"host__vulnerability_medium_generic_count"},
+            "order_by": [
+                {"field": "host__vulnerability_critical_generic_count"},
+                {"field": "host__vulnerability_high_generic_count"},
+                {"field": "host__vulnerability_medium_generic_count"},
             ],
             "filters": [{
                 "or": [
@@ -36,7 +35,6 @@ class TestFilters:
         res = FlaskRestlessSchema().load(test_filter)
         assert res == test_filter
 
-
     def test_FlaskRestlessSchema_(self):
         test_filter = [{"name": "severity", "op": "eq", "val": "low"}]
         res = FlaskRestlessSchema().load(test_filter)
@@ -45,9 +43,9 @@ class TestFilters:
     def test_simple_and_operator(self):
         test_filter = {"filters": [
             {'and': [
-                    {"name": "severity", "op": "eq", "val": "low"},
-                    {"name": "severity", "op": "eq", "val": "medium"}
-                ]
+                {"name": "severity", "op": "eq", "val": "low"},
+                {"name": "severity", "op": "eq", "val": "medium"}
+            ]
             }
 
         ]}
@@ -182,7 +180,6 @@ class TestFilters:
             else:
                 assert and_op == {"name": "severity", "op": "eq", "val": "high"}
 
-
     def test_case_1(self):
         filter_schema = FilterSchema()
         filters = {'filters': [{"name": "confirmed", "op": "==", "val": "true"}]}
@@ -197,46 +194,46 @@ class TestFilters:
 
     def test_case_3(self):
         filters = {'filters': [
+            {"and": [
                 {"and": [
-                    {"and": [
-                        {"name": "severity", "op": "eq", "val": "critical"},
-                        {"name": "confirmed", "op": "==", "val": "true"}
-                    ]},
-                    {"name": "host__os", "op": "has", "val": "Linux"}
-                ]}
-            ]}
-        res = FilterSchema().load(filters)
-        assert res == filters
-
-    def test_test_case_recursive(self):
-        filters = {"filters":
-        [{"or":[
-            {"name":"severity","op":"eq","val":"medium"},
-            {"or":[
-                {"name":"severity","op":"eq","val":"high"},
-                {"and":[
-                    {"and":[
-                        {"name":"severity","op":"eq","val":"critical"},
-                        {"name":"confirmed","op":"==","val":"true"}
-                    ]},
-                    {"name":"host__os","op":"has","val":"Linux"}
-                    ]}
-                ]}
+                    {"name": "severity", "op": "eq", "val": "critical"},
+                    {"name": "confirmed", "op": "==", "val": "true"}
+                ]},
+                {"name": "host__os", "op": "has", "val": "Linux"}
             ]}
         ]}
         res = FilterSchema().load(filters)
         assert res == filters
 
+    def test_test_case_recursive(self):
+        filters = {"filters":
+            [{"or": [
+                {"name": "severity", "op": "eq", "val": "medium"},
+                {"or": [
+                    {"name": "severity", "op": "eq", "val": "high"},
+                    {"and": [
+                        {"and": [
+                            {"name": "severity", "op": "eq", "val": "critical"},
+                            {"name": "confirmed", "op": "==", "val": "true"}
+                        ]},
+                        {"name": "host__os", "op": "has", "val": "Linux"}
+                    ]}
+                ]}
+            ]}
+            ]}
+        res = FilterSchema().load(filters)
+        assert res == filters
+
     def test_case_recursive_2(self):
         filters = {'filters': [
-                        {"and": [
-                            {"and": [
-                                {"name": "severity", "op": "eq", "val": "critical"},
-                                {"name": "confirmed", "op": "==", "val": "true"}
-                            ]},
-                            {"name": "host__os", "op": "has", "val": "Linux"}
-                        ]}
-                    ]}
+            {"and": [
+                {"and": [
+                    {"name": "severity", "op": "eq", "val": "critical"},
+                    {"name": "confirmed", "op": "==", "val": "true"}
+                ]},
+                {"name": "host__os", "op": "has", "val": "Linux"}
+            ]}
+        ]}
 
         res = FilterSchema().load(filters)
         assert res == filters

@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -56,7 +56,7 @@ class TestLicensesAPI(ReadWriteAPITests):
 
 class TestLicensesAPIV3(TestLicensesAPI, PatchableTestsMixin):
     def url(self, obj=None):
-        return v2_to_v3(super(TestLicensesAPIV3, self).url(obj))
+        return v2_to_v3(super().url(obj))
 
     @pytest.mark.skip(reason="Not a license actually test")
     def test_envelope_list(self, test_client, app):
@@ -74,13 +74,13 @@ def license_json():
                 "creator": st.one_of(st.none(), st.text()),
                 "create_time": st.floats(),
                 "update_controller_action": st.one_of(st.none(), st.text()),
-            "owner": st.one_of(st.none(), st.text())}),
+                "owner": st.one_of(st.none(), st.text())}),
             "notes": st.one_of(st.none(), st.text()),
             "product": st.one_of(st.none(), st.text()),
             "start": st.datetimes(),
             "end": st.datetimes(),
             "type": st.one_of(st.none(), st.text())
-         })
+        })
 
 
 @pytest.mark.usefixtures('logged_user')

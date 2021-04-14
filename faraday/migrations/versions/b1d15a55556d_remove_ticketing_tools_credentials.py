@@ -5,8 +5,6 @@ Revises: f00247a92a14
 Create Date: 2020-04-02 20:41:41.083048+00:00
 
 """
-from alembic import op
-import sqlalchemy as sa
 
 from faraday.server.config import LOCAL_CONFIG_FILE
 from configparser import ConfigParser, NoSectionError

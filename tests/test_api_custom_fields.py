@@ -1,4 +1,3 @@
-
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
@@ -16,8 +15,8 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
     model = CustomFieldsSchema
     factory = CustomFieldsSchemaFactory
     api_endpoint = 'custom_fields_schema'
-    #unique_fields = ['ip']
-    #update_fields = ['ip', 'description', 'os']
+    # unique_fields = ['ip']
+    # update_fields = ['ip', 'description', 'os']
     view_class = CustomFieldsSchemaView
     patchable_fields = ['field_name']
 
@@ -34,7 +33,9 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
 
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None, u'field_order': 1} in res.json
+        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text',
+                u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None,
+                u'field_order': 1} in res.json
 
     def test_custom_fields_field_name_cant_be_changed(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(
@@ -85,4 +86,4 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
 
 class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, PatchableTestsMixin):
     def url(self, obj=None):
-        return v2_to_v3(super(TestVulnerabilityCustomFieldsV3, self).url(obj))
+        return v2_to_v3(super().url(obj))

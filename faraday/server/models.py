@@ -2186,6 +2186,7 @@ class Action(Metadata):
     __tablename__ = 'action'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=True)
+    description = Column(String, nullable=False, default='')
     command = Column(String, nullable=False)
     field = Column(String, nullable=True)
     value = Column(String, nullable=True)

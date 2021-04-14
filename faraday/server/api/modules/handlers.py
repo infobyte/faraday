@@ -15,8 +15,4 @@ def error_response(e):
         'messages': 'error',
     }), 500
 
-
-
-
-#.register(commandsrun_api)
-# I'm Py3
+# .register(commandsrun_api)

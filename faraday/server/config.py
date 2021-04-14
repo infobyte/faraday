@@ -164,7 +164,6 @@ class LDAPConfigObject(ConfigSection):
         self.use_start_tls = None
 
 
-
 class SmtpConfigObject(ConfigSection):
     def __init__(self):
         self.username = None
@@ -189,6 +188,7 @@ class StorageConfigObject(ConfigSection):
 class LoggerConfig(ConfigSection):
     def __init__(self):
         self.use_rfc5424_formatter = False
+
 
 database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()

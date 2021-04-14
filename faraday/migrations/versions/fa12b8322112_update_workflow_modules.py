@@ -7,8 +7,6 @@ Create Date: 2021-03-12 20:42:03.286727+00:00
 """
 from alembic import op
 import sqlalchemy as sa
-from faraday.server.fields import JSONType
-from depot.fields.sqlalchemy import UploadedFileField
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

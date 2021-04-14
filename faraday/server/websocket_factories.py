@@ -30,9 +30,7 @@ from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
 
-
 logger = logging.getLogger(__name__)
-
 
 connected_agents = {}
 
@@ -52,7 +50,6 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         return (protocol, headers)
 
     def onMessage(self, payload, is_binary):
-        from faraday.server.web import app # pylint:disable=import-outside-toplevel
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify
@@ -60,6 +57,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             When authentication is implemented we need to reply
             the client if the join failed.
         """
+        from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
         if not is_binary:
             message = json.loads(payload)
             if message['action'] == 'JOIN_WORKSPACE':
@@ -67,7 +65,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     logger.warning(f'Invalid join workspace message: {message}')
                     self.sendClose()
                     return
-                signer = itsdangerous.TimestampSigner(app.config['SECRET_KEY'],
+                signer = itsdangerous.TimestampSigner(get_app().config['SECRET_KEY'],
                                                       salt="websocket")
                 try:
                     workspace_id = signer.unsign(message['token'], max_age=60)
@@ -77,7 +75,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                                    '{}'.format(message['workspace']))
                     logger.exception(e)
                 else:
-                    with app.app_context():
+                    with get_app().app_context():
                         workspace = Workspace.query.get(int(workspace_id))
                     if workspace.name != message['workspace']:
                         logger.warning(
@@ -96,7 +94,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     logger.warning("Invalid agent join message")
                     self.sendClose(1000, reason="Invalid JOIN_AGENT message")
                     return False
-                with app.app_context():
+                with get_app().app_context():
                     try:
                         agent = decode_agent_websocket_token(message['token'])
                         update_executors(agent, message['executors'])
@@ -107,7 +105,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     # factory will now send broadcast messages to the agent
                     return self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
-                with app.app_context():
+                with get_app().app_context():
                     (agent_id,) = [
                         k
                         for (k, v) in connected_agents.items()
@@ -117,7 +115,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     assert agent is not None  # TODO the agent could be deleted here
                 return self.factory.leave_agent(self, agent)
             if message['action'] == 'RUN_STATUS':
-                with app.app_context():
+                with get_app().app_context():
                     if 'executor_name' not in message:
                         logger.warning(f'Missing executor_name param in message: {message}')
                         return True
@@ -151,7 +149,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                         else:
                             agent_execution.successful = message.get('successful', None)
                             agent_execution.running = message.get('running', None)
-                            agent_execution.message = message.get('message','')
+                            agent_execution.message = message.get('message', '')
                             db.session.commit()
                     else:
                         logger.exception(

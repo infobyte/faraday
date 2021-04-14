@@ -14,7 +14,7 @@ from faraday.server.api.modules.hosts import HostsView
 from tests.test_api_workspaced_base import (
     ReadOnlyAPITests)
 from tests import factories
-from tests.factories import WorkspaceFactory
+
 
 @pytest.mark.parametrize(
     "with_host_vulns,with_service_vulns", [[True, False],
@@ -127,11 +127,13 @@ class TestUpdateHostnames:
         assert len(host.hostnames) == 1
         assert host.hostnames[0].name == 'y'
 
+
 HOST_TO_QUERY_AMOUNT = 3
 HOST_NOT_TO_QUERY_AMOUNT = 2
 SERVICE_BY_HOST = 3
 VULN_BY_HOST = 2
 VULN_BY_SERVICE = 1
+
 
 class TestHostAPI(ReadOnlyAPITests):
     model = Host
@@ -192,7 +194,7 @@ class TestHostAPI(ReadOnlyAPITests):
 
     # This test the api endpoint for some of the host in the ws, with existing other host in other ws and ask for the
     # other hosts and test the api endpoint for all of the host in the ws, retrieving all host when none is required
-    @pytest.mark.parametrize('querystring', [ 'countVulns/?hosts={}', 'countVulns/',
+    @pytest.mark.parametrize('querystring', ['countVulns/?hosts={}', 'countVulns/',
     ])
     def test_vuln_count_ignore_other_ws(self,
                         vulnerability_factory,

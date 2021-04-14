@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 workspace_api = Blueprint('workspace_api', __name__)
 
 
-
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
@@ -86,7 +85,6 @@ class WorkspaceSchema(AutoSchema):
                            dump_only=True)
 
     active_agents_count = fields.Integer(dump_only=True)
-
 
     class Meta:
         model = Workspace

@@ -41,10 +41,10 @@ def add_custom_field_wizard():
     field_type = click.prompt('Field type (int, str, list)', type=click.Choice(['int', 'str', 'list']))
     custom_fields = db.session.query(CustomFieldsSchema)
 
-    #Checks the name of the fields wont be a duplicate
+    # Checks the name of the fields wont be a duplicate
     for custom_field in custom_fields:
         if field_name == custom_field.field_name \
-            or field_display_name == custom_field.field_display_name:
+                or field_display_name == custom_field.field_display_name:
             print('Custom field already exists, skipping')
             sys.exit(1)
 
@@ -71,17 +71,18 @@ def add_custom_field_wizard():
             invalid_field_order = True
             continue
         invalid_field_order = False
-    confirmation = click.prompt('New CustomField will be added to vulnerability -> Order {order} ({0},{1},{2}) <-, confirm to continue (yes/no)'\
-        .format(field_name, field_display_name, field_type, order=field_order))
+    confirmation = click.prompt('New CustomField will be added to vulnerability -> Order {order} ({0},{1},{2}) <-'
+                                ', confirm to continue (yes/no)'
+                                .format(field_name, field_display_name, field_type, order=field_order))
     if not confirmation:
         sys.exit(1)
 
     custom_field_data, created = get_or_create(
-            db.session,
-            CustomFieldsSchema,
-            table_name='vulnerability',
-            field_name=field_name,
-            field_order=field_order,
+        db.session,
+        CustomFieldsSchema,
+        table_name='vulnerability',
+        field_name=field_name,
+        field_order=field_order,
     )
     if not created:
         print('Custom field already exists, skipping')

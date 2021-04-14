@@ -132,8 +132,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open', severity='informational')
 
-
-
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -144,7 +142,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['critical_vulns'] == 0
         assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
-
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'
@@ -196,8 +193,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open')
 
-
-
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -206,7 +201,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['web_vulns'] == 2
         assert res.json['stats']['std_vulns'] == 11
         assert res.json['stats']['total_vulns'] == 13
-
 
     @pytest.mark.parametrize('querystring', [
         '?confirmed=1',
@@ -231,7 +225,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=0',
         '?confirmed=false'
     ])
-    def test_vuln_count_confirmed(self,
+    def test_vuln_count_confirmed_2(self,
                                   vulnerability_factory,
                                   test_client,
                                   session,
@@ -248,8 +242,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
     def test_create_fails_with_valid_duration(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        end_date = start_date+86400000
+        start_date = int(time.time()) * 1000
+        end_date = start_date + 86400000
         duration = {'start_date': start_date, 'end_date': end_date}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
         res = test_client.post(self.url(), data=raw_data)
@@ -295,8 +289,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                                                 session,
                                                                 test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        duration = {'start_date': start_date, 'end_date': start_date-86400000}
+        start_date = int(time.time()) * 1000
+        duration = {'start_date': start_date, 'end_date': start_date - 86400000}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
@@ -375,10 +369,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
-        assert active == True
+        assert active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
+        assert active_query
 
     def test_workspace_deactivation(self, test_client, workspace, session):
         workspace.active = True
@@ -389,10 +383,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
-        assert active == False
+        assert not active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
+        assert not active_query
 
     def test_create_fails_with_start_date_greater_than_end_date(self,
                                                            session,
@@ -422,10 +416,10 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
 
         res = test_client.get(self.url(workspace))
         active = res.json.get('active')
-        assert active == True
+        assert active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
+        assert active_query
 
     def test_workspace_deactivation(self, test_client, workspace, session):
         workspace.active = True
@@ -436,7 +430,7 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
 
         res = test_client.get(self.url(workspace))
         active = res.json.get('active')
-        assert active == False
+        assert not active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
+        assert not active_query

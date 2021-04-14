@@ -135,7 +135,6 @@ class HostFilterSet(FilterSet):
     port = ServicePortFilter(fields.Str())
 
 
-
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView,
@@ -379,10 +378,10 @@ class HostsView(PaginatedMixin,
                 Service.name.ilike(like_term))
             match_os = Host.os.ilike(like_term)
             match_hostname = Host.hostnames.any(Hostname.name.ilike(like_term))
-            query = query.filter(match_ip |
-                                 match_service_name |
-                                 match_os |
-                                 match_hostname)
+            query = query.filter(match_ip
+                                 | match_service_name
+                                 | match_os
+                                 | match_hostname)
         return query
 
     def _envelope_list(self, objects, pagination_metadata=None):
@@ -464,6 +463,7 @@ class HostsV3View(HostsView, PatchableWorkspacedMixin):
     tool_impacted_by_host.__doc__ = HostsView.tool_impacted_by_host.__doc__
     bulk_create.__doc__ = HostsView.bulk_create.__doc__
     count_vulns.__doc__ = HostsView.count_vulns.__doc__
+
 
 HostsView.register(host_api)
 HostsV3View.register(host_api)

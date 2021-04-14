@@ -270,7 +270,6 @@ class TestListServiceView(ReadWriteAPITests):
         assert cmd_obj.object_type == 'service'
         assert cmd_obj.object_id == res.json['id']
 
-
     def test_create_service_without_ost(self, test_client, host, session):
         session.commit()
         data = {

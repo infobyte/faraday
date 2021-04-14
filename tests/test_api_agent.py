@@ -13,8 +13,8 @@ import pytest
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, PatchableTestsMixin
-from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 from tests.utils.url import v2_to_v3
@@ -261,7 +261,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
             super().test_create_fails_with_empty_dict(test_client)
         assert '405' in exc_info.value.args[0]
 
-    def workspaced_url(self, workspace, obj= None):
+    def workspaced_url(self, workspace, obj=None):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
         if obj is not None:
             id_ = str(obj.id) if isinstance(obj, self.model) else str(obj)
@@ -392,7 +392,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count
 
-    def test_run_fails(self, test_client, session,csrf_token):
+    def test_run_fails(self, test_client, session, csrf_token):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         other_workspace = WorkspaceFactory.create()

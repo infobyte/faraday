@@ -15,7 +15,6 @@ import unicodedata
 import time
 
 import pytz
-from factory import SubFactory
 from factory.fuzzy import (
     BaseFuzzyAttribute,
     FuzzyChoice,
@@ -54,6 +53,7 @@ from faraday.server.models import (
     Action,
     RuleAction)
 
+
 # Make partials for start and end date. End date must be after start date
 def FuzzyStartTime():
     return (
@@ -63,6 +63,7 @@ def FuzzyStartTime():
         )
     )
 
+
 def FuzzyEndTime():
     return (
         FuzzyNaiveDateTime(
@@ -70,6 +71,7 @@ def FuzzyEndTime():
             datetime.datetime.now()
         )
     )
+
 
 all_unicode = ''.join(chr(i) for i in range(65536))
 UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')
@@ -99,7 +101,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText(chars=string.ascii_lowercase+string.digits)
+    name = FuzzyText(chars=string.ascii_lowercase + string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -327,7 +329,6 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
     type = "vulnerability_web"
 
-
     @classmethod
     def build_dict(cls, **kwargs):
         ret = super().build_dict(**kwargs)
@@ -360,7 +361,6 @@ class VulnerabilityTemplateFactory(FaradayFactory):
     class Meta:
         model = VulnerabilityTemplate
         sqlalchemy_session = db.session
-
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -483,7 +483,6 @@ class CommentFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-
 class LicenseFactory(FaradayFactory):
     product = FuzzyText()
     start_date = FuzzyStartTime()
@@ -560,6 +559,7 @@ class ExecutorFactory(FaradayFactory):
     parameters_metadata = factory.LazyAttribute(
         lambda e: {"param_name": False}
     )
+
     class Meta:
         model = Executor
         sqlalchemy_session = db.session
@@ -584,7 +584,6 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     class Meta:
         model = AgentExecution
         sqlalchemy_session = db.session
-
 
 
 class SearchFilterFactory(FaradayFactory):

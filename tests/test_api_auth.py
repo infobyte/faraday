@@ -28,7 +28,7 @@ class TestWebsocketAuthEndpoint:
         assert res.status_code == 405
 
     @pytest.mark.usefixtures('logged_user')
-    def test_succeeds(self, test_client, workspace):
+    def test_post_method_succeeds(self, test_client, workspace):
         res = test_client.post(self.check_url(f'/v2/ws/{workspace.name}/websocket_token/'))
         assert res.status_code == 200
 

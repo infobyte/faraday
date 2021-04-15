@@ -2,6 +2,11 @@ New features in the latest update
 =====================================
 
 
+3.14.4 [Apr 15th, 2021]:
+---
+ * Updated plugins package, which update appscan plugin
+
+
 3.14.3 [Mar 30th, 2021]:
 ---
  * MOD MAYOR Breaking change: Use frontend from other repository

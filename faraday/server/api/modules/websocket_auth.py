@@ -48,6 +48,14 @@ class WebsocketWorkspaceAuthV3View(WebsocketWorkspaceAuthView):
 
     @route('', methods=['GET', 'POST'])
     def get_token(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Token"]
+          responses:
+            200:
+              description: Ok
+        """
         return super().get_token(workspace_name)
 
 

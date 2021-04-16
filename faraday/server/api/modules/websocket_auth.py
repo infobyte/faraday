@@ -46,6 +46,10 @@ class WebsocketWorkspaceAuthV3View(WebsocketWorkspaceAuthView):
     route_prefix = "/v3/ws/<workspace_name>/"
     trailing_slash = False
 
+    @route('', methods=['GET', 'POST'])
+    def get_token(self, workspace_name):
+        return super().get_token(workspace_name)
+
 
 WebsocketWorkspaceAuthView.register(websocket_auth_api)
 WebsocketWorkspaceAuthV3View.register(websocket_auth_api)

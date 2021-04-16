@@ -34,7 +34,7 @@ class TokenAuthView(GenericView):
             200:
               description: Ok
         """
-        user_id = flask_login.current_user.id
+        user_id = flask_login.current_user.fs_uniquifier
         serializer = TimedJSONWebSignatureSerializer(
             app.config['SECRET_KEY'],
             salt="api_token",

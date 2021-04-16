@@ -2,6 +2,11 @@ New features in the latest update
 =====================================
 
 
+3.14.4 [Apr 15th, 2021]:
+---
+ * Updated plugins package, which update appscan plugin
+
+
 3.14.3 [Mar 30th, 2021]:
 ---
  * MOD MAYOR Breaking change: Use frontend from other repository
@@ -38,8 +43,8 @@ New features in the latest update
  * ADD v3 API, which includes:
     * All endpoints ends without `/`
     * `PATCH {model}/id` endpoints
-    * Bulk update via PATCH `{model}` endpoints
-    * Bulk delete via DELETE `{model}` endpoints
+    * ~~Bulk update via PATCH `{model}` endpoints~~ In a future release
+    * ~~Bulk delete via DELETE `{model}` endpoints~~ In a future release
     * Endpoints removed:
       * `/v2/ws/<workspace_id>/activate/`
       * `/v2/ws/<workspace_id>/change_readonly/`

@@ -12,6 +12,7 @@ import factory
 import datetime
 import itertools
 import unicodedata
+import uuid
 import time
 
 import pytz
@@ -94,6 +95,9 @@ class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
 class UserFactory(FaradayFactory):
 
     username = FuzzyText()
+    fs_uniquifier = factory.LazyAttribute(
+        lambda e: uuid.uuid4().hex
+    )
 
     class Meta:
         model = User

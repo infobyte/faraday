@@ -1778,6 +1778,7 @@ class User(db.Model, UserMixin):
     )
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
     preferences = Column(JSONType, nullable=True, default={})
+    fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     # TODO: add  many to many relationship to add permission to workspace
 

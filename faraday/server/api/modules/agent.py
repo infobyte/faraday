@@ -35,6 +35,7 @@ agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
 
+
 class ExecutorSchema(AutoSchema):
 
     parameters_metadata = fields.Dict(
@@ -133,7 +134,7 @@ class AgentCreationView(CreateMixin, GenericView):
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _perform_create(self,  data, **kwargs):
+    def _perform_create(self, data, **kwargs):
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
@@ -161,13 +162,12 @@ class AgentCreationView(CreateMixin, GenericView):
             dict_["name"] for dict_ in workspace_names
         ]
 
-
         workspaces = list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names
         )
 
-        agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
+        agent = super()._perform_create(data, **kwargs)
         agent.workspaces = workspaces
 
         db.session.add(agent)
@@ -193,7 +193,7 @@ class AgentRunSchema(Schema):
     )
 
     def __init__(self, *args, **kwargs):
-        super(AgentRunSchema, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.unknown = EXCLUDE
 
 
@@ -364,11 +364,11 @@ class AgentV3View(AgentView):
     @route('/<int:agent_id>', methods=['DELETE'])
     def remove_workspace(self, workspace_name, agent_id):
         # This endpoint is not an exception for V3, overrides logic of DELETE
-        return super(AgentV3View, self).remove_workspace(workspace_name, agent_id)
+        return super().remove_workspace(workspace_name, agent_id)
 
     @route('/<int:agent_id>/run', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
-        return super(AgentV3View, self).run_agent(workspace_name, agent_id)
+        return super().run_agent(workspace_name, agent_id)
 
     remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
     run_agent.__doc__ = AgentView.run_agent.__doc__

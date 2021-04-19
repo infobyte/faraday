@@ -1,0 +1,1 @@
+Improve bulk create logs

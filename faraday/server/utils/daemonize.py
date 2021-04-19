@@ -96,7 +96,7 @@ def createDaemon():
             # based systems).  This second fork guarantees that the child is no
             # longer a session leader, preventing the daemon from ever acquiring
             # a controlling terminal.
-            pid = os.fork()	# Fork a second child.
+            pid = os.fork()  # Fork a second child.
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
@@ -110,7 +110,7 @@ def createDaemon():
             os.umask(UMASK)
         else:
             # exit() or _exit()?  See below.
-            os._exit(0)	 # Exit parent (the first child) of the second child.
+            os._exit(0)  # Exit parent (the first child) of the second child.
     else:
         # exit() or _exit()?
         # _exit is like exit(), but it doesn't call any functions registered
@@ -119,7 +119,7 @@ def createDaemon():
         # streams to be flushed twice and any temporary files may be unexpectedly
         # removed.  It's therefore recommended that child branches of a fork()
         # and the parent branch(es) of a daemon use _exit().
-        os._exit(0)	 # Exit parent of the first child.
+        os._exit(0)  # Exit parent of the first child.
 
     # NOTE(mrocha): Since we need all file descriptors opened during server
     # setup (i.e.: databases sessions, logging, socket connections, etc.), we
@@ -159,8 +159,8 @@ def stop_server(port):
         logger.info("Faraday Server stopped successfully")
     except OSError as err:
         if err.errno == errno.EPERM:
-            logger.error("Couldn't stop Faraday Server. User doesn't"\
-                "have enough permissions")
+            logger.error("Couldn't stop Faraday Server. User doesn't"
+                         "have enough permissions")
             return False
         else:
             raise err
@@ -182,13 +182,14 @@ def is_server_running(port):
             remove_pid_file(port)
             return None
         elif err.errno == errno.EPERM:
-            logger.warning("Server is running BUT the current user"\
-                "doesn't have enough access to operate with it")
+            logger.warning("Server is running BUT the current user"
+                           "doesn't have enough access to operate with it")
             return pid
         else:
             raise
     else:
         return pid
+
 
 def get_server_pid(port):
     if not Path(str(FARADAY_SERVER_PID_FILE).format(port)).exists():
@@ -200,9 +201,9 @@ def get_server_pid(port):
         try:
             pid = int(pid_file.readline())
         except ValueError:
-            logger.warning('PID file was found but is corrupted. '\
-                'Assuming server is not running. Please check manually'\
-                'if Faraday Server is effectively running')
+            logger.warning('PID file was found but is corrupted. '
+                           'Assuming server is not running. Please check manually'
+                           'if Faraday Server is effectively running')
             remove_pid_file(port)
             return None
 

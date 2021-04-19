@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 workspace_api = Blueprint('workspace_api', __name__)
 
 
-
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
@@ -86,7 +85,6 @@ class WorkspaceSchema(AutoSchema):
                            dump_only=True)
 
     active_agents_count = fields.Integer(dump_only=True)
-
 
     class Meta:
         model = Workspace
@@ -263,7 +261,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 abort(make_response(jsonify(message="Workspace start date can't be greater than the end date"), 400))
 
         scope = data.pop('scope', [])
-        workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
+        workspace = super()._perform_create(data, **kwargs)
         workspace.set_scope(scope)
 
         db.session.commit()
@@ -272,14 +270,14 @@ class WorkspaceView(ReadWriteView, FilterMixin):
     def _update_object(self, obj, data, **kwargs):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
-        return super(WorkspaceView, self)._update_object(obj, data)
+        return super()._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):
         # When the object was created or updated it doesn't have the stats
         # loaded so I have to query it again
         if not kwargs.get('many') and obj.vulnerability_total_count is None:
             obj = self._get_object(obj.name)
-        return super(WorkspaceView, self)._dump(obj, route_kwargs, **kwargs)
+        return super()._dump(obj, route_kwargs, **kwargs)
 
     @route('/<workspace_id>/activate/', methods=["PUT"])
     def activate(self, workspace_id):

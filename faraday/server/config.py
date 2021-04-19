@@ -147,6 +147,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.agent_registration_secret = None
         self.debug = False
         self.custom_plugins_folder = None
+        self.ignore_info_severity = False
 
 
 class LDAPConfigObject(ConfigSection):
@@ -161,7 +162,6 @@ class LDAPConfigObject(ConfigSection):
         self.server = None
         self.use_ldaps = None
         self.use_start_tls = None
-
 
 
 class SmtpConfigObject(ConfigSection):
@@ -188,6 +188,7 @@ class StorageConfigObject(ConfigSection):
 class LoggerConfig(ConfigSection):
     def __init__(self):
         self.use_rfc5424_formatter = False
+
 
 database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()

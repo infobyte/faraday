@@ -77,7 +77,6 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 400
         assert res.json == {u'message': u"Can't comment inexistent object"}
 
-
     def test_create_unique_comment_for_plugins(self, session, test_client):
         """
 
@@ -125,7 +124,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         factories.CommentFactory.create(workspace=workspace, text='third')
         factories.CommentFactory.create(workspace=workspace, text='fourth')
         get_comments = test_client.get(self.url(workspace=workspace))
-        expected = ['first', 'second', 'third','fourth']
+        expected = ['first', 'second', 'third', 'fourth']
         assert expected == [comment['text'] for comment in get_comments.json]
 
 
@@ -133,7 +132,7 @@ class TestCommentAPIGenericV3(TestCommentAPIGeneric, PatchableTestsMixin):
     view_class = CommentV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestCommentAPIGenericV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)

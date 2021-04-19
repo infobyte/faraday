@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -6,8 +6,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from builtins import str
-
-from tests.utils.url import v2_to_v3
 
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
@@ -17,9 +15,9 @@ from sqlalchemy.orm.util import was_deleted
 API_PREFIX = '/v2/'
 OBJECT_COUNT = 5
 
+
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
-
     model = None
     factory = None
     api_endpoint = None
@@ -146,11 +144,11 @@ class PatchableTestsMixin(UpdateTestsMixin):
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
-        super(PatchableTestsMixin, self).test_update_an_object(test_client, logged_user, method)
+        super().test_update_an_object(test_client, logged_user, method)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_fails_with_existing(self, test_client, session, method):
-        super(PatchableTestsMixin, self).test_update_fails_with_existing(test_client, session, method)
+        super().test_update_fails_with_existing(test_client, session, method)
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""

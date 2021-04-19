@@ -12,10 +12,10 @@ import factory
 import datetime
 import itertools
 import unicodedata
+import uuid
 import time
 
 import pytz
-from factory import SubFactory
 from factory.fuzzy import (
     BaseFuzzyAttribute,
     FuzzyChoice,
@@ -54,6 +54,7 @@ from faraday.server.models import (
     Action,
     RuleAction)
 
+
 # Make partials for start and end date. End date must be after start date
 def FuzzyStartTime():
     return (
@@ -63,6 +64,7 @@ def FuzzyStartTime():
         )
     )
 
+
 def FuzzyEndTime():
     return (
         FuzzyNaiveDateTime(
@@ -70,6 +72,7 @@ def FuzzyEndTime():
             datetime.datetime.now()
         )
     )
+
 
 all_unicode = ''.join(chr(i) for i in range(65536))
 UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')
@@ -91,6 +94,9 @@ class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
 class UserFactory(FaradayFactory):
 
     username = FuzzyText()
+    fs_uniquifier = factory.LazyAttribute(
+        lambda e: uuid.uuid4().hex
+    )
 
     class Meta:
         model = User
@@ -99,7 +105,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText(chars=string.ascii_lowercase+string.digits)
+    name = FuzzyText(chars=string.ascii_lowercase + string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -124,7 +130,7 @@ class FuzzyIncrementalInteger(BaseFuzzyAttribute):
 
     def __init__(self, low, high, **kwargs):
         self.iterator = itertools.cycle(range(low, high - 1))
-        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fuzz(self):
         return next(self.iterator)
@@ -190,7 +196,7 @@ class ServiceFactory(WorkspaceObjectFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(ServiceFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['host'].workspace = kwargs['workspace']
         ret['parent'] = ret['host'].id
         ret['ports'] = [ret['port']]
@@ -327,10 +333,9 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
     type = "vulnerability_web"
 
-
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(VulnerabilityWebFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         assert ret['type'] == 'vulnerability_web'
         ret['type'] = 'VulnerabilityWeb'
         return ret
@@ -361,10 +366,9 @@ class VulnerabilityTemplateFactory(FaradayFactory):
         model = VulnerabilityTemplate
         sqlalchemy_session = db.session
 
-
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(VulnerabilityTemplateFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['exploitation'] = ret['severity']
         return ret
 
@@ -429,7 +433,7 @@ class CommandFactory(WorkspaceObjectFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # Ugly hack to JSON-serialize datetimes
-        ret = super(CommandFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['itime'] = time.mktime(ret['start_date'].utctimetuple())
         ret['duration'] = (ret['end_date'] - ret['start_date']).seconds + ((ret['end_date'] - ret['start_date']).microseconds / 1000000.0)
         ret.pop('start_date')
@@ -466,7 +470,7 @@ class CommentFactory(WorkspaceObjectFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # The host, service or comment must be created
-        ret = super(CommentFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         workspace = kwargs['workspace']
         if ret['object_type'] == 'host':
             HostFactory.create(workspace=workspace, id=ret['object_id'])
@@ -483,7 +487,6 @@ class CommentFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-
 class LicenseFactory(FaradayFactory):
     product = FuzzyText()
     start_date = FuzzyStartTime()
@@ -497,7 +500,7 @@ class LicenseFactory(FaradayFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # Ugly hack to JSON-serialize datetimes
-        ret = super(LicenseFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['start'] = ret['start_date'].isoformat()
         ret['end'] = ret['end_date'].isoformat()
         ret.pop('start_date')
@@ -547,7 +550,7 @@ class AgentFactory(FaradayFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        return super(AgentFactory, cls).build_dict(**kwargs)
+        return super().build_dict(**kwargs)
 
     class Meta:
         model = Agent
@@ -560,6 +563,7 @@ class ExecutorFactory(FaradayFactory):
     parameters_metadata = factory.LazyAttribute(
         lambda e: {"param_name": False}
     )
+
     class Meta:
         model = Executor
         sqlalchemy_session = db.session
@@ -584,7 +588,6 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     class Meta:
         model = AgentExecution
         sqlalchemy_session = db.session
-
 
 
 class SearchFilterFactory(FaradayFactory):

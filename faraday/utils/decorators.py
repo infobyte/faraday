@@ -34,5 +34,3 @@ def updateLocalMetadata(func):
         self.updateMetadata()
         return func(self, *args, **kwargs)
     return wrapper
-
-# I'm Py3

@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import pytest
-from lxml.etree import fromstring, tostring
+from lxml.etree import fromstring
 
 from tests.conftest import TEST_DATA_PATH
 from tests.factories import (

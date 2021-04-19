@@ -1,8 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from flask import Blueprint, g
+from flask import Blueprint
 from marshmallow import fields
+import flask_login
 
 from faraday.server.models import SearchFilter
 from faraday.server.api.base import (
@@ -31,7 +32,7 @@ class SearchFilterView(ReadWriteView):
 
     def _get_base_query(self):
         query = super()._get_base_query()
-        return query.filter(SearchFilter.creator_id == g.user.id)
+        return query.filter(SearchFilter.creator_id == flask_login.current_user.id)
 
 
 class SearchFilterV3View(SearchFilterView, PatchableMixin):

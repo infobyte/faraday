@@ -2,6 +2,21 @@ New features in the latest update
 =====================================
 
 
+3.14.4 [Apr 15th, 2021]:
+---
+ * Updated plugins package, which update appscan plugin
+
+
+3.14.3 [Mar 30th, 2021]:
+---
+ * MOD MAYOR Breaking change: Use frontend from other repository
+ * ADD `last_run` to executors and agents
+ * ADD ignore info vulns option (from faraday-plugins 1.4.3)
+ * ADD invalid logins are registered in `audit.log`
+ * ADD agent registration tokens are now 6-digit short and automatically regenerated every 30 seconds
+ * MOD Fix logout redirect loop
+ * REMOVE support for native SSL
+
 3.14.2 [Feb 26th, 2021]:
 ---
  * ADD New plugins:
@@ -9,7 +24,6 @@ New features in the latest update
     * nextnet
     * openscap
  * FIX old versions of Nessus plugins bugs
-
 
 3.14.1 [Feb 17th, 2021]:
 ---
@@ -29,8 +43,8 @@ New features in the latest update
  * ADD v3 API, which includes:
     * All endpoints ends without `/`
     * `PATCH {model}/id` endpoints
-    * Bulk update via PATCH `{model}` endpoints
-    * Bulk delete via DELETE `{model}` endpoints
+    * ~~Bulk update via PATCH `{model}` endpoints~~ In a future release
+    * ~~Bulk delete via DELETE `{model}` endpoints~~ In a future release
     * Endpoints removed:
       * `/v2/ws/<workspace_id>/activate/`
       * `/v2/ws/<workspace_id>/change_readonly/`

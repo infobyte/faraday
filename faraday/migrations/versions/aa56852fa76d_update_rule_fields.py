@@ -7,6 +7,7 @@ Create Date: 2021-04-12 19:53:48.615218+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import text
 
 # revision identifiers, used by Alembic.
 revision = 'aa56852fa76d'
@@ -15,24 +16,37 @@ branch_labels = None
 depends_on = None
 
 
-def constraint_exists(name):
+def constraint_exists(constraint_name):
     connection = op.get_bind()
     result = connection.execute(
-        "SELECT exists(SELECT 1 from pg_catalog.pg_constraint where conname = '{}') as exists;"
-            .format(name)
+        text("""
+            SELECT exists(
+                SELECT 1
+                from pg_catalog.pg_constraint
+                where conname = :constraint_name
+            ) as exists """
+        ), **{
+            'constraint_name': constraint_name,
+        }
     ).first()
+
     return result.exists
 
 
-def column_exists(table, column):
+def column_exists(table_name, column_name):
     connection = op.get_bind()
     result = connection.execute(
-        f"""SELECT exists(
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_name = '{table}'
-                AND column_name = '{column}') as exists;"""
-            .format(table, column)
+        text("""
+            SELECT exists(
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = :table_name
+                    AND column_name = :column_name
+            ) as exists """
+        ), **{
+            'table_name': table_name,
+            'column_name': column_name,
+        }
     ).first()
     return result.exists
 
@@ -65,7 +79,7 @@ def downgrade():
 
     # op.drop_constraint('rule_action_uc', 'rule_action', type_='unique')
     # op.add_column('rule', sa.Column('object', postgresql.JSONB(astext_type=sa.Text()), autoincrement=False, nullable=False))
-    op.drop_constraint('ux_rule_name', 'rule', type_='unique')
+    # op.drop_constraint('ux_rule_name', 'rule', type_='unique')
     # op.drop_column('rule', 'name')
     # op.drop_column('rule', 'description')
     op.drop_constraint('condition_rule_id_fkey', 'condition', type_='foreignkey')

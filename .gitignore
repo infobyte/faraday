@@ -80,6 +80,3 @@ reports/executive/outputs/scope.docx
 _install
 faraday_plugins/
 faraday/frontend/
-
-# Backup de scripts de migracion autogenerados
-*.py.bkp

@@ -8,7 +8,7 @@ from builtins import input
 
 import getpass
 import string
-
+import uuid
 import os
 import sys
 import click
@@ -120,21 +120,23 @@ class InitDB():
             else:
                 user_password = self.generate_random_pw(12)
         already_created = False
+        fs_uniquifier = str(uuid.uuid4())
         try:
 
             statement = text("""
                 INSERT INTO faraday_user (
                             username, name, password,
                             is_ldap, active, last_login_ip,
-                            current_login_ip, role, state_otp
+                            current_login_ip, role, state_otp, fs_uniquifier
                         ) VALUES (
                             'faraday', 'Administrator', :password,
                             false, true, '127.0.0.1',
-                            '127.0.0.1', 'admin', 'disabled'
+                            '127.0.0.1', 'admin', 'disabled', :fs_uniquifier
                         )
             """)
             params = {
-                'password': hash_password(user_password)
+                'password': hash_password(user_password),
+                'fs_uniquifier': fs_uniquifier
             }
             connection = engine.connect()
             connection.execute(statement, **params)

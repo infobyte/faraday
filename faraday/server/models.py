@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import json
 import logging
 import operator
 import string
@@ -2140,21 +2141,37 @@ class KnowledgeBase(db.Model):
                                        name='uix_externalidentifier_toolname_referenceid'),)
 
 
+def rule_default_name(context):
+    model = context.get_current_parameters()['model']
+    create_date = context.get_current_parameters()['create_date']
+    return f'Rule for model {model} @ {create_date.isoformat()}'
+
+
 class Rule(Metadata):
     __tablename__ = 'rule'
     id = Column(Integer, primary_key=True)
+    description = Column(String, nullable=False, default="")
     model = Column(String, nullable=False)
     object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
-    object = Column(JSONType, nullable=False)
     enabled = Column(Boolean, nullable=False, default=True)
-    actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
+    actions = relationship("Action", secondary="rule_action", backref=backref("rules"), lazy='subquery')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
+    conditions = relationship("Condition", back_populates="rule",
+                              cascade="all, delete-orphan", passive_deletes=True, lazy='subquery')
+    name = Column(String, nullable=False, unique=True, default=rule_default_name)
 
     @property
     def parent(self):
         return
+
+    @property
+    def object(self):
+        # TODO THIS MUST BE DELETED AND REIMPLEMENTED FOR NEWW METHODS
+        return json.dumps(
+            [{condition.field: condition.value} for condition in self.conditions]
+        )
 
     @property
     def disabled(self):
@@ -2169,6 +2186,7 @@ class Action(Metadata):
     __tablename__ = 'action'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=True)
+    description = Column(String, nullable=False, default='')
     command = Column(String, nullable=False)
     field = Column(String, nullable=True)
     value = Column(String, nullable=True)
@@ -2232,6 +2250,8 @@ class RuleAction(Metadata):
     action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
     action = relationship('Action', foreign_keys=[action_id],
                           backref=backref('rule_actions', cascade="all, delete-orphan"))
+
+    __table_args__ = (UniqueConstraint('rule_id', 'action_id', name='rule_action_uc'),)
 
 
 class Agent(Metadata):
@@ -2313,8 +2333,8 @@ class Condition(Metadata):
     field = Column(String)
     value = Column(String)
     operator = Column(String, default='equals')
-    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
+    rule_id = Column(Integer, ForeignKey('rule.id', ondelete="CASCADE"), index=True, nullable=False)
+    rule = relationship('Rule', back_populates="conditions")
 
     @property
     def parent(self):

@@ -52,7 +52,8 @@ from faraday.server.models import (
     Executor,
     Rule,
     Action,
-    RuleAction)
+    RuleAction,
+    Condition)
 
 
 # Make partials for start and end date. End date must be after start date
@@ -614,9 +615,18 @@ class ActionFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
+class ConditionFactory(FaradayFactory):
+    field = 'description'
+    value = FuzzyText()
+    operator = 'equals'
+
+    class Meta:
+        model = Condition
+        sqlalchemy_session = db.session
+
+
 class RuleFactory(WorkspaceObjectFactory):
     model = 'Vulnerability'
-    object = "severity=low",
     disabled = FuzzyChoice([True, False])
     workspace = factory.SubFactory(WorkspaceFactory)
 

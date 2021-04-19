@@ -6,7 +6,7 @@ import pytest
 from faraday.searcher.api import Api
 from faraday.searcher.searcher import Searcher
 from faraday.searcher.sqlapi import SqlApi
-from faraday.server.models import Service, Host, VulnerabilityWeb
+from faraday.server.models import Service, Host, VulnerabilityWeb, Rule
 from faraday.server.models import Vulnerability, CommandObject
 from faraday.server.schemas import WorkerRuleSchema
 from faraday.utils.smtp import MailNotification
@@ -20,6 +20,7 @@ from tests.factories import (
     ActionFactory,
     RuleActionFactory,
     UserFactory,
+    ConditionFactory,
 )
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
 
@@ -854,8 +855,10 @@ class TestSearcherRules():
         assert vulns_count == 10
 
         searcher = Searcher(api(workspace, test_client, session))
-        rule_disabled = RuleFactory.create(object="severity=low", disabled=True, workspace=workspace)
-        rule_enabled = RuleFactory.create(object="severity=medium", disabled=False, workspace=workspace)
+        rule_disabled: Rule = RuleFactory.create(disabled=True, workspace=workspace)
+        rule_enabled = RuleFactory.create(disabled=False, workspace=workspace)
+        rule_disabled.conditions = [ConditionFactory.create(field='severity', value="low")]
+        rule_enabled.conditions = [ConditionFactory.create(field='severity', value="medium")]
 
         action = ActionFactory.create(command='DELETE')
         session.add(action)

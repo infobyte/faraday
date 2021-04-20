@@ -11,7 +11,7 @@ from colorama import init
 from colorama import Fore
 
 import faraday.server.config
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday.server.models import db
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils.daemonize import is_server_running
@@ -27,7 +27,7 @@ def check_server_running():
 
 
 def check_open_ports():
-    address =  faraday.server.config.faraday_server.bind_address
+    address = faraday.server.config.faraday_server.bind_address
     port = int(faraday.server.config.faraday_server.port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((address, port))
@@ -38,9 +38,10 @@ def check_open_ports():
 
 
 def check_postgres():
-    with app.app_context():
+    with get_app().app_context():
         try:
-            result = (db.session.query("version()").one(),db.session.query("current_setting('server_version_num')").one())
+            result = (
+                db.session.query("version()").one(), db.session.query("current_setting('server_version_num')").one())
             return result
         except sqlalchemy.exc.OperationalError:
             return False
@@ -49,7 +50,7 @@ def check_postgres():
 
 
 def check_locks_postgresql():
-    with app.app_context():
+    with get_app().app_context():
         psql_status = check_postgres()
         if psql_status:
             result = db.engine.execute("""SELECT blocked_locks.pid     AS blocked_pid,
@@ -85,7 +86,7 @@ def check_locks_postgresql():
 
 
 def check_postgresql_encoding():
-    with app.app_context():
+    with get_app().app_context():
         psql_status = check_postgres()
         if psql_status:
             encoding = db.engine.execute("SHOW SERVER_ENCODING").first()[0]
@@ -95,7 +96,6 @@ def check_postgresql_encoding():
 
 
 def check_storage_permission():
-
     path = CONST_FARADAY_HOME_PATH / 'storage' / 'test'
 
     try:
@@ -113,7 +113,8 @@ def print_config_info():
     data_keys = ['bind_address', 'port', 'websocket_port', 'debug']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
-              format(KEY=key, VALUE=getattr(faraday.server.config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))
+              format(KEY=key, VALUE=getattr(faraday.server.config.faraday_server, key), white=Fore.WHITE,
+                     blue=Fore.BLUE))
 
     print(f'\n{Fore.WHITE}Showing faraday plugins data')
     print(f"{Fore.BLUE} version: {Fore.WHITE}{faraday_plugins.__version__}")
@@ -136,20 +137,19 @@ def print_postgresql_status():
     exit_code = 0
     result = check_postgres()
 
-
-    if result == False:
-        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
-            .format(red=Fore.RED, white=Fore.WHITE))
+    if not result:
+        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'
+              .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code
-    elif result == None:
-        print('[{red}-{white}] Database not initialized. Execute: faraday-manage initdb'\
-            .format(red=Fore.RED, white=Fore.WHITE))
+    elif result is None:
+        print('[{red}-{white}] Database not initialized. Execute: faraday-manage initdb'
+              .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code
-    elif int(result[1][0])<90400:
-        print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
-            format(red=Fore.RED, white=Fore.WHITE))
+    elif int(result[1][0]) < 90400:
+        print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'
+              .format(red=Fore.RED, white=Fore.WHITE))
     elif result:
         print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL is running and up to date')
         return exit_code
@@ -162,22 +162,22 @@ def print_postgresql_other_status():
     lock_status = check_locks_postgresql()
     if lock_status:
         print(f'[{Fore.YELLOW}-{Fore.WHITE}] Warning: PostgreSQL lock detected.')
-    elif lock_status == False:
+    elif not lock_status:
         print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL lock not detected. ')
-    elif lock_status == None:
+    elif lock_status is None:
         pass
 
     encoding = check_postgresql_encoding()
     if encoding:
         print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL encoding: {encoding}')
-    elif encoding == None:
+    elif encoding is None:
         pass
 
 
 def print_faraday_status():
     """Prints Status of farday using check_server_running() """
 
-    #Prints Status of the server using check_server_running()
+    # Prints Status of the server using check_server_running()
     pid = check_server_running()
     if pid is not None:
         print('[{green}+{white}] Faraday Server is running. PID:{PID} \
@@ -199,11 +199,13 @@ def print_config_status():
         print(f'[{Fore.RED}-{Fore.WHITE}] /.faraday/storage -> Permission denied')
 
     if check_open_ports():
-        print("[{green}+{white}] Port {PORT} in {ad} is open"\
-            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address))
+        print("[{green}+{white}] Port {PORT} in {ad} is open"
+              .format(PORT=faraday.server.config.faraday_server.port,
+                      green=Fore.GREEN, white=Fore.WHITE, ad=faraday.server.config.faraday_server.bind_address))
     else:
-        print("[{red}-{white}] Port {PORT} in {ad} is not open"\
-            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address))
+        print("[{red}-{white}] Port {PORT} in {ad} is not open"
+              .format(PORT=faraday.server.config.faraday_server.port,
+                      red=Fore.RED, white=Fore.WHITE, ad=faraday.server.config.faraday_server.bind_address))
 
 
 def full_status_check():

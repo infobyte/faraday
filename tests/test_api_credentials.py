@@ -57,17 +57,17 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         host = host_factory.create(workspace=workspace)
         session.commit()
         raw_data = {
-            "_id":"1.e5069bb0718aa519852e6449448eedd717f1b90d",
-            "name":"name",
-            "username":"username",
-            "metadata":{"update_time":1508794240799,"update_user":"",
-                        "update_action":0,"creator":"UI Web",
-                        "create_time":1508794240799,"update_controller_action":"",
-                        "owner":""},
-            "password":"pass",
-            "type":"Cred",
-            "owner":"",
-            "description":"",
+            "_id": "1.e5069bb0718aa519852e6449448eedd717f1b90d",
+            "name": "name",
+            "username": "username",
+            "metadata": {"update_time": 1508794240799, "update_user": "",
+                         "update_action": 0, "creator": "UI Web",
+                         "create_time": 1508794240799, "update_controller_action": "",
+                         "owner": ""},
+            "password": "pass",
+            "type": "Cred",
+            "owner": "",
+            "description": "",
             "parent": host.id,
             "parent_type": "Host"
         }
@@ -82,17 +82,17 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         service = service_factory.create(workspace=workspace)
         session.commit()
         raw_data = {
-            "_id":"1.e5069bb0718aa519852e6449448eedd717f1b90d",
-            "name":"name",
-            "username":"username",
-            "metadata":{"update_time":1508794240799,"update_user":"",
-                        "update_action":0,"creator":"UI Web",
-                        "create_time":1508794240799,"update_controller_action":"",
-                        "owner":""},
-            "password":"pass",
-            "type":"Cred",
-            "owner":"",
-            "description":"",
+            "_id": "1.e5069bb0718aa519852e6449448eedd717f1b90d",
+            "name": "name",
+            "username": "username",
+            "metadata": {"update_time": 1508794240799, "update_user": "",
+                         "update_action": 0, "creator": "UI Web",
+                         "create_time": 1508794240799, "update_controller_action": "",
+                         "owner": ""},
+            "password": "pass",
+            "type": "Cred",
+            "owner": "",
+            "description": "",
             "parent": service.id,
             "parent_type": "Service"
         }
@@ -153,24 +153,23 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         service = service_factory.create(workspace=workspace)
         session.commit()
         raw_data = {
-            "_id":"1.e5069bb0718aa519852e6449448eedd717f1b90d",
-            "name":"name",
-            "username":"username",
-            "metadata":{"update_time":1508794240799,"update_user":"",
-                        "update_action":0,"creator":"UI Web",
-                        "create_time":1508794240799,"update_controller_action":"",
-                        "owner":""},
-            "password":"pass",
-            "type":"Cred",
-            "owner":"",
-            "description":"",
+            "_id": "1.e5069bb0718aa519852e6449448eedd717f1b90d",
+            "name": "name",
+            "username": "username",
+            "metadata": {"update_time": 1508794240799, "update_user": "",
+                         "update_action": 0, "creator": "UI Web",
+                         "create_time": 1508794240799, "update_controller_action": "",
+                         "owner": ""},
+            "password": "pass",
+            "type": "Cred",
+            "owner": "",
+            "description": "",
             "parent": service.id,
             "parent_type": "Vulnerability"
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert res.json['messages']['json']['_schema'] == ['Unknown parent type: Vulnerability']
-
 
     def test_update_credentials(self, test_client, session, host):
         credential = self.factory.create(host=host, service=None,
@@ -238,7 +237,6 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 400
         assert b'Parent id not found' in res.data
 
-
     def test_sort_credentials_target(self, test_client, second_workspace):
         host = HostFactory(workspace=second_workspace, ip="192.168.1.1")
         service = ServiceFactory(name="http", workspace=second_workspace, host=host)
@@ -261,7 +259,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         # Desc order
         response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=desc")
         assert response.status_code == 200
-        assert sorted(credentials_target, reverse=True) == [ v['value']['target'] for v in response.json['rows']]
+        assert sorted(credentials_target, reverse=True) == [v['value']['target'] for v in response.json['rows']]
 
         # Asc order
         response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=asc")
@@ -273,4 +271,4 @@ class TestCredentialsAPIGenericV3(TestCredentialsAPIGeneric, PatchableTestsMixin
     view_class = CredentialV3View
 
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestCredentialsAPIGenericV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))

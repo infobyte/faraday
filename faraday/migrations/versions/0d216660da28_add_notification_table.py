@@ -8,7 +8,6 @@ Create Date: 2019-04-26 20:17:48.639684+00:00
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = '0d216660da28'
 down_revision = '1b2533cc16fe'
@@ -25,7 +24,7 @@ OBJECT_TYPES = (
     'executive_report',
     'workspace',
     'task'
-    )
+)
 
 
 def upgrade():
@@ -44,13 +43,12 @@ def upgrade():
     # the syntax os the sql is invalid for postgresql and it also tries to
     # create the enum when it already exists.
     op.add_column('notification',
-        sa.Column(
-            'object_type',
-            sa.Enum(OBJECT_TYPES, name='object_types'),
-            nullable=False
-        )
-    )
-
+                  sa.Column(
+                      'object_type',
+                      sa.Enum(OBJECT_TYPES, name='object_types'),
+                      nullable=False
+                  )
+                  )
 
     op.create_foreign_key(
         'notification_user_id_fkey',
@@ -67,6 +65,6 @@ def upgrade():
 
 def downgrade():
     op.drop_table('notification')
-    #op.drop_constraint(None, 'notification_user_id_fkey', type_='foreignkey')
-    #op.drop_constraint(None, 'notification_workspace_id_fkey', type_='foreignkey')
+    # op.drop_constraint(None, 'notification_user_id_fkey', type_='foreignkey')
+    # op.drop_constraint(None, 'notification_workspace_id_fkey', type_='foreignkey')
 # I'm Py3

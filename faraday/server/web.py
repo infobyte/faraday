@@ -2,7 +2,6 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import sys
-import functools
 import logging
 from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
@@ -20,12 +19,9 @@ from autobahn.twisted.websocket import (
 
 from flask_mail import Mail
 
-from OpenSSL.SSL import Error as SSLError
-
 import faraday.server.config
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
-from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
@@ -34,15 +30,8 @@ from faraday.server.websocket_factories import (
     BroadcastServerProtocol
 )
 
+FARADAY_APP = None
 
-app = create_app()  # creates a Flask(__name__) app
-# After 'Create app'
-app.config['MAIL_SERVER'] = smtp.host
-app.config['MAIL_PORT'] = smtp.port
-app.config['MAIL_USE_SSL'] = smtp.ssl
-app.config['MAIL_USERNAME'] = smtp.username
-app.config['MAIL_PASSWORD'] = smtp.password
-mail = Mail(app)
 logger = logging.getLogger(__name__)
 
 
@@ -83,7 +72,8 @@ class WebServer:
     WEB_UI_LOCAL_PATH = faraday.server.config.FARADAY_BASE / 'server/www'
 
     def __init__(self):
-        logger.info(f'Starting web server at http://'
+
+        logger.info('Starting web server at http://'
                     f'{faraday.server.config.faraday_server.bind_address}:'
                     f'{faraday.server.config.faraday_server.port}/')
         self.__websocket_port = faraday.server.config.faraday_server.websocket_port or 9000
@@ -98,7 +88,7 @@ class WebServer:
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            sys.exit(1) # Abort web-server startup
+            sys.exit(1)  # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -115,7 +105,7 @@ class WebServer:
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
 
     def __build_api_resource(self):
-        return FaradayWSGIResource(reactor, reactor.getThreadPool(), app)
+        return FaradayWSGIResource(reactor, reactor.getThreadPool(), get_app())
 
     def __build_websockets_resource(self):
         websocket_port = int(faraday.server.config.faraday_server.websocket_port)
@@ -181,4 +171,18 @@ class WebServer:
             logger.exception(e)
             self.__stop_all_threads()
             sys.exit(1)
-# I'm Py3
+
+
+def get_app():
+    global FARADAY_APP  # pylint: disable=W0603
+    if not FARADAY_APP:
+        app = create_app()  # creates a Flask(__name__) app
+        # After 'Create app'
+        app.config['MAIL_SERVER'] = smtp.host
+        app.config['MAIL_PORT'] = smtp.port
+        app.config['MAIL_USE_SSL'] = smtp.ssl
+        app.config['MAIL_USERNAME'] = smtp.username
+        app.config['MAIL_PASSWORD'] = smtp.password
+        mail = Mail(app)
+        FARADAY_APP = app
+    return FARADAY_APP

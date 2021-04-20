@@ -124,6 +124,10 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
+    owasp = fields.Method(serialize='get_owasp_refs', default=[])
+    cve = fields.Method(serialize='get_cve_refs', default=[])
+    cwe = fields.Method(serialize='get_cwe_refs', default=[])
+    cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -169,10 +173,24 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool')
+            'custom_fields', 'external_id', 'tool',
+            'cvss', 'cwe', 'cve', 'owasp',
+            )
 
     def get_type(self, obj):
         return obj.__class__.__name__
+
+    def get_owasp_refs(self, obj):
+        return [reference for reference in obj.references if 'owasp' in reference.lower()]
+
+    def get_cwe_refs(self, obj):
+        return [reference for reference in obj.references if 'cwe' in reference.lower()]
+
+    def get_cve_refs(self, obj):
+        return [reference for reference in obj.references if 'cve' in reference.lower()]
+
+    def get_cvss_refs(self, obj):
+        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     def get_attachments(self, obj):
         res = {}
@@ -267,7 +285,6 @@ class VulnerabilitySchema(AutoSchema):
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):
-
     method = fields.String(default='')
     params = fields.String(attribute='parameters', default='')
     pname = fields.String(attribute='parameter_name', default='')
@@ -290,7 +307,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool'
+            'status_code', 'custom_fields', 'external_id', 'tool',
+            'cve', 'cwe', 'owasp', 'cvss',
         )
 
 
@@ -336,7 +354,7 @@ class ServiceFilter(Filter):
         return query.join(
             alias,
             alias.id == model.__table__.c.service_id).filter(
-                alias.name == value
+            alias.name == value
         )
 
 
@@ -346,13 +364,13 @@ class HostnamesFilter(Filter):
 
         value_list = value.split(",")
 
-        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
-           join(Host).\
-           join(alias).\
-           filter(alias.name.in_(value_list))
+        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id). \
+            join(Host). \
+            join(alias). \
+            filter(alias.name.in_(value_list))
 
-        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
-            join(alias).\
+        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id). \
+            join(alias). \
             filter(alias.name.in_(value_list))
 
         query = service_hostnames_query.union(host_hostnames_query)
@@ -396,6 +414,7 @@ class VulnerabilityFilterSet(FilterSet):
             field: _strict_filtering for field in strict_fields
         }
         operators = (CustomILike, operators.Equal)
+
     id = IDFilter(fields.Int())
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
@@ -443,8 +462,8 @@ class VulnerabilityFilterSet(FilterSet):
 
         if command_id:
             # query = query.filter(CommandObject.command_id == int(command_id))
-            query = query.filter(VulnerabilityGeneric.creator_command_id ==
-                                 int(command_id))  # TODO migration: handle invalid int()
+            query = query.filter(VulnerabilityGeneric.creator_command_id
+                                 == int(command_id))  # TODO migration: handle invalid int()
         return query
 
 
@@ -452,7 +471,6 @@ class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
                         ReadWriteWorkspacedView,
                         CountMultiWorkspacedMixin):
-
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
@@ -535,7 +553,7 @@ class VulnerabilityView(PaginatedMixin,
             )
 
     def _update_object(self, obj, data, **kwargs):
-        data.pop('type', '') # It's forbidden to change vuln type!
+        data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
         return super()._update_object(obj, data)
 
@@ -558,16 +576,16 @@ class VulnerabilityView(PaginatedMixin,
             *args, **kwargs)
         joinedloads = [
             joinedload(Vulnerability.host)
-            .load_only(Host.id)  # Only hostnames are needed
-            .joinedload(Host.hostnames),
+                .load_only(Host.id)  # Only hostnames are needed
+                .joinedload(Host.hostnames),
 
             joinedload(Vulnerability.service)
-            .joinedload(Service.host)
-            .joinedload(Host.hostnames),
+                .joinedload(Service.host)
+                .joinedload(Host.hostnames),
 
             joinedload(VulnerabilityWeb.service)
-            .joinedload(Service.host)
-            .joinedload(Host.hostnames),
+                .joinedload(Service.host)
+                .joinedload(Host.hostnames),
             joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
@@ -685,7 +703,7 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(403)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
-                                Workspace.name == workspace_name).first()
+                              Workspace.name == workspace_name).first()
 
         if vuln_workspace_check:
             if 'file' not in request.files:
@@ -777,17 +795,19 @@ class VulnerabilityView(PaginatedMixin,
         return res_filters, hostname_filters
 
     def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
-        hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
+        hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
+                           host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
             # remove host__os filters from filters due to a bug
             hosts_os_filter = hosts_os_filter[0]
-            filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') != 'host__os']
+            filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if
+                                  host_os_filter.get('name') != 'host__os']
 
         vulns = search(db.session,
                        vulnerability_class,
                        filters)
-        vulns = vulns.filter(VulnerabilityGeneric.workspace==workspace)
+        vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
 
         if hostname_filters:
             or_filters = []
@@ -800,7 +820,7 @@ class VulnerabilityView(PaginatedMixin,
 
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
-            vulns = vulns.join(Host).join(Service).filter(Host.os==os_value)
+            vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
             vulns = vulns.options(
@@ -829,7 +849,7 @@ class VulnerabilityView(PaginatedMixin,
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit') # we need to remove pagination, since
+                limit = filters.pop('limit')  # we need to remove pagination, since
 
             vulns = self._generate_filter_query(
                 VulnerabilityGeneric,
@@ -854,11 +874,11 @@ class VulnerabilityView(PaginatedMixin,
                 workspace,
                 marshmallow_params,
             )
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in vulns.all()]
             vulns_data = []
             for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
+                vulns_data.append({field[0]: field[1] for field in row})
 
             return vulns_data, len(rows)
 
@@ -883,8 +903,8 @@ class VulnerabilityView(PaginatedMixin,
 
         if vuln_workspace_check:
             file_obj = db.session.query(File).filter_by(object_type='vulnerability',
-                                         object_id=vuln_id,
-                                         filename=attachment_filename.replace(" ", "%20")).first()
+                                                        object_id=vuln_id,
+                                                        filename=attachment_filename.replace(" ", "%20")).first()
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))
@@ -933,7 +953,7 @@ class VulnerabilityView(PaginatedMixin,
                               Workspace.name == workspace.name).first()
         if vuln_workspace_check:
             files = db.session.query(File).filter_by(object_type='vulnerability',
-                                                        object_id=vuln_id).all()
+                                                     object_id=vuln_id).all()
             res = {}
             for file_obj in files:
                 ret = EvidenceSchema().dump(file_obj)
@@ -942,7 +962,6 @@ class VulnerabilityView(PaginatedMixin,
             return flask.jsonify(res)
         else:
             flask.abort(404, "Vulnerability not found")
-
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -1011,7 +1030,6 @@ class VulnerabilityView(PaginatedMixin,
                          as_attachment=True,
                          cache_timeout=-1)
 
-
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
         """
@@ -1040,7 +1058,7 @@ class VulnerabilityView(PaginatedMixin,
         if vulnerability_ids:
             logger.info("Delete Vuln IDs: %s", vulnerability_ids)
             vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
-                                              VulnerabilityGeneric.workspace_id == workspace.id)
+                                                      VulnerabilityGeneric.workspace_id == workspace.id)
         elif vulnerability_severities:
             logger.info("Delete Vuln Severities: %s", vulnerability_severities)
             vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
@@ -1072,8 +1090,8 @@ class VulnerabilityView(PaginatedMixin,
         """
         limit = flask.request.args.get('limit', 1)
         workspace = self._get_workspace(workspace_name)
-        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)\
-            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id)\
+        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
+            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
             .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
         users = []
         for item in data:

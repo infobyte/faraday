@@ -21,7 +21,7 @@ def test_html_content_type_is_not_html():
 
 def test_image_is_detected_correctly():
 
-    with open(TEST_DATA_PATH /  'faraday.png', "rb")as image_data:
+    with open(TEST_DATA_PATH / 'faraday.png', "rb")as image_data:
         field = FaradayUploadedFile(image_data.read())
         assert field['content_type'] == 'image/png'
         assert 'thumb_id' in field.keys()
@@ -30,7 +30,7 @@ def test_image_is_detected_correctly():
 
 
 def test_normal_attach_is_not_detected_as_image():
-    with open(TEST_DATA_PATH /  'report_w3af.xml', "rb")as image_data:
+    with open(TEST_DATA_PATH / 'report_w3af.xml', "rb")as image_data:
         field = FaradayUploadedFile(image_data.read())
         assert field['content_type'] == 'application/octet-stream'
         assert len(field['files']) == 1

@@ -1,18 +1,14 @@
-"""cascade_delete_from_workspace
+"""add cascade delete from workspace
 
-Revision ID: 46545f7a97d7
+Revision ID: 18891ca61db6
 Revises: a4def820a5bb
-Create Date: 2021-04-06 14:25:19.261797+00:00
+Create Date: 2021-04-08 12:09:04.182543+00:00
 
 """
 from alembic import op
-import sqlalchemy as sa
-from faraday.server.fields import JSONType
-from depot.fields.sqlalchemy import UploadedFileField
-
 
 # revision identifiers, used by Alembic.
-revision = '46545f7a97d7'
+revision = '18891ca61db6'
 down_revision = 'a4def820a5bb'
 branch_labels = None
 depends_on = None
@@ -26,6 +22,7 @@ def upgrade():
     op.create_foreign_key(None, 'host', 'workspace', ['workspace_id'], ['id'], ondelete='CASCADE')
     op.drop_constraint('hostname_workspace_id_fkey', 'hostname', type_='foreignkey')
     op.create_foreign_key(None, 'hostname', 'workspace', ['workspace_id'], ['id'], ondelete='CASCADE')
+    op.drop_constraint('rule_action_uc', 'rule_action', type_='unique')
     op.drop_constraint('service_workspace_id_fkey', 'service', type_='foreignkey')
     op.create_foreign_key(None, 'service', 'workspace', ['workspace_id'], ['id'], ondelete='CASCADE')
     op.drop_constraint('vulnerability_workspace_id_fkey', 'vulnerability', type_='foreignkey')
@@ -39,6 +36,7 @@ def downgrade():
     op.create_foreign_key('vulnerability_workspace_id_fkey', 'vulnerability', 'workspace', ['workspace_id'], ['id'])
     op.drop_constraint(None, 'service', type_='foreignkey')
     op.create_foreign_key('service_workspace_id_fkey', 'service', 'workspace', ['workspace_id'], ['id'])
+    op.create_unique_constraint('rule_action_uc', 'rule_action', ['rule_id', 'action_id'])
     op.drop_constraint(None, 'hostname', type_='foreignkey')
     op.create_foreign_key('hostname_workspace_id_fkey', 'hostname', 'workspace', ['workspace_id'], ['id'])
     op.drop_constraint(None, 'host', type_='foreignkey')

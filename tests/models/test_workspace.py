@@ -86,8 +86,7 @@ def test_vuln_count(workspace, second_workspace, database):
     assert workspace['vulnerability_standard_count'] == sum(
         STANDARD_VULN_COUNT)
     assert workspace['vulnerability_total_count'] == (
-        sum(STANDARD_VULN_COUNT) + WEB_VULN_COUNT +
-        SOURCE_CODE_VULN_COUNT
+        sum(STANDARD_VULN_COUNT) + WEB_VULN_COUNT + SOURCE_CODE_VULN_COUNT
     )
 
 
@@ -103,8 +102,7 @@ def test_vuln_count_confirmed(workspace, second_workspace, database):
     assert workspace['vulnerability_standard_count'] == sum(
         C_STANDARD_VULN_COUNT)
     assert workspace['vulnerability_total_count'] == (
-        sum(C_STANDARD_VULN_COUNT) + C_WEB_VULN_COUNT +
-        C_SOURCE_CODE_VULN_COUNT
+        sum(C_STANDARD_VULN_COUNT) + C_WEB_VULN_COUNT + C_SOURCE_CODE_VULN_COUNT
     )
 
 
@@ -119,4 +117,3 @@ def test_vuln_no_count(workspace, second_workspace, database):
     assert workspace.vulnerability_code_count is None
     assert workspace.vulnerability_standard_count is None
     assert workspace.vulnerability_total_count is None
-# I'm Py3

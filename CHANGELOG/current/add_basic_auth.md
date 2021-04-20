@@ -1,0 +1,1 @@
+Add Basic Auth support

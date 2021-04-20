@@ -61,7 +61,8 @@ def upgrade():
         op.add_column('rule', sa.Column('description', sa.String(), nullable=False))
     if not column_exists('rule', 'name'):
         op.add_column('rule', sa.Column('name', sa.String(), nullable=False))
-    op.create_unique_constraint('ux_rule_name', 'rule', ['name'])
+    if not constraint_exists('ux_rule_name'):
+        op.create_unique_constraint('ux_rule_name', 'rule', ['name'])
     if column_exists('rule', 'object'):
         op.drop_column('rule', 'object')
     if not constraint_exists('rule_action_uc'):

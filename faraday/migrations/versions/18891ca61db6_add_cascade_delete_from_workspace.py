@@ -1,7 +1,7 @@
 """add cascade delete from workspace
 
 Revision ID: 18891ca61db6
-Revises: a4def820a5bb
+Revises: aa56852fa76d
 Create Date: 2021-04-08 12:09:04.182543+00:00
 
 """
@@ -9,7 +9,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '18891ca61db6'
-down_revision = 'a4def820a5bb'
+down_revision = 'aa56852fa76d'
 branch_labels = None
 depends_on = None
 

@@ -296,7 +296,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
 
-    def test_create_fails_with_slash(self, session, test_client):
+    def test_create_fails_with_forward_slash(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
         raw_data = {'name': 'swtr/'}
         res = test_client.post(self.url(), data=raw_data)

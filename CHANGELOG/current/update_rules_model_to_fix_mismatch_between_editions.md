@@ -1,1 +1,0 @@
-Update rules model to fix mismatch between editions

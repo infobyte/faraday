@@ -27,7 +27,7 @@ def get_md_text_from_json_file(filepath: Path, level_dict):
     with filepath.open("r") as file:
         file_json: Dict = json.loads(file.read())
         level = file_json.get("level")
-        level_dict[level] += f" * {file_json.get('md')}"
+        level_dict[level] += f" * {file_json.get('md')}\n"
 
 
 def main():

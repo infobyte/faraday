@@ -671,11 +671,15 @@ class FilterWorkspacedMixin(ListMixin):
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
 
-            filter_query = self._generate_filter_query(
-                filters,
-                workspace,
-                severity_count=severity_count
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                    workspace,
+                    severity_count=severity_count
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
+
             count = filter_query.count()
             if limit:
                 filter_query = filter_query.limit(limit)
@@ -684,10 +688,13 @@ class FilterWorkspacedMixin(ListMixin):
             objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
-            filter_query = self._generate_filter_query(
-                filters,
-                workspace,
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                    workspace,
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in filter_query.all()]
             data = []
@@ -758,11 +765,14 @@ class FilterMixin(ListMixin):
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
 
-            filter_query = self._generate_filter_query(
-                filters,
-                severity_count=severity_count,
-                host_vulns=host_vulns
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                    severity_count=severity_count,
+                    host_vulns=host_vulns
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)

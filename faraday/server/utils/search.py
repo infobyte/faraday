@@ -495,13 +495,14 @@ class QueryBuilder:
         create_filt = QueryBuilder._create_filter
 
         def create_filters(filt):
-            if not getattr(filt, 'fieldname', False) or filt.fieldname.split('__')[0] in valid_model_fields:
+            if not getattr(filt, 'fieldname', False) \
+                    or filt.fieldname.split('__')[0] in valid_model_fields:
                 try:
                     return create_filt(model, filt)
                 except AttributeError:
                     # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
-                    return None
-            return None
+                    raise AttributeError(f"Foreing field {filt.fieldname.split('__')[0]} not found in submodel")
+            raise AttributeError(f"Field {filt.fieldname} not found in model")
 
         return create_filters
 
@@ -550,6 +551,7 @@ class QueryBuilder:
             QueryBuilder.create_filters_func(model, valid_model_fields),
             search_params.filters
         )
+
         filters = [filt for filt in filters_generator if filt is not None]
 
         # Multiple filter criteria at the top level of the provided search

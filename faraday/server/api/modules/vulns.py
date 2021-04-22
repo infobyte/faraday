@@ -808,7 +808,6 @@ class VulnerabilityView(PaginatedMixin,
                        vulnerability_class,
                        filters)
         vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
-
         if hostname_filters:
             or_filters = []
             for hostname_filter in hostname_filters:
@@ -851,12 +850,15 @@ class VulnerabilityView(PaginatedMixin,
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
 
-            vulns = self._generate_filter_query(
-                VulnerabilityGeneric,
-                filters,
-                hostname_filters,
-                workspace,
-                marshmallow_params)
+            try:
+                vulns = self._generate_filter_query(
+                    VulnerabilityGeneric,
+                    filters,
+                    hostname_filters,
+                    workspace,
+                    marshmallow_params)
+            except AttributeError as e:
+                flask.abort(400, e)
             total_vulns = vulns
             if limit:
                 vulns = vulns.limit(limit)

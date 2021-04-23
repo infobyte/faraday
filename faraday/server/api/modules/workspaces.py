@@ -66,7 +66,7 @@ class WorkspaceDurationSchema(Schema):
 class WorkspaceSchema(AutoSchema):
 
     name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0,
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-]*$", 0,
                                                   error="The workspace name must validate with the regex "
                                                         "^[a-z0-9][a-z0-9\\_\\$\\(\\)\\+\\-\\/]*$"))
     stats = SelfNestedField(WorkspaceSummarySchema())

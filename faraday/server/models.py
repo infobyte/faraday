@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import json
 import logging
 import operator
 import string
@@ -369,6 +370,8 @@ class SourceCode(Metadata):
     function = BlankColumn(Text)
     module = BlankColumn(Text)
 
+    # 1 workspace <--> N source_codes
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
 
@@ -429,12 +432,16 @@ class Hostname(Metadata):
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref=backref("hostnames", cascade="all, delete-orphan"))
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+
+    # 1 workspace <--> N hostnames
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
-        backref='hostnames',
-        foreign_keys=[workspace_id]
+        foreign_keys=[workspace_id],
+        backref=backref('hostnames', cascade="all, delete-orphan", passive_deletes=True),
     )
+
     __table_args__ = (
         UniqueConstraint(name, host_id, workspace_id, name='uix_hostname_host_workspace'),
     )
@@ -659,6 +666,8 @@ class CommandObject(db.Model):
     command = relationship('Command', backref='command_objects')
     command_id = Column(Integer, ForeignKey('command.id'), index=True)
 
+    # 1 workspace <--> N command_objects
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
@@ -762,6 +771,8 @@ class Command(Metadata):
     user = BlankColumn(String(250))  # os username where the command was executed
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
 
+    # 1 workspace <--> N commands
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
@@ -819,12 +830,13 @@ class Host(Metadata):
         cascade="all, delete-orphan"
     )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
-                          nullable=False)
+    # 1 workspace <--> N hosts
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
-        backref=backref("hosts", cascade="all, delete-orphan")
+        backref=backref("hosts", cascade="all, delete-orphan", passive_deletes=True)
     )
 
     open_service_count = _make_generic_count_property(
@@ -991,11 +1003,13 @@ class Service(Metadata):
         foreign_keys=[host_id],
     )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # 1 workspace <--> N services
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
-        backref=backref('services', cascade="all, delete-orphan"),
-        foreign_keys=[workspace_id]
+        foreign_keys=[workspace_id],
+        backref=backref('services', cascade="all, delete-orphan", passive_deletes=True),
     )
 
     vulnerability_count = _make_generic_count_property('service',
@@ -1071,13 +1085,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
-    workspace_id = Column(
-        Integer,
-        ForeignKey('workspace.id'),
-        index=True,
-        nullable=False,
+    # 1 workspace <--> N vulnerabilites
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('vulnerabilities', cascade="all, delete-orphan", passive_deletes=True)
     )
-    workspace = relationship('Workspace', backref='vulnerabilities')
 
     reference_instances = relationship(
         "Reference",
@@ -1319,17 +1333,13 @@ class Reference(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
 
-    workspace_id = Column(
-        Integer,
-        ForeignKey('workspace.id'),
-        index=True,
-        nullable=False
-    )
+    # 1 workspace <--> N references
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
-        backref=backref("references",
-                        cascade="all, delete-orphan"),
         foreign_keys=[workspace_id],
+        backref=backref("references", cascade="all, delete-orphan"),
     )
 
     __table_args__ = (
@@ -1368,11 +1378,8 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolation", backref="policy_violation_associations",
-                                    foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref=backref("policy_violationvulnerability_associations",
-                                                                  cascade="all, delete-orphan"),
-                                 foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
+    vulnerability = relationship("Vulnerability", backref=backref("policy_violation_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
 
 
 class ReferenceTemplateVulnerabilityAssociation(db.Model):
@@ -1388,9 +1395,8 @@ class ReferenceTemplateVulnerabilityAssociation(db.Model):
     )
     vulnerability = relationship(
         "VulnerabilityTemplate",
-        backref=backref('reference_template_vulnerability_associations',
-                        cascade="all, delete-orphan"),
-        foreign_keys=[vulnerability_id]
+        foreign_keys=[vulnerability_id],
+        backref=backref('reference_template_vulnerability_associations', cascade="all, delete-orphan")
     )
 
 
@@ -1400,12 +1406,8 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolationTemplate", backref="policy_violation_template_associations",
-                                    foreign_keys=[policy_violation_id])
-    vulnerability = relationship("VulnerabilityTemplate",
-                                 backref=backref("policy_violation_template_vulnerability_associations",
-                                                 cascade="all, delete-orphan"),
-                                 foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolationTemplate", backref=backref("policy_violation_template_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
+    vulnerability = relationship("VulnerabilityTemplate", backref=backref("policy_violation_template_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -1478,11 +1480,13 @@ class Credential(Metadata):
         foreign_keys=[service_id],
     )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # 1 workspace <--> N credentials
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
-        backref=backref('credentials', cascade="all, delete-orphan"),
         foreign_keys=[workspace_id],
+        backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
     )
 
     _host_ip_query = (
@@ -1777,6 +1781,7 @@ class User(db.Model, UserMixin):
     )
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
     preferences = Column(JSONType, nullable=True, default={})
+    fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     # TODO: add  many to many relationship to add permission to workspace
 
@@ -1855,11 +1860,13 @@ class Methodology(Metadata):
         nullable=True,
     )
 
+    # 1 workspace <--> N methodologies
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         backref=backref('methodologies', cascade="all, delete-orphan"),
     )
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
     @property
     def parent(self):
@@ -1951,11 +1958,13 @@ class Task(TaskABC):
     )
     template = relationship('TaskTemplate', backref='tasks')
 
+    # 1 workspace <--> N tasks
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         backref=backref('tasks', cascade="all, delete-orphan")
     )
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
     # __table_args__ = (
     #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
@@ -2013,8 +2022,9 @@ class Comment(Metadata):
         foreign_keys=[reply_to_id]
     )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
-                          nullable=False)
+    # 1 workspace <--> N comments
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -2139,21 +2149,42 @@ class KnowledgeBase(db.Model):
                                        name='uix_externalidentifier_toolname_referenceid'),)
 
 
+def rule_default_name(context):
+    model = context.get_current_parameters()['model']
+    create_date = context.get_current_parameters()['create_date']
+    return f'Rule for model {model} @ {create_date.isoformat()}'
+
+
 class Rule(Metadata):
     __tablename__ = 'rule'
     id = Column(Integer, primary_key=True)
+    description = Column(String, nullable=False, default="")
     model = Column(String, nullable=False)
     object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
-    object = Column(JSONType, nullable=False)
     enabled = Column(Boolean, nullable=False, default=True)
-    actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
+    actions = relationship("Action", secondary="rule_action", backref=backref("rules"), lazy='subquery')
+    # 1 workspace <--> N rules
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
+    workspace = relationship(
+        'Workspace',
+        backref=backref('rules', cascade="all, delete-orphan")
+    )
+    conditions = relationship("Condition", back_populates="rule",
+                              cascade="all, delete-orphan", passive_deletes=True, lazy='subquery')
+    name = Column(String, nullable=False, unique=True, default=rule_default_name)
 
     @property
     def parent(self):
         return
+
+    @property
+    def object(self):
+        # TODO THIS MUST BE DELETED AND REIMPLEMENTED FOR NEWW METHODS
+        return json.dumps(
+            [{condition.field: condition.value} for condition in self.conditions]
+        )
 
     @property
     def disabled(self):
@@ -2168,6 +2199,7 @@ class Action(Metadata):
     __tablename__ = 'action'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=True)
+    description = Column(String, nullable=False, default='')
     command = Column(String, nullable=False)
     field = Column(String, nullable=True)
     value = Column(String, nullable=True)
@@ -2201,6 +2233,8 @@ class AgentsSchedule(Metadata):
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
 
+    # 1 workspace <--> N schedules
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
@@ -2231,6 +2265,8 @@ class RuleAction(Metadata):
     action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
     action = relationship('Action', foreign_keys=[action_id],
                           backref=backref('rule_actions', cascade="all, delete-orphan"))
+
+    __table_args__ = (UniqueConstraint('rule_id', 'action_id', name='rule_action_uc'),)
 
 
 class Agent(Metadata):
@@ -2285,12 +2321,13 @@ class AgentExecution(Metadata):
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
-    executor = relationship('Executor', foreign_keys=[executor_id],
-                            backref=backref('executions', cascade="all, delete-orphan"))
+    executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))
+    # 1 workspace <--> N agent_executions
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
-        backref=backref('agent_executions', cascade="all, delete-orphan"),
+        backref=backref('agent_executions', cascade="all, delete-orphan")
     )
     parameters_data = Column(JSONType, nullable=False)
     command_id = Column(Integer, ForeignKey('command.id'), index=True)
@@ -2312,8 +2349,12 @@ class Condition(Metadata):
     field = Column(String)
     value = Column(String)
     operator = Column(String, default='equals')
-    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
+    # 1 rule <--> N conditions
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    # rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    # rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
+    rule_id = Column(Integer, ForeignKey('rule.id', ondelete="CASCADE"), index=True, nullable=False)
+    rule = relationship('Rule', back_populates="conditions")
 
     @property
     def parent(self):

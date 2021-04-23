@@ -5,14 +5,16 @@
 { buildPythonPackage
 , fetchPypi
 , lib
-, marshmallow
+, packaging
+, six
+, webencodings
 }:
 
 buildPythonPackage rec {
   pname =
-    "webargs";
+    "bleach";
   version =
-    "8.0.0";
+    "3.3.0";
 
   src =
     fetchPypi {
@@ -20,12 +22,14 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0xy6na8axc5wnp2wg3kvqbpl2iv0hx0rsnlrmrgkgp88znx6cmjn";
+        "0cx4jyvd7hlaiiq2cq6vps689b978w3kyqqrvkckvs75743igcwq";
     };
 
   propagatedBuildInputs =
     [
-      marshmallow
+      packaging
+      six
+      webencodings
     ];
 
   # TODO FIXME
@@ -35,8 +39,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, Falcon, and aiohttp.";
+        "An easy safelist-based HTML-sanitizing tool.";
       homepage =
-        "https://github.com/marshmallow-code/webargs";
+        "https://github.com/mozilla/bleach";
     };
 }

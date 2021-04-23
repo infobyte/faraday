@@ -17,8 +17,8 @@ BRANCH_NAME = os.environ.get("CI_COMMIT_REF_NAME", ACTUAL_BRANCH)
 if not args.local:
     BRANCH_NAME = f"origin/{BRANCH_NAME}"
 
-PINK_FILE = "faraday/server/api/modules/reports.py"
-BLACK_FILE = "faraday/server/api/modules/jira.py"
+PROF_FILE = "faraday/server/api/modules/reports.py"
+CORP_FILE = "faraday/server/api/modules/integration_jira.py"
 
 mode = args.mode
 if mode == "diff":
@@ -42,9 +42,7 @@ if __name__ == '__main__':
     print(f"Current branch {ACTUAL_BRANCH} should be equal to {BRANCH_NAME}")
     intersection = set()
     if "white" in BRANCH_NAME:
-        intersection = git_diff_intersection({PINK_FILE, BLACK_FILE})
-    elif "pink" in BRANCH_NAME:
-        intersection = git_diff_intersection({BLACK_FILE})
-    assert len(intersection) == 0, f"The {intersection} should not be in " \
-                                   f"{BRANCH_NAME}"
-    assert child.returncode == 0, (child.stdout, child.returncode)
+        intersection = git_diff_intersection({PROF_FILE, CORP_FILE})
+        assert len(intersection) == 0, f"The {intersection} should not be in" \
+                                       f" {BRANCH_NAME}"
+        assert child.returncode == 0, (child.stdout, child.returncode)

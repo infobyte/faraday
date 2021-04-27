@@ -835,7 +835,7 @@ class VulnerabilityView(PaginatedMixin,
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
             hostname_filters = []
             if filters:
-                _, hostname_filters = self._hostname_filters(filters.get('filters', []))
+                filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             flask.abort(400, "Invalid filters")

@@ -11,7 +11,6 @@ the code of Faraday Professional or Faraday Corporate
 '''
 
 import os
-import re
 import sys
 import subprocess
 import logging
@@ -20,8 +19,9 @@ from contextlib import contextmanager
 from tempfile import mkdtemp
 from shutil import rmtree
 
-VERSIONS = ['white', 'pink', 'black']
+VERSIONS = ['white', 'black']
 BRANCH_FORMAT = 'origin/{}/dev'
+
 
 @contextmanager
 def chdir(directory):
@@ -30,6 +30,7 @@ def chdir(directory):
     os.chdir(directory)
     yield
     os.chdir(current)
+
 
 @contextmanager
 def temp_worktree(branch=None):
@@ -45,6 +46,7 @@ def temp_worktree(branch=None):
         yield
     rmtree(directory)
     subprocess.check_output(['git', 'worktree', 'prune'])
+
 
 def check_merge(dst_branch, cur_branch='HEAD'):
     """Return a boolean indicating if the merge from cur_branch
@@ -85,7 +87,7 @@ def branch_exists(branch_name):
 
 def version_of_branch(branch_name):
     """
-    >>> version_of_branch('tkt_white_this_is_not_a_pink_branch')
+    >>> version_of_branch('tkt_white_this_is_not_a_ee_branch')
     'white'
     """
     positions = {version: branch_name.find(version)
@@ -119,7 +121,7 @@ def main(branch):
         else:
             branches_to_test.append(BRANCH_FORMAT.format(target_version))
 
-    logging.info('Testing merges in branches %s' % branches_to_test)
+    logging.info(f'Testing merges in branches {branches_to_test}')
 
     success = True
     cur_branch = branch
@@ -130,8 +132,6 @@ def main(branch):
         else:
             success = False
             logger.error("Merge into %s failed :(", dst_branch)
-        print()
-        print()
 
     if not success:
         sys.exit(1)
@@ -143,7 +143,3 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--log-level', default='debug')
     args = parser.parse_args()
     main(args.branch)
-
-
-# I'm Py3
-

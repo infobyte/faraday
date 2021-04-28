@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "Added 'ondelete cascade' constraint to tables"
+}

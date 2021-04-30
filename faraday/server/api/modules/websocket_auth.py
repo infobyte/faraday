@@ -27,7 +27,7 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
     schema_class = WebsocketWorkspaceAuthSchema
 
     @route('/', methods=['GET', 'POST'])
-    def get_token(self, workspace_name):
+    def get(self, workspace_name):
         """
         ---
         get:
@@ -47,7 +47,7 @@ class WebsocketWorkspaceAuthV3View(WebsocketWorkspaceAuthView):
     trailing_slash = False
 
     @route('', methods=['GET', 'POST'])
-    def get_token(self, workspace_name):
+    def get(self, workspace_name):
         """
         ---
         get:
@@ -56,7 +56,7 @@ class WebsocketWorkspaceAuthV3View(WebsocketWorkspaceAuthView):
             200:
               description: Ok
         """
-        return super().get_token(workspace_name)
+        return super().get(workspace_name)
 
 
 WebsocketWorkspaceAuthView.register(websocket_auth_api)

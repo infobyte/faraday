@@ -98,11 +98,12 @@ class TestAgentCreationAPI:
         session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name='new_agent',
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, interval=60).now(),
             workspaces=[workspace, other_workspace]
         )
         # /v2/agent_registration/
@@ -125,11 +126,12 @@ class TestAgentCreationAPI:
         session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name=None,
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, interval=60).now(),
             workspaces=[workspace]
         )
         # /v2/agent_registration/
@@ -192,9 +194,10 @@ class TestAgentCreationAPI:
         session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, interval=60).now(),
             name="test agent",
             workspaces=[]
         )
@@ -210,9 +213,10 @@ class TestAgentCreationAPI:
         session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, interval=60).now(),
             name="test agent",
             workspaces=[]
         )
@@ -229,10 +233,11 @@ class TestAgentCreationAPI:
         session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
-            token=pyotp.TOTP(secret).now()
+            token=pyotp.TOTP(secret, interval=60).now()
         )
         # /v2/agent_registration/
         res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)

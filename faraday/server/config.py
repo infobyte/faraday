@@ -145,6 +145,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.session_timeout = 12
         self.api_token_expiration = 43200  # Default as 12 hs
         self.agent_registration_secret = None
+        self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
         self.custom_plugins_folder = None
         self.ignore_info_severity = False

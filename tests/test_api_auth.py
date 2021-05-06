@@ -23,12 +23,17 @@ class TestWebsocketAuthEndpoint:
         assert res.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
-    def test_get_method_not_allowed(self, test_client, workspace):
+    def test_get_method_succeeds(self, test_client, workspace):
         res = test_client.get(self.check_url(f'/v2/ws/{workspace.name}/websocket_token/'))
-        assert res.status_code == 405
+        assert res.status_code == 200
+
+        # A token for that workspace should be generated,
+        # This will break if we change the token generation
+        # mechanism.
+        assert res.json['token'].startswith(str(workspace.id))
 
     @pytest.mark.usefixtures('logged_user')
-    def test_succeeds(self, test_client, workspace):
+    def test_post_method_succeeds(self, test_client, workspace):
         res = test_client.post(self.check_url(f'/v2/ws/{workspace.name}/websocket_token/'))
         assert res.status_code == 200
 

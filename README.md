@@ -12,7 +12,7 @@ Faraday crunches the data you load into different visualizations that are useful
 
 Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities, users improve their own work. Do you remember the last time you programmed without an IDE? What IDEs are to programming, Faraday is to pentesting.
 
-![GUI - GTK](https://raw.github.com/wiki/infobyte/faraday/images/client/gtk_main_window.png)
+[![asciicast](https://asciinema.org/a/384132.svg)](https://asciinema.org/a/384132)
 
 To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
@@ -21,11 +21,20 @@ To read about the latest features check out the [release notes](https://github.c
 
 Refer to the [releases page](https://github.com/infobyte/faraday/releases) for the latest pre-made installers for all supported operating systems.
 
-Check out our documentation for detailed information on how to install Faraday in all of our supported platforms:
+Check out our documentation for detailed information on how to install Faraday in all of our supported platforms
 
-![Supported Os](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png)
+### Install from repo
+```shell
+$ pip install virtualenv
+$ virtualenv faraday_venv
+$ source faraday_env/bin/activate
+$ git clone git@github.com:infobyte/faraday.git
+$ cd faraday
+$ git clone git@github.com:infobyte/faraday-angular.git faraday/frontend
+$ pip install .
+```
 
-To begin the installation process, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Install-Guide).
+For more information about the installation, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Install-Guide).
 
 ## Development
 
@@ -38,14 +47,15 @@ If you want to develop for Faraday, please follow our [development setup for lin
 Once you installed faraday packages, you will need to initialize the faraday database:
 
 ```
-sudo faraday-manage initdb
+# first add your user to the faraday group
+$ faraday-manage initdb
 ```
 
 This will give you a *randomly generated password* to log into the web UI.
 Now you can start the server with:
 
 ```
-systemctl start faraday-server
+$ sudo systemctl start faraday-server
 ```
 
 In your browser, now you can go to localhost:5985 and login with "faraday" as username, and the password generated in the initdb step.
@@ -58,13 +68,13 @@ There are new entries every few weeks, don't forget to check out our amazing new
 
 ## API
 
-This is a branch for a PoC of automatically generating the API documentation in the [OpenAPI/swagger](https://www.openapis.org/) format.
-To generate the API docs, for example, to use with swagger UI, run:
+Check out the documentation of our API [here](https://api.faradaysec.com/).
 
-```
-faraday-manage openapi-yaml
-```
+## Cli
 
+Try [faraday-cli](https://github.com/infobyte/faraday-cli) to easily upload for information to faraday.
+
+Check out the documentation [here](https://docs.faraday-cli.faradaysec.com/).
 
 ## Plugins list
 
@@ -88,32 +98,6 @@ Information is organized into various **Workspaces**. Each Workspace contains a 
 
 [Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) helps user develop integrations with Faraday written in any language.
 Agents collects information from different network location using different tools. You can use [FaradaySEC](https://www.faradaysec.com) to orchestrate tool execution.
-
-### Conflicts
-
-If two plugins produce clashing information for an individual element, a conflict that the user will have to resolve is generated.  An example is if **user1** incorporates host *127.0.0.1 OS:Linux* and **user2** incorporates *127.0.0.1 OS: Linux Ubuntu 13.10*.
-
-On our [GTK interface](https://github.com/infobyte/faraday/wiki/Usage#gtk-gui) there's a button on the bottom right corner of the main window displaying the number of conflicts in the current workspace. To resolve them, just click on the button and a window will open where you can edit the conflicting objects and select which one to keep.
-
-### Faraday plugin
-
-Using our plugin you can perform various actions using the command line, for example:
-
-    $ cd faraday-dev/bin/
-    $ ./fplugin create_host 192.154.33.222 Android
-    1a7b2981c7becbcb3d5318056eb29a58817f5e67
-    $ ./fplugin filter_services http ssh -p 21 -a
-    Filtering services for ports: 21, 22, 80, 443, 8080, 8443
-
-    192.168.20.1    ssh     [22]    tcp open    None
-    192.168.20.1    http    [443]   tcp open    None
-    192.168.20.7    ssh     [22]    tcp open    Linux
-    192.168.20.7    http    [443]   tcp open    Linux
-    192.168.20.11   ssh     [22]    tcp open    Linux
-
-
-Read more about the [Faraday Plugin](https://github.com/infobyte/faraday/wiki/faraday-plugin).
-
 
 ### CSV Exporting
 

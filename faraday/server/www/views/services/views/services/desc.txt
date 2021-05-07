@@ -1,1 +1,0 @@
-cuenta services totales, devuelve idService, nombreService, ports, protocol.

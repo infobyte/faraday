@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import click
 
 from faraday.server.models import db
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday.server.commands.initdb import InitDB
 import faraday.server.config
 
@@ -31,7 +31,7 @@ def reset_db_all():
 
 
 def reset_db():
-    with app.app_context():
+    with get_app().app_context():
         reset_db_all()
 
 

@@ -5,14 +5,16 @@ See the file 'doc/LICENSE' for the license information
 """
 
 from unittest import mock
+
 from posixpath import join as urljoin
+import pyotp
 import pytest
 
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, OBJECT_COUNT, PatchableTestsMixin
-from tests.test_api_workspaced_base import ReadWriteMultiWorkspacedAPITests, ReadOnlyMultiWorkspacedAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 from tests.utils.url import v2_to_v3
@@ -61,28 +63,17 @@ class TestAgentAuthTokenAPIGeneric:
         return url
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_token(self, faraday_server_config, test_client, session):
-        faraday_server_config.agent_token = None
+    def test_get_agent_token(self, faraday_server_config, test_client, session):
+        faraday_server_config.agent_registration_secret = None
         res = test_client.get(self.check_url('/v2/agent_token/'))
-        assert 'token' in res.json
+        assert 'token' in res.json and 'expires_in' in res.json
         assert len(res.json['token'])
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_token_without_csrf_fails(self, faraday_server_config, test_client, session):
-        faraday_server_config.agent_token = None
+    def test_create_agent_token_fails(self, faraday_server_config, test_client, session):
+        faraday_server_config.agent_registration_secret = None
         res = test_client.post(self.check_url('/v2/agent_token/'))
-        assert res.status_code == 403
-
-    @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_new_agent_token(self, faraday_server_config, test_client, session, csrf_token):
-        faraday_server_config.agent_token = None
-        headers = {'Content-type': 'multipart/form-data'}
-        res = test_client.post(self.check_url('/v2/agent_token/'),
-                               data={"csrf_token": csrf_token},
-                               headers=headers,
-                               use_json_data=False)
-        assert res.status_code == 200
-        assert len(res.json['token'])
+        assert res.status_code == 405
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -105,12 +96,14 @@ class TestAgentCreationAPI:
         other_workspace = WorkspaceFactory.create()
         session.add(other_workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name='new_agent',
-            token='sarasa',
+            token=pyotp.TOTP(secret, interval=60).now(),
             workspaces=[workspace, other_workspace]
         )
         # /v2/agent_registration/
@@ -131,12 +124,14 @@ class TestAgentCreationAPI:
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name=None,
-            token='sarasa',
+            token=pyotp.TOTP(secret, interval=60).now(),
             workspaces=[workspace]
         )
         # /v2/agent_registration/
@@ -153,7 +148,8 @@ class TestAgentCreationAPI:
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="INVALID",
@@ -170,7 +166,7 @@ class TestAgentCreationAPI:
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
@@ -183,7 +179,7 @@ class TestAgentCreationAPI:
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_invalid_payload(self, faraday_server_config,
                                           test_client, session):
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = {"PEPE": 'INVALID'}
         # /v2/agent_registration/
@@ -196,10 +192,12 @@ class TestAgentCreationAPI:
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token="sarasa",
+            token=pyotp.TOTP(secret, interval=60).now(),
             name="test agent",
             workspaces=[]
         )
@@ -213,10 +211,12 @@ class TestAgentCreationAPI:
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token="sarasa",
+            token=pyotp.TOTP(secret, interval=60).now(),
             name="test agent",
             workspaces=[]
         )
@@ -231,11 +231,13 @@ class TestAgentCreationAPI:
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_registration_secret = secret
+        faraday_server_config.agent_token_expiration = 60
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
-            token='sarasa'
+            token=pyotp.TOTP(secret, interval=60).now()
         )
         # /v2/agent_registration/
         res = test_client.post(self.check_url('/v2/agent_registration/'), data=raw_data)
@@ -256,15 +258,15 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
 
     def test_create_succeeds(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
-            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_succeeds(test_client)
+            super().test_create_succeeds(test_client)
         assert '405' in exc_info.value.args[0]
 
     def test_create_fails_with_empty_dict(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
-            super(TestAgentWithWorkspacesAPIGeneric, self).test_create_fails_with_empty_dict(test_client)
+            super().test_create_fails_with_empty_dict(test_client)
         assert '405' in exc_info.value.args[0]
 
-    def workspaced_url(self, workspace, obj= None):
+    def workspaced_url(self, workspace, obj=None):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
         if obj is not None:
             id_ = str(obj.id) if isinstance(obj, self.model) else str(obj)
@@ -395,7 +397,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count
 
-    def test_run_fails(self, test_client, session,csrf_token):
+    def test_run_fails(self, test_client, session, csrf_token):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         other_workspace = WorkspaceFactory.create()
@@ -426,7 +428,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
 
 class TestAgentWithWorkspacesAPIGenericV3(TestAgentWithWorkspacesAPIGeneric, PatchableTestsMixin):
     def url(self, obj=None):
-        return v2_to_v3(super(TestAgentWithWorkspacesAPIGenericV3, self).url(obj))
+        return v2_to_v3(super().url(obj))
 
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
@@ -543,9 +545,15 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     def test_happy_path_valid_json(self, test_client, session, csrf_token):
         agent = AgentFactory.create(workspaces=[self.workspace])
         executor = ExecutorFactory.create(agent=agent)
+        executor2 = ExecutorFactory.create(agent=agent)
 
         session.add(executor)
         session.commit()
+
+        assert agent.last_run is None
+        assert executor.last_run is None
+        assert executor2.last_run is None
+
         payload = {
             'csrf_token': csrf_token,
             'executorData': {
@@ -563,6 +571,10 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         command_id = res.json["command_id"]
         command = Command.query.filter(Command.workspace_id == self.workspace.id).one()
         assert command_id == command.id
+        assert agent.last_run is not None
+        assert executor.last_run is not None
+        assert executor2.last_run is None
+        assert agent.last_run == executor.last_run
 
     def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token,
                                                          session, test_client):
@@ -596,7 +608,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
 
 class TestAgentAPIV3(TestAgentAPI):
     def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestAgentAPIV3, self).url(obj, workspace))
+        return v2_to_v3(super().url(obj, workspace))
 
     def check_url(self, url):
         return v2_to_v3(url)

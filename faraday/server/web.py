@@ -2,7 +2,6 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import sys
-import functools
 import logging
 from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
@@ -20,12 +19,9 @@ from autobahn.twisted.websocket import (
 
 from flask_mail import Mail
 
-from OpenSSL.SSL import Error as SSLError
-
 import faraday.server.config
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
-from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
@@ -34,22 +30,15 @@ from faraday.server.websocket_factories import (
     BroadcastServerProtocol
 )
 
+FARADAY_APP = None
 
-app = create_app()  # creates a Flask(__name__) app
-# After 'Create app'
-app.config['MAIL_SERVER'] = smtp.host
-app.config['MAIL_PORT'] = smtp.port
-app.config['MAIL_USE_SSL'] = smtp.ssl
-app.config['MAIL_USERNAME'] = smtp.username
-app.config['MAIL_PASSWORD'] = smtp.password
-mail = Mail(app)
 logger = logging.getLogger(__name__)
 
 
 class CleanHttpHeadersResource(Resource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(CleanHttpHeadersResource, self).render(request)
+        return super().render(request)
 
 
 class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
@@ -57,7 +46,7 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         return ForbiddenResource()
 
     def render(self, request):
-        ret = super(FileWithoutDirectoryListing, self).render(request)
+        ret = super().render(request)
         if self.type == 'text/html':
             request.responseHeaders.addRawHeader('Content-Security-Policy',
                                                  'frame-ancestors \'self\'')
@@ -68,13 +57,13 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
 class FaradayWSGIResource(WSGIResource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(FaradayWSGIResource, self).render(request)
+        return super().render(request)
 
 
 class FaradayRedirectResource(Redirect):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(FaradayRedirectResource, self).render(request)
+        return super().render(request)
 
 
 class WebServer:
@@ -83,28 +72,23 @@ class WebServer:
     WEB_UI_LOCAL_PATH = faraday.server.config.FARADAY_BASE / 'server/www'
 
     def __init__(self):
-        self.__ssl_enabled = faraday.server.config.ssl.enabled
-        logger.info('Starting web server at %s://%s:%s/',
-            'https' if self.__ssl_enabled else 'http',
-            faraday.server.config.faraday_server.bind_address,
-            faraday.server.config.ssl.port if self.__ssl_enabled else faraday.server.config.faraday_server.port)
-        self.__websocket_ssl_enabled = faraday.server.config.websocket_ssl.enabled
+
+        logger.info('Starting web server at http://'
+                    f'{faraday.server.config.faraday_server.bind_address}:'
+                    f'{faraday.server.config.faraday_server.port}/')
         self.__websocket_port = faraday.server.config.faraday_server.websocket_port or 9000
         self.__config_server()
         self.__build_server_tree()
 
     def __config_server(self):
         self.__bind_address = faraday.server.config.faraday_server.bind_address
-        if self.__ssl_enabled:
-            self.__listen_port = int(faraday.server.config.ssl.port)
-        else:
-            self.__listen_port = int(faraday.server.config.faraday_server.port)
+        self.__listen_port = int(faraday.server.config.faraday_server.port)
 
     def __load_ssl_certs(self):
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            sys.exit(1) # Abort web-server startup
+            sys.exit(1)  # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -121,23 +105,14 @@ class WebServer:
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
 
     def __build_api_resource(self):
-        return FaradayWSGIResource(reactor, reactor.getThreadPool(), app)
+        return FaradayWSGIResource(reactor, reactor.getThreadPool(), get_app())
 
     def __build_websockets_resource(self):
         websocket_port = int(faraday.server.config.faraday_server.websocket_port)
-        url = f'{self.__bind_address}:{websocket_port}/websockets'
-        if self.__websocket_ssl_enabled:
-            url = 'wss://' + url
-        else:
-            url = 'ws://' + url
+        url = f'ws://{self.__bind_address}:{websocket_port}/websockets'
         # logger.info(u"Websocket listening at {url}".format(url=url))
-        logger.info('Starting websocket server at port {0} with bind address {1}. '
-                    'SSL {2}'.format(
-            self.__websocket_port,
-            self.__bind_address,
-            self.__ssl_enabled
-        ))
-
+        logger.info(f'Starting websocket server at port '
+                    f'{self.__websocket_port} with bind address {self.__bind_address}.')
         factory = WorkspaceServerFactory(url=url)
         factory.protocol = BroadcastServerProtocol
         return factory
@@ -162,13 +137,7 @@ class WebServer:
                                        logPath=log_path,
                                        logFormatter=proxiedLogFormatter)
         site.displayTracebacks = False
-        if self.__ssl_enabled:
-            ssl_context = self.__load_ssl_certs()
-            self.__listen_func = functools.partial(
-                reactor.listenSSL,
-                contextFactory=ssl_context)
-        else:
-            self.__listen_func = reactor.listenTCP
+        self.__listen_func = reactor.listenTCP
 
         try:
             self.install_signal()
@@ -182,29 +151,12 @@ class WebServer:
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
-            if faraday.server.config.websocket_ssl.enabled:
-
-                try:
-                    contextFactory = ssl.DefaultOpenSSLContextFactory(
-                            faraday.server.config.websocket_ssl.keyfile.strip('\''),
-                            faraday.server.config.websocket_ssl.certificate.strip('\'')
-                    )
-
-                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
-
-                except SSLError as e:
-                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')
-                except error.CannotListenError:
-                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
-                except Exception as ex:
-                    logger.warn(f'Could not start websocket, error: {ex}')
-            else:
-                try:
-                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
-                except error.CannotListenError:
-                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
-                except Exception as ex:
-                    logger.warn(f'Could not start websocket, error: {ex}')
+            try:
+                listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            except error.CannotListenError:
+                logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+            except Exception as ex:
+                logger.warn(f'Could not start websocket, error: {ex}')
             logger.info('Faraday Server is ready')
             reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             reactor.run()
@@ -219,4 +171,18 @@ class WebServer:
             logger.exception(e)
             self.__stop_all_threads()
             sys.exit(1)
-# I'm Py3
+
+
+def get_app():
+    global FARADAY_APP  # pylint: disable=W0603
+    if not FARADAY_APP:
+        app = create_app()  # creates a Flask(__name__) app
+        # After 'Create app'
+        app.config['MAIL_SERVER'] = smtp.host
+        app.config['MAIL_PORT'] = smtp.port
+        app.config['MAIL_USE_SSL'] = smtp.ssl
+        app.config['MAIL_USERNAME'] = smtp.username
+        app.config['MAIL_PASSWORD'] = smtp.password
+        mail = Mail(app)
+        FARADAY_APP = app
+    return FARADAY_APP

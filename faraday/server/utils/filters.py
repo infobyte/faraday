@@ -19,7 +19,7 @@ from dateutil.parser._parser import ParserError
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
 
-from faraday.server.models import VulnerabilityWeb, Host, Service, VulnerabilityTemplate
+from faraday.server.models import VulnerabilityWeb, Host, Service, VulnerabilityTemplate, Workspace, User
 from faraday.server.utils.search import OPERATORS
 from faraday.server.fields import JSONType
 
@@ -27,6 +27,7 @@ from faraday.server.fields import JSONType
 VALID_OPERATORS = set(OPERATORS.keys()) - set(['desc', 'asc'])
 
 logger = logging.getLogger(__name__)
+
 
 class FlaskRestlessFilterSchema(Schema):
     name = fields.String(required=True)
@@ -175,13 +176,25 @@ class FlaskRestlessVulnerabilityFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return VulnerabilityWeb
 
+
 class FlaskRestlessVulnerabilityTemplateFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return VulnerabilityTemplate
 
+
 class FlaskRestlessHostFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return Host
+
+
+class FlaskRestlessWorkspaceFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Workspace
+
+
+class FlaskRestlessUserFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return User
 
 
 class FlaskRestlessOperator(Schema):
@@ -191,6 +204,8 @@ class FlaskRestlessOperator(Schema):
     model_filter_schemas = [
         FlaskRestlessHostFilterSchema,
         FlaskRestlessVulnerabilityFilterSchema,
+        FlaskRestlessWorkspaceFilterSchema,
+        FlaskRestlessUserFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
     ]
 
@@ -275,6 +290,8 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessVulnerabilityFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
         FlaskRestlessHostFilterSchema,
+        FlaskRestlessWorkspaceFilterSchema,
+        FlaskRestlessUserFilterSchema,
     ]
 
     def load(

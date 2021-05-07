@@ -4,9 +4,8 @@ from flask_security.utils import hash_password
 from itsdangerous import TimedJSONWebSignatureSerializer
 
 from faraday.server.models import User
-from faraday.server.web import app
+from faraday.server.web import get_app
 from tests import factories
-from tests.conftest import logged_user, login_as
 from tests.utils.url import v2_to_v3
 
 
@@ -30,7 +29,7 @@ class TestLogin:
         session.commit()
         # we use lower case username, but in db is Capitalized
         login_payload = {
-            'email': 'susan',
+            'email': 'Susan',
             'password': 'pepito',
         }
         res = test_client.post('/login', data=login_payload)
@@ -73,7 +72,7 @@ class TestLogin:
         """
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        secret_key = app.config['SECRET_KEY']
+        secret_key = get_app().config['SECRET_KEY']
         alice = factories.UserFactory.create(
                 active=True,
                 username='alice',
@@ -86,8 +85,8 @@ class TestLogin:
         session.add(ws)
         session.commit()
 
-        serializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=500, salt="token")
-        token = serializer.dumps({ 'user_id': alice.id})
+        serializer = TimedJSONWebSignatureSerializer(get_app().config['SECRET_KEY'], expires_in=500, salt="token")
+        token = serializer.dumps({'user_id': alice.id})
 
         headers = {'Authorization': b'Token ' + token}
 
@@ -112,7 +111,6 @@ class TestLogin:
         assert 'Set-Cookie' not in res.headers
         cookies = [cookie.name for cookie in test_client.cookie_jar]
         assert "faraday_session_2" not in cookies
-
 
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session

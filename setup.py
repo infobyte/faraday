@@ -42,6 +42,7 @@ try:
     # and we don't want this!
     # Taken from https://github.com/pypa/setuptools_scm/issues/190#issuecomment-351181286
     import setuptools_scm.integration
+
     setuptools_scm.integration.find_files = lambda _: []
 except ImportError:
     pass
@@ -163,12 +164,12 @@ setup(
     # packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
     # packages=[''],
     # packages=['faraday', 'faraday.server', 'faraday.utils'],
-    #packages=['faraday.' + package
+    # packages=['faraday.' + package
     #          for package in find_packages(
     #              '.', include=['server.*', 'config.*', 'utils.*', 'client.*',
     #                            'server', 'config', 'utils', 'client'])
     #          ] + ['faraday'],
-    #package_dir={'faraday': '.'},
+    # package_dir={'faraday': '.'},
     packages=find_packages(include=['faraday', 'faraday.*']),
 
     # Specify which Python versions you support. In contrast to the
@@ -206,7 +207,7 @@ setup(
     # MANIFEST.in as well.
     include_package_data=True,
     package_data={  # Optional
-         '': ['requirements.txt',],
+        '': ['requirements.txt', ],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -243,7 +244,7 @@ setup(
     # what's used to render the link text on PyPI.
     project_urls={  # Optional
         'Bug Reports': 'https://github.com/infobyte/faraday/issues',
-        #'Funding': 'https://donate.pypi.org',
+        # 'Funding': 'https://donate.pypi.org',
         'Say Thanks!': 'http://saythanks.io/to/faradaysec',
         'Source': 'https://github.com/infobyte/faraday/',
     },

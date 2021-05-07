@@ -107,14 +107,12 @@ class ConfigSection:
             section = faraday_server
         elif section_name == 'ldap':
             section = ldap
-        elif section_name == 'ssl':
-            section = ssl
-        elif section_name == 'websocket_ssl':
-            section = websocket_ssl
         elif section_name == 'storage':
             section = storage
         elif section_name == 'logger':
             section = logger_config
+        elif section_name == 'limiter':
+            section = limiter_config
         elif section_name == 'smtp':
             section = smtp
         else:
@@ -132,6 +130,12 @@ class DashboardConfigObject(ConfigSection):
         self.show_vulns_by_price = False
 
 
+class LimiterConfigObject(ConfigSection):
+    def __init__(self):
+        self.enabled = False
+        self.login_limit = "10/minutes"
+
+
 class FaradayServerConfigObject(ConfigSection):
     def __init__(self):
         self.bind_address = None
@@ -140,9 +144,11 @@ class FaradayServerConfigObject(ConfigSection):
         self.websocket_port = None
         self.session_timeout = 12
         self.api_token_expiration = 43200  # Default as 12 hs
-        self.agent_token = None
+        self.agent_registration_secret = None
+        self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
         self.custom_plugins_folder = None
+        self.ignore_info_severity = False
 
 
 class LDAPConfigObject(ConfigSection):
@@ -157,21 +163,6 @@ class LDAPConfigObject(ConfigSection):
         self.server = None
         self.use_ldaps = None
         self.use_start_tls = None
-
-
-class SSLConfigObject(ConfigSection):
-    def __init__(self):
-        self.certificate = None
-        self.keyfile = None
-        self.port = None
-        self.enabled = False
-
-
-class WebsocketSSLConfigObject(ConfigSection):
-    def __init__(self):
-        self.keyfile = None
-        self.certificate = None
-        self.enabled = False
 
 
 class SmtpConfigObject(ConfigSection):
@@ -199,15 +190,15 @@ class LoggerConfig(ConfigSection):
     def __init__(self):
         self.use_rfc5424_formatter = False
 
+
 database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
-ssl = SSLConfigObject()
-websocket_ssl = WebsocketSSLConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
 smtp = SmtpConfigObject()
+limiter_config = LimiterConfigObject()
 
 parse_and_bind_configuration()
 
@@ -220,7 +211,6 @@ def gen_web_config():
         'lic_db': CONST_LICENSES_DB,
         'vuln_model_db': CONST_VULN_MODEL_DB,
         'show_vulns_by_price': dashboard.show_vulns_by_price,
-        'websocket_ssl': websocket_ssl.enabled,
         'websocket_port': faraday_server.websocket_port,
     }
     return doc

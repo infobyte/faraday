@@ -156,8 +156,8 @@ def get_count(query, count_col=None):
     else:
         count_filter = [func.count(distinct(count_col))]
 
-    count_q = query.statement.with_only_columns(count_filter).\
-              order_by(None).group_by(None)
+    count_q = query.statement.with_only_columns(count_filter). \
+        order_by(None).group_by(None)
     count = query.session.execute(count_q).scalar()
 
     return count
@@ -196,7 +196,7 @@ def _group_concat_postgresql(element, compiler, **kw):
 class BooleanToIntColumn(expression.FunctionElement):
 
     def __init__(self, expression):
-        super(BooleanToIntColumn, self).__init__()
+        super().__init__()
         self.expression_str = expression
 
 
@@ -214,8 +214,8 @@ def get_object_type_for(instance):
     object_type = instance.__tablename__
     if object_type is None:
         if instance.__class__.__name__ in ['Vulnerability',
-                                          'VulnerabilityWeb',
-                                          'VulnerabilityCode']:
+                                           'VulnerabilityWeb',
+                                           'VulnerabilityCode']:
             object_type = 'vulnerability'
         else:
             raise RuntimeError(f"Unknown table for object: {instance}")
@@ -264,7 +264,7 @@ def get_conflict_object(session, obj, data, workspace=None):
 
         if get_object_type_for(obj) == 'vulnerability':
             # This is a special key due to model inheritance
-            from faraday.server.models import VulnerabilityGeneric # pylint:disable=import-outside-toplevel
+            from faraday.server.models import VulnerabilityGeneric  # pylint:disable=import-outside-toplevel
             klass = VulnerabilityGeneric
         else:
             klass = obj.__class__
@@ -311,7 +311,7 @@ UNIQUE_VIOLATION = '23505'
 
 
 def is_unique_constraint_violation(exception):
-    from faraday.server.models import db # pylint:disable=import-outside-toplevel
+    from faraday.server.models import db  # pylint:disable=import-outside-toplevel
     if db.engine.dialect.name != 'postgresql':
         # Not implemened for RDMS other than postgres, we can live without
         # this since it is just an extra check
@@ -324,7 +324,7 @@ NOT_NULL_VIOLATION = '23502'
 
 
 def not_null_constraint_violation(exception):
-    from faraday.server.models import db # pylint:disable=import-outside-toplevel
+    from faraday.server.models import db  # pylint:disable=import-outside-toplevel
     if db.engine.dialect.name != 'postgresql':
         # Not implemened for RDMS other than postgres, we can live without
         # this since it is just an extra check

@@ -5,6 +5,7 @@ import logging
 import flask
 from flask import Blueprint
 from flask import current_app as app
+from flask_classful import route
 from itsdangerous import BadData, TimestampSigner
 from marshmallow import Schema
 from sqlalchemy.orm.exc import NoResultFound
@@ -25,10 +26,11 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
     route_base = 'websocket_token'
     schema_class = WebsocketWorkspaceAuthSchema
 
-    def post(self, workspace_name):
+    @route('/', methods=['GET', 'POST'])
+    def get(self, workspace_name):
         """
         ---
-        post:
+        get:
           tags: ["Token"]
           responses:
             200:
@@ -43,6 +45,18 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
 class WebsocketWorkspaceAuthV3View(WebsocketWorkspaceAuthView):
     route_prefix = "/v3/ws/<workspace_name>/"
     trailing_slash = False
+
+    @route('', methods=['GET', 'POST'])
+    def get(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Token"]
+          responses:
+            200:
+              description: Ok
+        """
+        return super().get(workspace_name)
 
 
 WebsocketWorkspaceAuthView.register(websocket_auth_api)

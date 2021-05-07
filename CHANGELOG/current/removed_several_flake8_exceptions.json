@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "Removed several flake8 exceptions"
+}

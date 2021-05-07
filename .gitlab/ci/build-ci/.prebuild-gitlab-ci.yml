@@ -1,8 +1,22 @@
+.clone_and_replace_www:
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-angular.git frontend
+    - cd frontend
+    - (git branch -a | grep $CI_COMMIT_REF_NAME) && export FRONT_REF=$CI_COMMIT_REF_NAME || export FRONT_REF=white/master
+    - (git branch -a | grep $ANGULAR_REF) && export FRONT_REF=$ANGULAR_REF || export FRONT_REF=$FRONT_REF
+    - echo $FRONT_REF
+    - git checkout $FRONT_REF
+    - cd ..
+    - rm faraday/server/www
+    - mv frontend/www/ faraday/server/www/
+    - rm -fr frontend
+
 generate_build_file:
     image: registry.gitlab.com/faradaysec/devops
     stage: pre_build
     script:
         - "/bin/mkdir faraday_copy"
+        - !reference [.clone_and_replace_www, script]
         - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
     rules:
@@ -25,6 +39,7 @@ build_nix_python3:
     - mkdir -p ~/.config/cachix
     - export USER=$(whoami)
     - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+    - !reference [ .clone_and_replace_www, script ]
     - cachix use faradaysec
     - nix-build
     - tar cf /py3.tar $(nix-store --query --requisites $(readlink result))

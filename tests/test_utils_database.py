@@ -53,7 +53,7 @@ def test_vulnerability_ddl_invariant(session):
                    map(lambda column: column.strip("'')").strip('-1').strip('-1));').strip(), statements_clean)
                    )
         )
-    statements_clean.remove('source_code_id') # we don't support source_code yet
+    statements_clean.remove('source_code_id')  # we don't support source_code yet
     unique_constraints = get_unique_fields(session, Vulnerability())
     for unique_constraint in unique_constraints:
         assert len(statements_clean) == len(unique_constraint)
@@ -69,6 +69,5 @@ def test_unique_fields_workspace(obj_class, expected_unique_fields, session):
     unique_constraints = get_unique_fields(session, object_)
     for unique_constraint in unique_constraints:
         assert unique_constraint == expected_unique_fields
-
 
 # I'm Py3

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "Fix super() to py3 style"
-}

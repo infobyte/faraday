@@ -7,6 +7,7 @@ import flask
 import logging
 
 import pyotp
+from faraday_agent_parameters_types.validation import type_validate
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -358,6 +359,30 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 'command_id': command.id,
             })
 
+    @route('/validate_param/', methods=['POST'])
+    def validate_param(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Agent"]
+          description: Validates an executor parameter
+          responses:
+            200:
+              description: Ok
+            400:
+              description: Bad Request
+        """
+        if flask.request.content_type != 'application/json':
+            flask.abort(400, "Only application/json is a valid content-type")
+        valid = True
+        data = request.json
+        if "type" not in data or "data" not in data:
+            flask.abort(400, 'type and data needed in json format')
+        errors = type_validate(data["type"], data["data"])
+        if errors:
+            valid = False
+        return flask.jsonify({"valid": valid, "errors": errors})
+
 
 class AgentV3View(AgentView):
     route_prefix = '/v3/ws/<workspace_name>/'
@@ -372,8 +397,13 @@ class AgentV3View(AgentView):
     def run_agent(self, workspace_name, agent_id):
         return super().run_agent(workspace_name, agent_id)
 
+    @route('/validate_param', methods=['POST'])
+    def validate_param(self, workspace_name):
+        return super().validate_param(workspace_name)
+
     remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
     run_agent.__doc__ = AgentView.run_agent.__doc__
+    validate_param.__doc__ = AgentView.validate_param.__doc__
 
 
 AgentWithWorkspacesView.register(agent_api)

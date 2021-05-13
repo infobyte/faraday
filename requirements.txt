@@ -40,4 +40,4 @@ pyyaml
 pyotp>=2.6.0
 Flask-Limiter
 Flask-Mail
-faraday_agent_parameters_types>=0.1.0a3
+faraday_agent_parameters_types>=0.1.0a7

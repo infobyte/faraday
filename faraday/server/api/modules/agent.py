@@ -320,14 +320,15 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                                          Executor.agent_id == agent_id).one()
 
             # VALIDATE
-            errors = ""
+            errors = {}
             for param_name, param_data in executor_data["args"].items():
                 val_error = type_validate(executor.parameters_metadata[param_name]['type'], param_data)
                 if val_error:
-                    errors += f"Validation error on parameter of type " \
-                              f"{executor.parameters_metadata[param_name]['type']}: {param_name} - {val_error}\n"
+                    errors[param_name] = val_error
             if errors:
-                abort(400, errors)
+                response = jsonify(errors)
+                response.status_code = 400
+                abort(response)
 
             params = ', '.join([f'{key}={value}' for (key, value) in executor_data["args"].items()])
             command = Command(

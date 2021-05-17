@@ -112,6 +112,11 @@ let
         ./packages/flask-security-too
         { };
 
+      marshmallow =
+        self.callPackage
+        ./packages/marshmallow
+        { };
+
       pyotp =
         self.callPackage
         ./packages/pyotp

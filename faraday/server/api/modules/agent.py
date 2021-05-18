@@ -7,7 +7,7 @@ import flask
 import logging
 
 import pyotp
-from faraday_agent_parameters_types.validation import type_validate
+from faraday_agent_parameters_types.utils import type_validate
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE

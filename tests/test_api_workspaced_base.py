@@ -179,7 +179,11 @@ class UpdateTestsMixin:
     def control_cant_change_data(self, data: dict) -> dict:
         return data
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @staticmethod
+    def control_patcheable_data(test_suite, data: dict) -> dict:
+        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, method):
         data = self.factory.build_dict(workspace=self.workspace)
         data = self.control_cant_change_data(data)
@@ -188,7 +192,7 @@ class UpdateTestsMixin:
             res = test_client.put(self.url(self.first_object),
                                   data=data)
         elif method == "PATCH":
-            data = PatchableTestsMixin.control_data(self, data)
+            data = self.control_patcheable_data(self, data)
             res = test_client.patch(self.url(self.first_object), data=data)
         assert res.status_code == 200
         assert self.model.query.count() == count
@@ -196,7 +200,7 @@ class UpdateTestsMixin:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object_readonly_fails(self, test_client, method):
         self.workspace.readonly = True
         db.session.commit()
@@ -213,7 +217,7 @@ class UpdateTestsMixin:
             assert self.model.query.count() == OBJECT_COUNT
             assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_inactive_fails(self, test_client, method):
         self.workspace.deactivate()
         db.session.commit()
@@ -228,7 +232,7 @@ class UpdateTestsMixin:
         assert res.status_code == 403
         assert self.model.query.count() == count
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_fails_with_existing(self, test_client, session, method):
         for unique_field in self.unique_fields:
             unique_field_value = getattr(self.objects[1], unique_field)
@@ -246,7 +250,7 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, method):
         raw_json = self.factory.build_dict(workspace=self.workspace)
         raw_json = self.control_cant_change_data(raw_json)
@@ -261,38 +265,6 @@ class UpdateTestsMixin:
         assert res.status_code == 200, (res.status_code, res.data)
         object_id = res.json.get('id') or res.json['_id']
         assert object_id == expected_id
-
-
-class PatchableTestsMixin(UpdateTestsMixin):
-
-    @staticmethod
-    def control_data(test_suite, data: dict) -> dict:
-        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_an_object(self, test_client, method):
-        super().test_update_an_object(test_client, method)
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_an_object_readonly_fails(self, test_client, method):
-        super().test_update_an_object_readonly_fails(test_client, method)
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_inactive_fails(self, test_client, method):
-        super().test_update_inactive_fails(test_client, method)
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_fails_with_existing(self, test_client, session, method):
-        super().test_update_fails_with_existing(test_client, session, method)
-
-    def test_update_an_object_fails_with_empty_dict(self, test_client):
-        """To do this the user should use a PATCH request"""
-        res = test_client.patch(self.url(self.first_object), data={})
-        assert res.status_code == 200, (res.status_code, res.json)
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_cant_change_id(self, test_client, method):
-        super().test_update_cant_change_id(test_client, method)
 
 
 class CountTestsMixin:

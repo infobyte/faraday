@@ -103,13 +103,17 @@ class CreateTestsMixin:
 @pytest.mark.usefixtures('logged_user')
 class UpdateTestsMixin:
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @staticmethod
+    def control_data(test_suite, data: dict) -> dict:
+        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
         data = self.factory.build_dict()
         if method == "PUT":
             res = test_client.put(self.url(self.first_object), data=data)
         elif method == "PATCH":
-            data = PatchableTestsMixin.control_data(self, data)
+            data = self.control_data(self, data)
             res = test_client.patch(self.url(self.first_object), data=data)
         assert res.status_code == 200, (res.status_code, res.json)
         assert self.model.query.count() == OBJECT_COUNT
@@ -133,22 +137,6 @@ class UpdateTestsMixin:
         """To do this the user should use a PATCH request"""
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400, (res.status_code, res.json)
-
-
-@pytest.mark.usefixtures('logged_user')
-class PatchableTestsMixin(UpdateTestsMixin):
-
-    @staticmethod
-    def control_data(test_suite, data: dict) -> dict:
-        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_an_object(self, test_client, logged_user, method):
-        super().test_update_an_object(test_client, logged_user, method)
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_fails_with_existing(self, test_client, session, method):
-        super().test_update_fails_with_existing(test_client, session, method)
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""

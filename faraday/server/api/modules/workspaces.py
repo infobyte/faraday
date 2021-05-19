@@ -24,12 +24,11 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin
 
 logger = logging.getLogger(__name__)
 
 workspace_api = Blueprint('workspace_api', __name__)
-
 
 
 class WorkspaceSummarySchema(Schema):
@@ -67,7 +66,7 @@ class WorkspaceDurationSchema(Schema):
 class WorkspaceSchema(AutoSchema):
 
     name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0,
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-]*$", 0,
                                                   error="The workspace name must validate with the regex "
                                                         "^[a-z0-9][a-z0-9\\_\\$\\(\\)\\+\\-\\/]*$"))
     stats = SelfNestedField(WorkspaceSummarySchema())
@@ -77,7 +76,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
-    active = fields.Boolean(dump_only=True)
+    active = fields.Boolean()
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)
@@ -86,7 +85,6 @@ class WorkspaceSchema(AutoSchema):
                            dump_only=True)
 
     active_agents_count = fields.Integer(dump_only=True)
-
 
     class Meta:
         model = Workspace
@@ -263,23 +261,23 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 abort(make_response(jsonify(message="Workspace start date can't be greater than the end date"), 400))
 
         scope = data.pop('scope', [])
-        workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
+        workspace = super()._perform_create(data, **kwargs)
         workspace.set_scope(scope)
 
         db.session.commit()
         return workspace
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
-        return super(WorkspaceView, self)._update_object(obj, data)
+        return super()._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):
         # When the object was created or updated it doesn't have the stats
         # loaded so I have to query it again
         if not kwargs.get('many') and obj.vulnerability_total_count is None:
             obj = self._get_object(obj.name)
-        return super(WorkspaceView, self)._dump(obj, route_kwargs, **kwargs)
+        return super()._dump(obj, route_kwargs, **kwargs)
 
     @route('/<workspace_id>/activate/', methods=["PUT"])
     def activate(self, workspace_id):
@@ -339,5 +337,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         return self._get_object(workspace_id).readonly
 
 
+class WorkspaceV3View(WorkspaceView, PatchableMixin):
+    route_prefix = 'v3/'
+    trailing_slash = False
+
+
 WorkspaceView.register(workspace_api)
-# I'm Py3
+WorkspaceV3View.register(workspace_api)

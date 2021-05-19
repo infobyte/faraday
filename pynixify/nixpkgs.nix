@@ -67,6 +67,11 @@ let
         ./packages/apispec-webframeworks
         { };
 
+      bleach =
+        self.callPackage
+        ./packages/bleach
+        { };
+
       faraday-plugins =
         self.callPackage
         ./packages/faraday-plugins
@@ -97,9 +102,14 @@ let
         ./packages/flask-kvsession-fork
         { };
 
-      flask-security =
+      flask-security-too =
         self.callPackage
-        ./packages/flask-security
+        ./packages/flask-security-too
+        { };
+
+      pyotp =
+        self.callPackage
+        ./packages/pyotp
         { };
 
       simplekv =

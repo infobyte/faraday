@@ -68,7 +68,6 @@ def delete_object_event(mapper, connection, instance):
     changes_queue.put(msg)
 
 
-
 def update_object_event(mapper, connection, instance):
     delta = instance.update_date - instance.create_date
     if delta.seconds < 30:
@@ -88,15 +87,13 @@ def update_object_event(mapper, connection, instance):
 
 def after_insert_check_child_has_same_workspace(mapper, connection, inserted_instance):
     if inserted_instance.parent:
-        assert (inserted_instance.workspace ==
-                inserted_instance.parent.workspace), \
+        assert (inserted_instance.workspace
+                == inserted_instance.parent.workspace), \
                 "Conflicting workspace assignation for objects. " \
                 "This should never happen!!!"
 
-
-
-        assert (inserted_instance.workspace_id ==
-                inserted_instance.parent.workspace_id), \
+        assert (inserted_instance.workspace_id
+                == inserted_instance.parent.workspace_id), \
                 "Conflicting workspace_id assignation for objects. " \
                 "This should never happen!!!"
 
@@ -106,8 +103,6 @@ for name, obj in inspect.getmembers(sys.modules['faraday.server.models']):
     if inspect.isclass(obj) and getattr(obj, 'workspace_id', None):
         event.listen(obj, 'after_insert', after_insert_check_child_has_same_workspace)
         event.listen(obj, 'after_update', after_insert_check_child_has_same_workspace)
-
-
 
 
 # Events for websockets
@@ -121,4 +116,3 @@ event.listen(Service, 'after_delete', delete_object_event)
 # Update object bindings
 event.listen(Host, 'after_update', update_object_event)
 event.listen(Service, 'after_update', update_object_event)
-# I'm Py3

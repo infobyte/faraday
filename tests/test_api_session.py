@@ -8,8 +8,9 @@ See the file 'doc/LICENSE' for the license information
 import pytest
 from tests.conftest import login_as
 
+
 @pytest.mark.usefixtures('logged_user')
-class TestSessionLogged():
+class TestSessionLogged:
     def test_session_when_user_is_logged(self, test_client):
         res = test_client.get('/session')
         assert res.status_code == 200
@@ -23,10 +24,7 @@ class TestSessionLogged():
         assert res.json['role'] == role
 
 
-class TestSessionNotLogged():
+class TestSessionNotLogged:
     def test_session_when_user_is_not_logged(self, test_client):
         res = test_client.get('/session')
         assert res.status_code == 401
-
-
-# I'm Py3

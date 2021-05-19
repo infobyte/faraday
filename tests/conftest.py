@@ -21,7 +21,6 @@ from faraday.server.app import create_app
 from faraday.server.models import db
 from tests import factories
 
-
 TEST_DATA_PATH = Path(__file__).parent / 'data'
 
 TEMPORATY_SQLITE = NamedTemporaryFile()
@@ -60,9 +59,9 @@ class CustomClient(FlaskClient):
         from flask import _app_ctx_stack
         _app_ctx_stack.top.sqlalchemy_queries = []
 
-        ret = super(CustomClient, self).open(*args, **kwargs)
-        #Now set in flask 1.0
-        #if ret.headers.get('content-type') == 'application/json':
+        ret = super().open(*args, **kwargs)
+        # Now set in flask 1.0
+        # if ret.headers.get('content-type') == 'application/json':
         #    try:
         #        ret.json = json.loads(ret.data)
         #    except ValueError:
@@ -79,7 +78,7 @@ def pytest_addoption(parser):
     # we need to review sqlite configuraitons for persistence using PRAGMA.
     parser.addoption('--connection-string', default=f'sqlite:////{TEMPORATY_SQLITE.name}',
                      help="Database connection string. Defaults to in-memory "
-                     "sqlite if not specified:")
+                          "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
                      help="Globally ignore nplusone errors")
     parser.addoption("--with-hypothesis", action="store_true",
@@ -191,7 +190,6 @@ def session(database, request):
     @event.listens_for(session, "after_transaction_end")
     def restart_savepoint(session, transaction):
         if transaction.nested and not transaction._parent.nested:
-
             # ensure that state is expired the way
             # session.commit() at the top level normally does
             # (optional step)
@@ -220,7 +218,6 @@ def session(database, request):
 
 @pytest.fixture
 def test_client(app):
-
     # flask.g is persisted in requests, and the werkzeug
     # CSRF checker could fail if we don't do this
     from flask import g
@@ -267,7 +264,7 @@ def login_as(test_client, user):
         # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
         assert user.id is not None
         db.session.add(user)
-        sess['_user_id'] = user.id  # TODO use public flask_login functions
+        sess['_user_id'] = user.fs_uniquifier  # TODO use public flask_login functions
         identity_changed.send(test_client.application,
                               identity=Identity(user.id))
 
@@ -298,6 +295,5 @@ def skip_by_sql_dialect(app, request):
 def csrf_token(logged_user, test_client):
     session_response = test_client.get('/session')
     return session_response.json.get('csrf_token')
-
 
 # I'm Py3

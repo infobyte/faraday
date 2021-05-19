@@ -5,10 +5,8 @@ See the file 'doc/LICENSE' for the license information
 """
 from __future__ import print_function
 from __future__ import absolute_import
-from builtins import range
 
 import flask
-from flask_login import current_user
 
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
@@ -17,26 +15,17 @@ import re
 import logging
 
 from flask import current_app as app
-from flask import abort, Blueprint, jsonify, g, request, make_response
-from flask_security.confirmable import requires_confirmation
-from flask_security.forms import LoginForm, ChangePasswordForm
-from flask_security.datastore import SQLAlchemyUserDatastore
-from flask_security.utils import (
-    get_message,
-    get_identity_attributes,
-)
-from flask_security.signals import password_reset, reset_password_instructions_sent
+from flask import Blueprint, request, make_response
+from flask_security.signals import reset_password_instructions_sent
 from faraday.server import config
 
 from flask_security.recoverable import generate_reset_password_token, update_password
 from flask_security.views import anonymous_user_required
-from werkzeug.middleware.proxy_fix import ProxyFix
-#from flask_security.recoverable import _security
-from flask_security.utils import do_flash, send_mail, \
-    config_value, get_token_status, verify_hash
+from flask_security.utils import send_mail, config_value, get_token_status, verify_hash
 from flask_security.forms import ResetPasswordForm
 
 from faraday.server.models import User
+
 _security = LocalProxy(lambda: app.extensions['security'])
 _datastore = LocalProxy(lambda: _security.datastore)
 
@@ -44,41 +33,64 @@ auth = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
 
 
-@auth.route('/auth/forgot_password', methods= ['POST'])
+@auth.route('/auth/forgot_password', methods=['POST'])
 @anonymous_user_required
 def forgot_password():
+    """
+    ---
+    post:
+      tags: ["User"]
+      description: Send a token within an email to the user for password recovery
+      responses:
+        200:
+          description: Ok
+    """
 
     if not config.smtp.is_enabled():
         logger.warning('Missing SMTP Config.')
-        return make_response(flask.jsonify(response=dict(message="Operation not implemented"), success=False, code=501), 501)
+        return make_response(flask.jsonify(response=dict(message="Operation not implemented"), success=False, code=501),
+                             501)
 
     if 'email' not in request.json:
-        return make_response(flask.jsonify(response=dict(message="Operation not allowed"), success=False, code=406),406)
-
+        return make_response(flask.jsonify(response=dict(message="Operation not allowed"), success=False, code=406),
+                             406)
 
     try:
         email = request.json.get('email')
         user = User.query.filter_by(email=email).first()
         if not user:
-            return make_response(flask.jsonify(response=dict(email=email, message="Invalid Email"), success=False, code=400), 400)
+            return make_response(
+                flask.jsonify(response=dict(email=email, message="Invalid Email"), success=False, code=400), 400)
 
         send_reset_password_instructions(user)
         return flask.jsonify(response=dict(email=email), success=True, code=200)
     except Exception as e:
         logger.exception(e)
-        return make_response(flask.jsonify(response=dict(email=email, message="Server Error"), success=False, code=500), 500)
+        return make_response(flask.jsonify(response=dict(email=email, message="Server Error"), success=False, code=500),
+                             500)
 
 
-@auth.route('/auth/reset_password/<token>', methods= ['POST'])
+@auth.route('/auth/reset_password/<token>', methods=['POST'])
 @anonymous_user_required
 def reset_password(token):
+    """
+    ---
+    post:
+      tags: ["User"]
+      description: Reset the user's password based on the given token
+      responses:
+        200:
+          description: Ok
+    """
     if not config.smtp.is_enabled():
         logger.warning('Missing SMTP Config.')
-        return make_response(flask.jsonify(response=dict(message="Operation not implemented"), success=False, code=501), 501)
+        return make_response(flask.jsonify(response=dict(message="Operation not implemented"), success=False, code=501),
+                             501)
 
     try:
         if 'password' not in request.json or 'password_confirm' not in request.json:
-            return make_response(flask.jsonify(response=dict(message="Invalid data provided"), success=False, code=406),406)
+            return make_response(flask.jsonify(response=dict(message="Invalid data provided"), success=False, code=406),
+                                 406)
 
         expired, invalid, user = reset_password_token_status(token)
 
@@ -86,7 +98,7 @@ def reset_password(token):
             invalid = True
 
         if invalid or expired:
-            return make_response(flask.jsonify(response=dict(message="Invalid Token"), success=False, code=406),406)
+            return make_response(flask.jsonify(response=dict(message="Invalid Token"), success=False, code=406), 406)
         if request.is_json:
             form = ResetPasswordForm(MultiDict(request.get_json()))
             if form.validate_on_submit() and validate_strong_password(form.password.data, form.password_confirm.data):
@@ -94,11 +106,12 @@ def reset_password(token):
                 _datastore.commit()
                 return flask.jsonify(response=dict(message="Password changed successfully"), success=True, code=200)
 
-        return make_response(flask.jsonify(response=dict(message="Bad request"), success=False, code=400),400)
+        return make_response(flask.jsonify(response=dict(message="Bad request"), success=False, code=400), 400)
 
     except Exception as e:
         logger.exception(e)
-        return make_response(flask.jsonify(response=dict(token=token, message="Server Error"), success=False, code=500), 500)
+        return make_response(flask.jsonify(response=dict(token=token, message="Server Error"), success=False, code=500),
+                             500)
 
 
 def send_reset_password_instructions(user):
@@ -112,8 +125,8 @@ def send_reset_password_instructions(user):
 
     if config_value('SEND_PASSWORD_RESET_EMAIL'):
         send_mail(config_value('EMAIL_SUBJECT_PASSWORD_RESET'),
-                            user.email, 'reset_instructions',
-                            user=user, reset_link=reset_link)
+                  user.email, 'reset_instructions',
+                  user=user, reset_link=reset_link)
 
     reset_password_instructions_sent.send(
         app._get_current_object(), user=user, token=token
@@ -126,7 +139,7 @@ def send_password_reset_notice(user):
     """
     if config_value('SEND_PASSWORD_RESET_NOTICE_EMAIL'):
         send_mail(config_value('EMAIL_SUBJECT_PASSWORD_NOTICE'),
-                            user.email, 'reset_notice', user=user)
+                  user.email, 'reset_notice', user=user)
 
 
 def reset_password_token_status(token):

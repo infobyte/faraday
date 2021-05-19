@@ -2,6 +2,72 @@ New features in the latest update
 =====================================
 
 
+3.15.0 [May 18th, 2021]:
+---
+
+ * ADD `Basic Auth` support
+ * ADD support for GET method in websocket_tokens, POST will be deprecated in the future
+ * ADD CVSS(String), CWE(String), CVE(relationship) columns to vulnerability model and API
+ * ADD agent token's API says the renewal cycling duration
+ * MOD Improve database model to be able to delete workspaces fastly
+ * MOD Improve code style and uses (less flake8 exceptions, py3 `super` style, Flask app as singleton, etc)
+ * MOD workspaces' names regex to verify they cannot contain forward slash (`/`)
+ * MOD Improve bulk create logs
+ * FIX Own schema breaking Marshmallow 3.11.0+
+ * UPD flask_security_too to version 4.0.0+
+
+3.14.4 [Apr 15th, 2021]:
+---
+ * Updated plugins package, which update appscan plugin
+
+3.14.3 [Mar 30th, 2021]:
+---
+ * MOD MAYOR Breaking change: Use frontend from other repository
+ * ADD `last_run` to executors and agents
+ * ADD ignore info vulns option (from faraday-plugins 1.4.3)
+ * ADD invalid logins are registered in `audit.log`
+ * ADD agent registration tokens are now 6-digit short and automatically regenerated every 30 seconds
+ * MOD Fix logout redirect loop
+ * REMOVE support for native SSL
+
+3.14.2 [Feb 26th, 2021]:
+---
+ * ADD New plugins:
+    * microsoft baseline security analyzer
+    * nextnet
+    * openscap
+ * FIX old versions of Nessus plugins bugs
+
+3.14.1 [Feb 17th, 2021]:
+---
+ * ADD forgot password
+ * ADD update services by bulk_create
+ * ADD FARADAY_DISABLE_LOGS varibale to disable logs to filesystem
+ * ADD security logs in `audit.log` file
+ * UPD security dependency Flask-Security-Too v3.4.4
+ * MOD rename total_rows field in filter host response
+ * MOD improved Export cvs performance by reducing the number of queries
+ * MOD sanitize the content of vulns' request and response
+ * MOD dont strip new line in description when exporting csv
+ * MOD improved threads management on exception
+ * MOD improved performance on vulnerability filter
+ * MOD improved [API documentation](www.api.faradaysec.com)
+ * FIX upload a report with invalid custom fields
+ * ADD v3 API, which includes:
+    * All endpoints ends without `/`
+    * `PATCH {model}/id` endpoints
+    * ~~Bulk update via PATCH `{model}` endpoints~~ In a future release
+    * ~~Bulk delete via DELETE `{model}` endpoints~~ In a future release
+    * Endpoints removed:
+      * `/v2/ws/<workspace_id>/activate/`
+      * `/v2/ws/<workspace_id>/change_readonly/`
+      * `/v2/ws/<workspace_id>/deactivate/`
+      * `/v2/ws/<workspace_name>/hosts/bulk_delete/`
+      * `/v2/ws/<workspace_name>/vulns/bulk_delete/`
+    * Endpoints updated:
+      * `/v2/ws/<workspace_name>/vulns/<int:vuln_id>/attachments/` => \
+        `/v3/ws/<workspace_name>/vulns/<int:vuln_id>/attachment`
+
 3.14.0 [Dec 23th, 2020]:
 ---
  * ADD RESTless filter to multiples views, improving the searchs
@@ -55,6 +121,9 @@ New features in the latest update
  * Cleanup old sessions when a user logs in
  * Remove unmaintained Flask-Restless dependency
  * Remove pbkdf2\_sha1 and plain password schemes. We only support bcrypt
+
+3.11.2:
+---
 
 3.11.1 [Jun 3rd, 2020]:
 ---
@@ -257,9 +326,6 @@ compatible with python 3.
  * Fix bug when using custom fields, we must use the field_name instead of the display_name
  * Fix user's menu visibily when vuln detail is open.
  * Fix bug in status report that incorrectly showed standard vulns like if they were vulnwebs
-
-3.7.2:
----
 
 3.7:
 ---

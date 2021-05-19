@@ -52,7 +52,7 @@ class FaradayUploadedFile(UploadedFile):
         if image_format:
             content_type = f'image/{image_format}'
             self.generate_thumbnail(content)
-        return super(FaradayUploadedFile, self).process_content(
+        return super().process_content(
                 content, filename, content_type)
 
     def generate_thumbnail(self, content):

@@ -1,4 +1,3 @@
-import re
 import csv
 from io import StringIO, BytesIO
 import logging
@@ -43,31 +42,44 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
-    hosts_data = {}
-    services_data = {}
+    comments_dict = dict()
+    hosts_ids = set()
+    services_ids = set()
+    vulns_ids = set()
+
     for vuln in vulns:
-        vuln_data = _build_vuln_data(vuln, custom_fields_columns)
+        if vuln['parent_type'] == 'Host':
+            hosts_ids.add(vuln['parent'])
+        elif vuln['parent_type'] == 'Service':
+            services_ids.add(vuln['parent'])
+        vulns_ids.add(vuln['_id'])
+
+    comments = db.session.query(Comment)\
+        .filter(Comment.object_type == 'vulnerability')\
+        .filter(Comment.object_id.in_(vulns_ids)).all()
+    for comment in comments:
+        if comment.object_id in comments_dict:
+            comments_dict[comment.object_id].append(comment.text)
+        else:
+            comments_dict[comment.object_id] = [comment.text]
+
+    services_data = _build_services_data(services_ids)
+
+    hosts_ids.update({elem['service_parent_id'] for elem in services_data.values()})
+
+    hosts_data = _build_hosts_data(hosts_ids)
+
+    for vuln in vulns:
+        vuln_data = _build_vuln_data(vuln, custom_fields_columns, comments_dict)
         if vuln['parent_type'] == 'Host':
             host_id = vuln['parent']
-            if host_id in hosts_data:
-                host_data = hosts_data[host_id]
-            else:
-                host_data = _build_host_data(host_id)
-                hosts_data[host_id] = host_data
+            host_data = hosts_data[host_id]
             row = {**vuln_data, **host_data}
         elif vuln['parent_type'] == 'Service':
             service_id = vuln['parent']
-            if service_id in services_data:
-                service_data = services_data[service_id]
-            else:
-                service_data = _build_service_data(service_id)
-                services_data[service_id] = service_data
+            service_data = services_data[service_id]
             host_id = service_data['service_parent_id']
-            if host_id in hosts_data:
-                host_data = hosts_data[host_id]
-            else:
-                host_data = _build_host_data(host_id)
-                hosts_data[host_id] = host_data
+            host_data = hosts_data[host_id]
             row = {**vuln_data, **host_data, **service_data}
 
         writer.writerow(row)
@@ -78,53 +90,58 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     return memory_file
 
 
-def _build_host_data(host_id):
-    host = db.session.query(Host)\
-                            .filter(Host.id == host_id).one()
+def _build_hosts_data(hosts_id):
+    hosts = db.session.query(Host)\
+                            .filter(Host.id.in_(hosts_id)).all()
 
-    host_data = {
-        "host_id": host.id,
-        "host_description": host.description,
-        "mac": host.mac,
-        "host_owned": host.owned,
-        "host_creator_id": host.creator_id,
-        "host_date": host.create_date,
-        "host_update_date": host.update_date,
-    }
+    hosts_dict = {}
 
-    return host_data
+    for host in hosts:
+        host_data = {
+            "host_id": host.id,
+            "host_description": host.description,
+            "mac": host.mac,
+            "host_owned": host.owned,
+            "host_creator_id": host.creator_id,
+            "host_date": host.create_date,
+            "host_update_date": host.update_date,
+        }
 
+        hosts_dict[host.id] = host_data
 
-def _build_service_data(service_id):
-    service = db.session.query(Service)\
-                            .filter(Service.id == service_id).one()
-    service_data = {
-        "service_id": service.id,
-        "service_name": service.name,
-        "service_description": service.description,
-        "service_owned": service.owned,
-        "port": service.port,
-        "protocol": service.protocol,
-        "summary": service.summary,
-        "version": service.version,
-        "service_status": service.status,
-        "service_creator_id": service.creator_id,
-        "service_date": service.create_date,
-        "service_update_date": service.update_date,
-        "service_parent_id": service.host_id,
-    }
-
-    return service_data
+    return hosts_dict
 
 
-def _build_vuln_data(vuln, custom_fields_columns):
-    comments_list = []
-    comments = db.session.query(Comment).filter_by(
-        object_type='vulnerability',
-        object_id=vuln['_id']).all()
-    for comment in comments:
-        comments_list.append(comment.text)
-    vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
+def _build_services_data(services_ids):
+    services = db.session.query(Service)\
+                            .filter(Service.id.in_(services_ids)).all()
+    services_dict = {}
+
+    for service in services:
+
+        service_data = {
+            "service_id": service.id,
+            "service_name": service.name,
+            "service_description": service.description,
+            "service_owned": service.owned,
+            "port": service.port,
+            "protocol": service.protocol,
+            "summary": service.summary,
+            "version": service.version,
+            "service_status": service.status,
+            "service_creator_id": service.creator_id,
+            "service_date": service.create_date,
+            "service_update_date": service.update_date,
+            "service_parent_id": service.host_id,
+        }
+
+        services_dict[service.id] = service_data
+
+    return services_dict
+
+
+def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
+    comments_list = comments_dict[vuln['_id']] if vuln['_id'] in comments_dict else []
     vuln_date = vuln['metadata']['create_time']
     if vuln['service']:
         service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
@@ -146,7 +163,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
         "severity": vuln.get('severity', None),
         "service": vuln_service,
         "target": vuln.get('target', None),
-        "desc": vuln_description,
+        "desc": vuln.get('description', None),
         "status": vuln.get('status', None),
         "hostnames": vuln_hostnames,
         "comments": comments_list,
@@ -186,7 +203,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
 
 # Patch possible formula injection attacks
 def csv_escape(vuln_dict):
-    for key,value in vuln_dict.items():
+    for key, value in vuln_dict.items():
         if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') or str(value).startswith('@'):
             # Convert value to str just in case is has another type (like a list or
             # dict). This would be done anyway by the csv writer.

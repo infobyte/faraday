@@ -12,9 +12,10 @@ import factory
 import datetime
 import itertools
 import unicodedata
+import uuid
+import time
 
 import pytz
-from factory import SubFactory
 from factory.fuzzy import (
     BaseFuzzyAttribute,
     FuzzyChoice,
@@ -51,7 +52,9 @@ from faraday.server.models import (
     Executor,
     Rule,
     Action,
-    RuleAction)
+    RuleAction,
+    Condition)
+
 
 # Make partials for start and end date. End date must be after start date
 def FuzzyStartTime():
@@ -62,6 +65,7 @@ def FuzzyStartTime():
         )
     )
 
+
 def FuzzyEndTime():
     return (
         FuzzyNaiveDateTime(
@@ -69,6 +73,7 @@ def FuzzyEndTime():
             datetime.datetime.now()
         )
     )
+
 
 all_unicode = ''.join(chr(i) for i in range(65536))
 UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')
@@ -90,6 +95,9 @@ class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
 class UserFactory(FaradayFactory):
 
     username = FuzzyText()
+    fs_uniquifier = factory.LazyAttribute(
+        lambda e: uuid.uuid4().hex
+    )
 
     class Meta:
         model = User
@@ -98,7 +106,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText(chars=string.ascii_lowercase+string.digits)
+    name = FuzzyText(chars=string.ascii_lowercase + string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -112,12 +120,25 @@ class WorkspaceObjectFactory(FaradayFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(WorkspaceObjectFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         del ret['workspace']  # It is passed in the URL, not in POST data
         return ret
 
 
+class FuzzyIncrementalInteger(BaseFuzzyAttribute):
+    """Like a FuzzyInteger, but tries to prevent generating duplicated
+    values"""
+
+    def __init__(self, low, high, **kwargs):
+        self.iterator = itertools.cycle(range(low, high - 1))
+        super().__init__(**kwargs)
+
+    def fuzz(self):
+        return next(self.iterator)
+
+
 class HostFactory(WorkspaceObjectFactory):
+    id = FuzzyIncrementalInteger(1, 65535)
     ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
@@ -161,18 +182,6 @@ class ReferenceTemplateFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class FuzzyIncrementalInteger(BaseFuzzyAttribute):
-    """Like a FuzzyInteger, but tries to prevent generating duplicated
-    values"""
-
-    def __init__(self, low, high, **kwargs):
-        self.iterator = itertools.cycle(range(low, high - 1))
-        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
-
-    def fuzz(self):
-        return next(self.iterator)
-
-
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
@@ -186,6 +195,15 @@ class ServiceFactory(WorkspaceObjectFactory):
         model = Service
         sqlalchemy_session = db.session
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super().build_dict(**kwargs)
+        ret['host'].workspace = kwargs['workspace']
+        ret['parent'] = ret['host'].id
+        ret['ports'] = [ret['port']]
+        ret.pop('host')
+        return ret
+
 
 class SourceCodeFactory(WorkspaceObjectFactory):
     filename = FuzzyText()
@@ -195,7 +213,13 @@ class SourceCodeFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-class CustomFieldsSchemaFactory(factory.alchemy.SQLAlchemyModelFactory):
+class CustomFieldsSchemaFactory(FaradayFactory):
+
+    field_name = FuzzyText()
+    field_type = FuzzyText()
+    field_display_name = FuzzyText()
+    field_order = FuzzyInteger(1, 10)
+    table_name = FuzzyText()
 
     class Meta:
         model = CustomFieldsSchema
@@ -209,7 +233,7 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     severity = FuzzyChoice(['critical', 'high'])
 
 
-class HasParentHostOrService:
+class HasParentHostOrService(WorkspaceObjectFactory):
     """
     Mixins for objects that must have either a host or a service,
     but ont both, as a parent.
@@ -227,12 +251,11 @@ class HasParentHostOrService:
                 raise ValueError('You should pass both service and host and '
                                  'set one of them to None to prevent random '
                                  'stuff to happen')
-        return super(HasParentHostOrService, cls).attributes(create, extra)
+        return super().attributes(create, extra)
 
     @classmethod
     def _after_postgeneration(cls, obj, create, results=None):
-        super(HasParentHostOrService, cls)._after_postgeneration(
-            obj, create, results)
+        super()._after_postgeneration(obj, create, results)
         if isinstance(obj, dict):
             # This happens when built with build_dict
             if obj['host'] and obj['service']:
@@ -248,10 +271,13 @@ class HasParentHostOrService:
                 obj.host = None
             else:
                 obj.service = None
+            session = cls._meta.sqlalchemy_session
+            session.add(obj)
+            session.commit()
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = super(HasParentHostOrService, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         service = ret.pop('service')
         host = ret.pop('host')
         if host is not None:
@@ -282,11 +308,20 @@ class HasParentHostOrService:
         return ret
 
 
-class VulnerabilityFactory(HasParentHostOrService,
-                           VulnerabilityGenericFactory):
+class VulnerabilityFactory(VulnerabilityGenericFactory,
+                           HasParentHostOrService):
 
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
+    description = FuzzyText()
+    type = "vulnerability"
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super().build_dict(**kwargs)
+        assert ret['type'] == 'vulnerability'
+        ret['type'] = 'Vulnerability'
+        return ret
 
     class Meta:
         model = Vulnerability
@@ -297,6 +332,14 @@ class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
     parameter_name = FuzzyText()
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
+    type = "vulnerability_web"
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super().build_dict(**kwargs)
+        assert ret['type'] == 'vulnerability_web'
+        ret['type'] = 'VulnerabilityWeb'
+        return ret
 
     class Meta:
         model = VulnerabilityWeb
@@ -323,6 +366,12 @@ class VulnerabilityTemplateFactory(FaradayFactory):
     class Meta:
         model = VulnerabilityTemplate
         sqlalchemy_session = db.session
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super().build_dict(**kwargs)
+        ret['exploitation'] = ret['severity']
+        return ret
 
 
 class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
@@ -382,6 +431,16 @@ class CommandFactory(WorkspaceObjectFactory):
                 workspace=self.workspace
             )
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        # Ugly hack to JSON-serialize datetimes
+        ret = super().build_dict(**kwargs)
+        ret['itime'] = time.mktime(ret['start_date'].utctimetuple())
+        ret['duration'] = (ret['end_date'] - ret['start_date']).seconds + ((ret['end_date'] - ret['start_date']).microseconds / 1000000.0)
+        ret.pop('start_date')
+        ret.pop('end_date')
+        return ret
+
 
 class EmptyCommandFactory(WorkspaceObjectFactory):
     """
@@ -406,14 +465,27 @@ class CommentFactory(WorkspaceObjectFactory):
         A command without command objects.
     """
     text = FuzzyText()
-    object_id = FuzzyInteger(1)
-    object_type = FuzzyChoice(['host', 'service', 'comment'])
+    object_id = FuzzyInteger(1, 10000)
+    object_type = FuzzyChoice(['host', 'service', 'comment', 'vulnerability'])
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        # The host, service or comment must be created
+        ret = super().build_dict(**kwargs)
+        workspace = kwargs['workspace']
+        if ret['object_type'] == 'host':
+            HostFactory.create(workspace=workspace, id=ret['object_id'])
+        elif ret['object_type'] == 'service':
+            ServiceFactory.create(workspace=workspace, id=ret['object_id'])
+        elif ret['object_type'] == 'vulnerability':
+            VulnerabilityFactory.create(workspace=workspace, id=ret['object_id'])
+        elif ret['object_type'] == 'comment':
+            cls.create(workspace=workspace, id=ret['object_id'])
+        return ret
 
     class Meta:
         model = Comment
         sqlalchemy_session = db.session
-
 
 
 class LicenseFactory(FaradayFactory):
@@ -429,7 +501,7 @@ class LicenseFactory(FaradayFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         # Ugly hack to JSON-serialize datetimes
-        ret = super(LicenseFactory, cls).build_dict(**kwargs)
+        ret = super().build_dict(**kwargs)
         ret['start'] = ret['start_date'].isoformat()
         ret['end'] = ret['end_date'].isoformat()
         ret.pop('start_date')
@@ -455,14 +527,21 @@ class NoteFactory(FaradayFactory):
 class AgentFactory(FaradayFactory):
     name = FuzzyText()
     active = True
+    id = FuzzyIncrementalInteger(1, 10000)
 
     @factory.post_generation
     def workspaces(self, create, extracted, **kwargs):
         if not create:
             # Simple build, do nothing.
-            return
+            if extracted:
+                # A list of groups were passed in, use them
+                self['workspaces'] = []
+                for workspace in extracted:
+                    self['workspaces'].append(workspace.name)
+            else:
+                self['workspaces'] = [WorkspaceFactory().name, WorkspaceFactory().name]
 
-        if extracted:
+        elif extracted:
             # A list of groups were passed in, use them
             for workspace in extracted:
                 self.workspaces.append(workspace)
@@ -470,6 +549,9 @@ class AgentFactory(FaradayFactory):
             self.workspaces.append(WorkspaceFactory())
             self.workspaces.append(WorkspaceFactory())
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        return super().build_dict(**kwargs)
 
     class Meta:
         model = Agent
@@ -480,8 +562,9 @@ class ExecutorFactory(FaradayFactory):
     name = FuzzyText()
     agent = factory.SubFactory(AgentFactory)
     parameters_metadata = factory.LazyAttribute(
-        lambda e: str({"param_name": False})
+        lambda e: {"param_name": False}
     )
+
     class Meta:
         model = Executor
         sqlalchemy_session = db.session
@@ -498,7 +581,7 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
         lambda agent_execution: agent_execution.executor.agent.workspaces[0]
     )
     command = factory.SubFactory(
-        CommandFactory,
+        EmptyCommandFactory,
         workspace=factory.SelfAttribute("..workspace"),
         end_date=None
     )
@@ -506,7 +589,6 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     class Meta:
         model = AgentExecution
         sqlalchemy_session = db.session
-
 
 
 class SearchFilterFactory(FaradayFactory):
@@ -533,9 +615,18 @@ class ActionFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
+class ConditionFactory(FaradayFactory):
+    field = 'description'
+    value = FuzzyText()
+    operator = 'equals'
+
+    class Meta:
+        model = Condition
+        sqlalchemy_session = db.session
+
+
 class RuleFactory(WorkspaceObjectFactory):
     model = 'Vulnerability'
-    object = "severity=low",
     disabled = FuzzyChoice([True, False])
     workspace = factory.SubFactory(WorkspaceFactory)
 

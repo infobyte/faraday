@@ -15,7 +15,7 @@ def main(version_id):
         assert file == "keep", file
     version_folder = changelog_folder / version_id
     for file in os.listdir(version_folder):
-        assert file in ["date.md", "white.md", "pink.md", "black.md"], file
+        assert file in ["date.md", "community.md", "prof.md", "corp.md"], file
 
 
 if __name__ == '__main__':

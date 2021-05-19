@@ -2,6 +2,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
+import time
+import flask_login
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
@@ -45,6 +47,7 @@ bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
 logger = logging.getLogger(__name__)
 
+
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
     class Meta(vulns.VulnerabilitySchema.Meta):
         extra_fields = ('run_date',)
@@ -66,8 +69,9 @@ class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
 class PolymorphicVulnerabilityField(fields.Field):
     """Used like a nested field with many objects, but it decides which
     schema to use based on the type of each vuln"""
+
     def __init__(self, *args, **kwargs):
-        super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
         self.vuln_schema = VulnerabilitySchema()
         self.vulnweb_schema = BulkVulnerabilityWebSchema()
@@ -221,17 +225,30 @@ def bulk_create(ws: Workspace,
                 data: dict,
                 data_already_deserialized: bool = False,
                 set_end_date: bool = True):
+
+    logger.info("Init bulk create process")
+    start_time = time.time()
+
     if not data_already_deserialized:
         schema = BulkCreateSchema()
         data = schema.load(data)
+
     if 'command' in data:
         command = _update_command(command, data['command'])
-    for host in data['hosts']:
-        _create_host(ws, host, command)
+
+    total_hosts = len(data['hosts'])
+    if total_hosts > 0:
+        logger.debug(f"Needs to create {total_hosts} hosts...")
+        for host in data['hosts']:
+            _create_host(ws, host, command)
+
     if 'command' in data and set_end_date:
         command.end_date = datetime.now() if command.end_date is None else \
             command.end_date
         db.session.commit()
+
+    total_secs = time.time() - start_time
+    logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} secs")
 
 
 def _update_command(command: Command, command_data: dict):
@@ -253,14 +270,23 @@ def _create_host(ws, host_data, command=None):
     if command is not None:
         _create_command_object_for(ws, created, host, command)
 
-    for service_data in services:
-        _create_service(ws, host, service_data, command)
+    total_services = len(services)
+    if total_services > 0:
+        logger.debug(f"Needs to create {total_services} services...")
+        for service_data in services:
+            _create_service(ws, host, service_data, command)
 
-    for vuln_data in vulns:
-        _create_hostvuln(ws, host, vuln_data, command)
+    total_vulns = len(vulns)
+    if total_vulns > 0:
+        logger.debug(f"Needs to create {total_vulns} vulns...")
+        for vuln_data in vulns:
+            _create_hostvuln(ws, host, vuln_data, command)
 
-    for cred_data in credentials:
-        _create_credential(ws, cred_data, command, host=host)
+    total_credentials = len(credentials)
+    if total_credentials > 0:
+        logger.debug(f"Needs to create {total_credentials} credentials...")
+        for cred_data in credentials:
+            _create_credential(ws, cred_data, command, host=host)
 
 
 def _create_command_object_for(ws, created, obj, command):
@@ -276,22 +302,50 @@ def _create_command_object_for(ws, created, obj, command):
     db.session.commit()
 
 
+def _update_service(service: Service, service_data: dict) -> Service:
+    keys = ['version', 'description', 'name', 'status', 'owned']
+    updated = False
+
+    for key in keys:
+        if key == 'owned':
+            value = service_data.get(key, False)
+        else:
+            value = service_data.get(key, '')
+        if value != getattr(service, key):
+            setattr(service, key, value)
+            updated = True
+
+    if updated:
+        service.update_date = datetime.now()
+
+    return service
+
+
 def _create_service(ws, host, service_data, command=None):
     service_data = service_data.copy()
     vulns = service_data.pop('vulnerabilities')
     creds = service_data.pop('credentials')
     service_data['host'] = host
     (created, service) = get_or_create(ws, Service, service_data)
+
+    if not created:
+        service = _update_service(service, service_data)
     db.session.commit()
 
     if command is not None:
         _create_command_object_for(ws, created, service, command)
 
-    for vuln_data in vulns:
-        _create_servicevuln(ws, service, vuln_data, command)
+    total_service_vulns = len(vulns)
+    if total_service_vulns > 0:
+        logger.debug(f"Needs to create {total_service_vulns} service vulns...")
+        for vuln_data in vulns:
+            _create_servicevuln(ws, service, vuln_data, command)
 
-    for cred_data in creds:
-        _create_credential(ws, cred_data, command, service=service)
+    total_service_creds = len(creds)
+    if total_service_creds > 0:
+        logger.debug(f"Needs to create {total_service_creds} service credentials...")
+        for cred_data in creds:
+            _create_credential(ws, cred_data, command, service=service)
 
 
 def _create_vuln(ws, vuln_data, command=None, **kwargs):
@@ -409,7 +463,7 @@ class BulkCreateView(GenericWorkspacedView):
         """
         data = self._parse_data(self._get_schema_instance({}), flask.request)
 
-        if flask.g.user is None:
+        if flask_login.current_user.is_anonymous:
             agent = require_agent_token()
             workspace = self._get_workspace(workspace_name)
 
@@ -449,7 +503,7 @@ class BulkCreateView(GenericWorkspacedView):
 
             data["command"] = {
                 'id': agent_execution.command.id,
-                'tool': agent.name, # Agent name
+                'tool': agent.name,  # Agent name
                 'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
@@ -471,10 +525,9 @@ class BulkCreateView(GenericWorkspacedView):
             _update_command(command, data['command'])
             db.session.flush()
 
-
         else:
             workspace = self._get_workspace(workspace_name)
-            creator_user = flask.g.user
+            creator_user = flask_login.current_user
             data = add_creator(data, creator_user)
 
             if 'command' in data:
@@ -496,4 +549,11 @@ class BulkCreateView(GenericWorkspacedView):
 
     post.is_public = True
 
+
+class BulkCreateV3View(BulkCreateView):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
+
 BulkCreateView.register(bulk_create_api)
+BulkCreateV3View.register(bulk_create_api)

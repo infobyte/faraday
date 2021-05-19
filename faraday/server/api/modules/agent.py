@@ -6,6 +6,7 @@ from datetime import datetime
 import flask
 import logging
 
+import pyotp
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -19,7 +20,8 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-    ReadOnlyMultiWorkspacedView
+    ReadOnlyMultiWorkspacedView,
+    PatchableMixin
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
@@ -29,8 +31,10 @@ from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
+agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
+
 
 class ExecutorSchema(AutoSchema):
 
@@ -39,12 +43,14 @@ class ExecutorSchema(AutoSchema):
     )
     id = fields.Integer(dump_only=True)
     name = fields.String(dump_only=True)
+    last_run = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Executor
         fields = (
             'id',
             'name',
+            'last_run',
             'parameters_metadata',
         )
 
@@ -58,6 +64,7 @@ class AgentSchema(AutoSchema):
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
+    last_run = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Agent
@@ -72,7 +79,8 @@ class AgentSchema(AutoSchema):
             'token',
             'is_online',
             'active',
-            'executors'
+            'executors',
+            'last_run'
         )
 
 
@@ -96,6 +104,7 @@ class AgentCreationSchema(Schema):
             'token',
             'workspaces',
         )
+
 
 class AgentCreationView(CreateMixin, GenericView):
     """
@@ -125,12 +134,14 @@ class AgentCreationView(CreateMixin, GenericView):
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _perform_create(self,  data, **kwargs):
+    def _perform_create(self, data, **kwargs):
         token = data.pop('token')
-        if not faraday_server.agent_token:
+        if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
             abort(401, "Invalid Token")
-        if token != faraday_server.agent_token:
+        if not pyotp.TOTP(faraday_server.agent_registration_secret,
+                          interval=int(faraday_server.agent_token_expiration)
+                          ).verify(token, valid_window=1):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')
@@ -153,19 +164,23 @@ class AgentCreationView(CreateMixin, GenericView):
             dict_["name"] for dict_ in workspace_names
         ]
 
-
         workspaces = list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names
         )
 
-        agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
+        agent = super()._perform_create(data, **kwargs)
         agent.workspaces = workspaces
 
         db.session.add(agent)
         db.session.commit()
 
         return agent
+
+
+class AgentCreationV3View(AgentCreationView):
+    route_prefix = '/v3'
+    trailing_slash = False
 
 
 class ExecutorDataSchema(Schema):
@@ -180,7 +195,7 @@ class AgentRunSchema(Schema):
     )
 
     def __init__(self, *args, **kwargs):
-        super(AgentRunSchema, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.unknown = EXCLUDE
 
 
@@ -201,7 +216,7 @@ class AgentWithWorkspacesView(UpdateMixin,
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _update_object(self, obj, data):
+    def _update_object(self, obj, data, **kwargs):
         """Perform changes in the selected object
 
         It modifies the attributes of the SQLAlchemy model to match
@@ -211,9 +226,10 @@ class AgentWithWorkspacesView(UpdateMixin,
         with some specific field. Typically the new method should call
         this one to handle the update of the rest of the fields.
         """
-        workspace_names = data.pop('workspaces')
+        workspace_names = data.pop('workspaces', '')
+        partial = False if 'partial' not in kwargs else kwargs['partial']
 
-        if len(workspace_names) == 0:
+        if len(workspace_names) == 0 and not partial:
             abort(
                 make_response(
                     jsonify(
@@ -241,6 +257,11 @@ class AgentWithWorkspacesView(UpdateMixin,
         obj.workspaces = workspaces
 
         return obj
+
+
+class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin):
+    route_prefix = '/v3'
+    trailing_slash = False
 
 
 class AgentView(ReadOnlyMultiWorkspacedView):
@@ -317,6 +338,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 parameters_data=executor_data["args"],
                 command=command
             )
+            executor.last_run = datetime.utcnow()
             db.session.add(agent_execution)
             db.session.commit()
 
@@ -337,6 +359,26 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             })
 
 
+class AgentV3View(AgentView):
+    route_prefix = '/v3/ws/<workspace_name>/'
+    trailing_slash = False
+
+    @route('/<int:agent_id>', methods=['DELETE'])
+    def remove_workspace(self, workspace_name, agent_id):
+        # This endpoint is not an exception for V3, overrides logic of DELETE
+        return super().remove_workspace(workspace_name, agent_id)
+
+    @route('/<int:agent_id>/run', methods=['POST'])
+    def run_agent(self, workspace_name, agent_id):
+        return super().run_agent(workspace_name, agent_id)
+
+    remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
+    run_agent.__doc__ = AgentView.run_agent.__doc__
+
+
 AgentWithWorkspacesView.register(agent_api)
-AgentCreationView.register(agent_api)
+AgentWithWorkspacesV3View.register(agent_api)
+AgentCreationView.register(agent_creation_api)
+AgentCreationV3View.register(agent_creation_api)
 AgentView.register(agent_api)
+AgentV3View.register(agent_api)

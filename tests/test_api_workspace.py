@@ -7,11 +7,14 @@ See the file 'doc/LICENSE' for the license information
 
 import time
 import pytest
+from posixpath import join as urljoin
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
-from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from tests import factories
+from tests.utils.url import v2_to_v3
+
 
 class TestWorkspaceAPI(ReadWriteAPITests):
     model = Workspace
@@ -19,26 +22,43 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     api_endpoint = 'ws'
     lookup_field = 'name'
     view_class = WorkspaceView
+    patchable_fields = ['name']
+
+    def check_url(self, url):
+        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                f'filter?q={{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 1
         assert res.json[0]['name'] == self.first_object.name
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name_zero_results_found(self, test_client):
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                'filter?q={"filters":[{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}]}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 0
 
     def test_filter_restless_by_description(self, test_client):
         self.first_object.description = "this is a new description"
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                f'filter?q={{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}'
+                ']}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 1
         assert res.json[0]['description'] == self.first_object.description
@@ -68,8 +88,13 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         session.commit()
 
         self.first_object.description = "this is a new description"
-        res = test_client.get(f'{self.url()}filter?q='
-                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        res = test_client.get(
+            urljoin(
+                self.url(),
+                f'filter?q={{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}'
+                ']}'
+            )
+        )
         assert res.status_code == 200
         assert len(res.json) == 1
         assert res.json[0]['description'] == self.first_object.description
@@ -107,8 +132,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open', severity='informational')
 
-
-
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -119,7 +142,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['critical_vulns'] == 0
         assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
-
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'
@@ -171,8 +193,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open')
 
-
-
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -181,7 +201,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['web_vulns'] == 2
         assert res.json['stats']['std_vulns'] == 11
         assert res.json['stats']['total_vulns'] == 13
-
 
     @pytest.mark.parametrize('querystring', [
         '?confirmed=1',
@@ -206,7 +225,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=0',
         '?confirmed=false'
     ])
-    def test_vuln_count_confirmed(self,
+    def test_vuln_count_confirmed_2(self,
                                   vulnerability_factory,
                                   test_client,
                                   session,
@@ -223,11 +242,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
     def test_create_fails_with_valid_duration(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        end_date = start_date+86400000
+        start_date = int(time.time()) * 1000
+        end_date = start_date + 86400000
         duration = {'start_date': start_date, 'end_date': end_date}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
         assert workspace_count_previous + 1 == session.query(Workspace).count()
         assert res.json['duration']['start_date'] == start_date
@@ -236,21 +255,21 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     def test_create_fails_with_mayus(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
         raw_data = {'name': 'sWtr'}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
 
     def test_create_fails_with_special_character(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
         raw_data = {'name': '$wtr'}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
 
     def test_create_with_initial_number(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
         raw_data = {'name': '2$wtr'}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
         assert workspace_count_previous + 1 == session.query(Workspace).count()
 
@@ -261,7 +280,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         start_date = 'this should clearly fail'
         duration = {'start_date': start_date, 'end_date': 86400000}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
 
@@ -270,10 +289,17 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                                                 session,
                                                                 test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        duration = {'start_date': start_date, 'end_date': start_date-86400000}
+        start_date = int(time.time()) * 1000
+        duration = {'start_date': start_date, 'end_date': start_date - 86400000}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
+
+    def test_create_fails_with_forward_slash(self, session, test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        raw_data = {'name': 'swtr/'}
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
 
@@ -281,7 +307,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         description = 'darkside'
         raw_data = {'name': 'something', 'description': description}
         workspace_count_previous = session.query(Workspace).count()
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
         assert workspace_count_previous + 1 == session.query(Workspace).count()
         assert res.json['description'] == description
@@ -292,7 +318,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     ])
     def test_create_stat_is_zero(self, test_client, stat_name):
         raw_data = {'name': 'something', 'description': ''}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
         assert res.json['stats'][stat_name] == 0
 
@@ -304,8 +330,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         session.add_all(vulns)
         session.commit()
         raw_data = {'name': 'something', 'description': ''}
-        res = test_client.put(f'/v2/ws/{workspace.name}/',
-                              data=raw_data)
+        res = test_client.put(self.url(obj=workspace), data=raw_data)
         assert res.status_code == 200
         assert res.json['stats']['web_vulns'] == 5
         assert res.json['stats']['std_vulns'] == 10
@@ -318,7 +343,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         ]
         raw_data = {'name': 'something', 'description': 'test',
                     'scope': desired_scope}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
         assert set(res.json['scope']) == set(desired_scope)
         workspace = Workspace.query.get(res.json['id'])
@@ -333,14 +358,14 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         ]
         raw_data = {'name': 'something', 'description': 'test',
                     'scope': desired_scope}
-        res = test_client.put(f'/v2/ws/{workspace.name}/', data=raw_data)
+        res = test_client.put(self.url(obj=workspace), data=raw_data)
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
         assert set(s.name for s in workspace.scope) == set(desired_scope)
 
     @pytest.mark.skip  # TODO fix fox sqlite
     def test_list_retrieves_all_items_from(self, test_client):
-        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client)
+        super().test_list_retrieves_all_items_from(test_client)
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False
@@ -351,10 +376,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
-        assert active == True
+        assert active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
+        assert active_query
 
     def test_workspace_deactivation(self, test_client, workspace, session):
         workspace.active = True
@@ -365,10 +390,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
-        assert active == False
+        assert not active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
+        assert not active_query
 
     def test_create_fails_with_start_date_greater_than_end_date(self,
                                                            session,
@@ -376,6 +401,43 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         workspace_count_previous = session.query(Workspace).count()
         duration = {'start_date': 1563638577, 'end_date': 1563538577}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
-        res = test_client.post('/v2/ws/', data=raw_data)
+        res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
+
+
+class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
+
+    def check_url(self, url):
+        return v2_to_v3(url)
+
+    def url(self, obj=None):
+        return v2_to_v3(super().url(obj))
+
+    def test_workspace_activation(self, test_client, workspace, session):
+        workspace.active = False
+        session.add(workspace)
+        session.commit()
+        res = test_client.patch(self.url(workspace), data={'active': True})
+        assert res.status_code == 200
+
+        res = test_client.get(self.url(workspace))
+        active = res.json.get('active')
+        assert active
+
+        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
+        assert active_query
+
+    def test_workspace_deactivation(self, test_client, workspace, session):
+        workspace.active = True
+        session.add(workspace)
+        session.commit()
+        res = test_client.patch(self.url(workspace), data={'active': False})
+        assert res.status_code == 200
+
+        res = test_client.get(self.url(workspace))
+        active = res.json.get('active')
+        assert not active
+
+        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
+        assert not active_query

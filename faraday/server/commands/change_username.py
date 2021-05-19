@@ -1,12 +1,12 @@
 import sys
 import click
 
-from faraday.server.web import app
+from faraday.server.web import get_app
 from faraday.server.models import User, db
 
 
 def change_username(current_username, new_username):
-    with app.app_context():
+    with get_app().app_context():
         user = User.query.filter_by(username=current_username).first()
         if not user:
             print(f"\nERROR: User {current_username} was not found in Faraday's Database.")

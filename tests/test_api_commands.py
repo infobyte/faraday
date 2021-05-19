@@ -1,24 +1,24 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from tests.utils.url import v2_to_v3
 
 """Tests for many API endpoints that do not depend on workspace_name"""
+from posixpath import join as urljoin
 import datetime
 import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 from faraday.server.models import (
     Command,
-    Workspace,
     Vulnerability)
-from faraday.server.api.modules.commandsrun import CommandView
-from faraday.server.api.modules.workspaces import WorkspaceView
+from faraday.server.api.modules.commandsrun import CommandView, CommandV3View
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
 
@@ -30,18 +30,22 @@ from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandOb
 # and https://github.com/pytest-dev/pytest/issues/568 for more information
 
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(ReadOnlyAPITests):
+class TestListCommandView(ReadWriteAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
+    patchable_fields = ["ip"]
+
+    def check_url(self, url):
+        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.usefixtures('mock_envelope_list')
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):
-        super(TestListCommandView, self).test_list_retrieves_all_items_from_workspace(test_client, second_workspace, session)
+        super().test_list_retrieves_all_items_from_workspace(test_client, second_workspace, session)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_backwards_compatibility_list(self, test_client, second_workspace, session):
@@ -65,13 +69,14 @@ class TestListCommandView(ReadOnlyAPITests):
                 u'tool',
                 u'import_source',
                 u'creator',
+                u'metadata'
             ]
             assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_can_list_readonly(self, test_client, session):
-        super(TestListCommandView, self).test_can_list_readonly(test_client, session)
+        super().test_can_list_readonly(test_client, session)
 
     def test_activity_feed(self, session, test_client):
         command = self.factory.create()
@@ -91,7 +96,8 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=command.workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
 
         assert list(filter(lambda stats: stats['_id'] == command.id, res.json)) == [
@@ -108,19 +114,19 @@ class TestListCommandView(ReadOnlyAPITests):
              u'criticalIssue': 0}]
 
         assert list(filter(lambda stats: stats['_id'] == another_command.id,
-                      res.json)) == [{
-                        u'_id': another_command.id,
-                        u'command': another_command.command,
-                        u'import_source': u'shell',
-                        u'tool': another_command.tool,
-                        u'user': another_command.user,
-                        u'date': time.mktime(
-                            another_command.start_date.timetuple()) * 1000,
-                        u'params': another_command.params,
-                        u'hosts_count': 0,
-                        u'services_count': 0,
-                        u'vulnerabilities_count': 0,
-                        u'criticalIssue': 0}]
+                           res.json)) == [{
+            u'_id': another_command.id,
+            u'command': another_command.command,
+            u'import_source': u'shell',
+            u'tool': another_command.tool,
+            u'user': another_command.user,
+            u'date': time.mktime(
+                another_command.start_date.timetuple()) * 1000,
+            u'params': another_command.params,
+            u'hosts_count': 0,
+            u'services_count': 0,
+            u'vulnerabilities_count': 0,
+            u'criticalIssue': 0}]
 
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -148,21 +154,21 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [
-                            {u'_id': command.id,
-                             u'command': command.command,
-                             u'import_source': u'shell',
-                             u'tool': command.tool,
-                             u'user': command.user,
-                             u'date': time.mktime(command.start_date.timetuple()) * 1000,
-                             u'params': command.params,
-                             u'hosts_count': 1,
-                             u'services_count': 0,
-                             u'vulnerabilities_count': 2,
-                             u'criticalIssue': 1}
-                            ]
+            {u'_id': command.id,
+             u'command': command.command,
+             u'import_source': u'shell',
+             u'tool': command.tool,
+             u'user': command.user,
+             u'date': time.mktime(command.start_date.timetuple()) * 1000,
+             u'params': command.params,
+             u'hosts_count': 1,
+             u'services_count': 0,
+             u'vulnerabilities_count': 2,
+             u'criticalIssue': 1}
+        ]
 
     def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -197,7 +203,7 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         assert res.json == [{
             u'_id': command.id,
@@ -263,7 +269,7 @@ class TestListCommandView(ReadOnlyAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         raw_first_command = list(filter(lambda comm: comm['_id'] == commands[0].id, res.json))
 
@@ -284,31 +290,33 @@ class TestListCommandView(ReadOnlyAPITests):
         for in_the_middle_command in in_the_middle_commands:
             raw_in_the_middle_command = list(filter(lambda comm: comm['_id'] == in_the_middle_command.id, res.json))
             assert raw_in_the_middle_command.pop() == {u'_id': in_the_middle_command.id,
-                                       u'command': in_the_middle_command.command,
-                                       u'import_source': u'shell',
-                                       u'user': in_the_middle_command.user,
-                                       u'date': time.mktime(in_the_middle_command.start_date.timetuple()) * 1000,
-                                       u'params': in_the_middle_command.params,
-                                       u'hosts_count': 0,
-                                       u'tool': in_the_middle_command.tool,
-                                       u'services_count': 0,
-                                       u'vulnerabilities_count': 0,
-                                       u'criticalIssue': 0}
+                                                       u'command': in_the_middle_command.command,
+                                                       u'import_source': u'shell',
+                                                       u'user': in_the_middle_command.user,
+                                                       u'date': time.mktime(
+                                                           in_the_middle_command.start_date.timetuple()) * 1000,
+                                                       u'params': in_the_middle_command.params,
+                                                       u'hosts_count': 0,
+                                                       u'tool': in_the_middle_command.tool,
+                                                       u'services_count': 0,
+                                                       u'vulnerabilities_count': 0,
+                                                       u'criticalIssue': 0}
 
         # new command must create new service and vuln
         raw_last_command = list(filter(lambda comm: comm['_id'] == last_command.id, res.json))
         assert raw_last_command.pop() == {u'_id': last_command.id,
-                                       u'command': last_command.command,
-                                       u'import_source': u'shell',
-                                       u'user': last_command.user,
-                                       u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
-                                       u'params': last_command.params,
-                                       u'hosts_count': 0,
-                                       u'tool': last_command.tool,
-                                       u'services_count': 1,
-                                       u'vulnerabilities_count': 1,
-                                       u'criticalIssue': 0}
+                                          u'command': last_command.command,
+                                          u'import_source': u'shell',
+                                          u'user': last_command.user,
+                                          u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
+                                          u'params': last_command.params,
+                                          u'hosts_count': 0,
+                                          u'tool': last_command.tool,
+                                          u'services_count': 1,
+                                          u'vulnerabilities_count': 1,
+                                          u'criticalIssue': 0}
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_sub_second_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 248433),
@@ -318,6 +326,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 0.442406
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_more_than_one_second_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 29, 20, 248433),
@@ -327,6 +336,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 1.442406
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_more_than_one_minute_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 248433),
@@ -336,6 +346,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 61.442406
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_more_than_one_day_none_end_date_command_returns_msg(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 0),
@@ -345,6 +356,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'].lower() == "timeout"
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_less_than_one_day_none_end_date_command_returns_msg(self, test_client):
         command = self.factory(
             start_date=datetime.datetime.now(),
@@ -355,7 +367,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.json['commands'][0]['value']['duration'].lower() == "in progress"
 
     def test_create_command(self, test_client):
-        raw_data ={
+        raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': None,
@@ -405,13 +417,13 @@ class TestListCommandView(ReadOnlyAPITests):
         )
         session.commit()
 
-        res = test_client.get(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
+        res = test_client.get(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 200
 
-        res = test_client.delete(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
+        res = test_client.delete(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
         assert res.status_code == 204
 
-        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
         assert res.status_code == 200
         command_history = list(filter(lambda hist: hist['_id'] == command.id, res.json))
         assert len(command_history)
@@ -420,7 +432,7 @@ class TestListCommandView(ReadOnlyAPITests):
         assert command_history['tool'] == 'test'
 
     def test_year_is_out_range(self, test_client):
-        raw_data ={
+        raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': None,
@@ -435,4 +447,12 @@ class TestListCommandView(ReadOnlyAPITests):
 
         assert res.status_code == 400
 
-# I'm Py3
+
+class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
+    view_class = CommandV3View
+
+    def url(self, obj=None, workspace=None):
+        return v2_to_v3(super().url(obj, workspace))
+
+    def check_url(self, url):
+        return v2_to_v3(url)

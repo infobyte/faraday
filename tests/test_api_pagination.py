@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -15,8 +15,10 @@ try:
 except ImportError as e:
     from urllib.parse import urlencode
 
+
 def with_0_and_n_objects(n=10):
     return pytest.mark.parametrize('object_count', [0, n])
+
 
 class PaginationTestsMixin:
 
@@ -108,6 +110,3 @@ class PaginationTestsMixin:
         res = test_client.get(self.page_url(1, 5))
         assert res.status_code == 200
         assert len(res.json['data']) == 0
-
-
-# I'm Py3

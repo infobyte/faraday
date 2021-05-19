@@ -1,22 +1,24 @@
-
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadOnlyAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
     CustomFieldsSchema
 )
+from tests.utils.url import v2_to_v3
+
 
 @pytest.mark.usefixtures('logged_user')
-class TestVulnerabilityCustomFields(ReadOnlyAPITests):
+class TestVulnerabilityCustomFields(ReadWriteAPITests):
     model = CustomFieldsSchema
     factory = CustomFieldsSchemaFactory
     api_endpoint = 'custom_fields_schema'
-    #unique_fields = ['ip']
-    #update_fields = ['ip', 'description', 'os']
+    # unique_fields = ['ip']
+    # update_fields = ['ip', 'description', 'os']
     view_class = CustomFieldsSchemaView
+    patchable_fields = ['field_name']
 
     def test_custom_fields_data(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(
@@ -29,9 +31,11 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         session.add(add_text_field)
         session.commit()
 
-        res = test_client.get(self.url()) # '/v2/custom_fields_schema/')
+        res = test_client.get(self.url())
         assert res.status_code == 200
-        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None, u'field_order': 1} in res.json
+        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text',
+                u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None,
+                u'field_order': 1} in res.json
 
     def test_custom_fields_field_name_cant_be_changed(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(
@@ -47,7 +51,7 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         data = {
             u'field_name': u'cvss 2',
             u'field_type': 'int',
-            u'talbe_name': 'sarasa',
+            u'table_name': 'sarasa',
             u'field_display_name': u'CVSS new',
             u'field_order': 1
         }
@@ -73,10 +77,13 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         session.add(add_choice_field)
         session.commit()
 
-        res = test_client.get(self.url())  # '/v2/custom_fields_schema/')
+        res = test_client.get(self.url())
         assert res.status_code == 200
         assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
                 u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
                 u'field_order': 1} in res.json
 
-# I'm Py3
+
+class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, PatchableTestsMixin):
+    def url(self, obj=None):
+        return v2_to_v3(super().url(obj))

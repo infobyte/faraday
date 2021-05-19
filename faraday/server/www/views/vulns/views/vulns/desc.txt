@@ -1,1 +1,0 @@
-gets all vulnerabilities from workspace, except web ones.

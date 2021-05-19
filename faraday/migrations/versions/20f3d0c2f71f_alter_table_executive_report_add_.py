@@ -8,7 +8,6 @@ Create Date: 2020-10-04 15:42:43.511069+00:00
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = '20f3d0c2f71f'
 down_revision = '08d02214aedc'
@@ -21,11 +20,11 @@ def upgrade():
                   sa.Column(
                       'advanced_filter_parsed',
                       sa.String(255),
-                      nullable = False,
-                      server_default = ""
+                      nullable=False,
+                      server_default=""
                   )
-    )
+                  )
 
 
 def downgrade():
-    op.drop_column('executive_report','advanced_filter_parsed')
+    op.drop_column('executive_report', 'advanced_filter_parsed')

@@ -21,12 +21,9 @@ from tests.factories import (
 @pytest.mark.usefixtures('logged_user')
 class TestExportData:
 
-    def check_url(self, url):
-        return url
-
     def test_export_data_without_format(self, test_client):
         workspace = WorkspaceFactory.create()
-        url = self.check_url(f'/v2/ws/{workspace.name}/export_data')
+        url = f'/v3/ws/{workspace.name}/export_data'
         response = test_client.get(url)
         assert response.status_code == 400
 
@@ -89,7 +86,7 @@ class TestExportData:
         session.add(vuln_web)
         session.commit()
 
-        url = self.check_url(f'/v2/ws/{workspace.name}/export_data?format=xml_metasploit')
+        url = f'/v3/ws/{workspace.name}/export_data?format=xml_metasploit'
         response = test_client.get(url)
         assert response.status_code == 200
         response_xml = response.data

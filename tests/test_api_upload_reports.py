@@ -14,7 +14,6 @@ from tests.factories import WorkspaceFactory
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 
 from faraday.server.models import Host, Service, Command
-from tests.utils.url import v2_to_v3
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -119,8 +118,3 @@ class TestFileUpload:
         )
 
         assert res.status_code == 404
-
-
-class TestFileUploadV3(TestFileUpload):
-    def check_url(self, url):
-        return v2_to_v3(url)

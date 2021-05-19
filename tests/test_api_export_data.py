@@ -16,7 +16,6 @@ from tests.factories import (
     VulnerabilityFactory,
     VulnerabilityWebFactory
 )
-from tests.utils.url import v2_to_v3
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -143,9 +142,3 @@ class TestExportData:
                         assert response_tree.xpath(full_xpath)[0].text == xml_file_hostnames
                     else:
                         assert response_tree.xpath(full_xpath)[0].text == xml_file_tree.xpath(full_xpath)[0].text
-
-
-class TestExportDataV3(TestExportData):
-
-    def check_url(self, url):
-        return v2_to_v3(url)

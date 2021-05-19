@@ -12,7 +12,7 @@ from builtins import str
 import pytest
 from sqlalchemy.orm.util import was_deleted
 
-API_PREFIX = '/v2/'
+API_PREFIX = '/v3/'
 OBJECT_COUNT = 5
 
 
@@ -41,11 +41,11 @@ class GenericAPITest:
         return obj
 
     def url(self, obj=None):
-        url = API_PREFIX + self.api_endpoint + '/'
+        url = API_PREFIX + self.api_endpoint
         if obj is not None:
             id_ = str(getattr(obj, self.lookup_field)) if isinstance(
                 obj, self.model) else str(obj)
-            url += id_ + u'/'
+            url += u'/' + id_
         return url
 
 

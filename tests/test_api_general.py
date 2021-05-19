@@ -29,7 +29,7 @@ def test_v3_endpoints():
     assert len(rules) == 0, [rule.rule for rule in rules]
 
 
-def test_v2_in_v3_endpoints():
+def test_v2_endpoints_removed_in_v3():
     exceptions = {
         '/v3/ws/<workspace_id>/activate',
         '/v3/ws/<workspace_id>/change_readonly',
@@ -48,7 +48,7 @@ def test_v2_in_v3_endpoints():
         map(lambda rule: rule.rule, filter(lambda rule: rule.rule.startswith("/v3"), get_app().url_map.iter_rules()))
     )
     exceptions_present_v2 = rules_v2.intersection(exceptions)
-    assert len(exceptions_present_v2) == len(exceptions), sorted(exceptions_present_v2)
+    assert len(exceptions_present_v2) == 0, sorted(exceptions_present_v2)
     exceptions_present = rules.intersection(exceptions)
     assert len(exceptions_present) == 0, sorted(exceptions_present)
     # We can have extra endpoints in v3 (like all the PATCHS)

@@ -11,9 +11,8 @@ from posixpath import join as urljoin
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests import factories
-from tests.utils.url import v2_to_v3
 
 
 class TestWorkspaceAPI(ReadWriteAPITests):
@@ -371,53 +370,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         workspace.active = False
         session.add(workspace)
         session.commit()
-        res = test_client.put(f'{self.url()}{workspace.name}/activate/')
-        assert res.status_code == 200
-
-        res = test_client.get(f'{self.url()}{workspace.name}/')
-        active = res.json.get('active')
-        assert active
-
-        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query
-
-    def test_workspace_deactivation(self, test_client, workspace, session):
-        workspace.active = True
-        session.add(workspace)
-        session.commit()
-        res = test_client.put(f'{self.url()}{workspace.name}/deactivate/')
-        assert res.status_code == 200
-
-        res = test_client.get(f'{self.url()}{workspace.name}/')
-        active = res.json.get('active')
-        assert not active
-
-        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert not active_query
-
-    def test_create_fails_with_start_date_greater_than_end_date(self,
-                                                           session,
-                                                           test_client):
-        workspace_count_previous = session.query(Workspace).count()
-        duration = {'start_date': 1563638577, 'end_date': 1563538577}
-        raw_data = {'name': 'somethingdarkside', 'duration': duration}
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-        assert workspace_count_previous == session.query(Workspace).count()
-
-
-class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
-
-    def check_url(self, url):
-        return v2_to_v3(url)
-
-    def url(self, obj=None):
-        return v2_to_v3(super().url(obj))
-
-    def test_workspace_activation(self, test_client, workspace, session):
-        workspace.active = False
-        session.add(workspace)
-        session.commit()
         res = test_client.patch(self.url(workspace), data={'active': True})
         assert res.status_code == 200
 
@@ -441,3 +393,13 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, PatchableTestsMixin):
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
         assert not active_query
+
+    def test_create_fails_with_start_date_greater_than_end_date(self,
+                                                           session,
+                                                           test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        duration = {'start_date': 1563638577, 'end_date': 1563538577}
+        raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()

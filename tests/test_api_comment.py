@@ -5,12 +5,11 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from faraday.server.api.modules.comments import CommentView, CommentV3View
+from faraday.server.api.modules.comments import CommentView
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
-from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests
 from tests import factories
-from tests.utils.url import v2_to_v3
 
 
 class TestCommentAPIGeneric(ReadWriteAPITests):
@@ -91,7 +90,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 201
         assert len(session.query(Comment).all()) == initial_comment_count + 1
 
-        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique/')
+        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique')
         res = test_client.post(url, data=raw_comment)
         assert res.status_code == 409
         assert 'object' in res.json
@@ -106,7 +105,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         session.commit()
         initial_comment_count = len(session.query(Comment).all())
         raw_comment = self._create_raw_comment('service', service.id)
-        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique/')
+        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique')
         res = test_client.post(url,
                                data=raw_comment)
         assert res.status_code == 201
@@ -126,13 +125,3 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         get_comments = test_client.get(self.url(workspace=workspace))
         expected = ['first', 'second', 'third', 'fourth']
         assert expected == [comment['text'] for comment in get_comments.json]
-
-
-class TestCommentAPIGenericV3(TestCommentAPIGeneric, PatchableTestsMixin):
-    view_class = CommentV3View
-
-    def url(self, obj=None, workspace=None):
-        return v2_to_v3(super().url(obj, workspace))
-
-    def check_url(self, url):
-        return v2_to_v3(url)

@@ -16,7 +16,7 @@ from faraday.server.models import db
 from tests.test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 
-API_PREFIX = '/v2/ws/'
+API_PREFIX = '/v3/ws/'
 OBJECT_COUNT = 5
 
 
@@ -50,11 +50,11 @@ class GenericAPITest:
 
     def url(self, obj=None, workspace=None):
         workspace = workspace or self.workspace
-        url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
+        url = API_PREFIX + workspace.name + '/' + self.api_endpoint
         if obj is not None:
             id_ = str(obj.id) if isinstance(
                 obj, self.model) else str(obj)
-            url += id_ + u'/'
+            url += '/' + id_
         return url
 
 

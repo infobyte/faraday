@@ -3,7 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import flask
 from flask import Blueprint, request
-from faraday_agent_parameters_types.validation import type_validate
+from faraday_agent_parameters_types.utils import type_validate
 
 param_type_validate = Blueprint('param_type_validate', __name__)
 

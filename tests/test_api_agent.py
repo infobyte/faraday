@@ -93,7 +93,6 @@ class TestAgentCreationAPI:
             token=pyotp.TOTP(secret, interval=60).now(),
             workspaces=[workspace, other_workspace]
         )
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 201, (res.json, raw_data)
         assert len(session.query(Agent).all()) == initial_agent_count + 1
@@ -121,7 +120,6 @@ class TestAgentCreationAPI:
             token=pyotp.TOTP(secret, interval=60).now(),
             workspaces=[workspace]
         )
-        # /v2/agent_registration/
         res = test_client.post(
             '/v3/agent_registration',
             data=raw_data
@@ -143,7 +141,6 @@ class TestAgentCreationAPI:
             name="test agent",
             workspaces=[workspace]
         )
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 401
 
@@ -159,7 +156,6 @@ class TestAgentCreationAPI:
             name="test agent",
             workspaces=[workspace],
         )
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 400
 
@@ -169,7 +165,6 @@ class TestAgentCreationAPI:
         faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = {"PEPE": 'INVALID'}
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 400
 
@@ -188,7 +183,6 @@ class TestAgentCreationAPI:
             name="test agent",
             workspaces=[]
         )
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 400
 
@@ -208,7 +202,6 @@ class TestAgentCreationAPI:
             workspaces=[]
         )
         raw_data["workspaces"] = ["donotexist"]
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 404
 
@@ -226,7 +219,6 @@ class TestAgentCreationAPI:
             name="test agent",
             token=pyotp.TOTP(secret, interval=60).now()
         )
-        # /v2/agent_registration/
         res = test_client.post('/v3/agent_registration', data=raw_data)
         assert res.status_code == 400
 
@@ -263,7 +255,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
     def test_create_agent_invalid(self, test_client, session):
         """
             To create new agent use the
-            <Rule '/v2/agent_registration/' (POST, OPTIONS)
+            <Rule '/v3/agent_registration/' (POST, OPTIONS)
         """
         initial_agent_count = len(session.query(Agent).all())
         raw_agent = self.create_raw_agent()

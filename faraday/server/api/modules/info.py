@@ -12,7 +12,7 @@ from faraday.server.config import gen_web_config
 info_api = Blueprint('info_api', __name__)
 
 
-@info_api.route('/v2/info', methods=['GET'])
+@info_api.route('/v3/info', methods=['GET'])
 def show_info():
     """
     ---

@@ -128,11 +128,11 @@ class Api:
             else:
                 cookies = getattr(resp, 'cookies', None)
                 if cookies is not None:
-                    token_response = self.requests.get(self.base + 'v2/token/', cookies=cookies)
+                    token_response = self.requests.get(self.base + 'v3/token', cookies=cookies)
                     if token_response.status_code != 404:
                         token = token_response.json()
                 else:
-                    token = self.requests.get(self.base + 'v2/token/').json
+                    token = self.requests.get(self.base + 'v3/token').json
 
                 header = {'Authorization': f'Token {token}'}
 

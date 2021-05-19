@@ -110,7 +110,7 @@ class TestLogin:
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        res = test_client.get('/v2/token')
+        res = test_client.get('/v3/token')
 
         assert res.status_code == 401
 

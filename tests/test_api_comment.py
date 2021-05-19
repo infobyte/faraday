@@ -20,9 +20,6 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
     update_fields = ['text']
     patchable_fields = ['text']
 
-    def check_url(self, url):
-        return url
-
     def _create_raw_comment(self, object_type, object_id):
         return {
             'object_id': object_id,
@@ -90,7 +87,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 201
         assert len(session.query(Comment).all()) == initial_comment_count + 1
 
-        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique')
+        url = self.url(workspace=self.workspace).strip('/') + '_unique'
         res = test_client.post(url, data=raw_comment)
         assert res.status_code == 409
         assert 'object' in res.json
@@ -105,7 +102,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         session.commit()
         initial_comment_count = len(session.query(Comment).all())
         raw_comment = self._create_raw_comment('service', service.id)
-        url = self.check_url(self.url(workspace=self.workspace).strip('/') + '_unique')
+        url = self.url(workspace=self.workspace).strip('/') + '_unique'
         res = test_client.post(url,
                                data=raw_comment)
         assert res.status_code == 201

@@ -23,9 +23,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     view_class = WorkspaceView
     patchable_fields = ['name']
 
-    def check_url(self, url):
-        return url
-
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
         res = test_client.get(

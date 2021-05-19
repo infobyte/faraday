@@ -41,9 +41,6 @@ class TestWebsocketAuthEndpoint:
 
 class TestAgentWebsocketToken:
 
-    def check_url(self, url):
-        return url
-
     @pytest.mark.usefixtures('session')  # I don't know why this is required
     def test_fails_without_authorization_header(self, test_client):
         res = test_client.post('/v3/agent_websocket_token')

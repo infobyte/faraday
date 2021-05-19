@@ -33,7 +33,7 @@ class TestFileUpload:
         }
 
         res = test_client.post(
-                self.check_url(f'/v3/ws/{ws.name}/upload_report'),
+                f'/v3/ws/{ws.name}/upload_report',
                 data=data,
                 use_json_data=False)
 
@@ -70,7 +70,7 @@ class TestFileUpload:
         session.add(ws)
         session.commit()
 
-        res = test_client.post(self.check_url(f'/v3/ws/{ws.name}/upload_report'))
+        res = test_client.post(f'/v3/ws/{ws.name}/upload_report')
 
         assert res.status_code == 400
 
@@ -88,7 +88,7 @@ class TestFileUpload:
         }
 
         res = test_client.post(
-                self.check_url(f'/v3/ws/{ws.name}/upload_report'),
+                f'/v3/ws/{ws.name}/upload_report',
                 data=data,
                 use_json_data=False)
 

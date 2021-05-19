@@ -19,9 +19,6 @@ from faraday.server.models import Host, Service, Command
 @pytest.mark.usefixtures('logged_user')
 class TestFileUpload:
 
-    def check_url(self, url):
-        return url
-
     def test_file_upload(self, test_client, session, csrf_token, logged_user):
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
@@ -36,7 +33,7 @@ class TestFileUpload:
         }
 
         res = test_client.post(
-                self.check_url(f'/v2/ws/{ws.name}/upload_report'),
+                self.check_url(f'/v3/ws/{ws.name}/upload_report'),
                 data=data,
                 use_json_data=False)
 
@@ -73,7 +70,7 @@ class TestFileUpload:
         session.add(ws)
         session.commit()
 
-        res = test_client.post(self.check_url(f'/v2/ws/{ws.name}/upload_report'))
+        res = test_client.post(self.check_url(f'/v3/ws/{ws.name}/upload_report'))
 
         assert res.status_code == 400
 
@@ -91,7 +88,7 @@ class TestFileUpload:
         }
 
         res = test_client.post(
-                self.check_url(f'/v2/ws/{ws.name}/upload_report'),
+                self.check_url(f'/v3/ws/{ws.name}/upload_report'),
                 data=data,
                 use_json_data=False)
 
@@ -112,7 +109,7 @@ class TestFileUpload:
             'csrf_token': csrf_token
         }
         res = test_client.post(
-                self.check_url(f'/v2/ws/{ws.name}/upload_report'),
+                f'/v3/ws/{ws.name}/upload_report',
                 data=data,
                 use_json_data=False
         )

@@ -283,10 +283,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        if self.view_class.route_prefix.startswith("/v2"):
-            res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id"))
-        else:
-            res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
+        res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
 
         assert res.status_code == 200, res.json
         res = res.get_json()
@@ -316,10 +313,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        if self.view_class.route_prefix.startswith("/v2"):
-            res = test_client.get(urljoin(self.url(), "count/?group_by=creator_id&order=desc"))
-        else:
-            res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))
+        res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))
 
         assert res.status_code == 200, res.json
         res = res.get_json()

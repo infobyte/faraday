@@ -30,7 +30,7 @@ before_script:
     - mkdir -pv $APT_CACHE_DIR
 
 include:
-  - local: .gitlab/ci/fetch-secrets.yml
+  - local: .gitlab/ci/fetch-secrets.yaml
   - local: .gitlab/ci/testing/.pretesting-gitlab-ci.yml
   - local: .gitlab/ci/testing/.nix-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml

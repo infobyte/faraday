@@ -30,14 +30,9 @@ def test_v3_endpoints():
 
 
 def test_v2_endpoints_removed_in_v3():
-    exceptions = {
-        '/v3/ws/<workspace_id>/activate',
-        '/v3/ws/<workspace_id>/change_readonly',
-        '/v3/ws/<workspace_id>/deactivate',
-        '/v3/ws/<workspace_name>/hosts/bulk_delete',
-        '/v3/ws/<workspace_name>/vulns/bulk_delete',
-        '/v3/ws/<workspace_name>/vulns/<int:vuln_id>/attachments'
-    }
+    exceptions = set()
+    actaul_rules_v2 = list(filter(lambda rule: rule.rule.startswith("/v2"), get_app().url_map.iter_rules()))
+    assert len(actaul_rules_v2) == 0, actaul_rules_v2
     rules_v2 = set(
         map(
             lambda rule: rule.rule.replace("v2", "v3").rstrip("/"),

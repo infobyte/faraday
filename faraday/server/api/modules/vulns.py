@@ -543,6 +543,7 @@ class VulnerabilityView(PaginatedMixin,
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
+            filename = filename.replace(" ", "_")
             get_or_create(
                 db.session,
                 File,

@@ -248,7 +248,12 @@ class UpdateTestsMixin:
     def test_update_an_object_fails_with_empty_dict(self, test_client):
         """To do this the user should use a PATCH request"""
         res = test_client.put(self.url(self.first_object), data={})
-        assert res.status_code == 400
+        assert res.status_code == 400, (res.status_code, res.json)
+
+    def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client):
+        """To do this the user should use a PATCH request"""
+        res = test_client.patch(self.url(self.first_object), data={})
+        assert res.status_code == 200, (res.status_code, res.json)
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, method):

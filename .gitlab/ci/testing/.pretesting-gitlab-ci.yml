@@ -73,9 +73,10 @@ build_and_push_to_cachix:
       # Note: this size has to fit both our community, professional and corporate versions
       MAX_CLOSURE_SIZE_IN_MB: 850
     script:
-        - !reference [ .get_secrets, script ]
+        - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk
+        - !reference [ .get_secrets, script ]
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall

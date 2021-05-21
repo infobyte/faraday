@@ -5,6 +5,7 @@ pylint:
     image: nixorg/nix
     stage: test  # This should be after build_and_push_to_cachix to improve performance
     script:
+        - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
@@ -33,6 +34,7 @@ pylint:
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
@@ -68,6 +70,7 @@ pylint:
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)

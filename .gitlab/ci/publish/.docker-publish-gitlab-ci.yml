@@ -29,6 +29,7 @@ docker-publish-prod:
     CI_REGISTRY: docker.io
     CI_REGISTRY_IMAGE: index.docker.io/faradaysec/faraday
   script:
+    - !reference [ .get_secrets, script ]
     - docker image tag registry.gitlab.com/faradaysec/faraday:latest $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:latest
     - docker image tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$VERSION

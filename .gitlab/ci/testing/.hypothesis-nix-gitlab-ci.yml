@@ -5,6 +5,7 @@ test_hypothesis:
     stage: test
     allow_failure: true
     script:
+        - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)

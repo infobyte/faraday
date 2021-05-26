@@ -5,14 +5,13 @@
 { buildPythonPackage
 , fetchPypi
 , lib
-, marshmallow
 }:
 
 buildPythonPackage rec {
   pname =
-    "webargs";
+    "python-engineio";
   version =
-    "8.0.0";
+    "4.2.0";
 
   src =
     fetchPypi {
@@ -20,13 +19,8 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0xy6na8axc5wnp2wg3kvqbpl2iv0hx0rsnlrmrgkgp88znx6cmjn";
+        "0xr0sq02r7y807zkkh63hd9h05frziyc8vdvymc3i4i3khcc35sf";
     };
-
-  propagatedBuildInputs =
-    [
-      marshmallow
-    ];
 
   # TODO FIXME
   doCheck =
@@ -35,8 +29,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, Falcon, and aiohttp.";
+        "Engine.IO server";
       homepage =
-        "https://github.com/marshmallow-code/webargs";
+        "http://github.com/miguelgrinberg/python-engineio/";
     };
 }

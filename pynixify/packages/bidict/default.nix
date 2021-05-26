@@ -5,14 +5,14 @@
 { buildPythonPackage
 , fetchPypi
 , lib
-, marshmallow
+, setuptools_scm
 }:
 
 buildPythonPackage rec {
   pname =
-    "webargs";
+    "bidict";
   version =
-    "8.0.0";
+    "0.21.2";
 
   src =
     fetchPypi {
@@ -20,12 +20,12 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0xy6na8axc5wnp2wg3kvqbpl2iv0hx0rsnlrmrgkgp88znx6cmjn";
+        "02dy0b1k7qlhn7ajyzkrvxhyhjj0hzcq6ws3zjml9hkdz5znz92g";
     };
 
-  propagatedBuildInputs =
+  buildInputs =
     [
-      marshmallow
+      setuptools_scm
     ];
 
   # TODO FIXME
@@ -35,8 +35,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, Falcon, and aiohttp.";
+        "The bidirectional mapping library for Python.";
       homepage =
-        "https://github.com/marshmallow-code/webargs";
+        "https://bidict.readthedocs.io";
     };
 }

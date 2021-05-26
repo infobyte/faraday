@@ -2,17 +2,18 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ buildPythonPackage
+{ bidict
+, buildPythonPackage
 , fetchPypi
 , lib
-, marshmallow
+, python-engineio
 }:
 
 buildPythonPackage rec {
   pname =
-    "webargs";
+    "python-socketio";
   version =
-    "8.0.0";
+    "5.3.0";
 
   src =
     fetchPypi {
@@ -20,12 +21,13 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0xy6na8axc5wnp2wg3kvqbpl2iv0hx0rsnlrmrgkgp88znx6cmjn";
+        "0aqwda1dnz39zr8d1aydpm22fd32aq4ihf3cngpakwzfma2rgk1x";
     };
 
   propagatedBuildInputs =
     [
-      marshmallow
+      bidict
+      python-engineio
     ];
 
   # TODO FIXME
@@ -35,8 +37,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, Falcon, and aiohttp.";
+        "Socket.IO server";
       homepage =
-        "https://github.com/marshmallow-code/webargs";
+        "http://github.com/miguelgrinberg/python-socketio/";
     };
 }

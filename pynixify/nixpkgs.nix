@@ -112,6 +112,11 @@ let
         ./packages/flask-socketio
         { };
 
+      pyotp =
+        self.callPackage
+        ./packages/pyotp
+        { };
+
       python-engineio =
         self.callPackage
         ./packages/python-engineio
@@ -120,11 +125,6 @@ let
       python-socketio =
         self.callPackage
         ./packages/python-socketio
-        { };
-
-      pyotp =
-        self.callPackage
-        ./packages/pyotp
         { };
 
       simplekv =

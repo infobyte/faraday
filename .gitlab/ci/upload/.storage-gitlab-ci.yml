@@ -25,7 +25,7 @@ google_storage_deb_rpm_dev:
   variables:
     STORAGE_SPACE_BASE: gs://faraday-dev
   script:
-    - curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+    - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
     - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     - apt update && apt install curl jq vault -y
     - !reference [ .get_secrets, script ]

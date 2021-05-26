@@ -45,7 +45,6 @@ from flask_sqlalchemy import (
 )
 
 from depot.fields.sqlalchemy import UploadedFileField
-from sqlalchemy.sql.functions import count
 
 from faraday.server.fields import JSONType
 from flask_security import (

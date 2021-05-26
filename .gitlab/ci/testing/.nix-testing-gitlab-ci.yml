@@ -1,4 +1,3 @@
-
 pylint:
     tags:
         - faradaytests
@@ -35,6 +34,7 @@ pylint:
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
@@ -71,6 +71,7 @@ pylint:
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix

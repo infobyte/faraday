@@ -103,6 +103,7 @@ generate_docker_tar_gz:
     script:
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A vault
+        - nix-env -if pynixify/nixpkgs.nix -A gnugrep
         - !reference [ .get_secrets, script ]
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)

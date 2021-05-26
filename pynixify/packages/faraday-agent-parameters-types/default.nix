@@ -5,13 +5,15 @@
 { buildPythonPackage
 , fetchPypi
 , lib
+, marshmallow
+, pytestrunner
 }:
 
 buildPythonPackage rec {
   pname =
     "faraday-agent-parameters-types";
   version =
-    "0.1.8";
+    "0.1.9";
 
   src =
     fetchPypi {
@@ -20,14 +22,30 @@ buildPythonPackage rec {
       pname =
         "faraday_agent_parameters_types";
       sha256 =
-        "0jp0z4l3kxppbwaak7bx5lfr5ih2kldyp96mbwvxjhjhr825a2ba";
+        "1shck275qszds2x96bhpnclykpsidfsffnfmd5ilayxzjxd1pv6a";
     };
+
+  buildInputs =
+    [
+      pytestrunner
+    ];
+  propagatedBuildInputs =
+    [
+      marshmallow
+    ];
 
   # TODO FIXME
   doCheck =
     false;
 
   meta =
-    with lib;
-    { };
+    with lib; {
+      description =
+        ''
+          The faraday agents run code remotely to ensure your domains. This info is triggered and published
+              to a faraday server instance, which had set the parameters of the code. This repository sets the models to be used
+              by both sides.'';
+      homepage =
+        "https://github.com/infobyte/faraday_agent_parameters_types";
+    };
 }

@@ -25,7 +25,9 @@ google_storage_deb_rpm_dev:
   variables:
     STORAGE_SPACE_BASE: gs://faraday-dev
   script:
-    - apt update && apt install curl jq vault libcap -y
+    - curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+    - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    - apt update && apt install curl jq vault -y
     - !reference [ .get_secrets, script ]
     - cp $GCLOUD_STORAGE_KEY_FILE auth_file.json
     - *google_storage_deb_rpm_base

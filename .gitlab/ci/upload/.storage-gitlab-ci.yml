@@ -25,6 +25,7 @@ google_storage_deb_rpm_dev:
   variables:
     STORAGE_SPACE_BASE: gs://faraday-dev
   script:
+    - apk add --no-cache -q curl jq vault libcap
     - !reference [ .get_secrets, script ]
     - cp $GCLOUD_STORAGE_KEY_FILE auth_file.json
     - *google_storage_deb_rpm_base

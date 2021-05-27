@@ -64,6 +64,7 @@ BlankColumn = partial(Column, nullable=False,
                       info={'allow_blank': True},
                       default='')
 
+# TODO: Is it recommended to create a new one for notifications? Something like notification objects. Or maybe a new model would be better.
 OBJECT_TYPES = [
     'vulnerability',
     'host',
@@ -81,6 +82,14 @@ COMMENT_TYPES = [
     'user'
 ]
 
+# TODO: this constant is within class User too. Ask for suggestions.
+USER_ROLES = [
+    'admin',
+    'pentester',
+    'client',
+    'asset_owner'
+]
+
 NOTIFICATION_METHODS = [
     'mail',
     'webhook',
@@ -91,9 +100,25 @@ NOTIFICATION_EVENTS = [
     'new_workspace',
     'new_agent',
     'new_user',
-    'new_agent_scan',
-    'new_report_scan',
-    'new_vulnerability'
+    'new_agent',
+    'new_agentexecution',
+    'new_executivereport',
+    'new_vulnerability',
+    'new_command',
+    'new_comment',
+    'update_workspace',
+    'update_agent',
+    'update_user',
+    'update_agent_scan',
+    'update_executivereport',
+    'update_vulnerability',
+    'update_comment',
+    'delete_workspace',
+    'delete_agent',
+    'delete_user',
+    'delete_executivereport',
+    'delete_vulnerability',
+    'delete_comment',
 ]
 
 

@@ -10,12 +10,10 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 
 import flask
-import wtforms
 from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
-from flask import Blueprint
+from flask import Blueprint, make_response
 from flask_classful import route
-from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
@@ -697,10 +695,6 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
 
-        try:
-            validate_csrf(request.form.get('csrf_token'))
-        except wtforms.ValidationError:
-            flask.abort(403)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
@@ -708,21 +702,26 @@ class VulnerabilityView(PaginatedMixin,
         if vuln_workspace_check:
             if 'file' not in request.files:
                 flask.abort(400)
-
-            faraday_file = FaradayUploadedFile(request.files['file'].read())
+            vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
             filename = request.files['file'].filename
-
-            get_or_create(
-                db.session,
-                File,
-                object_id=vuln_id,
-                object_type='vulnerability',
-                name=filename,
-                filename=filename,
-                content=faraday_file
-            )
-            db.session.commit()
-            return flask.jsonify({'message': 'Evidence upload was successful'})
+            _attachments = vuln['_attachments']
+            if filename in _attachments:
+                message = 'Evidence already exists in vuln'
+                return make_response(flask.jsonify(message=message, success=False, code=400), 400)
+            else:
+                faraday_file = FaradayUploadedFile(request.files['file'].read())
+                instance, created = get_or_create(
+                    db.session,
+                    File,
+                    object_id=vuln_id,
+                    object_type='vulnerability',
+                    name=filename,
+                    filename=filename,
+                    content=faraday_file
+                )
+                db.session.commit()
+                message = 'Evidence upload was successful'
+                return flask.jsonify({'message': message})
         else:
             flask.abort(404, "Vulnerability not found")
 

@@ -2104,7 +2104,7 @@ class NotificationSubscription(Metadata):
     __tablename__ = 'notification_subscription'
     id = Column(Integer, primary_key=True)
     event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
-    global_subscription = Column(Boolean, default=False)
+    allowed_roles = Column(Enum(*USER_ROLES, name="allowed_roles"))
 
 
 class NotificationSubscriptionBaseConfig(db.Model):
@@ -2134,7 +2134,7 @@ class NotificationSubscriptionBaseConfig(db.Model):
 
 class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
     __tablename__ = 'notification_subscription_mail_config'
-    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'),primary_key=True)
+    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
     email = Column(String(50), nullable=True)
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
     user_notified = relationship(
@@ -2169,7 +2169,7 @@ class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
 
 class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig):
     __tablename__ = 'notification_subscription_websocket_config'
-    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'),  primary_key=True)
+    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
     user_notified = relationship(
         'User',
@@ -2205,12 +2205,13 @@ class NotificationSent(db.Model):
         'NotificationEvent',
         backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
-    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), index=True, nullable=False)
+    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_base_config.id'),
+                                                 index=True, nullable=False)
     notification_subscription_config = relationship(
         'NotificationSubscriptionBaseConfig',
         backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
-    mark_read = Column(Boolean, default=False, index=True)# mark read? is read? was read? index?
+    mark_read = Column(Boolean, default=False, index=True)  # mark read? is read? was read? index?
 
 
 class Notification(db.Model):

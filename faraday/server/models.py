@@ -978,6 +978,15 @@ class Host(Metadata):
                                     child_field='name')
 
 
+class CVE (db.Model):
+    __tablename__ = 'cve'
+
+    id = Column(Integer, primary_key=True)
+    year = Column(Integer, nullable=False)
+    identifier = Column(Integer, nullable=False)
+    description = Column(Text, nullable=True)# TODO: ver tamanios.
+
+
 class Service(Metadata):
     STATUSES = [
         'open',
@@ -1091,6 +1100,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
     workspace = relationship(
         'Workspace',
         backref=backref('vulnerabilities', cascade="all, delete-orphan", passive_deletes=True)
+    )
+
+    cve_id = Column(Integer, ForeignKey(CVE.id), index=True)
+    cve = relationship(
+        "CVE",
+        foreign_keys=[cve_id],
+        backref=backref('vulnerabilities_cves', cascade="all, delete-orphan")
     )
 
     reference_instances = relationship(

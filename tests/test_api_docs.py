@@ -2,7 +2,7 @@ import json
 
 import yaml
 from apispec import APISpec
-from faraday.server.web import app
+from faraday.server.web import get_app
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
@@ -30,9 +30,9 @@ class TestDocs:
         exc = {'/login', '/logout', '/change', '/reset', '/reset/{token}', '/verify'}
         failing = []
 
-        with app.test_request_context():
-            for endpoint in app.view_functions:
-                spec.path(view=app.view_functions[endpoint], app=app)
+        with get_app().test_request_context():
+            for endpoint in get_app().view_functions:
+                spec.path(view=get_app().view_functions[endpoint], app=get_app())
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
@@ -55,9 +55,9 @@ class TestDocs:
 
         failing = []
 
-        with app.test_request_context():
-            for endpoint in app.view_functions:
-                spec.path(view=app.view_functions[endpoint], app=app)
+        with get_app().test_request_context():
+            for endpoint in get_app().view_functions:
+                spec.path(view=get_app().view_functions[endpoint], app=get_app())
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
@@ -81,9 +81,9 @@ class TestDocs:
 
         tags = set()
 
-        with app.test_request_context():
-            for endpoint in app.view_functions:
-                spec.path(view=app.view_functions[endpoint], app=app)
+        with get_app().test_request_context():
+            for endpoint in get_app().view_functions:
+                spec.path(view=get_app().view_functions[endpoint], app=get_app())
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 

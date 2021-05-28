@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
-import string
 
 import pytest
 from marshmallow import ValidationError
+from sqlalchemy import true, null, false
+
 from faraday.server.models import (
     db,
     Command,
@@ -55,14 +56,12 @@ vuln_web_data = {
     'status_code': 200,
 }
 
-
 credential_data = {
     'name': 'test credential',
     'description': 'test',
     'username': 'admin',
     'password': '12345',
 }
-
 
 command_data = {
     'tool': 'pytest',
@@ -116,6 +115,7 @@ def test_create_host_add_hostnames(session, workspace):
     assert host.ip == "127.0.0.1"
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org", "test3.org"}
 
+
 def test_create_existing_host(session, host):
     session.add(host)
     session.commit()
@@ -160,6 +160,7 @@ def test_create_existing_service(session, service):
     data = bc.BulkServiceSchema().load(data)
     bc._create_service(service.workspace, service.host, data)
     assert count(Service, service.host.workspace) == 1
+
 
 def test_create_host_vuln(session, host):
     data = bc.VulnerabilitySchema().load(vuln_data)
@@ -216,7 +217,7 @@ def test_creates_vuln_with_command_object_with_tool(session, service):
         dict(
             command=command_data,
             hosts=[host_data_]
-            )
+        )
     )
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
@@ -239,6 +240,7 @@ def test_creates_vuln_with_command_object_without_tool(session, service):
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
     assert vuln.tool == command_data['tool']
+
 
 def test_cannot_create_host_vulnweb(session, host):
     data = vuln_data.copy()
@@ -428,10 +430,10 @@ def test_updates_command_object(session, workspace):
     service = host.services[0]
     vuln_host = Vulnerability.query.filter(
         Vulnerability.workspace == workspace,
-        Vulnerability.service == None).one()
+        Vulnerability.service == null()).one()
     vuln_service = Vulnerability.query.filter(
         Vulnerability.workspace == workspace,
-        Vulnerability.host == None).one()
+        Vulnerability.host == null()).one()
     vuln_web = VulnerabilityWeb.query.filter(
         VulnerabilityWeb.workspace == workspace).one()
     host_cred = Credential.query.filter(
@@ -458,7 +460,7 @@ def test_updates_command_object(session, workspace):
             CommandObject.command == command,
             CommandObject.object_type == table_name,
             CommandObject.object_id == obj.id,
-            CommandObject.created_persistent == True,
+            CommandObject.created_persistent == true(),
         ).one()
 
 
@@ -567,7 +569,7 @@ def test_creates_command_object_on_duplicates(
             CommandObject.command == new_command,
             CommandObject.object_type == table_name,
             CommandObject.object_id == obj.id,
-            CommandObject.created_persistent == False,
+            CommandObject.created_persistent == false(),
         ).one()
 
 
@@ -830,7 +832,8 @@ class TestBulkCreateAPI:
             )
             assert res.status_code == 400
 
-            assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+            assert Host.query.filter(
+                Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
             assert count(Command, workspace) == 1
             data_kwargs["execution_id"] = extra_agent_execution.id
             res = test_client.post(
@@ -839,7 +842,8 @@ class TestBulkCreateAPI:
                 headers=[("authorization", f"agent {agent.token}")]
             )
             assert res.status_code == 400
-            assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+            assert Host.query.filter(
+                Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
             assert count(Command, workspace) == 1
             data_kwargs["execution_id"] = agent_execution.id
             res = test_client.post(
@@ -908,7 +912,6 @@ class TestBulkCreateAPI:
             session.add(workspace)
         session.commit()
         for workspace in agent.workspaces:
-
             url = self.check_url(f'/v2/ws/{workspace.name}/bulk_create/')
             res = test_client.post(
                 url,
@@ -1001,7 +1004,7 @@ class TestBulkCreateAPI:
         host_data_['services'] = [service_data]
         host_data_['credentials'] = [credential_data]
         host_data_['vulnerabilities'] = [vuln_data]
-        host_data_['default_gateway'] = ["localhost"] # Can not be a list
+        host_data_['default_gateway'] = ["localhost"]  # Can not be a list
         res = test_client.post(url, data=dict(hosts=[host_data_]))
         assert res.status_code == 400, res.json
         assert count(Host, workspace) == 0

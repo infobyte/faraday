@@ -33,7 +33,7 @@ class JSTimestampField(fields.Integer):
 
     def _deserialize(self, value, attr, data, **kwargs):
         if value is not None and value:
-            return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
+            return datetime.datetime.fromtimestamp(self._validated(value) / 1e3)
 
 
 class FaradayCustomField(fields.Field):
@@ -184,11 +184,11 @@ class MutableField(fields.Field):
 
         return self.write_field._deserialize(value, attr, data, **kwargs)
 
-    def _add_to_schema(self, field_name, schema):
+    def _bind_to_schema(self, field_name, schema):
         # Propagate to child fields
-        super()._add_to_schema(field_name, schema)
-        self.read_field._add_to_schema(field_name, schema)
-        self.write_field._add_to_schema(field_name, schema)
+        super()._bind_to_schema(field_name, schema)
+        self.read_field._bind_to_schema(field_name, schema)
+        self.write_field._bind_to_schema(field_name, schema)
 
 
 class SeverityField(fields.String):

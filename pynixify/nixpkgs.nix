@@ -72,6 +72,11 @@ let
         ./packages/bidict
         { };
 
+      bleach =
+        self.callPackage
+        ./packages/bleach
+        { };
+
       faraday-plugins =
         self.callPackage
         ./packages/faraday-plugins
@@ -107,9 +112,15 @@ let
         ./packages/flask-security-too
         { };
 
+<<<<<<< HEAD
       flask-socketio =
         self.callPackage
         ./packages/flask-socketio
+=======
+      marshmallow-sqlalchemy =
+        self.callPackage
+        ./packages/marshmallow-sqlalchemy
+>>>>>>> white/dev
         { };
 
       pyotp =

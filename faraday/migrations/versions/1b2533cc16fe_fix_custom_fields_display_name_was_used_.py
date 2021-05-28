@@ -7,7 +7,6 @@ Create Date: 2019-04-05 16:19:11.216571+00:00
 """
 import json
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.sql import text
 
 

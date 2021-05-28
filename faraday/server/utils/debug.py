@@ -11,6 +11,7 @@ import logging
 
 debug_logger = logging.getLogger(__name__)
 
+
 class Timer:
     def __init__(self, tag, logger=None):
         self.__tag = tag
@@ -28,6 +29,8 @@ class Timer:
 #
 # Debug utility extracted from http://docs.sqlalchemy.org/en/latest/faq/performance.html
 #
+
+
 @contextlib.contextmanager
 def profiled():
     pr = cProfile.Profile()

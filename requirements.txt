@@ -10,7 +10,8 @@ flask-classful>=0.14
 email_validator
 WTForms>=2.1
 flask-login>=0.5.0
-Flask-Security-Too>=3.4.4,<4.0.0
+Flask-Security-Too>=4.0.0
+bleach>=3.3.0
 marshmallow>=3.0.0,<3.11.0
 Pillow>=4.2.1
 psycopg2
@@ -24,7 +25,7 @@ SQLAlchemy>=1.2.0,<1.4.0
 tqdm>=4.15.0
 twisted>=18.9.0
 webargs>=7.0.0
-marshmallow-sqlalchemy
+marshmallow-sqlalchemy==0.25.0
 filteralchemy-fork
 filedepot>=0.5.0
 nplusone>=0.8.1
@@ -39,3 +40,4 @@ pyyaml
 Flask-SocketIO==5.0.1
 pyotp>=2.6.0
 Flask-Limiter
+Flask-Mail

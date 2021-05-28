@@ -1,7 +1,6 @@
-
 import logging
 from io import BytesIO
-from lxml.etree import Element, SubElement, tostring # nosec
+from lxml.etree import Element, SubElement, tostring  # nosec
 # We don't use Element for parsing
 from flask import Blueprint, request, abort, send_file
 
@@ -82,7 +81,6 @@ def xml_metasploit_format(workspace):
                 web_services.add(vuln_web.service)
                 web_vuln_tag = SubElement(web_vulns_tag, 'web_vuln')
                 _build_vuln_web_element(vuln_web, web_vuln_tag)
-
 
         for vuln in host.vulnerabilities:
             vuln_tag = SubElement(vulns_tag, 'vuln')

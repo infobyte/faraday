@@ -39,7 +39,6 @@ class TestActivityFeed:
         assert activities['vulnerabilities_count'] == 1
         assert activities['tool'] == 'nessus'
 
-
     def test_load_itime(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         command = CommandFactory.create(workspace=ws)

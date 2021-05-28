@@ -17,6 +17,7 @@ agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
 class AgentAuthTokenSchema(Schema):
     token = fields.String(required=True)
     expires_in = fields.Float(required=True)
+    total_duration = fields.Float(required=True)
 
 
 class AgentAuthTokenView(GenericView):
@@ -40,15 +41,18 @@ class AgentAuthTokenView(GenericView):
             200:
               description: Ok
         """
-        totp = pyotp.TOTP(faraday_server.agent_registration_secret)
+        totp = pyotp.TOTP(faraday_server.agent_registration_secret, interval=int(
+            faraday_server.agent_token_expiration))
         return AgentAuthTokenSchema().dump(
             {'token': totp.now(),
-             'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval})
+             'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval,
+             'total_duration': totp.interval})
 
 
 class AgentAuthTokenV3View(AgentAuthTokenView):
     route_prefix = '/v3'
     trailing_slash = False
+
 
 AgentAuthTokenView.register(agent_auth_token_api)
 AgentAuthTokenV3View.register(agent_auth_token_api)

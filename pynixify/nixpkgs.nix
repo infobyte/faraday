@@ -107,6 +107,11 @@ let
         ./packages/flask-security-too
         { };
 
+      marshmallow-sqlalchemy =
+        self.callPackage
+        ./packages/marshmallow-sqlalchemy
+        { };
+
       pyotp =
         self.callPackage
         ./packages/pyotp

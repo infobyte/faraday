@@ -2,26 +2,18 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ beautifulsoup4
-, buildPythonPackage
-, click
-, colorama
-, dateutil
+{ buildPythonPackage
 , fetchPypi
-, html2text
 , lib
-, lxml
-, pytz
-, requests
-, simplejson
-, tabulate
+, marshmallow
+, sqlalchemy
 }:
 
 buildPythonPackage rec {
   pname =
-    "faraday-plugins";
+    "marshmallow-sqlalchemy";
   version =
-    "1.4.6";
+    "0.25.0";
 
   src =
     fetchPypi {
@@ -29,21 +21,13 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "1q35qina5x8vn7rjy4djd85985jypsrk5ihhiin7x1ks505bmis8";
+        "0i39ckrixh1w9fmkm0wl868gvza72j5la0x6dd0cij9shf1iyjgi";
     };
 
   propagatedBuildInputs =
     [
-      click
-      simplejson
-      requests
-      lxml
-      html2text
-      beautifulsoup4
-      pytz
-      dateutil
-      colorama
-      tabulate
+      marshmallow
+      sqlalchemy
     ];
 
   # TODO FIXME
@@ -53,6 +37,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Faraday plugins package";
+        "SQLAlchemy integration with the marshmallow (de)serialization library";
+      homepage =
+        "https://github.com/marshmallow-code/marshmallow-sqlalchemy";
     };
 }

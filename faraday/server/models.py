@@ -2128,8 +2128,8 @@ class ExecutiveReport(Metadata):
 class NotificationSubscription(Metadata):
     __tablename__ = 'notification_subscription'
     id = Column(Integer, primary_key=True)
-    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
-    allowed_roles = Column(Enum(*USER_ROLES, name="allowed_roles"))
+    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
+    allowed_roles = Column(Enum(*USER_ROLES, name="user_roles"), nullable=False)
 
 
 class NotificationSubscriptionBaseConfig(db.Model):
@@ -2212,7 +2212,7 @@ class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig
 class NotificationEvent(db.Model):
     __tablename__ = 'notification_event'
     id = Column(Integer, primary_key=True)
-    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"))
+    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
     notification_data = Column(JSONType, nullable=False)

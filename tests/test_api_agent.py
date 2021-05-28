@@ -627,6 +627,13 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         )
         assert res.status_code == 400
 
+    def test_get_manifests(self, session, csrf_token, test_client):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        session.add(agent)
+        session.commit()
+        res = test_client.get(self.check_url(urljoin(self.url(), 'get_manifests/')))
+        assert res.status_code == 200
+
 
 class TestAgentAPIV3(TestAgentAPI):
     def url(self, obj=None, workspace=None):

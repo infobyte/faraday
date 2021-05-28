@@ -30,6 +30,7 @@ from faraday.server.models import Agent, Executor, AgentExecution, db, \
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
+from faraday_agent_parameters_types.utils import get_manifests
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
@@ -395,6 +396,19 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             valid = False
         return flask.jsonify({"valid": valid, "errors": errors})
 
+    @route('/get_manifests/', methods=['GET'])
+    def manifests_get(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Agent"]
+          description: Get all manifests
+          responses:
+            200:
+              description: Ok
+        """
+        return flask.jsonify(get_manifests())
+
 
 class AgentV3View(AgentView):
     route_prefix = '/v3/ws/<workspace_name>/'
@@ -413,9 +427,14 @@ class AgentV3View(AgentView):
     def validate_param(self, workspace_name):
         return super().validate_param(workspace_name)
 
+    @route('/get_manifests', methods=['GET'])
+    def manifests_get(self, workspace_name):
+        return super().manifests_get(workspace_name)
+
     remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
     run_agent.__doc__ = AgentView.run_agent.__doc__
     validate_param.__doc__ = AgentView.validate_param.__doc__
+    manifests_get.__doc__ = AgentView.manifests_get.__doc__
 
 
 AgentWithWorkspacesView.register(agent_api)

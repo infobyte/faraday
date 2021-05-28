@@ -21,6 +21,7 @@ publish_pypi:
     image: python:3
     stage: publish
     script:
+      - !reference [ .clone_and_replace_www, script ]
       - apt-get update -qy
       - apt-get install twine -y
       - python setup.py sdist bdist_wheel

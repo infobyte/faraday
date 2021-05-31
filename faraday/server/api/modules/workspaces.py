@@ -24,7 +24,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin
 
 logger = logging.getLogger(__name__)
 
@@ -337,10 +337,4 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         return self._get_object(workspace_id).readonly
 
 
-class WorkspaceV3View(WorkspaceView, PatchableMixin):
-    route_prefix = 'v3/'
-    trailing_slash = False
-
-
 WorkspaceView.register(workspace_api)
-WorkspaceV3View.register(workspace_api)

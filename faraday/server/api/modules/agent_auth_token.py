@@ -49,10 +49,4 @@ class AgentAuthTokenView(GenericView):
              'total_duration': totp.interval})
 
 
-class AgentAuthTokenV3View(AgentAuthTokenView):
-    route_prefix = '/v3'
-    trailing_slash = False
-
-
 AgentAuthTokenView.register(agent_auth_token_api)
-AgentAuthTokenV3View.register(agent_auth_token_api)

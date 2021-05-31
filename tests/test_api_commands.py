@@ -5,7 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from tests.utils.url import v2_to_v3
 
 """Tests for many API endpoints that do not depend on workspace_name"""
 from posixpath import join as urljoin
@@ -14,11 +13,11 @@ import pytest
 import time
 
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests
 from faraday.server.models import (
     Command,
     Vulnerability)
-from faraday.server.api.modules.commandsrun import CommandView, CommandV3View
+from faraday.server.api.modules.commandsrun import CommandView
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
 
@@ -36,9 +35,6 @@ class TestListCommandView(ReadWriteAPITests):
     api_endpoint = 'commands'
     view_class = CommandView
     patchable_fields = ["ip"]
-
-    def check_url(self, url):
-        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.usefixtures('mock_envelope_list')
@@ -97,7 +93,7 @@ class TestListCommandView(ReadWriteAPITests):
         )
         session.commit()
 
-        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
+        res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
 
         assert list(filter(lambda stats: stats['_id'] == command.id, res.json)) == [
@@ -154,7 +150,7 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
+        res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
         assert res.json == [
             {u'_id': command.id,
@@ -203,7 +199,7 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
+        res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
         assert res.json == [{
             u'_id': command.id,
@@ -269,7 +265,7 @@ class TestListCommandView(ReadWriteAPITests):
             workspace=workspace
         )
         session.commit()
-        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
+        res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
         raw_first_command = list(filter(lambda comm: comm['_id'] == commands[0].id, res.json))
 
@@ -417,13 +413,13 @@ class TestListCommandView(ReadWriteAPITests):
         )
         session.commit()
 
-        res = test_client.get(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
+        res = test_client.get(f'/v3/ws/{host.workspace.name}/hosts/{host.id}')
         assert res.status_code == 200
 
-        res = test_client.delete(self.check_url(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/'))
+        res = test_client.delete(f'/v3/ws/{host.workspace.name}/hosts/{host.id}')
         assert res.status_code == 204
 
-        res = test_client.get(self.check_url(urljoin(self.url(workspace=command.workspace), 'activity_feed/')))
+        res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
         command_history = list(filter(lambda hist: hist['_id'] == command.id, res.json))
         assert len(command_history)
@@ -446,13 +442,3 @@ class TestListCommandView(ReadWriteAPITests):
         res = test_client.post(self.url(), data=raw_data)
 
         assert res.status_code == 400
-
-
-class TestListCommandViewV3(TestListCommandView, PatchableTestsMixin):
-    view_class = CommandV3View
-
-    def url(self, obj=None, workspace=None):
-        return v2_to_v3(super().url(obj, workspace))
-
-    def check_url(self, url):
-        return v2_to_v3(url)

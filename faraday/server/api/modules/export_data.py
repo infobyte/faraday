@@ -11,7 +11,7 @@ export_data_api = Blueprint('export_data_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-@export_data_api.route('/v2/ws/<workspace_name>/export_data', methods=['GET'])
+@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data(workspace_name):
     """
     ---
@@ -44,14 +44,6 @@ def export_data(workspace_name):
     else:
         logger.error("Invalid format. Please, specify a valid format.")
         abort(400, "Invalid format.")
-
-
-@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
-def export_data_v3(workspace_name):
-    return export_data(workspace_name)
-
-
-export_data_v3.__doc__ = export_data.__doc__
 
 
 def xml_metasploit_format(workspace):

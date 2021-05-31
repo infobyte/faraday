@@ -5,7 +5,6 @@ from faraday.server.websocket_factories import WorkspaceServerFactory, \
     update_executors, BroadcastServerProtocol
 
 from tests.factories import AgentFactory, ExecutorFactory
-from tests.utils.url import v2_to_v3
 
 
 class TransportMock:
@@ -28,16 +27,13 @@ def proto():
 
 class TestWebsocketBroadcastServerProtocol:
 
-    def check_url(self, url):
-        return url
-
     def _join_agent(self, test_client, session):
         agent = AgentFactory.create(token='pepito')
         session.add(agent)
         session.commit()
 
         headers = {"Authorization": f"Agent {agent.token}"}
-        token = test_client.post(self.check_url('/v2/agent_websocket_token/'), headers=headers).json['token']
+        token = test_client.post('/v3/agent_websocket_token', headers=headers).json['token']
         return token
 
     def test_join_agent_message_with_invalid_token_fails(self, session, proto, test_client):
@@ -72,11 +68,6 @@ class TestWebsocketBroadcastServerProtocol:
         message = '{"action": "LEAVE_AGENT"}'
         assert proto.onMessage(message, False)
         assert not agent.is_online
-
-
-class TestWebsocketBroadcastServerProtocolV3(TestWebsocketBroadcastServerProtocol):
-    def check_url(self, url):
-        return v2_to_v3(url)
 
 
 class TestCheckExecutors:

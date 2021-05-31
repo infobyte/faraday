@@ -9,7 +9,7 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load, ValidationError
 
-from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin, PatchableWorkspacedMixin
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
 from faraday.server.models import Command, Workspace
 from faraday.server.schemas import MutableField, PrimaryKeyRelatedField, SelfNestedField, MetadataSchema
 
@@ -79,7 +79,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             'commands': commands,
         }
 
-    @route('/activity_feed/')
+    @route('/activity_feed')
     def activity_feed(self, workspace_name):
         """
         ---
@@ -110,7 +110,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             })
         return res
 
-    @route('/last/', methods=['GET'])
+    @route('/last', methods=['GET'])
     def last_command(self, workspace_name):
         """
         ---
@@ -140,21 +140,4 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         return flask.jsonify(command_obj)
 
 
-class CommandV3View(CommandView, PatchableWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/activity_feed')
-    def activity_feed(self, workspace_name):
-        return super().activity_feed(workspace_name)
-
-    @route('/last', methods=['GET'])
-    def last_command(self, workspace_name):
-        return super().last_command(workspace_name)
-
-    activity_feed.__doc__ = CommandView.activity_feed.__doc__
-    last_command.__doc__ = CommandView.last_command.__doc__
-
-
 CommandView.register(commandsrun_api)
-CommandV3View.register(commandsrun_api)

@@ -7,8 +7,7 @@ from marshmallow import fields
 from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView,
-    PatchableMixin,
+    ReadWriteView
 )
 
 
@@ -52,10 +51,4 @@ class CustomFieldsSchemaView(ReadWriteView):
         return super()._update_object(obj, data)
 
 
-class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin):
-    route_prefix = '/v3'
-    trailing_slash = False
-
-
 CustomFieldsSchemaView.register(custom_fields_schema_api)
-CustomFieldsSchemaV3View.register(custom_fields_schema_api)

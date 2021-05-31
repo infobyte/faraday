@@ -1,13 +1,12 @@
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
     CustomFieldsSchema
 )
-from tests.utils.url import v2_to_v3
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -82,8 +81,3 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests):
         assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
                 u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
                 u'field_order': 1} in res.json
-
-
-class TestVulnerabilityCustomFieldsV3(TestVulnerabilityCustomFields, PatchableTestsMixin):
-    def url(self, obj=None):
-        return v2_to_v3(super().url(obj))

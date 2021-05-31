@@ -10,13 +10,12 @@ from random import randrange
 import pytest
 
 from tests.factories import SearchFilterFactory, UserFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, PatchableTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests.test_api_agent import logout
 from tests.conftest import login_as
 from faraday.server.models import SearchFilter
 
 from faraday.server.api.modules.search_filter import SearchFilterView
-from tests.utils.url import v2_to_v3
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -104,7 +103,7 @@ class TestSearchFilterAPI(ReadWriteAPITests):
         res = test_client.delete(self.url(user_filter))
         assert res.status_code == 404
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
         self.first_object.creator = logged_user
         super().test_update_an_object(test_client, logged_user, method)
@@ -116,16 +115,6 @@ class TestSearchFilterAPI(ReadWriteAPITests):
     def test_delete(self, test_client, logged_user):
         self.first_object.creator = logged_user
         super().test_delete(test_client, logged_user)
-
-
-@pytest.mark.usefixtures('logged_user')
-class TestSearchFilterAPIV3(TestSearchFilterAPI, PatchableTestsMixin):
-    def url(self, obj=None):
-        return v2_to_v3(super().url(obj))
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_an_object(self, test_client, logged_user, method):
-        super().test_update_an_object(test_client, logged_user, method)
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         self.first_object.creator = logged_user

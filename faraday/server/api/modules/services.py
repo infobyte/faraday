@@ -7,8 +7,12 @@ from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
 
-from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
-    FilterAlchemyMixin, PatchableWorkspacedMixin
+from faraday.server.api.base import (
+    AutoSchema,
+    ReadWriteWorkspacedView,
+    FilterSetMeta,
+    FilterAlchemyMixin
+)
 from faraday.server.models import Host, Service, Workspace
 from faraday.server.schemas import (
     MetadataSchema,
@@ -135,10 +139,4 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         return super()._perform_create(data, **kwargs)
 
 
-class ServiceV3View(ServiceView, PatchableWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-
 ServiceView.register(services_api)
-ServiceV3View.register(services_api)

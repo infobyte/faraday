@@ -33,8 +33,7 @@ from faraday.server.api.base import (
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage,
-    CountMultiWorkspacedMixin,
-    PatchableWorkspacedMixin
+    CountMultiWorkspacedMixin
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -679,7 +678,7 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
 
-    @route('/<int:vuln_id>/attachment/', methods=['POST'])
+    @route('/<int:vuln_id>/attachment', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
         """
         ---
@@ -883,7 +882,7 @@ class VulnerabilityView(PaginatedMixin,
 
             return vulns_data, len(rows)
 
-    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         """
         ---
@@ -926,7 +925,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<int:vuln_id>/attachments/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
         """
         ---
@@ -964,7 +963,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
         """
         ---
@@ -994,7 +993,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('export_csv/', methods=['GET'])
+    @route('export_csv', methods=['GET'])
     def export_csv(self, workspace_name):
         """
         ---
@@ -1073,7 +1072,7 @@ class VulnerabilityView(PaginatedMixin,
         response = {'deleted_vulns': deleted_vulns}
         return flask.jsonify(response)
 
-    @route('top_users/', methods=['GET'])
+    @route('top_users', methods=['GET'])
     def top_users(self, workspace_name):
         """
         ---
@@ -1106,41 +1105,4 @@ class VulnerabilityView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/<int:vuln_id>/attachment', methods=['POST'])
-    def post_attachment(self, workspace_name, vuln_id):
-        return super().post_attachment(workspace_name, vuln_id)
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
-    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super().get_attachment(workspace_name, vuln_id, attachment_filename)
-
-    @route('/<int:vuln_id>/attachment', methods=['GET'])
-    def get_attachments_by_vuln(self, workspace_name, vuln_id):
-        return super().get_attachments_by_vuln(workspace_name, vuln_id)
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
-    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super().delete_attachment(workspace_name, vuln_id, attachment_filename)
-
-    @route('/export_csv', methods=['GET'])
-    def export_csv(self, workspace_name):
-        return super().export_csv(workspace_name)
-
-    @route('/top_users', methods=['GET'])
-    def top_users(self, workspace_name):
-        return super().top_users(workspace_name)
-
-    post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__
-    delete_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    export_csv.__doc__ = VulnerabilityView.post_attachment.__doc__
-    top_users.__doc__ = VulnerabilityView.post_attachment.__doc__
-
-
 VulnerabilityView.register(vulns_api)
-VulnerabilityV3View.register(vulns_api)

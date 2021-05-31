@@ -101,7 +101,6 @@ generate_docker_tar_gz:
     stage: build
     image: nixorg/nix
     script:
-<<<<<<< HEAD
         - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]

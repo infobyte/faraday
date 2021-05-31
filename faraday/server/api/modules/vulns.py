@@ -16,7 +16,7 @@ from flask import Blueprint, make_response
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
@@ -157,6 +157,7 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
+    attachments_count = fields.Integer(dump_only=True, attribute='attachments_count')
 
     class Meta:
         model = Vulnerability
@@ -170,7 +171,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool',
+            'custom_fields', 'external_id', 'tool', 'attachments_count',
             'cvss', 'cwe', 'cve', 'owasp',
             )
 
@@ -304,7 +305,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool',
+            'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
             'cve', 'cwe', 'owasp', 'cvss',
         )
 
@@ -539,6 +540,7 @@ class VulnerabilityView(PaginatedMixin,
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
+            filename = filename.replace(" ", "_")
             get_or_create(
                 db.session,
                 File,
@@ -571,7 +573,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         query = super()._get_eagerloaded_query(
             *args, **kwargs)
-        joinedloads = [
+        options = [
             joinedload(Vulnerability.host)
                 .load_only(Host.id)  # Only hostnames are needed
                 .joinedload(Host.hostnames),
@@ -588,13 +590,18 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
-            joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
+
+        if flask.request.args.get('get_evidence'):
+            options.append(joinedload(VulnerabilityGeneric.evidence))
+        else:
+            options.append(noload(VulnerabilityGeneric.evidence))
+
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,
             [Vulnerability, VulnerabilityWeb]
-        ), *joinedloads)
+        ), *options)
 
     def _filter_query(self, query):
         query = super()._filter_query(query)

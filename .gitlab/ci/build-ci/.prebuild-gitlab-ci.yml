@@ -35,7 +35,6 @@ build_nix_python3:
   image: nixorg/nix
   stage: pre_build
   script:
-<<<<<<< HEAD
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
     - !reference [ .get_secrets, script ]

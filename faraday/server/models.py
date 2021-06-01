@@ -2134,11 +2134,24 @@ class ExecutiveReport(Metadata):
         )
 
 
+allowed_roles_association = db.Table('notification_allowed_roles',
+    Column('notification_subscription_id', Integer, db.ForeignKey('notification_subscription.id'), nullable=False),
+    Column('allowed_role_id', Integer, db.ForeignKey('notification_roles.id'), nullable=False)
+)
+
+
+# TODO: Avisar a @eric porque tal vez resuelve lo de roles que necesita
+class NotificationRoles(db.Model):
+    __tablename__ = 'notification_roles'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), nullable=False)
+
+
 class NotificationSubscription(Metadata):
     __tablename__ = 'notification_subscription'
     id = Column(Integer, primary_key=True)
     event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
-    allowed_roles = Column(Enum(*USER_ROLES, name="user_roles"), nullable=False)
+    allowed_roles = relationship("NotificationRoles", secondary=allowed_roles_association)
 
 
 class NotificationSubscriptionBaseConfig(db.Model):

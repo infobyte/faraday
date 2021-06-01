@@ -106,6 +106,8 @@ def upgrade():
     op.create_table('notification_subscription_base_config',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('subscription_id', sa.Integer(), nullable=False),
+    sa.Column('role_level', sa.Boolean(), nullable=False),
+    sa.Column('workspace_level', sa.Boolean(), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=True),
     sa.Column('type', sa.String(length=24), nullable=True),
     sa.ForeignKeyConstraint(['subscription_id'], ['notification_subscription.id'], ),
@@ -142,7 +144,7 @@ def upgrade():
     )
     op.create_table('notification_subscription_websocket_config',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_notified_id', sa.Integer(), nullable=False),
+    sa.Column('user_notified_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['id'], ['notification_subscription_base_config.id'], ),
     sa.ForeignKeyConstraint(['user_notified_id'], ['faraday_user.id'], ),
     sa.PrimaryKeyConstraint('id')

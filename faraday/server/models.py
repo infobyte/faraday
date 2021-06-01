@@ -2149,6 +2149,10 @@ class NotificationSubscriptionBaseConfig(db.Model):
         'NotificationSubscription',
         backref=backref('notification_subscription_config', cascade="all, delete-orphan")
     )
+
+    role_level = Column(Boolean, default=False)
+    workspace_level = Column(Boolean, default=False)
+
     active = Column(Boolean, default=True)
     type = Column(String(24))
 
@@ -2204,7 +2208,7 @@ class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
 class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig):
     __tablename__ = 'notification_subscription_websocket_config'
     id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
-    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
     user_notified = relationship(
         'User',
         backref=backref('notification_subscription_websocket_config', cascade="all, delete-orphan")

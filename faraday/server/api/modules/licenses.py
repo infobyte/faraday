@@ -7,8 +7,7 @@ from marshmallow import fields
 from faraday.server.models import License
 from faraday.server.api.base import (
     ReadWriteView,
-    AutoSchema,
-    PatchableMixin
+    AutoSchema
 )
 from faraday.server.schemas import (
     StrictDateTimeField,
@@ -37,10 +36,4 @@ class LicenseView(ReadWriteView):
     schema_class = LicenseSchema
 
 
-class LicenseV3View(LicenseView, PatchableMixin):
-    route_prefix = 'v3/'
-    trailing_slash = False
-
-
 LicenseView.register(license_api)
-LicenseV3View.register(license_api)

@@ -2,6 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
+import os
 import string
 import datetime
 
@@ -388,7 +389,7 @@ def create_app(db_connection_string=None, testing=None):
             DepotManager.configure('default', {
                 'depot.storage_path': storage_path
             })
-
+    app.config['SQLALCHEMY_ECHO'] = 'FARADAY_LOG_QUERY' in os.environ
     check_testing_configuration(testing, app)
 
     try:
@@ -440,7 +441,6 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
-    app.view_functions['agent_creation_api.AgentCreationV3View:post'].is_public = True
 
     return app
 

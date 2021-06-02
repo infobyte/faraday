@@ -10,15 +10,13 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 
 import flask
-import wtforms
 from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
-from flask import Blueprint
+from flask import Blueprint, make_response
 from flask_classful import route
-from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
@@ -35,8 +33,7 @@ from faraday.server.api.base import (
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage,
-    CountMultiWorkspacedMixin,
-    PatchableWorkspacedMixin
+    CountMultiWorkspacedMixin
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -160,6 +157,7 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
+    attachments_count = fields.Integer(dump_only=True, attribute='attachments_count')
 
     class Meta:
         model = Vulnerability
@@ -173,7 +171,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool',
+            'custom_fields', 'external_id', 'tool', 'attachments_count',
             'cvss', 'cwe', 'cve', 'owasp',
             )
 
@@ -307,7 +305,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool',
+            'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
             'cve', 'cwe', 'owasp', 'cvss',
         )
 
@@ -542,6 +540,7 @@ class VulnerabilityView(PaginatedMixin,
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
+            filename = filename.replace(" ", "_")
             get_or_create(
                 db.session,
                 File,
@@ -574,7 +573,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         query = super()._get_eagerloaded_query(
             *args, **kwargs)
-        joinedloads = [
+        options = [
             joinedload(Vulnerability.host)
                 .load_only(Host.id)  # Only hostnames are needed
                 .joinedload(Host.hostnames),
@@ -591,13 +590,18 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
-            joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
+
+        if flask.request.args.get('get_evidence'):
+            options.append(joinedload(VulnerabilityGeneric.evidence))
+        else:
+            options.append(noload(VulnerabilityGeneric.evidence))
+
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,
             [Vulnerability, VulnerabilityWeb]
-        ), *joinedloads)
+        ), *options)
 
     def _filter_query(self, query):
         query = super()._filter_query(query)
@@ -681,7 +685,7 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
 
-    @route('/<int:vuln_id>/attachment/', methods=['POST'])
+    @route('/<int:vuln_id>/attachment', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
         """
         ---
@@ -697,10 +701,6 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
 
-        try:
-            validate_csrf(request.form.get('csrf_token'))
-        except wtforms.ValidationError:
-            flask.abort(403)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
@@ -708,21 +708,26 @@ class VulnerabilityView(PaginatedMixin,
         if vuln_workspace_check:
             if 'file' not in request.files:
                 flask.abort(400)
-
-            faraday_file = FaradayUploadedFile(request.files['file'].read())
+            vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
             filename = request.files['file'].filename
-
-            get_or_create(
-                db.session,
-                File,
-                object_id=vuln_id,
-                object_type='vulnerability',
-                name=filename,
-                filename=filename,
-                content=faraday_file
-            )
-            db.session.commit()
-            return flask.jsonify({'message': 'Evidence upload was successful'})
+            _attachments = vuln['_attachments']
+            if filename in _attachments:
+                message = 'Evidence already exists in vuln'
+                return make_response(flask.jsonify(message=message, success=False, code=400), 400)
+            else:
+                faraday_file = FaradayUploadedFile(request.files['file'].read())
+                instance, created = get_or_create(
+                    db.session,
+                    File,
+                    object_id=vuln_id,
+                    object_type='vulnerability',
+                    name=filename,
+                    filename=filename,
+                    content=faraday_file
+                )
+                db.session.commit()
+                message = 'Evidence upload was successful'
+                return flask.jsonify({'message': message})
         else:
             flask.abort(404, "Vulnerability not found")
 
@@ -884,7 +889,7 @@ class VulnerabilityView(PaginatedMixin,
 
             return vulns_data, len(rows)
 
-    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         """
         ---
@@ -927,7 +932,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<int:vuln_id>/attachments/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
         """
         ---
@@ -965,7 +970,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
         """
         ---
@@ -995,7 +1000,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('export_csv/', methods=['GET'])
+    @route('export_csv', methods=['GET'])
     def export_csv(self, workspace_name):
         """
         ---
@@ -1074,7 +1079,7 @@ class VulnerabilityView(PaginatedMixin,
         response = {'deleted_vulns': deleted_vulns}
         return flask.jsonify(response)
 
-    @route('top_users/', methods=['GET'])
+    @route('top_users', methods=['GET'])
     def top_users(self, workspace_name):
         """
         ---
@@ -1107,41 +1112,4 @@ class VulnerabilityView(PaginatedMixin,
         return flask.jsonify(response)
 
 
-class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/<int:vuln_id>/attachment', methods=['POST'])
-    def post_attachment(self, workspace_name, vuln_id):
-        return super().post_attachment(workspace_name, vuln_id)
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
-    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super().get_attachment(workspace_name, vuln_id, attachment_filename)
-
-    @route('/<int:vuln_id>/attachment', methods=['GET'])
-    def get_attachments_by_vuln(self, workspace_name, vuln_id):
-        return super().get_attachments_by_vuln(workspace_name, vuln_id)
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
-    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super().delete_attachment(workspace_name, vuln_id, attachment_filename)
-
-    @route('/export_csv', methods=['GET'])
-    def export_csv(self, workspace_name):
-        return super().export_csv(workspace_name)
-
-    @route('/top_users', methods=['GET'])
-    def top_users(self, workspace_name):
-        return super().top_users(workspace_name)
-
-    post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__
-    delete_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    export_csv.__doc__ = VulnerabilityView.post_attachment.__doc__
-    top_users.__doc__ = VulnerabilityView.post_attachment.__doc__
-
-
 VulnerabilityView.register(vulns_api)
-VulnerabilityV3View.register(vulns_api)

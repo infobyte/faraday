@@ -21,8 +21,7 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-    ReadOnlyMultiWorkspacedView,
-    PatchableMixin
+    ReadOnlyMultiWorkspacedView
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
@@ -180,11 +179,6 @@ class AgentCreationView(CreateMixin, GenericView):
         return agent
 
 
-class AgentCreationV3View(AgentCreationView):
-    route_prefix = '/v3'
-    trailing_slash = False
-
-
 class ExecutorDataSchema(Schema):
     executor = fields.String(default=None)
     args = fields.Dict(default=None)
@@ -261,18 +255,13 @@ class AgentWithWorkspacesView(UpdateMixin,
         return obj
 
 
-class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin):
-    route_prefix = '/v3'
-    trailing_slash = False
-
-
 class AgentView(ReadOnlyMultiWorkspacedView):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
-    @route('/<int:agent_id>/', methods=['DELETE'])
+    @route('/<int:agent_id>', methods=['DELETE'])
     def remove_workspace(self, workspace_name, agent_id):
         """
         ---
@@ -294,7 +283,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         db.session.commit()
         return make_response({"description": "ok"}, 204)
 
-    @route('/<int:agent_id>/run/', methods=['POST'])
+    @route('/<int:agent_id>/run', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
         """
         ---
@@ -410,36 +399,6 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         return flask.jsonify(get_manifests())
 
 
-class AgentV3View(AgentView):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/<int:agent_id>', methods=['DELETE'])
-    def remove_workspace(self, workspace_name, agent_id):
-        # This endpoint is not an exception for V3, overrides logic of DELETE
-        return super().remove_workspace(workspace_name, agent_id)
-
-    @route('/<int:agent_id>/run', methods=['POST'])
-    def run_agent(self, workspace_name, agent_id):
-        return super().run_agent(workspace_name, agent_id)
-
-    @route('/validate_param', methods=['POST'])
-    def validate_param(self, workspace_name):
-        return super().validate_param(workspace_name)
-
-    @route('/get_manifests', methods=['GET'])
-    def manifests_get(self, workspace_name):
-        return super().manifests_get(workspace_name)
-
-    remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
-    run_agent.__doc__ = AgentView.run_agent.__doc__
-    validate_param.__doc__ = AgentView.validate_param.__doc__
-    manifests_get.__doc__ = AgentView.manifests_get.__doc__
-
-
 AgentWithWorkspacesView.register(agent_api)
-AgentWithWorkspacesV3View.register(agent_api)
 AgentCreationView.register(agent_creation_api)
-AgentCreationV3View.register(agent_creation_api)
 AgentView.register(agent_api)
-AgentV3View.register(agent_api)

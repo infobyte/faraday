@@ -25,7 +25,7 @@ SQLAlchemy>=1.2.0,<1.4.0
 tqdm>=4.15.0
 twisted>=18.9.0
 webargs>=7.0.0
-marshmallow-sqlalchemy
+marshmallow-sqlalchemy==0.25.0
 filteralchemy-fork
 filedepot>=0.5.0
 nplusone>=0.8.1

@@ -6,14 +6,9 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 from faraday.server.models import User
 from faraday.server.web import get_app
 from tests import factories
-from tests.utils.url import v2_to_v3
 
 
 class TestLogin:
-
-    def check_url(self, url):
-        return url
-
     def test_case_bug_with_username(self, test_client, session):
         """
             When the user case does not match the one in database,
@@ -63,7 +58,7 @@ class TestLogin:
 
         headers = {'Authentication-Token': res.json['response']['user']['authentication_token']}
 
-        ws = test_client.get(self.check_url('/v2/ws/wonderland/'), headers=headers)
+        ws = test_client.get('/v3/ws/wonderland', headers=headers)
         assert ws.status_code == 200
 
     def test_case_ws_with_invalid_authentication_token(self, test_client, session):
@@ -90,12 +85,12 @@ class TestLogin:
 
         headers = {'Authorization': b'Token ' + token}
 
-        ws = test_client.get(self.check_url('/v2/ws/wonderland/'), headers=headers)
+        ws = test_client.get('/v3/ws/wonderland', headers=headers)
         assert ws.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_retrieve_token_from_api_and_use_it(self, test_client, session):
-        res = test_client.get(self.check_url('/v2/token/'))
+        res = test_client.get('/v3/token')
         cookies = [cookie.name for cookie in test_client.cookie_jar]
         assert "faraday_session_2" in cookies
         assert res.status_code == 200
@@ -106,7 +101,7 @@ class TestLogin:
         session.commit()
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        res = test_client.get(self.check_url('/v2/ws/wonderland/'), headers=headers)
+        res = test_client.get('/v3/ws/wonderland', headers=headers)
         assert res.status_code == 200
         assert 'Set-Cookie' not in res.headers
         cookies = [cookie.name for cookie in test_client.cookie_jar]
@@ -115,14 +110,14 @@ class TestLogin:
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        res = test_client.get(self.check_url('/v2/token/'))
+        res = test_client.get('/v3/token')
 
         assert res.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_token_expires_after_password_change(self, test_client, session):
         user = User.query.filter_by(username="test").first()
-        res = test_client.get(self.check_url('/v2/token/'))
+        res = test_client.get('/v3/token')
 
         assert res.status_code == 200
 
@@ -135,7 +130,7 @@ class TestLogin:
 
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        res = test_client.get(self.check_url('/v2/ws/'), headers=headers)
+        res = test_client.get('/v3/ws', headers=headers)
         assert res.status_code == 401
 
     def test_null_caracters(self, test_client, session):
@@ -166,7 +161,7 @@ class TestLogin:
 
         headers = {'Authentication-Token': res.json['response']['user']['authentication_token']}
 
-        ws = test_client.get(self.check_url('/v2/ws/wonderland/'), headers=headers)
+        ws = test_client.get('/v3/ws/wonderland', headers=headers)
         assert ws.status_code == 200
 
     def test_login_remember_me(self, test_client, session):
@@ -236,8 +231,3 @@ class TestLogin:
         assert res.status_code == 200
         cookies = [cookie.name for cookie in test_client.cookie_jar]
         assert "remember_token" not in cookies
-
-
-class TestLoginV3(TestLogin):
-    def check_url(self, url):
-        return v2_to_v3(url)

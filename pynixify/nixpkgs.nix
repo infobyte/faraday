@@ -117,6 +117,11 @@ let
         ./packages/marshmallow
         { };
 
+      marshmallow-sqlalchemy =
+        self.callPackage
+        ./packages/marshmallow-sqlalchemy
+        { };
+
       pyotp =
         self.callPackage
         ./packages/pyotp

@@ -108,6 +108,10 @@ class CustomMetadataSchema(MetadataSchema):
             return obj.creator_command_tool or 'Web UI'
 
 
+class CVESchema(AutoSchema):
+    identifier = fields.Integer(dump_only=True)
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -122,7 +126,8 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
-    cve = fields.Method(serialize='get_cve_refs', default=[])
+    # cve = fields.Method(serialize='get_cve_refs', default=[])
+    cve = fields.Nested(CVESchema, many=True)
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)

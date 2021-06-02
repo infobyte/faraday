@@ -355,6 +355,11 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
+
+    # Sacar los cve, cwe, etc.
+    # Buscar el cve en nuestra tabla de cve
+    #
+
     policyviolations = vuln_data.pop('policy_violations', [])
 
     vuln_data = vuln_data.copy()

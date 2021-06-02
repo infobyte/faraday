@@ -123,6 +123,8 @@ def upgrade():
     sa.Column('event_id', sa.Integer(), nullable=False),
     sa.Column('notification_subscription_config_id', sa.Integer(), nullable=False),
     sa.Column('mark_read', sa.Boolean(), nullable=True),
+    sa.Column('user_notified_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['user_notified_id'], ['faraday_user.id'], ),
     sa.ForeignKeyConstraint(['event_id'], ['notification_event.id'], ),
     sa.ForeignKeyConstraint(['notification_subscription_config_id'], ['notification_subscription_base_config.id'], ),
     sa.PrimaryKeyConstraint('id')

@@ -2262,6 +2262,15 @@ class NotificationSent(db.Model):
         'NotificationSubscriptionBaseConfig',
         backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
+
+    # TODO: el usuario tal vez deberia estar aca. Si se modifica la notificacion config nos caga el usuario al que se envio :think:
+    # El tema es que estamos repitiendo data.
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notifications_sent', cascade="all, delete-orphan")
+    )
+
     mark_read = Column(Boolean, default=False, index=True)  # mark read? is read? was read? index?
 
 

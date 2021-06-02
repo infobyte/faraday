@@ -7,7 +7,7 @@ import flask
 import logging
 
 import pyotp
-from faraday_agent_parameters_types.utils import type_validate
+from faraday_agent_parameters_types.utils import type_validate, get_manifests
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -29,7 +29,6 @@ from faraday.server.models import Agent, Executor, AgentExecution, db, \
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
-from faraday_agent_parameters_types.utils import get_manifests
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
@@ -361,7 +360,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 'command_id': command.id,
             })
 
-    @route('/validate_param/', methods=['POST'])
+    @route('/validate_param', methods=['POST'])
     def validate_param(self, workspace_name):
         """
         ---
@@ -385,7 +384,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             valid = False
         return flask.jsonify({"valid": valid, "errors": errors})
 
-    @route('/get_manifests/', methods=['GET'])
+    @route('/get_manifests', methods=['GET'])
     def manifests_get(self, workspace_name):
         """
         ---

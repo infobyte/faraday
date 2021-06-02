@@ -559,7 +559,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            self.check_url(urljoin(self.url(agent), 'run/')),
+            urljoin(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 400
@@ -597,5 +597,5 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         agent = AgentFactory.create(workspaces=[self.workspace])
         session.add(agent)
         session.commit()
-        res = test_client.get(self.check_url(urljoin(self.url(), 'get_manifests/')))
+        res = test_client.get(urljoin(self.url(), 'get_manifests'))
         assert res.status_code == 200

@@ -2244,6 +2244,12 @@ class NotificationEvent(db.Model):
     notification_data = Column(JSONType, nullable=False)
     create_date = Column(DateTime, default=datetime.utcnow)
 
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
+    )
+
     def parent(self):
         pass
 

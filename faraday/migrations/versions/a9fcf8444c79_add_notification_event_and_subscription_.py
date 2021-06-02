@@ -32,7 +32,9 @@ def upgrade():
     sa.Column('object_id', sa.Integer(), nullable=False),
     sa.Column('notification_data', JSONType(), nullable=False),
     sa.Column('create_date', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('workspace_id', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], )
     )
 
     ## Added manually

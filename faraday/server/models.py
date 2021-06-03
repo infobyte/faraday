@@ -1799,9 +1799,13 @@ class User(db.Model, UserMixin):
     preferences = Column(JSONType, nullable=True, default={})
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
-    role = db.relationship('Role', secondary=roles_users,
-                           backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary=roles_users,
+                            backref='users')
     # TODO: add  many to many relationship to add permission to workspace
+
+    @hybrid_property
+    def roles_list(self):
+        return [role.name for role in self.roles]
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",
@@ -1823,8 +1827,7 @@ class User(db.Model, UserMixin):
             "username": self.username,
             "name": self.username,
             "email": self.email,
-            "role": self.role,
-            "roles": [self.role],
+            "roles": self.roles_list,
         }
 
 

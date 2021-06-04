@@ -8,6 +8,8 @@ variables:
     APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
     DEBIAN_FRONTEND: noninteractive
     IMAGE_TAG: 'egrep -o "[0-9]\.([0-9]|[0-9][0-9])(\.[0-9])?" faraday/__init__.py'
+    VAULT_ROLE: 'faraday-readonly' 
+    VAULT_ADDR: 'https://tluav-lb.faradaysec.com'
 
     ## ENV_VARS LIST
     # FULL_TEST = Test all jobs
@@ -28,6 +30,7 @@ before_script:
     - mkdir -pv $APT_CACHE_DIR
 
 include:
+  - local: .gitlab/ci/fetch-secrets.yaml
   - local: .gitlab/ci/testing/.pretesting-gitlab-ci.yml
   - local: .gitlab/ci/testing/.nix-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml

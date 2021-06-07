@@ -25,6 +25,8 @@ class ReportsManager(Thread):
     def __init__(self, upload_reports_queue, *args, **kwargs):
         super().__init__(name="ReportsManager-Thread", daemon=True, *args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
+        self.plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder,
+                                              ignore_info=config.faraday_server.ignore_info_severity)
         self.__event = threading.Event()
 
     def stop(self):
@@ -78,8 +80,7 @@ class ReportsManager(Thread):
 
     def run(self):
         logger.info("Reports Manager Thread [Start]")
-        self.plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder,
-                                              ignore_info=config.faraday_server.ignore_info_severity)
+
         while not self.__event.is_set():
             try:
                 tpl: Tuple[str, int, Path, int, int] = \

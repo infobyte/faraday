@@ -15,6 +15,7 @@ class PingHomeThread(threading.Thread):
         self.__event = threading.Event()
 
     def run(self):
+        logger.info("Ping Home Thread [Start]")
         while not self.__event.is_set():
             try:
                 res = requests.get(HOME_URL, params={'version': faraday.__version__, 'key': 'white'},
@@ -29,4 +30,5 @@ class PingHomeThread(threading.Thread):
             self.__event.wait(RUN_INTERVAL)
 
     def stop(self):
+        logger.info("Ping Home Thread [Stopping...]")
         self.__event.set()

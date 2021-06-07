@@ -38,8 +38,6 @@ LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config' / 'server.ini'
 LOCAL_REPORTS_FOLDER = CONST_FARADAY_HOME_PATH / 'uploaded_reports'
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
-CONST_LICENSES_DB = 'faraday_licenses'
-CONST_VULN_MODEL_DB = 'cwe'
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +62,6 @@ def copy_default_config_to_local():
 
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
-
     logger.info(f"Local faraday-server configuration created at {LOCAL_CONFIG_FILE}")
 
 
@@ -101,20 +98,14 @@ class ConfigSection:
         section = None
         if section_name == 'database':
             section = database
-        elif section_name == 'dashboard':
-            section = dashboard
         elif section_name == 'faraday_server':
             section = faraday_server
-        elif section_name == 'ldap':
-            section = ldap
         elif section_name == 'storage':
             section = storage
         elif section_name == 'logger':
             section = logger_config
         elif section_name == 'limiter':
             section = limiter_config
-        elif section_name == 'smtp':
-            section = smtp
         else:
             return
         section.parse(__parser)
@@ -123,11 +114,6 @@ class ConfigSection:
 class DatabaseConfigObject(ConfigSection):
     def __init__(self):
         self.connection_string = None
-
-
-class DashboardConfigObject(ConfigSection):
-    def __init__(self):
-        self.show_vulns_by_price = False
 
 
 class LimiterConfigObject(ConfigSection):
@@ -151,36 +137,6 @@ class FaradayServerConfigObject(ConfigSection):
         self.ignore_info_severity = False
 
 
-class LDAPConfigObject(ConfigSection):
-    def __init__(self):
-        self.admin_group = None
-        self.client_group = None
-        self.disconnect_timeout = None
-        self.domain_dn = None
-        self.enabled = None
-        self.pentester_group = None
-        self.port = None
-        self.server = None
-        self.use_ldaps = None
-        self.use_start_tls = None
-
-
-class SmtpConfigObject(ConfigSection):
-    def __init__(self):
-        self.username = None
-        self.password = None
-        self.host = None
-        self.port = None
-        self.sender = None
-        self.ssl = False
-        self.certfile = None
-        self.keyfile = None
-        self.enabled = False
-
-    def is_enabled(self):
-        return self.enabled is True
-
-
 class StorageConfigObject(ConfigSection):
     def __init__(self):
         self.path = None
@@ -192,14 +148,10 @@ class LoggerConfig(ConfigSection):
 
 
 database = DatabaseConfigObject()
-dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()
-ldap = LDAPConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
-smtp = SmtpConfigObject()
 limiter_config = LimiterConfigObject()
-
 parse_and_bind_configuration()
 
 
@@ -208,9 +160,7 @@ def gen_web_config():
     # authenticated user. Don't add sensitive information here.
     doc = {
         'ver': license_version,
-        'lic_db': CONST_LICENSES_DB,
-        'vuln_model_db': CONST_VULN_MODEL_DB,
-        'show_vulns_by_price': dashboard.show_vulns_by_price,
+        'show_vulns_by_price': False,
         'websocket_port': faraday_server.websocket_port,
     }
     return doc

@@ -24,15 +24,14 @@ def manage(action, name):
             click.secho(f'Invalid settings: {name}', fg='red')
         else:
             settings = get_settings(name)
-            current_settings = {key: value for key, value in settings.value.items()}
             if action == "show":
                 click.secho(f"Settings for: {name}", fg="green")
-                for key, value in current_settings.items():
+                for key, value in settings.value.items():
                     click.secho(f"{key}: {value}")
             elif action == "update":
                 new_settings = {}
                 click.secho(f"Update settings for: {name}", fg="green")
-                for key, value in current_settings.items():
+                for key, value in settings.value.items():
                     new_value = click.prompt(f'{key}', default=value)
                     new_settings[key] = new_value
                 try:

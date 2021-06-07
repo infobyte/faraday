@@ -9,7 +9,7 @@ def get_settings(name: str):
 
 
 def get_all_settings() -> List:
-    return list(map(lambda x: x.settings_id, LOADED_SETTINGS.values()))
+    return [x.settings_id for x in LOADED_SETTINGS.values()]
 
 
 def load_settings():

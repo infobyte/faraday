@@ -3,7 +3,6 @@ from functools import lru_cache
 from typing import Dict, Optional
 from copy import deepcopy
 
-from faraday.settings.exceptions import InvalidConfigurationError
 from faraday.server.models import (
     db,
     Configuration
@@ -65,10 +64,7 @@ class Settings:
 
     def validate_configuration(self, config: Dict):
         valid_config = self.schema.load(config)
-        try:
-            self.custom_validation(valid_config)
-        except InvalidConfigurationError as e:
-            raise
+        self.custom_validation(valid_config)
         return valid_config
 
     @property

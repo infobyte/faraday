@@ -137,6 +137,7 @@ def database(app, request):
 
     db.app = app
     db.create_all()
+    db.engine.execute("INSERT INTO faraday_role(name) VALUES ('admin'),('pentester'),('client'),('asset_owner');")
 
     request.addfinalizer(teardown)
     return db

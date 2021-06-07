@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 LOADED_SETTINGS = {}
 
 
-class classproperty(object):
+class classproperty:
 
     def __init__(self, fget):
         self.fget = fget

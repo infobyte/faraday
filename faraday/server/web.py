@@ -8,7 +8,7 @@ from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
-from twisted.internet import ssl, reactor, error
+from twisted.internet import reactor, error
 from twisted.web.static import File
 from twisted.web.util import Redirect
 from twisted.web.http import proxiedLogFormatter
@@ -17,11 +17,9 @@ from autobahn.twisted.websocket import (
     listenWS
 )
 
-from flask_mail import Mail
-
 import faraday.server.config
 
-from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
@@ -83,13 +81,6 @@ class WebServer:
     def __config_server(self):
         self.__bind_address = faraday.server.config.faraday_server.bind_address
         self.__listen_port = int(faraday.server.config.faraday_server.port)
-
-    def __load_ssl_certs(self):
-        certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
-        if not all(certs):
-            logger.critical("HTTPS request but SSL certificates are not configured")
-            sys.exit(1)  # Abort web-server startup
-        return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
         self.__root_resource = self.__build_web_resource()
@@ -178,11 +169,5 @@ def get_app():
     if not FARADAY_APP:
         app = create_app()  # creates a Flask(__name__) app
         # After 'Create app'
-        app.config['MAIL_SERVER'] = smtp.host
-        app.config['MAIL_PORT'] = smtp.port
-        app.config['MAIL_USE_SSL'] = smtp.ssl
-        app.config['MAIL_USERNAME'] = smtp.username
-        app.config['MAIL_PASSWORD'] = smtp.password
-        mail = Mail(app)
         FARADAY_APP = app
     return FARADAY_APP

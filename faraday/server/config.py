@@ -15,7 +15,6 @@ from logging import (
 )
 from pathlib import Path
 
-from faraday import __license_version__ as license_version
 
 CONST_FARADAY_HOME_PATH = Path(
     os.getenv('FARADAY_HOME', Path('~/').expanduser())
@@ -153,14 +152,3 @@ storage = StorageConfigObject()
 logger_config = LoggerConfig()
 limiter_config = LimiterConfigObject()
 parse_and_bind_configuration()
-
-
-def gen_web_config():
-    # Warning: This is publicly accesible via the API, it doesn't even need an
-    # authenticated user. Don't add sensitive information here.
-    doc = {
-        'ver': license_version,
-        'show_vulns_by_price': False,
-        'websocket_port': faraday_server.websocket_port,
-    }
-    return doc

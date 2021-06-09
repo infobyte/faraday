@@ -360,30 +360,6 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 'command_id': command.id,
             })
 
-    @route('/validate_param', methods=['POST'])
-    def validate_param(self, workspace_name):
-        """
-        ---
-        post:
-          tags: ["Agent"]
-          description: Validates an executor parameter
-          responses:
-            200:
-              description: Ok
-            400:
-              description: Bad Request
-        """
-        if flask.request.content_type != 'application/json':
-            flask.abort(400, "Only application/json is a valid content-type")
-        valid = True
-        data = request.json
-        if "type" not in data or "data" not in data:
-            flask.abort(400, 'type and data needed in json format')
-        errors = type_validate(data["type"], data["data"])
-        if errors:
-            valid = False
-        return flask.jsonify({"valid": valid, "errors": errors})
-
     @route('/get_manifests', methods=['GET'])
     def manifests_get(self, workspace_name):
         """

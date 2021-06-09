@@ -36,6 +36,8 @@ build_nix_python3:
   stage: pre_build
   script:
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
+    - nix-env -if pynixify/nixpkgs.nix -A vault
+    - !reference [ .get_secrets, script ]
     - mkdir -p ~/.config/cachix
     - export USER=$(whoami)
     - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall

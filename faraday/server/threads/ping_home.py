@@ -28,6 +28,8 @@ class PingHomeThread(threading.Thread):
                 logger.exception(ex)
                 logger.warning("Can't connect to portal...")
             self.__event.wait(RUN_INTERVAL)
+        else:
+            logger.info("Ping Home Thread [Stop]")
 
     def stop(self):
         logger.info("Ping Home Thread [Stopping...]")

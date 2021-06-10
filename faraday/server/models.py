@@ -1803,7 +1803,7 @@ class User(db.Model, UserMixin):
                             backref='users')
     # TODO: add  many to many relationship to add permission to workspace
 
-    @hybrid_property
+    @property
     def roles_list(self):
         return [role.name for role in self.roles]
 

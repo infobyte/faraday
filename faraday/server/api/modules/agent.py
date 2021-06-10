@@ -371,7 +371,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             200:
               description: Ok
         """
-        return flask.jsonify(get_manifests())
+        return flask.jsonify(get_manifests("1.6.0"))
 
 
 AgentWithWorkspacesView.register(agent_api)

@@ -96,7 +96,7 @@ def import_vulnerability_templates(language, list_languages):
           'ask for the desired one')
 )
 @click.option(
-    '--password', type=str, default=False,
+    '--password', type=str,
     help=('Instead of using a random password for the user "faraday", '
           'use the one provided')
 )

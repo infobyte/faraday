@@ -364,9 +364,14 @@ class AgentView(ReadOnlyMultiWorkspacedView):
     def manifests_get(self, workspace_name):
         """
         ---
-        post:
+        get:
           tags: ["Agent"]
-          description: Get all manifests, Request max version with url parameter "v"
+          summary: Get all manifests, Optionally choose latest version with parameter
+          parameters:
+          - in: version
+            name: v
+            description: latest version to request
+
           responses:
             200:
               description: Ok

@@ -261,6 +261,8 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 abort(make_response(jsonify(message="Workspace start date can't be greater than the end date"), 400))
 
         scope = data.pop('scope', [])
+        if data.get("name") in ["filter"]:
+            abort(make_response(jsonify(message=f'Workspace can\'t be named {data.get("name")}'), 400))
         workspace = super()._perform_create(data, **kwargs)
         workspace.set_scope(scope)
 
@@ -269,6 +271,8 @@ class WorkspaceView(ReadWriteView, FilterMixin):
 
     def _update_object(self, obj, data, **kwargs):
         scope = data.pop('scope', [])
+        if data.get("name") in ["filter"]:
+            abort(make_response(jsonify(message=f'Workspace can\'t be named {data.get("name")}'), 400))
         obj.set_scope(scope)
         return super()._update_object(obj, data)
 

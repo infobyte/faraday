@@ -2,7 +2,10 @@ import logging
 from functools import lru_cache
 from typing import Dict, Optional
 from copy import deepcopy
+import os
+import signal
 
+from faraday.server.utils.database import get_or_create
 from faraday.server.models import (
     db,
     Configuration
@@ -25,6 +28,7 @@ class classproperty:
 class Settings:
     settings_id = None
     settings_key = None
+    must_restart_threads = False
 
     def __init__(self):
         if self.settings_key not in LOADED_SETTINGS:
@@ -78,3 +82,16 @@ class Settings:
     @classproperty
     def settings(cls):
         return LOADED_SETTINGS.get(cls.settings_key, cls())
+
+    def update(self, new_config=None):
+        saved_config, created = get_or_create(db.session, Configuration, key=self.settings_key)
+        if created:
+            saved_config.value = self.update_configuration(new_config)
+        else:
+            # SQLAlchemy doesn't detect in-place mutations to the structure of a JSON type.
+            # Thus, we make a deepcopy of the JSON so SQLAlchemy can detect the changes.
+            saved_config.value = self.update_configuration(new_config, saved_config.value)
+        db.session.commit()
+        self.__class__.value.fget.cache_clear()
+        if self.must_restart_threads:
+            os.kill(os.getpid(), signal.SIGUSR1)

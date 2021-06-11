@@ -9,8 +9,6 @@ import logging
 from flask import Blueprint, abort, make_response
 from marshmallow import Schema, fields, ValidationError
 
-from faraday.server.models import db, Configuration
-from faraday.server.utils.database import get_or_create
 from faraday.settings import get_settings, get_all_settings
 from faraday.settings.exceptions import InvalidConfigurationError
 
@@ -108,13 +106,5 @@ def update_setting_config():
         logger.error(f'Invalid setting for {settings_config}: {e}.')
         abort(make_response({'message': f'{e}.'}, 400))
 
-    saved_config, created = get_or_create(db.session, Configuration, key=settings.settings_key)
-    if created:
-        saved_config.value = settings.update_configuration(valid_setting_config)
-    else:
-        # SQLAlchemy doesn't detect in-place mutations to the structure of a JSON type.
-        # Thus, we make a deepcopy of the JSON so SQLAlchemy can detect the changes.
-        saved_config.value = settings.update_configuration(valid_setting_config, saved_config.value)
-    db.session.commit()
-    settings.__class__.value.fget.cache_clear()
+    settings.update(valid_setting_config)
     return flask.jsonify(settings_config)

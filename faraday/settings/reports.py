@@ -20,6 +20,7 @@ class ReportsSettingSchema(AutoSchema):
 class ReportsSettings(Settings):
     settings_id = "reports"
     settings_key = f'{settings_id}_settings'
+    must_restart_threads = True
     schema = ReportsSettingSchema()
 
     def custom_validation(self, validated_config):

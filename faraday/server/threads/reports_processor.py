@@ -26,7 +26,7 @@ class ReportsManager(Thread):
         self.upload_reports_queue = upload_reports_queue
         self.plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
                                               ignore_info=ReportsSettings.settings.ignore_info_severity)
-        logger.debug(f"Reports Manager: [Custom plugins folder: [{ReportsSettings.settings.custom_plugins_folder}]"
+        logger.info(f"Reports Manager: [Custom plugins folder: [{ReportsSettings.settings.custom_plugins_folder}]"
                      f"[Ignore info severity: {ReportsSettings.settings.ignore_info_severity}]")
         self.__event = threading.Event()
 

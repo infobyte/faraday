@@ -117,11 +117,6 @@ class WebServer:
             self.raw_report_processor.join()
         self.raw_report_processor = ReportsManager(REPORTS_QUEUE)
         self.raw_report_processor.start()
-        if self.ping_home_thread.is_alive():
-            self.ping_home_thread.stop()
-            self.ping_home_thread.join()
-        self.ping_home_thread = PingHomeThread()
-        self.ping_home_thread.start()
 
     def start_threads(self):
         self.raw_report_processor = ReportsManager(REPORTS_QUEUE)

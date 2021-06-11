@@ -366,12 +366,12 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         ---
         post:
           tags: ["Agent"]
-          description: Get all manifests
+          description: Get all manifests, Request max version with url parameter "v"
           responses:
             200:
               description: Ok
         """
-        return flask.jsonify(get_manifests("1.6.0"))
+        return flask.jsonify(get_manifests(request.args.get("v")))
 
 
 AgentWithWorkspacesView.register(agent_api)

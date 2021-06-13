@@ -13,7 +13,6 @@ from faraday.server.api.base import (
     InvalidUsage,
     CreateWorkspacedMixin,
     GenericWorkspacedView,
-    PatchableWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin
 )
@@ -55,14 +54,17 @@ class CommentCreateMixing(CreateWorkspacedMixin):
         return super()._perform_create(data, workspace_name)
 
 
-class CommentView(CommentCreateMixing, ReadWriteWorkspacedView):
+class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkUpdateWorkspacedMixin, BulkDeleteWorkspacedMixin):
     route_base = 'comment'
     model_class = Comment
     schema_class = CommentSchema
     order_field = 'create_date'
 
 
-class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
+class UniqueCommentView(GenericWorkspacedView,
+                        CommentCreateMixing,
+                        BulkUpdateWorkspacedMixin,
+                        BulkDeleteWorkspacedMixin):
     """
         This view is used by the plugin engine to avoid duplicate comments
         when the same plugin and data was ran multiple times.
@@ -90,18 +92,5 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
         return res
 
 
-class CommentV3View(CommentView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-
-class UniqueCommentV3View(UniqueCommentView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin,
-                          BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-
 CommentView.register(comment_api)
 UniqueCommentView.register(comment_api)
-CommentV3View.register(comment_api)
-UniqueCommentV3View.register(comment_api)

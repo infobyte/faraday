@@ -1,4 +1,4 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -7,19 +7,17 @@ See the file 'doc/LICENSE' for the license information
 '''
 from builtins import str
 
-from tests.utils.url import v2_to_v3
-
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
 
-API_PREFIX = '/v2/'
+API_PREFIX = '/v3/'
 OBJECT_COUNT = 5
+
 
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
-
     model = None
     factory = None
     api_endpoint = None
@@ -43,11 +41,11 @@ class GenericAPITest:
         return obj
 
     def url(self, obj=None):
-        url = API_PREFIX + self.api_endpoint + '/'
+        url = API_PREFIX + self.api_endpoint
         if obj is not None:
             id_ = str(getattr(obj, self.lookup_field)) if isinstance(
                 obj, self.model) else str(obj)
-            url += id_ + u'/'
+            url += u'/' + id_
         return url
 
 
@@ -105,13 +103,17 @@ class CreateTestsMixin:
 @pytest.mark.usefixtures('logged_user')
 class UpdateTestsMixin:
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @staticmethod
+    def control_data(test_suite, data: dict) -> dict:
+        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
         data = self.factory.build_dict()
         if method == "PUT":
             res = test_client.put(self.url(self.first_object), data=data)
         elif method == "PATCH":
-            data = PatchableTestsMixin.control_data(self, data)
+            data = self.control_data(self, data)
             res = test_client.patch(self.url(self.first_object), data=data)
         assert res.status_code == 200, (res.status_code, res.json)
         assert self.model.query.count() == OBJECT_COUNT
@@ -136,22 +138,6 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400, (res.status_code, res.json)
 
-
-@pytest.mark.usefixtures('logged_user')
-class PatchableTestsMixin(UpdateTestsMixin):
-
-    @staticmethod
-    def control_data(test_suite, data: dict) -> dict:
-        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_an_object(self, test_client, logged_user, method):
-        super().test_update_an_object(test_client, logged_user, method)
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_fails_with_existing(self, test_client, session, method):
-        super().test_update_fails_with_existing(test_client, session, method)
-
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""
         res = test_client.patch(self.url(self.first_object), data={})
@@ -163,7 +149,7 @@ class BulkUpdateTestsMixin:
 
     @staticmethod
     def control_data(test_suite, data: dict) -> dict:
-        return PatchableTestsMixin.control_data(test_suite, data)
+        return UpdateTestsMixin.control_data(test_suite, data)
 
     def test_bulk_update_an_object(self, test_client, logged_user):
         all_objs = self.model.query.all()
@@ -314,12 +300,4 @@ class ReadWriteAPITests(ReadWriteTestsMixin,
 class ReadOnlyAPITests(ListTestsMixin,
                        RetrieveTestsMixin,
                        GenericAPITest):
-    pass
-
-
-class V3TestMixin(
-    PatchableTestsMixin,
-    BulkDeleteTestsMixin,
-    BulkUpdateTestsMixin
-):
     pass

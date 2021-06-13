@@ -1,7 +1,6 @@
-
 import logging
 from io import BytesIO
-from lxml.etree import Element, SubElement, tostring # nosec
+from lxml.etree import Element, SubElement, tostring  # nosec
 # We don't use Element for parsing
 from flask import Blueprint, request, abort, send_file
 
@@ -12,7 +11,7 @@ export_data_api = Blueprint('export_data_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-@export_data_api.route('/v2/ws/<workspace_name>/export_data', methods=['GET'])
+@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data(workspace_name):
     """
     ---
@@ -47,14 +46,6 @@ def export_data(workspace_name):
         abort(400, "Invalid format.")
 
 
-@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
-def export_data_v3(workspace_name):
-    return export_data(workspace_name)
-
-
-export_data_v3.__doc__ = export_data.__doc__
-
-
 def xml_metasploit_format(workspace):
     root = Element('MetasploitV4')
     hosts_tag = SubElement(root, 'hosts')
@@ -82,7 +73,6 @@ def xml_metasploit_format(workspace):
                 web_services.add(vuln_web.service)
                 web_vuln_tag = SubElement(web_vulns_tag, 'web_vuln')
                 _build_vuln_web_element(vuln_web, web_vuln_tag)
-
 
         for vuln in host.vulnerabilities:
             vuln_tag = SubElement(vulns_tag, 'vuln')

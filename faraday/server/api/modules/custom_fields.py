@@ -7,8 +7,8 @@ from marshmallow import fields
 from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
+
     ReadWriteView,
-    PatchableMixin,
     BulkDeleteMixin,
     BulkUpdateMixin
 )
@@ -39,7 +39,7 @@ class CustomFieldsSchemaSchema(AutoSchema):
                   )
 
 
-class CustomFieldsSchemaView(ReadWriteView):
+class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin, BulkUpdateMixin):
     route_base = 'custom_fields_schema'
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
@@ -56,15 +56,9 @@ class CustomFieldsSchemaView(ReadWriteView):
         data = self._check_post_only_data(data)
         return super()._update_object(obj, data)
 
-
-class CustomFieldsSchemaV3View(CustomFieldsSchemaView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
-    route_prefix = '/v3'
-    trailing_slash = False
-
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         data = self._check_post_only_data(data)
         return super()._perform_bulk_update(ids, data, workspace_name=None, **kwargs)
 
 
 CustomFieldsSchemaView.register(custom_fields_schema_api)
-CustomFieldsSchemaV3View.register(custom_fields_schema_api)

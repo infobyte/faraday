@@ -67,6 +67,11 @@ let
         ./packages/apispec-webframeworks
         { };
 
+      bleach =
+        self.callPackage
+        ./packages/bleach
+        { };
+
       faraday-plugins =
         self.callPackage
         ./packages/faraday-plugins
@@ -100,6 +105,11 @@ let
       flask-security-too =
         self.callPackage
         ./packages/flask-security-too
+        { };
+
+      marshmallow-sqlalchemy =
+        self.callPackage
+        ./packages/marshmallow-sqlalchemy
         { };
 
       pyotp =

@@ -48,9 +48,9 @@ def gzipped(f):
 
             response.direct_passthrough = False
 
-            if (response.status_code < 200 or
-                response.status_code >= 300 or
-                'Content-Encoding' in response.headers):
+            if (response.status_code < 200
+                or response.status_code >= 300
+                or 'Content-Encoding' in response.headers):
                 return response
             gzip_buffer = IO()
             gzip_file = gzip.GzipFile(mode='wb',

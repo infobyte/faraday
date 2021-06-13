@@ -7,6 +7,7 @@
 , apispec-webframeworks
 , autobahn
 , bcrypt
+, bleach
 , buildPythonPackage
 , click
 , colorama
@@ -24,6 +25,7 @@
 , flask-limiter
 , flask-security-too
 , flask_login
+, flask_mail
 , flask_sqlalchemy
 , hypothesis
 , lib
@@ -61,7 +63,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "3.14.3";
+    "3.15.0";
 
   src =
     lib.cleanSource
@@ -86,6 +88,7 @@ buildPythonPackage rec {
       wtforms
       flask_login
       flask-security-too
+      bleach
       marshmallow
       pillow
       psycopg2
@@ -113,6 +116,7 @@ buildPythonPackage rec {
       pyyaml
       pyotp
       flask-limiter
+      flask_mail
     ];
   checkInputs =
     [

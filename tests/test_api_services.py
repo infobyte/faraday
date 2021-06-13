@@ -5,8 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from tests.utils.url import v2_to_v3
-
 """Tests for many API endpoints that do not depend on workspace_name"""
 try:
     from urllib import urlencode
@@ -16,9 +14,9 @@ except ImportError:
 import pytest
 import json
 
-from faraday.server.api.modules.services import ServiceView, ServiceV3View
+from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests, V3TestMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin, BulkUpdateTestsMixin
 from faraday.server.models import (
     Service
 )
@@ -26,7 +24,7 @@ from tests.factories import HostFactory, EmptyCommandFactory
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestListServiceView(ReadWriteAPITests):
+class TestListServiceView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Service
     factory = factories.ServiceFactory
     api_endpoint = 'services'
@@ -233,7 +231,7 @@ class TestListServiceView(ReadWriteAPITests):
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.port == 221
 
-    @pytest.mark.parametrize("method", ["PUT"])
+    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_cant_change_id(self, test_client, session, method):
         service = self.factory()
         host = HostFactory.create()
@@ -269,7 +267,6 @@ class TestListServiceView(ReadWriteAPITests):
         cmd_obj = command.command_objects[0]
         assert cmd_obj.object_type == 'service'
         assert cmd_obj.object_id == res.json['id']
-
 
     def test_create_service_without_ost(self, test_client, host, session):
         session.commit()
@@ -338,17 +335,6 @@ class TestListServiceView(ReadWriteAPITests):
         res = test_client.post(self.url(), data=data)
         print(res.data)
         assert res.status_code == 400
-
-
-class TestListServiceViewV3(TestListServiceView, V3TestMixin):
-    view_class = ServiceV3View
-
-    def url(self, obj=None, workspace=None):
-        return v2_to_v3(super().url(obj, workspace))
-
-    @pytest.mark.parametrize("method", ["PUT", "PATCH"])
-    def test_update_cant_change_id(self, test_client, session, method):
-        super().test_update_cant_change_id(test_client, session, method)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_update_cant_change_id(self, test_client):

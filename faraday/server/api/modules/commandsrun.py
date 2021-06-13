@@ -13,7 +13,6 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     PaginatedMixin,
-    PatchableWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin
 )
@@ -48,7 +47,7 @@ class CommandSchema(AutoSchema):
         if obj.end_date:
             return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
         else:
-            if (datetime.datetime.now() - obj.start_date).total_seconds() > 86400:# 86400 is 1d TODO BY CONFIG
+            if (datetime.datetime.now() - obj.start_date).total_seconds() > 86400:  # 86400 is 1d TODO BY CONFIG
                 return 'Timeout'
             return 'In progress'
 
@@ -67,7 +66,7 @@ class CommandSchema(AutoSchema):
                   'params', 'user', 'creator', 'workspace', 'tool', 'import_source', 'metadata')
 
 
-class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
+class CommandView(PaginatedMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
     route_base = 'commands'
     model_class = Command
     schema_class = CommandSchema
@@ -86,7 +85,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             'commands': commands,
         }
 
-    @route('/activity_feed/')
+    @route('/activity_feed')
     def activity_feed(self, workspace_name):
         """
         ---
@@ -117,7 +116,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             })
         return res
 
-    @route('/last/', methods=['GET'])
+    @route('/last', methods=['GET'])
     def last_command(self, workspace_name):
         """
         ---
@@ -127,7 +126,8 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             200:
                description: Last executed command or an empty json
         """
-        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc()).first()
+        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(
+            Command.start_date.desc()).first()
         command_obj = {}
         if command:
             command_obj = {
@@ -146,21 +146,4 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         return flask.jsonify(command_obj)
 
 
-class CommandV3View(CommandView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/activity_feed')
-    def activity_feed(self, workspace_name):
-        return super().activity_feed(workspace_name)
-
-    @route('/last', methods=['GET'])
-    def last_command(self, workspace_name):
-        return super().last_command(workspace_name)
-
-    activity_feed.__doc__ = CommandView.activity_feed.__doc__
-    last_command.__doc__ = CommandView.last_command.__doc__
-
-
 CommandView.register(commandsrun_api)
-CommandV3View.register(commandsrun_api)

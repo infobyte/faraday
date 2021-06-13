@@ -8,7 +8,7 @@ from builtins import input
 
 import getpass
 import string
-
+import uuid
 import os
 import sys
 import click
@@ -17,7 +17,7 @@ from alembic.config import Config
 from alembic import command
 from random import SystemRandom
 from tempfile import TemporaryFile
-from subprocess import Popen # nosec
+from subprocess import Popen  # nosec
 
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -48,7 +48,8 @@ class InitDB():
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = input(f'Database section {Fore.YELLOW} already found{Fore.WHITE}. Do you want to reconfigure database? (yes/no) ')
+                reconfigure = input(
+                    f'Database section {Fore.YELLOW} already found{Fore.WHITE}. Do you want to reconfigure database? (yes/no) ')
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -119,21 +120,23 @@ class InitDB():
             else:
                 user_password = self.generate_random_pw(12)
         already_created = False
+        fs_uniquifier = str(uuid.uuid4())
         try:
 
             statement = text("""
                 INSERT INTO faraday_user (
                             username, name, password,
                             is_ldap, active, last_login_ip,
-                            current_login_ip, role, state_otp
+                            current_login_ip, role, state_otp, fs_uniquifier
                         ) VALUES (
                             'faraday', 'Administrator', :password,
                             false, true, '127.0.0.1',
-                            '127.0.0.1', 'admin', 'disabled'
+                            '127.0.0.1', 'admin', 'disabled', :fs_uniquifier
                         )
             """)
             params = {
-                'password': hash_password(user_password)
+                'password': hash_password(user_password),
+                'fs_uniquifier': fs_uniquifier
             }
             connection = engine.connect()
             connection.execute(statement, **params)
@@ -142,8 +145,8 @@ class InitDB():
                 # when re using database user could be created previously
                 already_created = True
                 print(
-                "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
-                    yellow=Fore.YELLOW, white=Fore.WHITE))
+                    "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
+                        yellow=Fore.YELLOW, white=Fore.WHITE))
             else:
                 print(
                     "{yellow}WARNING{white}: Can't create administrator user.".format(
@@ -153,7 +156,7 @@ class InitDB():
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"
                   "user_password} \n".format(user_password=user_password,
-                                               white=Fore.WHITE, red=Fore.RED))
+                                             white=Fore.WHITE, red=Fore.RED))
 
     def _configure_existing_postgres_user(self):
         username = input('Please enter the postgresql username: ')
@@ -167,13 +170,14 @@ class InitDB():
         if 'unknown user: postgres' in psql_output:
             print(f'ERROR: Postgres user not found. Did you install package {Fore.BLUE}postgresql{Fore.WHITE}?')
         elif 'could not connect to server' in psql_output:
-            print(f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
+            print(
+                f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
         elif process_status > 0:
             current_psql_output_file.seek(0)
             print('ERROR: ' + psql_output)
 
         if process_status != 0:
-            current_psql_output_file.close() # delete temp file
+            current_psql_output_file.close()  # delete temp file
             sys.exit(process_status)
 
     def generate_random_pw(self, pwlen):
@@ -185,15 +189,17 @@ class InitDB():
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
         """
-        print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
-        username =  os.environ.get("FARADAY_DATABASE_USER", 'faraday_postgresql')
+        print(
+            'This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(
+                blue=Fore.BLUE, white=Fore.WHITE))
+        username = os.environ.get("FARADAY_DATABASE_USER", 'faraday_postgresql')
         postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
             print(f'{Fore.BLUE}MAC OS detected{Fore.WHITE}')
             postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
-        command = postgres_command + [ '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
-        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file) # nosec
+        command = postgres_command + ['-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
+        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)  # nosec
         p.wait()
         psql_log_file.seek(0)
         output = psql_log_file.read()
@@ -206,14 +212,17 @@ class InitDB():
 
             try:
                 if not getattr(faraday.server.config, 'database', None):
-                    print('Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
-                    print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    print(
+                        'Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
+                    print(
+                        'Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
                     sys.exit(1)
                 try:
                     password = faraday.server.config.database.connection_string.split(':')[2].split('@')[0]
                 except AttributeError:
                     print('Could not find connection string.')
-                    print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    print(
+                        'Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
                     sys.exit(1)
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,
@@ -245,7 +254,7 @@ class InitDB():
 
         print(f'Creating database {database_name}')
         command = postgres_command + ['createdb', '-E', 'utf8', '-O', username, database_name]
-        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp') # nosec
+        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp')  # nosec
         p.wait()
         return_code = p.returncode
         psql_log_file.seek(0)
@@ -275,7 +284,7 @@ class InitDB():
 
     def _create_tables(self, conn_string):
         print('Creating tables')
-        from faraday.server.models import db   # pylint:disable=import-outside-toplevel
+        from faraday.server.models import db  # pylint:disable=import-outside-toplevel
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
 
         # Check if the alembic_version exists
@@ -293,7 +302,8 @@ class InitDB():
             db.create_all()
         except OperationalError as ex:
             if 'could not connect to server' in str(ex):
-                print(f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
+                print(
+                    f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
                 sys.exit(1)
             elif 'password authentication failed' in str(ex):
                 print('ERROR: ')

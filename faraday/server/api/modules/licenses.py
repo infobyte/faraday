@@ -7,8 +7,8 @@ from marshmallow import fields
 from faraday.server.models import License
 from faraday.server.api.base import (
     ReadWriteView,
+
     AutoSchema,
-    PatchableMixin,
     BulkDeleteMixin,
     BulkUpdateMixin
 )
@@ -33,16 +33,10 @@ class LicenseSchema(AutoSchema):
                   'notes')
 
 
-class LicenseView(ReadWriteView):
+class LicenseView(ReadWriteView, BulkUpdateMixin, BulkDeleteMixin):
     route_base = 'licenses'
     model_class = License
     schema_class = LicenseSchema
 
 
-class LicenseV3View(LicenseView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
-    route_prefix = 'v3/'
-    trailing_slash = False
-
-
 LicenseView.register(license_api)
-LicenseV3View.register(license_api)

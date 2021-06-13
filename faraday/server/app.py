@@ -2,9 +2,11 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
+import os
 import string
 import datetime
 
+import bleach
 import pyotp
 import requests
 from flask_limiter import Limiter
@@ -17,6 +19,7 @@ from faraday.server.models import User
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
+import flask_login
 from flask import Flask, session, g, request
 from flask.json import JSONEncoder
 from flask_sqlalchemy import get_debug_queries
@@ -45,7 +48,6 @@ from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.utils.invalid_chars import remove_null_caracters
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 
-
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
@@ -69,33 +71,35 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
-
-    from faraday.server.api.modules.info import info_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.commandsrun import commandsrun_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.activity_feed import activityfeed_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.credentials import credentials_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts import host_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.licenses import license_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.services import services_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.session import session_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.vulns import vulns_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.vulnerability_template import vulnerability_template_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.workspaces import workspace_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.handlers import handlers_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.comments import comment_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.upload_reports import upload_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.websocket_auth import websocket_auth_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.get_exploits import exploits_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.custom_fields import custom_fields_schema_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.agent import agent_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.info import info_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.commandsrun import commandsrun_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.activity_feed import activityfeed_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.credentials import credentials_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts import host_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.licenses import license_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services import services_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.session import session_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns import vulns_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulnerability_template import \
+        vulnerability_template_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.workspaces import workspace_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.handlers import handlers_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.comments import comment_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.upload_reports import upload_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.websocket_auth import websocket_auth_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.get_exploits import exploits_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.custom_fields import \
+        custom_fields_schema_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent_auth_token import \
+        agent_auth_token_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent import agent_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.bulk_create import bulk_create_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.token import token_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.search_filter import searchfilter_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
-    #Custom reset password
-    from faraday.server.api.modules.auth import auth # pylint:disable=import-outside-toplevel
+    # Custom reset password
+    from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -146,7 +150,7 @@ def register_handlers(app):
         try:
             data = serialized.loads(token)
             user_id = data["user_id"]
-            user = User.query.filter_by(id=user_id).first()
+            user = User.query.filter_by(fs_uniquifier=user_id).first()
             if not user or not verify_hash(data['validation_check'], user.password):
                 logger.warn('Invalid authentication token. token invalid after password change')
                 return None
@@ -156,11 +160,8 @@ def register_handlers(app):
         except BadSignature:
             return None  # invalid token
 
-
-    @app.before_request
-    def default_login_required(): # pylint:disable=unused-variable
-        view = app.view_functions.get(flask.request.endpoint)
-
+    @app.login_manager.request_loader
+    def load_user_from_request(request):
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
             header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
             try:
@@ -174,43 +175,39 @@ def register_handlers(app):
                 if not user:
                     logger.warn('Invalid authentication token.')
                     flask.abort(401)
-                logged_in = True
+                else:
+                    return user
             elif auth_type == 'agent':
                 # Don't handle the agent logic here, do it in another
                 # before_request handler
-                logged_in = False
+                return None
+            elif auth_type == "basic":
+                username = flask.request.authorization.get('username', '')
+                password = flask.request.authorization.get('password', '')
+                user = User.query.filter_by(username=username).first()
+                if user and user.verify_and_update_password(password):
+                    return user
             else:
                 logger.warn("Invalid authorization type")
                 flask.abort(401)
-        else:
-            # TODO use public flask_login functions
-            logged_in = '_user_id' in flask.session
-            user_id = session.get("_user_id")
-            if logged_in:
-                user = User.query.filter_by(id=user_id).first()
 
-        if logged_in:
-            assert user
+        # finally, return None if both methods did not login the user
+        return None
 
-        if not logged_in and not getattr(view, 'is_public', False) \
+    @app.before_request
+    def default_login_required():  # pylint:disable=unused-variable
+        view = app.view_functions.get(flask.request.endpoint)
+
+        if flask_login.current_user.is_anonymous and not getattr(view, 'is_public', False) \
                 and flask.request.method != 'OPTIONS':
             flask.abort(401)
 
-        g.user = None
-        if logged_in:
-            g.user = user
-            if user is None:
-                logger.warn(f"Unknown user id {session['_user_id']}")
-                del flask.session['_user_id']
-                flask.abort(401)  # 403 would be better but breaks the web ui
-                return
-
     @app.before_request
-    def load_g_custom_fields(): # pylint:disable=unused-variable
+    def load_g_custom_fields():  # pylint:disable=unused-variable
         g.custom_fields = {}
 
     @app.after_request
-    def log_queries_count(response): # pylint:disable=unused-variable
+    def log_queries_count(response):  # pylint:disable=unused-variable
         if flask.request.method not in ['GET', 'HEAD']:
             # We did most optimizations for read only endpoints
             # TODO migrations: improve optimization and remove this if
@@ -285,8 +282,11 @@ def user_logged_in_succesfull(app, user):
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
 
 
-def create_app(db_connection_string=None, testing=None):
+def uia_username_mapper(identity):
+    return bleach.clean(identity, strip=True)
 
+
+def create_app(db_connection_string=None, testing=None):
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',
@@ -329,19 +329,18 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
         'SECURITY_PASSWORD_SINGLE_HASH': True,
         'WTF_CSRF_ENABLED': False,
-        'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': [{'username': {'mapper': uia_username_mapper}}],
         'SECURITY_POST_LOGIN_VIEW': '/_api/session',
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',
         'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
         'SECURITY_POST_RESET_VIEW': '/',
-        'SECURITY_SEND_PASSWORD_RESET_EMAIL':True,
-        #For testing porpouse
+        'SECURITY_SEND_PASSWORD_RESET_EMAIL': True,
+        # For testing porpouse
         'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
         'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
-
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.
@@ -361,7 +360,8 @@ def create_app(db_connection_string=None, testing=None):
             # 'sha256_crypt',
             # 'sha512_crypt',
         ],
-        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
+        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(
+            hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
     })
@@ -374,7 +374,8 @@ def create_app(db_connection_string=None, testing=None):
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:
-        logger.warn('No storage section or path in the .faraday/config/server.ini. Setting the default value to .faraday/storage')
+        logger.warn(
+            'No storage section or path in the .faraday/config/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
 
     if not DepotManager.get('default'):
@@ -386,19 +387,23 @@ def create_app(db_connection_string=None, testing=None):
             DepotManager.configure('default', {
                 'depot.storage_path': storage_path
             })
-
+    app.config['SQLALCHEMY_ECHO'] = 'FARADAY_LOG_QUERY' in os.environ
     check_testing_configuration(testing, app)
 
     try:
-        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or faraday.server.config.database.connection_string.strip("'")
+        app.config[
+            'SQLALCHEMY_DATABASE_URI'] = db_connection_string or faraday.server.config.database.connection_string.strip(
+            "'")
     except AttributeError:
-        logger.info('Missing [database] section on server.ini. Please configure the database before running the server.')
+        logger.info(
+            'Missing [database] section on server.ini. Please configure the database before running the server.')
     except NoOptionError:
-        logger.info('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
+        logger.info(
+            'Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
 
-    from faraday.server.models import db # pylint:disable=import-outside-toplevel
+    from faraday.server.models import db  # pylint:disable=import-outside-toplevel
     db.init_app(app)
-    #Session(app)
+    # Session(app)
 
     # Setup Flask-Security
     app.user_datastore = SQLAlchemyUserDatastore(
@@ -434,7 +439,6 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
-    app.view_functions['agent_creation_api.AgentCreationV3View:post'].is_public = True
 
     return app
 
@@ -468,7 +472,7 @@ class CustomLoginForm(LoginForm):
             return False
         self.email.data = remove_null_caracters(self.email.data)
 
-        self.user = _datastore.get_user(self.email.data)
+        self.user = _datastore.find_user(username=self.email.data)
 
         if self.user is None:
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "

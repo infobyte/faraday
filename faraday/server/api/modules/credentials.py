@@ -11,8 +11,8 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     FilterSetMeta,
     FilterAlchemyMixin,
+
     InvalidUsage,
-    PatchableWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin
 )
@@ -112,7 +112,10 @@ class CredentialFilterSet(FilterSet):
         operators = (operators.Equal, )
 
 
-class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
+class CredentialView(FilterAlchemyMixin,
+                     ReadWriteWorkspacedView,
+                     BulkDeleteWorkspacedMixin,
+                     BulkUpdateWorkspacedMixin):
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
@@ -133,10 +136,4 @@ class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         }
 
 
-class CredentialV3View(CredentialView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-
 CredentialView.register(credentials_api)
-CredentialV3View.register(credentials_api)

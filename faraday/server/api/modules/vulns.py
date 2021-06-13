@@ -10,15 +10,13 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 
 import flask
-import wtforms
 from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
-from flask import Blueprint
+from flask import Blueprint, make_response
 from flask_classful import route
-from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
@@ -36,7 +34,6 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     InvalidUsage,
     CountMultiWorkspacedMixin,
-    PatchableWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin
 )
@@ -126,6 +123,10 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
+    owasp = fields.Method(serialize='get_owasp_refs', default=[])
+    cve = fields.Method(serialize='get_cve_refs', default=[])
+    cwe = fields.Method(serialize='get_cwe_refs', default=[])
+    cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -158,6 +159,7 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
+    attachments_count = fields.Integer(dump_only=True, attribute='attachments_count')
 
     class Meta:
         model = Vulnerability
@@ -171,10 +173,24 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool')
+            'custom_fields', 'external_id', 'tool', 'attachments_count',
+            'cvss', 'cwe', 'cve', 'owasp',
+            )
 
     def get_type(self, obj):
         return obj.__class__.__name__
+
+    def get_owasp_refs(self, obj):
+        return [reference for reference in obj.references if 'owasp' in reference.lower()]
+
+    def get_cwe_refs(self, obj):
+        return [reference for reference in obj.references if 'cwe' in reference.lower()]
+
+    def get_cve_refs(self, obj):
+        return [reference for reference in obj.references if 'cve' in reference.lower()]
+
+    def get_cvss_refs(self, obj):
+        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     def get_attachments(self, obj):
         res = {}
@@ -269,7 +285,6 @@ class VulnerabilitySchema(AutoSchema):
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):
-
     method = fields.String(default='')
     params = fields.String(attribute='parameters', default='')
     pname = fields.String(attribute='parameter_name', default='')
@@ -292,7 +307,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool'
+            'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
+            'cve', 'cwe', 'owasp', 'cvss',
         )
 
 
@@ -338,7 +354,7 @@ class ServiceFilter(Filter):
         return query.join(
             alias,
             alias.id == model.__table__.c.service_id).filter(
-                alias.name == value
+            alias.name == value
         )
 
 
@@ -348,13 +364,13 @@ class HostnamesFilter(Filter):
 
         value_list = value.split(",")
 
-        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
-           join(Host).\
-           join(alias).\
-           filter(alias.name.in_(value_list))
+        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id). \
+            join(Host). \
+            join(alias). \
+            filter(alias.name.in_(value_list))
 
-        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
-            join(alias).\
+        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id). \
+            join(alias). \
             filter(alias.name.in_(value_list))
 
         query = service_hostnames_query.union(host_hostnames_query)
@@ -398,6 +414,7 @@ class VulnerabilityFilterSet(FilterSet):
             field: _strict_filtering for field in strict_fields
         }
         operators = (CustomILike, operators.Equal)
+
     id = IDFilter(fields.Int())
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
@@ -445,16 +462,17 @@ class VulnerabilityFilterSet(FilterSet):
 
         if command_id:
             # query = query.filter(CommandObject.command_id == int(command_id))
-            query = query.filter(VulnerabilityGeneric.creator_command_id ==
-                                 int(command_id))  # TODO migration: handle invalid int()
+            query = query.filter(VulnerabilityGeneric.creator_command_id
+                                 == int(command_id))  # TODO migration: handle invalid int()
         return query
 
 
 class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
                         ReadWriteWorkspacedView,
-                        CountMultiWorkspacedMixin):
-
+                        CountMultiWorkspacedMixin,
+                        BulkDeleteWorkspacedMixin,
+                        BulkUpdateWorkspacedMixin):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
@@ -526,6 +544,7 @@ class VulnerabilityView(PaginatedMixin,
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
+            filename = filename.replace(" ", "_")
             get_or_create(
                 db.session,
                 File,
@@ -537,7 +556,7 @@ class VulnerabilityView(PaginatedMixin,
             )
 
     def _update_object(self, obj, data, **kwargs):
-        data.pop('type', '') # It's forbidden to change vuln type!
+        data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
         return super()._update_object(obj, data)
 
@@ -558,30 +577,35 @@ class VulnerabilityView(PaginatedMixin,
         """
         query = super()._get_eagerloaded_query(
             *args, **kwargs)
-        joinedloads = [
+        options = [
             joinedload(Vulnerability.host)
-            .load_only(Host.id)  # Only hostnames are needed
-            .joinedload(Host.hostnames),
+                .load_only(Host.id)  # Only hostnames are needed
+                .joinedload(Host.hostnames),
 
             joinedload(Vulnerability.service)
-            .joinedload(Service.host)
-            .joinedload(Host.hostnames),
+                .joinedload(Service.host)
+                .joinedload(Host.hostnames),
 
             joinedload(VulnerabilityWeb.service)
-            .joinedload(Service.host)
-            .joinedload(Host.hostnames),
+                .joinedload(Service.host)
+                .joinedload(Host.hostnames),
             joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
-            joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
+
+        if flask.request.args.get('get_evidence'):
+            options.append(joinedload(VulnerabilityGeneric.evidence))
+        else:
+            options.append(noload(VulnerabilityGeneric.evidence))
+
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,
             [Vulnerability, VulnerabilityWeb]
-        ), *joinedloads)
+        ), *options)
 
     def _filter_query(self, query):
         query = super()._filter_query(query)
@@ -603,7 +627,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
-        if request.method == 'POST':
+        if request.method == 'POST' and request.json:
             requested_type = request.json.get('type', None)
             if not requested_type:
                 raise InvalidUsage('Type is required.')
@@ -665,7 +689,7 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
 
-    @route('/<int:vuln_id>/attachment/', methods=['POST'])
+    @route('/<int:vuln_id>/attachment', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
         """
         ---
@@ -681,32 +705,33 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
 
-        try:
-            validate_csrf(request.form.get('csrf_token'))
-        except wtforms.ValidationError:
-            flask.abort(403)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
-                                Workspace.name == workspace_name).first()
+                              Workspace.name == workspace_name).first()
 
         if vuln_workspace_check:
             if 'file' not in request.files:
                 flask.abort(400)
-
-            faraday_file = FaradayUploadedFile(request.files['file'].read())
+            vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
             filename = request.files['file'].filename
-
-            get_or_create(
-                db.session,
-                File,
-                object_id=vuln_id,
-                object_type='vulnerability',
-                name=filename,
-                filename=filename,
-                content=faraday_file
-            )
-            db.session.commit()
-            return flask.jsonify({'message': 'Evidence upload was successful'})
+            _attachments = vuln['_attachments']
+            if filename in _attachments:
+                message = 'Evidence already exists in vuln'
+                return make_response(flask.jsonify(message=message, success=False, code=400), 400)
+            else:
+                faraday_file = FaradayUploadedFile(request.files['file'].read())
+                instance, created = get_or_create(
+                    db.session,
+                    File,
+                    object_id=vuln_id,
+                    object_type='vulnerability',
+                    name=filename,
+                    filename=filename,
+                    content=faraday_file
+                )
+                db.session.commit()
+                message = 'Evidence upload was successful'
+                return flask.jsonify({'message': message})
         else:
             flask.abort(404, "Vulnerability not found")
 
@@ -734,7 +759,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        filters = request.args.get('q')
+        filters = request.args.get('q', '{}')
         filtered_vulns, count = self._filter(filters, workspace_name)
 
         class PageMeta:
@@ -779,18 +804,19 @@ class VulnerabilityView(PaginatedMixin,
         return res_filters, hostname_filters
 
     def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
-        hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
+        hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
+                           host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
             # remove host__os filters from filters due to a bug
             hosts_os_filter = hosts_os_filter[0]
-            filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') != 'host__os']
+            filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if
+                                  host_os_filter.get('name') != 'host__os']
 
         vulns = search(db.session,
                        vulnerability_class,
                        filters)
-        vulns = vulns.filter(VulnerabilityGeneric.workspace==workspace)
-
+        vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
         if hostname_filters:
             or_filters = []
             for hostname_filter in hostname_filters:
@@ -802,7 +828,7 @@ class VulnerabilityView(PaginatedMixin,
 
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
-            vulns = vulns.join(Host).join(Service).filter(Host.os==os_value)
+            vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
             vulns = vulns.options(
@@ -818,7 +844,7 @@ class VulnerabilityView(PaginatedMixin,
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
             hostname_filters = []
             if filters:
-                _, hostname_filters = self._hostname_filters(filters.get('filters', []))
+                filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
@@ -831,14 +857,17 @@ class VulnerabilityView(PaginatedMixin,
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit') # we need to remove pagination, since
+                limit = filters.pop('limit')  # we need to remove pagination, since
 
-            vulns = self._generate_filter_query(
-                VulnerabilityGeneric,
-                filters,
-                hostname_filters,
-                workspace,
-                marshmallow_params)
+            try:
+                vulns = self._generate_filter_query(
+                    VulnerabilityGeneric,
+                    filters,
+                    hostname_filters,
+                    workspace,
+                    marshmallow_params)
+            except AttributeError as e:
+                flask.abort(400, e)
             total_vulns = vulns
             if limit:
                 vulns = vulns.limit(limit)
@@ -856,15 +885,15 @@ class VulnerabilityView(PaginatedMixin,
                 workspace,
                 marshmallow_params,
             )
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in vulns.all()]
             vulns_data = []
             for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
+                vulns_data.append({field[0]: field[1] for field in row})
 
             return vulns_data, len(rows)
 
-    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         """
         ---
@@ -885,8 +914,8 @@ class VulnerabilityView(PaginatedMixin,
 
         if vuln_workspace_check:
             file_obj = db.session.query(File).filter_by(object_type='vulnerability',
-                                         object_id=vuln_id,
-                                         filename=attachment_filename.replace(" ", "%20")).first()
+                                                        object_id=vuln_id,
+                                                        filename=attachment_filename.replace(" ", "%20")).first()
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))
@@ -907,7 +936,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<int:vuln_id>/attachments/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
         """
         ---
@@ -935,7 +964,7 @@ class VulnerabilityView(PaginatedMixin,
                               Workspace.name == workspace.name).first()
         if vuln_workspace_check:
             files = db.session.query(File).filter_by(object_type='vulnerability',
-                                                        object_id=vuln_id).all()
+                                                     object_id=vuln_id).all()
             res = {}
             for file_obj in files:
                 ret = EvidenceSchema().dump(file_obj)
@@ -945,8 +974,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
         """
         ---
@@ -976,7 +1004,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('export_csv/', methods=['GET'])
+    @route('export_csv', methods=['GET'])
     def export_csv(self, workspace_name):
         """
         ---
@@ -1013,50 +1041,50 @@ class VulnerabilityView(PaginatedMixin,
                          as_attachment=True,
                          cache_timeout=-1)
 
+    # This method was replaced with generic bulk_delete
+    # @route('bulk_delete/', methods=['DELETE'])
+    # def bulk_delete(self, workspace_name):
+    #     """
+    #     ---
+    #     delete:
+    #       tags: ["Bulk", "Vulnerability"]
+    #       description: Delete vulnerabilities in bulk
+    #       responses:
+    #         200:
+    #           description: Ok
+    #         400:
+    #           description: Bad request
+    #         403:
+    #           description: Forbidden
+    #     tags: ["Bulk", "Vulnerability"]
+    #     responses:
+    #       200:
+    #         description: Ok
+    #     """
+    #     workspace = self._get_workspace(workspace_name)
+    #     json_quest = request.get_json()
+    #     vulnerability_ids = json_quest.get('vulnerability_ids', [])
+    #     vulnerability_severities = json_quest.get('severities', [])
+    #     deleted_vulns = 0
+    #     vulns = []
+    #     if vulnerability_ids:
+    #         logger.info("Delete Vuln IDs: %s", vulnerability_ids)
+    #         vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
+    #                                                   VulnerabilityGeneric.workspace_id == workspace.id)
+    #     elif vulnerability_severities:
+    #         logger.info("Delete Vuln Severities: %s", vulnerability_severities)
+    #         vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
+    #                                                   VulnerabilityGeneric.workspace_id == workspace.id)
+    #     else:
+    #         flask.abort(400, "Invalid Request")
+    #     for vuln in vulns:
+    #         db.session.delete(vuln)
+    #         deleted_vulns += 1
+    #     db.session.commit()
+    #     response = {'deleted_vulns': deleted_vulns}
+    #     return flask.jsonify(response)
 
-    @route('bulk_delete/', methods=['DELETE'])
-    def bulk_delete(self, workspace_name):
-        """
-        ---
-        delete:
-          tags: ["Bulk", "Vulnerability"]
-          description: Delete vulnerabilities in bulk
-          responses:
-            200:
-              description: Ok
-            400:
-              description: Bad request
-            403:
-              description: Forbidden
-        tags: ["Bulk", "Vulnerability"]
-        responses:
-          200:
-            description: Ok
-        """
-        workspace = self._get_workspace(workspace_name)
-        json_quest = request.get_json()
-        vulnerability_ids = json_quest.get('vulnerability_ids', [])
-        vulnerability_severities = json_quest.get('severities', [])
-        deleted_vulns = 0
-        vulns = []
-        if vulnerability_ids:
-            logger.info("Delete Vuln IDs: %s", vulnerability_ids)
-            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
-                                              VulnerabilityGeneric.workspace_id == workspace.id)
-        elif vulnerability_severities:
-            logger.info("Delete Vuln Severities: %s", vulnerability_severities)
-            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
-                                                      VulnerabilityGeneric.workspace_id == workspace.id)
-        else:
-            flask.abort(400, "Invalid Request")
-        for vuln in vulns:
-            db.session.delete(vuln)
-            deleted_vulns += 1
-        db.session.commit()
-        response = {'deleted_vulns': deleted_vulns}
-        return flask.jsonify(response)
-
-    @route('top_users/', methods=['GET'])
+    @route('top_users', methods=['GET'])
     def top_users(self, workspace_name):
         """
         ---
@@ -1074,8 +1102,8 @@ class VulnerabilityView(PaginatedMixin,
         """
         limit = flask.request.args.get('limit', 1)
         workspace = self._get_workspace(workspace_name)
-        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)\
-            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id)\
+        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
+            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
             .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
         users = []
         for item in data:
@@ -1088,39 +1116,9 @@ class VulnerabilityView(PaginatedMixin,
         response = {'users': users}
         return flask.jsonify(response)
 
-
-class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin,
-                          BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/<int:vuln_id>/attachment', methods=['POST'])
-    def post_attachment(self, workspace_name, vuln_id):
-        return super().post_attachment(workspace_name, vuln_id)
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
-    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super().get_attachment(workspace_name, vuln_id, attachment_filename)
-
-    @route('/<int:vuln_id>/attachment', methods=['GET'])
-    def get_attachments_by_vuln(self, workspace_name, vuln_id):
-        return super().get_attachments_by_vuln(workspace_name, vuln_id)
-
-    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
-    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
-        return super().delete_attachment(workspace_name, vuln_id, attachment_filename)
-
-    @route('/export_csv', methods=['GET'])
-    def export_csv(self, workspace_name):
-        return super().export_csv(workspace_name)
-
-    @route('/top_users', methods=['GET'])
-    def top_users(self, workspace_name):
-        return super().top_users(workspace_name)
-
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):
-        #TODO BULK_DELETE_SCHEMA
+        # TODO BULK_DELETE_SCHEMA
         if not flask.request.json or 'severities' not in flask.request.json:
             return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
         return self._perform_bulk_delete(flask.request.json['severities'], by='severity',
@@ -1142,20 +1140,11 @@ class VulnerabilityV3View(VulnerabilityView, PatchableWorkspacedMixin, BulkDelet
         return query.filter(self.model_class.workspace_id == workspace.id)
 
     def _pre_bulk_update(self, data, **kwargs):
-        data.pop('type', '') # It's forbidden to change vuln type!
+        data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
         return super()._pre_bulk_update(data, **kwargs)
 
-    post_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    get_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    get_attachments_by_vuln.__doc__ = VulnerabilityView.post_attachment.__doc__
-    delete_attachment.__doc__ = VulnerabilityView.post_attachment.__doc__
-    export_csv.__doc__ = VulnerabilityView.post_attachment.__doc__
-    top_users.__doc__ = VulnerabilityView.post_attachment.__doc__
-    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
-
 
 VulnerabilityView.register(vulns_api)
-VulnerabilityV3View.register(vulns_api)

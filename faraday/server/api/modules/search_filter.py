@@ -1,14 +1,15 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from flask import Blueprint, g
+from flask import Blueprint
 from marshmallow import fields
+import flask_login
 
 from faraday.server.models import SearchFilter
 from faraday.server.api.base import (
     ReadWriteView,
+
     AutoSchema,
-    PatchableMixin,
     BulkDeleteMixin,
     BulkUpdateMixin
 )
@@ -26,20 +27,14 @@ class SearchFilterSchema(AutoSchema):
                   'json_query', 'user_query')
 
 
-class SearchFilterView(ReadWriteView):
+class SearchFilterView(ReadWriteView, BulkDeleteMixin, BulkUpdateMixin):
     route_base = 'searchfilter'
     model_class = SearchFilter
     schema_class = SearchFilterSchema
 
     def _get_base_query(self):
         query = super()._get_base_query()
-        return query.filter(SearchFilter.creator_id == g.user.id)
-
-
-class SearchFilterV3View(SearchFilterView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
-    route_prefix = 'v3/'
-    trailing_slash = False
+        return query.filter(SearchFilter.creator_id == flask_login.current_user.id)
 
 
 SearchFilterView.register(searchfilter_api)
-SearchFilterV3View.register(searchfilter_api)

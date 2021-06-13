@@ -101,12 +101,15 @@ generate_docker_tar_gz:
     stage: build
     image: nixorg/nix
     script:
-        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
+        - nix-env -if pynixify/nixpkgs.nix -A vault
+        - !reference [ .get_secrets, script ]
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - !reference [ .clone_and_replace_www, script ]
         - cachix use faradaysec
-        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest
+        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
         - cp $(readlink result) faraday-server-docker.tar.gz
     artifacts:
       paths:

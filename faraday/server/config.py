@@ -92,9 +92,15 @@ class ConfigSection:
                     self.__setattr__(att, True)
                 else:
                     self.__setattr__(att, False)
+            elif isinstance(self.__dict__[att], int):
+                if value:
+                    self.__setattr__(att, int(value))
             else:
                 if value:
                     self.__setattr__(att, value)
+
+    def set(self, option_name, value):
+        return self.__setattr__(option_name, value)
 
     @staticmethod
     def parse_section(section_name, __parser):
@@ -138,13 +144,14 @@ class LimiterConfigObject(ConfigSection):
 
 class FaradayServerConfigObject(ConfigSection):
     def __init__(self):
-        self.bind_address = None
-        self.port = None
+        self.bind_address = "127.0.0.1"
+        self.port = 5985
         self.secret_key = None
-        self.websocket_port = None
+        self.websocket_port = 9000
         self.session_timeout = 12
         self.api_token_expiration = 43200  # Default as 12 hs
         self.agent_registration_secret = None
+        self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
         self.custom_plugins_folder = None
         self.ignore_info_severity = False
@@ -162,7 +169,6 @@ class LDAPConfigObject(ConfigSection):
         self.server = None
         self.use_ldaps = None
         self.use_start_tls = None
-
 
 
 class SmtpConfigObject(ConfigSection):
@@ -189,6 +195,7 @@ class StorageConfigObject(ConfigSection):
 class LoggerConfig(ConfigSection):
     def __init__(self):
         self.use_rfc5424_formatter = False
+
 
 database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()

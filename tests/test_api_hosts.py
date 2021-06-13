@@ -10,12 +10,10 @@ from posixpath import join as urljoin
 
 import pytz
 
-from tests.utils.url import v2_to_v3
-
 from urllib.parse import urlencode
 from random import choice
 from sqlalchemy.orm.util import was_deleted
-from hypothesis import given, assume, settings, strategies as st
+from hypothesis import given, strategies as st
 
 import pytest
 
@@ -24,21 +22,19 @@ from tests.test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
     PaginationTestsMixin,
-    V3TestMixin,
+    BulkUpdateTestsMixin,
+    BulkDeleteTestsMixin
 )
 from faraday.server.models import db, Host, Hostname
-from faraday.server.api.modules.hosts import HostsView, HostsV3View
-from tests.factories import HostFactory, CommandFactory, \
-    EmptyCommandFactory, WorkspaceFactory
+from faraday.server.api.modules.hosts import HostsView
+from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
 
+
 @pytest.mark.usefixtures('database', 'logged_user')
 class TestHostAPI:
-
-    def check_url(self, url):
-        return url
 
     @pytest.fixture(autouse=True)
     def load_workspace_with_hosts(self, database, session, workspace, host_factory):
@@ -67,13 +63,13 @@ class TestHostAPI:
 
     def url(self, host=None, workspace=None):
         workspace = workspace or self.workspace
-        url = API_PREFIX + workspace.name + '/hosts/'
+        url = API_PREFIX + workspace.name + '/hosts'
         if host is not None:
-            url += str(host.id) + '/'
+            url += '/' + str(host.id)
         return url
 
     def services_url(self, host, workspace=None):
-        return self.url(host, workspace) + 'services/'
+        return self.url(host, workspace) + '/services'
 
     def compare_results(self, hosts, response):
         """
@@ -128,7 +124,7 @@ class TestHostAPI:
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",
             "description": "aaaaa",
-            "_rev":"saraza"
+            "_rev": "saraza"
             # os is not required
         })
         assert res.status_code == 201
@@ -292,7 +288,7 @@ class TestHostAPI:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_os_exact(self, test_client, session, workspace,
-                                second_workspace, host_factory):
+                                         second_workspace, host_factory):
         # The hosts that should be shown
         hosts = host_factory.create_batch(10, workspace=workspace, os='Unix')
 
@@ -309,7 +305,7 @@ class TestHostAPI:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_count(self, test_client, session, workspace,
-                                second_workspace, host_factory):
+                                   second_workspace, host_factory):
         # The hosts that should be shown
         hosts = host_factory.create_batch(30, workspace=workspace, os='Unix')
 
@@ -328,7 +324,7 @@ class TestHostAPI:
         host_factory.create_batch(1, workspace=workspace, os='unix')
         session.commit()
         res = test_client.get(urljoin(self.url(), 'filter?q={"filters":[{"name": "os", "op": "like", "val": "%nix"}], '
-                              '"group_by":[{"field": "os"}], "order_by":[{"field": "os", "direction": "desc"}]}'))
+                                                  '"group_by":[{"field": "os"}], "order_by":[{"field": "os", "direction": "desc"}]}'))
         assert res.status_code == 200
         assert len(res.json['rows']) == 2
         assert res.json['count'] == 2
@@ -362,7 +358,7 @@ class TestHostAPI:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_os_like_ilike(self, test_client, session, workspace,
-                                     second_workspace, host_factory):
+                                              second_workspace, host_factory):
         # The hosts that should be shown
         hosts = host_factory.create_batch(5, workspace=workspace, os='Unix 1')
         hosts += host_factory.create_batch(5, workspace=workspace, os='Unix 2')
@@ -381,7 +377,7 @@ class TestHostAPI:
         res = test_client.get(urljoin(
             self.url(),
             'filter?q={"filters":[{"name": "os", "op":"like", "val":"Unix %"}]}'
-            )
+        )
         )
         assert res.status_code == 200
         self.compare_results(hosts, res)
@@ -389,7 +385,7 @@ class TestHostAPI:
         res = test_client.get(urljoin(
             self.url(),
             'filter?q={"filters":[{"name": "os", "op":"ilike", "val":"Unix %"}]}'
-            )
+        )
         )
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
@@ -412,7 +408,7 @@ class TestHostAPI:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_service_name(self, test_client, session, workspace,
-                               service_factory, host_factory):
+                                             service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace,
                                                 name="IRC")
         hosts = [service.host for service in services]
@@ -433,9 +429,8 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
-
     def test_filter_by_service_port(self, test_client, session, workspace,
-                               service_factory, host_factory):
+                                    service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
         hosts = [service.host for service in services]
 
@@ -449,10 +444,9 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
-
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_service_port(self, test_client, session, workspace,
-                               service_factory, host_factory):
+                                             service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
         hosts = [service.host for service in services]
 
@@ -495,7 +489,7 @@ class TestHostAPI:
 
         assert res.status_code == 200
 
-        severities =  res.json['rows'][0]['value']['severity_counts']
+        severities = res.json['rows'][0]['value']['severity_counts']
         assert severities['info'] == 1
         assert severities['critical'] == 2
         assert severities['high'] == 1
@@ -505,7 +499,7 @@ class TestHostAPI:
         assert severities['total'] == 5
 
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
-                               service_factory, host_factory):
+                                            service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
         hosts = [service.host for service in services]
 
@@ -518,7 +512,7 @@ class TestHostAPI:
         assert res.json['count'] == 0
 
     def test_filter_restless_by_invalid_service_port(self, test_client, session, workspace,
-                               service_factory, host_factory):
+                                                     service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
         hosts = [service.host for service in services]
 
@@ -545,7 +539,7 @@ class TestHostAPI:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_with_no_q_param(self, test_client, session, workspace, host_factory):
-        res = test_client.get(urljoin(self.url(),'filter'))
+        res = test_client.get(urljoin(self.url(), 'filter'))
         assert res.status_code == 200
         assert len(res.json['rows']) == HOSTS_COUNT
 
@@ -621,7 +615,7 @@ class TestHostAPI:
         vulnerability_factory.create(service=service, host=None, workspace=workspace)
         session.commit()
 
-        res = test_client.get(self.check_url(urljoin(self.url(host),'services/')))
+        res = test_client.get(urljoin(self.url(host), 'services'))
         assert res.status_code == 200
         assert res.json[0]['vulns'] == 1
 
@@ -676,30 +670,30 @@ class TestHostAPI:
         session.commit()
         raw_data = {
             "metadata":
-                        {
-                            "update_time":1510688312.431,
-                            "update_user":"UI Web",
-                            "update_action":0,
-                            "creator":"",
-                            "create_time":1510673388000,
-                            "update_controller_action":"",
-                            "owner":"leonardo",
-                            "command_id": None},
-            "name":"10.31.112.21",
-            "ip":"10.31.112.21",
-            "_rev":"",
-            "description":"",
+                {
+                    "update_time": 1510688312.431,
+                    "update_user": "UI Web",
+                    "update_action": 0,
+                    "creator": "",
+                    "create_time": 1510673388000,
+                    "update_controller_action": "",
+                    "owner": "leonardo",
+                    "command_id": None},
+            "name": "10.31.112.21",
+            "ip": "10.31.112.21",
+            "_rev": "",
+            "description": "",
             "default_gateway": None,
             "owned": False,
-            "services":12,
-            "hostnames":[],
-            "vulns":43,
-            "owner":"leonardo",
-            "credentials":0,
+            "services": 12,
+            "hostnames": [],
+            "vulns": 43,
+            "owner": "leonardo",
+            "credentials": 0,
             "_id": 4000,
-            "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
+            "os": "Microsoft Windows Server 2008 R2 Standard Service Pack 1",
             "id": 4000,
-            "icon":"windows",
+            "icon": "windows",
             "versions": [],
             "important": False,
         }
@@ -762,13 +756,14 @@ class TestHostAPI:
             'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
-        res = test_client.post(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_create/'),
+        res = test_client.post(f'/v3/ws/{ws.name}/hosts/bulk_create',
                                data=data, headers=headers, use_json_data=False)
         assert res.status_code == 200
         assert res.json['hosts_created'] == expected_created_hosts
         assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
+    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         host_1 = HostFactory.create(workspace=ws)
@@ -777,7 +772,7 @@ class TestHostAPI:
         hosts_ids = [host_1.id, host_2.id]
         request_data = {'hosts_ids': hosts_ids}
 
-        delete_response = test_client.delete(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'), data=request_data)
+        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts/bulk_delete', data=request_data)
 
         deleted_hosts = delete_response.json['deleted_hosts']
         host_count_after_delete = db.session.query(Host).filter(
@@ -788,14 +783,16 @@ class TestHostAPI:
         assert deleted_hosts == len(hosts_ids)
         assert host_count_after_delete == 0
 
+    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': []}
 
-        delete_response = test_client.delete(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'), data=request_data)
+        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts/bulk_delete', data=request_data)
 
         assert delete_response.status_code == 400
 
+    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_from_another_workspace(self, test_client, session):
         workspace_1 = WorkspaceFactory.create(name='workspace_1')
         host_of_ws_1 = HostFactory.create(workspace=workspace_1)
@@ -805,18 +802,20 @@ class TestHostAPI:
 
         # Try to delete workspace_2's host from workspace_1
         request_data = {'hosts_ids': [host_of_ws_2.id]}
-        url = self.check_url(f'/v2/ws/{workspace_1.name}/hosts/bulk_delete/')
+        url = f'/v3/ws/{workspace_1.name}/hosts/bulk_delete'
         delete_response = test_client.delete(url, data=request_data)
 
         assert delete_response.json['deleted_hosts'] == 0
 
+    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': [-1, 'test']}
-        delete_response = test_client.delete(self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'), data=request_data)
+        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts/bulk_delete', data=request_data)
 
         assert delete_response.json['deleted_hosts'] == 0
 
+    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_wrong_content_type(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         host_1 = HostFactory.create(workspace=ws)
@@ -828,45 +827,14 @@ class TestHostAPI:
         headers = [('content-type', 'text/xml')]
 
         delete_response = test_client.delete(
-            self.check_url(f'/v2/ws/{ws.name}/hosts/bulk_delete/'),
+            f'/v3/ws/{ws.name}/hosts/bulk_delete',
             data=request_data,
             headers=headers)
 
         assert delete_response.status_code == 400
 
 
-class TestHostAPIV3(TestHostAPI):
-    def url(self, host=None, workspace=None):
-        return v2_to_v3(super(TestHostAPIV3, self).url(host, workspace))
-
-    def check_url(self, url):
-        return v2_to_v3(url)
-
-    def services_url(self, host, workspace=None):
-        return self.url(host, workspace) + '/services'
-
-    @pytest.mark.skip(reason="Reimplemented in generic test")
-    def test_bulk_delete_hosts(self, test_client, session):
-        pass
-
-    @pytest.mark.skip(reason="Reimplemented in generic test")
-    def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
-        pass
-
-    @pytest.mark.skip(reason="Reimplemented in generic test")
-    def test_bulk_delete_hosts_from_another_workspace(self, test_client, session):
-        pass
-
-    @pytest.mark.skip(reason="Reimplemented in generic test")
-    def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
-        pass
-
-    @pytest.mark.skip(reason="Reimplemented in generic test")
-    def test_bulk_delete_hosts_wrong_content_type(self, test_client, session):
-        pass
-
-
-class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
+class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Host
     factory = factories.HostFactory
     api_endpoint = 'hosts'
@@ -904,8 +872,8 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             session.flush()
             expected_ids.append(host.id)
         session.commit()
-        res = test_client.get(self.url(workspace=second_workspace) +
-                              '?sort=services&sort_dir=asc')
+        res = test_client.get(self.url(workspace=second_workspace)
+                              + '?sort=services&sort_dir=asc')
         assert res.status_code == 200
         assert [h['_id'] for h in res.json['data']] == expected_ids
 
@@ -920,14 +888,14 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         expected = host_factory.create_batch(10, workspace=second_workspace)
         session.commit()
         for i in range(len(expected)):
-            if i % 2 == 0:   # Only update some hosts
+            if i % 2 == 0:  # Only update some hosts
                 host = expected.pop(0)
                 host.description = 'i was updated'
                 session.add(host)
                 session.commit()
                 expected.append(host)  # Put it on the end
-        res = test_client.get(self.url(workspace=second_workspace) +
-                              '?sort=metadata.update_time&sort_dir=asc')
+        res = test_client.get(self.url(workspace=second_workspace)
+                              + '?sort=metadata.update_time&sort_dir=asc')
         assert res.status_code == 200, res.data
         assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
 
@@ -1037,15 +1005,15 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         session.add(host)
         session.commit()
         data = {
-            "description":"",
-            "default_gateway":"",
-            "ip":"127.0.0.1",
-            "owned":False,
-            "name":"127.0.0.1",
-            "mac":"",
-            "hostnames":["dasdas"],
-            "owner":"faraday",
-            "os":"Unknown",
+            "description": "",
+            "default_gateway": "",
+            "ip": "127.0.0.1",
+            "owned": False,
+            "name": "127.0.0.1",
+            "mac": "",
+            "hostnames": ["dasdas"],
+            "owner": "faraday",
+            "os": "Unknown",
         }
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=data)
@@ -1137,13 +1105,6 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
             assert index_in_hosts_ids == index_in_response_hosts
 
-
-class TestHostAPIGenericV3(TestHostAPIGeneric, V3TestMixin):
-    view_class = HostsV3View
-
-    def url(self, obj=None, workspace=None):
-        return v2_to_v3(super(TestHostAPIGenericV3, self).url(obj, workspace))
-
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_update_host_with_hostnames(self, test_client, session,
                                         host_with_hostnames):
@@ -1186,7 +1147,7 @@ def host_json():
                     "create_time": st.integers(),
                     "update_controller_action": st.text(),
                     "owner": st.one_of(st.none(), st.text()),
-                    "command_id": st.one_of(st.none(), st.text(), st.integers()),}),
+                    "command_id": st.one_of(st.none(), st.text(), st.integers()), }),
             "name": st.one_of(st.none(), st.text()),
             "ip": st.one_of(st.none(), st.text()),
             "_rev": st.one_of(st.none(), st.text()),
@@ -1213,19 +1174,9 @@ def test_hypothesis(host_with_hostnames, test_client, session):
 
     @given(HostData)
     def send_api_request(raw_data):
-
-        ws_name = host_with_hostnames.workspace.name
-        res = test_client.post(f'/v2/ws/{ws_name}/vulns/',
-                               data=raw_data)
-        assert res.status_code in [201, 400, 409]
-
-    @given(HostData)
-    def send_api_request_v3(raw_data):
-
         ws_name = host_with_hostnames.workspace.name
         res = test_client.post(f'/v3/ws/{ws_name}/vulns',
                                data=raw_data)
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
-    send_api_request_v3()

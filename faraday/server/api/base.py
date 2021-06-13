@@ -13,7 +13,6 @@ import flask
 import sqlalchemy
 import datetime
 from collections import defaultdict
-from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
@@ -27,12 +26,14 @@ from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
+import flask_login
 
 from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation
+    is_unique_constraint_violation,
+    not_null_constraint_violation
     )
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
@@ -97,7 +98,7 @@ class GenericView(FlaskView):
 
     #: The prefix where the endpoint should be registered.
     #: This is useful for API versioning
-    route_prefix = '/v2/'
+    route_prefix = '/v3/'
 
     #: Arguments that are passed to the view but shouldn't change the route
     #: rule. This should be used when route_prefix is parametrized
@@ -155,6 +156,8 @@ class GenericView(FlaskView):
     #: typically is isn't used, like the vuln creator. If you know you will use
     #: it, indicate it here to prevent doing an extra SQL query.
     get_undefer = []  # List of columns to undefer
+
+    trailing_slash = False
 
     def _get_schema_class(self):
         """By default, it returns ``self.schema_class``.
@@ -319,16 +322,16 @@ class GenericView(FlaskView):
         deserialization
         """
         return FlaskParser(unknown=EXCLUDE).parse(schema, request, location="json",
-                                   *args, **kwargs)
+                                                  *args, **kwargs)
 
     @classmethod
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
         400 instead of 409"""
-        super(GenericView, cls).register(app, *args, **kwargs)
+        super().register(app, *args, **kwargs)
 
         @app.errorhandler(422)
-        def handle_error(err): # pylint: disable=unused-variable
+        def handle_error(err):  # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -341,7 +344,7 @@ class GenericView(FlaskView):
             }), 400
 
         @app.errorhandler(409)
-        def handle_conflict(err): # pylint: disable=unused-variable
+        def handle_conflict(err):  # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc', None) or getattr(err, 'description', None)
             if exc:
@@ -352,19 +355,20 @@ class GenericView(FlaskView):
             return flask.jsonify(messages), 409
 
         @app.errorhandler(InvalidUsage)
-        def handle_invalid_usage(error): # pylint: disable=unused-variable
+        def handle_invalid_usage(error):  # pylint: disable=unused-variable
             response = flask.jsonify(error.to_dict())
             response.status_code = error.status_code
             return response
 
         # @app.errorhandler(404)
-        def handle_not_found(err): # pylint: disable=unused-variable
+        def handle_not_found(err):  # pylint: disable=unused-variable
             response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
             return flask.jsonify(response), 404
 
         @app.errorhandler(500)
-        def handle_server_error(err): # pylint: disable=unused-variable
-            response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
+        def handle_server_error(err):  # pylint: disable=unused-variable
+            response = {'success': False,
+                        'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
             return flask.jsonify(response), 500
 
 
@@ -380,7 +384,7 @@ class GenericWorkspacedView(GenericView):
     """
 
     # Default attributes
-    route_prefix = '/v2/ws/<workspace_name>/'
+    route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
     def _get_workspace(self, workspace_name):
@@ -418,8 +422,8 @@ class GenericWorkspacedView(GenericView):
         sup = super()
         if hasattr(sup, 'before_request'):
             sup.before_request(name, *args, **kwargs)
-        if (self._get_workspace(kwargs['workspace_name']).readonly and
-                flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
+        if (self._get_workspace(kwargs['workspace_name']).readonly
+            and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
@@ -603,7 +607,7 @@ class PaginatedMixin:
 
             try:
                 per_page = int(flask.request.args[
-                    self.per_page_parameter_name])
+                                   self.per_page_parameter_name])
             except (TypeError, ValueError):
                 flask.abort(404, 'Invalid per_page value')
 
@@ -629,6 +633,7 @@ class FilterAlchemyMixin:
 class FilterWorkspacedMixin(ListMixin):
     """Add filter endpoint for searching on any workspaced objects columns
     """
+
     @route('/filter')
     def filter(self, workspace_name):
         """
@@ -653,14 +658,15 @@ class FilterWorkspacedMixin(ListMixin):
 
         class PageMeta:
             total = 0
+
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters, workspace, severity_count=False):
         filter_query = search(db.session,
-                       self.model_class,
-                       filters)
+                              self.model_class,
+                              filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
 
@@ -685,13 +691,17 @@ class FilterWorkspacedMixin(ListMixin):
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit') # we need to remove pagination, since
+                limit = filters.pop('limit')  # we need to remove pagination, since
 
-            filter_query = self._generate_filter_query(
-                filters,
-                workspace,
-                severity_count=severity_count
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                    workspace,
+                    severity_count=severity_count
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
+
             count = filter_query.count()
             if limit:
                 filter_query = filter_query.limit(limit)
@@ -700,10 +710,13 @@ class FilterWorkspacedMixin(ListMixin):
             objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
-            filter_query = self._generate_filter_query(
-                filters,
-                workspace,
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                    workspace,
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in filter_query.all()]
             data = []
@@ -741,14 +754,15 @@ class FilterMixin(ListMixin):
 
         class PageMeta:
             total = 0
+
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
         filter_query = search(db.session,
-                      self.model_class,
-                      filters)
+                              self.model_class,
+                              filters)
 
         if severity_count and 'group_by' not in filters:
             filter_query = count_vulnerability_severities(filter_query, self.model_class,
@@ -771,13 +785,16 @@ class FilterMixin(ListMixin):
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit') # we need to remove pagination, since
+                limit = filters.pop('limit')  # we need to remove pagination, since
 
-            filter_query = self._generate_filter_query(
-                filters,
-                severity_count=severity_count,
-                host_vulns=host_vulns
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                    severity_count=severity_count,
+                    host_vulns=host_vulns
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
@@ -837,6 +854,7 @@ class RetrieveMixin:
 
 class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
+
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
     def get(self, object_id, workspace_name=None):
@@ -931,7 +949,8 @@ class CreateMixin:
                                 flask.request)
         data.pop('id', None)
         created = self._perform_create(data, **kwargs)
-        created.creator = g.user
+        if not flask_login.current_user.is_anonymous:
+            created.creator = flask_login.current_user
         db.session.commit()
         return self._dump(created, kwargs), 201
 
@@ -948,7 +967,10 @@ class CreateMixin:
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
             if not is_unique_constraint_violation(ex):
-                raise
+                if not_null_constraint_violation(ex):
+                    flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
+                else:
+                    raise
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:
@@ -980,7 +1002,8 @@ class CommandMixin():
             command_id = None
 
         if command_id:
-            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
+            command = db.session.query(Command).filter(Command.id == command_id,
+                                                       Command.workspace == obj.workspace).first()
             if command is None:
                 raise InvalidUsage('Command not found.')
             # if the object is created and updated in the same command
@@ -1156,10 +1179,6 @@ class UpdateMixin:
                 raise
         return obj
 
-
-class PatchableMixin:
-    # TODO must be used with a UpdateMixin, when v2 be deprecated, add patch() to that Mixin
-
     def patch(self, object_id, **kwargs):
         """
         ---
@@ -1213,7 +1232,7 @@ class BulkUpdateMixin:
             204:
               description: Ok
         """
-        #TODO BULK_UPDATE_SCHEMA
+        # TODO BULK_UPDATE_SCHEMA
         if not flask.request.json or 'ids' not in flask.request.json:
             flask.abort(400)
         ids = flask.request.json['ids']
@@ -1329,10 +1348,6 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         self._set_command_id(obj, False)
         return super()._perform_update(object_id, obj, data, workspace_name)
 
-
-class PatchableWorkspacedMixin(PatchableMixin):
-    # TODO must be used with a UpdateWorkspacedMixin, when v2 be deprecated, add patch() to that Mixin
-
     def patch(self, object_id, workspace_name=None):
         """
         ---
@@ -1390,6 +1405,7 @@ class BulkUpdateWorkspacedMixin(BulkUpdateMixin):
 
 class DeleteMixin:
     """Add DELETE /<id>/ route"""
+
     def delete(self, object_id, **kwargs):
         """
         ---
@@ -1427,11 +1443,11 @@ class BulkDeleteMixin:
             204:
               description: Ok
         """
-        #TODO BULK_DELETE_SCHEMA
+        # TODO BULK_DELETE_SCHEMA
         if not flask.request.json or 'ids' not in flask.request.json:
             flask.abort(400)
-        #objs = self._get_objects(flask.request.json['ids'], **kwargs)
-        #self._perform_bulk_delete(objs, **kwargs)
+        # objs = self._get_objects(flask.request.json['ids'], **kwargs)
+        # self._perform_bulk_delete(objs, **kwargs)
         return self._perform_bulk_delete(flask.request.json['ids'], **kwargs), 200
 
     def _bulk_delete_query(self, ids, **kwargs):
@@ -1447,8 +1463,8 @@ class BulkDeleteMixin:
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
-    def delete(self, object_id, workspace_name=None):
 
+    def delete(self, object_id, workspace_name=None):
         """
           ---
             tags: ["{tag_name}"]
@@ -1495,6 +1511,7 @@ class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
     def _bulk_delete_query(self, ids, **kwargs):
         workspace = self._get_workspace(kwargs.pop("workspace_name"))
         return super()._bulk_delete_query(ids).filter(self.model_class.workspace_id == workspace.id)
+
 
 class CountWorkspacedMixin:
     """Add GET /<workspace_name>/<route_base>/count/ route
@@ -1551,12 +1568,12 @@ class CountWorkspacedMixin:
 
         count = self._filter_query(
             db.session.query(self.model_class)
-            .join(Workspace)
-            .group_by(group_by)
-            .filter(Workspace.name == workspace_name,
-                    *self.count_extra_filters))
+                .join(Workspace)
+                .group_by(group_by)
+                .filter(Workspace.name == workspace_name,
+                        *self.count_extra_filters))
 
-        #order
+        # order
         order_by = group_by
         if sort_dir == 'desc':
             count = count.order_by(desc(order_by))
@@ -1608,7 +1625,7 @@ class CountMultiWorkspacedMixin:
             400:
               description: No workspace passed or group_by is not specified
         """
-        #"""head:
+        # """head:
         #  tags: [{tag_name}]
         #   responses:
         #     200:
@@ -1652,15 +1669,15 @@ class CountMultiWorkspacedMixin:
         grouped_attr = getattr(self.model_class, group_by)
 
         q = db.session.query(
-                Workspace.name,
-                grouped_attr,
-                func.count(grouped_attr)
-            )\
-            .join(Workspace)\
-            .group_by(grouped_attr, Workspace.name)\
+            Workspace.name,
+            grouped_attr,
+            func.count(grouped_attr)
+        ) \
+            .join(Workspace) \
+            .group_by(grouped_attr, Workspace.name) \
             .filter(Workspace.name.in_(workspace_names_list))
 
-        #order
+        # order
         order_by = grouped_attr
         if sort_dir == 'desc':
             q = q.order_by(desc(Workspace.name), desc(order_by))
@@ -1706,6 +1723,7 @@ class CustomModelConverter(ModelConverter):
     Model converter that automatically sets minimum length
     validators to not blankable fields
     """
+
     def _add_column_kwargs(self, kwargs, column):
         super()._add_column_kwargs(kwargs, column)
         if not column.info.get('allow_blank', True):
@@ -1732,6 +1750,8 @@ def old_isoformat(dt, *args, **kwargs):
     else:
         dt = dt.astimezone(datetime.timezone.utc)
     return dt.isoformat(*args, **kwargs)
+
+
 fields.DateTime.SERIALIZATION_FUNCS['iso'] = old_isoformat
 
 
@@ -1751,6 +1771,7 @@ class AutoSchema(Schema, metaclass=ModelSchemaMeta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.unknown = EXCLUDE
+
 
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.

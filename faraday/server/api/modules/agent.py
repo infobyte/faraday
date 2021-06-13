@@ -20,8 +20,8 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
+
     ReadOnlyMultiWorkspacedView,
-    PatchableMixin,
     BulkDeleteMixin,
     BulkUpdateMixin
 )
@@ -36,6 +36,7 @@ agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
 
 logger = logging.getLogger(__name__)
+
 
 class ExecutorSchema(AutoSchema):
 
@@ -135,12 +136,14 @@ class AgentCreationView(CreateMixin, GenericView):
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _perform_create(self,  data, **kwargs):
+    def _perform_create(self, data, **kwargs):
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
             abort(401, "Invalid Token")
-        if not pyotp.TOTP(faraday_server.agent_registration_secret).verify(token, valid_window=1):
+        if not pyotp.TOTP(faraday_server.agent_registration_secret,
+                          interval=int(faraday_server.agent_token_expiration)
+                          ).verify(token, valid_window=1):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')
@@ -163,7 +166,6 @@ class AgentCreationView(CreateMixin, GenericView):
             dict_["name"] for dict_ in workspace_names
         ]
 
-
         workspaces = list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names
@@ -176,11 +178,6 @@ class AgentCreationView(CreateMixin, GenericView):
         db.session.commit()
 
         return agent
-
-
-class AgentCreationV3View(AgentCreationView):
-    route_prefix = '/v3'
-    trailing_slash = False
 
 
 class ExecutorDataSchema(Schema):
@@ -201,6 +198,8 @@ class AgentRunSchema(Schema):
 
 class AgentWithWorkspacesView(UpdateMixin,
                               DeleteMixin,
+                              BulkUpdateMixin,
+                              BulkDeleteMixin,
                               ReadOnlyView):
     route_base = 'agents'
     model_class = Agent
@@ -258,11 +257,6 @@ class AgentWithWorkspacesView(UpdateMixin,
 
         return obj
 
-
-class AgentWithWorkspacesV3View(AgentWithWorkspacesView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
-    route_prefix = '/v3'
-    trailing_slash = False
-
     def _pre_bulk_update(self, data, **kwargs):
         ans_data = dict()
         if "workspaces" in data:
@@ -283,7 +277,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
-    @route('/<int:agent_id>/', methods=['DELETE'])
+    @route('/<int:agent_id>', methods=['DELETE'])
     def remove_workspace(self, workspace_name, agent_id):
         """
         ---
@@ -305,7 +299,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         db.session.commit()
         return make_response({"description": "ok"}, 204)
 
-    @route('/<int:agent_id>/run/', methods=['POST'])
+    @route('/<int:agent_id>/run', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
         """
         ---
@@ -372,26 +366,6 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             })
 
 
-class AgentV3View(AgentView):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/<int:agent_id>', methods=['DELETE'])
-    def remove_workspace(self, workspace_name, agent_id):
-        # This endpoint is not an exception for V3, overrides logic of DELETE
-        return super().remove_workspace(workspace_name, agent_id)
-
-    @route('/<int:agent_id>/run', methods=['POST'])
-    def run_agent(self, workspace_name, agent_id):
-        return super().run_agent(workspace_name, agent_id)
-
-    remove_workspace.__doc__ = AgentView.remove_workspace.__doc__
-    run_agent.__doc__ = AgentView.run_agent.__doc__
-
-
 AgentWithWorkspacesView.register(agent_api)
-AgentWithWorkspacesV3View.register(agent_api)
 AgentCreationView.register(agent_creation_api)
-AgentCreationV3View.register(agent_creation_api)
 AgentView.register(agent_api)
-AgentV3View.register(agent_api)

@@ -8,7 +8,7 @@ import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
-from faraday.server.web import app
+from faraday.server.web import get_app
 import json
 
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
@@ -49,9 +49,9 @@ def openapi_format(format="yaml", server="localhost", no_servers=False, return_t
 
     tags = set()
 
-    with app.test_request_context():
-        for endpoint in app.view_functions.values():
-            spec.path(view=endpoint, app=app)
+    with get_app().test_request_context():
+        for endpoint in get_app().view_functions.values():
+            spec.path(view=endpoint, app=get_app())
 
         # Set up global tags
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.SafeLoader)
@@ -73,4 +73,4 @@ def openapi_format(format="yaml", server="localhost", no_servers=False, return_t
 
 
 def show_all_urls():
-    print(app.url_map)
+    print(get_app().url_map)

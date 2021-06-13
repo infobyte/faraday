@@ -1,15 +1,20 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import pytest
 from flask import Blueprint, abort, make_response, jsonify
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
 
-from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
-    FilterAlchemyMixin, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin
+from faraday.server.api.base import (
+    AutoSchema,
+    ReadWriteWorkspacedView,
+    FilterSetMeta,
+    FilterAlchemyMixin,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
+)
 from faraday.server.models import Host, Service, Workspace
 from faraday.server.schemas import (
     MetadataSchema,
@@ -111,7 +116,7 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
+class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service
@@ -140,9 +145,4 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         return super()._perform_create(data, **kwargs)
 
 
-class ServiceV3View(ServiceView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
 ServiceView.register(services_api)
-ServiceV3View.register(services_api)

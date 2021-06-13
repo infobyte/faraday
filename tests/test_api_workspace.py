@@ -12,21 +12,17 @@ from posixpath import join as urljoin
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.factories import WorkspaceFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, V3TestMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
 from tests import factories
-from tests.utils.url import v2_to_v3
 
 
-class TestWorkspaceAPI(ReadWriteAPITests):
+class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Workspace
     factory = factories.WorkspaceFactory
     api_endpoint = 'ws'
     lookup_field = 'name'
     view_class = WorkspaceView
     patchable_fields = ['description']
-
-    def check_url(self, url):
-        return url
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
@@ -133,8 +129,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open', severity='informational')
 
-
-
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -145,7 +139,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['critical_vulns'] == 0
         assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
-
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'
@@ -197,8 +190,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open')
 
-
-
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -207,7 +198,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['web_vulns'] == 2
         assert res.json['stats']['std_vulns'] == 11
         assert res.json['stats']['total_vulns'] == 13
-
 
     @pytest.mark.parametrize('querystring', [
         '?confirmed=1',
@@ -232,7 +222,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=0',
         '?confirmed=false'
     ])
-    def test_vuln_count_confirmed(self,
+    def test_vuln_count_confirmed_2(self,
                                   vulnerability_factory,
                                   test_client,
                                   session,
@@ -249,8 +239,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
     def test_create_fails_with_valid_duration(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        end_date = start_date+86400000
+        start_date = int(time.time()) * 1000
+        end_date = start_date + 86400000
         duration = {'start_date': start_date, 'end_date': end_date}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
         res = test_client.post(self.url(), data=raw_data)
@@ -296,9 +286,16 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                                                 session,
                                                                 test_client):
         workspace_count_previous = session.query(Workspace).count()
-        start_date = int(time.time())*1000
-        duration = {'start_date': start_date, 'end_date': start_date-86400000}
+        start_date = int(time.time()) * 1000
+        duration = {'start_date': start_date, 'end_date': start_date - 86400000}
         raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
+
+    def test_create_fails_with_forward_slash(self, session, test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        raw_data = {'name': 'swtr/'}
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
@@ -365,54 +362,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
     @pytest.mark.skip_sql_dialect('sqlite')
     def test_list_retrieves_all_items_from(self, test_client, logged_user):
-        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client, logged_user)
-
-    def test_workspace_activation(self, test_client, workspace, session):
-        workspace.active = False
-        session.add(workspace)
-        session.commit()
-        res = test_client.put(f'{self.url()}{workspace.name}/activate/')
-        assert res.status_code == 200
-
-        res = test_client.get(f'{self.url()}{workspace.name}/')
-        active = res.json.get('active')
-        assert active == True
-
-        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
-
-    def test_workspace_deactivation(self, test_client, workspace, session):
-        workspace.active = True
-        session.add(workspace)
-        session.commit()
-        res = test_client.put(f'{self.url()}{workspace.name}/deactivate/')
-        assert res.status_code == 200
-
-        res = test_client.get(f'{self.url()}{workspace.name}/')
-        active = res.json.get('active')
-        assert active == False
-
-        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
-
-    def test_create_fails_with_start_date_greater_than_end_date(self,
-                                                           session,
-                                                           test_client):
-        workspace_count_previous = session.query(Workspace).count()
-        duration = {'start_date': 1563638577, 'end_date': 1563538577}
-        raw_data = {'name': 'somethingdarkside', 'duration': duration}
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-        assert workspace_count_previous == session.query(Workspace).count()
-
-
-class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):
-
-    def check_url(self, url):
-        return v2_to_v3(url)
-
-    def url(self, obj=None):
-        return v2_to_v3(super(TestWorkspaceAPIV3, self).url(obj))
+        super().test_list_retrieves_all_items_from(test_client, logged_user)
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False
@@ -423,10 +373,10 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):
 
         res = test_client.get(self.url(workspace))
         active = res.json.get('active')
-        assert active == True
+        assert active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == True
+        assert active_query
 
     def test_workspace_deactivation(self, test_client, workspace, session):
         workspace.active = True
@@ -437,10 +387,20 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):
 
         res = test_client.get(self.url(workspace))
         active = res.json.get('active')
-        assert active == False
+        assert not active
 
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
-        assert active_query == False
+        assert not active_query
+
+    def test_create_fails_with_start_date_greater_than_end_date(self,
+                                                           session,
+                                                           test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        duration = {'start_date': 1563638577, 'end_date': 1563538577}
+        raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_update_with_scope(self, session, test_client):
@@ -455,7 +415,7 @@ class TestWorkspaceAPIV3(TestWorkspaceAPI, V3TestMixin):
         assert res.json['updated'] == 2
         assert set(s.name for s in workspace.scope) == set(desired_scope)
         assert set(s.name for s in self.first_object.scope) == set(desired_scope)
-        raw_data = {"ids": [self.first_object.name], 'name': self.first_object.name+"a"}
+        raw_data = {"ids": [self.first_object.name], 'name': self.first_object.name + "a"}
         res = test_client.patch(self.url(), data=raw_data)
         assert res.status_code == 200
         assert res.json['updated'] == 1

@@ -24,13 +24,11 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, PatchableMixin, BulkDeleteMixin, \
-    BulkUpdateMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, BulkDeleteMixin, BulkUpdateMixin
 
 logger = logging.getLogger(__name__)
 
 workspace_api = Blueprint('workspace_api', __name__)
-
 
 
 class WorkspaceSummarySchema(Schema):
@@ -68,7 +66,7 @@ class WorkspaceDurationSchema(Schema):
 class WorkspaceSchema(AutoSchema):
 
     name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0,
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-]*$", 0,
                                                   error="The workspace name must validate with the regex "
                                                         "^[a-z0-9][a-z0-9\\_\\$\\(\\)\\+\\-\\/]*$"))
     stats = SelfNestedField(WorkspaceSummarySchema())
@@ -87,7 +85,6 @@ class WorkspaceSchema(AutoSchema):
                            dump_only=True)
 
     active_agents_count = fields.Integer(dump_only=True)
-
 
     class Meta:
         model = Workspace
@@ -108,7 +105,7 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
-class WorkspaceView(ReadWriteView, FilterMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, BulkUpdateMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -356,13 +353,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         db.session.commit()
         return self._get_object(workspace_id).readonly
 
-
-class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin, BulkUpdateMixin):
-    route_prefix = 'v3/'
-    trailing_slash = False
-
     # We should want this, we should use _get_base_query, but for some cases as workspace, it needs a refactor first
-
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.name.in_(ids))
@@ -385,4 +376,3 @@ class WorkspaceV3View(WorkspaceView, PatchableMixin, BulkDeleteMixin, BulkUpdate
 
 
 WorkspaceView.register(workspace_api)
-WorkspaceV3View.register(workspace_api)

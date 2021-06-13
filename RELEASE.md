@@ -2,6 +2,24 @@ New features in the latest update
 =====================================
 
 
+3.15.0 [May 18th, 2021]:
+---
+
+ * ADD `Basic Auth` support
+ * ADD support for GET method in websocket_tokens, POST will be deprecated in the future
+ * ADD CVSS(String), CWE(String), CVE(relationship) columns to vulnerability model and API
+ * ADD agent token's API says the renewal cycling duration
+ * MOD Improve database model to be able to delete workspaces fastly
+ * MOD Improve code style and uses (less flake8 exceptions, py3 `super` style, Flask app as singleton, etc)
+ * MOD workspaces' names regex to verify they cannot contain forward slash (`/`)
+ * MOD Improve bulk create logs
+ * FIX Own schema breaking Marshmallow 3.11.0+
+ * UPD flask_security_too to version 4.0.0+
+
+3.14.4 [Apr 15th, 2021]:
+---
+ * Updated plugins package, which update appscan plugin
+
 3.14.3 [Mar 30th, 2021]:
 ---
  * MOD MAYOR Breaking change: Use frontend from other repository
@@ -38,8 +56,8 @@ New features in the latest update
  * ADD v3 API, which includes:
     * All endpoints ends without `/`
     * `PATCH {model}/id` endpoints
-    * Bulk update via PATCH `{model}` endpoints
-    * Bulk delete via DELETE `{model}` endpoints
+    * ~~Bulk update via PATCH `{model}` endpoints~~ In a future release
+    * ~~Bulk delete via DELETE `{model}` endpoints~~ In a future release
     * Endpoints removed:
       * `/v2/ws/<workspace_id>/activate/`
       * `/v2/ws/<workspace_id>/change_readonly/`
@@ -103,6 +121,9 @@ New features in the latest update
  * Cleanup old sessions when a user logs in
  * Remove unmaintained Flask-Restless dependency
  * Remove pbkdf2\_sha1 and plain password schemes. We only support bcrypt
+
+3.11.2:
+---
 
 3.11.1 [Jun 3rd, 2020]:
 ---
@@ -305,9 +326,6 @@ compatible with python 3.
  * Fix bug when using custom fields, we must use the field_name instead of the display_name
  * Fix user's menu visibily when vuln detail is open.
  * Fix bug in status report that incorrectly showed standard vulns like if they were vulnwebs
-
-3.7.2:
----
 
 3.7:
 ---

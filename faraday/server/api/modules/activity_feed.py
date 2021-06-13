@@ -11,7 +11,6 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     PaginatedMixin,
-    PatchableWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin
 )
@@ -63,7 +62,7 @@ class ActivityFeedSchema(AutoSchema):
                   'creator')
 
 
-class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
+class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
     route_base = 'activities'
     model_class = Command
     schema_class = ActivityFeedSchema
@@ -97,11 +96,4 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
         }
 
 
-class ActivityFeedV3View(ActivityFeedView, PatchableWorkspacedMixin, BulkDeleteWorkspacedMixin,
-                         BulkUpdateWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-
 ActivityFeedView.register(activityfeed_api)
-ActivityFeedV3View.register(activityfeed_api)

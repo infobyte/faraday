@@ -14,13 +14,14 @@
 , pytz
 , requests
 , simplejson
+, tabulate
 }:
 
 buildPythonPackage rec {
   pname =
     "faraday-plugins";
   version =
-    "1.4.4";
+    "1.4.6";
 
   src =
     fetchPypi {
@@ -28,7 +29,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0bcm4c0f9lhp48bzbn408m648w3b3wiq9xvfgs82kxkf6kas7q4z";
+        "1q35qina5x8vn7rjy4djd85985jypsrk5ihhiin7x1ks505bmis8";
     };
 
   propagatedBuildInputs =
@@ -42,6 +43,7 @@ buildPythonPackage rec {
       pytz
       dateutil
       colorama
+      tabulate
     ];
 
   # TODO FIXME

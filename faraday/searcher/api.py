@@ -10,7 +10,7 @@ logger = logging.getLogger('Faraday searcher')
 
 class ApiError(Exception):
     def __init__(self, message):
-        super(ApiError, self).__init__(message)
+        super().__init__(message)
 
 
 class Structure:
@@ -57,14 +57,14 @@ class Api:
                 raise UserWarning('Invalid username or password')
 
     def _url(self, path, is_get=False):
-        url = self.base + 'v2/' + path
+        url = self.base + 'v3/' + path
         if self.command_id and 'commands' not in url and not url.endswith('}') and not is_get:
             if '?' in url:
                 url += f'&command_id={self.command_id}'
             elif url.endswith('/'):
-                url += f'?command_id={self.command_id}'
+                url = f'{url[:-1]}?command_id={self.command_id}'
             else:
-                url += f'/?command_id={self.command_id}'
+                url += f'?command_id={self.command_id}'
         return url
 
     def _get(self, url, object_name):
@@ -128,11 +128,11 @@ class Api:
             else:
                 cookies = getattr(resp, 'cookies', None)
                 if cookies is not None:
-                    token_response = self.requests.get(self.base + 'v2/token/', cookies=cookies)
+                    token_response = self.requests.get(self.base + 'v3/token', cookies=cookies)
                     if token_response.status_code != 404:
                         token = token_response.json()
                 else:
-                    token = self.requests.get(self.base + 'v2/token/').json
+                    token = self.requests.get(self.base + 'v3/token').json
 
                 header = {'Authorization': f'Token {token}'}
 
@@ -149,7 +149,7 @@ class Api:
         self.params = params
         self.tool_name = tool_name
         data = self._command_info()
-        res = self._post(self._url(f'ws/{self.workspace}/commands/'), data, 'command')
+        res = self._post(self._url(f'ws/{self.workspace}/commands'), data, 'command')
         return res["_id"]
 
     def _command_info(self, duration=None):
@@ -171,28 +171,28 @@ class Api:
 
     def close_command(self, command_id, duration):
         data = self._command_info(duration)
-        self._put(self._url(f'ws/{self.workspace}/commands/{command_id}/'), data, 'command')
+        self._put(self._url(f'ws/{self.workspace}/commands/{command_id}'), data, 'command')
 
     def fetch_vulnerabilities(self):
-        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/vulns/', True),
+        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/vulns', True),
                                                                  'vulnerabilities')['vulnerabilities']]
 
     def fetch_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/services/', True),
+        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/services', True),
                                                                  'services')['services']]
 
     def fetch_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/hosts/', True),
+        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/hosts', True),
                                                                  'hosts')['rows']]
 
     def fetch_templates(self):
         return [Structure(**item['doc']) for item in
-                self._get(self._url('vulnerability_template/', True), 'templates')['rows']]
+                self._get(self._url('vulnerability_template', True), 'templates')['rows']]
 
     def filter_vulnerabilities(self, **kwargs):
         if len(list(kwargs.keys())) > 1:
             params = urlencode(kwargs)
-            url = self._url(f'ws/{self.workspace}/vulns/?{params}')
+            url = self._url(f'ws/{self.workspace}/vulns?{params}')
         else:
             params = self.parse_args(**kwargs)
             url = self._url(f'ws/{self.workspace}/vulns/{params}', True)
@@ -201,13 +201,13 @@ class Api:
 
     def filter_services(self, **kwargs):
         params = urlencode(kwargs)
-        url = self._url(f'ws/{self.workspace}/services/?{params}', True)
+        url = self._url(f'ws/{self.workspace}/services?{params}', True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'services')['services']]
 
     def filter_hosts(self, **kwargs):
         params = urlencode(kwargs)
-        url = self._url(f'ws/{self.workspace}/hosts/?{params}', True)
+        url = self._url(f'ws/{self.workspace}/hosts?{params}', True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'hosts')['rows']]
 
@@ -222,7 +222,7 @@ class Api:
         return filtered_templates
 
     def update_vulnerability(self, vulnerability):
-        return Structure(**self._put(self._url(f'ws/{self.workspace}/vulns/{vulnerability.id}/'),
+        return Structure(**self._put(self._url(f'ws/{self.workspace}/vulns/{vulnerability.id}'),
                                      vulnerability.__dict__, 'vulnerability'))
 
     def update_service(self, service):
@@ -230,21 +230,21 @@ class Api:
             service.ports = [service.ports]
         else:
             service.ports = []
-        return Structure(**self._put(self._url(f'ws/{self.workspace}/services/{service.id}/'),
+        return Structure(**self._put(self._url(f'ws/{self.workspace}/services/{service.id}'),
                                      service.__dict__, 'service'))
 
     def update_host(self, host):
-        return Structure(**self._put(self._url(f'ws/{self.workspace}/hosts/{host.id}/'),
+        return Structure(**self._put(self._url(f'ws/{self.workspace}/hosts/{host.id}'),
                                      host.__dict__, 'hosts'))
 
     def delete_vulnerability(self, vulnerability_id):
-        return self._delete(self._url(f'ws/{self.workspace}/vulns/{vulnerability_id}/'), 'vulnerability')
+        return self._delete(self._url(f'ws/{self.workspace}/vulns/{vulnerability_id}'), 'vulnerability')
 
     def delete_service(self, service_id):
-        return self._delete(self._url(f'ws/{self.workspace}/services/{service_id}/'), 'service')
+        return self._delete(self._url(f'ws/{self.workspace}/services/{service_id}'), 'service')
 
     def delete_host(self, host_id):
-        return self._delete(self._url(f'ws/{self.workspace}/hosts/{host_id}/'), 'host')
+        return self._delete(self._url(f'ws/{self.workspace}/hosts/{host_id}'), 'host')
 
     @staticmethod
     def parse_args(**kwargs):

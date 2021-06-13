@@ -409,6 +409,8 @@ class HostsView(PaginatedMixin,
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
         return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
 
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+
     def _pre_bulk_update(self, data, **kwargs):
         hostnames = data.pop('hostnames', None)
         ans_data = super()._pre_bulk_update(data, **kwargs)

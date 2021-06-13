@@ -1123,6 +1123,7 @@ class VulnerabilityView(PaginatedMixin,
             return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
         return self._perform_bulk_delete(flask.request.json['severities'], by='severity',
                                          workspace_name=workspace_name, **kwargs), 200
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE

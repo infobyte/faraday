@@ -6,6 +6,7 @@
 , fetchPypi
 , lib
 , marshmallow
+, packaging
 , pytestrunner
 }:
 
@@ -13,7 +14,7 @@ buildPythonPackage rec {
   pname =
     "faraday-agent-parameters-types";
   version =
-    "0.1.15";
+    "0.1.16";
 
   src =
     fetchPypi {
@@ -22,7 +23,7 @@ buildPythonPackage rec {
       pname =
         "faraday_agent_parameters_types";
       sha256 =
-        "17zrkj1ganaqzbcbvrmd49gczvy73ghy7ngpdhgric1vs1r7abrs";
+        "0llv11bgcpbjp61502l71jisd22l0nlj65dkn603qvpmc98kp01s";
     };
 
   buildInputs =
@@ -32,6 +33,7 @@ buildPythonPackage rec {
   propagatedBuildInputs =
     [
       marshmallow
+      packaging
     ];
 
   # TODO FIXME

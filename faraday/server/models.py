@@ -1811,14 +1811,6 @@ class User(db.Model, UserMixin):
         "WorkspacePermission",
         cascade="all, delete-orphan")
 
-    def __init__(self, *args, **kwargs):
-        # added for compatibility with flask security
-        try:
-            kwargs.pop('roles')
-        except KeyError:
-            pass
-        super().__init__(*args, **kwargs)
-
     def __repr__(self):
         return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
 

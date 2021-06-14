@@ -623,7 +623,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
-        if request.method == 'POST':
+        if request.method == 'POST' and request.json:
             requested_type = request.json.get('type', None)
             if not requested_type:
                 raise InvalidUsage('Type is required.')
@@ -755,7 +755,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        filters = request.args.get('q')
+        filters = request.args.get('q', '{}')
         filtered_vulns, count = self._filter(filters, workspace_name)
 
         class PageMeta:

@@ -17,18 +17,20 @@ logger = logging.getLogger(__name__)
 
 REPORTS_QUEUE = Queue()
 
+INTERVAL = 0.5
+
 
 class ReportsManager(Thread):
 
     def __init__(self, upload_reports_queue, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(name="ReportsManager-Thread", daemon=True, *args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
         self.plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder,
                                               ignore_info=config.faraday_server.ignore_info_severity)
         self.__event = threading.Event()
 
     def stop(self):
-        logger.debug("Stop Reports Manager")
+        logger.info("Reports Manager Thread [Stopping...]")
         self.__event.set()
 
     def send_report_request(self,
@@ -77,7 +79,8 @@ class ReportsManager(Thread):
             logger.info(f"No plugin detected for report [{file_path}]")
 
     def run(self):
-        logger.debug("Start Reports Manager")
+        logger.info("Reports Manager Thread [Start]")
+
         while not self.__event.is_set():
             try:
                 tpl: Tuple[str, int, Path, int, int] = \
@@ -98,10 +101,12 @@ class ReportsManager(Thread):
                     logger.warning(f"Report file [{file_path}] don't exists",
                                    file_path)
             except Empty:
-                self.__event.wait(0.1)
+                self.__event.wait(INTERVAL)
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt, stopping report processing thread")
                 self.stop()
             except Exception as ex:
                 logger.exception(ex)
                 continue
+        else:
+            logger.info("Reports Manager Thread [Stop]")

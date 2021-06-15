@@ -101,7 +101,9 @@ def register_blueprints(app):
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
     # Custom reset password
     from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.settings import settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_reports import reports_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_dashboard import \
+        dashboard_settings_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -128,7 +130,8 @@ def register_blueprints(app):
     app.register_blueprint(preferences_api)
     app.register_blueprint(export_data_api)
     app.register_blueprint(auth)
-    app.register_blueprint(settings_api)
+    app.register_blueprint(reports_settings_api)
+    app.register_blueprint(dashboard_settings_api)
 
 
 def check_testing_configuration(testing, app):

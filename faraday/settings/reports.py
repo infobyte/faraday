@@ -25,8 +25,8 @@ class ReportsSettings(Settings):
 
     def custom_validation(self, validated_config):
         if validated_config['custom_plugins_folder']:
-            if not Path(validated_config['custom_plugins_folder']).is_dir():
-                raise InvalidConfigurationError(f"{validated_config['custom_plugins_folder']} dir don't exists")
+            if validated_config['custom_plugins_folder'] and not Path(validated_config['custom_plugins_folder']).is_dir():
+                raise InvalidConfigurationError(f"{validated_config['custom_plugins_folder']} is not valid path")
 
     def get_default_config(self):
         return {'ignore_info_severity': DEFAULT_IGNORE_INFO_SEVERITY,

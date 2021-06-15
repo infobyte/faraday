@@ -30,15 +30,16 @@ class SettingsAPIView(GenericView):
     def get(self, **kwargs):
         """
         ---
+        get:
           tags: ["settings"]
-          summary: Retrieves settings for {route_base}
+          summary: Retrieves settings
           responses:
             200:
               description: Ok
               content:
                 application/json:
                   schema: {schema_class}
-           403:
+            403:
               description: Admin user required
         """
         if flask_login.current_user.role != 'admin':
@@ -50,8 +51,9 @@ class SettingsAPIView(GenericView):
     def post(self, **kwargs):
         """
         ---
+        post:
           tags: ["settings"]
-          summary: Creates/Updates {rouse_base} settings
+          summary: Creates/Updates settings
           requestBody:
             required: true
             content:

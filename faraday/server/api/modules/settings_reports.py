@@ -5,7 +5,7 @@
 import logging
 from flask import Blueprint
 
-from faraday.settings.reports import ReportsSettingSchema
+from faraday.settings.reports import ReportsSettingSchema, ReportsSettings
 from faraday.server.api.modules.settings import SettingsAPIView
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ reports_settings_api = Blueprint('reports_settings_api', __name__)
 
 
 class ReportsSettingsAPI(SettingsAPIView):
-    route_base = 'reports'
+    route_base = ReportsSettings.settings_id
     schema_class = ReportsSettingSchema
 
 

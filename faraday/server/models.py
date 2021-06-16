@@ -2154,8 +2154,8 @@ class NotificationSubscription(Metadata):
     allowed_roles = relationship("NotificationRoles", secondary=allowed_roles_association)
 
 
-class NotificationSubscriptionBaseConfig(db.Model):
-    __tablename__ = 'notification_subscription_base_config'
+class NotificationSubscriptionConfigBase(db.Model):
+    __tablename__ = 'notification_subscription_config_base'
     id = Column(Integer, primary_key=True)
     subscription_id = Column(Integer, ForeignKey('notification_subscription.id'), index=True, nullable=False)
     subscription = relationship(
@@ -2183,9 +2183,9 @@ class NotificationSubscriptionBaseConfig(db.Model):
         pass
 
 
-class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
+class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):
     __tablename__ = 'notification_subscription_mail_config'
-    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
     email = Column(String(50), nullable=True)
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
     user_notified = relationship(
@@ -2205,9 +2205,9 @@ class NotificationSubscriptionMailConfig(NotificationSubscriptionBaseConfig):
             return self.user_notified.email
 
 
-class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
+class NotificationSubscriptionWebHookConfig(NotificationSubscriptionConfigBase):
     __tablename__ = 'notification_subscription_webhook_config'
-    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
     url = Column(String(50), nullable=False)
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[1]
@@ -2218,9 +2218,9 @@ class NotificationSubscriptionWebHookConfig(NotificationSubscriptionBaseConfig):
         return self.url
 
 
-class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionBaseConfig):
+class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionConfigBase):
     __tablename__ = 'notification_subscription_websocket_config'
-    id = Column(Integer, ForeignKey('notification_subscription_base_config.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
     user_notified = relationship(
         'User',
@@ -2254,30 +2254,100 @@ class NotificationEvent(db.Model):
         pass
 
 
-class NotificationSent(db.Model):
-    __tablename__ = 'notification_sent'
+class NotificationBase(db.Model):
+    __tablename__ = 'notification_base'
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
     event = relationship(
         'NotificationEvent',
         backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
-    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_base_config.id'),
+    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_config_base.id'),
                                                  index=True, nullable=False)
     notification_subscription_config = relationship(
-        'NotificationSubscriptionBaseConfig',
+        'NotificationSubscriptionConfigBase',
         backref=backref('notifications_sent', cascade="all, delete-orphan"),
     )
 
-    # TODO: el usuario tal vez deberia estar aca. Si se modifica la notificacion config nos caga el usuario al que se envio :think:
-    # El tema es que estamos repitiendo data.
-    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+# TBI
+class MailNotification(NotificationBase):
+    __tablename__ = 'mail_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+
+    @property
+    def dst(self):
+        return f'user_{self.notification_subscription_config.dst}'
+
+    @property
+    def body(self):
+        return 'body to be implemented'
+
+    @property
+    def subject(self):
+        return 'subject to be implemented'
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[0]
+    }
+
+#TBI
+class WebHookNotification(NotificationBase):
+    __tablename__ = 'webhook_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+
+    @property
+    def dst(self):
+        return f'user_{self.notification_subscription_config.dst}'
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[1]
+    }
+
+
+class WebsocketNotification(NotificationBase):
+    __tablename__ = 'websocket_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True)
     user_notified = relationship(
         'User',
         backref=backref('notifications_sent', cascade="all, delete-orphan")
     )
 
-    mark_read = Column(Boolean, default=False, index=True)  # mark read? is read? was read? index?
+    mark_read = Column(Boolean, default=False, index=True)
+
+    @property
+    def message(self):
+        msg = {
+            'notification_id': self.id,
+            'event': self.event.event,
+            'notification_text': self.event.notification_data,
+            'mark_read': self.mark_read,
+            'create_date': self.event.create_date.strftime("%Y-%m-%dT%H:%M:%S.%f+00:00"),
+            'object_id': self.event.object_id,
+            'object_type': self.event.object_type,
+        }
+        logger.debug(f'Message {msg}')
+        return msg
+
+    @property
+    def dst(self):
+        if self.notification_subscription_config.dst:
+            return f'user_{self.notification_subscription_config.dst}'
+        return f'user_{self.user_notified.username}'
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[2]
+    }
 
 
 class Notification(db.Model):

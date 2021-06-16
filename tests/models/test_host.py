@@ -7,8 +7,9 @@ See the file 'doc/LICENSE' for the license information
 import random
 import pytest
 from functools import partial
-from faraday.server.models import Hostname, Host
+from posixpath import join as urljoin
 
+from faraday.server.models import Hostname, Host
 from faraday.server.api.modules.hosts import HostsView
 
 from tests.test_api_workspaced_base import (
@@ -143,7 +144,7 @@ class TestHostAPI(ReadOnlyAPITests):
 
     # This test the api endpoint for some of the host in the ws, with existing other host with vulns in the same and
     # other ws
-    @pytest.mark.parametrize('querystring', ['countVulns/?hosts={}',
+    @pytest.mark.parametrize('querystring', ['countVulns?hosts={}',
                                              ])
     def test_vuln_count(self,
                         vulnerability_factory,
@@ -183,7 +184,10 @@ class TestHostAPI(ReadOnlyAPITests):
         session.add_all(vulns)
         session.commit()
 
-        url = self.url(workspace=workspace1) + querystring.format(",".join(map(lambda x: str(x.id), hosts_to_query)))
+        url = urljoin(
+            self.url(workspace=workspace1),
+            querystring.format(",".join(map(lambda x: str(x.id), hosts_to_query)))
+        )
         res = test_client.get(url)
 
         assert res.status_code == 200
@@ -194,7 +198,7 @@ class TestHostAPI(ReadOnlyAPITests):
 
     # This test the api endpoint for some of the host in the ws, with existing other host in other ws and ask for the
     # other hosts and test the api endpoint for all of the host in the ws, retrieving all host when none is required
-    @pytest.mark.parametrize('querystring', ['countVulns/?hosts={}', 'countVulns/',
+    @pytest.mark.parametrize('querystring', ['countVulns?hosts={}', 'countVulns',
     ])
     def test_vuln_count_ignore_other_ws(self,
                         vulnerability_factory,
@@ -232,7 +236,7 @@ class TestHostAPI(ReadOnlyAPITests):
         session.add_all(vulns)
         session.commit()
 
-        url = self.url(workspace=workspace1) + querystring.format(",".join(map(lambda x: str(x.id), hosts)))
+        url = urljoin(self.url(workspace=workspace1), querystring.format(",".join(map(lambda x: str(x.id), hosts))))
         res = test_client.get(url)
 
         assert res.status_code == 200
@@ -244,4 +248,3 @@ class TestHostAPI(ReadOnlyAPITests):
 
         for host in hosts_not_to_query_w2:
             assert str(host.id) not in res.json['hosts']
-# I'm Py3

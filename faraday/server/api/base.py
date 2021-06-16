@@ -32,8 +32,9 @@ from faraday.server.models import Workspace, db, Command, CommandObject, count_v
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation
-)
+    is_unique_constraint_violation,
+    not_null_constraint_violation
+    )
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
 
@@ -97,7 +98,7 @@ class GenericView(FlaskView):
 
     #: The prefix where the endpoint should be registered.
     #: This is useful for API versioning
-    route_prefix = '/v2/'
+    route_prefix = '/v3/'
 
     #: Arguments that are passed to the view but shouldn't change the route
     #: rule. This should be used when route_prefix is parametrized
@@ -155,6 +156,8 @@ class GenericView(FlaskView):
     #: typically is isn't used, like the vuln creator. If you know you will use
     #: it, indicate it here to prevent doing an extra SQL query.
     get_undefer = []  # List of columns to undefer
+
+    trailing_slash = False
 
     def _get_schema_class(self):
         """By default, it returns ``self.schema_class``.
@@ -362,7 +365,7 @@ class GenericWorkspacedView(GenericView):
     """
 
     # Default attributes
-    route_prefix = '/v2/ws/<workspace_name>/'
+    route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
     def _get_workspace(self, workspace_name):
@@ -945,7 +948,10 @@ class CreateMixin:
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
             if not is_unique_constraint_violation(ex):
-                raise
+                if not_null_constraint_violation(ex):
+                    flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
+                else:
+                    raise
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:
@@ -1154,10 +1160,6 @@ class UpdateMixin:
                 raise
         return obj
 
-
-class PatchableMixin:
-    # TODO must be used with a UpdateMixin, when v2 be deprecated, add patch() to that Mixin
-
     def patch(self, object_id, **kwargs):
         """
         ---
@@ -1250,10 +1252,6 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
 
         self._set_command_id(obj, False)
         return super()._perform_update(object_id, obj, data, workspace_name)
-
-
-class PatchableWorkspacedMixin(PatchableMixin):
-    # TODO must be used with a UpdateWorkspacedMixin, when v2 be deprecated, add patch() to that Mixin
 
     def patch(self, object_id, workspace_name=None):
         """

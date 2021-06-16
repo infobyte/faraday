@@ -12,11 +12,6 @@ import pytest
 class TestAPIInfoEndpoint:
 
     def test_api_info(self, test_client):
-        response = test_client.get('v2/info')
-        assert response.status_code == 200
-        assert response.json['Faraday Server'] == 'Running'
-
-    def test_api_info_v3(self, test_client):
         response = test_client.get('v3/info')
         assert response.status_code == 200
         assert response.json['Faraday Server'] == 'Running'

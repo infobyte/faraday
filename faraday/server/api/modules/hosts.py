@@ -24,8 +24,7 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-    FilterWorkspacedMixin,
-    PatchableWorkspacedMixin
+    FilterWorkspacedMixin
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -192,7 +191,7 @@ class HostsView(PaginatedMixin,
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    @route('/bulk_create/', methods=['POST'])
+    @route('/bulk_create', methods=['POST'])
     def bulk_create(self, workspace_name):
         """
         ---
@@ -259,7 +258,7 @@ class HostsView(PaginatedMixin,
             logger.error("Error parsing hosts CSV (%s)", e)
             abort(400, f"Error parsing hosts CSV ({e})")
 
-    @route('/<host_id>/services/')
+    @route('/<host_id>/services')
     def service_list(self, workspace_name, host_id):
         """
         ---
@@ -280,7 +279,7 @@ class HostsView(PaginatedMixin,
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services)
 
-    @route('/countVulns/')
+    @route('/countVulns')
     def count_vulns(self, workspace_name):
         """
         ---
@@ -315,7 +314,7 @@ class HostsView(PaginatedMixin,
 
         return res_dict
 
-    @route('/<host_id>/tools_history/')
+    @route('/<host_id>/tools_history')
     def tool_impacted_by_host(self, workspace_name, host_id):
         """
         ---
@@ -400,70 +399,44 @@ class HostsView(PaginatedMixin,
                            or len(hosts)),
         }
 
+    # ### THIS WAS FROM V2
     # TODO SCHEMA
-    @route('bulk_delete/', methods=['DELETE'])
-    def bulk_delete(self, workspace_name):
-        """
-        ---
-        delete:
-          tags: ["Bulk", "Host"]
-          description: Delete hosts in bulk
-          responses:
-            200:
-              description: Ok
-            400:
-              description: Bad request
-            403:
-              description: Forbidden
-        tags: ["Bulk", "Host"]
-        responses:
-          200:
-            description: Ok
-        """
-        workspace = self._get_workspace(workspace_name)
-        json_request = flask.request.get_json()
-        if not json_request:
-            flask.abort(400, 'Invalid request. Check the request data or the content type of the request')
-        hosts_ids = json_request.get('hosts_ids', [])
-        hosts_ids = [host_id for host_id in hosts_ids if isinstance(host_id, int)]
-        deleted_hosts = 0
-        if hosts_ids:
-            deleted_hosts = Host.query.filter(
-                Host.id.in_(hosts_ids),
-                Host.workspace_id == workspace.id).delete(synchronize_session='fetch')
-        else:
-            flask.abort(400, "Invalid request")
-
-        db.session.commit()
-        response = {'deleted_hosts': deleted_hosts}
-        return flask.jsonify(response)
-
-
-class HostsV3View(HostsView, PatchableWorkspacedMixin):
-    route_prefix = '/v3/ws/<workspace_name>/'
-    trailing_slash = False
-
-    @route('/<host_id>/services')
-    def service_list(self, workspace_name, host_id):
-        return super().service_list(workspace_name, host_id)
-
-    @route('/<host_id>/tools_history')
-    def tool_impacted_by_host(self, workspace_name, host_id):
-        return super().tool_impacted_by_host(workspace_name, host_id)
-
-    @route('/bulk_create', methods=['POST'])
-    def bulk_create(self, workspace_name):
-        return super().bulk_create(workspace_name)
-
-    @route('/countVulns')
-    def count_vulns(self, workspace_name):
-        return super().count_vulns()
-
-    service_list.__doc__ = HostsView.service_list.__doc__
-    tool_impacted_by_host.__doc__ = HostsView.tool_impacted_by_host.__doc__
-    bulk_create.__doc__ = HostsView.bulk_create.__doc__
-    count_vulns.__doc__ = HostsView.count_vulns.__doc__
+    # @route('bulk_delete/', methods=['DELETE'])
+    # def bulk_delete(self, workspace_name):
+    #     """
+    #     ---
+    #     delete:
+    #       tags: ["Bulk", "Host"]
+    #       description: Delete hosts in bulk
+    #       responses:
+    #         200:
+    #           description: Ok
+    #         400:
+    #           description: Bad request
+    #         403:
+    #           description: Forbidden
+    #     tags: ["Bulk", "Host"]
+    #     responses:
+    #       200:
+    #         description: Ok
+    #     """
+    #     workspace = self._get_workspace(workspace_name)
+    #     json_request = flask.request.get_json()
+    #     if not json_request:
+    #         flask.abort(400, 'Invalid request. Check the request data or the content type of the request')
+    #     hosts_ids = json_request.get('hosts_ids', [])
+    #     hosts_ids = [host_id for host_id in hosts_ids if isinstance(host_id, int)]
+    #     deleted_hosts = 0
+    #     if hosts_ids:
+    #         deleted_hosts = Host.query.filter(
+    #             Host.id.in_(hosts_ids),
+    #             Host.workspace_id == workspace.id).delete(synchronize_session='fetch')
+    #     else:
+    #         flask.abort(400, "Invalid request")
+    #
+    #     db.session.commit()
+    #     response = {'deleted_hosts': deleted_hosts}
+    #     return flask.jsonify(response)
 
 
 HostsView.register(host_api)
-HostsV3View.register(host_api)

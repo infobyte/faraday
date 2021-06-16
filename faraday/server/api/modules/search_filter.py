@@ -8,8 +8,7 @@ import flask_login
 from faraday.server.models import SearchFilter
 from faraday.server.api.base import (
     ReadWriteView,
-    AutoSchema,
-    PatchableMixin,
+    AutoSchema
 )
 
 searchfilter_api = Blueprint('searchfilter_api', __name__)
@@ -35,10 +34,4 @@ class SearchFilterView(ReadWriteView):
         return query.filter(SearchFilter.creator_id == flask_login.current_user.id)
 
 
-class SearchFilterV3View(SearchFilterView, PatchableMixin):
-    route_prefix = 'v3/'
-    trailing_slash = False
-
-
 SearchFilterView.register(searchfilter_api)
-SearchFilterV3View.register(searchfilter_api)

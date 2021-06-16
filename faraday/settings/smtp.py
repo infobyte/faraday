@@ -17,7 +17,7 @@ DEFAULT_SSL = False
 
 
 class SMTPSettingSchema(AutoSchema):
-    enabled = fields.Boolean(required=True, default=DEFAULT_ENABLED)
+    enabled = fields.Boolean(default=DEFAULT_ENABLED, required=True)
     username = fields.String(default=DEFAULT_USERNAME, required=True)
     password = fields.String(default=DEFAULT_PASSWORD, required=True)
     host = fields.String(default=DEFAULT_HOST, required=True)

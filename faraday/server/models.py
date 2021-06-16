@@ -2276,6 +2276,7 @@ class NotificationBase(db.Model):
         'polymorphic_identity': 'base'
     }
 
+
 # TBI
 class MailNotification(NotificationBase):
     __tablename__ = 'mail_notification'
@@ -2297,6 +2298,7 @@ class MailNotification(NotificationBase):
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[0]
     }
+
 
 #TBI
 class WebHookNotification(NotificationBase):

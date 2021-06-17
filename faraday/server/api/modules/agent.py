@@ -369,14 +369,17 @@ class AgentView(ReadOnlyMultiWorkspacedView):
           summary: Get all manifests, Optionally choose latest version with parameter
           parameters:
           - in: version
-            name: v
+            name: agent_version
             description: latest version to request
 
           responses:
             200:
               description: Ok
         """
-        return flask.jsonify(get_manifests(request.args.get("v")))
+        try:
+            return flask.jsonify(get_manifests(request.args.get("agent_version")))
+        except ValueError as e:
+            flask.abort(400, e)
 
 
 AgentWithWorkspacesView.register(agent_api)

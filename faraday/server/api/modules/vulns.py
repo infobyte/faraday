@@ -47,8 +47,8 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User
-)
+    User,
+    CVE)
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
 
@@ -109,6 +109,7 @@ class CustomMetadataSchema(MetadataSchema):
 
 
 class CVESchema(AutoSchema):
+    year = fields.Integer(dump_only=True)
     identifier = fields.Integer(dump_only=True)
 
 
@@ -524,6 +525,18 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
+        cves = [reference for reference in references if 'cve-' in reference.lower()]
+        for cve in cves:
+            logger.debug("cve found %s", cve)
+            try:
+                _, year, identifier = cve.split("-")
+            except ValueError as e:
+                logger.error("Could not parse cve ", e)
+                continue
+            obj.cve.append(CVE(year=year, identifier=identifier))
+
+        db.session.flush()
+
         if not obj.tool:
             if obj.creator_command_tool:
                 obj.tool = obj.creator_command_tool

@@ -28,8 +28,8 @@ from faraday.server.models import (
     VulnerabilityWeb,
     AgentExecution,
     Workspace,
-    Metadata
-)
+    Metadata,
+    CVE)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -356,9 +356,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
 
-    # Sacar los cve, cwe, etc.
-    # Buscar el cve en nuestra tabla de cve
-    #
+    cves = [reference for reference in references if 'cve-' in reference.lower()]
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -407,18 +405,27 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(policyviolations, references, vuln):
+    def update_vuln(policyviolations, references, vuln, cves):
         vuln.references = references
         vuln.policy_violations = policyviolations
+
+        for cve in cves:
+            logger.debug("cve found %s", cve)
+            try:
+                _, year, identifier = cve.split("-")
+            except ValueError as e:
+                logger.error("Could not parse cve ", e)
+                continue
+            vuln.cve.append(CVE(year=year, identifier=identifier))
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln)
+        update_vuln(policyviolations, references, vuln, cves)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln)
+        update_vuln(policyviolations, references, vuln, cves)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

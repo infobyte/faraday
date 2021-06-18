@@ -2267,13 +2267,13 @@ class NotificationBase(db.Model):
     event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
     event = relationship(
         'NotificationEvent',
-        backref=backref('notifications_sent', cascade="all, delete-orphan"),
+        backref=backref('notifications', cascade="all, delete-orphan"),
     )
     notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_config_base.id'),
                                                  index=True, nullable=False)
     notification_subscription_config = relationship(
         'NotificationSubscriptionConfigBase',
-        backref=backref('notifications_sent', cascade="all, delete-orphan"),
+        backref=backref('notifications', cascade="all, delete-orphan"),
     )
 
     type = Column(String(24))
@@ -2329,7 +2329,7 @@ class WebsocketNotification(NotificationBase):
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True)
     user_notified = relationship(
         'User',
-        backref=backref('notifications_sent', cascade="all, delete-orphan")
+        backref=backref('notifications', cascade="all, delete-orphan")
     )
 
     mark_read = Column(Boolean, default=False, index=True)
@@ -2339,7 +2339,7 @@ class WebsocketNotification(NotificationBase):
         msg = {
             'notification_id': self.id,
             'event': self.event.event,
-            'notification_text': self.event.notification_data,
+            'notification_data': self.event.notification_data,
             'mark_read': self.mark_read,
             'create_date': self.event.create_date.strftime("%Y-%m-%dT%H:%M:%S.%f+00:00"),
             'object_id': self.event.object_id,

@@ -8,8 +8,9 @@ Create Date: 2021-05-28 15:47:13.781453+00:00
 from alembic import op
 import sqlalchemy as sa
 from faraday.server.fields import JSONType
-from depot.fields.sqlalchemy import UploadedFileField
-from sqlalchemy.dialects import postgresql
+
+# Added manually for inserts
+from sqlalchemy import orm
 
 # revision identifiers, used by Alembic.
 revision = 'a9fcf8444c79'
@@ -186,6 +187,136 @@ def upgrade():
                     unique=False)
 
     # ### end Alembic commands ###
+
+    # Added manually for inserts
+    bind = op.get_bind()
+    session = orm.Session(bind=bind)
+
+    from faraday.server.models import NotificationSubscription, NotificationSubscriptionConfigBase, \
+        NotificationSubscriptionWebSocketConfig, WebsocketNotification, NotificationRoles
+    r1 = NotificationRoles(name='admin')
+    r2 = NotificationRoles(name='pentester')
+    r3 = NotificationRoles(name='client')
+    r4 = NotificationRoles(name='asset_owner')
+
+    n = NotificationSubscription(event='new_workspace', allowed_roles=[r1])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='update_workspace', allowed_roles=[r1])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='delete_workspace', allowed_roles=[r1])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_user', allowed_roles=[r1])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='update_user', allowed_roles=[r1])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='delete_user', allowed_roles=[r1])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_agent', allowed_roles=[r1, r2])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='update_agent', allowed_roles=[r1, r2])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='delete_agent', allowed_roles=[r1, r2])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_executivereport', allowed_roles=[r1, r2, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='update_executivereport', allowed_roles=[r1, r2, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_agentexecution', allowed_roles=[r1, r2, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_command', allowed_roles=[r1, r2, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_vulnerability', allowed_roles=[r1, r2, r3, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='update_vulnerability', allowed_roles=[r1, r2, r3, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='delete_vulnerability', allowed_roles=[r1, r2, r3, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
+
+    n = NotificationSubscription(event='new_comment', allowed_roles=[r1, r2, r3, r4])
+    session.add(n)
+    session.commit()
+    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+    session.add(ns)
+    session.commit()
 
 
 def downgrade():

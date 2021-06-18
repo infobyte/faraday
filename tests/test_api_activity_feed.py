@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import datetime
 import pytest
 
 from tests.factories import (WorkspaceFactory,
@@ -40,12 +41,11 @@ class TestActivityFeed:
         session.add(command)
         session.commit()
 
-        # Timestamp of 14/12/2018
-        itime = 1544745600.0
+        new_start_date = command.end_date - datetime.timedelta(days=1)
         data = {
             'command': command.command,
             'tool': command.tool,
-            'itime': itime
+            'itime': new_start_date.timestamp()
 
         }
 
@@ -57,7 +57,7 @@ class TestActivityFeed:
         # Changing res.json['itime'] to timestamp format of itime
         res_itime = res.json['itime'] / 1000.0
         assert res.status_code == 200
-        assert res_itime == itime
+        assert datetime.datetime.fromtimestamp(res_itime) == new_start_date
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_verify_correct_severities_sum_values(self, session, test_client):

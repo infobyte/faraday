@@ -60,8 +60,8 @@ from faraday.server.models import (
 def FuzzyStartTime():
     return (
         FuzzyNaiveDateTime(
-        datetime.datetime.now() - datetime.timedelta(days=40),
-        datetime.datetime.now() - datetime.timedelta(days=20),
+        datetime.datetime.utcnow() - datetime.timedelta(days=40),
+        datetime.datetime.utcnow() - datetime.timedelta(days=20),
         )
     )
 
@@ -69,8 +69,8 @@ def FuzzyStartTime():
 def FuzzyEndTime():
     return (
         FuzzyNaiveDateTime(
-            datetime.datetime.now() - datetime.timedelta(days=19),
-            datetime.datetime.now()
+            datetime.datetime.utcnow() - datetime.timedelta(days=19),
+            datetime.datetime.utcnow()
         )
     )
 

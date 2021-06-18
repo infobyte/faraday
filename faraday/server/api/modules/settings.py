@@ -29,7 +29,7 @@ class SettingsAPIView(GenericView):
         ---
         get:
           tags: ["settings"]
-          summary: Retrieves settings
+          summary: Retrieves settings of {route_base}
           responses:
             200:
               description: Ok
@@ -47,7 +47,7 @@ class SettingsAPIView(GenericView):
         ---
         patch:
           tags: ["settings"]
-          summary: Creates/Updates settings
+          summary: Creates/Updates settings of {route_base}
           requestBody:
             required: true
             content:

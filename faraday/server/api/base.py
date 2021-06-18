@@ -469,7 +469,6 @@ class ListMixin:
           ---
           tags: [{tag_name}]
           summary: "Get a list of {class_model}."
-          base_route: {route_base}
           responses:
             200:
               description: Ok
@@ -817,7 +816,6 @@ class RetrieveMixin:
         ---
           tags: ["{tag_name}"]
           summary: Retrieves {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -845,7 +843,6 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
         ---
           tags: ["{tag_name}"]
           summary: Retrieves {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -910,7 +907,6 @@ class CreateMixin:
         ---
           tags: ["{tag_name}"]
           summary: Creates {class_model}
-          base_route: {route_base}
           requestBody:
             required: true
             content:
@@ -1028,7 +1024,6 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         ---
           tags: ["{tag_name}"]
           summary: Creates {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: workspace_name
@@ -1092,7 +1087,6 @@ class UpdateMixin:
         ---
           tags: ["{tag_name}"]
           summary: Updates {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -1171,7 +1165,6 @@ class UpdateMixin:
         ---
           tags: ["{tag_name}"]
           summary: Updates {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -1220,7 +1213,6 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         ---
           tags: ["{tag_name}"]
           summary: Updates {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -1266,7 +1258,6 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         ---
           tags: ["{tag_name}"]
           summary: Updates {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -1306,7 +1297,6 @@ class DeleteMixin:
         ---
           tags: ["{tag_name}"]
           summary: Deletes {class_model}
-          base_route: {route_base}
           parameters:
           - in: path
             name: object_id
@@ -1334,7 +1324,6 @@ class DeleteWorkspacedMixin(DeleteMixin):
           ---
             tags: ["{tag_name}"]
             summary: Deletes {class_model}
-            base_route: {route_base}
             parameters:
             - in: path
               name: object_id
@@ -1379,7 +1368,6 @@ class CountWorkspacedMixin:
           ---
           tags: [{tag_name}]
           summary: "Group {class_model} by the field set in the group_by GET parameter."
-          base_route: {route_base}
           responses:
             200:
               description: Ok
@@ -1463,7 +1451,6 @@ class CountMultiWorkspacedMixin:
         ---
           tags: [{tag_name}]
           summary: "Count {class_model} by multiples workspaces"
-          base_route: {route_base}
           responses:
             200:
               description: Ok

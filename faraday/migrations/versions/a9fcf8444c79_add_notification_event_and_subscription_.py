@@ -39,7 +39,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], )
     )
 
-    ## Added manually
+    # Added manually
     op.add_column('notification_event',
                   sa.Column(
                       'object_type',
@@ -54,8 +54,8 @@ def upgrade():
                               'task'
                               'executivereport'
                               'agent',
-                              'agentexecution'
-                              , name='object_types'),
+                              'agentexecution',
+                              name='object_types'),
                       nullable=False
                   )
                   )
@@ -71,7 +71,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['update_user_id'], ['faraday_user.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
-    ## Added manually
+    # Added manually
     op.add_column('notification_subscription',
                   sa.Column(
                       'event',
@@ -95,8 +95,8 @@ def upgrade():
                               'delete_user',
                               'delete_executivereport',
                               'delete_vulnerability',
-                              'delete_comment'
-                              , name='notification_events'),
+                              'delete_comment',
+                              name='notification_events'),
                       nullable=False)
                   )
 
@@ -108,7 +108,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['allowed_role_id'], ['notification_roles.id'], ),
     sa.ForeignKeyConstraint(['notification_subscription_id'], ['notification_subscription.id'], )
     )
-
 
     op.create_table('notification_subscription_config_base',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -122,7 +121,6 @@ def upgrade():
     sa.UniqueConstraint('subscription_id', 'type', name='uix_subscriptionid_type')
     )
     op.create_index(op.f('ix_notification_subscription_config_base_subscription_id'), 'notification_subscription_config_base', ['subscription_id'], unique=False)
-
 
     op.create_table('notification_subscription_mail_config',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -192,8 +190,9 @@ def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
 
-    from faraday.server.models import NotificationSubscription, NotificationSubscriptionConfigBase, \
-        NotificationSubscriptionWebSocketConfig, WebsocketNotification, NotificationRoles
+    from faraday.server.models import NotificationSubscription, NotificationSubscriptionWebSocketConfig,\
+        NotificationRoles
+
     r1 = NotificationRoles(name='admin')
     r2 = NotificationRoles(name='pentester')
     r3 = NotificationRoles(name='client')
@@ -341,7 +340,7 @@ def downgrade():
     op.drop_table('notification_event')
     op.drop_table('notification_roles')
 
-    ## Added Manually
+    # Added Manually
     op.execute('DROP TYPE notification_events')
     ##
 

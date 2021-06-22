@@ -2307,7 +2307,7 @@ class MailNotification(NotificationBase):
     }
 
 
-#TBI
+# TBI
 class WebHookNotification(NotificationBase):
     __tablename__ = 'webhook_notification'
 

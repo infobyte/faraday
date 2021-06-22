@@ -2,7 +2,6 @@ import functools
 from flask import Blueprint
 from flask_socketio import emit, disconnect
 import logging
-from faraday.server.extensions import socketio
 from flask_login import current_user
 
 logger = logging.getLogger(__name__)

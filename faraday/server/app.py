@@ -98,8 +98,8 @@ def register_blueprints(app):
     from faraday.server.api.modules.search_filter import searchfilter_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
-    #Custom reset password
-    from faraday.server.api.modules.auth import auth # pylint:disable=import-outside-toplevel
+    # Custom reset password
+    from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
     from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)

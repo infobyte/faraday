@@ -5,9 +5,6 @@ import logging
 import os
 import string
 import datetime
-
-from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, rooms, disconnect
-
 import bleach
 import pyotp
 import requests
@@ -17,6 +14,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadS
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
+from faraday.server.extensions import socketio
 from faraday.server.models import User
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
@@ -53,7 +51,6 @@ from faraday.server.config import CONST_FARADAY_HOME_PATH
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
-socketio = SocketIO()
 
 def setup_storage_path():
     default_path = CONST_FARADAY_HOME_PATH / 'storage'
@@ -103,7 +100,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
     #Custom reset password
     from faraday.server.api.modules.auth import auth # pylint:disable=import-outside-toplevel
-    from faraday.server.websockets import websockets_test # pylint:disable=import-outside-toplevel
+    from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -120,7 +117,7 @@ def register_blueprints(app):
     app.register_blueprint(comment_api)
     app.register_blueprint(upload_api)
     app.register_blueprint(websocket_auth_api)
-    app.register_blueprint(websockets_test)
+    app.register_blueprint(websockets)
 
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
@@ -446,8 +443,13 @@ def create_app(db_connection_string=None, testing=None):
 
     app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
 
-    socketio.init_app(app)
+    register_extensions(app)
+
     return app
+
+
+def register_extensions(app):
+    socketio.init_app(app)
 
 
 def minify_json_output(app):

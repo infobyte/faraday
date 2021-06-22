@@ -101,7 +101,6 @@ NOTIFICATION_EVENTS = [
     'new_workspace',
     'new_agent',
     'new_user',
-    'new_agent',
     'new_agentexecution',
     'new_executivereport',
     'new_vulnerability',

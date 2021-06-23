@@ -243,7 +243,7 @@ def bulk_create(ws: Workspace,
             _create_host(ws, host, command)
 
     if 'command' in data and set_end_date:
-        command.end_date = datetime.now() if command.end_date is None else \
+        command.end_date = datetime.utcnow() if command.end_date is None else \
             command.end_date
         db.session.commit()
 
@@ -316,7 +316,7 @@ def _update_service(service: Service, service_data: dict) -> Service:
             updated = True
 
     if updated:
-        service.update_date = datetime.now()
+        service.update_date = datetime.utcnow()
 
     return service
 
@@ -379,7 +379,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         try:
             run_timestamp = float(run_date_string)
             run_date = datetime.utcfromtimestamp(run_timestamp)
-            if run_date < datetime.now() + timedelta(hours=24):
+            if run_date < datetime.utcnow() + timedelta(hours=24):
                 logger.debug("Valid run date")
             else:
                 run_date = None

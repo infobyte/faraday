@@ -1,9 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import time
 from datetime import datetime
 
+import pytz
 from flask import Blueprint
 from marshmallow import fields
 
@@ -30,10 +30,10 @@ class ActivityFeedSchema(AutoSchema):
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
     def load_itime(self, value):
-        return datetime.fromtimestamp(value)
+        return datetime.utcfromtimestamp(value)
 
     def get_itime(self, obj):
-        return time.mktime(obj.start_date.utctimetuple()) * 1000
+        return obj.start_date.replace(tzinfo=pytz.utc).timestamp() * 1000
 
     def get_sum_created_vulnerabilities(self, obj):
         return obj.sum_created_vulnerabilities

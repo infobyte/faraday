@@ -42,7 +42,7 @@ class TokenAuthView(GenericView):
         )
         hashed_data = hash_data(flask_login.current_user.password) if flask_login.current_user.password else None
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        requested_at = datetime.datetime.now()
+        requested_at = datetime.datetime.utcnow()
         audit_logger.info(f"User [{flask_login.current_user.username}] requested token from IP [{user_ip}] at [{requested_at}]")
         return serializer.dumps({'user_id': user_id, "validation_check": hashed_data}).decode('utf-8')
 

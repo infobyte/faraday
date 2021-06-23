@@ -314,7 +314,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 user='',
                 hostname='',
                 params=params,
-                start_date=datetime.now(),
+                start_date=datetime.utcnow(),
                 workspace=workspace
             )
 

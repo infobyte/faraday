@@ -214,7 +214,7 @@ def create_superuser(username, email, password):
         get_app().user_datastore.create_user(username=username,
                                        email=email,
                                        password=hash_password(password),
-                                       role='admin',
+                                       roles=['admin'],
                                        is_ldap=False)
         db.session.commit()
         click.echo(click.style(

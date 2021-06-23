@@ -15,7 +15,7 @@ from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from faraday.server.extensions import socketio
-from faraday.server.models import User
+from faraday.server.models import User, Role
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
@@ -412,7 +412,7 @@ def create_app(db_connection_string=None, testing=None):
     app.user_datastore = SQLAlchemyUserDatastore(
         db,
         user_model=User,
-        role_model=None)  # We won't use flask security roles feature
+        role_model=Role)
 
     from faraday.server.api.modules.agent import agent_creation_api  # pylint: disable=import-outside-toplevel
 

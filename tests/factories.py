@@ -53,7 +53,9 @@ from faraday.server.models import (
     Rule,
     Action,
     RuleAction,
-    Condition)
+    Condition,
+    Role
+)
 
 
 # Make partials for start and end date. End date must be after start date
@@ -98,6 +100,30 @@ class UserFactory(FaradayFactory):
     fs_uniquifier = factory.LazyAttribute(
         lambda e: uuid.uuid4().hex
     )
+
+    @factory.post_generation
+    def roles(self, create, extracted, **kwargs):
+
+        def get_role(_role: str) -> Role:
+            return Role.query.filter(Role.name == _role).one()
+
+        if not create:
+            # Simple build, do nothing.
+            if extracted:
+                # A list of roles were passed in, use them
+                self['roles'] = self.get('roles', [])
+                for role in extracted:
+                    role = role if not isinstance(role, str) else get_role(role)
+                    self['roles'].append(role.name)
+            else:
+                self.roles.append(get_role('client'))
+        elif extracted:
+            # A list of groups were passed in, use them
+            for role in extracted:
+                role = role if not isinstance(role, str) else get_role(role)
+                self.roles.append(role)
+        else:
+            self.roles.append(get_role('client'))
 
     class Meta:
         model = User

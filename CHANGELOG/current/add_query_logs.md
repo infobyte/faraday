@@ -1,1 +1,0 @@
-Add querys to log

@@ -7,6 +7,7 @@ import flask
 import logging
 
 import pyotp
+from faraday_agent_parameters_types.utils import type_validate, get_manifests
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -306,6 +307,18 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                          Executor.agent_id == agent_id).one()
+
+            # VALIDATE
+            errors = {}
+            for param_name, param_data in executor_data["args"].items():
+                val_error = type_validate(executor.parameters_metadata[param_name]['type'], param_data)
+                if val_error:
+                    errors[param_name] = val_error
+            if errors:
+                response = jsonify(errors)
+                response.status_code = 400
+                abort(response)
+
             params = ', '.join([f'{key}={value}' for (key, value) in executor_data["args"].items()])
             command = Command(
                 import_source="agent",
@@ -346,6 +359,19 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             return flask.jsonify({
                 'command_id': command.id,
             })
+
+    @route('/get_manifests', methods=['GET'])
+    def manifests_get(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Agent"]
+          description: Get all manifests
+          responses:
+            200:
+              description: Ok
+        """
+        return flask.jsonify(get_manifests())
 
 
 AgentWithWorkspacesView.register(agent_api)

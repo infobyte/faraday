@@ -100,7 +100,6 @@ def register_blueprints(app):
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
     # Custom reset password
     from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
-
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)

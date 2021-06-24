@@ -19,7 +19,7 @@ class TestLogin:
                 active=True,
                 username='Susan',
                 password=hash_password('pepito'),
-                role='pentester')
+                roles=['pentester'])
         session.add(susan)
         session.commit()
         # we use lower case username, but in db is Capitalized
@@ -40,7 +40,7 @@ class TestLogin:
                 active=True,
                 username='alice',
                 password=hash_password('passguord'),
-                role='pentester')
+                roles=['pentester'])
         session.add(alice)
         session.commit()
 
@@ -72,7 +72,7 @@ class TestLogin:
                 active=True,
                 username='alice',
                 password=hash_password('passguord'),
-                role='pentester')
+                roles=['pentester'])
         session.add(alice)
         session.commit()
 
@@ -142,7 +142,7 @@ class TestLogin:
                 active=True,
                 username='asdasd',
                 password=hash_password('asdasd'),
-                role='pentester')
+                roles=['pentester'])
         session.add(alice)
         session.commit()
 
@@ -173,7 +173,7 @@ class TestLogin:
                 active=True,
                 username='susan',
                 password=hash_password('pepito'),
-                role='pentester')
+                roles=['pentester'])
         session.add(susan)
         session.commit()
 
@@ -197,7 +197,7 @@ class TestLogin:
                 active=True,
                 username='susan',
                 password=hash_password('pepito'),
-                role='pentester')
+                roles=['pentester'])
         session.add(susan)
         session.commit()
         login_payload = {
@@ -220,7 +220,7 @@ class TestLogin:
                 active=True,
                 username='susan',
                 password=hash_password('pepito'),
-                role='pentester')
+                roles=['pentester'])
         session.add(susan)
         session.commit()
         login_payload = {

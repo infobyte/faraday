@@ -105,7 +105,7 @@ class TestBasicAuth:
                 active=True,
                 username='asdasd',
                 password=hash_password('asdasd'),
-                role='admin')
+                roles=['admin'])
         session.add(alice)
         session.commit()
 
@@ -127,7 +127,7 @@ class TestBasicAuth:
                 active=True,
                 username='asdasd',
                 password=hash_password('asdasd'),
-                role='admin')
+                roles=['admin'])
         session.add(alice)
         session.commit()
 

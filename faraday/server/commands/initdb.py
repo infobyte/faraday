@@ -104,6 +104,26 @@ class InitDB():
             print('User cancelled.')
             sys.exit(1)
 
+    def _create_roles(self, conn_string):
+        engine = create_engine(conn_string)
+        try:
+            statement = text(
+                "INSERT INTO faraday_role(name) VALUES ('admin'),('pentester'),('client'),('asset_owner');"
+            )
+            connection = engine.connect()
+            connection.execute(statement)
+        except sqlalchemy.exc.IntegrityError as ex:
+            if is_unique_constraint_violation(ex):
+                # when re using database user could be created previously
+                print(
+                    "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
+                        yellow=Fore.YELLOW, white=Fore.WHITE))
+            else:
+                print(
+                    "{yellow}WARNING{white}: Can't create administrator user.".format(
+                        yellow=Fore.YELLOW, white=Fore.WHITE))
+                raise
+
     def _create_admin_user(self, conn_string, choose_password, faraday_user_password):
         engine = create_engine(conn_string)
         # TODO change the random_password variable name, it is not always
@@ -127,11 +147,11 @@ class InitDB():
                 INSERT INTO faraday_user (
                             username, name, password,
                             is_ldap, active, last_login_ip,
-                            current_login_ip, role, state_otp, fs_uniquifier
+                            current_login_ip, state_otp, fs_uniquifier
                         ) VALUES (
                             'faraday', 'Administrator', :password,
                             false, true, '127.0.0.1',
-                            '127.0.0.1', 'admin', 'disabled', :fs_uniquifier
+                            '127.0.0.1', 'disabled', :fs_uniquifier
                         )
             """)
             params = {
@@ -140,6 +160,15 @@ class InitDB():
             }
             connection = engine.connect()
             connection.execute(statement, **params)
+            result = connection.execute(text("""SELECT id, username FROM faraday_user"""))
+            user_id = list(user_tuple[0] for user_tuple in result if user_tuple[1] == "faraday")[0]
+            result = connection.execute(text("""SELECT id, name FROM faraday_role"""))
+            role_id = list(role_tuple[0] for role_tuple in result if role_tuple[1] == "admin")[0]
+            params = {
+                "user_id": user_id,
+                "role_id": role_id
+            }
+            connection.execute(text("INSERT INTO roles_users(user_id, role_id) VALUES (:user_id, :role_id)"), **params)
         except sqlalchemy.exc.IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
@@ -233,7 +262,7 @@ class InitDB():
                 connection.commit()
                 connection.close()
             except psycopg2.Error as e:
-                if 'authentication failed' in e.message:
+                if 'authentication failed' in str(e):
                     print('{red}ERROR{white}: User {username} already '
                           'exists'.format(white=Fore.WHITE,
                                           red=Fore.RED,
@@ -326,3 +355,4 @@ class InitDB():
             os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")
             # TODO ADD RETURN TO PREV DIR
+        self._create_roles(conn_string)

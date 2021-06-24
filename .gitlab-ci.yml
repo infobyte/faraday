@@ -8,7 +8,7 @@ variables:
     APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
     DEBIAN_FRONTEND: noninteractive
     IMAGE_TAG: 'egrep -o "[0-9]\.([0-9]|[0-9][0-9])(\.[0-9])?" faraday/__init__.py'
-    VAULT_ROLE: 'faraday-readonly' 
+    VAULT_ROLE: 'faraday-readonly'
     VAULT_ADDR: 'https://tluav-lb.faradaysec.com'
 
     ## ENV_VARS LIST

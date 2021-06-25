@@ -45,7 +45,7 @@ class AgentAuthTokenView(GenericView):
             faraday_server.agent_token_expiration))
         return AgentAuthTokenSchema().dump(
             {'token': totp.now(),
-             'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval,
+             'expires_in': totp.interval - datetime.datetime.utcnow().timestamp() % totp.interval,
              'total_duration': totp.interval})
 
 

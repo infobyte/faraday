@@ -12,7 +12,7 @@ WTForms>=2.1
 flask-login>=0.5.0
 Flask-Security-Too>=4.0.0
 bleach>=3.3.0
-marshmallow>=3.0.0,<3.11.0
+marshmallow>=3.11.0
 Pillow>=4.2.1
 psycopg2
 pgcli
@@ -41,3 +41,4 @@ Flask-SocketIO==5.0.1
 pyotp>=2.6.0
 Flask-Limiter
 Flask-Mail
+faraday_agent_parameters_types>=0.1.17

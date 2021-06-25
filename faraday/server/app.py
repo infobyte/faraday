@@ -261,7 +261,7 @@ def expire_session(app, user):
     KVSessionExtension(app=app).cleanup_sessions(app)
 
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    user_logout_at = datetime.datetime.now()
+    user_logout_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
 
 
@@ -281,7 +281,7 @@ def user_logged_in_succesfull(app, user):
     KVSessionExtension(app=app).cleanup_sessions(app)
 
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    user_login_at = datetime.datetime.now()
+    user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
 
 
@@ -472,7 +472,7 @@ class CustomLoginForm(LoginForm):
     def validate(self):
 
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        time_now = datetime.datetime.now()
+        time_now = datetime.datetime.utcnow()
 
         # Use super of LoginForm, not super of CustomLoginForm, since I
         # want to skip the LoginForm validate logic

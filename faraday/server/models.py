@@ -990,11 +990,11 @@ class CVE(db.Model):
     id = Column(Integer, primary_key=True)
     year = Column(Integer, nullable=False)
     identifier = Column(Integer, nullable=False)
-    description = Column(Text, nullable=True)# TODO: ver tamanios.
+    description = Column(Text, nullable=True)  # TODO: ver tamanios.
     # Referencias?
 
     def __str__(self):
-        return f'CVE-{self.year}-{self.identifier}'
+        return f'CVE-{self.year}-{self.identifier:04}'
 
 
 class Service(Metadata):

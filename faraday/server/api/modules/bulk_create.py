@@ -408,13 +408,16 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     def update_vuln(policyviolations, references, vuln, cves):
         vuln.references = references
         vuln.policy_violations = policyviolations
-
-        for cve in cves:
+        # TODO: Wrap into a function
+        for cve in set(cves):
             logger.debug("cve found %s", cve)
             try:
                 _, year, identifier = cve.split("-")
+                # TODO: Add marshmallow
+                if not year.isdigit() or not identifier.isdigit():
+                    logger.error("Malformed cve")
             except ValueError as e:
-                logger.error("Could not parse cve ", e)
+                logger.error("Could not parse cve")
                 continue
             vuln.cve.append(CVE(year=year, identifier=identifier))
         # TODO attachments

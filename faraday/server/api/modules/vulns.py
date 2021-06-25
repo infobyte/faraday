@@ -526,12 +526,16 @@ class VulnerabilityView(PaginatedMixin,
         obj.references = references
         obj.policy_violations = policyviolations
         cves = [reference for reference in references if 'cve-' in reference.lower()]
-        for cve in cves:
+        for cve in set(cves):
             logger.debug("cve found %s", cve)
+
             try:
                 _, year, identifier = cve.split("-")
+                # TODO: Add marshmallow
+                if not year.isdigit() or not identifier.isdigit():
+                    logger.error("Malformed cve")
             except ValueError as e:
-                logger.error("Could not parse cve ", e)
+                logger.error("Could not parse cve")
                 continue
             obj.cve.append(CVE(year=year, identifier=identifier))
 

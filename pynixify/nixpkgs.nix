@@ -72,6 +72,11 @@ let
         ./packages/bleach
         { };
 
+      faraday-agent-parameters-types =
+        self.callPackage
+        ./packages/faraday-agent-parameters-types
+        { };
+
       faraday-plugins =
         self.callPackage
         ./packages/faraday-plugins
@@ -105,6 +110,11 @@ let
       flask-security-too =
         self.callPackage
         ./packages/flask-security-too
+        { };
+
+      marshmallow =
+        self.callPackage
+        ./packages/marshmallow
         { };
 
       marshmallow-sqlalchemy =

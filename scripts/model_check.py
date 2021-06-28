@@ -15,5 +15,4 @@ def check(source_branch: str, target_branch: str) -> None:
 
 
 if __name__ == '__main__':
-    check("origin/white/dev", "origin/pink/dev")
-    check("origin/pink/dev", "origin/black/dev")
+    check("origin/white/dev", "origin/black/dev")

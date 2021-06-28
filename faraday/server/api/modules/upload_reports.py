@@ -103,7 +103,7 @@ def file_upload(workspace=None):
                     name=workspace).one()
                 command = Command()
                 command.workspace = workspace_instance
-                command.start_date = datetime.now()
+                command.start_date = datetime.utcnow()
                 command.import_source = 'report'
                 # The data will be updated in the bulk_create function
                 command.tool = "In progress"

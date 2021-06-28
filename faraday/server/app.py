@@ -16,7 +16,7 @@ from random import SystemRandom
 
 from faraday.settings import load_settings
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from faraday.server.models import User
+from faraday.server.models import User, Role
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
@@ -264,7 +264,7 @@ def expire_session(app, user):
     KVSessionExtension(app=app).cleanup_sessions(app)
 
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    user_logout_at = datetime.datetime.now()
+    user_logout_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
 
 
@@ -284,7 +284,7 @@ def user_logged_in_succesfull(app, user):
     KVSessionExtension(app=app).cleanup_sessions(app)
 
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    user_login_at = datetime.datetime.now()
+    user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
 
 
@@ -415,7 +415,7 @@ def create_app(db_connection_string=None, testing=None):
     app.user_datastore = SQLAlchemyUserDatastore(
         db,
         user_model=User,
-        role_model=None)  # We won't use flask security roles feature
+        role_model=Role)
 
     from faraday.server.api.modules.agent import agent_creation_api  # pylint: disable=import-outside-toplevel
 
@@ -469,7 +469,7 @@ class CustomLoginForm(LoginForm):
     def validate(self):
 
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        time_now = datetime.datetime.now()
+        time_now = datetime.datetime.utcnow()
 
         # Use super of LoginForm, not super of CustomLoginForm, since I
         # want to skip the LoginForm validate logic

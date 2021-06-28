@@ -15,6 +15,7 @@
 , distro
 , email_validator
 , factory_boy
+, faraday-agent-parameters-types
 , faraday-plugins
 , fetchPypi
 , filedepot
@@ -63,7 +64,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "3.15.0";
+    "3.16.0";
 
   src =
     lib.cleanSource
@@ -117,6 +118,7 @@ buildPythonPackage rec {
       pyotp
       flask-limiter
       flask_mail
+      faraday-agent-parameters-types
     ];
   checkInputs =
     [

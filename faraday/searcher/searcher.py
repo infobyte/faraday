@@ -582,7 +582,7 @@ class Searcher:
         _objs_value = None
         if 'object' in rule:
             _objs_value = rule['object']
-        command_start = datetime.now()
+        command_start = datetime.utcnow()
         command_id = self.api.create_command(
             itime=time.mktime(command_start.timetuple()),
             params=self.rules,
@@ -630,13 +630,13 @@ class Searcher:
                     if self.mail_notification:
                         subject = 'Faraday searcher alert'
                         body = '%s %s have been modified by rule %s at %s' % (
-                            object_type, obj.name, rule['id'], str(datetime.now()))
+                            object_type, obj.name, rule['id'], str(datetime.utcnow()))
                         self.mail_notification.send_mail(expression, subject, body)
                         logger.info(f"Sending mail to: '{expression}'")
                     else:
                         logger.warn("Searcher needs SMTP configuration to send mails")
 
-        duration = (datetime.now() - command_start).seconds
+        duration = (datetime.utcnow() - command_start).seconds
         self.api.close_command(self.api.command_id, duration)
         return True
 

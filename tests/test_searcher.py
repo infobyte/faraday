@@ -858,8 +858,10 @@ class TestSearcherRules():
         searcher = Searcher(api(workspace, test_client, session))
         rule_disabled: Rule = RuleFactory.create(disabled=True, workspace=workspace)
         rule_enabled = RuleFactory.create(disabled=False, workspace=workspace)
-        rule_disabled.conditions = [ConditionFactory.create(field='severity', value="low")]
-        rule_enabled.conditions = [ConditionFactory.create(field='severity', value="medium")]
+
+        with session.no_autoflush:
+            rule_disabled.conditions = [ConditionFactory.create(field='severity', value="low")]
+            rule_enabled.conditions = [ConditionFactory.create(field='severity', value="medium")]
 
         action = ActionFactory.create(command='DELETE')
         session.add(action)

@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import re
 from builtins import str
 
 import json
@@ -9,7 +10,7 @@ import logging
 import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
-from marshmallow import Schema, fields, post_load, validate, ValidationError
+from marshmallow import Schema, fields, post_load, ValidationError
 from sqlalchemy.orm import (
     with_expression
 )
@@ -63,12 +64,18 @@ class WorkspaceDurationSchema(Schema):
     end_date = JSTimestampField(attribute='end_date')
 
 
+def validate_workspace_name(name):
+    blacklist = ["filter"]
+    if name in blacklist:
+        raise ValidationError(f"Not possible to create workspace of name: {name}")
+    if not re.match(r"^[a-z0-9][a-z0-9_$()+-]*$", name):
+        raise ValidationError("The workspace name must validate with the regex "
+                              "^[a-z0-9][a-z0-9_$()+-]*$")
+
+
 class WorkspaceSchema(AutoSchema):
 
-    name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-]*$", 0,
-                                                  error="The workspace name must validate with the regex "
-                                                        "^[a-z0-9][a-z0-9\\_\\$\\(\\)\\+\\-\\/]*$"))
+    name = fields.String(required=True, validate=validate_workspace_name)
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')

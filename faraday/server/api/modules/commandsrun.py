@@ -4,6 +4,7 @@
 import time
 import datetime
 
+import pytz
 import flask
 from flask import Blueprint
 from flask_classful import route
@@ -29,19 +30,19 @@ class CommandSchema(AutoSchema):
 
     def load_itime(self, value):
         try:
-            return datetime.datetime.fromtimestamp(value)
+            return datetime.datetime.utcfromtimestamp(value)
         except ValueError:
             raise ValidationError('Invalid Itime Value')
 
     def get_itime(self, obj):
-        return time.mktime(obj.start_date.utctimetuple()) * 1000
+        return obj.start_date.replace(tzinfo=pytz.utc).timestamp() * 1000
 
     def get_duration(self, obj):
         # obj.start_date can't be None
         if obj.end_date:
             return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
         else:
-            if (datetime.datetime.now() - obj.start_date).total_seconds() > 86400:  # 86400 is 1d TODO BY CONFIG
+            if (datetime.datetime.utcnow() - obj.start_date).total_seconds() > 86400:  # 86400 is 1d TODO BY CONFIG
                 return 'Timeout'
             return 'In progress'
 

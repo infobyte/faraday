@@ -613,6 +613,7 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
+            joinedload(VulnerabilityGeneric.cve),
         ]
 
         if flask.request.args.get('get_evidence'):

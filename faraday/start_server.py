@@ -28,8 +28,6 @@ init()
 def setup_environment(check_deps=False):
     # Configuration files generation
     faraday.server.config.copy_default_config_to_local()
-    # Web configuration file generation
-    faraday.server.config.gen_web_config()
 
 
 def is_server_running(port):

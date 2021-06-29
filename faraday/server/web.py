@@ -18,11 +18,9 @@ from autobahn.twisted.websocket import (
     listenWS
 )
 
-from flask_mail import Mail
-
 import faraday.server.config
 
-from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
@@ -119,11 +117,6 @@ class WebServer:
             self.raw_report_processor.join()
         self.raw_report_processor = ReportsManager(REPORTS_QUEUE)
         self.raw_report_processor.start()
-        if self.ping_home_thread.is_alive():
-            self.ping_home_thread.stop()
-            self.ping_home_thread.join()
-        self.ping_home_thread = PingHomeThread()
-        self.ping_home_thread.start()
 
     def start_threads(self):
         self.raw_report_processor = ReportsManager(REPORTS_QUEUE)
@@ -183,11 +176,5 @@ def get_app():
     if not FARADAY_APP:
         app = create_app()  # creates a Flask(__name__) app
         # After 'Create app'
-        app.config['MAIL_SERVER'] = smtp.host
-        app.config['MAIL_PORT'] = smtp.port
-        app.config['MAIL_USE_SSL'] = smtp.ssl
-        app.config['MAIL_USERNAME'] = smtp.username
-        app.config['MAIL_PASSWORD'] = smtp.password
-        mail = Mail(app)
         FARADAY_APP = app
     return FARADAY_APP

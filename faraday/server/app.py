@@ -14,6 +14,7 @@ from flask_limiter.util import get_remote_address
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from random import SystemRandom
 
+from faraday.settings import load_settings
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from faraday.server.models import User, Role
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
@@ -100,6 +101,10 @@ def register_blueprints(app):
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
     # Custom reset password
     from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_reports import reports_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_dashboard import \
+        dashboard_settings_api  # pylint:disable=import-outside-toplevel
+
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -125,6 +130,8 @@ def register_blueprints(app):
     app.register_blueprint(preferences_api)
     app.register_blueprint(export_data_api)
     app.register_blueprint(auth)
+    app.register_blueprint(reports_settings_api)
+    app.register_blueprint(dashboard_settings_api)
 
 
 def check_testing_configuration(testing, app):
@@ -438,7 +445,7 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
-
+    load_settings()
     return app
 
 

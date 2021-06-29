@@ -313,6 +313,7 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.skip("No available in community")
     def test_mail_notification(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')

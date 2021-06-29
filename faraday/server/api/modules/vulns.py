@@ -528,16 +528,14 @@ class VulnerabilityView(PaginatedMixin,
         cves = [reference for reference in references if 'cve-' in reference.lower()]
         for cve in set(cves):
             logger.debug("cve found %s", cve)
-
             try:
                 _, year, identifier = cve.split("-")
                 # TODO: Add marshmallow
-                if not year.isdigit() or not identifier.isdigit():
-                    logger.error("Malformed cve")
+                if year.isdigit() and identifier.isdigit():
+                    obj.cve.append(CVE(year=year, identifier=identifier))
             except ValueError as e:
                 logger.error("Could not parse cve")
                 continue
-            obj.cve.append(CVE(year=year, identifier=identifier))
 
         db.session.flush()
 
@@ -613,7 +611,8 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
-            joinedload(VulnerabilityGeneric.cve),
+            joinedload(VulnerabilityWeb.cve),
+            joinedload(Vulnerability.cve),
         ]
 
         if flask.request.args.get('get_evidence'):

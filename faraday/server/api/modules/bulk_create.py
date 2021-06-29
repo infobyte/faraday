@@ -414,12 +414,12 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             try:
                 _, year, identifier = cve.split("-")
                 # TODO: Add marshmallow
-                if not year.isdigit() or not identifier.isdigit():
-                    logger.error("Malformed cve")
+                if year.isdigit() and identifier.isdigit():
+                    vuln.cve.append(CVE(year=year, identifier=identifier))
             except ValueError as e:
                 logger.error("Could not parse cve")
                 continue
-            vuln.cve.append(CVE(year=year, identifier=identifier))
+
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()

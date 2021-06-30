@@ -991,6 +991,7 @@ class CVE(db.Model):
     name = Column(String(24), unique=True)
     year = Column(Integer, nullable=True)
     identifier = Column(Integer, nullable=True)
+
     # TODO: add customer inserted flag
     # Other fields TBD
 
@@ -1132,7 +1133,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                                  lazy="joined",
                                  collection_class=set)
 
-    cve = association_proxy('cve_instances',
+    cves = association_proxy('cve_instances',
                              'name',
                              proxy_factory=CustomAssociationSet,
                              creator=_build_associationproxy_creator_non_workspaced('CVE'))

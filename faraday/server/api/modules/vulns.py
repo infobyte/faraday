@@ -125,8 +125,8 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
-    cve = fields.Nested(CVESchema, many=True)
-    cve = fields.List(fields.String(), attribute='cve')
+    # cve = fields.Nested(CVESchema, many=True)
+    cve = fields.List(fields.String(), attribute='cves')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
@@ -513,7 +513,7 @@ class VulnerabilityView(PaginatedMixin,
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
-        cves = data.pop('cve', [])
+        cves = data.pop('cves', [])
 
         policyviolations = data.pop('policy_violations', [])
         try:
@@ -527,7 +527,7 @@ class VulnerabilityView(PaginatedMixin,
         obj.policy_violations = policyviolations
 
         try:
-            obj.cve = cves
+            obj.cves = cves
         except ValueError:
             flask.abort(400)
 

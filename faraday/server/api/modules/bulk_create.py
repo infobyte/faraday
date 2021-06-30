@@ -355,7 +355,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
 
-    cves = vuln_data.pop('cve', [])
+    cves = vuln_data.pop('cves', [])
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -402,7 +402,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             vuln.custom_fields = vuln_data.pop('custom_fields', {})
             db.session.commit()
         try:
-            vuln.cve = cves
+            vuln.cves = cves
         except ValueError:
             flask.abort(400)
 
@@ -415,7 +415,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         vuln.references = references
         vuln.policy_violations = policyviolations
         try:
-            vuln.cve = cves
+            vuln.cves = cves
         except ValueError:
             flask.abort(400)
 

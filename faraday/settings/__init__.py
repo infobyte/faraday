@@ -17,3 +17,5 @@ def load_settings():
     smtp_init()
     from faraday.settings.dashboard import init_setting as dashboard_init  # pylint: disable=import-outside-toplevel
     dashboard_init()
+    from faraday.settings.reports import init_setting as reports_init  # pylint: disable=import-outside-toplevel
+    reports_init()

@@ -988,13 +988,28 @@ class CVE(db.Model):
     __tablename__ = 'cve'
 
     id = Column(Integer, primary_key=True)
-    year = Column(Integer, nullable=False)
-    identifier = Column(Integer, nullable=False)
-    description = Column(Text, nullable=True)  # TODO: ver tamanios.
-    # Referencias?
+    name = Column(String(24), unique=True)
+    year = Column(Integer, nullable=True)
+    identifier = Column(Integer, nullable=True)
+    # TODO: add customer inserted flag
+    # Other fields TBD
+
+    vulnerabilities = relationship("VulnerabilityGeneric", secondary=cve_vulnerability_association)
 
     def __str__(self):
-        return f'CVE-{self.year}-{self.identifier:04}'
+        return f'{self.id}'
+
+    def __init__(self, name=None, **kwargs):
+        logger.debug("cve found %s", name)
+        try:
+            _, year, identifier = name.split("-")
+            if year.isdigit() and identifier.isdigit():
+                super().__init__(name=name, year=year, identifier=identifier, **kwargs)
+            else:
+                raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
+        except ValueError:
+            logger.error("Invalid cve format. Should be CVE-YEAR-ID.")
+            raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
 
 
 class Service(Metadata):
@@ -1112,7 +1127,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
         backref=backref('vulnerabilities', cascade="all, delete-orphan", passive_deletes=True)
     )
 
-    cve = relationship("CVE", secondary=cve_vulnerability_association)
+    cve_instances = relationship("CVE",
+                                 secondary=cve_vulnerability_association,
+                                 lazy="joined",
+                                 collection_class=set)
+
+    cve = association_proxy('cve_instances',
+                             'name',
+                             proxy_factory=CustomAssociationSet,
+                             creator=_build_associationproxy_creator_non_workspaced('CVE'))
 
     reference_instances = relationship(
         "Reference",

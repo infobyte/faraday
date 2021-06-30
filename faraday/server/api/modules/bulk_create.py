@@ -28,8 +28,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     AgentExecution,
     Workspace,
-    Metadata,
-    CVE)
+    Metadata)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -356,7 +355,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
 
-    cves = [reference for reference in references if 'cve-' in reference.lower()]
+    cves = vuln_data.pop('cve', [])
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -397,9 +396,16 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         logger.debug("Apply run date to vuln")
         vuln.create_date = run_date
         db.session.commit()
-    elif not created and ("custom_fields" in vuln_data and any(vuln_data["custom_fields"])):
-        # Updates Custom Fields
-        vuln.custom_fields = vuln_data.pop('custom_fields', {})
+    elif not created:
+        if "custom_fields" in vuln_data and any(vuln_data["custom_fields"]):
+            # Updates Custom Fields
+            vuln.custom_fields = vuln_data.pop('custom_fields', {})
+            db.session.commit()
+        try:
+            vuln.cve = cves
+        except ValueError:
+            flask.abort(400)
+
         db.session.commit()
 
     if command is not None:
@@ -408,17 +414,10 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     def update_vuln(policyviolations, references, vuln, cves):
         vuln.references = references
         vuln.policy_violations = policyviolations
-        # TODO: Wrap into a function
-        for cve in set(cves):
-            logger.debug("cve found %s", cve)
-            try:
-                _, year, identifier = cve.split("-")
-                # TODO: Add marshmallow
-                if year.isdigit() and identifier.isdigit():
-                    vuln.cve.append(CVE(year=year, identifier=identifier))
-            except ValueError as e:
-                logger.error("Could not parse cve")
-                continue
+        try:
+            vuln.cve = cves
+        except ValueError:
+            flask.abort(400)
 
         # TODO attachments
         db.session.add(vuln)

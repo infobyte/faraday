@@ -14,8 +14,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityGeneric,
     VulnerabilityWeb,
-    Workspace,
-    CVE)
+    Workspace)
 
 from faraday.server.api.modules import bulk_create as bc
 from tests.factories import CustomFieldsSchemaFactory
@@ -41,7 +40,8 @@ vuln_data = {
         'accountability': True,
         'availability': False,
     },
-    'refs': ['CVE-1234'],
+    'refs': ['CVE-2021-1234', 'CVE-2020-0001'],
+    'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
     'tool': 'some_tool',
     'data': 'test data',
     'custom_fields': {}
@@ -174,8 +174,8 @@ def test_create_host_vuln(session, host):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert vuln.references == {u'CVE-1234'}
-    assert vuln.cve == {}
+    assert set(vuln.references) == set(vuln_data['refs'])
+    assert set(vuln.cve) == set(vuln_data['refs'])
     assert vuln.tool == "some_tool"
 
 
@@ -192,8 +192,8 @@ def test_create_service_vuln(session, service):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert vuln.references == {u'CVE-1234'}
-    assert vuln.cve == {}
+    assert set(vuln.references) == set(vuln_data['refs'])
+    assert set(vuln.cve) == set(vuln_data['refs'])
     assert vuln.tool == "some_tool"
 
 
@@ -281,7 +281,7 @@ def test_create_existing_host_vuln_with_cve(session, host, vulnerability_factory
     session.add(vuln)
     session.commit()
     vuln.references = ['old']
-    vuln.cve = [CVE(year='2021', identifier='0001')]
+    vuln.cve = ["CVE-2021-0001"]
     session.add(vuln)
     session.commit()
     data = {
@@ -289,7 +289,8 @@ def test_create_existing_host_vuln_with_cve(session, host, vulnerability_factory
         'desc': vuln.description,
         'severity': vuln.severity,
         'type': 'Vulnerability',
-        'refs': ['new', 'CVE-2021-0002']
+        'refs': ['new'],
+        'cve': ['CVE-2021-0002']
     }
     data = bc.VulnerabilitySchema().load(data)
     bc._create_hostvuln(host.workspace, host, data)
@@ -297,9 +298,7 @@ def test_create_existing_host_vuln_with_cve(session, host, vulnerability_factory
     assert count(Vulnerability, host.workspace) == 1
     vuln = Vulnerability.query.get(vuln.id)  # just in case it isn't refreshed
     assert 'old' in vuln.references  # it must preserve the old references
-    cves = [f'{cve}' for cve in vuln.cve]
-    assert 'CVE-2021-0001' in cves
-    assert 'CVE-2021-0002' in cves
+    assert 'CVE-2021-0002' in vuln.cve
 
 
 @pytest.mark.skip(reason="unique constraing on credential isn't working")

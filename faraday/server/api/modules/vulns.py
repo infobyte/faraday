@@ -47,8 +47,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User,
-    CVE)
+    User)
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
 
@@ -109,8 +108,7 @@ class CustomMetadataSchema(MetadataSchema):
 
 
 class CVESchema(AutoSchema):
-    year = fields.Integer(dump_only=True)
-    identifier = fields.Integer(dump_only=True)
+    name = fields.String()
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -127,8 +125,8 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
-    # cve = fields.Method(serialize='get_cve_refs', default=[])
     cve = fields.Nested(CVESchema, many=True)
+    cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
@@ -515,6 +513,8 @@ class VulnerabilityView(PaginatedMixin,
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
+        cves = data.pop('cve', [])
+
         policyviolations = data.pop('policy_violations', [])
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -525,17 +525,11 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
-        cves = [reference for reference in references if 'cve-' in reference.lower()]
-        for cve in set(cves):
-            logger.debug("cve found %s", cve)
-            try:
-                _, year, identifier = cve.split("-")
-                # TODO: Add marshmallow
-                if year.isdigit() and identifier.isdigit():
-                    obj.cve.append(CVE(year=year, identifier=identifier))
-            except ValueError as e:
-                logger.error("Could not parse cve")
-                continue
+
+        try:
+            obj.cve = cves
+        except ValueError:
+            flask.abort(400)
 
         db.session.flush()
 
@@ -574,6 +568,7 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
@@ -611,8 +606,6 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
-            joinedload(VulnerabilityWeb.cve),
-            joinedload(Vulnerability.cve),
         ]
 
         if flask.request.args.get('get_evidence'):

@@ -38,8 +38,6 @@ For more information about the installation, check out our [Installation Wiki](h
 
 ## Development
 
-You need Python 3.6+ and postgres to run the faraday server.
-
 If you want to develop for Faraday, please follow our [development setup for linux](https://github.com/infobyte/faraday/wiki/Development-setup) or [development setup for OSX](https://github.com/infobyte/faraday/wiki/Development-Installation-OSX).
 
 ## Quickstart

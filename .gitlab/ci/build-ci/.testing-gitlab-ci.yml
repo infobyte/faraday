@@ -20,7 +20,6 @@ smoke_test_deb:
         - /opt/faraday/bin/faraday-server &
         - sleep 5
         - curl -v http://localhost:5985/_api/v2/info
-        - faraday-manage status-check
         - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
         - jobs
     rules:

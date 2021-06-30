@@ -72,7 +72,7 @@ class Settings:
         return valid_config
 
     @property
-    @lru_cache
+    @lru_cache(maxsize=None)
     def value(self) -> Dict:
         return self.load_configuration()
 

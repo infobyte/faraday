@@ -354,7 +354,6 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
-
     cves = vuln_data.pop('cves', [])
 
     policyviolations = vuln_data.pop('policy_violations', [])
@@ -401,12 +400,6 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             # Updates Custom Fields
             vuln.custom_fields = vuln_data.pop('custom_fields', {})
             db.session.commit()
-        try:
-            vuln.cves = cves
-        except ValueError:
-            flask.abort(400)
-
-        db.session.commit()
 
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)

@@ -175,7 +175,7 @@ def test_create_host_vuln(session, host):
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
     assert set(vuln.references) == set(vuln_data['refs'])
-    assert set(vuln.cve) == set(vuln_data['refs'])
+    assert set(vuln.cves) == set(vuln_data['cve'])
     assert vuln.tool == "some_tool"
 
 
@@ -193,7 +193,7 @@ def test_create_service_vuln(session, service):
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
     assert set(vuln.references) == set(vuln_data['refs'])
-    assert set(vuln.cve) == set(vuln_data['refs'])
+    assert set(vuln.cves) == set(vuln_data['cve'])
     assert vuln.tool == "some_tool"
 
 
@@ -273,32 +273,6 @@ def test_create_existing_host_vuln(session, host, vulnerability_factory):
     assert count(Vulnerability, host.workspace) == 1
     vuln = Vulnerability.query.get(vuln.id)  # just in case it isn't refreshed
     assert 'old' in vuln.references  # it must preserve the old references
-
-
-def test_create_existing_host_vuln_with_cve(session, host, vulnerability_factory):
-    vuln = vulnerability_factory.create(
-        workspace=host.workspace, host=host, service=None)
-    session.add(vuln)
-    session.commit()
-    vuln.references = ['old']
-    vuln.cve = ["CVE-2021-0001"]
-    session.add(vuln)
-    session.commit()
-    data = {
-        'name': vuln.name,
-        'desc': vuln.description,
-        'severity': vuln.severity,
-        'type': 'Vulnerability',
-        'refs': ['new'],
-        'cve': ['CVE-2021-0002']
-    }
-    data = bc.VulnerabilitySchema().load(data)
-    bc._create_hostvuln(host.workspace, host, data)
-    session.commit()
-    assert count(Vulnerability, host.workspace) == 1
-    vuln = Vulnerability.query.get(vuln.id)  # just in case it isn't refreshed
-    assert 'old' in vuln.references  # it must preserve the old references
-    assert 'CVE-2021-0002' in vuln.cve
 
 
 @pytest.mark.skip(reason="unique constraing on credential isn't working")

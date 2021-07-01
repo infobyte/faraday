@@ -15,19 +15,6 @@ class ImportTests(unittest.TestCase):
         self.secret_key = faraday_server.secret_key
         self.websocket_port = faraday_server.websocket_port
 
-    def test_ldap(self):
-        from faraday.server.config import ldap
-        self.admin_group = ldap.admin_group
-        self.client_group = ldap.client_group
-        self.disconnect_timeout = ldap.disconnect_timeout
-        self.domain_dn = ldap.domain_dn
-        self.enabled = ldap.enabled
-        self.pentester_group = ldap.pentester_group
-        self.port = ldap.port
-        self.server = ldap.server
-        self.use_ldaps = ldap.use_ldaps
-        self.use_start_tls = ldap.use_start_tls
-
     def test_storage(self):
         from faraday.server.config import storage
         self.path = storage.path

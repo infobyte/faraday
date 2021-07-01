@@ -107,7 +107,7 @@ Faraday supports CSV Exporting from its WEB UI.
 ## Links
 
 * Homepage: [FaradaySEC](https://www.faradaysec.com)
-* User forum: [Faraday Forum](https://forum.faradaysec.com)
+* User forum: [Faraday Forum](https://github.com/infobyte/faraday/issues)
 * User's manual: [Faraday Wiki](https://github.com/infobyte/faraday/wiki) or check our [support portal](https://support.faradaysec.com/portal/home)
 * Download: [Download .deb/.rpm from releases page](https://github.com/infobyte/faraday/releases)
 * Commits RSS feed: https://github.com/infobyte/faraday/commits/master.atom

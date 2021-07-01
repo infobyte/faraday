@@ -9,8 +9,9 @@ The **RELEASE.md** generation process is as follows:
     * _header.md_, md format lines at the beginning of the release file
     * _footer.md_, md format lines at the ending of the release file
     * _changelog.py_, a python file, which will generate the release file
- * The python file process is: 
-    * Iterate over all the version folder in sorted order, joining all .md files in only one ( _white/pink/black.md_ ) in the proper version folder.
+ * The python file process is:
+    * Iterate over all the version folder in sorted order, joining all .json files in only one .md (
+      _community/prof/corp.md_ ) in the proper version folder.
     * Generate the release file as header/v0file.md/.../vnfile.md/footer
  * The release step-by-step generation should be:
     1. Checkout white/master and go to CHANGELOG/
@@ -30,3 +31,11 @@ The **RELEASE.md** generation process is as follows:
     1. Replace _old **RELEASE.md**_ with new generated file
     1. Git add CHANGELOG/
     1. Commit & push
+
+As for faraday 3.15.0, the changelog file changed to .json format with this structure:
+```json
+{
+  "level": "community|prof|corp",
+  "md": "<changelog text>"
+}
+```

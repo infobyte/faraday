@@ -11,7 +11,7 @@ from faraday.server.fields import JSONType
 
 # revision identifiers, used by Alembic.
 revision = 'a9fcf8444c79'
-down_revision = 'f0439bf6688a'
+down_revision = '97a9348d0406'
 branch_labels = None
 depends_on = None
 

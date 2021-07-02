@@ -35,6 +35,3 @@ class ReportsSettings(Settings):
 
 def init_setting():
     ReportsSettings()
-
-
-init_setting()

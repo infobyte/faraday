@@ -13,5 +13,9 @@ def get_all_settings() -> List:
 
 
 def load_settings():
-    import faraday.settings.smtp  # pylint: disable=import-outside-toplevel
-    import faraday.settings.dashboard  # pylint: disable=import-outside-toplevel  # noqa: F401
+    from faraday.settings.smtp import init_setting as smtp_init  # pylint: disable=import-outside-toplevel
+    smtp_init()
+    from faraday.settings.dashboard import init_setting as dashboard_init  # pylint: disable=import-outside-toplevel
+    dashboard_init()
+    from faraday.settings.reports import init_setting as reports_init  # pylint: disable=import-outside-toplevel
+    reports_init()

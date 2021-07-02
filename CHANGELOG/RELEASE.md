@@ -2,6 +2,11 @@ New features in the latest update
 =====================================
 
 
+3.16.1 [Jul 2nd, 2021]:
+---
+ * MOD only show settings of this version in faraday-manage settings
+ * FIX update minimum version of click dependency
+
 3.16.0 [Jun 29th, 2021]:
 ---
  * BREAKING CHANGE: API V2 discontinued

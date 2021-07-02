@@ -24,6 +24,3 @@ class DashboardSettings(Settings):
 
 def init_setting():
     DashboardSettings()
-
-
-init_setting()

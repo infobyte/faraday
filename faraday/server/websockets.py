@@ -23,4 +23,4 @@ def authenticated_only(f):
 @authenticated_only
 def on_connect(self):
     logger.debug(f'{current_user.username} connected')
-    emit('my_response', {'message': 'connected'})
+    emit('connected', {'data': f'{current_user.username} connected successfully to notifications namespace'})

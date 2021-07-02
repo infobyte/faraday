@@ -125,9 +125,9 @@ class InitDB():
                 raise
 
     def _create_default_notifications_config(self):
-        from faraday.server.models import (db,
-                                           Role,
-                                           NotificationSubscription,
+        from faraday.server.models import (db,  # pylint:disable=import-outside-toplevel
+                                           Role,  # pylint:disable=import-outside-toplevel
+                                           NotificationSubscription,  # pylint:disable=import-outside-toplevel
                                            NotificationSubscriptionWebSocketConfig)  # pylint:disable=import-outside-toplevel
 
         _admin = Role.query.filter_by(name='admin').first()

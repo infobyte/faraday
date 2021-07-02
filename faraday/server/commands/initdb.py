@@ -124,6 +124,44 @@ class InitDB():
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise
 
+    def _create_default_notifications_config(self):
+        from faraday.server.models import (db,
+                                           Role,
+                                           NotificationSubscription,
+                                           NotificationSubscriptionWebSocketConfig)  # pylint:disable=import-outside-toplevel
+
+        _admin = Role.query.filter_by(name='admin').first()
+        _pentester = Role.query.filter_by(name='pentester').first()
+        _client = Role.query.filter_by(name='client').first()
+        _assetowner = Role.query.filter_by(name='asset_owner').first()
+
+        dflt_notifications_config = [
+            # Workspace
+            {'new_workspace': [_admin]}, {'update_workspace': [_admin]}, {'delete_workspace': [_admin]},
+            # Users
+            {'new_user': [_admin]}, {'update_user': [_admin]}, {'delete_user': [_admin]},
+            # Agents
+            {'new_agent': [_admin, _pentester]}, {'update_agent': [_admin, _pentester]}, {'delete_agent': [_admin, _pentester]},
+            # Reports
+            {'new_executivereport': [_admin, _pentester, _assetowner]}, {'update_executivereport': [_admin, _pentester, _assetowner]},
+            # Agent execution
+            {'new_agentexecution': [_admin, _pentester, _assetowner]},
+            # Commands
+            {'new_command': [_admin, _pentester, _assetowner]},
+            # Vulnerability
+            {'new_vulnerability': [_admin, _pentester, _client, _assetowner]}, {'update_vulnerability': [_admin, _pentester, _client, _assetowner]},
+            {'delete_vulnerability': [_admin, _pentester, _client, _assetowner]},
+            # Comments
+            {'new_comment': [_admin, _pentester, _client, _assetowner]},
+        ]
+
+        for notitication_config in dflt_notifications_config:
+            for event, roles in notitication_config.items():
+                n = NotificationSubscription(event=event, allowed_roles=roles)
+                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+                db.session.add(ns)
+                db.session.commit()
+
     def _create_admin_user(self, conn_string, choose_password, faraday_user_password):
         engine = create_engine(conn_string)
         # TODO change the random_password variable name, it is not always
@@ -356,3 +394,4 @@ class InitDB():
             command.stamp(alembic_cfg, "head")
             # TODO ADD RETURN TO PREV DIR
         self._create_roles(conn_string)
+        self._create_default_notifications_config()

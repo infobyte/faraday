@@ -50,6 +50,7 @@ def upgrade():
                               'executivereport'
                               'agent',
                               'agentexecution',
+                              'command',
                               name='object_types'),
                       nullable=False
                   )

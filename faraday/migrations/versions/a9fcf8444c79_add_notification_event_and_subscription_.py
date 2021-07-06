@@ -71,6 +71,7 @@ def upgrade():
     op.execute('INSERT INTO object_type ("name") VALUES (\'agent\')')
     op.execute('INSERT INTO object_type ("name") VALUES (\'agentexecution\')')
     op.execute('INSERT INTO object_type ("name") VALUES (\'command\')')
+    op.execute('INSERT INTO object_type ("name") VALUES (\'user\')')
 
     op.create_table('notification_subscription',
     sa.Column('create_date', sa.DateTime(), nullable=True),

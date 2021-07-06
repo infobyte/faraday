@@ -599,8 +599,8 @@ def _build_associationproxy_creator(model_class_name):
 
 def _build_associationproxy_creator_non_workspaced(model_class_name):
     def creator(name, vulnerability):
-        """Get or create a reference/policyviolation with the
-        corresponding name. This must be workspace aware"""
+        """Get or create a reference/policyviolation/CVE with the
+        corresponding name. This is not workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
@@ -1003,11 +1003,9 @@ class CVE(db.Model):
     def __init__(self, name=None, **kwargs):
         logger.debug("cve found %s", name)
         try:
+            name = name.upper()
             _, year, identifier = name.split("-")
-            if year.isdigit() and identifier.isdigit():
-                super().__init__(name=name, year=year, identifier=identifier, **kwargs)
-            else:
-                raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
+            super().__init__(name=name, year=year, identifier=identifier, **kwargs)
         except ValueError:
             logger.error("Invalid cve format. Should be CVE-YEAR-ID.")
             raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
@@ -1133,7 +1131,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                                  lazy="joined",
                                  collection_class=set)
 
-    cves = association_proxy('cve_instances',
+    cve = association_proxy('cve_instances',
                              'name',
                              proxy_factory=CustomAssociationSet,
                              creator=_build_associationproxy_creator_non_workspaced('CVE'))

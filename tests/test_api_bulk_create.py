@@ -40,7 +40,7 @@ vuln_data = {
         'accountability': True,
         'availability': False,
     },
-    'refs': ['CVE-2021-1234', 'CVE-2020-0001'],
+    'refs': ['CVE-2021-1234', 'CVE-2020-0004'],
     'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
     'tool': 'some_tool',
     'data': 'test data',
@@ -175,7 +175,8 @@ def test_create_host_vuln(session, host):
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
     assert set(vuln.references) == set(vuln_data['refs'])
-    assert set(vuln.cves) == set(vuln_data['cve'])
+    assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
+    assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
     assert vuln.tool == "some_tool"
 
 
@@ -193,7 +194,8 @@ def test_create_service_vuln(session, service):
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
     assert set(vuln.references) == set(vuln_data['refs'])
-    assert set(vuln.cves) == set(vuln_data['cve'])
+    assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
+    assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
     assert vuln.tool == "some_tool"
 
 

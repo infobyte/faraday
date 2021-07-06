@@ -5,6 +5,7 @@
 import io
 import json
 import logging
+import re
 from base64 import b64encode, b64decode
 from json.decoder import JSONDecodeError
 from pathlib import Path
@@ -125,8 +126,7 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
-    # cve = fields.Nested(CVESchema, many=True)
-    cve = fields.List(fields.String(), attribute='cves')
+    cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
@@ -187,9 +187,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_cwe_refs(self, obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
-
-    def get_cve_refs(self, obj):
-        return [reference for reference in obj.references if 'cve' in reference.lower()]
 
     def get_cvss_refs(self, obj):
         return [reference for reference in obj.references if 'cvss' in reference.lower()]
@@ -513,9 +510,9 @@ class VulnerabilityView(PaginatedMixin,
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
-        cves = data.pop('cves', [])
-
         policyviolations = data.pop('policy_violations', [])
+        cve_list = data.pop('cve', [])
+
         try:
             obj = super()._perform_create(data, **kwargs)
         except TypeError:
@@ -527,7 +524,11 @@ class VulnerabilityView(PaginatedMixin,
         obj.policy_violations = policyviolations
 
         try:
-            obj.cves = cves
+            CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
+            cve_list += [cve for cve in references if 'cve-' in cve.lower()]  # This should be temporal
+            for cve in cve_list:
+                if re.match(CVE_PATTERN, cve):
+                    obj.cve.add(cve)
         except ValueError:
             flask.abort(400)
 

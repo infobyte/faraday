@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
@@ -354,7 +355,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
-    cves = vuln_data.pop('cves', [])
+    cve_list = vuln_data.pop('cve', [])
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -404,11 +405,15 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(policyviolations, references, vuln, cves):
+    def update_vuln(policyviolations, references, vuln, cve_list):
         vuln.references = references
         vuln.policy_violations = policyviolations
         try:
-            vuln.cves = cves
+            CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
+            cve_list += [cve for cve in references if 'cve-' in cve.lower()]  # This should be temporal
+            for cve in cve_list:
+                if re.match(CVE_PATTERN, cve):
+                    vuln.cve.add(cve)
         except ValueError:
             flask.abort(400)
 
@@ -417,10 +422,10 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln, cves)
+        update_vuln(policyviolations, references, vuln, cve_list)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln, cves)
+        update_vuln(policyviolations, references, vuln, cve_list)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

@@ -2148,6 +2148,12 @@ class ExecutiveReport(Metadata):
         )
 
 
+class ObjectType(db.Model):
+    __tablename__ = 'object_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), unique=True)
+
+
 allowed_roles_association = db.Table('notification_allowed_roles',
     Column('notification_subscription_id', Integer, db.ForeignKey('notification_subscription.id'), nullable=False),
     Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'), nullable=False)
@@ -2247,7 +2253,12 @@ class NotificationEvent(db.Model):
     id = Column(Integer, primary_key=True)
     event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
     object_id = Column(Integer, nullable=False)
-    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
+    object_type_id = Column(Integer, ForeignKey('object_type.id'), index=True, nullable=False)
+    object_type = relationship(
+        'ObjectType',
+        backref=backref('notification_event_object_type', cascade="all, delete-orphan")
+    )
+
     notification_data = Column(JSONType, nullable=False)
     create_date = Column(DateTime, default=datetime.utcnow)
 

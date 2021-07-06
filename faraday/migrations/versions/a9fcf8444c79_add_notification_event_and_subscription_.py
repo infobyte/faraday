@@ -41,16 +41,13 @@ def upgrade():
     op.execute('INSERT INTO event_type VALUES (10, \'update_workspace\', False)')
     op.execute('INSERT INTO event_type VALUES (11, \'update_agent\', False)')
     op.execute('INSERT INTO event_type VALUES (12, \'update_user\', False)')
-    op.execute('INSERT INTO event_type VALUES (13, \'update_agent_scan\', False)')
     op.execute('INSERT INTO event_type VALUES (14, \'update_executivereport\', True)')
     op.execute('INSERT INTO event_type VALUES (15, \'update_vulnerability\', False)')
-    op.execute('INSERT INTO event_type VALUES (16, \'update_comment\', False)')
     op.execute('INSERT INTO event_type VALUES (17, \'delete_workspace\', False)')
     op.execute('INSERT INTO event_type VALUES (18, \'delete_agent\', False)')
     op.execute('INSERT INTO event_type VALUES (19, \'delete_user\', False)')
     op.execute('INSERT INTO event_type VALUES (20, \'delete_executivereport\', False)')
     op.execute('INSERT INTO event_type VALUES (21, \'delete_vulnerability\', False)')
-    op.execute('INSERT INTO event_type VALUES (22, \'delete_comment\', False)')
 
     op.create_table('object_type',
     sa.Column('id', sa.Integer(), nullable=False),

@@ -2151,7 +2151,14 @@ class ExecutiveReport(Metadata):
 class ObjectType(db.Model):
     __tablename__ = 'object_type'
     id = Column(Integer, primary_key=True)
-    name = Column(String(64), unique=True)
+    name = Column(String(64), unique=True, nullable=False)
+
+
+class EventType(db.Model):
+    __tablename__ = 'event_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), unique=True, nullable=False)
+    async_event = Column(Boolean, default=False)
 
 
 allowed_roles_association = db.Table('notification_allowed_roles',
@@ -2163,7 +2170,12 @@ allowed_roles_association = db.Table('notification_allowed_roles',
 class NotificationSubscription(Metadata):
     __tablename__ = 'notification_subscription'
     id = Column(Integer, primary_key=True)
-    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
+    # event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
+    event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
+    event_type = relationship(
+        'EventType',
+        backref=backref('event_type', cascade="all, delete-orphan")
+    )
     allowed_roles = relationship("Role", secondary=allowed_roles_association)
 
 
@@ -2251,7 +2263,11 @@ class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionConfigBase
 class NotificationEvent(db.Model):
     __tablename__ = 'notification_event'
     id = Column(Integer, primary_key=True)
-    event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
+    event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
+    event_type = relationship(
+        'EventType',
+        backref=backref('notification_event_type', cascade="all, delete-orphan")
+    )
     object_id = Column(Integer, nullable=False)
     object_type_id = Column(Integer, ForeignKey('object_type.id'), index=True, nullable=False)
     object_type = relationship(
@@ -2275,8 +2291,8 @@ class NotificationEvent(db.Model):
 class NotificationBase(db.Model):
     __tablename__ = 'notification_base'
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
-    event = relationship(
+    notification_event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
+    notification_event = relationship(
         'NotificationEvent',
         backref=backref('notifications', cascade="all, delete-orphan"),
     )

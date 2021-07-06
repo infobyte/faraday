@@ -65,7 +65,6 @@ BlankColumn = partial(Column, nullable=False,
                       info={'allow_blank': True},
                       default='')
 
-# TODO: Is it recommended to create a new one for notifications? Something like notification objects. Or maybe a new model would be better.
 OBJECT_TYPES = [
     'vulnerability',
     'host',
@@ -83,42 +82,10 @@ COMMENT_TYPES = [
     'user'
 ]
 
-# TODO: this constant is within class User too. Ask for suggestions.
-USER_ROLES = [
-    'admin',
-    'pentester',
-    'client',
-    'asset_owner'
-]
-
 NOTIFICATION_METHODS = [
     'mail',
     'webhook',
     'websocket'
-]
-
-NOTIFICATION_EVENTS = [
-    'new_workspace',
-    'new_agent',
-    'new_user',
-    'new_agentexecution',
-    'new_executivereport',
-    'new_vulnerability',
-    'new_command',
-    'new_comment',
-    'update_workspace',
-    'update_agent',
-    'update_user',
-    'update_agent_scan',
-    'update_executivereport',
-    'update_vulnerability',
-    'update_comment',
-    'delete_workspace',
-    'delete_agent',
-    'delete_user',
-    'delete_executivereport',
-    'delete_vulnerability',
-    'delete_comment',
 ]
 
 
@@ -2170,7 +2137,6 @@ allowed_roles_association = db.Table('notification_allowed_roles',
 class NotificationSubscription(Metadata):
     __tablename__ = 'notification_subscription'
     id = Column(Integer, primary_key=True)
-    # event = Column(Enum(*NOTIFICATION_EVENTS, name="notification_events"), nullable=False)
     event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
     event_type = relationship(
         'EventType',

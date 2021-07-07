@@ -410,9 +410,9 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         vuln.policy_violations = policyviolations
         try:
             CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
-            cve_list += [cve for cve in references if 'cve-' in cve.lower()]  # This should be temporal
+            cve_list += [cve for cve in references if 'CVE-' in cve.upper()]  # This should be temporal
             for cve in cve_list:
-                if re.match(CVE_PATTERN, cve):
+                if re.match(CVE_PATTERN, cve.upper()):
                     vuln.cve.add(cve)
         except ValueError:
             flask.abort(400)

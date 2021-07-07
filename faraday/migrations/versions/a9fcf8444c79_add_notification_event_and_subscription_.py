@@ -33,7 +33,7 @@ def upgrade():
     op.execute('INSERT INTO event_type VALUES (1, \'new_workspace\', False)')
     op.execute('INSERT INTO event_type VALUES (2, \'new_agent\', False)')
     op.execute('INSERT INTO event_type VALUES (3, \'new_user\', False)')
-    op.execute('INSERT INTO event_type VALUES (4, \'new_agentexecution\', False)')
+    op.execute('INSERT INTO event_type VALUES (4, \'new_agentexecution\', True)')
     op.execute('INSERT INTO event_type VALUES (5, \'new_executivereport\', True)')
     op.execute('INSERT INTO event_type VALUES (6, \'new_vulnerability\', False)')
     op.execute('INSERT INTO event_type VALUES (7, \'new_command\', True)')

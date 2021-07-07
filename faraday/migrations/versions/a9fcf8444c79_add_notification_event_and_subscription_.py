@@ -31,7 +31,7 @@ def upgrade():
     )
 
     op.execute('INSERT INTO event_type VALUES (1, \'new_workspace\', False)')
-    op.execute('INSERT INTO event_type VALUES (2, \'new_agent\', False)')
+    op.execute('INSERT INTO event_type VALUES (2, \'new_agent\', True)')
     op.execute('INSERT INTO event_type VALUES (3, \'new_user\', False)')
     op.execute('INSERT INTO event_type VALUES (4, \'new_agentexecution\', True)')
     op.execute('INSERT INTO event_type VALUES (5, \'new_executivereport\', True)')

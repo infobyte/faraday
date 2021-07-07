@@ -166,7 +166,7 @@ class InitDB():
             {'update_user': {'roles': [_admin], 'event_type_id': 12, 'async': False}},
             {'delete_user': {'roles': [_admin], 'event_type_id': 19, 'async': False}},
             # Agents
-            {'new_agent': {'roles': [_admin, _pentester], 'event_type_id': 2, 'async': False}},
+            {'new_agent': {'roles': [_admin, _pentester], 'event_type_id': 2, 'async': True}},
             {'update_agent': {'roles': [_admin, _pentester], 'event_type_id': 11, 'async': False}},
             {'delete_agent': {'roles': [_admin, _pentester], 'event_type_id': 18, 'async': False}},
             # Reports
@@ -174,7 +174,7 @@ class InitDB():
             {'update_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 14, 'async': True}},
             {'delete_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 20, 'async': True}},
             # Agent execution
-            {'new_agentexecution': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 4, 'async': False}},
+            {'new_agentexecution': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 4, 'async': True}},
             # Commands
             {'new_command': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 7, 'async': True}},
             # Vulnerability

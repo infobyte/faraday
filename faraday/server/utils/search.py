@@ -452,7 +452,7 @@ class QueryBuilder:
             map_attr = {
                 'creator': 'username',
             }
-            if hasattr(getattr(field, 'prop'), 'entity'):
+            if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
                 field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
 
             return opfunc(field, argument)
@@ -496,13 +496,17 @@ class QueryBuilder:
         create_filt = QueryBuilder._create_filter
 
         def create_filters(filt):
-            if not getattr(filt, 'fieldname', False) \
-                    or filt.fieldname.split('__')[0] in valid_model_fields:
-                try:
-                    return create_filt(model, filt)
-                except AttributeError as e:
-                    # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
-                    raise AttributeError(f"Foreing field {filt.fieldname.split('__')[0]} not found in submodel")
+            if not isinstance(filt,
+                              JunctionFilter) and '__' in filt.fieldname:
+                return create_filt(model, filt)
+            else:
+                if not getattr(filt, 'fieldname', False) or \
+                        filt.fieldname.split('__')[0] in valid_model_fields:
+                    try:
+                        return create_filt(model, filt)
+                    except AttributeError:
+                        # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
+                        raise AttributeError(f"Foreing field {filt.fieldname.split('__')[0]} not found in submodel")
             raise AttributeError(f"Field {filt.fieldname} not found in model")
 
         return create_filters
@@ -553,6 +557,7 @@ class QueryBuilder:
                 valid_model_fields.append(str(orm_descriptor).split('.')[1])
             if isinstance(orm_descriptor, hybrid_property):
                 valid_model_fields.append(orm_descriptor.__name__)
+        valid_model_fields += [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).relationships]
 
         filters_generator = map(   # pylint: disable=W1636
             QueryBuilder.create_filters_func(model, valid_model_fields),

@@ -46,8 +46,8 @@ def manage(action, json_data, name):
             for key, value in settings.value.items():
                 if json_data is not None:
                     json_value = json_data.get(key, None)
-                    if type(json_value) != type(value):
-                        click.secho(f"Invalid value for {key} [{json_value}]", fg="red")
+                    if type(json_value) != type(value) or json_value is None:
+                        click.secho(f"Missing or Invalid value for {key} [{json_value}]", fg="red")
                         sys.exit(1)
                     else:
                         new_value = json_value

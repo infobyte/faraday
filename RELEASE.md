@@ -2,14 +2,21 @@ New features in the latest update
 =====================================
 
 
+3.16.1 [Jul 2nd, 2021]:
+---
+ * MOD only show settings of this version in faraday-manage settings
+ * FIX update minimum version of click dependency
+
 3.16.0 [Jun 29th, 2021]:
 ---
  * BREAKING CHANGE: API V2 discontinued
  * BREAKING CHANGE: Changed minimum version of python to 3.7
  * ADD agent parameters has types (protocol with agent and its APIs)
+ * ADD move settings from `server.in` to a db model
  * ADD (optional) query logs
  * MOD new threads management
  * MOD vulnerabilities' endpoint no longer loads evidence unless requested with `get_evidence=true`
+ * FIX now it is not possible to create workspace of name "filter"
  * FIX bug with dates in the future
  * FIX bug with click 8
  * FIX bug using --port command

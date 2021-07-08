@@ -2,26 +2,17 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ beautifulsoup4
-, buildPythonPackage
-, click
-, colorama
-, dateutil
+{ buildPythonPackage
 , fetchPypi
-, html2text
+, importlib-metadata
 , lib
-, lxml
-, pytz
-, requests
-, simplejson
-, tabulate
 }:
 
 buildPythonPackage rec {
   pname =
-    "faraday-plugins";
+    "click";
   version =
-    "1.5.0";
+    "8.0.1";
 
   src =
     fetchPypi {
@@ -29,21 +20,12 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "1wf313s2kricd44s4m0x62psk2xq69fp6n4qm0f7k1rrwilwdxyd";
+        "0ymdyf37acq4qxh038q0xx44qgj6y2kf0jd0ivvix6qij88w214c";
     };
 
   propagatedBuildInputs =
     [
-      click
-      simplejson
-      requests
-      lxml
-      html2text
-      beautifulsoup4
-      pytz
-      dateutil
-      colorama
-      tabulate
+      importlib-metadata
     ];
 
   # TODO FIXME
@@ -51,8 +33,6 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib; {
-      description =
-        "Faraday plugins package";
-    };
+    with lib;
+    { };
 }

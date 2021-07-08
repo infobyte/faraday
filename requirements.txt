@@ -37,6 +37,7 @@ faraday-plugins>=1.4.4,<2.0.0
 apispec>=4.0.0
 apispec-webframeworks>=0.5.0
 pyyaml
+Flask-SocketIO==5.0.1
 pyotp>=2.6.0
 Flask-Limiter
 Flask-Mail

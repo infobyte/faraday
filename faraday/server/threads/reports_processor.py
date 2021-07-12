@@ -1,9 +1,11 @@
 import logging
+import os
 import threading
 from pathlib import Path
 from threading import Thread
 from queue import Queue, Empty
-from typing import Tuple
+from typing import Tuple, Optional
+import json
 
 from faraday_plugins.plugins.manager import PluginsManager
 from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
@@ -38,46 +40,62 @@ class ReportsManager(Thread):
                             workspace_name: str,
                             command_id: int,
                             report_json: dict,
-                            user_id: int):
+                            user_id: Optional[int],
+                            set_end_date: bool):
         logger.info("Send Report data to workspace [%s]", workspace_name)
         from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
         with get_app().app_context():
             ws = Workspace.query.filter_by(name=workspace_name).one()
             command = Command.query.filter_by(id=command_id).one()
-            user = User.query.filter_by(id=user_id).one()
             schema = BulkCreateSchema()
             data = schema.load(report_json)
-            data = add_creator(data, user)
-            bulk_create(ws, command, data, True, True)
+            if user_id:
+                user = User.query.filter_by(id=user_id).one()
+                data = add_creator(data, user)
+            bulk_create(ws, command, data, True, set_end_date)
 
     def process_report(self,
                        workspace_name: str,
                        command_id: int,
                        file_path: Path,
-                       plugin_id: int,
-                       user_id: int):
-        plugin = self.plugins_manager.get_plugin(plugin_id)
-        if plugin:
-            try:
-                logger.info(f"Processing report [{file_path}] with plugin ["
-                            f"{plugin.id}")
-                plugin.processReport(str(file_path))
-                vulns_data = plugin.get_data()
-                del vulns_data['command']['duration']
-            except Exception as e:
-                logger.error("Processing Error: %s", e)
-                logger.exception(e)
-            else:
+                       plugin_id: Optional[int],
+                       user_id: Optional[int]):
+        if plugin_id is not None:
+            plugin = self.plugins_manager.get_plugin(plugin_id)
+            if plugin:
                 try:
-                    self.send_report_request(
-                        workspace_name, command_id, vulns_data, user_id
-                    )
-                    logger.info("Report processing finished")
+                    logger.info(f"Processing report [{file_path}] with plugin ["
+                                f"{plugin.id}]")
+                    plugin.processReport(str(file_path))
+                    vulns_data = plugin.get_data()
+                    del vulns_data['command']['duration']
                 except Exception as e:
+                    logger.error("Processing Error: %s", e)
                     logger.exception(e)
-                    logger.error("Save Error: %s", e)
+                    return
+            else:
+                logger.error(f"No plugin detected for report [{file_path}]")
+                return
         else:
-            logger.info(f"No plugin detected for report [{file_path}]")
+            try:
+                with file_path.open("r") as f:
+                    vulns_data = json.load(f)
+            except Exception as e:
+                logger.error("Loading data from json file: %s [%s]", file_path, e)
+                logger.exception(e)
+                return
+        if plugin_id is None:
+            logger.debug("Removing file: %s", file_path)
+            os.remove(file_path)
+        set_end_date = False if plugin_id is None else True
+        try:
+            self.send_report_request(
+                workspace_name, command_id, vulns_data, user_id, set_end_date
+            )
+            logger.info("Report processing finished")
+        except Exception as e:
+            logger.exception(e)
+            logger.error("Save Error: %s", e)
 
     def run(self):
         logger.info("Reports Manager Thread [Start]")

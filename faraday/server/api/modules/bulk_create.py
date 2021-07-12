@@ -1,6 +1,9 @@
 import logging
 from datetime import datetime, timedelta
 from typing import Type, Optional
+import string
+import random
+import json
 
 import time
 import flask_login
@@ -41,7 +44,7 @@ from faraday.server.api.modules import (
 )
 from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 from faraday.server.api.modules.websocket_auth import require_agent_token
-from faraday.server.utils.bulk_create import add_creator
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
@@ -461,7 +464,10 @@ class BulkCreateView(GenericWorkspacedView):
             404:
                description: Workspace not found
         """
+        from faraday.server.threads.reports_processor import REPORTS_QUEUE  # pylint: disable=import-outside-toplevel
+
         data = self._parse_data(self._get_schema_instance({}), flask.request)
+        json_data = flask.request.json
 
         if flask_login.current_user.is_anonymous:
             agent = require_agent_token()
@@ -524,11 +530,14 @@ class BulkCreateView(GenericWorkspacedView):
 
             _update_command(command, data['command'])
             db.session.flush()
+            if data['hosts']:
+                json_data['command'] = data["command"]
+                json_data['command']["start_date"] = data["command"]["start_date"].isoformat()
+                if 'end_date' in data["command"]:
+                    json_data['command']["end_date"] = data["command"]["end_date"].isoformat()
 
         else:
             workspace = self._get_workspace(workspace_name)
-            creator_user = flask_login.current_user
-            data = add_creator(data, creator_user)
 
             if 'command' in data:
                 command = Command(**(data['command']))
@@ -538,8 +547,26 @@ class BulkCreateView(GenericWorkspacedView):
             else:
                 # Here the data won't appear in the activity field
                 command = None
-
-        bulk_create(workspace, command, data, True, False)
+        if data['hosts']:
+            # Create random file
+            chars = string.ascii_uppercase + string.digits
+            random_prefix = ''.join(random.choice(chars) for x in range(30))  # nosec
+            json_file = f"{random_prefix}.json"
+            file_path = CONST_FARADAY_HOME_PATH / 'uploaded_reports' \
+                        / json_file
+            with file_path.open('w') as output:
+                json.dump(json_data, output)
+            logger.info("Create tmp json file for bulk_create: %s", file_path)
+            user_id = flask_login.current_user.id if not flask_login.current_user.is_anonymous else None
+            REPORTS_QUEUE.put(
+                (
+                    workspace.name,
+                    command.id,
+                    file_path,
+                    None,
+                    user_id
+                )
+            )
         return flask.jsonify(
             {
                 "message": "Created",

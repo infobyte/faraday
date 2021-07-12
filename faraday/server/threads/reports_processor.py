@@ -87,7 +87,7 @@ class ReportsManager(Thread):
         if plugin_id is None:
             logger.debug("Removing file: %s", file_path)
             os.remove(file_path)
-        set_end_date = False if plugin_id is None else True
+        set_end_date = not plugin_id
         try:
             self.send_report_request(
                 workspace_name, command_id, vulns_data, user_id, set_end_date

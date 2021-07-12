@@ -7,11 +7,10 @@ from typing import Tuple
 
 from faraday_plugins.plugins.manager import PluginsManager
 from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
-from faraday.server import config
 
 from faraday.server.models import Workspace, Command, User
 from faraday.server.utils.bulk_create import add_creator
-
+from faraday.settings.reports import ReportsSettings
 logger = logging.getLogger(__name__)
 
 
@@ -25,8 +24,10 @@ class ReportsManager(Thread):
     def __init__(self, upload_reports_queue, *args, **kwargs):
         super().__init__(name="ReportsManager-Thread", daemon=True, *args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
-        self.plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder,
-                                              ignore_info=config.faraday_server.ignore_info_severity)
+        self.plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
+                                              ignore_info=ReportsSettings.settings.ignore_info_severity)
+        logger.info(f"Reports Manager: [Custom plugins folder: [{ReportsSettings.settings.custom_plugins_folder}]"
+                     f"[Ignore info severity: {ReportsSettings.settings.ignore_info_severity}]")
         self.__event = threading.Event()
 
     def stop(self):

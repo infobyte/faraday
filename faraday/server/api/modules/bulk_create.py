@@ -193,7 +193,7 @@ class BulkCreateSchema(Schema):
     )
     command = fields.Nested(
         BulkCommandSchema(),
-        required=False,
+        required=True,
     )
     execution_id = fields.Integer(attribute='execution_id')
 
@@ -477,7 +477,7 @@ class BulkCreateView(GenericWorkspacedView):
                 flask.abort(404, f"No such workspace: {workspace_name}")
 
             if "execution_id" not in data:
-                flask.abort(400, "'execution_id' argument expected")
+                flask.abort(400, "argument expected: execution_id")
 
             execution_id = data["execution_id"]
 
@@ -538,15 +538,10 @@ class BulkCreateView(GenericWorkspacedView):
 
         else:
             workspace = self._get_workspace(workspace_name)
-
-            if 'command' in data:
-                command = Command(**(data['command']))
-                command.workspace = workspace
-                db.session.add(command)
-                db.session.commit()
-            else:
-                # Here the data won't appear in the activity field
-                command = None
+            command = Command(**(data['command']))
+            command.workspace = workspace
+            db.session.add(command)
+            db.session.commit()
         if data['hosts']:
             # Create random file
             chars = string.ascii_uppercase + string.digits

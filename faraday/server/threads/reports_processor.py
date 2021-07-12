@@ -13,6 +13,7 @@ from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 from faraday.server.models import Workspace, Command, User
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
+
 logger = logging.getLogger(__name__)
 
 

@@ -265,21 +265,18 @@ class FilterSchema(Schema):
     def validate_order_and_group_by(self, data, **kwargs):
         """
             We need to validate that if group_by is used, all the field
-            in the order_by are the same.
-            When using different order_by fields with group, it will cause
+            in the order_by must be in group_by fields.
+            When using different order_by fields that are not in group by will cause
             an error on PostgreSQL
         """
         if 'group_by' in data and 'order_by' in data:
-            group_by_fields = set()
-            order_by_fields = set()
+            group_by_fields = []
             for group_field in data['group_by']:
-                group_by_fields.add(group_field['field'])
+                group_by_fields.append(group_field['field'])
             for order_field in data['order_by']:
-                order_by_fields.add(order_field['field'])
-
-            if order_by_fields != group_by_fields:
-                raise ValidationError('Can\'t group and order by with different fields. ')
-
+                if order_field['field'] not in group_by_fields:
+                    logger.error(f"Order_by field [{order_field['field']}] must be in group_by by fields")
+                    raise ValidationError(f"Order field [{order_field['field']}] must be in group by fields")
         return data
 
 

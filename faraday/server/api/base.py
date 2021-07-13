@@ -28,7 +28,11 @@ from webargs.core import ValidationError
 from flask_classful import route
 import flask_login
 
-from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
+from faraday.server.models import (Workspace,
+                                   db,
+                                   Command,
+                                   CommandObject,
+                                   count_vulnerability_severities)
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,

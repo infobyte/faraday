@@ -541,12 +541,24 @@ class QueryBuilder:
         documentation for :func:`_create_operation` for more information.
 
         """
+        # TODO: Esto no se puede hacer abajo con el group by?
         if search_params.group_by:
+            joined_models = set()
             select_fields = [func.count()]
             for groupby in search_params.group_by:
-                select_fields.append(getattr(model, groupby.field))
+                field_name = groupby.field
+                if '__' in field_name:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    relation = getattr(model, field_name)
+                    relation_model = relation.mapper.class_
+                    field = getattr(relation_model, field_name_in_relation)
+                    if relation_model not in joined_models:
+                        joined_models.add(relation_model)
+                    select_fields.append(field)
+                else:
+                    select_fields.append(getattr(model, groupby.field))
 
-            query = session.query(*select_fields)
+                query = session.query(*select_fields)
         else:
             query = session.query(model)
 
@@ -572,21 +584,19 @@ class QueryBuilder:
 
         # Order the search. If no order field is specified in the search
         # parameters, order by primary key.
+        joined_models = set()
         if not _ignore_order_by:
             if search_params.order_by:
-                joined_models = set()
                 for val in search_params.order_by:
                     field_name = val.field
                     if '__' in field_name:
-                        field_name, field_name_in_relation = \
-                            field_name.split('__')
+                        field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
                         relation_model = relation.mapper.class_
                         field = getattr(relation_model, field_name_in_relation)
                         direction = getattr(field, val.direction)
                         if relation_model not in joined_models:
-                            query = query.join(relation_model)
-                        joined_models.add(relation_model)
+                            joined_models.add(relation_model)
                         query = query.order_by(direction())
                     else:
                         field = getattr(model, val.field)
@@ -601,8 +611,21 @@ class QueryBuilder:
         # Group the query.
         if search_params.group_by:
             for groupby in search_params.group_by:
-                field = getattr(model, groupby.field)
+                field_name = groupby.field
+                if '__' in field_name:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    relation = getattr(model, field_name)
+                    relation_model = relation.mapper.class_
+                    field = getattr(relation_model, field_name_in_relation)
+                    if relation_model not in joined_models:
+                        joined_models.add(relation_model)
+                else:
+                    field = getattr(model, groupby.field)
                 query = query.group_by(field)
+
+        # Apply models to join.
+        if joined_models:
+            query = query.join(*joined_models)
 
         # Apply limit and offset to the query.
         if search_params.limit:

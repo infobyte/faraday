@@ -23,7 +23,7 @@ from wtforms import ValidationError
 
 from faraday.server.utils.web import gzipped
 from faraday.server.models import Workspace, Command, db
-from faraday.settings.reports import ReportsSettings
+# from faraday.settings.reports import ReportsSettings
 
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 
@@ -31,7 +31,7 @@ upload_api = Blueprint('upload_reports', __name__)
 
 logger = logging.getLogger(__name__)
 
-plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder)
+plugins_manager = PluginsManager(None)  # TODO Fix this when macking api view
 report_analyzer = ReportAnalyzer(plugins_manager)
 
 

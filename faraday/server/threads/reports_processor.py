@@ -12,6 +12,7 @@ from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 from faraday.server.models import Workspace, Command, User
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
+from faraday.server.config import faraday_server
 logger = logging.getLogger(__name__)
 
 
@@ -71,31 +72,30 @@ class ReportsManager(Thread):
         self.__event.set()
 
     def run(self):
-        logger.info("Reports Manager Thread [Start]")
+        logger.info(f"Reports Manager Thread [Start] with Pool Size: {faraday_server.reports_pool_size}")
 
-        while not self.__event.is_set():
-            try:
-                tpl: Tuple[str, int, Path, int, int] = \
-                    self.upload_reports_queue.get(False, timeout=0.1)
+        with multiprocessing.Pool(processes=faraday_server.reports_pool_size) as pool:
+            while not self.__event.is_set():
+                try:
+                    tpl: Tuple[str, int, Path, int, int] = \
+                        self.upload_reports_queue.get(False, timeout=0.1)
 
-                workspace_name, command_id, file_path, plugin_id, user_id = tpl
+                    workspace_name, command_id, file_path, plugin_id, user_id = tpl
 
-                logger.info(f"Processing raw report {file_path}")
-                if file_path.is_file():
-                    p = multiprocessing.Process(target=process_report,
-                                                args=(workspace_name, command_id, file_path, plugin_id, user_id))
-                    p.start()
-                    p.join()
-                else:
-                    logger.warning(f"Report file [{file_path}] don't exists",
-                                   file_path)
-            except Empty:
-                self.__event.wait(INTERVAL)
-            except KeyboardInterrupt:
-                logger.info("Keyboard interrupt, stopping report processing thread")
-                self.stop()
-            except Exception as ex:
-                logger.exception(ex)
-                continue
-        else:
-            logger.info("Reports Manager Thread [Stop]")
+                    logger.info(f"Processing raw report {file_path}")
+                    if file_path.is_file():
+                        pool.apply_async(process_report,
+                                         (workspace_name, command_id, file_path, plugin_id, user_id))
+                    else:
+                        logger.warning(f"Report file [{file_path}] don't exists",
+                                       file_path)
+                except Empty:
+                    self.__event.wait(INTERVAL)
+                except KeyboardInterrupt:
+                    logger.info("Keyboard interrupt, stopping report processing thread")
+                    self.stop()
+                except Exception as ex:
+                    logger.exception(ex)
+                    continue
+            else:
+                logger.info("Reports Manager Thread [Stop]")

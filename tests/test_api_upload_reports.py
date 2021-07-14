@@ -114,4 +114,4 @@ class TestFileUpload:
                 use_json_data=False
         )
 
-        assert res.status_code == 404
+        assert res.status_code == 403

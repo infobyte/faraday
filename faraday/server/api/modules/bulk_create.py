@@ -388,8 +388,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
                 run_date = None
                 logger.debug("Run date (%s) is greater than allowed", run_date)
         except ValueError:
-            logger.error("Error converting run_date to a valid date")
-            flask.abort(400, "Invalid run_date")
+            logger.error("Error converting [%s] to a valid date", run_date_string)
     else:
         run_date = None
     (created, vuln) = get_or_create(ws, model_class, vuln_data)

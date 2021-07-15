@@ -559,7 +559,7 @@ class QueryBuilder:
                         if relation_model == User:
                             query = query.join(relation_model, model.creator_id == relation_model.id)
                         else:
-                            query = query.join(relation_model.id)
+                            query = query.join(relation_model)
                     joined_models.add(relation_model)
                     select_fields.append(field)
                 else:

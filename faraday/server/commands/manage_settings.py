@@ -12,7 +12,7 @@ from faraday.settings import get_settings, get_all_settings, load_settings
 from faraday.settings.exceptions import InvalidConfigurationError
 
 
-def setttings_format_validation(ctx, param, value):
+def settings_format_validation(ctx, param, value):
     if value is not None:
         try:
             json_data = json.loads(value)

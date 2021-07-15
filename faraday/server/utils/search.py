@@ -26,6 +26,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm import ColumnProperty
 
+from faraday.server.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -542,8 +543,10 @@ class QueryBuilder:
 
         """
         # TODO: Esto no se puede hacer abajo con el group by?
+        joined_models = set()
+        query = session.query(model)
+
         if search_params.group_by:
-            joined_models = set()
             select_fields = [func.count()]
             for groupby in search_params.group_by:
                 field_name = groupby.field
@@ -553,14 +556,15 @@ class QueryBuilder:
                     relation_model = relation.mapper.class_
                     field = getattr(relation_model, field_name_in_relation)
                     if relation_model not in joined_models:
-                        joined_models.add(relation_model)
+                        if relation_model == User:
+                            query = query.join(relation_model, model.creator_id == relation_model.id)
+                        else:
+                            query = query.join(relation_model.id)
+                    joined_models.add(relation_model)
                     select_fields.append(field)
                 else:
                     select_fields.append(getattr(model, groupby.field))
-
-                query = session.query(*select_fields)
-        else:
-            query = session.query(model)
+                query = query.with_entities(*select_fields)
 
         # This function call may raise an exception.
         valid_model_fields = []
@@ -584,7 +588,6 @@ class QueryBuilder:
 
         # Order the search. If no order field is specified in the search
         # parameters, order by primary key.
-        joined_models = set()
         if not _ignore_order_by:
             if search_params.order_by:
                 for val in search_params.order_by:
@@ -596,7 +599,8 @@ class QueryBuilder:
                         field = getattr(relation_model, field_name_in_relation)
                         direction = getattr(field, val.direction)
                         if relation_model not in joined_models:
-                            joined_models.add(relation_model)
+                            query = query.join(*joined_models)
+                        joined_models.add(relation_model)
                         query = query.order_by(direction())
                     else:
                         field = getattr(model, val.field)
@@ -617,15 +621,9 @@ class QueryBuilder:
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_
                     field = getattr(relation_model, field_name_in_relation)
-                    if relation_model not in joined_models:
-                        joined_models.add(relation_model)
                 else:
                     field = getattr(model, groupby.field)
                 query = query.group_by(field)
-
-        # Apply models to join.
-        if joined_models:
-            query = query.join(*joined_models)
 
         # Apply limit and offset to the query.
         if search_params.limit:

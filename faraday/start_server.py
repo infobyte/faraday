@@ -28,8 +28,6 @@ init()
 def setup_environment(check_deps=False):
     # Configuration files generation
     faraday.server.config.copy_default_config_to_local()
-    # Web configuration file generation
-    faraday.server.config.gen_web_config()
 
 
 def is_server_running(port):
@@ -113,7 +111,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
-    parser.add_argument('--port', help='Overides server.ini port configuration')
+    parser.add_argument('--port', type=int, help='Overides server.ini port configuration')
     parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
     f_version = faraday.__version__
@@ -122,7 +120,7 @@ def main():
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
     args.port = faraday.server.config.faraday_server.port = args.port or \
-            faraday.server.config.faraday_server.port or '5985'
+            faraday.server.config.faraday_server.port or 5985
     if args.bind_address:
         faraday.server.config.faraday_server.bind_address = args.bind_address
 

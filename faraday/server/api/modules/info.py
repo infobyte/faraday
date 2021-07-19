@@ -6,8 +6,8 @@ import flask
 from flask import Blueprint
 
 from faraday import __version__ as f_version
-from faraday.server.config import gen_web_config
-
+from faraday.server.config import faraday_server
+from faraday.settings.dashboard import DashboardSettings
 
 info_api = Blueprint('info_api', __name__)
 
@@ -41,7 +41,14 @@ def get_config():
         200:
           description: Ok
     """
-    return flask.jsonify(gen_web_config())
+    doc = {
+        'ver': f_version,
+        'websocket_port': faraday_server.websocket_port,
+        'show_vulns_by_price': DashboardSettings.settings.show_vulns_by_price,
+        'smtp_enabled': False
+    }
+
+    return flask.jsonify(doc)
 
 
 get_config.is_public = True

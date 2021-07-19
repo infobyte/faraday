@@ -42,13 +42,12 @@ from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
 from faraday.server.commands.app_urls import openapi_format
-from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
-from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
 from faraday.server.commands import nginx_config
 from faraday.server.commands import import_vulnerability_template
+from faraday.server.commands import manage_settings
 from faraday.server.models import db, User
 from faraday.server.web import get_app
 from faraday_plugins.plugins.manager import PluginsManager
@@ -125,38 +124,6 @@ def sql_shell():
     pgcli.run_cli()
 
 
-@click.command(help='Checks configuration and faraday status.')
-@click.option('--check_postgresql', default=False, is_flag=True)
-@click.option('--check_faraday', default=False, is_flag=True)
-@click.option('--check_dependencies', default=False, is_flag=True)
-@click.option('--check_config', default=False, is_flag=True)
-def status_check(check_postgresql, check_faraday, check_dependencies, check_config):
-    selected = False
-    exit_code = 0
-    if check_postgresql:
-        # exit_code was created for Faraday automation-testing purposes
-        exit_code = status_check_functions.print_postgresql_status()
-        status_check_functions.print_postgresql_other_status()
-        selected = True
-
-    if check_faraday:
-        status_check_functions.print_faraday_status()
-        selected = True
-
-    if check_dependencies:
-        status_check_functions.print_depencencies_status()
-        selected = True
-
-    if check_config:
-        status_check_functions.print_config_status()
-        selected = True
-
-    if not selected:
-        status_check_functions.full_status_check()
-
-    sys.exit(exit_code)
-
-
 @click.command(help="Changes the password of a user")
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
@@ -214,7 +181,7 @@ def create_superuser(username, email, password):
         get_app().user_datastore.create_user(username=username,
                                        email=email,
                                        password=hash_password(password),
-                                       role='admin',
+                                       roles=['admin'],
                                        is_ldap=False)
         db.session.commit()
         click.echo(click.style(
@@ -240,11 +207,6 @@ def create_tables():
         click.echo(click.style(
             'Tables created successfully!',
             fg='green', bold=True))
-
-
-@click.command(help="Generates a .zip file with technical information")
-def support():
-    support_zip.all_for_support()
 
 
 @click.command(
@@ -316,23 +278,32 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
     nginx_config.generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url)
 
 
+@click.command(help="Manage settings")
+@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list'], case_sensitive=False),
+              default='list', show_default=True, help="Action")
+@click.option('--data', type=str, required=False, callback=manage_settings.settings_format_validation,
+              help="Settings config in json")
+@click.argument('name', required=False)
+def settings(action, data, name):
+    manage_settings.manage(action.lower(), data, name)
+
+
 cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(database_schema)
 cli.add_command(create_superuser)
 cli.add_command(sql_shell)
-cli.add_command(status_check)
 cli.add_command(create_tables)
 cli.add_command(change_password)
 cli.add_command(migrate)
 cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
-cli.add_command(support)
 cli.add_command(list_plugins)
 cli.add_command(rename_user)
 cli.add_command(openapi_yaml)
 cli.add_command(generate_nginx_config)
 cli.add_command(import_vulnerability_templates)
+cli.add_command(settings)
 
 if __name__ == '__main__':
     cli()

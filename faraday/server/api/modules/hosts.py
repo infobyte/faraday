@@ -347,7 +347,7 @@ class HostsView(PaginatedMixin,
         res_dict = {'tools': []}
         for row in result:
             _, command = row
-            res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
+            res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).isoformat()})
         return res_dict
 
     def _perform_create(self, data, **kwargs):

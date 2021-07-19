@@ -594,7 +594,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'csrf_token': csrf_token,
             'executorData': {
                 "args": {
-                    "param1": True
+                    "param_name": "test"
                 },
                 "executor": executor.name
             },
@@ -611,6 +611,28 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert executor.last_run is not None
         assert executor2.last_run is None
         assert agent.last_run == executor.last_run
+
+    def test_invalid_parameter_type(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        executor = ExecutorFactory.create(agent=agent)
+
+        session.add(executor)
+        session.commit()
+
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param_name": ["test"]
+                },
+                "executor": executor.name
+            },
+        }
+        res = test_client.post(
+            urljoin(self.url(agent), 'run'),
+            json=payload
+        )
+        assert res.status_code == 400
 
     def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token,
                                                          session, test_client):
@@ -640,3 +662,10 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             json=payload
         )
         assert res.status_code == 400
+
+    def test_get_manifests(self, session, csrf_token, test_client):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        session.add(agent)
+        session.commit()
+        res = test_client.get(urljoin(self.url(), 'get_manifests'))
+        assert res.status_code == 200

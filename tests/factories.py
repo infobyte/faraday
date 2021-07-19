@@ -53,15 +53,17 @@ from faraday.server.models import (
     Rule,
     Action,
     RuleAction,
-    Condition)
+    Condition,
+    Role
+)
 
 
 # Make partials for start and end date. End date must be after start date
 def FuzzyStartTime():
     return (
         FuzzyNaiveDateTime(
-        datetime.datetime.now() - datetime.timedelta(days=40),
-        datetime.datetime.now() - datetime.timedelta(days=20),
+        datetime.datetime.utcnow() - datetime.timedelta(days=40),
+        datetime.datetime.utcnow() - datetime.timedelta(days=20),
         )
     )
 
@@ -69,8 +71,8 @@ def FuzzyStartTime():
 def FuzzyEndTime():
     return (
         FuzzyNaiveDateTime(
-            datetime.datetime.now() - datetime.timedelta(days=19),
-            datetime.datetime.now()
+            datetime.datetime.utcnow() - datetime.timedelta(days=19),
+            datetime.datetime.utcnow()
         )
     )
 
@@ -98,6 +100,30 @@ class UserFactory(FaradayFactory):
     fs_uniquifier = factory.LazyAttribute(
         lambda e: uuid.uuid4().hex
     )
+
+    @factory.post_generation
+    def roles(self, create, extracted, **kwargs):
+
+        def get_role(_role: str) -> Role:
+            return Role.query.filter(Role.name == _role).one()
+
+        if not create:
+            # Simple build, do nothing.
+            if extracted:
+                # A list of roles were passed in, use them
+                self['roles'] = self.get('roles', [])
+                for role in extracted:
+                    role = role if not isinstance(role, str) else get_role(role)
+                    self['roles'].append(role.name)
+            else:
+                self.roles.append(get_role('client'))
+        elif extracted:
+            # A list of groups were passed in, use them
+            for role in extracted:
+                role = role if not isinstance(role, str) else get_role(role)
+                self.roles.append(role)
+        else:
+            self.roles.append(get_role('client'))
 
     class Meta:
         model = User
@@ -562,7 +588,7 @@ class ExecutorFactory(FaradayFactory):
     name = FuzzyText()
     agent = factory.SubFactory(AgentFactory)
     parameters_metadata = factory.LazyAttribute(
-        lambda e: {"param_name": False}
+        lambda e: {"param_name": {"mandatory": False, "type": "string", "base": "string"}}
     )
 
     class Meta:

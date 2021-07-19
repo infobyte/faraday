@@ -48,7 +48,7 @@ from depot.fields.sqlalchemy import UploadedFileField
 
 from faraday.server.fields import JSONType
 from flask_security import (
-    UserMixin,
+    UserMixin, RoleMixin,
 )
 
 from faraday.server.fields import FaradayUploadedFile
@@ -1762,6 +1762,17 @@ def get(workspace_name):
     return db.session.query(Workspace).filter_by(name=workspace_name).first()
 
 
+roles_users = db.Table('roles_users',
+        db.Column('user_id', db.Integer(), db.ForeignKey('faraday_user.id')),
+        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
+
+
+class Role(db.Model, RoleMixin):
+    __tablename__ = 'faraday_role'
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+
+
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'
     ROLES = ['admin', 'pentester', 'client', 'asset_owner']
@@ -1780,8 +1791,6 @@ class User(db.Model, UserMixin):
     login_count = Column(Integer)  # flask-security
     active = Column(Boolean(), default=True, nullable=False)  # TBI flask-security
     confirmed_at = Column(DateTime())
-    role = Column(Enum(*ROLES, name='user_roles'),
-                  nullable=False, default='client')
     _otp_secret = Column(
         String(32),
         name="otp_secret", nullable=True
@@ -1790,19 +1799,17 @@ class User(db.Model, UserMixin):
     preferences = Column(JSONType, nullable=True, default={})
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
+    roles = db.relationship('Role', secondary=roles_users,
+                            backref='users')
     # TODO: add  many to many relationship to add permission to workspace
+
+    @property
+    def roles_list(self):
+        return [role.name for role in self.roles]
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",
         cascade="all, delete-orphan")
-
-    def __init__(self, *args, **kwargs):
-        # added for compatibility with flask security
-        try:
-            kwargs.pop('roles')
-        except KeyError:
-            pass
-        super().__init__(*args, **kwargs)
 
     def __repr__(self):
         return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
@@ -1812,8 +1819,7 @@ class User(db.Model, UserMixin):
             "username": self.username,
             "name": self.username,
             "email": self.email,
-            "role": self.role,
-            "roles": [self.role],
+            "roles": self.roles_list,
         }
 
 
@@ -2070,6 +2076,8 @@ class ExecutiveReport(Metadata):
     confirmed = Column(Boolean, nullable=False, default=False)
     vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
     markdown = Column(Boolean, default=False, nullable=False)
+    duplicate_detection = Column(Boolean, default=False, nullable=False)
+    border_size = Column(Integer, default=3, nullable=True)
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(String, nullable=False, default="")
 

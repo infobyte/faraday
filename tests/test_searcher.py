@@ -313,6 +313,7 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.skip("No available in community")
     def test_mail_notification(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
@@ -857,8 +858,10 @@ class TestSearcherRules():
         searcher = Searcher(api(workspace, test_client, session))
         rule_disabled: Rule = RuleFactory.create(disabled=True, workspace=workspace)
         rule_enabled = RuleFactory.create(disabled=False, workspace=workspace)
-        rule_disabled.conditions = [ConditionFactory.create(field='severity', value="low")]
-        rule_enabled.conditions = [ConditionFactory.create(field='severity', value="medium")]
+
+        with session.no_autoflush:
+            rule_disabled.conditions = [ConditionFactory.create(field='severity', value="low")]
+            rule_enabled.conditions = [ConditionFactory.create(field='severity', value="medium")]
 
         action = ActionFactory.create(command='DELETE')
         session.add(action)

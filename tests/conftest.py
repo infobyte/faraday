@@ -137,6 +137,7 @@ def database(app, request):
 
     db.app = app
     db.create_all()
+    db.engine.execute("INSERT INTO faraday_role(name) VALUES ('admin'),('pentester'),('client'),('asset_owner');")
 
     request.addfinalizer(teardown)
     return db
@@ -230,6 +231,9 @@ def test_client(app):
 
 
 def create_user(app, session, username, email, password, **kwargs):
+    single_role = kwargs.pop('role', None)
+    if 'roles' not in kwargs:
+        kwargs['roles'] = [single_role] if single_role is not None else ['client']
     user = app.user_datastore.create_user(username=username,
                                           email=email,
                                           password=password,

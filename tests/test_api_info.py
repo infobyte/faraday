@@ -17,6 +17,7 @@ class TestAPIInfoEndpoint:
         assert response.json['Faraday Server'] == 'Running'
 
     def test_get_config(self, test_client):
+        from faraday import __version__
         res = test_client.get('/config')
         assert res.status_code == 200
-        assert res.json['lic_db'] == 'faraday_licenses'
+        assert __version__ in res.json['ver']

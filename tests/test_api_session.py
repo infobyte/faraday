@@ -6,6 +6,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import pytest
+
+from faraday.server.models import Role
 from tests.conftest import login_as
 
 
@@ -17,11 +19,11 @@ class TestSessionLogged:
 
     @pytest.mark.parametrize('role', ['admin', 'pentester', 'client', 'asset_owner'])
     def test_session_when_user_is_logged_with_different_roles(self, test_client, session, user, role):
-        user.role = role
+        user.roles = [Role.query.filter(Role.name == role).one()]
         session.commit()
         login_as(test_client, user)
         res = test_client.get('/session')
-        assert res.json['role'] == role
+        assert role in res.json['roles']
 
 
 class TestSessionNotLogged:

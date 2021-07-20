@@ -183,11 +183,11 @@ class InitDB():
             {'update_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 15, 'async': False}},
             {'delete_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 21, 'async': False}},
             # Vulnerability Web
-            {'new_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 22,
+            {'new_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 22,
                                    'async': False}},
-            {'update_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 23,
+            {'update_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 23,
                                       'async': False}},
-            {'delete_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 24,
+            {'delete_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 24,
                                       'async': False}},
             # Comments
             {'new_comment': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 9, 'async': False}},

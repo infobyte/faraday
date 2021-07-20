@@ -270,13 +270,11 @@ class FilterSchema(Schema):
             an error on PostgreSQL
         """
         if 'group_by' in data and 'order_by' in data:
-            group_by_fields = []
-            for group_field in data['group_by']:
-                group_by_fields.append(group_field['field'])
-            for order_field in data['order_by']:
-                if order_field['field'] not in group_by_fields:
-                    logger.error(f"Order_by field [{order_field['field']}] must be in group_by by fields")
-                    raise ValidationError(f"Order field [{order_field['field']}] must be in group by fields")
+            group_by_fields = set(group_field['field'] for group_field in data['group_by'])
+            order_by_fields = set(order_field['field'] for order_field in data['order_by'])
+            if not order_by_fields.issubset(group_by_fields):
+                logger.error(f'All order fields ({order_by_fields}) must be in group by {group_by_fields}.')
+                raise ValidationError(f'All order fields ({order_by_fields}) must be in group by {group_by_fields}.')
         return data
 
 

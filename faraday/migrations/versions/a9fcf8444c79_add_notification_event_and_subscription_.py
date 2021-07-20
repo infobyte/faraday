@@ -60,6 +60,7 @@ def upgrade():
     )
 
     op.execute('INSERT INTO object_type ("name") VALUES (\'vulnerability\')')
+    op.execute('INSERT INTO object_type ("name") VALUES (\'vulnerabilityweb\')')
     op.execute('INSERT INTO object_type ("name") VALUES (\'host\')')
     op.execute('INSERT INTO object_type ("name") VALUES (\'credential\')')
     op.execute('INSERT INTO object_type ("name") VALUES (\'service\')')

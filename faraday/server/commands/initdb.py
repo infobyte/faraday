@@ -138,18 +138,19 @@ class InitDB():
         _assetowner = Role.query.filter_by(name='asset_owner').first()
 
         object_types = ['vulnerability',
-                         'host',
-                         'credential',
-                         'service',
-                         'source_code',
-                         'comment',
-                         'executive_report',
-                         'workspace',
-                         'task',
-                         'agent',
-                         'agentexecution',
-                         'command',
-                         'executivereport']
+                        'vulnerabilityweb',
+                        'host',
+                        'credential',
+                        'service',
+                        'source_code',
+                        'comment',
+                        'executive_report',
+                        'workspace',
+                        'task',
+                        'agent',
+                        'agentexecution',
+                        'command',
+                        'executivereport']
 
         for object_type in object_types:
             obj = ObjectType(name=object_type)

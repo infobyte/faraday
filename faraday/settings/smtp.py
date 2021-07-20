@@ -44,6 +44,3 @@ class SMTPSettings(Settings):
 
 def init_setting():
     SMTPSettings()
-
-
-init_setting()

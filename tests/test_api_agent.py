@@ -469,6 +469,21 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin,
         assert len(workspaces) == 1
         assert workspaces[0] == workspace
 
+    def test_bulk_delete_agents(self, test_client, session):
+        previous_count = session.query(Agent).count()
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        agent_a = AgentFactory.create(workspaces=[workspace])
+        agent_b = AgentFactory.create(workspaces=[workspace])
+        agent_c = AgentFactory.create(workspaces=[workspace])
+        session.commit()
+
+        data = {'ids': [agent_a.id, agent_b.id, agent_c.id]}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['deleted'] == 3
+        assert previous_count == session.query(Agent).count()
+
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     model = Agent

@@ -144,13 +144,13 @@ class InitDB():
                         'service',
                         'source_code',
                         'comment',
-                        'executive_report',
+                        'executivereport',
                         'workspace',
                         'task',
                         'agent',
                         'agentexecution',
                         'command',
-                        'executivereport']
+                        'user']
 
         for object_type in object_types:
             obj = ObjectType(name=object_type)

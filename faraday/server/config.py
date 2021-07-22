@@ -84,10 +84,11 @@ class ConfigSection:
         for att in self.__dict__:
             value = __parser.get(att)
             if isinstance(self.__dict__[att], bool):
-                if value in ("yes", "true", "t", "1", "True"):
-                    self.__setattr__(att, True)
-                else:
-                    self.__setattr__(att, False)
+                if value:
+                    if value in ("yes", "true", "t", "1", "True"):
+                        self.__setattr__(att, True)
+                    else:
+                        self.__setattr__(att, False)
             elif isinstance(self.__dict__[att], int):
                 if value:
                     self.__setattr__(att, int(value))

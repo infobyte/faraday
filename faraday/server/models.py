@@ -2289,11 +2289,11 @@ class MailNotification(NotificationBase):
 
     @property
     def body(self):
-        return 'body to be implemented'
+        raise NotImplementedError('Mail notification body called. Must Be implemented.')
 
     @property
     def subject(self):
-        return 'subject to be implemented'
+        raise NotImplementedError('Mail notification subject called. Must Be implemented.')
 
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[0]

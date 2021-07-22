@@ -13,6 +13,7 @@ from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 from faraday.server.models import Workspace, Command, User
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
+from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,9 @@ class ReportsManager(Thread):
         if plugin_id is None:
             logger.debug("Removing file: %s", file_path)
             os.remove(file_path)
+        else:
+            if faraday_server.delete_report_after_process:
+                os.remove(file_path)
         set_end_date = not plugin_id
         try:
             self.send_report_request(

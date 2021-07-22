@@ -140,6 +140,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.debug = False
         self.custom_plugins_folder = None
         self.ignore_info_severity = False
+        self.delete_report_after_process = True
 
 
 class StorageConfigObject(ConfigSection):

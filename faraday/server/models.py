@@ -2171,7 +2171,7 @@ class NotificationSubscriptionConfigBase(db.Model):
 
     @property
     def dst(self):
-        pass
+        raise NotImplementedError('Notification subsciption base dst called. Must Be implemented.')
 
 
 class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):

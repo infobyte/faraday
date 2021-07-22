@@ -2188,13 +2188,6 @@ class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):
         'polymorphic_identity': NOTIFICATION_METHODS[0]
     }
 
-    @property
-    def dst(self):
-        if self.email:
-            return self.email
-        else:
-            return self.user_notified.email
-
 
 class NotificationSubscriptionWebHookConfig(NotificationSubscriptionConfigBase):
     __tablename__ = 'notification_subscription_webhook_config'
@@ -2203,10 +2196,6 @@ class NotificationSubscriptionWebHookConfig(NotificationSubscriptionConfigBase):
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[1]
     }
-
-    @property
-    def dst(self):
-        return self.url
 
 
 class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionConfigBase):
@@ -2220,10 +2209,6 @@ class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionConfigBase
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[2]
     }
-
-    @property
-    def dst(self):
-        return self.user_notified.username
 
 
 class NotificationEvent(db.Model):
@@ -2280,18 +2265,6 @@ class MailNotification(NotificationBase):
 
     id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
 
-    @property
-    def dst(self):
-        return f'user_{self.notification_subscription_config.dst}'
-
-    @property
-    def body(self):
-        raise NotImplementedError('Mail notification body called. Must Be implemented.')
-
-    @property
-    def subject(self):
-        raise NotImplementedError('Mail notification subject called. Must Be implemented.')
-
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[0]
     }
@@ -2302,10 +2275,6 @@ class WebHookNotification(NotificationBase):
     __tablename__ = 'webhook_notification'
 
     id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
-
-    @property
-    def dst(self):
-        return f'user_{self.notification_subscription_config.dst}'
 
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[1]
@@ -2323,26 +2292,6 @@ class WebsocketNotification(NotificationBase):
     )
 
     mark_read = Column(Boolean, default=False, index=True)
-
-    @property
-    def message(self):
-        msg = {
-            'notification_id': self.id,
-            'event': self.event.event,
-            'notification_data': self.event.notification_data,
-            'mark_read': self.mark_read,
-            'create_date': self.event.create_date.strftime("%Y-%m-%dT%H:%M:%S.%f+00:00"),
-            'object_id': self.event.object_id,
-            'object_type': self.event.object_type,
-        }
-        logger.debug(f'Message {msg}')
-        return msg
-
-    @property
-    def dst(self):
-        if self.notification_subscription_config.dst:
-            return f'user_{self.notification_subscription_config.dst}'
-        return f'user_{self.user_notified.username}'
 
     __mapper_args__ = {
         'polymorphic_identity': NOTIFICATION_METHODS[2]

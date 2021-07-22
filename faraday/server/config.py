@@ -83,18 +83,18 @@ class ConfigSection:
     def parse(self, __parser):
         for att in self.__dict__:
             value = __parser.get(att)
+            if value is None:
+                continue
             if isinstance(self.__dict__[att], bool):
-                if value:
-                    if value in ("yes", "true", "t", "1", "True"):
-                        self.__setattr__(att, True)
-                    else:
-                        self.__setattr__(att, False)
+                if value in ("yes", "true", "t", "1", "True"):
+                    self.__setattr__(att, True)
+                else:
+                    self.__setattr__(att, False)
             elif isinstance(self.__dict__[att], int):
-                if value:
-                    self.__setattr__(att, int(value))
+                self.__setattr__(att, int(value))
+
             else:
-                if value:
-                    self.__setattr__(att, value)
+                self.__setattr__(att, value)
 
     def set(self, option_name, value):
         return self.__setattr__(option_name, value)

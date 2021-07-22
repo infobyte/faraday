@@ -2250,9 +2250,6 @@ class NotificationEvent(db.Model):
         backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
     )
 
-    def parent(self):
-        pass
-
 
 class NotificationBase(db.Model):
     __tablename__ = 'notification_base'

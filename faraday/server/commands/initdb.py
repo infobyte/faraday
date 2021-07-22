@@ -124,6 +124,83 @@ class InitDB():
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise
 
+    def _create_default_notifications_config(self):
+        from faraday.server.models import (db,  # pylint:disable=import-outside-toplevel
+                                           Role,  # pylint:disable=import-outside-toplevel
+                                           NotificationSubscription,  # pylint:disable=import-outside-toplevel
+                                           NotificationSubscriptionWebSocketConfig,  # pylint:disable=import-outside-toplevel
+                                           EventType,  # pylint:disable=import-outside-toplevel
+                                           ObjectType)  # pylint:disable=import-outside-toplevel
+
+        _admin = Role.query.filter_by(name='admin').first()
+        _pentester = Role.query.filter_by(name='pentester').first()
+        _client = Role.query.filter_by(name='client').first()
+        _assetowner = Role.query.filter_by(name='asset_owner').first()
+
+        object_types = ['vulnerability',
+                        'vulnerabilityweb',
+                        'host',
+                        'credential',
+                        'service',
+                        'source_code',
+                        'comment',
+                        'executivereport',
+                        'workspace',
+                        'task',
+                        'agent',
+                        'agentexecution',
+                        'command',
+                        'user']
+
+        for object_type in object_types:
+            obj = ObjectType(name=object_type)
+            db.session.add(obj)
+            db.session.commit()
+
+        dflt_notifications_config = [
+            # Workspace
+            {'new_workspace': {'roles': [_admin], 'event_type_id': 1, 'async': False}},
+            {'update_workspace': {'roles': [_admin], 'event_type_id': 10, 'async': False}},
+            {'delete_workspace': {'roles': [_admin], 'event_type_id': 17, 'async': False}},
+            # Users
+            {'new_user': {'roles': [_admin], 'event_type_id': 3, 'async': False}},
+            {'update_user': {'roles': [_admin], 'event_type_id': 12, 'async': False}},
+            {'delete_user': {'roles': [_admin], 'event_type_id': 19, 'async': False}},
+            # Agents
+            {'new_agent': {'roles': [_admin, _pentester], 'event_type_id': 2, 'async': True}},
+            {'update_agent': {'roles': [_admin, _pentester], 'event_type_id': 11, 'async': False}},
+            {'delete_agent': {'roles': [_admin, _pentester], 'event_type_id': 18, 'async': False}},
+            # Reports
+            {'new_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 5, 'async': True}},
+            {'update_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 14, 'async': True}},
+            {'delete_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 20, 'async': True}},
+            # Agent execution
+            {'new_agentexecution': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 4, 'async': True}},
+            # Commands
+            {'new_command': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 7, 'async': True}},
+            # Vulnerability
+            {'new_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 6, 'async': False}},
+            {'update_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 15, 'async': False}},
+            {'delete_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 21, 'async': False}},
+            # Vulnerability Web
+            {'new_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 22,
+                                   'async': False}},
+            {'update_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 23,
+                                      'async': False}},
+            {'delete_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 24,
+                                      'async': False}},
+            # Comments
+            {'new_comment': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 9, 'async': False}},
+        ]
+
+        for notitication_config in dflt_notifications_config:
+            for event, data in notitication_config.items():
+                e = EventType(id=data['event_type_id'], name=event, async_event=data['async'])
+                n = NotificationSubscription(event_type=e, allowed_roles=data['roles'])
+                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+                db.session.add(ns)
+                db.session.commit()
+
     def _create_admin_user(self, conn_string, choose_password, faraday_user_password):
         engine = create_engine(conn_string)
         # TODO change the random_password variable name, it is not always
@@ -356,3 +433,4 @@ class InitDB():
             command.stamp(alembic_cfg, "head")
             # TODO ADD RETURN TO PREV DIR
         self._create_roles(conn_string)
+        self._create_default_notifications_config()

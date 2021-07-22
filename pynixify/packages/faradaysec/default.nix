@@ -25,6 +25,7 @@
 , flask-kvsession-fork
 , flask-limiter
 , flask-security-too
+, flask-socketio
 , flask_login
 , flask_mail
 , flask_sqlalchemy
@@ -115,6 +116,7 @@ buildPythonPackage rec {
       apispec
       apispec-webframeworks
       pyyaml
+      flask-socketio
       pyotp
       flask-limiter
       flask_mail

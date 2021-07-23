@@ -138,8 +138,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.agent_registration_secret = None
         self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
-        self.custom_plugins_folder = None
-        self.ignore_info_severity = False
+        self.reports_pool_size = 1
 
 
 class StorageConfigObject(ConfigSection):

@@ -48,9 +48,8 @@ class TestFileUpload:
         ws_id = ws.id
         logged_user_id = logged_user.id
 
-        from faraday.server.threads.reports_processor import ReportsManager
-        false_thread = ReportsManager(None)
-        false_thread.process_report(queue_elem[0], queue_elem[1],
+        from faraday.server.threads.reports_processor import process_report
+        process_report(queue_elem[0], queue_elem[1],
                                     queue_elem[2], queue_elem[3],
                                     queue_elem[4])
         command = Command.query.filter(Command.workspace_id == ws_id).one()

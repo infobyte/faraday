@@ -396,8 +396,7 @@ class TestListCommandView(ReadWriteAPITests):
         assert res.status_code == 200
         updated_command = self.model.query.get(command.id)
         print(updated_command.end_date)
-        assert updated_command.end_date == datetime.datetime.fromtimestamp(
-            1511387720.048548) + datetime.timedelta(seconds=120)
+        assert updated_command.end_date == updated_command.start_date + datetime.timedelta(seconds=120)
 
     def test_delete_objects_preserve_history(self, session, test_client):
 

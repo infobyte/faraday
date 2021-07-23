@@ -124,7 +124,7 @@ class InitDB():
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise
 
-    def _create_default_notifications_config(self):
+    def _create_initial_notifications_config(self):
         from faraday.server.models import (db,  # pylint:disable=import-outside-toplevel
                                            Role,  # pylint:disable=import-outside-toplevel
                                            NotificationSubscription,  # pylint:disable=import-outside-toplevel
@@ -204,7 +204,7 @@ class InitDB():
 
         for config in default_initial_notifications_config:
             for event_type in config['event_types']:
-                allowed_roles_objs = [role for role in Role.query.filter(Role.name.in_(config['roles'])).all()]
+                allowed_roles_objs = Role.query.filter(Role.name.in_(config['roles'])).all()
                 event_type_obj = EventType.query.filter(EventType.name == event_type).first()
                 n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
                 db.session.add(n)
@@ -445,4 +445,4 @@ class InitDB():
             command.stamp(alembic_cfg, "head")
             # TODO ADD RETURN TO PREV DIR
         self._create_roles(conn_string)
-        self._create_default_notifications_config()
+        self._create_initial_notifications_config()

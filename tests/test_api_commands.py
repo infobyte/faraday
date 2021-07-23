@@ -380,13 +380,14 @@ class TestListCommandView(ReadWriteAPITests):
     def test_update_command(self, test_client, session):
         command = self.factory()
         session.commit()
+        start_date = datetime.datetime.utcnow()
         raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': 120,
             'hostname': 'mandarina',
             'ip': '192.168.20.53',
-            'itime': 1511387720.048548,
+            'itime': start_date.timestamp(),
             'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
             'user': 'lcubo'
         }

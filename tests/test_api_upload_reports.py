@@ -20,6 +20,7 @@ from faraday.server.models import Host, Service, Command
 class TestFileUpload:
 
     def test_file_upload(self, test_client, session, csrf_token, logged_user):
+        REPORTS_QUEUE.queue.clear()
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
@@ -56,7 +57,6 @@ class TestFileUpload:
         assert command
         assert command.creator_id == logged_user_id
         assert command.id == res.json["command_id"]
-        assert command.end_date
         host = Host.query.filter(Host.workspace_id == ws_id).first()
         assert host
         assert host.creator_id == logged_user_id

@@ -1,9 +1,11 @@
 import logging
+import os
 import threading
 from pathlib import Path
 from threading import Thread
 from queue import Queue, Empty
-from typing import Tuple
+from typing import Tuple, Optional
+import json
 import multiprocessing
 
 from faraday_plugins.plugins.manager import PluginsManager
@@ -13,6 +15,7 @@ from faraday.server.models import Workspace, Command, User
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
 from faraday.server.config import faraday_server
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,44 +23,65 @@ REPORTS_QUEUE = Queue()
 INTERVAL = 0.5
 
 
-def send_report_data(workspace_name: str, command_id: int, report_json: dict, user_id: int):
+def send_report_data(workspace_name: str, command_id: int, report_json: dict,
+                     user_id: Optional[int], set_end_date: bool):
     logger.info("Send Report data to workspace [%s]", workspace_name)
     from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
     with get_app().app_context():
         ws = Workspace.query.filter_by(name=workspace_name).one()
         command = Command.query.filter_by(id=command_id).one()
-        user = User.query.filter_by(id=user_id).one()
         schema = BulkCreateSchema()
         data = schema.load(report_json)
-        data = add_creator(data, user)
-        bulk_create(ws, command, data, True, True)
+        if user_id:
+            user = User.query.filter_by(id=user_id).one()
+            data = add_creator(data, user)
+        bulk_create(ws, command, data, True, set_end_date)
 
 
-def process_report(workspace_name: str, command_id: int, file_path: Path, plugin_id: int, user_id: int):
-    plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
-                                     ignore_info=ReportsSettings.settings.ignore_info_severity)
-    logger.info(f"Reports Manager: [Custom plugins folder: "
-                f"[{ReportsSettings.settings.custom_plugins_folder}]"
-                f"[Ignore info severity: {ReportsSettings.settings.ignore_info_severity}]")
-    plugin = plugins_manager.get_plugin(plugin_id)
-    if plugin:
-        try:
-            logger.info(f"Processing report [{file_path}] with plugin [{plugin.id}]")
-            plugin.processReport(str(file_path))
-            vulns_data = plugin.get_data()
-            del vulns_data['command']['duration']
-        except Exception as e:
-            logger.error("Processing Error: %s", e)
-            logger.exception(e)
-        else:
+def process_report(workspace_name: str, command_id: int, file_path: Path,
+                   plugin_id: Optional[int], user_id: Optional[int]):
+    if plugin_id is not None:
+        plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
+                                         ignore_info=ReportsSettings.settings.ignore_info_severity)
+        logger.info(f"Reports Manager: [Custom plugins folder: "
+                    f"[{ReportsSettings.settings.custom_plugins_folder}]"
+                    f"[Ignore info severity: {ReportsSettings.settings.ignore_info_severity}]")
+        plugin = plugins_manager.get_plugin(plugin_id)
+        if plugin:
             try:
-                send_report_data(workspace_name, command_id, vulns_data, user_id)
-                logger.info("Report processing finished")
+                logger.info(f"Processing report [{file_path}] with plugin ["
+                            f"{plugin.id}]")
+                plugin.processReport(str(file_path))
+                vulns_data = plugin.get_data()
+                del vulns_data['command']['duration']
             except Exception as e:
+                logger.error("Processing Error: %s", e)
                 logger.exception(e)
-                logger.error("Save Error: %s", e)
+                return
+        else:
+            logger.error(f"No plugin detected for report [{file_path}]")
+            return
     else:
-        logger.info(f"No plugin detected for report [{file_path}]")
+        try:
+            with file_path.open("r") as f:
+                vulns_data = json.load(f)
+        except Exception as e:
+            logger.error("Loading data from json file: %s [%s]", file_path, e)
+            logger.exception(e)
+            return
+    if plugin_id is None:
+        logger.debug("Removing file: %s", file_path)
+        os.remove(file_path)
+    else:
+        if faraday_server.delete_report_after_process:
+            os.remove(file_path)
+    set_end_date = True
+    try:
+        send_report_data(workspace_name, command_id, vulns_data, user_id, set_end_date)
+        logger.info("Report processing finished")
+    except Exception as e:
+        logger.exception(e)
+        logger.error("Save Error: %s", e)
 
 
 class ReportsManager(Thread):

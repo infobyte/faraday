@@ -82,6 +82,12 @@ COMMENT_TYPES = [
     'user'
 ]
 
+NOTIFICATION_METHODS = [
+    'mail',
+    'webhook',
+    'websocket'
+]
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -1901,6 +1907,7 @@ class TaskTemplate(TaskABC):
     __mapper_args__ = {
         'concrete': True
     }
+
     template = relationship(
         'MethodologyTemplate',
         backref=backref('tasks', cascade="all, delete-orphan"))
@@ -2108,10 +2115,192 @@ class ExecutiveReport(Metadata):
         )
 
 
+class ObjectType(db.Model):
+    __tablename__ = 'object_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), unique=True, nullable=False)
+
+
+class EventType(db.Model):
+    __tablename__ = 'event_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), unique=True, nullable=False)
+    async_event = Column(Boolean, default=False)
+
+
+allowed_roles_association = db.Table('notification_allowed_roles',
+    Column('notification_subscription_id', Integer, db.ForeignKey('notification_subscription.id'), nullable=False),
+    Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'), nullable=False)
+)
+
+
+class NotificationSubscription(Metadata):
+    __tablename__ = 'notification_subscription'
+    id = Column(Integer, primary_key=True)
+    event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
+    event_type = relationship(
+        'EventType',
+        backref=backref('event_type', cascade="all, delete-orphan")
+    )
+    allowed_roles = relationship("Role", secondary=allowed_roles_association)
+
+
+class NotificationSubscriptionConfigBase(db.Model):
+    __tablename__ = 'notification_subscription_config_base'
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey('notification_subscription.id'), index=True, nullable=False)
+    subscription = relationship(
+        'NotificationSubscription',
+        backref=backref('notification_subscription_config', cascade="all, delete-orphan")
+    )
+
+    role_level = Column(Boolean, default=False)
+    workspace_level = Column(Boolean, default=False)
+
+    active = Column(Boolean, default=True)
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+    __table_args__ = (
+        UniqueConstraint('subscription_id', 'type', name='uix_subscriptionid_type'),
+    )
+
+    @property
+    def dst(self):
+        raise NotImplementedError('Notification subsciption base dst called. Must Be implemented.')
+
+
+class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):
+    __tablename__ = 'notification_subscription_mail_config'
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
+    email = Column(String(50), nullable=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_subscription_mail_config', cascade="all, delete-orphan")
+    )
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[0]
+    }
+
+
+class NotificationSubscriptionWebHookConfig(NotificationSubscriptionConfigBase):
+    __tablename__ = 'notification_subscription_webhook_config'
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
+    url = Column(String(50), nullable=False)
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[1]
+    }
+
+
+class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionConfigBase):
+    __tablename__ = 'notification_subscription_websocket_config'
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_subscription_websocket_config', cascade="all, delete-orphan")
+    )
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[2]
+    }
+
+
+class NotificationEvent(db.Model):
+    __tablename__ = 'notification_event'
+    id = Column(Integer, primary_key=True)
+    event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
+    event_type = relationship(
+        'EventType',
+        backref=backref('notification_event_type', cascade="all, delete-orphan")
+    )
+    object_id = Column(Integer, nullable=False)
+    object_type_id = Column(Integer, ForeignKey('object_type.id'), index=True, nullable=False)
+    object_type = relationship(
+        'ObjectType',
+        backref=backref('notification_event_object_type', cascade="all, delete-orphan")
+    )
+
+    notification_data = Column(JSONType, nullable=False)
+    create_date = Column(DateTime, default=datetime.utcnow)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
+    )
+
+
+class NotificationBase(db.Model):
+    __tablename__ = 'notification_base'
+    id = Column(Integer, primary_key=True)
+    notification_event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
+    notification_event = relationship(
+        'NotificationEvent',
+        backref=backref('notifications', cascade="all, delete-orphan"),
+    )
+    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_config_base.id'),
+                                                 index=True, nullable=False)
+    notification_subscription_config = relationship(
+        'NotificationSubscriptionConfigBase',
+        backref=backref('notifications', cascade="all, delete-orphan"),
+    )
+
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+
+# TBI
+class MailNotification(NotificationBase):
+    __tablename__ = 'mail_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[0]
+    }
+
+
+# TBI
+class WebHookNotification(NotificationBase):
+    __tablename__ = 'webhook_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[1]
+    }
+
+
+class WebsocketNotification(NotificationBase):
+    __tablename__ = 'websocket_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notifications', cascade="all, delete-orphan")
+    )
+
+    mark_read = Column(Boolean, default=False, index=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[2]
+    }
+
+
 class Notification(db.Model):
     __tablename__ = 'notification'
     id = Column(Integer, primary_key=True)
-
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
     user_notified = relationship(
         'User',

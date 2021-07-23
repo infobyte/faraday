@@ -67,6 +67,11 @@ let
         ./packages/apispec-webframeworks
         { };
 
+      bidict =
+        self.callPackage
+        ./packages/bidict
+        { };
+
       bleach =
         self.callPackage
         ./packages/bleach
@@ -117,6 +122,11 @@ let
         ./packages/flask-security-too
         { };
 
+      flask-socketio =
+        self.callPackage
+        ./packages/flask-socketio
+        { };
+
       marshmallow =
         self.callPackage
         ./packages/marshmallow
@@ -130,6 +140,16 @@ let
       pyotp =
         self.callPackage
         ./packages/pyotp
+        { };
+
+      python-engineio =
+        self.callPackage
+        ./packages/python-engineio
+        { };
+
+      python-socketio =
+        self.callPackage
+        ./packages/python-socketio
         { };
 
       simplekv =

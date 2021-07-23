@@ -132,10 +132,55 @@ class InitDB():
                                            EventType,  # pylint:disable=import-outside-toplevel
                                            ObjectType)  # pylint:disable=import-outside-toplevel
 
-        _admin = Role.query.filter_by(name='admin').first()
-        _pentester = Role.query.filter_by(name='pentester').first()
-        _client = Role.query.filter_by(name='client').first()
-        _assetowner = Role.query.filter_by(name='asset_owner').first()
+        default_initial_notifications_config = [
+            # Workspace
+            {'roles': ['admin'], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
+            # Users
+            {'roles': ['admin'], 'event_types': ['new_user', 'update_user', 'delete_user']},
+            # Agents
+            {'roles': ['admin', 'pentester'], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
+            # Reports
+            {'roles': ['admin', 'pentester', 'asset_owner'],
+             'event_types': ['new_executivereport', 'update_executivereport', 'delete_executivereport']},
+            # Agent execution
+            {'roles': ['admin', 'pentester', 'asset_owner'], 'event_types': ['new_agentexecution']},
+            # Commands
+            {'roles': ['admin', 'pentester', 'asset_owner'], 'event_types': ['new_command']},
+            # Vulnerability
+            {'roles': ['admin', 'pentester', 'asset_owner', 'client'],
+             'event_types': ['new_vulnerability', 'update_vulnerability', 'delete_vulnerability']},
+            # Vulnerability Web
+            {'roles': ['admin', 'pentester', 'asset_owner', 'client'],
+             'event_types': ['new_vulnerabilityweb', 'update_vulnerabilityweb', 'delete_vulnerabilityweb']},
+            # Comments
+            {'roles': ['admin', 'pentester', 'asset_owner', 'client'], 'event_types': ['new_comment']},
+        ]
+
+        event_types = [('new_workspace', False),
+                          ('new_agent', True),
+                          ('new_user', False),
+                          ('new_agentexecution', True),
+                          ('new_executivereport', True),
+                          ('new_vulnerability', False),
+                          ('new_command', True),
+                          ('new_comment', False),
+                          ('update_workspace', False),
+                          ('update_agent', False),
+                          ('update_user', False),
+                          ('update_executivereport', True),
+                          ('update_vulnerability', False),
+                          ('delete_workspace', False),
+                          ('delete_agent', False),
+                          ('delete_user', False),
+                          ('delete_executivereport', False),
+                          ('delete_vulnerability', False),
+                          ('new_vulnerabilityweb', False),
+                          ('update_vulnerabilityweb', False),
+                  ('delete_vulnerabilityweb', False)]
+
+        for event_type in event_types:
+            event_type_obj = EventType(name=event_type[0], async_event=event_type[1])
+            db.session.add(event_type_obj)
 
         object_types = ['vulnerability',
                         'vulnerabilityweb',
@@ -157,46 +202,13 @@ class InitDB():
             db.session.add(obj)
             db.session.commit()
 
-        dflt_notifications_config = [
-            # Workspace
-            {'new_workspace': {'roles': [_admin], 'event_type_id': 1, 'async': False}},
-            {'update_workspace': {'roles': [_admin], 'event_type_id': 10, 'async': False}},
-            {'delete_workspace': {'roles': [_admin], 'event_type_id': 17, 'async': False}},
-            # Users
-            {'new_user': {'roles': [_admin], 'event_type_id': 3, 'async': False}},
-            {'update_user': {'roles': [_admin], 'event_type_id': 12, 'async': False}},
-            {'delete_user': {'roles': [_admin], 'event_type_id': 19, 'async': False}},
-            # Agents
-            {'new_agent': {'roles': [_admin, _pentester], 'event_type_id': 2, 'async': True}},
-            {'update_agent': {'roles': [_admin, _pentester], 'event_type_id': 11, 'async': False}},
-            {'delete_agent': {'roles': [_admin, _pentester], 'event_type_id': 18, 'async': False}},
-            # Reports
-            {'new_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 5, 'async': True}},
-            {'update_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 14, 'async': True}},
-            {'delete_executivereport': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 20, 'async': True}},
-            # Agent execution
-            {'new_agentexecution': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 4, 'async': True}},
-            # Commands
-            {'new_command': {'roles': [_admin, _pentester, _assetowner], 'event_type_id': 7, 'async': True}},
-            # Vulnerability
-            {'new_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 6, 'async': False}},
-            {'update_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 15, 'async': False}},
-            {'delete_vulnerability': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 21, 'async': False}},
-            # Vulnerability Web
-            {'new_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 22,
-                                   'async': False}},
-            {'update_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 23,
-                                      'async': False}},
-            {'delete_vulnerabilityweb': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 24,
-                                      'async': False}},
-            # Comments
-            {'new_comment': {'roles': [_admin, _pentester, _client, _assetowner], 'event_type_id': 9, 'async': False}},
-        ]
-
-        for notitication_config in dflt_notifications_config:
-            for event, data in notitication_config.items():
-                e = EventType(id=data['event_type_id'], name=event, async_event=data['async'])
-                n = NotificationSubscription(event_type=e, allowed_roles=data['roles'])
+        for config in default_initial_notifications_config:
+            for event_type in config['event_types']:
+                allowed_roles_objs = [role for role in Role.query.filter(Role.name.in_(config['roles'])).all()]
+                event_type_obj = EventType.query.filter(EventType.name == event_type).first()
+                n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
+                db.session.add(n)
+                db.session.commit()
                 ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
                 db.session.add(ns)
                 db.session.commit()

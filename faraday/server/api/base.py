@@ -21,8 +21,7 @@ from sqlalchemy import func, desc, asc
 from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
-from marshmallow_sqlalchemy.schema.sqlalchemy_schema import SQLAlchemyAutoSchemaMeta
-from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaOpts
+from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaOpts, SQLAlchemyAutoSchemaMeta
 from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError

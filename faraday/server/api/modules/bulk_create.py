@@ -465,11 +465,11 @@ class BulkCreateView(GenericWorkspacedView):
         """
         from faraday.server.threads.reports_processor import REPORTS_QUEUE  # pylint: disable=import-outside-toplevel
 
-        data = self._parse_data(self._get_schema_instance({}), flask.request)
-        json_data = flask.request.json
-
         if flask_login.current_user.is_anonymous:
             agent = require_agent_token()
+        data = self._parse_data(self._get_schema_instance({}), flask.request)
+        json_data = flask.request.json
+        if flask_login.current_user.is_anonymous:
             workspace = self._get_workspace(workspace_name)
 
             if not workspace or workspace not in agent.workspaces:

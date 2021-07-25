@@ -11,6 +11,7 @@ import sys
 import platform
 import logging
 
+os.environ['FARADAY_MANAGE_RUNNING'] = "1"
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp

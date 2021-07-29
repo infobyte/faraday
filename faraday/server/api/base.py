@@ -21,7 +21,7 @@ from sqlalchemy import func, desc, asc
 from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
-from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
+from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaOpts, SQLAlchemyAutoSchemaMeta
 from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
@@ -1569,7 +1569,7 @@ class CustomModelConverter(ModelConverter):
             kwargs['validate'].append(Length(min=1))
 
 
-class CustomModelSchemaOpts(ModelSchemaOpts):
+class CustomSQLAlchemyAutoSchemaOpts(SQLAlchemyAutoSchemaOpts):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model_converter = CustomModelConverter
@@ -1594,14 +1594,14 @@ def old_isoformat(dt, *args, **kwargs):
 fields.DateTime.SERIALIZATION_FUNCS['iso'] = old_isoformat
 
 
-class AutoSchema(Schema, metaclass=ModelSchemaMeta):
+class AutoSchema(Schema, metaclass=SQLAlchemyAutoSchemaMeta):
     """
     A Marshmallow schema that does field introspection based on
     the SQLAlchemy model specified in Meta.model.
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
     the serialization and deserialization proccess.
     """
-    OPTIONS_CLASS = CustomModelSchemaOpts
+    OPTIONS_CLASS = CustomSQLAlchemyAutoSchemaOpts
 
     # Use NullToBlankString instead of fields.String by default on text fields
     TYPE_MAPPING = Schema.TYPE_MAPPING.copy()

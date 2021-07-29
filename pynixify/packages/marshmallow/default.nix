@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "marshmallow";
   version =
-    "3.12.1";
+    "3.12.2";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0h70m4z1kbcwsd0sv8cwlcmpj4dnblvr5vj18j7wa327f1dlfl40";
+        "1zyjjcscwhwa82424blyiihdihgs6c5wxnxv3h23lg6rvbz8sdkp";
     };
 
   # TODO FIXME

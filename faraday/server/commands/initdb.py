@@ -130,35 +130,36 @@ class InitDB():
                                            NotificationSubscription,  # pylint:disable=import-outside-toplevel
                                            NotificationSubscriptionWebSocketConfig,  # pylint:disable=import-outside-toplevel
                                            EventType,  # pylint:disable=import-outside-toplevel
+                                           User,  # pylint:disable=import-outside-toplevel
                                            ObjectType)  # pylint:disable=import-outside-toplevel
 
-        ADMIN = 'admin'
-        PENTESTER = 'pentester'
-        ASSET_OWNER = 'asset_owner'
-        CLIENT = 'client'
+        admin = User.ADMIN_ROLE
+        pentester = User.PENTESTER_ROLE
+        asset_owner = User.ASSET_OWNER_ROLE
+        client = User.CLIENT_ROLE
 
         default_initial_notifications_config = [
             # Workspace
-            {'roles': [ADMIN], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
+            {'roles': [admin], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
             # Users
-            {'roles': [ADMIN], 'event_types': ['new_user', 'update_user', 'delete_user']},
+            {'roles': [admin], 'event_types': ['new_user', 'update_user', 'delete_user']},
             # Agents
-            {'roles': [ADMIN, PENTESTER], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
+            {'roles': [admin, pentester], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
             # Reports
-            {'roles': [ADMIN, PENTESTER, ASSET_OWNER],
+            {'roles': [admin, pentester, asset_owner],
              'event_types': ['new_executivereport', 'update_executivereport', 'delete_executivereport']},
             # Agent execution
-            {'roles': [ADMIN, PENTESTER, ASSET_OWNER], 'event_types': ['new_agentexecution']},
+            {'roles': [admin, pentester, asset_owner], 'event_types': ['new_agentexecution']},
             # Commands
-            {'roles': [ADMIN, PENTESTER, ASSET_OWNER], 'event_types': ['new_command']},
+            {'roles': [admin, pentester, asset_owner], 'event_types': ['new_command']},
             # Vulnerability
-            {'roles': [ADMIN, PENTESTER, ASSET_OWNER, CLIENT],
+            {'roles': [admin, pentester, asset_owner, client],
              'event_types': ['new_vulnerability', 'update_vulnerability', 'delete_vulnerability']},
             # Vulnerability Web
-            {'roles': [ADMIN, PENTESTER, ASSET_OWNER, CLIENT],
+            {'roles': [admin, pentester, asset_owner, client],
              'event_types': ['new_vulnerabilityweb', 'update_vulnerabilityweb', 'delete_vulnerabilityweb']},
             # Comments
-            {'roles': [ADMIN, PENTESTER, ASSET_OWNER, CLIENT], 'event_types': ['new_comment']},
+            {'roles': [admin, pentester, asset_owner, client], 'event_types': ['new_comment']},
         ]
 
         event_types = [('new_workspace', False),

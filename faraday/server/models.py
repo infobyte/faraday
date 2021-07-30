@@ -1474,13 +1474,13 @@ class Credential(Metadata):
     description = BlankColumn(Text)
     name = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='SET NULL'), index=True, nullable=True)
     host = relationship(
         'Host',
         backref=backref("credentials", cascade="all, delete-orphan"),
         foreign_keys=[host_id])
 
-    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
+    service_id = Column(Integer, ForeignKey(Service.id, ondelete='SET NULL'), index=True, nullable=True)
     service = relationship(
         'Service',
         backref=backref('credentials', cascade="all, delete-orphan"),

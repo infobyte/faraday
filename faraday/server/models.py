@@ -664,7 +664,7 @@ class CommandObject(db.Model):
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
     command = relationship('Command', backref='command_objects')
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
 
     # 1 workspace <--> N command_objects
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -773,7 +773,7 @@ class Command(Metadata):
 
     # 1 workspace <--> N commands
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -2345,7 +2345,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_executions', cascade="all, delete-orphan")
     )
     parameters_data = Column(JSONType, nullable=False)
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
     command = relationship(
         'Command',
         foreign_keys=[command_id],
@@ -2388,7 +2388,7 @@ class RuleExecution(Metadata):
     end = Column(DateTime, nullable=True)
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
     rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
-    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='CASCADE'), index=True, nullable=False)
     command = relationship('Command', foreign_keys=[command_id],
                            backref=backref('rule_executions', cascade="all, delete-orphan"))
 

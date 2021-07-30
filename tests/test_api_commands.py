@@ -19,7 +19,7 @@ from faraday.server.models import (
     Vulnerability)
 from faraday.server.api.modules.commandsrun import CommandView
 from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
-    WorkspaceFactory, ServiceFactory
+    WorkspaceFactory, ServiceFactory, RuleExecutionFactory, AgentExecutionFactory
 
 
 # Note: because of a bug with pytest, I can't simply mark TestListCommandView
@@ -442,3 +442,29 @@ class TestListCommandView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
         res = test_client.post(self.url(), data=raw_data)
 
         assert res.status_code == 400
+
+    def test_bulk_delete_with_references(self, session, test_client):
+        command_1 = EmptyCommandFactory.create(workspace=self.workspace)
+        command_2 = EmptyCommandFactory.create(workspace=self.workspace)
+        for i in range(3):
+            CommandObjectFactory.create(
+                command=command_1,
+                object_type='vulnerability',
+                object_id=i,
+                workspace=self.workspace
+            )
+        for _ in range(3):
+            AgentExecutionFactory.create(
+                command=command_1,
+            )
+
+        for _ in range(3):
+            RuleExecutionFactory.create(
+                command=command_1,
+            )
+        session.commit()
+
+        data = {"ids": [command_1.id, command_2.id]}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['deleted'] == 2

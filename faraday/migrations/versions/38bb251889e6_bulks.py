@@ -65,6 +65,26 @@ def upgrade():
         ondelete='SET NULL'
     )
 
+    # Command table
+    op.drop_constraint('command_object_command_id_fkey', 'command_object')
+    op.create_foreign_key(
+        'command_object_command_id_fkey', 'command_object',
+        'command', ['command_id'], ['id'],
+        ondelete='SET NULL'
+    )
+    op.drop_constraint('agent_execution_command_id_fkey', 'agent_execution')
+    op.create_foreign_key(
+        'agent_execution_command_id_fkey', 'agent_execution',
+        'command', ['command_id'], ['id'],
+        ondelete='SET NULL'
+    )
+    op.drop_constraint('rule_execution_command_id_fkey', 'rule_execution')
+    op.create_foreign_key(
+        'rule_execution_command_id_fkey', 'rule_execution',
+        'command', ['command_id'], ['id'],
+        ondelete='CASCADE'
+    )
+
 
 def downgrade():
 
@@ -110,4 +130,21 @@ def downgrade():
     op.create_foreign_key(
         'credential_service_id_fkey', 'credential',
         'service', ['service_id'], ['id']
+    )
+
+    # Command table
+    op.drop_constraint('command_object_command_id_fkey', 'command_object')
+    op.create_foreign_key(
+        'command_object_command_id_fkey', 'command_object',
+        'command', ['command_id'], ['id']
+    )
+    op.drop_constraint('agent_execution_command_id_fkey', 'agent_execution')
+    op.create_foreign_key(
+        'agent_execution_command_id_fkey', 'agent_execution',
+        'command', ['command_id'], ['id']
+    )
+    op.drop_constraint('rule_execution_command_id_fkey', 'rule_execution')
+    op.create_foreign_key(
+        'rule_execution_command_id_fkey', 'rule_execution',
+        'command', ['command_id'], ['id']
     )

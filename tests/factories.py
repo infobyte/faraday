@@ -54,7 +54,7 @@ from faraday.server.models import (
     Action,
     RuleAction,
     Condition,
-    Role
+    Role, RuleExecution
 )
 
 
@@ -667,6 +667,15 @@ class RuleActionFactory(FaradayFactory):
 
     class Meta:
         model = RuleAction
+        sqlalchemy_session = db.session
+
+
+class RuleExecutionFactory(FaradayFactory):
+    rule = factory.SubFactory(RuleFactory)
+    command = factory.SubFactory(CommandFactory)
+
+    class Meta:
+        model = RuleExecution
         sqlalchemy_session = db.session
 
 # I'm Py3

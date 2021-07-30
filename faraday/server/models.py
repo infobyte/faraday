@@ -1781,7 +1781,11 @@ class Role(db.Model, RoleMixin):
 
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'
-    ROLES = ['admin', 'pentester', 'client', 'asset_owner']
+    ADMIN_ROLE = 'admin'
+    PENTESTER_ROLE = 'pentester'
+    ASSET_OWNER_ROLE = 'asset_owner'
+    CLIENT_ROLE = 'client'
+    ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
 
     id = Column(Integer, primary_key=True)
@@ -2234,6 +2238,10 @@ class NotificationEvent(db.Model):
         'Workspace',
         backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
     )
+
+    @property
+    def parent(self):
+        return
 
 
 class NotificationBase(db.Model):

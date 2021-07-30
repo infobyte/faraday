@@ -11,7 +11,9 @@ from faraday.server.fields import JSONType
 
 # Added manually for inserts
 from sqlalchemy import orm
-from faraday.server.models import NotificationSubscription, NotificationSubscriptionWebSocketConfig
+from faraday.server.models import (NotificationSubscription,
+                                   NotificationSubscriptionWebSocketConfig,
+                                   User)
 
 # revision identifiers, used by Alembic.
 revision = 'a9fcf8444c79'
@@ -30,27 +32,27 @@ def upgrade():
     sa.UniqueConstraint('name')
     )
 
-    op.execute('INSERT INTO event_type VALUES (1, \'new_workspace\', False)')
-    op.execute('INSERT INTO event_type VALUES (2, \'new_agent\', True)')
-    op.execute('INSERT INTO event_type VALUES (3, \'new_user\', False)')
-    op.execute('INSERT INTO event_type VALUES (4, \'new_agentexecution\', True)')
-    op.execute('INSERT INTO event_type VALUES (5, \'new_executivereport\', True)')
-    op.execute('INSERT INTO event_type VALUES (6, \'new_vulnerability\', False)')
-    op.execute('INSERT INTO event_type VALUES (7, \'new_command\', True)')
-    op.execute('INSERT INTO event_type VALUES (9, \'new_comment\', False)')
-    op.execute('INSERT INTO event_type VALUES (10, \'update_workspace\', False)')
-    op.execute('INSERT INTO event_type VALUES (11, \'update_agent\', False)')
-    op.execute('INSERT INTO event_type VALUES (12, \'update_user\', False)')
-    op.execute('INSERT INTO event_type VALUES (14, \'update_executivereport\', True)')
-    op.execute('INSERT INTO event_type VALUES (15, \'update_vulnerability\', False)')
-    op.execute('INSERT INTO event_type VALUES (17, \'delete_workspace\', False)')
-    op.execute('INSERT INTO event_type VALUES (18, \'delete_agent\', False)')
-    op.execute('INSERT INTO event_type VALUES (19, \'delete_user\', False)')
-    op.execute('INSERT INTO event_type VALUES (20, \'delete_executivereport\', False)')
-    op.execute('INSERT INTO event_type VALUES (21, \'delete_vulnerability\', False)')
-    op.execute('INSERT INTO event_type VALUES (22, \'new_vulnerabilityweb\', False)')
-    op.execute('INSERT INTO event_type VALUES (23, \'update_vulnerabilityweb\', False)')
-    op.execute('INSERT INTO event_type VALUES (24, \'delete_vulnerabilityweb\', False)')
+    op.execute('INSERT INTO event_type (name, async_event) VALUES (\'new_workspace\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_agent\', True)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_user\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_agentexecution\', True)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_executivereport\', True)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_vulnerability\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_command\', True)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_comment\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'update_workspace\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'update_agent\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'update_user\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'update_executivereport\', True)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'update_vulnerability\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'delete_workspace\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'delete_agent\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'delete_user\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'delete_executivereport\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'delete_vulnerability\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'new_vulnerabilityweb\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'update_vulnerabilityweb\', False)')
+    op.execute('INSERT INTO event_type (name, async_event)  VALUES (\'delete_vulnerabilityweb\', False)')
 
     op.create_table('object_type',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -181,341 +183,59 @@ def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
 
+    admin = User.ADMIN_ROLE
+    pentester = User.PENTESTER_ROLE
+    asset_owner = User.ASSET_OWNER_ROLE
+    client = User.CLIENT_ROLE
+
+    default_initial_notifications_config = [
+        # Workspace
+        {'roles': [admin], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
+        # Users
+        {'roles': [admin], 'event_types': ['new_user', 'update_user', 'delete_user']},
+        # Agents
+        {'roles': [admin, pentester], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
+        # Reports
+        {'roles': [admin, pentester, asset_owner],
+         'event_types': ['new_executivereport', 'update_executivereport', 'delete_executivereport']},
+        # Agent execution
+        {'roles': [admin, pentester, asset_owner], 'event_types': ['new_agentexecution']},
+        # Commands
+        {'roles': [admin, pentester, asset_owner], 'event_types': ['new_command']},
+        # Vulnerability
+        {'roles': [admin, pentester, asset_owner, client],
+         'event_types': ['new_vulnerability', 'update_vulnerability', 'delete_vulnerability']},
+        # Vulnerability Web
+        {'roles': [admin, pentester, asset_owner, client],
+         'event_types': ['new_vulnerabilityweb', 'update_vulnerabilityweb', 'delete_vulnerabilityweb']},
+        # Comments
+        {'roles': [admin, pentester, asset_owner, client], 'event_types': ['new_comment']},
+    ]
+
     allowed_roles = sa.table(
         'notification_allowed_roles',
         sa.column('notification_subscription_id', sa.Integer),
         sa.column('allowed_role_id', sa.Integer)
     )
 
-    n = NotificationSubscription(event_type_id=1)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
+    res = bind.execute('SELECT name, id FROM event_type').fetchall()
+    event_type_ids = dict(res)
 
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
+    res = bind.execute('SELECT name, id FROM faraday_role').fetchall()
+    role_ids = dict(res)
 
-    n = NotificationSubscription(event_type_id=10)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    n = NotificationSubscription(event_type_id=17)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    n = NotificationSubscription(event_type_id=3)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    n = NotificationSubscription(event_type_id=12)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    n = NotificationSubscription(event_type_id=19)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    n = NotificationSubscription(event_type_id=2)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-
-    n = NotificationSubscription(event_type_id=11)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-
-    n = NotificationSubscription(event_type_id=18)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    n = NotificationSubscription(event_type_id=5)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=14)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=20)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=4)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=7)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=6)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-    n = NotificationSubscription(event_type_id=15)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=21)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-    n = NotificationSubscription(event_type_id=9)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=22)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-    n = NotificationSubscription(event_type_id=23)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
-
-    n = NotificationSubscription(event_type_id=24)
-    session.add(n)
-    session.commit()
-    ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
-    session.add(ns)
-    session.commit()
-
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 1})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 2})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 3})
-    )
-    op.execute(
-        allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': 4})
-    )
+    for config in default_initial_notifications_config:
+        for event_type in config['event_types']:
+            n = NotificationSubscription(event_type_id=event_type_ids[event_type])
+            session.add(n)
+            session.commit()
+            ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+            session.add(ns)
+            session.commit()
+            for role_name in config['roles']:
+                op.execute(
+                    allowed_roles.insert().values({'notification_subscription_id': n.id, 'allowed_role_id': role_ids[role_name]})
+                )
 
 
 def downgrade():

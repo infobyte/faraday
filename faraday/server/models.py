@@ -2028,7 +2028,7 @@ class Comment(Metadata):
 
     text = BlankColumn(Text)
 
-    reply_to_id = Column(Integer, ForeignKey('comment.id'))
+    reply_to_id = Column(Integer, ForeignKey('comment.id', ondelete='SET NULL'))
     reply_to = relationship(
         'Comment',
         remote_side=[id],

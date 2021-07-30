@@ -122,3 +122,18 @@ class TestCommentAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteT
         get_comments = test_client.get(self.url(workspace=workspace))
         expected = ['first', 'second', 'third', 'fourth']
         assert expected == [comment['text'] for comment in get_comments.json]
+
+    def test_bulk_delete_with_references(self, session, test_client):
+        previous_count = session.query(Comment).count()
+        comment_first = factories.CommentFactory.create(workspace=self.workspace, text='first')
+        comment_second = factories.CommentFactory.create(workspace=self.workspace, text='second', reply_to=comment_first)
+        _ = factories.CommentFactory.create(workspace=self.workspace, text='third', reply_to=comment_second)
+        comment_fourth = factories.CommentFactory.create(workspace=self.workspace, text='fourth')
+        session.commit()
+
+        data = {'ids': [comment_first.id, comment_fourth.id]}
+        res = test_client.delete(self.url(), data=data)
+
+        assert res.status_code == 200
+        assert res.json['deleted'] == 2
+        assert previous_count + 2 == session.query(Comment).count()

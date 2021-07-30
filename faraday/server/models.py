@@ -1540,7 +1540,7 @@ association_workspace_and_agents_table = Table(
     'association_workspace_and_agents_table',
     db.Model.metadata,
     Column('workspace_id', Integer, ForeignKey('workspace.id')),
-    Column('agent_id', Integer, ForeignKey('agent.id'))
+    Column('agent_id', Integer, ForeignKey('agent.id', ondelete='CASCADE'))
 )
 
 
@@ -2224,7 +2224,7 @@ class Executor(Metadata):
     __tablename__ = 'executor'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent_id = Column(Integer, ForeignKey('agent.id', ondelete='CASCADE'), index=True, nullable=False)
     agent = relationship(
         'Agent',
         backref=backref('executors', cascade="all, delete-orphan"),

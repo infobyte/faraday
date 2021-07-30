@@ -476,6 +476,10 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin,
         agent_a = AgentFactory.create(workspaces=[workspace])
         agent_b = AgentFactory.create(workspaces=[workspace])
         agent_c = AgentFactory.create(workspaces=[workspace])
+        # Test ondelete cascade for FKs
+        _ = ExecutorFactory.create(agent=agent_a)
+        for _ in range(3):
+            _ = ExecutorFactory.create(agent=agent_b)
         session.commit()
 
         data = {'ids': [agent_a.id, agent_b.id, agent_c.id]}

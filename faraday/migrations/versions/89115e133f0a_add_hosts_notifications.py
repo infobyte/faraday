@@ -56,4 +56,4 @@ def downgrade():
             event_type_objs = session.query(EventType).filter(EventType.name == event_type).all()
             for event_type_obj in event_type_objs:
                 session.delete(event_type_obj)
-                session.commit()
+            session.commit()

@@ -11,7 +11,9 @@ from faraday.server.fields import JSONType
 
 # Added manually for inserts
 from sqlalchemy import orm
-from faraday.server.models import NotificationSubscription, NotificationSubscriptionWebSocketConfig
+from faraday.server.models import (NotificationSubscription,
+                                   NotificationSubscriptionWebSocketConfig,
+                                   User)
 
 # revision identifiers, used by Alembic.
 revision = 'a9fcf8444c79'
@@ -181,27 +183,33 @@ def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
 
+    admin = User.ADMIN_ROLE
+    pentester = User.PENTESTER_ROLE
+    asset_owner = User.ASSET_OWNER_ROLE
+    client = User.CLIENT_ROLE
+
     default_initial_notifications_config = [
         # Workspace
-        {'roles': ['admin'], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
+        {'roles': [admin], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
         # Users
-        {'roles': ['admin'], 'event_types': ['new_user', 'update_user', 'delete_user']},
+        {'roles': [admin], 'event_types': ['new_user', 'update_user', 'delete_user']},
         # Agents
-        {'roles': ['admin', 'pentester'], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
+        {'roles': [admin, pentester], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
         # Reports
-        {'roles': ['admin', 'pentester', 'asset_owner'], 'event_types': ['new_executivereport', 'update_executivereport', 'delete_executivereport']},
+        {'roles': [admin, pentester, asset_owner],
+         'event_types': ['new_executivereport', 'update_executivereport', 'delete_executivereport']},
         # Agent execution
-        {'roles': ['admin', 'pentester', 'asset_owner'], 'event_types': ['new_agentexecution']},
+        {'roles': [admin, pentester, asset_owner], 'event_types': ['new_agentexecution']},
         # Commands
-        {'roles': ['admin', 'pentester', 'asset_owner'], 'event_types': ['new_command']},
+        {'roles': [admin, pentester, asset_owner], 'event_types': ['new_command']},
         # Vulnerability
-        {'roles': ['admin', 'pentester', 'asset_owner', 'client'],
+        {'roles': [admin, pentester, asset_owner, client],
          'event_types': ['new_vulnerability', 'update_vulnerability', 'delete_vulnerability']},
         # Vulnerability Web
-        {'roles': ['admin', 'pentester', 'asset_owner', 'client'],
+        {'roles': [admin, pentester, asset_owner, client],
          'event_types': ['new_vulnerabilityweb', 'update_vulnerabilityweb', 'delete_vulnerabilityweb']},
         # Comments
-        {'roles': ['admin', 'pentester', 'asset_owner', 'client'], 'event_types': ['new_comment']},
+        {'roles': [admin, pentester, asset_owner, client], 'event_types': ['new_comment']},
     ]
 
     allowed_roles = sa.table(

@@ -27,7 +27,7 @@ from tests.test_api_workspaced_base import (
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView
-from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory
+from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory, HostnameFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -826,6 +826,30 @@ class TestHostAPI:
             headers=headers)
 
         assert delete_response.status_code == 400
+
+    def test_bulk_delete_with_references(self, test_client, session, workspace, host_factory, vulnerability_factory,
+                                         service_factory, credential_factory):
+        host_1 = host_factory.create(workspace=workspace)
+        service_factory.create(host=host_1, workspace=workspace)
+        vulnerability_factory.create(service=None, host=host_1, workspace=workspace)
+        host_1.hostnames.append(HostnameFactory.create(name='pepe1', workspace=workspace, host=host_1))
+        credential_factory.create(workspace=workspace, host=host_1)
+
+        host_2 = host_factory.create(workspace=workspace)
+        service_factory.create(host=host_2, workspace=workspace)
+        vulnerability_factory.create(service=None, host=host_2, workspace=workspace)
+        host_1.hostnames.append(HostnameFactory.create(name='pepe2', workspace=workspace, host=host_2))
+        credential_factory.create(workspace=workspace, host=host_2)
+
+        session.commit()
+
+        hosts_ids = [host_1.id, host_2.id]
+        request_data = {'ids': hosts_ids}
+        url = f'/v3/ws/{workspace.name}/hosts'
+        delete_response = test_client.delete(url, data=request_data)
+
+        assert delete_response.status_code == 200
+        assert delete_response.json['deleted'] == 2
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTestsMixin, BulkDeleteTestsMixin):

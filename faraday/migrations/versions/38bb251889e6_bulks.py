@@ -56,13 +56,13 @@ def upgrade():
     op.create_foreign_key(
         'credential_host_id_fkey', 'credential',
         'host', ['host_id'], ['id'],
-        ondelete='SET NULL'
+        ondelete='CASCADE'
     )
     op.drop_constraint('credential_service_id_fkey', 'credential')
     op.create_foreign_key(
         'credential_service_id_fkey', 'credential',
         'service', ['service_id'], ['id'],
-        ondelete='SET NULL'
+        ondelete='CASCADE'
     )
 
     # Command table
@@ -82,6 +82,32 @@ def upgrade():
     op.create_foreign_key(
         'rule_execution_command_id_fkey', 'rule_execution',
         'command', ['command_id'], ['id'],
+        ondelete='CASCADE'
+    )
+
+    # Host table
+    op.drop_constraint('hostname_host_id_fkey', 'hostname')
+    op.create_foreign_key(
+        'hostname_host_id_fkey', 'hostname',
+        'host', ['host_id'], ['id'],
+        ondelete='CASCADE'
+    )
+    op.drop_constraint('service_host_id_fkey', 'service')
+    op.create_foreign_key(
+        'service_host_id_fkey', 'service',
+        'host', ['host_id'], ['id'],
+        ondelete='CASCADE'
+    )
+    op.drop_constraint('vulnerability_host_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_host_id_fkey', 'vulnerability',
+        'host', ['host_id'], ['id'],
+        ondelete='CASCADE'
+    )
+    op.drop_constraint('credential_host_id_fkey', 'credential')
+    op.create_foreign_key(
+        'credential_host_id_fkey', 'credential',
+        'host', ['host_id'], ['id'],
         ondelete='CASCADE'
     )
 
@@ -147,4 +173,21 @@ def downgrade():
     op.create_foreign_key(
         'rule_execution_command_id_fkey', 'rule_execution',
         'command', ['command_id'], ['id']
+    )
+
+    # Host table
+    op.drop_constraint('hostname_host_id_fkey', 'hostname')
+    op.create_foreign_key(
+        'hostname_host_id_fkey', 'hostname',
+        'host', ['host_id'], ['id']
+    )
+    op.drop_constraint('service_host_id_fkey', 'service')
+    op.create_foreign_key(
+        'service_host_id_fkey', 'service',
+        'host', ['host_id'], ['id']
+    )
+    op.drop_constraint('vulnerability_host_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_host_id_fkey', 'vulnerability',
+        'host', ['host_id'], ['id']
     )

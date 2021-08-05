@@ -430,7 +430,7 @@ class Hostname(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
     host = relationship('Host', backref=backref("hostnames", cascade="all, delete-orphan"))
 
     # 1 workspace <--> N hostnames
@@ -997,7 +997,7 @@ class Service(Metadata):
 
     banner = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
     host = relationship(
         'Host',
         foreign_keys=[host_id],
@@ -1185,7 +1185,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         'host_inner.id = service.host_id'))
     )
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True)
     host = relationship(
         'Host',
         backref=backref("vulnerabilities", cascade="all, delete-orphan"),
@@ -1474,13 +1474,13 @@ class Credential(Metadata):
     description = BlankColumn(Text)
     name = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey(Host.id, ondelete='SET NULL'), index=True, nullable=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
     host = relationship(
         'Host',
         backref=backref("credentials", cascade="all, delete-orphan"),
         foreign_keys=[host_id])
 
-    service_id = Column(Integer, ForeignKey(Service.id, ondelete='SET NULL'), index=True, nullable=True)
+    service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
     service = relationship(
         'Service',
         backref=backref('credentials', cascade="all, delete-orphan"),

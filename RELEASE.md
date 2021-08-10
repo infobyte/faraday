@@ -2,6 +2,12 @@ New features in the latest update
 =====================================
 
 
+3.17.0 [Aug 10th, 2021]:
+---
+ * ADD `--data` parameter to `faraday-manage settings`
+ * MOD Process report files in a separate process
+ * MOD Make `bulk_create` requests asynchronous
+
 3.16.1 [Jul 2nd, 2021]:
 ---
  * MOD only show settings of this version in faraday-manage settings

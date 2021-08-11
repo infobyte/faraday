@@ -78,8 +78,10 @@ def check_alembic_version():
             if not faraday.server.config.database.connection_string:
                 print("\n\nNo database configuration found. Did you execute \"faraday-manage initdb\"? \n\n")
                 sys.exit(1)
-        except sqlalchemy.exc.OperationalError:
-            print("Bad Credentials, please check the .faraday/config/server.ini")
+        except sqlalchemy.exc.OperationalError as e:
+            print(e)
+            print("Error during connection to database, please check if the DB is running and"
+                  "\nyour credentials are correct on the config file .faraday/config/server.ini")
             sys.exit(1)
 
         context = MigrationContext.configure(conn)

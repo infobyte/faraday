@@ -139,7 +139,6 @@ class FaradayServerConfigObject(ConfigSection):
         self.agent_registration_secret = None
         self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
-        self.reports_pool_size = 1
         self.delete_report_after_process = True
 
 

@@ -1067,7 +1067,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_duplicate_id = Column(
         Integer,
-        ForeignKey('vulnerability.id', ondelete='CASCADE'),
+        ForeignKey('vulnerability.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
     )
@@ -1077,7 +1077,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_template_id = Column(
         Integer,
-        ForeignKey('vulnerability_template.id', ondelete='CASCADE'),
+        ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
     )

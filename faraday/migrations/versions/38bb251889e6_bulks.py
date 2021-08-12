@@ -110,7 +110,7 @@ def upgrade():
     op.create_foreign_key(
         'vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability',
         'vulnerability', ['vulnerability_duplicate_id'], ['id'],
-        ondelete='CASCADE'
+        ondelete='SET NULL'
     )
 
     # VulnerabilityTemplate Table
@@ -118,7 +118,7 @@ def upgrade():
     op.create_foreign_key(
         'vulnerability_vulnerability_template_id_fkey', 'vulnerability',
         'vulnerability_template', ['vulnerability_template_id'], ['id'],
-        ondelete='CASCADE'
+        ondelete='SET NULL'
     )
 
     # SourceCode Table

@@ -51,13 +51,7 @@ def upgrade():
         ondelete='SET NULL'
     )
 
-    # Credential table
-    op.drop_constraint('credential_host_id_fkey', 'credential')
-    op.create_foreign_key(
-        'credential_host_id_fkey', 'credential',
-        'host', ['host_id'], ['id'],
-        ondelete='CASCADE'
-    )
+    # Service table
     op.drop_constraint('credential_service_id_fkey', 'credential')
     op.create_foreign_key(
         'credential_service_id_fkey', 'credential',
@@ -111,18 +105,23 @@ def upgrade():
         ondelete='CASCADE'
     )
 
+    # Vulnerability Table
     op.drop_constraint('vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability')
     op.create_foreign_key(
         'vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability',
         'vulnerability', ['vulnerability_duplicate_id'], ['id'],
         ondelete='CASCADE'
     )
+
+    # VulnerabilityTemplate Table
     op.drop_constraint('vulnerability_vulnerability_template_id_fkey', 'vulnerability')
     op.create_foreign_key(
         'vulnerability_vulnerability_template_id_fkey', 'vulnerability',
         'vulnerability_template', ['vulnerability_template_id'], ['id'],
         ondelete='CASCADE'
     )
+
+    # SourceCode Table
     op.drop_constraint('vulnerability_source_code_id_fkey', 'vulnerability')
     op.create_foreign_key(
         'vulnerability_source_code_id_fkey', 'vulnerability',
@@ -165,12 +164,7 @@ def downgrade():
         'comment', ['reply_to_id'], ['id']
     )
 
-    # Credential table
-    op.drop_constraint('credential_host_id_fkey', 'credential')
-    op.create_foreign_key(
-        'credential_host_id_fkey', 'credential',
-        'host', ['host_id'], ['id']
-    )
+    # Service table
     op.drop_constraint('credential_service_id_fkey', 'credential')
     op.create_foreign_key(
         'credential_service_id_fkey', 'credential',
@@ -195,6 +189,11 @@ def downgrade():
     )
 
     # Host table
+    op.drop_constraint('credential_host_id_fkey', 'credential')
+    op.create_foreign_key(
+        'credential_host_id_fkey', 'credential',
+        'host', ['host_id'], ['id']
+    )
     op.drop_constraint('hostname_host_id_fkey', 'hostname')
     op.create_foreign_key(
         'hostname_host_id_fkey', 'hostname',
@@ -216,11 +215,15 @@ def downgrade():
         'vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability',
         'vulnerability', ['vulnerability_duplicate_id'], ['id']
     )
+
+    # VulnerabilityTemplate Table
     op.drop_constraint('vulnerability_vulnerability_template_id_fkey', 'vulnerability')
     op.create_foreign_key(
         'vulnerability_vulnerability_template_id_fkey', 'vulnerability',
         'vulnerability_template', ['vulnerability_template_id'], ['id']
     )
+
+    # SourceCode Table
     op.drop_constraint('vulnerability_source_code_id_fkey', 'vulnerability')
     op.create_foreign_key(
         'vulnerability_source_code_id_fkey', 'vulnerability',

@@ -1067,7 +1067,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_duplicate_id = Column(
         Integer,
-        ForeignKey('vulnerability.id'),
+        ForeignKey('vulnerability.id', ondelete='CASCADE'),
         index=True,
         nullable=True,
     )
@@ -1077,7 +1077,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_template_id = Column(
         Integer,
-        ForeignKey('vulnerability_template.id'),
+        ForeignKey('vulnerability_template.id', ondelete='CASCADE'),
         index=True,
         nullable=True,
     )
@@ -1246,8 +1246,10 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
-                                                                         index=True))
+        return VulnerabilityGeneric.__table__.c.get('service_id',
+                                                    Column(Integer,
+                                                           db.ForeignKey('service.id', ondelete='CASCADE'),
+                                                           index=True))
 
     @declared_attr
     def service(cls):
@@ -1276,7 +1278,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service_id(cls):
         return VulnerabilityGeneric.__table__.c.get(
-            'service_id', Column(Integer, db.ForeignKey('service.id'),
+            'service_id', Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'),
                                  nullable=False))
 
     @declared_attr
@@ -1302,7 +1304,7 @@ class VulnerabilityCode(VulnerabilityGeneric):
     start_line = Column(Integer, nullable=True)
     end_line = Column(Integer, nullable=True)
 
-    source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
+    source_code_id = Column(Integer, ForeignKey(SourceCode.id, ondelete='CASCADE'), index=True)
     source_code = relationship(
         SourceCode,
         backref='vulnerabilities',

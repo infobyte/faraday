@@ -111,6 +111,25 @@ def upgrade():
         ondelete='CASCADE'
     )
 
+    op.drop_constraint('vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability',
+        'vulnerability', ['vulnerability_duplicate_id'], ['id'],
+        ondelete='CASCADE'
+    )
+    op.drop_constraint('vulnerability_vulnerability_template_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_vulnerability_template_id_fkey', 'vulnerability',
+        'vulnerability_template', ['vulnerability_template_id'], ['id'],
+        ondelete='CASCADE'
+    )
+    op.drop_constraint('vulnerability_source_code_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_source_code_id_fkey', 'vulnerability',
+        'source_code', ['source_code_id'], ['id'],
+        ondelete='CASCADE'
+    )
+
 
 def downgrade():
 
@@ -190,4 +209,20 @@ def downgrade():
     op.create_foreign_key(
         'vulnerability_host_id_fkey', 'vulnerability',
         'host', ['host_id'], ['id']
+    )
+
+    op.drop_constraint('vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_vulnerability_duplicate_id_fkey', 'vulnerability',
+        'vulnerability', ['vulnerability_duplicate_id'], ['id']
+    )
+    op.drop_constraint('vulnerability_vulnerability_template_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_vulnerability_template_id_fkey', 'vulnerability',
+        'vulnerability_template', ['vulnerability_template_id'], ['id']
+    )
+    op.drop_constraint('vulnerability_source_code_id_fkey', 'vulnerability')
+    op.create_foreign_key(
+        'vulnerability_source_code_id_fkey', 'vulnerability',
+        'source_code', ['source_code_id'], ['id']
     )

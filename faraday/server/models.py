@@ -482,12 +482,12 @@ class VulnerabilityABC(Metadata):
         'infeasible'
     ]
     SEVERITIES = [
-        'critical',
-        'high',
-        'medium',
-        'low',
-        'informational',
         'unclassified',
+        'informational',
+        'low',
+        'medium',
+        'high',
+        'critical',
     ]
 
     __abstract__ = True

@@ -93,6 +93,12 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         )
         assert res.status_code == 200
         assert len(res.json) == 1
+
+        assert res.json[0]['stats']['std_vulns'] == 11
+        assert res.json[0]['stats']['web_vulns'] == 8
+        assert res.json[0]['stats']['code_vulns'] == 0
+        assert res.json[0]['active_agents_count'] == 0
+
         assert res.json[0]['description'] == self.first_object.description
         assert res.json[0]['stats']['total_vulns'] == 19
         assert res.json[0]['stats']['info_vulns'] == 8

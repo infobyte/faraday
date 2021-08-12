@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "python-engineio";
   version =
-    "4.2.0";
+    "4.2.1";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0xr0sq02r7y807zkkh63hd9h05frziyc8vdvymc3i4i3khcc35sf";
+        "0qps2bhis0ms8pbncsx6xwnyd6k5ffy5hbw68wjndmcfdndk446m";
     };
 
   # TODO FIXME
@@ -27,10 +27,6 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib; {
-      description =
-        "Engine.IO server";
-      homepage =
-        "http://github.com/miguelgrinberg/python-engineio/";
-    };
+    with lib;
+    { };
 }

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "Fix deprecated marshmallow-sqlalchemy's ModelSchema & ModelSchemaOpts"
-}

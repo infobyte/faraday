@@ -7,6 +7,7 @@ import socket
 import argparse
 import logging
 
+import psycopg2
 from alembic.runtime.migration import MigrationContext
 
 from colorama import init, Fore
@@ -78,10 +79,8 @@ def check_alembic_version():
             if not faraday.server.config.database.connection_string:
                 print("\n\nNo database configuration found. Did you execute \"faraday-manage initdb\"? \n\n")
                 sys.exit(1)
-        except sqlalchemy.exc.OperationalError as e:
-            print(e)
-            print("Error during connection to database, please check if the DB is running and"
-                  "\nyour credentials are correct on the config file .faraday/config/server.ini")
+        except sqlalchemy.exc.OperationalError:
+            print("Bad Credentials, please check the .faraday/config/server.ini")
             sys.exit(1)
 
         context = MigrationContext.configure(conn)
@@ -104,8 +103,18 @@ def check_alembic_version():
                     )
 
 
+def check_if_db_up():
+    try:
+        psycopg2.connect(dbname="postgres")
+    except psycopg2.OperationalError as e:
+        if "could not connect to server" in e.args[0]:
+            print("\n\nCould not ping the Postgres server, please check if it is running \n\n")
+            sys.exit(1)
+
+
 def main():
     os.chdir(faraday.server.config.FARADAY_BASE)
+    check_if_db_up()
     check_alembic_version()
     # TODO RETURN TO prev CWD
     check_postgresql()

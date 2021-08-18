@@ -605,8 +605,8 @@ def _build_associationproxy_creator(model_class_name):
 
 def _build_associationproxy_creator_non_workspaced(model_class_name):
     def creator(name, vulnerability):
-        """Get or create a reference/policyviolation with the
-        corresponding name. This must be workspace aware"""
+        """Get or create a reference/policyviolation/CVE with the
+        corresponding name. This is not workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
@@ -984,6 +984,41 @@ class Host(Metadata):
                                     child_field='name')
 
 
+cve_vulnerability_association = db.Table('cve_association',
+    Column('vulnerability_id', Integer, db.ForeignKey('vulnerability.id'), nullable=False),
+    Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
+)
+
+
+class CVE(db.Model):
+    __tablename__ = 'cve'
+
+    CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(24), unique=True)
+    year = Column(Integer, nullable=True)
+    identifier = Column(Integer, nullable=True)
+
+    # TODO: add customer inserted flag
+    # Other fields TBD
+
+    vulnerabilities = relationship("VulnerabilityGeneric", secondary=cve_vulnerability_association)
+
+    def __str__(self):
+        return f'{self.id}'
+
+    def __init__(self, name=None, **kwargs):
+        logger.debug("cve found %s", name)
+        try:
+            name = name.upper()
+            _, year, identifier = name.split("-")
+            super().__init__(name=name, year=year, identifier=identifier, **kwargs)
+        except ValueError:
+            logger.error("Invalid cve format. Should be CVE-YEAR-ID.")
+            raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
+
+
 class Service(Metadata):
     STATUSES = [
         'open',
@@ -1098,6 +1133,16 @@ class VulnerabilityGeneric(VulnerabilityABC):
         'Workspace',
         backref=backref('vulnerabilities', cascade="all, delete-orphan", passive_deletes=True)
     )
+
+    cve_instances = relationship("CVE",
+                                 secondary=cve_vulnerability_association,
+                                 lazy="joined",
+                                 collection_class=set)
+
+    cve = association_proxy('cve_instances',
+                             'name',
+                             proxy_factory=CustomAssociationSet,
+                             creator=_build_associationproxy_creator_non_workspaced('CVE'))
 
     reference_instances = relationship(
         "Reference",

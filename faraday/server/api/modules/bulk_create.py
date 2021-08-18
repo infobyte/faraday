@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Type, Optional
 import string
@@ -31,7 +32,8 @@ from faraday.server.models import (
     VulnerabilityWeb,
     AgentExecution,
     Workspace,
-    Metadata
+    Metadata,
+    CVE
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -358,6 +360,8 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
+    cve_list = vuln_data.pop('cve', [])
+
     policyviolations = vuln_data.pop('policy_violations', [])
 
     vuln_data = vuln_data.copy()
@@ -396,26 +400,30 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         logger.debug("Apply run date to vuln")
         vuln.create_date = run_date
         db.session.commit()
-    elif not created and ("custom_fields" in vuln_data and any(vuln_data["custom_fields"])):
-        # Updates Custom Fields
-        vuln.custom_fields = vuln_data.pop('custom_fields', {})
-        db.session.commit()
+    elif not created:
+        if "custom_fields" in vuln_data and any(vuln_data["custom_fields"]):
+            # Updates Custom Fields
+            vuln.custom_fields = vuln_data.pop('custom_fields', {})
+            db.session.commit()
 
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(policyviolations, references, vuln):
+    def update_vuln(policyviolations, references, vuln, cve_list):
+
         vuln.references = references
         vuln.policy_violations = policyviolations
+        vuln.cve = [cve for cve in references if re.match(CVE.CVE_PATTERN, cve.upper())] +\
+                   [cve for cve in cve_list if re.match(CVE.CVE_PATTERN, cve.upper())]
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln)
+        update_vuln(policyviolations, references, vuln, cve_list)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln)
+        update_vuln(policyviolations, references, vuln, cve_list)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

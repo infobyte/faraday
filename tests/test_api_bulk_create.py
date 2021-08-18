@@ -14,8 +14,8 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityGeneric,
     VulnerabilityWeb,
-    Workspace
-)
+    Workspace)
+
 from faraday.server.api.modules import bulk_create as bc
 from tests.factories import CustomFieldsSchemaFactory
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
@@ -41,7 +41,8 @@ vuln_data = {
         'accountability': True,
         'availability': False,
     },
-    'refs': ['CVE-1234'],
+    'refs': ['CVE-2021-1234', 'CVE-2020-0004'],
+    'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
     'tool': 'some_tool',
     'data': 'test data',
     'custom_fields': {}
@@ -183,7 +184,9 @@ def test_create_host_vuln(session, host):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert vuln.references == {u'CVE-1234'}
+    assert set(vuln.references) == set(vuln_data['refs'])
+    assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
+    assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
     assert vuln.tool == "some_tool"
 
 
@@ -200,7 +203,9 @@ def test_create_service_vuln(session, service):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert vuln.references == {u'CVE-1234'}
+    assert set(vuln.references) == set(vuln_data['refs'])
+    assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
+    assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
     assert vuln.tool == "some_tool"
 
 

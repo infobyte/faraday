@@ -32,7 +32,9 @@ from faraday.server.models import (
     VulnerabilityWeb,
     AgentExecution,
     Workspace,
-    Metadata)
+    Metadata,
+    CVE
+)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -408,17 +410,11 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         _create_command_object_for(ws, created, vuln, command)
 
     def update_vuln(policyviolations, references, vuln, cve_list):
+
         vuln.references = references
         vuln.policy_violations = policyviolations
-        try:
-            CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
-            cve_list += [cve for cve in references if 'CVE-' in cve.upper()]  # This should be temporal
-            for cve in cve_list:
-                if re.match(CVE_PATTERN, cve.upper()):
-                    vuln.cve.add(cve)
-        except ValueError:
-            flask.abort(400)
-
+        vuln.cve = [cve for cve in references if re.match(CVE.CVE_PATTERN, cve.upper())] +\
+                   [cve for cve in cve_list if re.match(CVE.CVE_PATTERN, cve.upper())]
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()

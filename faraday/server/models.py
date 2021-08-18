@@ -993,6 +993,8 @@ cve_vulnerability_association = db.Table('cve_association',
 class CVE(db.Model):
     __tablename__ = 'cve'
 
+    CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
+
     id = Column(Integer, primary_key=True)
     name = Column(String(24), unique=True)
     year = Column(Integer, nullable=True)

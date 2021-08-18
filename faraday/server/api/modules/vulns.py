@@ -48,7 +48,9 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User)
+    User,
+    CVE
+)
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
 
@@ -522,15 +524,8 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
-
-        try:
-            CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
-            cve_list += [cve for cve in references if 'CVE-' in cve.upper()]  # This should be temporal
-            for cve in cve_list:
-                if re.match(CVE_PATTERN, cve.upper()):
-                    obj.cve.add(cve)
-        except ValueError:
-            flask.abort(400)
+        obj.cve = [cve for cve in references if re.match(CVE.CVE_PATTERN, cve.upper())] +\
+                  [cve for cve in cve_list if re.match(CVE.CVE_PATTERN, cve.upper())]
 
         db.session.flush()
 

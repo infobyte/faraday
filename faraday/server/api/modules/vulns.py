@@ -857,7 +857,7 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400, "Invalid filters")
 
         workspace = self._get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}}
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
         if 'group_by' not in filters:
             offset = None
             limit = None

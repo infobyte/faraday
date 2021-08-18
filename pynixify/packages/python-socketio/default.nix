@@ -2,18 +2,18 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ buildPythonPackage
+{ bidict
+, buildPythonPackage
 , fetchPypi
 , lib
-, marshmallow
-, sqlalchemy
+, python-engineio
 }:
 
 buildPythonPackage rec {
   pname =
-    "marshmallow-sqlalchemy";
+    "python-socketio";
   version =
-    "0.26.1";
+    "5.4.0";
 
   src =
     fetchPypi {
@@ -21,13 +21,13 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0wval5lqak31zwrzmgi9c919lqk0dw1zxvwihif4nmaivrs5ylnq";
+        "0i15p94b592aa2h3vn3zs9qc8izv6kc4vmhjlkg9d3hn3yg7r06a";
     };
 
   propagatedBuildInputs =
     [
-      marshmallow
-      sqlalchemy
+      bidict
+      python-engineio
     ];
 
   # TODO FIXME
@@ -35,10 +35,6 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib; {
-      description =
-        "SQLAlchemy integration with the marshmallow (de)serialization library";
-      homepage =
-        "https://github.com/marshmallow-code/marshmallow-sqlalchemy";
-    };
+    with lib;
+    { };
 }

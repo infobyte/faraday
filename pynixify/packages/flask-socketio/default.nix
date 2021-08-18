@@ -4,30 +4,31 @@
 
 { buildPythonPackage
 , fetchPypi
+, flask
 , lib
-, marshmallow
-, sqlalchemy
+, python-socketio
 }:
 
 buildPythonPackage rec {
   pname =
-    "marshmallow-sqlalchemy";
+    "flask-socketio";
   version =
-    "0.26.1";
+    "5.1.1";
 
   src =
     fetchPypi {
       inherit
-        pname
         version;
+      pname =
+        "Flask-SocketIO";
       sha256 =
-        "0wval5lqak31zwrzmgi9c919lqk0dw1zxvwihif4nmaivrs5ylnq";
+        "1cgn86f2p7il4aiw153099jamxjq22dhg03s34mlzs96gb6amz8y";
     };
 
   propagatedBuildInputs =
     [
-      marshmallow
-      sqlalchemy
+      flask
+      python-socketio
     ];
 
   # TODO FIXME
@@ -35,10 +36,6 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib; {
-      description =
-        "SQLAlchemy integration with the marshmallow (de)serialization library";
-      homepage =
-        "https://github.com/marshmallow-code/marshmallow-sqlalchemy";
-    };
+    with lib;
+    { };
 }

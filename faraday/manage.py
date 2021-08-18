@@ -11,6 +11,7 @@ import sys
 import platform
 import logging
 
+os.environ['FARADAY_MANAGE_RUNNING'] = "1"
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
@@ -175,7 +176,8 @@ def create_superuser(username, email, password):
     with get_app().app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
             print(
-                "Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
+                "Can't create more users. The community edition only allows one user. "
+                "Please contact support for further information.")
             sys.exit(1)
 
         get_app().user_datastore.create_user(username=username,
@@ -279,10 +281,13 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
 
 
 @click.command(help="Manage settings")
-@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list'], case_sensitive=False), default='list', show_default=True)
+@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list'], case_sensitive=False),
+              default='list', show_default=True, help="Action")
+@click.option('--data', type=str, required=False, callback=manage_settings.settings_format_validation,
+              help="Settings config in json")
 @click.argument('name', required=False)
-def settings(action, name):
-    manage_settings.manage(action.lower(), name)
+def settings(action, data, name):
+    manage_settings.manage(action.lower(), data, name)
 
 
 cli.add_command(show_urls)

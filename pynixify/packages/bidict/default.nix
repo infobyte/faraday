@@ -5,15 +5,14 @@
 { buildPythonPackage
 , fetchPypi
 , lib
-, marshmallow
-, sqlalchemy
+, setuptools_scm
 }:
 
 buildPythonPackage rec {
   pname =
-    "marshmallow-sqlalchemy";
+    "bidict";
   version =
-    "0.26.1";
+    "0.21.2";
 
   src =
     fetchPypi {
@@ -21,13 +20,12 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0wval5lqak31zwrzmgi9c919lqk0dw1zxvwihif4nmaivrs5ylnq";
+        "02dy0b1k7qlhn7ajyzkrvxhyhjj0hzcq6ws3zjml9hkdz5znz92g";
     };
 
-  propagatedBuildInputs =
+  buildInputs =
     [
-      marshmallow
-      sqlalchemy
+      setuptools_scm
     ];
 
   # TODO FIXME
@@ -37,8 +35,8 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "SQLAlchemy integration with the marshmallow (de)serialization library";
+        "The bidirectional mapping library for Python.";
       homepage =
-        "https://github.com/marshmallow-code/marshmallow-sqlalchemy";
+        "https://bidict.readthedocs.io";
     };
 }

@@ -2,6 +2,9 @@ import logging
 import re
 from datetime import datetime, timedelta
 from typing import Type, Optional
+import string
+import random
+import json
 
 import time
 import flask_login
@@ -41,7 +44,7 @@ from faraday.server.api.modules import (
 )
 from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 from faraday.server.api.modules.websocket_auth import require_agent_token
-from faraday.server.utils.bulk_create import add_creator
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
@@ -190,7 +193,7 @@ class BulkCreateSchema(Schema):
     )
     command = fields.Nested(
         BulkCommandSchema(),
-        required=False,
+        required=True,
     )
     execution_id = fields.Integer(attribute='execution_id')
 
@@ -387,8 +390,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
                 run_date = None
                 logger.debug("Run date (%s) is greater than allowed", run_date)
         except ValueError:
-            logger.error("Error converting run_date to a valid date")
-            flask.abort(400, "Invalid run_date")
+            logger.error("Error converting [%s] to a valid date", run_date_string)
     else:
         run_date = None
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
@@ -473,17 +475,20 @@ class BulkCreateView(GenericWorkspacedView):
             404:
                description: Workspace not found
         """
-        data = self._parse_data(self._get_schema_instance({}), flask.request)
+        from faraday.server.threads.reports_processor import REPORTS_QUEUE  # pylint: disable=import-outside-toplevel
 
         if flask_login.current_user.is_anonymous:
             agent = require_agent_token()
+        data = self._parse_data(self._get_schema_instance({}), flask.request)
+        json_data = flask.request.json
+        if flask_login.current_user.is_anonymous:
             workspace = self._get_workspace(workspace_name)
 
             if not workspace or workspace not in agent.workspaces:
                 flask.abort(404, f"No such workspace: {workspace_name}")
 
             if "execution_id" not in data:
-                flask.abort(400, "'execution_id' argument expected")
+                flask.abort(400, "argument expected: execution_id")
 
             execution_id = data["execution_id"]
 
@@ -536,22 +541,38 @@ class BulkCreateView(GenericWorkspacedView):
 
             _update_command(command, data['command'])
             db.session.flush()
+            if data['hosts']:
+                json_data['command'] = data["command"]
+                json_data['command']["start_date"] = data["command"]["start_date"].isoformat()
+                if 'end_date' in data["command"]:
+                    json_data['command']["end_date"] = data["command"]["end_date"].isoformat()
 
         else:
             workspace = self._get_workspace(workspace_name)
-            creator_user = flask_login.current_user
-            data = add_creator(data, creator_user)
-
-            if 'command' in data:
-                command = Command(**(data['command']))
-                command.workspace = workspace
-                db.session.add(command)
-                db.session.commit()
-            else:
-                # Here the data won't appear in the activity field
-                command = None
-
-        bulk_create(workspace, command, data, True, False)
+            command = Command(**(data['command']))
+            command.workspace = workspace
+            db.session.add(command)
+            db.session.commit()
+        if data['hosts']:
+            # Create random file
+            chars = string.ascii_uppercase + string.digits
+            random_prefix = ''.join(random.choice(chars) for x in range(30))  # nosec
+            json_file = f"{random_prefix}.json"
+            file_path = CONST_FARADAY_HOME_PATH / 'uploaded_reports' \
+                        / json_file
+            with file_path.open('w') as output:
+                json.dump(json_data, output)
+            logger.info("Create tmp json file for bulk_create: %s", file_path)
+            user_id = flask_login.current_user.id if not flask_login.current_user.is_anonymous else None
+            REPORTS_QUEUE.put(
+                (
+                    workspace.name,
+                    command.id,
+                    file_path,
+                    None,
+                    user_id
+                )
+            )
         return flask.jsonify(
             {
                 "message": "Created",

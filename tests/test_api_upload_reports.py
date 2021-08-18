@@ -20,6 +20,7 @@ from faraday.server.models import Host, Service, Command
 class TestFileUpload:
 
     def test_file_upload(self, test_client, session, csrf_token, logged_user):
+        REPORTS_QUEUE.queue.clear()
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
@@ -48,16 +49,14 @@ class TestFileUpload:
         ws_id = ws.id
         logged_user_id = logged_user.id
 
-        from faraday.server.threads.reports_processor import ReportsManager
-        false_thread = ReportsManager(None)
-        false_thread.process_report(queue_elem[0], queue_elem[1],
+        from faraday.server.threads.reports_processor import process_report
+        process_report(queue_elem[0], queue_elem[1],
                                     queue_elem[2], queue_elem[3],
                                     queue_elem[4])
         command = Command.query.filter(Command.workspace_id == ws_id).one()
         assert command
         assert command.creator_id == logged_user_id
         assert command.id == res.json["command_id"]
-        assert command.end_date
         host = Host.query.filter(Host.workspace_id == ws_id).first()
         assert host
         assert host.creator_id == logged_user_id

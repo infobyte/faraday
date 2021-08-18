@@ -23,16 +23,12 @@ from wtforms import ValidationError
 
 from faraday.server.utils.web import gzipped
 from faraday.server.models import Workspace, Command, db
-from faraday.server import config
-
+from faraday.settings.reports import ReportsSettings
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 
 upload_api = Blueprint('upload_reports', __name__)
 
 logger = logging.getLogger(__name__)
-
-plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
-report_analyzer = ReportAnalyzer(plugins_manager)
 
 
 @gzipped
@@ -91,6 +87,8 @@ def file_upload(workspace=None):
                 500))
         else:
             logger.info(f"Get plugin for file: {file_path}")
+            plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder)
+            report_analyzer = ReportAnalyzer(plugins_manager)
             plugin = report_analyzer.get_plugin(file_path)
             if not plugin:
                 logger.info("Could not get plugin for file")

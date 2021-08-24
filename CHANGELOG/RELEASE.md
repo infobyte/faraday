@@ -2,6 +2,10 @@ New features in the latest update
 =====================================
 
 
+3.17.1 [Aug 20th, 2021]:
+---
+ * FIX bug when starting the server, creates a pool for reporting that breaks.
+
 3.17.0 [Aug 10th, 2021]:
 ---
  * ADD `--data` parameter to `faraday-manage settings`

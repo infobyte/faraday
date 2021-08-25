@@ -160,6 +160,9 @@ class InitDB():
              'event_types': ['new_vulnerabilityweb', 'update_vulnerabilityweb', 'delete_vulnerabilityweb']},
             # Comments
             {'roles': [admin, pentester, asset_owner, client], 'event_types': ['new_comment']},
+            # Comments
+            {'roles': [admin, pentester, asset_owner, client],
+             'event_types': ['new_host', 'update_host', 'delete_host']},
         ]
 
         event_types = [('new_workspace', False),
@@ -182,7 +185,11 @@ class InitDB():
                        ('delete_vulnerability', False),
                        ('new_vulnerabilityweb', False),
                        ('update_vulnerabilityweb', False),
-                       ('delete_vulnerabilityweb', False)]
+                       ('delete_vulnerabilityweb', False),
+                       ('new_host', False),
+                       ('update_host', False),
+                       ('delete_host', False)
+                       ]
 
         for event_type in event_types:
             event_type_obj = EventType(name=event_type[0], async_event=event_type[1])

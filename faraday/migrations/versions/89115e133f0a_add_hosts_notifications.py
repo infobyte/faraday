@@ -1,7 +1,7 @@
 """Add hosts notifications
 
 Revision ID: 89115e133f0a
-Revises: a9fcf8444c79
+Revises: 5d7a930c439e
 Create Date: 2021-07-26 17:18:43.521015+00:00
 
 """
@@ -13,7 +13,7 @@ from faraday.server.models import NotificationSubscription, NotificationSubscrip
     Role
 
 revision = '89115e133f0a'
-down_revision = 'a9fcf8444c79'
+down_revision = '5d7a930c439e'
 branch_labels = None
 depends_on = None
 

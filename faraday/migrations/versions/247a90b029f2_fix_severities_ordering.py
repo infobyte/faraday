@@ -1,7 +1,7 @@
 """Fix severities ordering
 
 Revision ID: 247a90b029f2
-Revises: 89115e133f0a
+Revises: a9fcf8444c79
 Create Date: 2021-08-02 12:52:34.453541+00:00
 
 """

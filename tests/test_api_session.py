@@ -13,9 +13,10 @@ from tests.conftest import login_as
 
 @pytest.mark.usefixtures('logged_user')
 class TestSessionLogged:
-    def test_session_when_user_is_logged(self, test_client):
+    def test_session_when_user_is_logged(self, test_client, user):
         res = test_client.get('/session')
         assert res.status_code == 200
+        assert user.id == res.json['user_id']
 
     @pytest.mark.parametrize('role', ['admin', 'pentester', 'client', 'asset_owner'])
     def test_session_when_user_is_logged_with_different_roles(self, test_client, session, user, role):

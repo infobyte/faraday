@@ -1019,6 +1019,77 @@ class CVE(db.Model):
             raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
 
 
+# TODO: Renombrar tabla y hacer un enum
+class ImpactType(db.Model):
+    __tablename__ = 'impact_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(12), nullable=False)
+
+
+class CVSSBase(db.Model):
+    __tablename__ = "cvss_base"
+    id = Column(Integer, primary_key=True)
+    version = Column(String(8), nullable=False)
+    vector_string = Column(String(64), nullable=False)
+    confidentiality_impact_id = Column(Integer, ForeignKey('impact_type.id'))
+    confidentiality_impact = relationship("ImpactType",
+                                          foreign_keys=[confidentiality_impact_id]
+                                          )
+    integrity_impact_id = Column(Integer, ForeignKey('impact_type.id'))
+    integrity_impact = relationship("ImpactType",
+                                     foreign_keys=[integrity_impact_id]
+                                     )
+    availability_impact_id = Column(Integer, ForeignKey('impact_type.id'))
+    availability_impact = relationship("ImpactType",
+                                        foreign_keys=[availability_impact_id]
+                                        )
+
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+
+ACCESS_VECTOR_TYPES = ['Network Adjacent', 'Local', 'Network']
+ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
+AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
+
+
+class CVSSV2(CVSSBase):
+    __tablename__ = "cvss_v2"
+    id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
+    access_vector = Column(Enum(*ACCESS_VECTOR_TYPES, name="cvss_access_vector"), nullable=False)
+    access_complexity = Column(Enum(*ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"), nullable=False)
+    authentication = Column(Enum(*AUTHENTICATION_TYPES, name="cvss_authentication"), nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': "v2"
+    }
+
+
+ATTACK_VECTOR_TYPES = ['Network Adjacent', 'Local', 'Physical']
+ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
+PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
+USER_INTERACTION_TYPES = ['None', 'Required']
+SCOPE_TYPES = ['Unchanged', 'Changed']
+
+
+class CVSSV3(CVSSBase):
+    __tablename__ = "cvss_v3"
+    id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
+    attack_vector = Column(Enum(*ATTACK_VECTOR_TYPES, name="cvss_attack_vector"), nullable=False)
+    attack_complexity = Column(Enum(*ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"), nullable=False)
+    privileges_required = Column(Enum(*PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"), nullable=False)
+    user_interaction = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_user_interaction"), nullable=False)
+    scope = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_scope"), nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': "v3"
+    }
+
+
 class Service(Metadata):
     STATUSES = [
         'open',
@@ -1143,6 +1214,22 @@ class VulnerabilityGeneric(VulnerabilityABC):
                              'name',
                              proxy_factory=CustomAssociationSet,
                              creator=_build_associationproxy_creator_non_workspaced('CVE'))
+
+    # TODO: Ver si el nombre deberia ser cvss_v2_id
+    cvssv2_id = Column(
+        Integer,
+        ForeignKey('cvss_v2.id'),
+        nullable=True
+    )
+    cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
+
+    # TODO: Ver si el nombre deberia ser cvss_v3_id
+    cvssv3_id = Column(
+        Integer,
+        ForeignKey('cvss_v3.id'),
+        nullable=True
+    )
+    cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
 
     reference_instances = relationship(
         "Reference",

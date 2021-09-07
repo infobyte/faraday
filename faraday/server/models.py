@@ -1031,18 +1031,6 @@ class CVSSBase(db.Model):
     id = Column(Integer, primary_key=True)
     version = Column(String(8), nullable=False)
     vector_string = Column(String(64), nullable=False)
-    confidentiality_impact_id = Column(Integer, ForeignKey('impact_type.id'))
-    confidentiality_impact = relationship("ImpactType",
-                                          foreign_keys=[confidentiality_impact_id]
-                                          )
-    integrity_impact_id = Column(Integer, ForeignKey('impact_type.id'))
-    integrity_impact = relationship("ImpactType",
-                                     foreign_keys=[integrity_impact_id]
-                                     )
-    availability_impact_id = Column(Integer, ForeignKey('impact_type.id'))
-    availability_impact = relationship("ImpactType",
-                                        foreign_keys=[availability_impact_id]
-                                        )
 
     type = Column(String(24))
 
@@ -1055,6 +1043,7 @@ class CVSSBase(db.Model):
 ACCESS_VECTOR_TYPES = ['Network Adjacent', 'Local', 'Network']
 ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
 AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
+IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
 
 
 class CVSSV2(CVSSBase):
@@ -1063,6 +1052,9 @@ class CVSSV2(CVSSBase):
     access_vector = Column(Enum(*ACCESS_VECTOR_TYPES, name="cvss_access_vector"), nullable=False)
     access_complexity = Column(Enum(*ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"), nullable=False)
     authentication = Column(Enum(*AUTHENTICATION_TYPES, name="cvss_authentication"), nullable=False)
+    confidentiality_impact = Column(Enum(*IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
+    integrity_impact = Column(Enum(*IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
+    availability_impact = Column(Enum(*IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': "v2"
@@ -1074,6 +1066,7 @@ ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
 PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
 USER_INTERACTION_TYPES = ['None', 'Required']
 SCOPE_TYPES = ['Unchanged', 'Changed']
+IMPACT_TYPES_V3 = ['None', 'Low', 'High']
 
 
 class CVSSV3(CVSSBase):
@@ -1084,6 +1077,9 @@ class CVSSV3(CVSSBase):
     privileges_required = Column(Enum(*PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"), nullable=False)
     user_interaction = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_user_interaction"), nullable=False)
     scope = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_scope"), nullable=False)
+    confidentiality_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
+    integrity_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
+    availability_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': "v3"

@@ -1040,7 +1040,7 @@ class CVSSBase(db.Model):
     }
 
 
-ACCESS_VECTOR_TYPES = ['Network Adjacent', 'Local', 'Network']
+ACCESS_VECTOR_TYPES = ['Local', 'Network', 'Adjacent']
 ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
 AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
 IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
@@ -1061,7 +1061,7 @@ class CVSSV2(CVSSBase):
     }
 
 
-ATTACK_VECTOR_TYPES = ['Network Adjacent', 'Local', 'Physical']
+ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
 ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
 PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
 USER_INTERACTION_TYPES = ['None', 'Required']

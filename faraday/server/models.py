@@ -88,6 +88,21 @@ NOTIFICATION_METHODS = [
     'websocket'
 ]
 
+# CVSSV2 ENUMS
+ACCESS_VECTOR_TYPES = ['Local', 'Network', 'Adjacent']
+ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
+AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
+IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
+
+
+# CVSSV3 ENUMS
+ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
+ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
+PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
+USER_INTERACTION_TYPES = ['None', 'Required']
+SCOPE_TYPES = ['Unchanged', 'Changed']
+IMPACT_TYPES_V3 = ['None', 'Low', 'High']
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -1019,13 +1034,6 @@ class CVE(db.Model):
             raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
 
 
-# TODO: Renombrar tabla y hacer un enum
-class ImpactType(db.Model):
-    __tablename__ = 'impact_type'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(12), nullable=False)
-
-
 class CVSSBase(db.Model):
     __tablename__ = "cvss_base"
     id = Column(Integer, primary_key=True)
@@ -1039,11 +1047,8 @@ class CVSSBase(db.Model):
         'polymorphic_identity': 'base'
     }
 
-
-ACCESS_VECTOR_TYPES = ['Local', 'Network', 'Adjacent']
-ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
-AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
-IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
+    def __repr__(self):
+        return f'{self.vector_string}'
 
 
 class CVSSV2(CVSSBase):
@@ -1059,14 +1064,6 @@ class CVSSV2(CVSSBase):
     __mapper_args__ = {
         'polymorphic_identity': "v2"
     }
-
-
-ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
-ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
-PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
-USER_INTERACTION_TYPES = ['None', 'Required']
-SCOPE_TYPES = ['Unchanged', 'Changed']
-IMPACT_TYPES_V3 = ['None', 'Low', 'High']
 
 
 class CVSSV3(CVSSBase):

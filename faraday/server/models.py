@@ -94,6 +94,11 @@ ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
 AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
 IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
 
+# CVSSV2 SCORE
+ACCESS_VECTOR_SCORE = {'Local': 0.395, 'Network': 0.646, 'Adjacent': 1.0}
+ACCESS_COMPLEXITY_SCORE = {'Low': 0.71, 'Medium': 0.61, 'High': 0.35}
+AUTHENTICATION_SCORE = {'None': 0.704, 'Single': 0.56, 'Multiple': 0.45}
+IMPACT_SCORES_V2 = {'None': 0.0, 'Partial': 0.275, 'Complete': 0.660}
 
 # CVSSV3 ENUMS
 ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
@@ -1065,6 +1070,21 @@ class CVSSV2(CVSSBase):
         'polymorphic_identity': "v2"
     }
 
+    def exploitability(self):
+        return 20 * ACCESS_VECTOR_SCORE[self.access_vector] * ACCESS_COMPLEXITY_SCORE[self.access_complexity] * AUTHENTICATION_SCORE[self.authentication]
+
+    def impact(self):
+        return 10.41 * (1 - (1 - IMPACT_SCORES_V2[self.confidentiality_impact]) * (1 - IMPACT_SCORES_V2[self.integrity_impact]) * (1 - IMPACT_SCORES_V2[self.availability_impact]))
+
+    def fimpact(self):
+        if self.impact() == 0:
+            return 0
+        return 1.176
+
+    @hybrid_property
+    def base_score(self):
+        return round((0.6 * self.impact()) + (0.4 * self.exploitability()) - 1.5) * self.fimpact()
+
 
 class CVSSV3(CVSSBase):
     __tablename__ = "cvss_v3"
@@ -1081,6 +1101,9 @@ class CVSSV3(CVSSBase):
     __mapper_args__ = {
         'polymorphic_identity': "v3"
     }
+
+    def score(self):
+        pass
 
 
 class Service(Metadata):

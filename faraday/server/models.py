@@ -1618,6 +1618,8 @@ class Workspace(Metadata):
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
     active_agents_count = query_expression()
+    vulnerability_open_count = query_expression()
+    vulnerability_confirmed_count = query_expression()
 
     vulnerability_informational_count = query_expression()
     vulnerability_medium_count = query_expression()

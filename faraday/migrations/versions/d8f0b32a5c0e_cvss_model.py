@@ -54,7 +54,7 @@ def upgrade():
                               nullable=False),
                     sa.Column('user_interaction', sa.Enum('None', 'Required', name='cvss_user_interaction'),
                               nullable=False),
-                    sa.Column('scope', sa.Enum('None', 'Required', name='cvss_scope'), nullable=False),
+                    sa.Column('scope', sa.Enum('Unchanged', 'Changed', name='cvss_scope'), nullable=False),
                     sa.Column('confidentiality_impact',
                               sa.Enum('None', 'Low', 'High', name='cvss_impact_types_v3'), nullable=True),
                     sa.Column('integrity_impact',

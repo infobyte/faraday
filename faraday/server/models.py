@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import json
 import logging
+import math
 import operator
 import string
 from datetime import datetime, timedelta
@@ -95,7 +96,7 @@ AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
 IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
 
 # CVSSV2 SCORE
-ACCESS_VECTOR_SCORE = {'Local': 0.395, 'Network': 0.646, 'Adjacent': 1.0}
+ACCESS_VECTOR_SCORE = {'Local': 0.395, 'Adjacent': 0.646, 'Network': 1.0}
 ACCESS_COMPLEXITY_SCORE = {'Low': 0.71, 'Medium': 0.61, 'High': 0.35}
 AUTHENTICATION_SCORE = {'None': 0.704, 'Single': 0.56, 'Multiple': 0.45}
 IMPACT_SCORES_V2 = {'None': 0.0, 'Partial': 0.275, 'Complete': 0.660}
@@ -107,6 +108,14 @@ PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
 USER_INTERACTION_TYPES = ['None', 'Required']
 SCOPE_TYPES = ['Unchanged', 'Changed']
 IMPACT_TYPES_V3 = ['None', 'Low', 'High']
+
+# CVSSV3 SCORE
+ATTACK_VECTOR_SCORES = {'Network': 0.85, 'Adjacent': 0.62, 'Local': 0.55, 'Physical': 0.2}
+ATTACK_COMPLEXITY_SCORES = {'Low': 0.77, 'High': 0.44}
+PRIVILEGES_REQUIRED_SCORES = {'Unchanged': {'None': 0.85, 'Low': 0.62, 'High': 0.27}, 'Changed': {'None': 0.85, 'Low': 0.68, 'High': 0.5}}
+USER_INTERACTION_SCORES = {'None': 0.85, 'Required': 0.62}
+SCOPE_SCORES = {'Unchanged': 6.42, 'Changed': 7.52}
+IMPACT_SCORES_V3 = {'None': 0.0, 'Low': 0.22, 'High': 0.56}
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -1083,7 +1092,11 @@ class CVSSV2(CVSSBase):
 
     @hybrid_property
     def base_score(self):
-        return round((0.6 * self.impact()) + (0.4 * self.exploitability()) - 1.5) * self.fimpact()
+        score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
+        # round up score
+        # Where “Round up” is defined as the smallest number, specified to one decimal place,
+        # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+        return math.ceil(score * 10) / 10
 
 
 class CVSSV3(CVSSBase):
@@ -1093,7 +1106,7 @@ class CVSSV3(CVSSBase):
     attack_complexity = Column(Enum(*ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"), nullable=False)
     privileges_required = Column(Enum(*PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"), nullable=False)
     user_interaction = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_user_interaction"), nullable=False)
-    scope = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_scope"), nullable=False)
+    scope = Column(Enum(*SCOPE_TYPES, name="cvss_scope"), nullable=False)
     confidentiality_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
     integrity_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
     availability_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
@@ -1102,8 +1115,36 @@ class CVSSV3(CVSSBase):
         'polymorphic_identity': "v3"
     }
 
-    def score(self):
-        pass
+    def isc_base(self):
+        return 1 - ((1 - IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - IMPACT_SCORES_V3[self.integrity_impact]) * (1 - IMPACT_SCORES_V3[self.availability_impact]))
+
+    def impact(self):
+        if self.scope == 'Unchanged':
+            return 6.42 * self.isc_base()
+        else:
+            return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
+
+    def exploitability(self):
+        return 8.22 * ATTACK_VECTOR_SCORES[self.attack_vector] * ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * USER_INTERACTION_SCORES[self.user_interaction]
+
+    @hybrid_property
+    def base_score(self):
+        score = 10
+        if self.impact() <= 0:
+            return 0
+        impact_plus_exploitability = self.impact() + self.exploitability()
+        if self.scope == 'Unchanged':
+            if impact_plus_exploitability < 10:
+                score = impact_plus_exploitability
+        else:
+            impact_plus_exploitability = impact_plus_exploitability * 1.08
+            if impact_plus_exploitability < 10:
+                score = impact_plus_exploitability
+
+        # round up score
+        # Where “Round up” is defined as the smallest number, specified to one decimal place,
+        # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+        return math.ceil(score * 10) / 10
 
 
 class Service(Metadata):

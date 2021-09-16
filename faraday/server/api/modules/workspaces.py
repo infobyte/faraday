@@ -235,23 +235,32 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                                           use_column_property=False),
             ),
             with_expression(
-                Workspace.vulnerability_open_count,
-                _make_vuln_count_property(None,
-                                          extra_query=extra_query or " status='open' ",
-                                          use_column_property=False),
-            ),
-            with_expression(
-                Workspace.vulnerability_confirmed_count,
-                _make_vuln_count_property(None,
-                                          confirmed=confirmed or True,
-                                          extra_query=extra_query,
-                                          use_column_property=False),
-            ),
-            with_expression(
                 Workspace.active_agents_count,
                 _make_active_agents_count_property(),
             ),
         )
+
+        # extra_query contains status filter
+        if not extra_query or status == 'open':
+            query = query.options(
+                with_expression(Workspace.vulnerability_open_count,
+                                _make_vuln_count_property(None,
+                                                          extra_query=" status='open' ",
+                                                          use_column_property=False),
+                                )
+            )
+
+        if confirmed is not False:
+            query = query.options(
+                with_expression(
+                    Workspace.vulnerability_confirmed_count,
+                    _make_vuln_count_property(None,
+                                              confirmed=True,
+                                              extra_query=extra_query,
+                                              use_column_property=False)
+                )
+            )
+
         query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
 
         try:

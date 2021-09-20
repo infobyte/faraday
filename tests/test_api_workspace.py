@@ -144,6 +144,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['critical_vulns'] == 0
         assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
+        assert res.json['last_run_agent_date'] is None
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'

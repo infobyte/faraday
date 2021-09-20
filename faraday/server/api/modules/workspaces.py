@@ -17,8 +17,13 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, \
-    _make_active_agents_count_property, count_vulnerability_severities
+from faraday.server.models import (db,
+                                   Workspace,
+                                   _make_vuln_count_property,
+                                   Vulnerability,
+                                   _make_active_agents_count_property,
+                                   count_vulnerability_severities,
+                                   _last_run_agent_date)
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -92,13 +97,14 @@ class WorkspaceSchema(AutoSchema):
                            dump_only=True)
 
     active_agents_count = fields.Integer(dump_only=True)
+    last_run_agent_date = fields.DateTime(dump_only=True, allow_none=False, attribute='last_run_agent_date', default='')
 
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'active_agents_count')
+                  'active_agents_count', 'last_run_agent_date')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -220,38 +226,42 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         if active is not None:
             query = query.filter_by(active=active)
         query = query.options(
-                 with_expression(
-                     Workspace.vulnerability_web_count,
-                         _make_vuln_count_property('vulnerability_web',
+            with_expression(
+                Workspace.vulnerability_web_count,
+                _make_vuln_count_property('vulnerability_web',
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False),
-                 ),
-                 with_expression(
-                     Workspace.vulnerability_standard_count,
-                         _make_vuln_count_property('vulnerability',
+            ),
+            with_expression(
+                Workspace.vulnerability_standard_count,
+                _make_vuln_count_property('vulnerability',
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False)
-                ),
-                with_expression(
-                     Workspace.vulnerability_total_count,
-                         _make_vuln_count_property(type_=None,
+            ),
+            with_expression(
+                Workspace.vulnerability_total_count,
+                _make_vuln_count_property(type_=None,
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False)
-               ),
-               with_expression(
-                     Workspace.vulnerability_code_count,
-                    _make_vuln_count_property('vulnerability_code',
+            ),
+            with_expression(
+                Workspace.vulnerability_code_count,
+                _make_vuln_count_property('vulnerability_code',
                                           extra_query=extra_query,
                                           use_column_property=False),
-               ),
-               with_expression(
-                   Workspace.active_agents_count,
-                   _make_active_agents_count_property(),
-               ),
-            )
+            ),
+            with_expression(
+                Workspace.active_agents_count,
+                _make_active_agents_count_property(),
+            ),
+            with_expression(
+                Workspace.last_run_agent_date,
+                _last_run_agent_date(),
+            ),
+        )
         query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
 
         try:

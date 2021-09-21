@@ -210,6 +210,8 @@ class InitDB():
                         'command',
                         'user']
 
+        default_initial_disabled_notifications_config = ['update_vulnerability', 'update_vulnerabilityweb']
+
         for object_type in object_types:
             obj = ObjectType(name=object_type)
             db.session.add(obj)
@@ -222,7 +224,8 @@ class InitDB():
                 n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
                 db.session.add(n)
                 db.session.commit()
-                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+                active = False if event_type in default_initial_disabled_notifications_config else True
+                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=active, role_level=True)
                 db.session.add(ns)
                 db.session.commit()
 

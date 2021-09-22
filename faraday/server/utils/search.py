@@ -599,7 +599,7 @@ class QueryBuilder:
                         field = getattr(relation_model, field_name_in_relation)
                         direction = getattr(field, val.direction)
                         if relation_model not in joined_models:
-                            query = query.join(*joined_models)
+                            query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)
                         query = query.order_by(direction())
                     else:

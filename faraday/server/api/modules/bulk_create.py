@@ -413,8 +413,16 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
         vuln.references = references
         vuln.policy_violations = policyviolations
-        vuln.cve = [cve for cve in references if re.match(CVE.CVE_PATTERN, cve.upper())] +\
-                   [cve for cve in cve_list if re.match(CVE.CVE_PATTERN, cve.upper())]
+
+        # parse cve and reference. Should be temporal.
+        parsed_cve_list = []
+        for cve in cve_list:
+            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+        for cve in references:
+            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+        vuln.cve = parsed_cve_list
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()

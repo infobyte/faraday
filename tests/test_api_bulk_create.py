@@ -218,6 +218,15 @@ def test_create_host_vuln_without_tool(session, host):
     assert vuln.tool == "Web UI"
 
 
+def test_create_not_fail_with_cve(session, host):
+    with_erroneous_cve_list = vuln_data.copy()
+    with_erroneous_cve_list['cve'] = ['CVSS: 10.0', 'OSVDB:339, OSVDB:8750, OSVDB:11516', 'CVE-1999-0170, CVE-1999-0211, CVE-1999-0554', 'cve-1111-9988']
+    data = bc.VulnerabilitySchema().load(with_erroneous_cve_list)
+    bc._create_hostvuln(host.workspace, host, data)
+    vuln = host.workspace.vulnerabilities[0]
+    assert set(vuln.cve) == set(['CVE-1999-0170', 'CVE-1999-0211', 'CVE-1999-0554', 'CVE-1111-9988'] + vuln_data['refs'])
+
+
 def test_creates_vuln_with_command_object_with_tool(session, service):
     host_data_ = host_data.copy()
     service_data_ = service_data.copy()

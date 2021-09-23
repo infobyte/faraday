@@ -210,7 +210,7 @@ class InitDB():
                         'command',
                         'user']
 
-        default_initial_disabled_notifications_config = ['update_vulnerability', 'update_vulnerabilityweb']
+        default_initial_enabled_notifications_config = ['new_workspace', 'update_executivereport', 'new_agentexecution', 'new_command', 'new_comment']
 
         for object_type in object_types:
             obj = ObjectType(name=object_type)
@@ -224,7 +224,9 @@ class InitDB():
                 n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
                 db.session.add(n)
                 db.session.commit()
-                active = False if event_type in default_initial_disabled_notifications_config else True
+                active = False
+                if event_type in default_initial_enabled_notifications_config:
+                    active = True
                 ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=active, role_level=True)
                 db.session.add(ns)
                 db.session.commit()

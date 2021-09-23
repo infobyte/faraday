@@ -17,21 +17,18 @@ down_revision = '89115e133f0a'
 branch_labels = None
 depends_on = None
 
+enabled_notifications = ['new_workspace', 'update_executivereport', 'new_agentexecution', 'new_command', 'new_comment']
+
 
 def upgrade():
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
 
-    # Disable update_vulnerability event
-    n = session.query(NotificationSubscriptionWebSocketConfig).join(NotificationSubscription).join(EventType).filter(EventType.name == 'update_vulnerability').one()
-    n.active = False
-    session.add(n)
-    session.commit()
-
-    # Disable update_vulnerability_web event
-    n = session.query(NotificationSubscriptionWebSocketConfig).join(NotificationSubscription).join(EventType).filter(EventType.name == 'update_vulnerabilityweb').one()
-    n.active = False
-    session.add(n)
+    notifications = session.query(NotificationSubscriptionWebSocketConfig).join(NotificationSubscription)\
+        .join(EventType).filter(EventType.name.notin_(enabled_notifications)).all()
+    for notification in notifications:
+        notification.active = False
+        session.add(notification)
     session.commit()
 
 
@@ -39,14 +36,9 @@ def downgrade():
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
 
-    # Enable update_vulnerability event
-    n = session.query(NotificationSubscriptionWebSocketConfig).join(NotificationSubscription).join(EventType).filter(EventType.name == 'update_vulnerability').one()
-    n.active = True
-    session.add(n)
-    session.commit()
-
-    # Enable update_vulnerability_web event
-    n = session.query(NotificationSubscriptionWebSocketConfig).join(NotificationSubscription).join(EventType).filter(EventType.name == 'update_vulnerabilityweb').one()
-    n.active = True
-    session.add(n)
+    notifications = session.query(NotificationSubscriptionWebSocketConfig)\
+        .join(NotificationSubscription).join(EventType).filter(EventType.name.notin_(enabled_notifications)).all()
+    for notification in notifications:
+        notification.active = True
+        session.add(notification)
     session.commit()

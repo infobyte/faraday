@@ -115,7 +115,7 @@ def check_if_db_up():
 
 def main():
     os.chdir(faraday.server.config.FARADAY_BASE)
-    check_if_db_up()
+    # check_if_db_up()
     check_alembic_version()
     # TODO RETURN TO prev CWD
     check_postgresql()

@@ -23,6 +23,7 @@ from sqlalchemy import (
     UniqueConstraint,
     event,
     Table,
+    literal,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -1632,6 +1633,8 @@ class Workspace(Metadata):
     vulnerability_total_count = query_expression()
     active_agents_count = query_expression()
     last_run_agent_date = query_expression()
+    vulnerability_open_count = query_expression(literal(0))
+    vulnerability_confirmed_count = query_expression(literal(0))
 
     vulnerability_informational_count = query_expression()
     vulnerability_medium_count = query_expression()

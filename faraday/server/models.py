@@ -159,6 +159,19 @@ def _make_active_agents_count_property():
     return query
 
 
+def _last_run_agent_date():
+    query = select([text('executor.last_run')])
+
+    from_clause = table('executor')\
+        .join(Agent, text('executor.agent_id = agent.id'))\
+        .join(text('association_workspace_and_agents_table'),
+              text('agent.id = association_workspace_and_agents_table.agent_id '
+                   'and association_workspace_and_agents_table.workspace_id = workspace.id'))
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')).order_by(Executor.last_run.desc()).limit(1)
+
+    return query
+
+
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
@@ -1619,6 +1632,7 @@ class Workspace(Metadata):
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
     active_agents_count = query_expression()
+    last_run_agent_date = query_expression()
     vulnerability_open_count = query_expression(literal(0))
     vulnerability_confirmed_count = query_expression(literal(0))
 

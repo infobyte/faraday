@@ -2175,6 +2175,7 @@ class EventType(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(64), unique=True, nullable=False)
     async_event = Column(Boolean, default=False)
+    enabled = Column(Boolean, default=True)
 
 
 allowed_roles_association = db.Table('notification_allowed_roles',

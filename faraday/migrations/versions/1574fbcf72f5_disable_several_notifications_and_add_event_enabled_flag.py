@@ -1,4 +1,4 @@
-"""disable vulns update notifications
+"""disable several notifications and add event enabled flag
 
 Revision ID: 1574fbcf72f5
 Revises: 89115e133f0a
@@ -24,8 +24,15 @@ def upgrade():
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
 
-    notifications = session.query(NotificationSubscriptionWebSocketConfig).join(NotificationSubscription)\
-        .join(EventType).filter(EventType.name.notin_(enabled_notifications)).all()
+    session.execute("ALTER TABLE event_type ADD COLUMN enabled BOOLEAN DEFAULT true")
+    session.commit()
+
+    events = session.query(EventType).filter(EventType.name.notin_(enabled_notifications)).all()
+    for event in events:
+        event.enabled = False
+
+    notifications = session.query(NotificationSubscriptionWebSocketConfig)\
+        .join(NotificationSubscription).join(EventType).filter(EventType.name.notin_(enabled_notifications)).all()
     for notification in notifications:
         notification.active = False
         session.add(notification)
@@ -36,9 +43,10 @@ def downgrade():
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
 
+    op.execute("ALTER TABLE event_type DROP COLUMN enabled")
+
     notifications = session.query(NotificationSubscriptionWebSocketConfig)\
         .join(NotificationSubscription).join(EventType).filter(EventType.name.notin_(enabled_notifications)).all()
     for notification in notifications:
         notification.active = True
-        session.add(notification)
     session.commit()

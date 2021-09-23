@@ -166,7 +166,7 @@ def _last_run_agent_date():
         .join(text('association_workspace_and_agents_table'),
               text('agent.id = association_workspace_and_agents_table.agent_id '
                    'and association_workspace_and_agents_table.workspace_id = workspace.id'))
-    query = query.select_from(from_clause).order_by(Executor.last_run.desc()).limit(1)
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')).order_by(Executor.last_run.desc()).limit(1)
 
     return query
 

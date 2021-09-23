@@ -97,7 +97,7 @@ class WorkspaceSchema(AutoSchema):
                            dump_only=True)
 
     active_agents_count = fields.Integer(dump_only=True)
-    last_run_agent_date = fields.DateTime(dump_only=True, allow_none=False, attribute='last_run_agent_date', default='')
+    last_run_agent_date = fields.DateTime(dump_only=True, attribute='last_run_agent_date')
 
     class Meta:
         model = Workspace

@@ -195,7 +195,7 @@ class InitDB():
 
         for event_type in event_types:
             enabled = False
-            if event_type in default_initial_enabled_notifications_config:
+            if event_type[0] in default_initial_enabled_notifications_config:
                 enabled = True
             event_type_obj = EventType(name=event_type[0], async_event=event_type[1], enabled=enabled)
             db.session.add(event_type_obj)

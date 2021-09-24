@@ -191,8 +191,13 @@ class InitDB():
                        ('delete_host', False)
                        ]
 
+        default_initial_enabled_notifications_config = ['new_workspace', 'update_executivereport', 'new_agentexecution', 'new_command', 'new_comment']
+
         for event_type in event_types:
-            event_type_obj = EventType(name=event_type[0], async_event=event_type[1])
+            enabled = False
+            if event_type[0] in default_initial_enabled_notifications_config:
+                enabled = True
+            event_type_obj = EventType(name=event_type[0], async_event=event_type[1], enabled=enabled)
             db.session.add(event_type_obj)
 
         object_types = ['vulnerability',
@@ -222,7 +227,10 @@ class InitDB():
                 n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
                 db.session.add(n)
                 db.session.commit()
-                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=True, role_level=True)
+                active = False
+                if event_type in default_initial_enabled_notifications_config:
+                    active = True
+                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=active, role_level=True)
                 db.session.add(ns)
                 db.session.commit()
 

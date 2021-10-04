@@ -289,6 +289,7 @@ class GenericView(FlaskView):
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, f'Object with id "{object_id}" not found')
+        logger.info(f"GET: object {obj}")
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -398,6 +399,7 @@ class GenericWorkspacedView(GenericView):
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, f'Object with id "{object_id}" not found')
+        logger.info(f"GET: object {obj}")
         return obj
 
     def _set_schema_context(self, context, **kwargs):
@@ -489,7 +491,7 @@ class ListMixin:
                 query = query.order_by(*order_field)
             else:
                 query = query.order_by(order_field)
-
+        logger.info(f"GET: list of {self.model_class}")
         objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
@@ -536,7 +538,6 @@ class SortableMixin:
                 logger.warn(f"Unknown field: {order_field}")
                 return self.order_field
             raise InvalidUsage(f"Unknown field: {order_field}")
-
         # Translate from the field name in the schema to the database field
         # name
         order_field = field_instance.attribute or order_field
@@ -971,7 +972,9 @@ class CreateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"POST: {obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"POST: couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 if not_null_constraint_violation(ex):
                     flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
@@ -1083,7 +1086,9 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"POST: {obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"POST: couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1165,7 +1170,9 @@ class UpdateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"PUT: {obj} updated")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"PUT: couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1339,6 +1346,7 @@ class DeleteMixin:
     def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
+        logger.info(f"DELETE: {obj} deleted")
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
@@ -1369,7 +1377,6 @@ class DeleteWorkspacedMixin(DeleteMixin):
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
-
         return super()._perform_delete(obj, workspace_name)
 
 
@@ -1432,14 +1439,13 @@ class CountWorkspacedMixin:
                 .group_by(group_by)
                 .filter(Workspace.name == workspace_name,
                         *self.count_extra_filters))
-
+        logger.info(f"GET: Counting {self.model_class} from ws {workspace_name}")
         # order
         order_by = group_by
         if sort_dir == 'desc':
             count = count.order_by(desc(order_by))
         else:
             count = count.order_by(asc(order_by))
-
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,
@@ -1536,6 +1542,7 @@ class CountMultiWorkspacedMixin:
             .join(Workspace) \
             .group_by(grouped_attr, Workspace.name) \
             .filter(Workspace.name.in_(workspace_names_list))
+        logger.info(f"GET: Counting {self.model_class} from Workspaces {Workspace} grouping by {group_by}")
 
         # order
         order_by = grouped_attr

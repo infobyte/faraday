@@ -15,7 +15,7 @@ from sqlalchemy.orm import (
     with_expression
 )
 from sqlalchemy.orm.exc import NoResultFound
-
+from sqlalchemy import func
 
 from faraday.server.models import (db,
                                    Workspace,
@@ -85,13 +85,14 @@ class WorkspaceSchema(AutoSchema):
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
     active_agents_count = fields.Integer(dump_only=True)
     last_run_agent_date = fields.DateTime(dump_only=True, attribute='last_run_agent_date')
+    histogram = fields.String(dump_only=True)
 
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'active_agents_count', 'last_run_agent_date')
+                  'active_agents_count', 'last_run_agent_date', 'histogram')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -130,7 +131,27 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             200:
               description: Ok
         """
+        histogram = flask.request.args.get('histogram', None)
+
         query = self._get_base_query()
+
+        histogram_dict = dict()
+        if histogram:
+            h = db.session.query(func.count(Vulnerability.severity), Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
+                .join(Vulnerability)\
+                .group_by(Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
+                .order_by(func.date_trunc('day', Vulnerability.create_date).asc(), Workspace.name).all()
+
+            current_ws = None
+            for count, severity, create_date, workspace_name in h:
+                if current_ws != workspace_name:
+                    current_ws = workspace_name
+                    histogram_dict[current_ws] = {}
+                if create_date not in histogram_dict[workspace_name]:
+                    histogram_dict[current_ws][create_date] = {}
+                if severity not in histogram_dict[current_ws][create_date]:
+                    histogram_dict[current_ws][create_date][severity] = 0
+                histogram_dict[current_ws][create_date][severity] += count
         objects = []
         for workspace_stat in query:
             workspace_stat_dict = dict(workspace_stat)
@@ -143,6 +164,12 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 workspace_stat_dict['scope_raw'] = workspace_stat_dict['scope_raw'].split(',')
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
+
+            workspace_stat_dict['histogram'] = dict()
+            if histogram:
+                if workspace_stat_dict['name'] in histogram_dict:
+                    workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
+
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 

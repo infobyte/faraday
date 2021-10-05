@@ -57,6 +57,13 @@ class WorkspaceSummarySchema(Schema):
     total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
 
 
+class HistogramSchema(Schema):
+    date = fields.Date(dump_only=True, attribute='date')
+    medium = fields.Integer(dump_only=True, attribute='medium')
+    high = fields.Integer(dump_only=True, attribute='high')
+    critical = fields.Integer(dump_only=True, attribute='critical')
+
+
 class WorkspaceDurationSchema(Schema):
     start_date = JSTimestampField(attribute='start_date')
     end_date = JSTimestampField(attribute='end_date')
@@ -87,7 +94,7 @@ class WorkspaceSchema(AutoSchema):
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
     active_agents_count = fields.Integer(dump_only=True)
     last_run_agent_date = fields.DateTime(dump_only=True, attribute='last_run_agent_date')
-    histogram = fields.String(dump_only=True)
+    histogram = fields.Nested(HistogramSchema(many=True))
 
     class Meta:
         model = Workspace
@@ -141,20 +148,17 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         if histogram:
             h = db.session.query(func.count(Vulnerability.severity), Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
                 .join(Vulnerability)\
-                .filter(Vulnerability.create_date > (datetime.today() - timedelta(days=20)))\
+                .filter(Vulnerability.create_date > (datetime.today() - timedelta(days=20)), Vulnerability.severity.in_(['medium', 'high', 'critical']))\
                 .group_by(Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
-                .order_by(func.date_trunc('day', Vulnerability.create_date).asc(), Workspace.name).all()
+                .order_by(func.date_trunc('day', Vulnerability.create_date).asc(), Vulnerability.severity, Workspace.name).all()
 
             current_ws = None
             for count, severity, create_date, workspace_name in h:
                 if current_ws != workspace_name:
                     current_ws = workspace_name
-                    histogram_dict[current_ws] = {}
-                if create_date not in histogram_dict[workspace_name]:
-                    histogram_dict[current_ws][create_date] = {}
-                if severity not in histogram_dict[current_ws][create_date]:
-                    histogram_dict[current_ws][create_date][severity] = 0
-                histogram_dict[current_ws][create_date][severity] += count
+                    histogram_dict[current_ws] = [{'date': create_date}]
+                histogram_dict[current_ws][len(histogram_dict[current_ws]) - 1][severity] = count
+
         objects = []
         for workspace_stat in query:
             workspace_stat_dict = dict(workspace_stat)

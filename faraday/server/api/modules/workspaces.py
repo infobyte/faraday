@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from datetime import timedelta, datetime
+
 import re
 from builtins import str
 
@@ -139,6 +141,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         if histogram:
             h = db.session.query(func.count(Vulnerability.severity), Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
                 .join(Vulnerability)\
+                .filter(Vulnerability.create_date > (datetime.today() - timedelta(days=20)))\
                 .group_by(Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
                 .order_by(func.date_trunc('day', Vulnerability.create_date).asc(), Workspace.name).all()
 

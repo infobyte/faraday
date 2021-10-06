@@ -289,7 +289,6 @@ class GenericView(FlaskView):
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, f'Object with id "{object_id}" not found')
-        logger.info(f"GET: object {obj}")
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -399,7 +398,6 @@ class GenericWorkspacedView(GenericView):
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, f'Object with id "{object_id}" not found')
-        logger.info(f"GET: object {obj}")
         return obj
 
     def _set_schema_context(self, context, **kwargs):
@@ -491,7 +489,6 @@ class ListMixin:
                 query = query.order_by(*order_field)
             else:
                 query = query.order_by(order_field)
-        logger.info(f"GET: list of {self.model_class}")
         objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
@@ -1439,7 +1436,6 @@ class CountWorkspacedMixin:
                 .group_by(group_by)
                 .filter(Workspace.name == workspace_name,
                         *self.count_extra_filters))
-        logger.info(f"GET: Counting {self.model_class} from ws {workspace_name}")
         # order
         order_by = group_by
         if sort_dir == 'desc':
@@ -1542,7 +1538,6 @@ class CountMultiWorkspacedMixin:
             .join(Workspace) \
             .group_by(grouped_attr, Workspace.name) \
             .filter(Workspace.name.in_(workspace_names_list))
-        logger.info(f"GET: Counting {self.model_class} from Workspaces {Workspace} grouping by {group_by}")
 
         # order
         order_by = grouped_attr

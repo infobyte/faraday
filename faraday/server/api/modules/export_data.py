@@ -35,6 +35,7 @@ def export_data(workspace_name):
 
     if export_format == 'xml_metasploit':
         memory_file = xml_metasploit_format(workspace)
+        logger.info("GET: workspace´s data exported")
         return send_file(
             memory_file,
             attachment_filename=f"Faraday-{workspace_name}-data.xml",

@@ -144,7 +144,6 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
             objects.append(workspace_stat_dict)
-        logger.info("GET: list of ws")
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
     @route('/filter')
@@ -278,7 +277,6 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             obj = query.one()
         except NoResultFound:
             flask.abort(404, f'Object with name "{object_id}" not found')
-        logger.info(f"GET: ws {object_id}")
         return obj
 
     def _perform_create(self, data, **kwargs):
@@ -324,7 +322,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
-        logger.info(f"PUT: ws {workspace_id} activated")
+        logger.info(f"PUT: workspace {workspace_id} activated")
         return changed
 
     @route('/<workspace_id>/deactivate/', methods=["PUT"])
@@ -343,7 +341,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             description: Ok
         """
         changed = self._get_object(workspace_id).deactivate()
-        logger.info(f"PUT: ws {workspace_id} deactivated")
+        logger.info(f"PUT: workspace {workspace_id} deactivated")
         db.session.commit()
         return changed
 
@@ -364,7 +362,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
-        logger.info(f"PUT: change ws {workspace_id} to readonly")
+        logger.info(f"PUT: change workspace {workspace_id} to readonly")
         return self._get_object(workspace_id).readonly
 
 

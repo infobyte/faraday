@@ -90,34 +90,6 @@ NOTIFICATION_METHODS = [
     'websocket'
 ]
 
-# CVSSV2 ENUMS
-ACCESS_VECTOR_TYPES = ['Local', 'Network', 'Adjacent']
-ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
-AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
-IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
-
-# CVSSV2 SCORE
-ACCESS_VECTOR_SCORE = {'Local': 0.395, 'Adjacent': 0.646, 'Network': 1.0}
-ACCESS_COMPLEXITY_SCORE = {'Low': 0.71, 'Medium': 0.61, 'High': 0.35}
-AUTHENTICATION_SCORE = {'None': 0.704, 'Single': 0.56, 'Multiple': 0.45}
-IMPACT_SCORES_V2 = {'None': 0.0, 'Partial': 0.275, 'Complete': 0.660}
-
-# CVSSV3 ENUMS
-ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
-ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
-PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
-USER_INTERACTION_TYPES = ['None', 'Required']
-SCOPE_TYPES = ['Unchanged', 'Changed']
-IMPACT_TYPES_V3 = ['None', 'Low', 'High']
-
-# CVSSV3 SCORE
-ATTACK_VECTOR_SCORES = {'Network': 0.85, 'Adjacent': 0.62, 'Local': 0.55, 'Physical': 0.2}
-ATTACK_COMPLEXITY_SCORES = {'Low': 0.77, 'High': 0.44}
-PRIVILEGES_REQUIRED_SCORES = {'Unchanged': {'None': 0.85, 'Low': 0.62, 'High': 0.27}, 'Changed': {'None': 0.85, 'Low': 0.68, 'High': 0.5}}
-USER_INTERACTION_SCORES = {'None': 0.85, 'Required': 0.62}
-SCOPE_SCORES = {'Unchanged': 6.42, 'Changed': 7.52}
-IMPACT_SCORES_V3 = {'None': 0.0, 'Low': 0.22, 'High': 0.56}
-
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -1062,6 +1034,39 @@ class CVE(db.Model):
             raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
 
 
+class CVSS2GeneralConfig:
+    # CVSSV2 ENUMS
+    ACCESS_VECTOR_TYPES = ['Local', 'Network', 'Adjacent']
+    ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
+    AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
+    IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
+
+    # CVSSV2 SCORE
+    ACCESS_VECTOR_SCORE = {'Local': 0.395, 'Adjacent': 0.646, 'Network': 1.0}
+    ACCESS_COMPLEXITY_SCORE = {'Low': 0.71, 'Medium': 0.61, 'High': 0.35}
+    AUTHENTICATION_SCORE = {'None': 0.704, 'Single': 0.56, 'Multiple': 0.45}
+    IMPACT_SCORES_V2 = {'None': 0.0, 'Partial': 0.275, 'Complete': 0.660}
+
+
+class CVSS3GeneralConfig:
+    # CVSSV3 ENUMS
+    ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
+    ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
+    PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
+    USER_INTERACTION_TYPES = ['None', 'Required']
+    SCOPE_TYPES = ['Unchanged', 'Changed']
+    IMPACT_TYPES_V3 = ['None', 'Low', 'High']
+
+    # CVSSV3 SCORE
+    ATTACK_VECTOR_SCORES = {'Network': 0.85, 'Adjacent': 0.62, 'Local': 0.55, 'Physical': 0.2}
+    ATTACK_COMPLEXITY_SCORES = {'Low': 0.77, 'High': 0.44}
+    PRIVILEGES_REQUIRED_SCORES = {'Unchanged': {'None': 0.85, 'Low': 0.62, 'High': 0.27},
+                                  'Changed': {'None': 0.85, 'Low': 0.68, 'High': 0.5}}
+    USER_INTERACTION_SCORES = {'None': 0.85, 'Required': 0.62}
+    SCOPE_SCORES = {'Unchanged': 6.42, 'Changed': 7.52}
+    IMPACT_SCORES_V3 = {'None': 0.0, 'Low': 0.22, 'High': 0.56}
+
+
 class CVSSBase(db.Model):
     __tablename__ = "cvss_base"
     id = Column(Integer, primary_key=True)
@@ -1082,22 +1087,22 @@ class CVSSBase(db.Model):
 class CVSSV2(CVSSBase):
     __tablename__ = "cvss_v2"
     id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
-    access_vector = Column(Enum(*ACCESS_VECTOR_TYPES, name="cvss_access_vector"), nullable=False)
-    access_complexity = Column(Enum(*ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"), nullable=False)
-    authentication = Column(Enum(*AUTHENTICATION_TYPES, name="cvss_authentication"), nullable=False)
-    confidentiality_impact = Column(Enum(*IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
-    integrity_impact = Column(Enum(*IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
-    availability_impact = Column(Enum(*IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
+    access_vector = Column(Enum(*CVSS2GeneralConfig.ACCESS_VECTOR_TYPES, name="cvss_access_vector"), nullable=False)
+    access_complexity = Column(Enum(*CVSS2GeneralConfig.ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"), nullable=False)
+    authentication = Column(Enum(*CVSS2GeneralConfig.AUTHENTICATION_TYPES, name="cvss_authentication"), nullable=False)
+    confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
+    integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
+    availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': "v2"
     }
 
     def exploitability(self):
-        return 20 * ACCESS_VECTOR_SCORE[self.access_vector] * ACCESS_COMPLEXITY_SCORE[self.access_complexity] * AUTHENTICATION_SCORE[self.authentication]
+        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
 
     def impact(self):
-        return 10.41 * (1 - (1 - IMPACT_SCORES_V2[self.confidentiality_impact]) * (1 - IMPACT_SCORES_V2[self.integrity_impact]) * (1 - IMPACT_SCORES_V2[self.availability_impact]))
+        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
 
     def fimpact(self):
         if self.impact() == 0:
@@ -1116,21 +1121,21 @@ class CVSSV2(CVSSBase):
 class CVSSV3(CVSSBase):
     __tablename__ = "cvss_v3"
     id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
-    attack_vector = Column(Enum(*ATTACK_VECTOR_TYPES, name="cvss_attack_vector"), nullable=False)
-    attack_complexity = Column(Enum(*ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"), nullable=False)
-    privileges_required = Column(Enum(*PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"), nullable=False)
-    user_interaction = Column(Enum(*USER_INTERACTION_TYPES, name="cvss_user_interaction"), nullable=False)
-    scope = Column(Enum(*SCOPE_TYPES, name="cvss_scope"), nullable=False)
-    confidentiality_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
-    integrity_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
-    availability_impact = Column(Enum(*IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
+    attack_vector = Column(Enum(*CVSS3GeneralConfig.ATTACK_VECTOR_TYPES, name="cvss_attack_vector"), nullable=False)
+    attack_complexity = Column(Enum(*CVSS3GeneralConfig.ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"), nullable=False)
+    privileges_required = Column(Enum(*CVSS3GeneralConfig.PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"), nullable=False)
+    user_interaction = Column(Enum(*CVSS3GeneralConfig.USER_INTERACTION_TYPES, name="cvss_user_interaction"), nullable=False)
+    scope = Column(Enum(*CVSS3GeneralConfig.SCOPE_TYPES, name="cvss_scope"), nullable=False)
+    confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
+    integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
+    availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': "v3"
     }
 
     def isc_base(self):
-        return 1 - ((1 - IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - IMPACT_SCORES_V3[self.integrity_impact]) * (1 - IMPACT_SCORES_V3[self.availability_impact]))
+        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
 
     def impact(self):
         if self.scope == 'Unchanged':
@@ -1139,7 +1144,7 @@ class CVSSV3(CVSSBase):
             return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
 
     def exploitability(self):
-        return 8.22 * ATTACK_VECTOR_SCORES[self.attack_vector] * ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * USER_INTERACTION_SCORES[self.user_interaction]
+        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
 
     @hybrid_property
     def base_score(self):

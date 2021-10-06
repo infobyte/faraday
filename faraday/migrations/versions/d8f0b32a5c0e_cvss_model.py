@@ -1,7 +1,7 @@
 """cvss_model
 
 Revision ID: d8f0b32a5c0e
-Revises: 89115e133f0a
+Revises: 1574fbcf72f5
 Create Date: 2021-09-01 10:30:06.693843+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'd8f0b32a5c0e'
-down_revision = '89115e133f0a'
+down_revision = '1574fbcf72f5'
 branch_labels = None
 depends_on = None
 

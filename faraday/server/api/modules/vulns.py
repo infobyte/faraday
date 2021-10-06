@@ -524,8 +524,16 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
-        obj.cve = [cve for cve in references if re.match(CVE.CVE_PATTERN, cve.upper())] +\
-                  [cve for cve in cve_list if re.match(CVE.CVE_PATTERN, cve.upper())]
+
+        # parse cve and reference. Should be temporal.
+        parsed_cve_list = []
+        for cve in cve_list:
+            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+        for cve in references:
+            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+        obj.cve = parsed_cve_list
 
         db.session.flush()
 

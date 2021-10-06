@@ -24,6 +24,7 @@ from sqlalchemy import (
     UniqueConstraint,
     event,
     Table,
+    literal,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -183,6 +184,19 @@ def _make_active_agents_count_property():
         # I suppose that we're using PostgreSQL, that can't compare
         # booleans with integers
         query = query.where(text('agent.active = true'))
+
+    return query
+
+
+def _last_run_agent_date():
+    query = select([text('executor.last_run')])
+
+    from_clause = table('executor')\
+        .join(Agent, text('executor.agent_id = agent.id'))\
+        .join(text('association_workspace_and_agents_table'),
+              text('agent.id = association_workspace_and_agents_table.agent_id '
+                   'and association_workspace_and_agents_table.workspace_id = workspace.id'))
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')).order_by(Executor.last_run.desc()).limit(1)
 
     return query
 
@@ -1762,6 +1776,9 @@ class Workspace(Metadata):
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
     active_agents_count = query_expression()
+    last_run_agent_date = query_expression()
+    vulnerability_open_count = query_expression(literal(0))
+    vulnerability_confirmed_count = query_expression(literal(0))
 
     vulnerability_informational_count = query_expression()
     vulnerability_medium_count = query_expression()
@@ -2319,6 +2336,7 @@ class EventType(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(64), unique=True, nullable=False)
     async_event = Column(Boolean, default=False)
+    enabled = Column(Boolean, default=True)
 
 
 allowed_roles_association = db.Table('notification_allowed_roles',

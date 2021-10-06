@@ -144,6 +144,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['critical_vulns'] == 0
         assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
+        assert res.json['last_run_agent_date'] is None
+        assert res.json['stats']['opened_vulns'] == 10
+        assert res.json['stats']['confirmed_vulns'] == 2
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'
@@ -173,6 +176,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['critical_vulns'] == 0
         assert res.json['stats']['info_vulns'] == 3
         assert res.json['stats']['total_vulns'] == 3
+        assert res.json['stats']['opened_vulns'] == 0
+        assert res.json['stats']['confirmed_vulns'] == 3
 
     @pytest.mark.parametrize('querystring', [
         '?status=asdfss',
@@ -227,19 +232,20 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=0',
         '?confirmed=false'
     ])
-    def test_vuln_count_confirmed_2(self,
-                                  vulnerability_factory,
-                                  test_client,
-                                  session,
-                                  querystring):
+    def test_vuln_count_confirmed_2(self, vulnerability_factory, test_client, session, querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False)
+                                                   confirmed=False, severity='critical', status='open')
         vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
-                                                    confirmed=True)
+                                                    confirmed=True, status='open')
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
+        assert res.json['stats']['std_vulns'] == 8
+        assert res.json['stats']['critical_vulns'] == 8
+        assert res.json['stats']['info_vulns'] == 0
+        assert res.json['stats']['opened_vulns'] == 13
+        assert res.json['stats']['confirmed_vulns'] == 0
         assert res.json['stats']['total_vulns'] == 8
 
     def test_create_fails_with_valid_duration(self, session, test_client):

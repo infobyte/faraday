@@ -162,9 +162,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
                                                     confirmed=True, status='closed', severity='critical', create_date=create_date_21_days_ago)
 
-        create_date_20_days_ago = datetime.datetime.today() - datetime.timedelta(days=20)
-        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
-                                                    confirmed=True, status='open', severity='critical', create_date=create_date_20_days_ago)
         create_date_today = datetime.datetime.today()
         vulns += vulnerability_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open', severity='high', create_date=create_date_today)

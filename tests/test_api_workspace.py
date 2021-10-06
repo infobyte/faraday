@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+import datetime
 import time
 import pytest
 from posixpath import join as urljoin
@@ -147,6 +147,45 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['last_run_agent_date'] is None
         assert res.json['stats']['opened_vulns'] == 10
         assert res.json['stats']['confirmed_vulns'] == 2
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    def test_histogram(self,
+                        vulnerability_factory,
+                        vulnerability_web_factory,
+                        test_client,
+                        session):
+        create_date_last_month = datetime.datetime.today() - datetime.timedelta(days=30)
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                                   confirmed=False, status='open', severity='critical', create_date=create_date_last_month)
+
+        create_date_21_days_ago = datetime.datetime.today() - datetime.timedelta(days=21)
+        vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
+                                                    confirmed=True, status='closed', severity='critical', create_date=create_date_21_days_ago)
+
+        create_date_20_days_ago = datetime.datetime.today() - datetime.timedelta(days=20)
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open', severity='critical', create_date=create_date_20_days_ago)
+        create_date_today = datetime.datetime.today()
+        vulns += vulnerability_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open', severity='high', create_date=create_date_today)
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open', severity='critical', create_date=create_date_today)
+        create_date_5_days_ago = datetime.datetime.today() - datetime.timedelta(days=5)
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open', severity='critical', create_date=create_date_5_days_ago)
+
+        session.add_all(vulns)
+        session.commit()
+        res = test_client.get('/v3/ws?histogram=true')
+        assert res.status_code == 200
+        ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(ws[0]) == 2
+        if ws[0][0]['date'] == create_date_today.strftime('%Y-%m-%d'):
+            assert ws[0][1] == {'critical': 2, 'date': create_date_5_days_ago.strftime('%Y-%m-%d')}
+            assert ws[0][0] == {'critical': 2, 'high': 2, 'date': create_date_today.strftime('%Y-%m-%d')}
+        else:
+            assert ws[0][0] == {'critical': 2, 'date': create_date_5_days_ago.strftime('%Y-%m-%d')}
+            assert ws[0][1] == {'critical': 2, 'high': 2, 'date': create_date_today.strftime('%Y-%m-%d')}
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'

@@ -23,6 +23,7 @@ from faraday.server.models import (db,
                                    Workspace,
                                    _make_vuln_count_property,
                                    Vulnerability,
+                                   VulnerabilityGeneric,
                                    _make_active_agents_count_property,
                                    count_vulnerability_severities,
                                    _last_run_agent_date)
@@ -146,17 +147,21 @@ class WorkspaceView(ReadWriteView, FilterMixin):
 
         histogram_dict = dict()
         if histogram:
-            h = db.session.query(func.count(Vulnerability.severity), Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
-                .join(Vulnerability)\
-                .filter(Vulnerability.create_date > (datetime.today() - timedelta(days=20)), Vulnerability.severity.in_(['medium', 'high', 'critical']))\
-                .group_by(Vulnerability.severity, func.date_trunc('day', Vulnerability.create_date), Workspace.name)\
-                .order_by(func.date_trunc('day', Vulnerability.create_date).asc(), Vulnerability.severity, Workspace.name).all()
+            h = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity, func.date_trunc('day', VulnerabilityGeneric.create_date), Workspace.name)\
+                .join(VulnerabilityGeneric)\
+                .filter(VulnerabilityGeneric.create_date > (datetime.today() - timedelta(days=20)), VulnerabilityGeneric.severity.in_(['medium', 'high', 'critical']))\
+                .group_by(VulnerabilityGeneric.severity, func.date_trunc('day', VulnerabilityGeneric.create_date), Workspace.name)\
+                .order_by(func.date_trunc('day', VulnerabilityGeneric.create_date).asc(), VulnerabilityGeneric.severity, Workspace.name).all()
 
             current_ws = None
+            current_date = None
             for count, severity, create_date, workspace_name in h:
                 if current_ws != workspace_name:
                     current_ws = workspace_name
-                    histogram_dict[current_ws] = [{'date': create_date}]
+                    histogram_dict[current_ws] = []
+                if current_date != create_date:
+                    current_date = create_date
+                    histogram_dict[current_ws].append({'date': current_date})
                 histogram_dict[current_ws][len(histogram_dict[current_ws]) - 1][severity] = count
 
         objects = []

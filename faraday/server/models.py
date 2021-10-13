@@ -1036,35 +1036,35 @@ class CVE(db.Model):
 
 class CVSS2GeneralConfig:
     # CVSSV2 ENUMS
-    ACCESS_VECTOR_TYPES = ['Local', 'Network', 'Adjacent']
-    ACCESS_COMPLEXITY_TYPES = ['Low', 'Medium', 'High']
-    AUTHENTICATION_TYPES = ['None', 'Single', 'Multiple']
-    IMPACT_TYPES_V2 = ['None', 'Partial', 'Complete']
+    ACCESS_VECTOR_TYPES = ['L', 'N', 'A']
+    ACCESS_COMPLEXITY_TYPES = ['L', 'M', 'H']
+    AUTHENTICATION_TYPES = ['N', 'S', 'M']
+    IMPACT_TYPES_V2 = ['N', 'P', 'C']
 
     # CVSSV2 SCORE
-    ACCESS_VECTOR_SCORE = {'Local': 0.395, 'Adjacent': 0.646, 'Network': 1.0}
-    ACCESS_COMPLEXITY_SCORE = {'Low': 0.71, 'Medium': 0.61, 'High': 0.35}
-    AUTHENTICATION_SCORE = {'None': 0.704, 'Single': 0.56, 'Multiple': 0.45}
-    IMPACT_SCORES_V2 = {'None': 0.0, 'Partial': 0.275, 'Complete': 0.660}
+    ACCESS_VECTOR_SCORE = {'L': 0.395, 'A': 0.646, 'N': 1.0}
+    ACCESS_COMPLEXITY_SCORE = {'L': 0.71, 'M': 0.61, 'H': 0.35}
+    AUTHENTICATION_SCORE = {'N': 0.704, 'S': 0.56, 'M': 0.45}
+    IMPACT_SCORES_V2 = {'N': 0.0, 'P': 0.275, 'C': 0.660}
 
 
 class CVSS3GeneralConfig:
     # CVSSV3 ENUMS
-    ATTACK_VECTOR_TYPES = ['Network', 'Adjacent', 'Local', 'Physical']
-    ATTACK_COMPLEXITY_TYPES = ['Low', 'High']
-    PRIVILEGES_REQUIRED_TYPES = ['None', 'Low', 'High']
-    USER_INTERACTION_TYPES = ['None', 'Required']
-    SCOPE_TYPES = ['Unchanged', 'Changed']
-    IMPACT_TYPES_V3 = ['None', 'Low', 'High']
+    ATTACK_VECTOR_TYPES = ['N', 'A', 'L', 'P']
+    ATTACK_COMPLEXITY_TYPES = ['L', 'H']
+    PRIVILEGES_REQUIRED_TYPES = ['N', 'L', 'H']
+    USER_INTERACTION_TYPES = ['N', 'R']
+    SCOPE_TYPES = ['U', 'C']
+    IMPACT_TYPES_V3 = ['N', 'L', 'H']
 
     # CVSSV3 SCORE
-    ATTACK_VECTOR_SCORES = {'Network': 0.85, 'Adjacent': 0.62, 'Local': 0.55, 'Physical': 0.2}
+    ATTACK_VECTOR_SCORES = {'N': 0.85, 'A': 0.62, 'L': 0.55, 'P': 0.2}
     ATTACK_COMPLEXITY_SCORES = {'Low': 0.77, 'High': 0.44}
-    PRIVILEGES_REQUIRED_SCORES = {'Unchanged': {'None': 0.85, 'Low': 0.62, 'High': 0.27},
-                                  'Changed': {'None': 0.85, 'Low': 0.68, 'High': 0.5}}
-    USER_INTERACTION_SCORES = {'None': 0.85, 'Required': 0.62}
-    SCOPE_SCORES = {'Unchanged': 6.42, 'Changed': 7.52}
-    IMPACT_SCORES_V3 = {'None': 0.0, 'Low': 0.22, 'High': 0.56}
+    PRIVILEGES_REQUIRED_SCORES = {'U': {'N': 0.85, 'L': 0.62, 'H': 0.27},
+                                  'C': {'N': 0.85, 'L': 0.68, 'H': 0.5}}
+    USER_INTERACTION_SCORES = {'N': 0.85, 'R': 0.62}
+    SCOPE_SCORES = {'U': 6.42, 'C': 7.52}
+    IMPACT_SCORES_V3 = {'N': 0.0, 'L': 0.22, 'H': 0.56}
 
 
 class CVSSBase(db.Model):

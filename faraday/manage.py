@@ -309,5 +309,3 @@ cli.add_command(settings)
 
 if __name__ == '__main__':
     cli()
-
-# I'm Py3

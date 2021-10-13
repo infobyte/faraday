@@ -196,4 +196,3 @@ def validate_rules(rules):
 
     logger.info('<-- Rules OK')
     return True
-# I'm Py3

@@ -22,4 +22,3 @@ def upgrade():
 
 def downgrade():
     op.drop_column('executive_report', 'markdown')
-# I'm Py3

@@ -667,5 +667,3 @@ class RuleActionFactory(FaradayFactory):
     class Meta:
         model = RuleAction
         sqlalchemy_session = db.session
-
-# I'm Py3

@@ -68,6 +68,3 @@ def test_child_parent_verification_event_changing_id_fails(session, workspace,
 
     with pytest.raises(AssertionError):
         session.commit()
-
-
-# I'm Py3

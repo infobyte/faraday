@@ -69,5 +69,3 @@ def test_unique_fields_workspace(obj_class, expected_unique_fields, session):
     unique_constraints = get_unique_fields(session, object_)
     for unique_constraint in unique_constraints:
         assert unique_constraint == expected_unique_fields
-
-# I'm Py3

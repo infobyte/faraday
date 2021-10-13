@@ -42,6 +42,3 @@ def test_manage_migrate():
         print(std)
         print(err)
         assert subproc.returncode == 0, ('manage migrate failed!', std, err)
-
-
-# I'm Py3

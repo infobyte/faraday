@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 ###
 # Faraday Penetration Test IDE
@@ -83,7 +82,7 @@ def validate_conditions(conditions):
 
 
 def validate_values(values, rule, rule_id):
-    r = re.findall("\{\{(.*?)\}\}", json.dumps(rule))
+    r = re.findall(r"\{\{(.*?)\}\}", json.dumps(rule))
     _vars = list(set(r))
     keys = []
     for index, item in enumerate(values):
@@ -119,7 +118,7 @@ def validate_action(actions):
 
         if action.startswith('--ALERT:'):
             expression = action.strip('--ALERT:')
-            if expression == '' or re.match("^(.+\@.+\..+)$", expression) is None:
+            if expression == '' or re.match(r"^(.+\@.+\..+)$", expression) is None:
                 return False
 
         if action.startswith('--EXECUTE:'):

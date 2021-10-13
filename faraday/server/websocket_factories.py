@@ -106,11 +106,11 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     return self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
                 with get_app().app_context():
-                    (agent_id,) = [
+                    (agent_id,) = (
                         k
                         for (k, v) in connected_agents.items()
                         if v == self
-                    ]
+                    )
                     agent = Agent.query.get(agent_id)
                     assert agent is not None  # TODO the agent could be deleted here
                 return self.factory.leave_agent(self, agent)
@@ -120,11 +120,11 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                         logger.warning(f'Missing executor_name param in message: {message}')
                         return True
 
-                    (agent_id,) = [
+                    (agent_id,) = (
                         k
                         for (k, v) in connected_agents.items()
                         if v == self
-                    ]
+                    )
                     agent = Agent.query.get(agent_id)
                     assert agent is not None  # TODO the agent could be deleted here
 

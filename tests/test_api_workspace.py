@@ -355,7 +355,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.status_code == 201
         assert set(res.json['scope']) == set(desired_scope)
         workspace = Workspace.query.get(res.json['id'])
-        assert set(s.name for s in workspace.scope) == set(desired_scope)
+        assert {s.name for s in workspace.scope} == set(desired_scope)
 
     def test_update_with_scope(self, session, test_client, workspace):
         session.add(Scope(name='test.com', workspace=workspace))
@@ -369,7 +369,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.put(self.url(obj=workspace), data=raw_data)
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
-        assert set(s.name for s in workspace.scope) == set(desired_scope)
+        assert {s.name for s in workspace.scope} == set(desired_scope)
 
     @pytest.mark.skip  # TODO fix fox sqlite
     def test_list_retrieves_all_items_from(self, test_client):

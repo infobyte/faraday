@@ -1,4 +1,3 @@
-
 import pytest
 from flask_security.utils import hash_password
 from itsdangerous import TimedJSONWebSignatureSerializer

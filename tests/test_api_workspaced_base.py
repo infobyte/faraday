@@ -1,11 +1,9 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from builtins import str
 from posixpath import join as urljoin
 
 """Generic tests for APIs prefixed with a workspace_name"""
@@ -103,7 +101,7 @@ class RetrieveTestsMixin:
         res = test_client.get(self.url(self.first_object, second_workspace))
         assert res.status_code == 404
 
-    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', 'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
         url = self.url(object_id)

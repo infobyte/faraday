@@ -144,8 +144,8 @@ def validate_user_unique_field(ctx, param, value):
         except OperationalError:
             logger = logging.getLogger(__name__)
             logger.error(
-                ('Could not connect to PostgreSQL. Please check: '
-                 'if database is running or if the configuration settings are correct.')
+                'Could not connect to PostgreSQL. Please check: '
+                 'if database is running or if the configuration settings are correct.'
             )
             sys.exit(1)
 
@@ -200,9 +200,9 @@ def create_tables():
         if not conn_string:
             logger = logging.getLogger(__name__)
             logger.error(
-                ('No database configuration found. Please check: '
+                'No database configuration found. Please check: '
                  'if the database is running or if the configuration settings are correct. '
-                 'For first time installations execute: faraday-manage initdb')
+                 'For first time installations execute: faraday-manage initdb'
             )
             sys.exit(1)
         InitDB()._create_tables(conn_string)

@@ -1,4 +1,3 @@
-
 import logging
 import faraday.server.config
 from faraday.server.web import get_app

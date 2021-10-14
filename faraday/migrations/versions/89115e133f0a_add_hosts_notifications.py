@@ -38,8 +38,11 @@ def upgrade():
             roles = session.query(Role).filter(Role.name.in_(config['roles'])).all()
             if not roles:
                 raise ValueError(f"Roles {config['roles']} not exist.")
-            event_type_obj = EventType(name=event_type)
-            n = NotificationSubscription(event_type=event_type_obj, allowed_roles=roles)
+
+            session.execute(f"INSERT INTO event_type (name) VALUES ('{event_type}')")
+            event_type_id = session.query(EventType.id).filter(EventType.name == event_type).one()
+            n = NotificationSubscription(event_type_id=event_type_id, allowed_roles=roles)
+
             ns = NotificationSubscriptionWebSocketConfig(subscription=n,
                                                          active=True,
                                                          role_level=True)
@@ -53,7 +56,11 @@ def downgrade():
 
     for config in notifications_config:
         for event_type in config['event_types']:
-            event_type_objs = session.query(EventType).filter(EventType.name == event_type).all()
-            for event_type_obj in event_type_objs:
-                session.delete(event_type_obj)
+            event_type_id = session.query(EventType.id).filter(EventType.name == event_type).one()
+            subscription = session.query(NotificationSubscription).filter(NotificationSubscription.event_type_id == event_type_id).one()
+            ns = session.query(NotificationSubscriptionWebSocketConfig).filter(NotificationSubscriptionWebSocketConfig.subscription == subscription).one()
+            session.delete(ns)
+            session.delete(subscription)
             session.commit()
+        name_list = ",".join([f"'{elem}'" for elem in config["event_types"]])
+        session.execute(f'DELETE FROM event_type WHERE name IN ({name_list})')

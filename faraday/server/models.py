@@ -5,6 +5,7 @@ import json
 import logging
 import math
 import operator
+import re
 import string
 from datetime import datetime, timedelta
 from functools import partial
@@ -1035,6 +1036,14 @@ class CVE(db.Model):
 
 
 class CVSS2GeneralConfig:
+    VERSION = '2'
+    REGEX = 'AV:(?P<access_vector>[LAN])' \
+            '/AC:(?P<access_complexity>[HML])' \
+            '/Au:(?P<authentication>[MSN])' \
+            '/C:(?P<confidentiality>[NPC])' \
+            '/I:(?P<integrity>[NPC])' \
+            '/A:(?P<availability>[NPC])'
+
     # CVSSV2 ENUMS
     ACCESS_VECTOR_TYPES = ['L', 'N', 'A']
     ACCESS_COMPLEXITY_TYPES = ['L', 'M', 'H']
@@ -1049,6 +1058,16 @@ class CVSS2GeneralConfig:
 
 
 class CVSS3GeneralConfig:
+    VERSION = '3'
+    REGEX = 'AV:(?P<attack_vector>[LANP])' \
+            '/AC:(?P<attack_complexity>[HL])' \
+            '/PR:(?P<privileges_required>[NLH])' \
+            '/UI:(?P<user_interaction>[NR])' \
+            '/S:(?P<scope>[UC])' \
+            '/C:(?P<confidentiality>[NLH])' \
+            '/I:(?P<integrity>[NLH])' \
+            '/A:(?P<availability>[NLH])'
+
     # CVSSV3 ENUMS
     ATTACK_VECTOR_TYPES = ['N', 'A', 'L', 'P']
     ATTACK_COMPLEXITY_TYPES = ['L', 'H']
@@ -1059,7 +1078,7 @@ class CVSS3GeneralConfig:
 
     # CVSSV3 SCORE
     ATTACK_VECTOR_SCORES = {'N': 0.85, 'A': 0.62, 'L': 0.55, 'P': 0.2}
-    ATTACK_COMPLEXITY_SCORES = {'Low': 0.77, 'High': 0.44}
+    ATTACK_COMPLEXITY_SCORES = {'L': 0.77, 'H': 0.44}
     PRIVILEGES_REQUIRED_SCORES = {'U': {'N': 0.85, 'L': 0.62, 'H': 0.27},
                                   'C': {'N': 0.85, 'L': 0.68, 'H': 0.5}}
     USER_INTERACTION_SCORES = {'N': 0.85, 'R': 0.62}
@@ -1072,6 +1091,7 @@ class CVSSBase(db.Model):
     id = Column(Integer, primary_key=True)
     version = Column(String(8), nullable=False)
     vector_string = Column(String(64), nullable=False)
+    base_score = Column(Float, nullable=True)
 
     type = Column(String(24))
 
@@ -1087,16 +1107,34 @@ class CVSSBase(db.Model):
 class CVSSV2(CVSSBase):
     __tablename__ = "cvss_v2"
     id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
-    access_vector = Column(Enum(*CVSS2GeneralConfig.ACCESS_VECTOR_TYPES, name="cvss_access_vector"), nullable=False)
-    access_complexity = Column(Enum(*CVSS2GeneralConfig.ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"), nullable=False)
-    authentication = Column(Enum(*CVSS2GeneralConfig.AUTHENTICATION_TYPES, name="cvss_authentication"), nullable=False)
-    confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
-    integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
-    availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"), nullable=False)
+    access_vector = Column(Enum(*CVSS2GeneralConfig.ACCESS_VECTOR_TYPES, name="cvss_access_vector"))
+    access_complexity = Column(Enum(*CVSS2GeneralConfig.ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"))
+    authentication = Column(Enum(*CVSS2GeneralConfig.AUTHENTICATION_TYPES, name="cvss_authentication"))
+    confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
+    integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
+    availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
 
     __mapper_args__ = {
         'polymorphic_identity': "v2"
     }
+
+    def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
+        vector_string_parsed = re.match(CVSS2GeneralConfig.REGEX, vector_string)
+        if vector_string_parsed:
+            base_score = self.calculate_base_score()
+            super().__init__(
+                             version=CVSS2GeneralConfig.VERSION,
+                             vector_string=vector_string,
+                             access_vector=vector_string_parsed['access_vector'],
+                             access_complexity=vector_string_parsed['access_complexity'],
+                             authentication=vector_string_parsed['authentication'],
+                             confidentiality_impact=vector_string_parsed['confidentiality'],
+                             integrity_impact=vector_string_parsed['integrity'],
+                             availability_impact=vector_string_parsed['availability'],
+                             base_score=base_score,
+                             **kwargs)
+        else:
+            super().__init__(version=CVSS2GeneralConfig.VERSION, base_score=base_score, vector_string=vector_string, **kwargs)
 
     def exploitability(self):
         return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
@@ -1109,8 +1147,7 @@ class CVSSV2(CVSSBase):
             return 0
         return 1.176
 
-    @hybrid_property
-    def base_score(self):
+    def calculate_base_score(self):
         score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
         # round up score
         # Where “Round up” is defined as the smallest number, specified to one decimal place,
@@ -1121,18 +1158,38 @@ class CVSSV2(CVSSBase):
 class CVSSV3(CVSSBase):
     __tablename__ = "cvss_v3"
     id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
-    attack_vector = Column(Enum(*CVSS3GeneralConfig.ATTACK_VECTOR_TYPES, name="cvss_attack_vector"), nullable=False)
-    attack_complexity = Column(Enum(*CVSS3GeneralConfig.ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"), nullable=False)
-    privileges_required = Column(Enum(*CVSS3GeneralConfig.PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"), nullable=False)
-    user_interaction = Column(Enum(*CVSS3GeneralConfig.USER_INTERACTION_TYPES, name="cvss_user_interaction"), nullable=False)
-    scope = Column(Enum(*CVSS3GeneralConfig.SCOPE_TYPES, name="cvss_scope"), nullable=False)
-    confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
-    integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
-    availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"), nullable=False)
+    attack_vector = Column(Enum(*CVSS3GeneralConfig.ATTACK_VECTOR_TYPES, name="cvss_attack_vector"))
+    attack_complexity = Column(Enum(*CVSS3GeneralConfig.ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"))
+    privileges_required = Column(Enum(*CVSS3GeneralConfig.PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"))
+    user_interaction = Column(Enum(*CVSS3GeneralConfig.USER_INTERACTION_TYPES, name="cvss_user_interaction"))
+    scope = Column(Enum(*CVSS3GeneralConfig.SCOPE_TYPES, name="cvss_scope"))
+    confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
+    integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
+    availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
 
     __mapper_args__ = {
         'polymorphic_identity': "v3"
     }
+
+    def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
+        vector_string_parsed = re.match(CVSS3GeneralConfig.REGEX, vector_string)
+        if vector_string_parsed:
+            base_score = self.calculate_base_score()
+            super().__init__(
+                             version=CVSS3GeneralConfig.VERSION,
+                             vector_string=vector_string,
+                             attack_vector=vector_string_parsed['attack_vector'],
+                             attack_complexity=vector_string_parsed['attack_complexity'],
+                             privileges_required=vector_string_parsed['privileges_required'],
+                             user_interaction=vector_string_parsed['user_interaction'],
+                             scope=vector_string_parsed['scope'],
+                             confidentiality_impact=vector_string_parsed['confidentiality'],
+                             integrity_impact=vector_string_parsed['integrity'],
+                             availability_impact=vector_string_parsed['availability'],
+                             base_score=base_score,
+                             **kwargs)
+        else:
+            super().__init__(version=CVSS3GeneralConfig.VERSION, base_score=base_score, vector_string=vector_string, **kwargs)
 
     def isc_base(self):
         return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
@@ -1146,8 +1203,7 @@ class CVSSV3(CVSSBase):
     def exploitability(self):
         return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
 
-    @hybrid_property
-    def base_score(self):
+    def calculate_base_score(self):
         score = 10
         if self.impact() <= 0:
             return 0

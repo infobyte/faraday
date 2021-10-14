@@ -39,7 +39,7 @@ def upgrade():
             if not roles:
                 raise ValueError(f"Roles {config['roles']} not exist.")
 
-            session.execute(f"INSERT INTO event_type (name) VALUES ('{event_type}')")
+            session.execute(f"INSERT INTO event_type (name) VALUES ('{event_type}')")  # nosec
             event_type_id = session.query(EventType.id).filter(EventType.name == event_type).one()
             n = NotificationSubscription(event_type_id=event_type_id, allowed_roles=roles)
 
@@ -63,4 +63,4 @@ def downgrade():
             session.delete(subscription)
             session.commit()
         name_list = ",".join([f"'{elem}'" for elem in config["event_types"]])
-        session.execute(f'DELETE FROM event_type WHERE name IN ({name_list})')
+        session.execute(f'DELETE FROM event_type WHERE name IN ({name_list})')  # nosec

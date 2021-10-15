@@ -1733,7 +1733,7 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'low' then 1 else null end) as count_12,
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
              COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14,
-             COUNT(case when vulnerability.status = 'open' then 1 else null end) as count_15,
+             COUNT(case when vulnerability.status = 'open' OR vulnerability.status='re-opened' then 1 else null end) as count_15,
              COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id

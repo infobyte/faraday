@@ -1121,7 +1121,6 @@ class CVSSV2(CVSSBase):
     def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
         vector_string_parsed = re.match(CVSS2GeneralConfig.REGEX, vector_string)
         if vector_string_parsed:
-            base_score = self.calculate_base_score()
             super().__init__(
                              version=CVSS2GeneralConfig.VERSION,
                              vector_string=vector_string,
@@ -1131,8 +1130,8 @@ class CVSSV2(CVSSBase):
                              confidentiality_impact=vector_string_parsed['confidentiality'],
                              integrity_impact=vector_string_parsed['integrity'],
                              availability_impact=vector_string_parsed['availability'],
-                             base_score=base_score,
                              **kwargs)
+            self.base_score = self.calculate_base_score()
         else:
             super().__init__(version=CVSS2GeneralConfig.VERSION, base_score=base_score, vector_string=vector_string, **kwargs)
 
@@ -1172,9 +1171,8 @@ class CVSSV3(CVSSBase):
     }
 
     def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
-        vector_string_parsed = re.match(CVSS3GeneralConfig.REGEX, vector_string)
+        vector_string_parsed = re.match(CVSS3GeneralConfig.REGEX, vector_string if vector_string else '')
         if vector_string_parsed:
-            base_score = self.calculate_base_score()
             super().__init__(
                              version=CVSS3GeneralConfig.VERSION,
                              vector_string=vector_string,
@@ -1186,8 +1184,8 @@ class CVSSV3(CVSSBase):
                              confidentiality_impact=vector_string_parsed['confidentiality'],
                              integrity_impact=vector_string_parsed['integrity'],
                              availability_impact=vector_string_parsed['availability'],
-                             base_score=base_score,
                              **kwargs)
+            self.base_score = self.calculate_base_score()
         else:
             super().__init__(version=CVSS3GeneralConfig.VERSION, base_score=base_score, vector_string=vector_string, **kwargs)
 

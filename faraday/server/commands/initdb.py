@@ -124,6 +124,116 @@ class InitDB():
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise
 
+    def _create_initial_notifications_config(self):
+        from faraday.server.models import (db,  # pylint:disable=import-outside-toplevel
+                                           Role,  # pylint:disable=import-outside-toplevel
+                                           NotificationSubscription,  # pylint:disable=import-outside-toplevel
+                                           NotificationSubscriptionWebSocketConfig,  # pylint:disable=import-outside-toplevel
+                                           EventType,  # pylint:disable=import-outside-toplevel
+                                           User,  # pylint:disable=import-outside-toplevel
+                                           ObjectType)  # pylint:disable=import-outside-toplevel
+
+        admin = User.ADMIN_ROLE
+        pentester = User.PENTESTER_ROLE
+        asset_owner = User.ASSET_OWNER_ROLE
+        client = User.CLIENT_ROLE
+
+        default_initial_notifications_config = [
+            # Workspace
+            {'roles': [admin], 'event_types': ['new_workspace', 'update_workspace', 'delete_workspace']},
+            # Users
+            {'roles': [admin], 'event_types': ['new_user', 'update_user', 'delete_user']},
+            # Agents
+            {'roles': [admin, pentester], 'event_types': ['new_agent', 'update_agent', 'delete_agent']},
+            # Reports
+            {'roles': [admin, pentester, asset_owner],
+             'event_types': ['new_executivereport', 'update_executivereport', 'delete_executivereport']},
+            # Agent execution
+            {'roles': [admin, pentester, asset_owner], 'event_types': ['new_agentexecution']},
+            # Commands
+            {'roles': [admin, pentester, asset_owner], 'event_types': ['new_command']},
+            # Vulnerability
+            {'roles': [admin, pentester, asset_owner, client],
+             'event_types': ['new_vulnerability', 'update_vulnerability', 'delete_vulnerability']},
+            # Vulnerability Web
+            {'roles': [admin, pentester, asset_owner, client],
+             'event_types': ['new_vulnerabilityweb', 'update_vulnerabilityweb', 'delete_vulnerabilityweb']},
+            # Comments
+            {'roles': [admin, pentester, asset_owner, client], 'event_types': ['new_comment']},
+            # Comments
+            {'roles': [admin, pentester, asset_owner, client],
+             'event_types': ['new_host', 'update_host', 'delete_host']},
+        ]
+
+        event_types = [('new_workspace', False),
+                       ('new_agent', True),
+                       ('new_user', False),
+                       ('new_agentexecution', True),
+                       ('new_executivereport', True),
+                       ('new_vulnerability', False),
+                       ('new_command', True),
+                       ('new_comment', False),
+                       ('update_workspace', False),
+                       ('update_agent', False),
+                       ('update_user', False),
+                       ('update_executivereport', True),
+                       ('update_vulnerability', False),
+                       ('delete_workspace', False),
+                       ('delete_agent', False),
+                       ('delete_user', False),
+                       ('delete_executivereport', False),
+                       ('delete_vulnerability', False),
+                       ('new_vulnerabilityweb', False),
+                       ('update_vulnerabilityweb', False),
+                       ('delete_vulnerabilityweb', False),
+                       ('new_host', False),
+                       ('update_host', False),
+                       ('delete_host', False)
+                       ]
+
+        default_initial_enabled_notifications_config = ['new_workspace', 'update_executivereport', 'new_agentexecution', 'new_command', 'new_comment']
+
+        for event_type in event_types:
+            enabled = False
+            if event_type[0] in default_initial_enabled_notifications_config:
+                enabled = True
+            event_type_obj = EventType(name=event_type[0], async_event=event_type[1], enabled=enabled)
+            db.session.add(event_type_obj)
+
+        object_types = ['vulnerability',
+                        'vulnerabilityweb',
+                        'host',
+                        'credential',
+                        'service',
+                        'source_code',
+                        'comment',
+                        'executivereport',
+                        'workspace',
+                        'task',
+                        'agent',
+                        'agentexecution',
+                        'command',
+                        'user']
+
+        for object_type in object_types:
+            obj = ObjectType(name=object_type)
+            db.session.add(obj)
+            db.session.commit()
+
+        for config in default_initial_notifications_config:
+            for event_type in config['event_types']:
+                allowed_roles_objs = Role.query.filter(Role.name.in_(config['roles'])).all()
+                event_type_obj = EventType.query.filter(EventType.name == event_type).first()
+                n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
+                db.session.add(n)
+                db.session.commit()
+                active = False
+                if event_type in default_initial_enabled_notifications_config:
+                    active = True
+                ns = NotificationSubscriptionWebSocketConfig(subscription=n, active=active, role_level=True)
+                db.session.add(ns)
+                db.session.commit()
+
     def _create_admin_user(self, conn_string, choose_password, faraday_user_password):
         engine = create_engine(conn_string)
         # TODO change the random_password variable name, it is not always
@@ -356,3 +466,4 @@ class InitDB():
             command.stamp(alembic_cfg, "head")
             # TODO ADD RETURN TO PREV DIR
         self._create_roles(conn_string)
+        self._create_initial_notifications_config()

@@ -13,7 +13,7 @@ buildPythonPackage rec {
   pname =
     "marshmallow-sqlalchemy";
   version =
-    "0.25.0";
+    "0.26.1";
 
   src =
     fetchPypi {
@@ -21,7 +21,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0i39ckrixh1w9fmkm0wl868gvza72j5la0x6dd0cij9shf1iyjgi";
+        "0wval5lqak31zwrzmgi9c919lqk0dw1zxvwihif4nmaivrs5ylnq";
     };
 
   propagatedBuildInputs =

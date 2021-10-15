@@ -5,6 +5,7 @@
 import io
 import json
 import logging
+import re
 from base64 import b64encode, b64decode
 from json.decoder import JSONDecodeError
 from pathlib import Path
@@ -47,7 +48,8 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User
+    User,
+    CVE
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -108,6 +110,10 @@ class CustomMetadataSchema(MetadataSchema):
             return obj.creator_command_tool or 'Web UI'
 
 
+class CVESchema(AutoSchema):
+    name = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -122,7 +128,7 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
-    cve = fields.Method(serialize='get_cve_refs', default=[])
+    cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
@@ -183,9 +189,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_cwe_refs(self, obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
-
-    def get_cve_refs(self, obj):
-        return [reference for reference in obj.references if 'cve' in reference.lower()]
 
     def get_cvss_refs(self, obj):
         return [reference for reference in obj.references if 'cvss' in reference.lower()]
@@ -510,6 +513,8 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
+        cve_list = data.pop('cve', [])
+
         try:
             obj = super()._perform_create(data, **kwargs)
         except TypeError:
@@ -519,6 +524,19 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
+
+        # parse cve and reference. Should be temporal.
+        parsed_cve_list = []
+        for cve in cve_list:
+            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+        for cve in references:
+            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+        obj.cve = parsed_cve_list
+
+        db.session.flush()
+
         if not obj.tool:
             if obj.creator_command_tool:
                 obj.tool = obj.creator_command_tool
@@ -554,6 +572,7 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
@@ -846,7 +865,7 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400, "Invalid filters")
 
         workspace = self._get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}}
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
         if 'group_by' not in filters:
             offset = None
             limit = None

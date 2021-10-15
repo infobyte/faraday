@@ -22,6 +22,8 @@ LVL_SETTABLE_HANDLERS = []
 
 
 def setup_logging():
+    if os.environ.get('FARADAY_MANAGE_RUNNING'):
+        return
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 

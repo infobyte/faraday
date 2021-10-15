@@ -26,6 +26,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm import ColumnProperty
 
+from faraday.server.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -452,7 +453,7 @@ class QueryBuilder:
             map_attr = {
                 'creator': 'username',
             }
-            if hasattr(getattr(field, 'prop'), 'entity'):
+            if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
                 field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
 
             return opfunc(field, argument)
@@ -496,13 +497,17 @@ class QueryBuilder:
         create_filt = QueryBuilder._create_filter
 
         def create_filters(filt):
-            if not getattr(filt, 'fieldname', False) \
-                    or filt.fieldname.split('__')[0] in valid_model_fields:
-                try:
-                    return create_filt(model, filt)
-                except AttributeError as e:
-                    # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
-                    raise AttributeError(f"Foreing field {filt.fieldname.split('__')[0]} not found in submodel")
+            if not isinstance(filt,
+                              JunctionFilter) and '__' in filt.fieldname:
+                return create_filt(model, filt)
+            else:
+                if not getattr(filt, 'fieldname', False) or \
+                        filt.fieldname.split('__')[0] in valid_model_fields:
+                    try:
+                        return create_filt(model, filt)
+                    except AttributeError:
+                        # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
+                        raise AttributeError(f"Foreing field {filt.fieldname.split('__')[0]} not found in submodel")
             raise AttributeError(f"Field {filt.fieldname} not found in model")
 
         return create_filters
@@ -537,14 +542,29 @@ class QueryBuilder:
         documentation for :func:`_create_operation` for more information.
 
         """
+        # TODO: Esto no se puede hacer abajo con el group by?
+        joined_models = set()
+        query = session.query(model)
+
         if search_params.group_by:
             select_fields = [func.count()]
             for groupby in search_params.group_by:
-                select_fields.append(getattr(model, groupby.field))
-
-            query = session.query(*select_fields)
-        else:
-            query = session.query(model)
+                field_name = groupby.field
+                if '__' in field_name:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    relation = getattr(model, field_name)
+                    relation_model = relation.mapper.class_
+                    field = getattr(relation_model, field_name_in_relation)
+                    if relation_model not in joined_models:
+                        if relation_model == User:
+                            query = query.join(relation_model, model.creator_id == relation_model.id)
+                        else:
+                            query = query.join(relation_model)
+                    joined_models.add(relation_model)
+                    select_fields.append(field)
+                else:
+                    select_fields.append(getattr(model, groupby.field))
+                query = query.with_entities(*select_fields)
 
         # This function call may raise an exception.
         valid_model_fields = []
@@ -553,6 +573,7 @@ class QueryBuilder:
                 valid_model_fields.append(str(orm_descriptor).split('.')[1])
             if isinstance(orm_descriptor, hybrid_property):
                 valid_model_fields.append(orm_descriptor.__name__)
+        valid_model_fields += [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).relationships]
 
         filters_generator = map(   # pylint: disable=W1636
             QueryBuilder.create_filters_func(model, valid_model_fields),
@@ -569,18 +590,16 @@ class QueryBuilder:
         # parameters, order by primary key.
         if not _ignore_order_by:
             if search_params.order_by:
-                joined_models = set()
                 for val in search_params.order_by:
                     field_name = val.field
                     if '__' in field_name:
-                        field_name, field_name_in_relation = \
-                            field_name.split('__')
+                        field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
                         relation_model = relation.mapper.class_
                         field = getattr(relation_model, field_name_in_relation)
                         direction = getattr(field, val.direction)
                         if relation_model not in joined_models:
-                            query = query.join(relation_model)
+                            query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)
                         query = query.order_by(direction())
                     else:
@@ -596,7 +615,14 @@ class QueryBuilder:
         # Group the query.
         if search_params.group_by:
             for groupby in search_params.group_by:
-                field = getattr(model, groupby.field)
+                field_name = groupby.field
+                if '__' in field_name:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    relation = getattr(model, field_name)
+                    relation_model = relation.mapper.class_
+                    field = getattr(relation_model, field_name_in_relation)
+                else:
+                    field = getattr(model, groupby.field)
                 query = query.group_by(field)
 
         # Apply limit and offset to the query.

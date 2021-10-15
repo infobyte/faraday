@@ -17,8 +17,13 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, \
-    _make_active_agents_count_property, count_vulnerability_severities
+from faraday.server.models import (db,
+                                   Workspace,
+                                   _make_vuln_count_property,
+                                   Vulnerability,
+                                   _make_active_agents_count_property,
+                                   count_vulnerability_severities,
+                                   _last_run_agent_date)
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -35,28 +40,19 @@ workspace_api = Blueprint('workspace_api', __name__)
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
-    services = fields.Integer(dump_only=True,
-                              attribute='total_service_count')
-    web_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_web_count')
-    code_vulns = fields.Integer(dump_only=True, allow_none=False,
-                                attribute='vulnerability_code_count')
-    std_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_standard_count')
-    critical_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_critical_count')
-    info_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_informational_count')
-    high_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_high_count')
-    medium_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_medium_count')
-    low_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_low_count')
-    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_unclassified_count')
-    total_vulns = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_total_count')
+    services = fields.Integer(dump_only=True, attribute='total_service_count')
+    web_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_count')
+    code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
+    std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
+    opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
+    confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
+    critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
+    info_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
+    high_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
+    medium_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
+    low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
+    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
+    total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
 
 
 class WorkspaceDurationSchema(Schema):
@@ -85,20 +81,17 @@ class WorkspaceSchema(AutoSchema):
     )
     active = fields.Boolean()
 
-    create_date = fields.DateTime(attribute='create_date',
-                           dump_only=True)
-
-    update_date = fields.DateTime(attribute='update_date',
-                           dump_only=True)
-
+    create_date = fields.DateTime(attribute='create_date', dump_only=True)
+    update_date = fields.DateTime(attribute='update_date', dump_only=True)
     active_agents_count = fields.Integer(dump_only=True)
+    last_run_agent_date = fields.DateTime(dump_only=True, attribute='last_run_agent_date')
 
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'active_agents_count')
+                  'active_agents_count', 'last_run_agent_date')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -220,38 +213,64 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         if active is not None:
             query = query.filter_by(active=active)
         query = query.options(
-                 with_expression(
-                     Workspace.vulnerability_web_count,
-                         _make_vuln_count_property('vulnerability_web',
+            with_expression(
+                Workspace.vulnerability_web_count,
+                _make_vuln_count_property('vulnerability_web',
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False),
-                 ),
-                 with_expression(
-                     Workspace.vulnerability_standard_count,
-                         _make_vuln_count_property('vulnerability',
+            ),
+            with_expression(
+                Workspace.vulnerability_standard_count,
+                _make_vuln_count_property('vulnerability',
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False)
-                ),
-                with_expression(
-                     Workspace.vulnerability_total_count,
-                         _make_vuln_count_property(type_=None,
+            ),
+            with_expression(
+                Workspace.vulnerability_total_count,
+                _make_vuln_count_property(type_=None,
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False)
-               ),
-               with_expression(
-                     Workspace.vulnerability_code_count,
-                    _make_vuln_count_property('vulnerability_code',
+            ),
+            with_expression(
+                Workspace.vulnerability_code_count,
+                _make_vuln_count_property('vulnerability_code',
                                           extra_query=extra_query,
                                           use_column_property=False),
-               ),
-               with_expression(
-                   Workspace.active_agents_count,
-                   _make_active_agents_count_property(),
-               ),
+            ),
+            with_expression(
+                Workspace.active_agents_count,
+                _make_active_agents_count_property(),
+            ),
+            with_expression(
+                Workspace.last_run_agent_date,
+                _last_run_agent_date(),
+            ),
+        )
+
+        # extra_query contains status filter
+        if not extra_query or status == 'open':
+            query = query.options(
+                with_expression(Workspace.vulnerability_open_count,
+                                _make_vuln_count_property(None,
+                                                          extra_query=" status='open' ",
+                                                          use_column_property=False),
+                                )
             )
+
+        if confirmed is not False:
+            query = query.options(
+                with_expression(
+                    Workspace.vulnerability_confirmed_count,
+                    _make_vuln_count_property(None,
+                                              confirmed=True,
+                                              extra_query=extra_query,
+                                              use_column_property=False)
+                )
+            )
+
         query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
 
         try:

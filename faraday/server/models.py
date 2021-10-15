@@ -23,6 +23,7 @@ from sqlalchemy import (
     UniqueConstraint,
     event,
     Table,
+    literal,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -80,6 +81,12 @@ OBJECT_TYPES = [
 COMMENT_TYPES = [
     'system',
     'user'
+]
+
+NOTIFICATION_METHODS = [
+    'mail',
+    'webhook',
+    'websocket'
 ]
 
 
@@ -148,6 +155,19 @@ def _make_active_agents_count_property():
         # I suppose that we're using PostgreSQL, that can't compare
         # booleans with integers
         query = query.where(text('agent.active = true'))
+
+    return query
+
+
+def _last_run_agent_date():
+    query = select([text('executor.last_run')])
+
+    from_clause = table('executor')\
+        .join(Agent, text('executor.agent_id = agent.id'))\
+        .join(text('association_workspace_and_agents_table'),
+              text('agent.id = association_workspace_and_agents_table.agent_id '
+                   'and association_workspace_and_agents_table.workspace_id = workspace.id'))
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')).order_by(Executor.last_run.desc()).limit(1)
 
     return query
 
@@ -476,12 +496,12 @@ class VulnerabilityABC(Metadata):
         'infeasible'
     ]
     SEVERITIES = [
-        'critical',
-        'high',
-        'medium',
-        'low',
-        'informational',
         'unclassified',
+        'informational',
+        'low',
+        'medium',
+        'high',
+        'critical',
     ]
 
     __abstract__ = True
@@ -599,8 +619,8 @@ def _build_associationproxy_creator(model_class_name):
 
 def _build_associationproxy_creator_non_workspaced(model_class_name):
     def creator(name, vulnerability):
-        """Get or create a reference/policyviolation with the
-        corresponding name. This must be workspace aware"""
+        """Get or create a reference/policyviolation/CVE with the
+        corresponding name. This is not workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
@@ -978,6 +998,41 @@ class Host(Metadata):
                                     child_field='name')
 
 
+cve_vulnerability_association = db.Table('cve_association',
+    Column('vulnerability_id', Integer, db.ForeignKey('vulnerability.id'), nullable=False),
+    Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
+)
+
+
+class CVE(db.Model):
+    __tablename__ = 'cve'
+
+    CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(24), unique=True)
+    year = Column(Integer, nullable=True)
+    identifier = Column(Integer, nullable=True)
+
+    # TODO: add customer inserted flag
+    # Other fields TBD
+
+    vulnerabilities = relationship("VulnerabilityGeneric", secondary=cve_vulnerability_association)
+
+    def __str__(self):
+        return f'{self.id}'
+
+    def __init__(self, name=None, **kwargs):
+        logger.debug("cve found %s", name)
+        try:
+            name = name.upper()
+            _, year, identifier = name.split("-")
+            super().__init__(name=name, year=year, identifier=identifier, **kwargs)
+        except ValueError:
+            logger.error("Invalid cve format. Should be CVE-YEAR-ID.")
+            raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
+
+
 class Service(Metadata):
     STATUSES = [
         'open',
@@ -1092,6 +1147,16 @@ class VulnerabilityGeneric(VulnerabilityABC):
         'Workspace',
         backref=backref('vulnerabilities', cascade="all, delete-orphan", passive_deletes=True)
     )
+
+    cve_instances = relationship("CVE",
+                                 secondary=cve_vulnerability_association,
+                                 lazy="joined",
+                                 collection_class=set)
+
+    cve = association_proxy('cve_instances',
+                             'name',
+                             proxy_factory=CustomAssociationSet,
+                             creator=_build_associationproxy_creator_non_workspaced('CVE'))
 
     reference_instances = relationship(
         "Reference",
@@ -1567,6 +1632,9 @@ class Workspace(Metadata):
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
     active_agents_count = query_expression()
+    last_run_agent_date = query_expression()
+    vulnerability_open_count = query_expression(literal(0))
+    vulnerability_confirmed_count = query_expression(literal(0))
 
     vulnerability_informational_count = query_expression()
     vulnerability_medium_count = query_expression()
@@ -1775,7 +1843,11 @@ class Role(db.Model, RoleMixin):
 
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'
-    ROLES = ['admin', 'pentester', 'client', 'asset_owner']
+    ADMIN_ROLE = 'admin'
+    PENTESTER_ROLE = 'pentester'
+    ASSET_OWNER_ROLE = 'asset_owner'
+    CLIENT_ROLE = 'client'
+    ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
 
     id = Column(Integer, primary_key=True)
@@ -1901,6 +1973,7 @@ class TaskTemplate(TaskABC):
     __mapper_args__ = {
         'concrete': True
     }
+
     template = relationship(
         'MethodologyTemplate',
         backref=backref('tasks', cascade="all, delete-orphan"))
@@ -2108,10 +2181,197 @@ class ExecutiveReport(Metadata):
         )
 
 
+class ObjectType(db.Model):
+    __tablename__ = 'object_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), unique=True, nullable=False)
+
+
+class EventType(db.Model):
+    __tablename__ = 'event_type'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), unique=True, nullable=False)
+    async_event = Column(Boolean, default=False)
+    enabled = Column(Boolean, default=True)
+
+
+allowed_roles_association = db.Table('notification_allowed_roles',
+    Column('notification_subscription_id', Integer, db.ForeignKey('notification_subscription.id'), nullable=False),
+    Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'), nullable=False)
+)
+
+
+class NotificationSubscription(Metadata):
+    __tablename__ = 'notification_subscription'
+    id = Column(Integer, primary_key=True)
+    event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
+    event_type = relationship(
+        'EventType',
+        backref=backref('event_type', cascade="all, delete-orphan")
+    )
+    allowed_roles = relationship("Role", secondary=allowed_roles_association)
+
+
+class NotificationSubscriptionConfigBase(db.Model):
+    __tablename__ = 'notification_subscription_config_base'
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey('notification_subscription.id'), index=True, nullable=False)
+    subscription = relationship(
+        'NotificationSubscription',
+        backref=backref('notification_subscription_config', cascade="all, delete-orphan")
+    )
+
+    role_level = Column(Boolean, default=False)
+    workspace_level = Column(Boolean, default=False)
+
+    active = Column(Boolean, default=True)
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+    __table_args__ = (
+        UniqueConstraint('subscription_id', 'type', name='uix_subscriptionid_type'),
+    )
+
+    @property
+    def dst(self):
+        raise NotImplementedError('Notification subsciption base dst called. Must Be implemented.')
+
+
+class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):
+    __tablename__ = 'notification_subscription_mail_config'
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
+    email = Column(String(50), nullable=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_subscription_mail_config', cascade="all, delete-orphan")
+    )
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[0]
+    }
+
+
+class NotificationSubscriptionWebHookConfig(NotificationSubscriptionConfigBase):
+    __tablename__ = 'notification_subscription_webhook_config'
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
+    url = Column(String(50), nullable=False)
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[1]
+    }
+
+
+class NotificationSubscriptionWebSocketConfig(NotificationSubscriptionConfigBase):
+    __tablename__ = 'notification_subscription_websocket_config'
+    id = Column(Integer, ForeignKey('notification_subscription_config_base.id'), primary_key=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification_subscription_websocket_config', cascade="all, delete-orphan")
+    )
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[2]
+    }
+
+
+class NotificationEvent(db.Model):
+    __tablename__ = 'notification_event'
+    id = Column(Integer, primary_key=True)
+    event_type_id = Column(Integer, ForeignKey('event_type.id'), index=True, nullable=False)
+    event_type = relationship(
+        'EventType',
+        backref=backref('notification_event_type', cascade="all, delete-orphan")
+    )
+    object_id = Column(Integer, nullable=False)
+    object_type_id = Column(Integer, ForeignKey('object_type.id'), index=True, nullable=False)
+    object_type = relationship(
+        'ObjectType',
+        backref=backref('notification_event_object_type', cascade="all, delete-orphan")
+    )
+
+    notification_data = Column(JSONType, nullable=False)
+    create_date = Column(DateTime, default=datetime.utcnow)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return
+
+
+class NotificationBase(db.Model):
+    __tablename__ = 'notification_base'
+    id = Column(Integer, primary_key=True)
+    notification_event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
+    notification_event = relationship(
+        'NotificationEvent',
+        backref=backref('notifications', cascade="all, delete-orphan"),
+    )
+    notification_subscription_config_id = Column(Integer, ForeignKey('notification_subscription_config_base.id'),
+                                                 index=True, nullable=False)
+    notification_subscription_config = relationship(
+        'NotificationSubscriptionConfigBase',
+        backref=backref('notifications', cascade="all, delete-orphan"),
+    )
+
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+
+# TBI
+class MailNotification(NotificationBase):
+    __tablename__ = 'mail_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[0]
+    }
+
+
+# TBI
+class WebHookNotification(NotificationBase):
+    __tablename__ = 'webhook_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[1]
+    }
+
+
+class WebsocketNotification(NotificationBase):
+    __tablename__ = 'websocket_notification'
+
+    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True)
+    user_notified = relationship(
+        'User',
+        backref=backref('notifications', cascade="all, delete-orphan")
+    )
+
+    mark_read = Column(Boolean, default=False, index=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': NOTIFICATION_METHODS[2]
+    }
+
+
 class Notification(db.Model):
     __tablename__ = 'notification'
     id = Column(Integer, primary_key=True)
-
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
     user_notified = relationship(
         'User',

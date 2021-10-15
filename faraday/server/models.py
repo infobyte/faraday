@@ -1090,8 +1090,9 @@ class CVSSBase(db.Model):
     __tablename__ = "cvss_base"
     id = Column(Integer, primary_key=True)
     version = Column(String(8), nullable=False)
-    vector_string = Column(String(64))
-    base_score = Column(Float)
+    _vector_string = Column('vector_string', String(64))
+    _base_score = Column('base_score', Float)
+    _fixed_base_score = Column('fixed_base_score', Float)
 
     type = Column(String(24))
 
@@ -1099,6 +1100,31 @@ class CVSSBase(db.Model):
         'polymorphic_on': type,
         'polymorphic_identity': 'base'
     }
+
+    @hybrid_property
+    def vector_string(self):
+        return self._vector_string
+
+    @vector_string.setter
+    def vector_string(self, vector_string):
+        self.assign_vector_string(vector_string)
+        self.base_score = self.calculate_base_score()
+
+    @hybrid_property
+    def base_score(self):
+        if self._base_score:
+            return self._base_score
+        return self._fixed_base_score
+
+    @base_score.setter
+    def base_score(self, base_score):
+        self._base_score = base_score
+
+    def assign_vector_string(self, vector_string, base_score):
+        raise NotImplementedError
+
+    def calculate_base_score(self):
+        raise NotImplementedError
 
     def __repr__(self):
         return f'{self.vector_string}'
@@ -1118,22 +1144,27 @@ class CVSSV2(CVSSBase):
         'polymorphic_identity': "v2"
     }
 
-    def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
+    def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
+        super().__init__(version=CVSS2GeneralConfig.VERSION, vector_string=vector_string,
+                         _fixed_base_score=base_score, **kwargs)
+
+    def assign_vector_string(self, vector_string):
+        self._vector_string = vector_string
         vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
-            super().__init__(
-                             version=CVSS2GeneralConfig.VERSION,
-                             vector_string=vector_string,
-                             access_vector=vector_string_parsed['access_vector'],
-                             access_complexity=vector_string_parsed['access_complexity'],
-                             authentication=vector_string_parsed['authentication'],
-                             confidentiality_impact=vector_string_parsed['confidentiality'],
-                             integrity_impact=vector_string_parsed['integrity'],
-                             availability_impact=vector_string_parsed['availability'],
-                             **kwargs)
-            self.base_score = self.calculate_base_score()
+            self.access_vector = vector_string_parsed['access_vector']
+            self.access_complexity = vector_string_parsed['access_complexity']
+            self.authentication = vector_string_parsed['authentication']
+            self.confidentiality_impact = vector_string_parsed['confidentiality']
+            self.integrity_impact = vector_string_parsed['integrity']
+            self.availability_impact = vector_string_parsed['availability']
         else:
-            super().__init__(version=CVSS2GeneralConfig.VERSION, base_score=base_score, vector_string=vector_string, **kwargs)
+            self.access_vector = None
+            self.access_complexity = None
+            self.authentication = None
+            self.confidentiality_impact = None
+            self.integrity_impact = None
+            self.availability_impact = None
 
     def exploitability(self):
         return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
@@ -1147,11 +1178,13 @@ class CVSSV2(CVSSBase):
         return 1.176
 
     def calculate_base_score(self):
-        score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
-        # round up score
-        # Where “Round up” is defined as the smallest number, specified to one decimal place,
-        # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
-        return math.ceil(score * 10) / 10
+        if re.match(CVSS2GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
+            score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
+            # round up score
+            # Where “Round up” is defined as the smallest number, specified to one decimal place,
+            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+            return math.ceil(score * 10) / 10
+        return self.base_score
 
 
 class CVSSV3(CVSSBase):
@@ -1170,24 +1203,31 @@ class CVSSV3(CVSSBase):
         'polymorphic_identity': "v3"
     }
 
-    def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
+    def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
+        super().__init__(version=CVSS3GeneralConfig.VERSION, vector_string=vector_string,
+                         _fixed_base_score=base_score, **kwargs)
+
+    def assign_vector_string(self, vector_string):
+        self._vector_string = vector_string
         vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
-            super().__init__(
-                             version=CVSS3GeneralConfig.VERSION,
-                             vector_string=vector_string,
-                             attack_vector=vector_string_parsed['attack_vector'],
-                             attack_complexity=vector_string_parsed['attack_complexity'],
-                             privileges_required=vector_string_parsed['privileges_required'],
-                             user_interaction=vector_string_parsed['user_interaction'],
-                             scope=vector_string_parsed['scope'],
-                             confidentiality_impact=vector_string_parsed['confidentiality'],
-                             integrity_impact=vector_string_parsed['integrity'],
-                             availability_impact=vector_string_parsed['availability'],
-                             **kwargs)
-            self.base_score = self.calculate_base_score()
+            self.attack_vector = vector_string_parsed['attack_vector']
+            self.attack_complexity = vector_string_parsed['attack_complexity']
+            self.privileges_required = vector_string_parsed['privileges_required']
+            self.user_interaction = vector_string_parsed['user_interaction']
+            self.scope = vector_string_parsed['scope']
+            self.confidentiality_impact = vector_string_parsed['confidentiality']
+            self.integrity_impact = vector_string_parsed['integrity']
+            self.availability_impact = vector_string_parsed['availability']
         else:
-            super().__init__(version=CVSS3GeneralConfig.VERSION, base_score=base_score, vector_string=vector_string, **kwargs)
+            self.attack_vector = None
+            self.attack_complexity = None
+            self.privileges_required = None
+            self.user_interaction = None
+            self.scope = None
+            self.confidentiality_impact = None
+            self.integrity_impact = None
+            self.availability_impact = None
 
     def isc_base(self):
         return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
@@ -1202,22 +1242,24 @@ class CVSSV3(CVSSBase):
         return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
 
     def calculate_base_score(self):
-        score = 10
-        if self.impact() <= 0:
-            return 0
-        impact_plus_exploitability = self.impact() + self.exploitability()
-        if self.scope == 'Unchanged':
-            if impact_plus_exploitability < 10:
-                score = impact_plus_exploitability
-        else:
-            impact_plus_exploitability = impact_plus_exploitability * 1.08
-            if impact_plus_exploitability < 10:
-                score = impact_plus_exploitability
+        if re.match(CVSS3GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
+            score = 10
+            if self.impact() <= 0:
+                return 0
+            impact_plus_exploitability = self.impact() + self.exploitability()
+            if self.scope == 'Unchanged':
+                if impact_plus_exploitability < 10:
+                    score = impact_plus_exploitability
+            else:
+                impact_plus_exploitability = impact_plus_exploitability * 1.08
+                if impact_plus_exploitability < 10:
+                    score = impact_plus_exploitability
 
-        # round up score
-        # Where “Round up” is defined as the smallest number, specified to one decimal place,
-        # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
-        return math.ceil(score * 10) / 10
+            # round up score
+            # Where “Round up” is defined as the smallest number, specified to one decimal place,
+            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+            return math.ceil(score * 10) / 10
+        return self.base_score
 
 
 class Service(Metadata):

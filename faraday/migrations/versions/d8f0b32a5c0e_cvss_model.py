@@ -24,6 +24,7 @@ def upgrade():
                     sa.Column('vector_string', sa.String(length=64)),
                     sa.Column('type', sa.String(length=24), nullable=True),
                     sa.Column('base_score', sa.Float(), default=0.0),
+                    sa.Column('fixed_base_score', sa.Float(), default=0.0),
                     sa.PrimaryKeyConstraint('id')
                     )
     op.create_table('cvss_v2',

@@ -1037,7 +1037,7 @@ class CVE(db.Model):
 
 class CVSS2GeneralConfig:
     VERSION = '2'
-    REGEX = 'AV:(?P<access_vector>[LAN])' \
+    PATTERN = 'AV:(?P<access_vector>[LAN])' \
             '/AC:(?P<access_complexity>[HML])' \
             '/Au:(?P<authentication>[MSN])' \
             '/C:(?P<confidentiality>[NPC])' \
@@ -1059,7 +1059,7 @@ class CVSS2GeneralConfig:
 
 class CVSS3GeneralConfig:
     VERSION = '3'
-    REGEX = 'AV:(?P<attack_vector>[LANP])' \
+    PATTERN = 'AV:(?P<attack_vector>[LANP])' \
             '/AC:(?P<attack_complexity>[HL])' \
             '/PR:(?P<privileges_required>[NLH])' \
             '/UI:(?P<user_interaction>[NR])' \
@@ -1090,8 +1090,8 @@ class CVSSBase(db.Model):
     __tablename__ = "cvss_base"
     id = Column(Integer, primary_key=True)
     version = Column(String(8), nullable=False)
-    vector_string = Column(String(64), nullable=False)
-    base_score = Column(Float, nullable=True)
+    vector_string = Column(String(64))
+    base_score = Column(Float)
 
     type = Column(String(24))
 
@@ -1119,7 +1119,7 @@ class CVSSV2(CVSSBase):
     }
 
     def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
-        vector_string_parsed = re.match(CVSS2GeneralConfig.REGEX, vector_string)
+        vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
             super().__init__(
                              version=CVSS2GeneralConfig.VERSION,
@@ -1171,7 +1171,7 @@ class CVSSV3(CVSSBase):
     }
 
     def __init__(self, base_score: Float = 0.0, vector_string=None, **kwargs):
-        vector_string_parsed = re.match(CVSS3GeneralConfig.REGEX, vector_string if vector_string else '')
+        vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
             super().__init__(
                              version=CVSS3GeneralConfig.VERSION,

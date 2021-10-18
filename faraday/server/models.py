@@ -1184,7 +1184,7 @@ class CVSSV2(CVSSBase):
             # Where “Round up” is defined as the smallest number, specified to one decimal place,
             # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
             return math.ceil(score * 10) / 10
-        return self.base_score
+        return None
 
 
 class CVSSV3(CVSSBase):
@@ -1259,7 +1259,7 @@ class CVSSV3(CVSSBase):
             # Where “Round up” is defined as the smallest number, specified to one decimal place,
             # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
             return math.ceil(score * 10) / 10
-        return self.base_score
+        return None
 
 
 class Service(Metadata):

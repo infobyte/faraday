@@ -38,6 +38,8 @@ class InfoView(GenericView):
 
         return response
 
+    get.is_public = True
+
 
 class ConfigView(GenericView):
     route_base = 'config'
@@ -62,6 +64,8 @@ class ConfigView(GenericView):
         }
 
         return flask.jsonify(doc)
+
+    get.is_public = True
 
 
 InfoView.register(info_api)

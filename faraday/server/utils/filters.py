@@ -24,7 +24,7 @@ from faraday.server.utils.search import OPERATORS
 from faraday.server.fields import JSONType
 
 
-VALID_OPERATORS = set(OPERATORS.keys()) - set(['desc', 'asc'])
+VALID_OPERATORS = set(OPERATORS.keys()) - {'desc', 'asc'}
 
 logger = logging.getLogger(__name__)
 
@@ -270,8 +270,8 @@ class FilterSchema(Schema):
             an error on PostgreSQL
         """
         if 'group_by' in data and 'order_by' in data:
-            group_by_fields = set(group_field['field'] for group_field in data['group_by'])
-            order_by_fields = set(order_field['field'] for order_field in data['order_by'])
+            group_by_fields = {group_field['field'] for group_field in data['group_by']}
+            order_by_fields = {order_field['field'] for order_field in data['order_by']}
             if not order_by_fields.issubset(group_by_fields):
                 logger.error(f'All order fields ({order_by_fields}) must be in group by {group_by_fields}.')
                 raise ValidationError(f'All order fields ({order_by_fields}) must be in group by {group_by_fields}.')

@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from builtins import input
 
 import getpass
 import string
@@ -337,7 +336,7 @@ class InitDB():
             print(f'{Fore.BLUE}MAC OS detected{Fore.WHITE}')
             postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
-        command = postgres_command + ['-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
+        command = postgres_command + ['-c', f'CREATE ROLE {username} WITH LOGIN PASSWORD \'{password}\';']
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)  # nosec
         p.wait()
         psql_log_file.seek(0)

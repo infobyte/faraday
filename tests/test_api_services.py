@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -44,19 +43,19 @@ class TestListServiceView(ReadWriteAPITests):
         assert res.status_code == 200
         assert 'services' in res.json
         for service in res.json['services']:
-            assert set([u'id', u'key', u'value']) == set(service.keys())
+            assert {'id', 'key', 'value'} == set(service.keys())
             object_properties = [
-                u'status',
-                u'protocol',
-                u'description',
-                u'_rev',
-                u'owned',
-                u'owner',
-                u'credentials',
-                u'name',
-                u'version',
-                u'_id',
-                u'metadata'
+                'status',
+                'protocol',
+                'description',
+                '_rev',
+                'owned',
+                'owner',
+                'credentials',
+                'name',
+                'version',
+                '_id',
+                'metadata'
             ]
             expected = set(object_properties)
             result = set(service['value'].keys())

@@ -26,6 +26,3 @@ def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE vulnerability DROP COLUMN external_id')
     conn.execute('ALTER TABLE vulnerability_template DROP COLUMN external_id')
-
-
-# I'm Py3

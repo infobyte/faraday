@@ -50,7 +50,7 @@ def downgrade():
     old_type = sa.Enum(*ROLES, name='user_roles')
 
     # Convert 'asset_owner' status into 'client'
-    op.execute(tcr.update().where(tcr.c.role == u'asset_owner')
+    op.execute(tcr.update().where(tcr.c.role == 'asset_owner')
                .values(status='client'))
     # Create a temporary "_role" type, convert and drop the "new" type
     tmp_type.create(op.get_bind(), checkfirst=False)

@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -51,21 +50,21 @@ class TestListCommandView(ReadWriteAPITests):
         assert res.status_code == 200
         assert 'commands' in res.json
         for command in res.json['commands']:
-            assert set([u'id', u'key', u'value']) == set(command.keys())
+            assert {'id', 'key', 'value'} == set(command.keys())
             object_properties = [
-                u'_id',
-                u'command',
-                u'duration',
-                u'hostname',
-                u'ip',
-                u'itime',
-                u'params',
-                u'user',
-                u'workspace',
-                u'tool',
-                u'import_source',
-                u'creator',
-                u'metadata'
+                '_id',
+                'command',
+                'duration',
+                'hostname',
+                'ip',
+                'itime',
+                'params',
+                'user',
+                'workspace',
+                'tool',
+                'import_source',
+                'creator',
+                'metadata'
             ]
             assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())
@@ -97,32 +96,32 @@ class TestListCommandView(ReadWriteAPITests):
         assert res.status_code == 200
 
         assert list(filter(lambda stats: stats['_id'] == command.id, res.json)) == [
-            {u'_id': command.id,
-             u'command': command.command,
-             u'import_source': u'shell',
-             u'user': command.user,
-             u'date': time.mktime(command.start_date.timetuple()) * 1000,
-             u'params': command.params,
-             u'tool': command.tool,
-             u'hosts_count': 1,
-             u'services_count': 0,
-             u'vulnerabilities_count': 1,
-             u'criticalIssue': 0}]
+            {'_id': command.id,
+             'command': command.command,
+             'import_source': 'shell',
+             'user': command.user,
+             'date': time.mktime(command.start_date.timetuple()) * 1000,
+             'params': command.params,
+             'tool': command.tool,
+             'hosts_count': 1,
+             'services_count': 0,
+             'vulnerabilities_count': 1,
+             'criticalIssue': 0}]
 
         assert list(filter(lambda stats: stats['_id'] == another_command.id,
                            res.json)) == [{
-            u'_id': another_command.id,
-            u'command': another_command.command,
-            u'import_source': u'shell',
-            u'tool': another_command.tool,
-            u'user': another_command.user,
-            u'date': time.mktime(
+            '_id': another_command.id,
+            'command': another_command.command,
+            'import_source': 'shell',
+            'tool': another_command.tool,
+            'user': another_command.user,
+            'date': time.mktime(
                 another_command.start_date.timetuple()) * 1000,
-            u'params': another_command.params,
-            u'hosts_count': 0,
-            u'services_count': 0,
-            u'vulnerabilities_count': 0,
-            u'criticalIssue': 0}]
+            'params': another_command.params,
+            'hosts_count': 0,
+            'services_count': 0,
+            'vulnerabilities_count': 0,
+            'criticalIssue': 0}]
 
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -153,17 +152,17 @@ class TestListCommandView(ReadWriteAPITests):
         res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
         assert res.json == [
-            {u'_id': command.id,
-             u'command': command.command,
-             u'import_source': u'shell',
-             u'tool': command.tool,
-             u'user': command.user,
-             u'date': time.mktime(command.start_date.timetuple()) * 1000,
-             u'params': command.params,
-             u'hosts_count': 1,
-             u'services_count': 0,
-             u'vulnerabilities_count': 2,
-             u'criticalIssue': 1}
+            {'_id': command.id,
+             'command': command.command,
+             'import_source': 'shell',
+             'tool': command.tool,
+             'user': command.user,
+             'date': time.mktime(command.start_date.timetuple()) * 1000,
+             'params': command.params,
+             'hosts_count': 1,
+             'services_count': 0,
+             'vulnerabilities_count': 2,
+             'criticalIssue': 1}
         ]
 
     def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
@@ -202,17 +201,17 @@ class TestListCommandView(ReadWriteAPITests):
         res = test_client.get(urljoin(self.url(workspace=command.workspace), 'activity_feed'))
         assert res.status_code == 200
         assert res.json == [{
-            u'_id': command.id,
-            u'command': command.command,
-            u'import_source': u'shell',
-            u'tool': command.tool,
-            u'user': command.user,
-            u'date': time.mktime(command.start_date.timetuple()) * 1000,
-            u'params': command.params,
-            u'hosts_count': 1,
-            u'services_count': 1,
-            u'vulnerabilities_count': 2,
-            u'criticalIssue': 1}
+            '_id': command.id,
+            'command': command.command,
+            'import_source': 'shell',
+            'tool': command.tool,
+            'user': command.user,
+            'date': time.mktime(command.start_date.timetuple()) * 1000,
+            'params': command.params,
+            'hosts_count': 1,
+            'services_count': 1,
+            'vulnerabilities_count': 2,
+            'criticalIssue': 1}
         ]
 
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
@@ -270,47 +269,47 @@ class TestListCommandView(ReadWriteAPITests):
         raw_first_command = list(filter(lambda comm: comm['_id'] == commands[0].id, res.json))
 
         assert raw_first_command.pop() == {
-            u'_id': first_command.id,
-            u'command': first_command.command,
-            u'import_source': u'shell',
-            u'user': first_command.user,
-            u'date': time.mktime(first_command.start_date.timetuple()) * 1000,
-            u'params': first_command.params,
-            u'hosts_count': 1,
-            u'services_count': 0,
-            u'vulnerabilities_count': 1,
-            u'tool': first_command.tool,
-            u'criticalIssue': 0
+            '_id': first_command.id,
+            'command': first_command.command,
+            'import_source': 'shell',
+            'user': first_command.user,
+            'date': time.mktime(first_command.start_date.timetuple()) * 1000,
+            'params': first_command.params,
+            'hosts_count': 1,
+            'services_count': 0,
+            'vulnerabilities_count': 1,
+            'tool': first_command.tool,
+            'criticalIssue': 0
         }
 
         for in_the_middle_command in in_the_middle_commands:
             raw_in_the_middle_command = list(filter(lambda comm: comm['_id'] == in_the_middle_command.id, res.json))
-            assert raw_in_the_middle_command.pop() == {u'_id': in_the_middle_command.id,
-                                                       u'command': in_the_middle_command.command,
-                                                       u'import_source': u'shell',
-                                                       u'user': in_the_middle_command.user,
-                                                       u'date': time.mktime(
+            assert raw_in_the_middle_command.pop() == {'_id': in_the_middle_command.id,
+                                                       'command': in_the_middle_command.command,
+                                                       'import_source': 'shell',
+                                                       'user': in_the_middle_command.user,
+                                                       'date': time.mktime(
                                                            in_the_middle_command.start_date.timetuple()) * 1000,
-                                                       u'params': in_the_middle_command.params,
-                                                       u'hosts_count': 0,
-                                                       u'tool': in_the_middle_command.tool,
-                                                       u'services_count': 0,
-                                                       u'vulnerabilities_count': 0,
-                                                       u'criticalIssue': 0}
+                                                       'params': in_the_middle_command.params,
+                                                       'hosts_count': 0,
+                                                       'tool': in_the_middle_command.tool,
+                                                       'services_count': 0,
+                                                       'vulnerabilities_count': 0,
+                                                       'criticalIssue': 0}
 
         # new command must create new service and vuln
         raw_last_command = list(filter(lambda comm: comm['_id'] == last_command.id, res.json))
-        assert raw_last_command.pop() == {u'_id': last_command.id,
-                                          u'command': last_command.command,
-                                          u'import_source': u'shell',
-                                          u'user': last_command.user,
-                                          u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
-                                          u'params': last_command.params,
-                                          u'hosts_count': 0,
-                                          u'tool': last_command.tool,
-                                          u'services_count': 1,
-                                          u'vulnerabilities_count': 1,
-                                          u'criticalIssue': 0}
+        assert raw_last_command.pop() == {'_id': last_command.id,
+                                          'command': last_command.command,
+                                          'import_source': 'shell',
+                                          'user': last_command.user,
+                                          'date': time.mktime(last_command.start_date.timetuple()) * 1000,
+                                          'params': last_command.params,
+                                          'hosts_count': 0,
+                                          'tool': last_command.tool,
+                                          'services_count': 1,
+                                          'vulnerabilities_count': 1,
+                                          'criticalIssue': 0}
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_sub_second_command_returns_correct_duration_value(self, test_client):
@@ -370,7 +369,7 @@ class TestListCommandView(ReadWriteAPITests):
             'hostname': 'mandarina',
             'ip': '192.168.20.53',
             'itime': 1511387720.048548,
-            'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
+            'params': '/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
             'user': 'lcubo'
         }
 
@@ -388,7 +387,7 @@ class TestListCommandView(ReadWriteAPITests):
             'hostname': 'mandarina',
             'ip': '192.168.20.53',
             'itime': start_date.timestamp(),
-            'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
+            'params': '/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
             'user': 'lcubo'
         }
 
@@ -435,7 +434,7 @@ class TestListCommandView(ReadWriteAPITests):
             'hostname': 'mandarina',
             'ip': '192.168.20.53',
             'itime': 1511387720000.048548,
-            'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
+            'params': '/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
             'user': 'lcubo'
         }
 

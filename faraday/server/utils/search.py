@@ -224,7 +224,7 @@ class Filter:
 
     def __repr__(self):
         """Returns a string representation of this object."""
-        return '<Filter {0} {1} {2}>'.format(self.fieldname, self.operator,
+        return '<Filter {} {} {}>'.format(self.fieldname, self.operator,
                                              self.argument or self.otherfield)
 
     @staticmethod

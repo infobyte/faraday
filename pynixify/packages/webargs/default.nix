@@ -12,7 +12,7 @@ buildPythonPackage rec {
   pname =
     "webargs";
   version =
-    "8.0.0";
+    "8.0.1";
 
   src =
     fetchPypi {
@@ -20,7 +20,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0xy6na8axc5wnp2wg3kvqbpl2iv0hx0rsnlrmrgkgp88znx6cmjn";
+        "052nard38lki662fqydlyip242n9i8w04yyh1axwz5zfa0i05kmw";
     };
 
   propagatedBuildInputs =

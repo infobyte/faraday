@@ -14,7 +14,7 @@ buildPythonPackage rec {
   pname =
     "faraday-agent-parameters-types";
   version =
-    "1.0.1";
+    "1.0.2";
 
   src =
     fetchPypi {
@@ -23,7 +23,7 @@ buildPythonPackage rec {
       pname =
         "faraday_agent_parameters_types";
       sha256 =
-        "0q2cngxgkvl74mhkibvdsvjjrdfd7flxd6a4776wmxkkn0brzw66";
+        "0dw2s7lyg9s1qjj6yrn5hxpasbb32qg89pcfsv4vv47yla9djzyc";
     };
 
   buildInputs =

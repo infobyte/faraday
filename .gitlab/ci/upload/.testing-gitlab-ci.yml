@@ -1,4 +1,4 @@
-qa_integration:
+.qa_integration:
     stage: upload_testing
     variables:
       REMOTE_BRANCH: $CI_COMMIT_REF_NAME

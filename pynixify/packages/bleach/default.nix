@@ -14,7 +14,7 @@ buildPythonPackage rec {
   pname =
     "bleach";
   version =
-    "3.3.0";
+    "4.0.0";
 
   src =
     fetchPypi {
@@ -22,7 +22,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0cx4jyvd7hlaiiq2cq6vps689b978w3kyqqrvkckvs75743igcwq";
+        "1j3wnrzk5p4n6avbpjz2spw0rpbf6rrk9hzwa369k4y2d8f25agz";
     };
 
   propagatedBuildInputs =

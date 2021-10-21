@@ -83,17 +83,18 @@ class ConfigSection:
     def parse(self, __parser):
         for att in self.__dict__:
             value = __parser.get(att)
+            if value is None:
+                continue
             if isinstance(self.__dict__[att], bool):
                 if value in ("yes", "true", "t", "1", "True"):
                     self.__setattr__(att, True)
                 else:
                     self.__setattr__(att, False)
             elif isinstance(self.__dict__[att], int):
-                if value:
-                    self.__setattr__(att, int(value))
+                self.__setattr__(att, int(value))
+
             else:
-                if value:
-                    self.__setattr__(att, value)
+                self.__setattr__(att, value)
 
     def set(self, option_name, value):
         return self.__setattr__(option_name, value)
@@ -138,8 +139,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.agent_registration_secret = None
         self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
-        self.custom_plugins_folder = None
-        self.ignore_info_severity = False
+        self.delete_report_after_process = True
 
 
 class StorageConfigObject(ConfigSection):

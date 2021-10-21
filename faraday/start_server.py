@@ -7,6 +7,7 @@ import socket
 import argparse
 import logging
 
+import psycopg2
 from alembic.runtime.migration import MigrationContext
 
 from colorama import init, Fore
@@ -102,8 +103,19 @@ def check_alembic_version():
                     )
 
 
+def check_if_db_up():
+    try:
+        conn = psycopg2.connect(dbname="postgres")
+        conn.close()
+    except psycopg2.OperationalError as e:
+        if "could not connect to server" in e.args[0]:
+            print("\n\nCould not ping the Postgres server, please check if it is running \n\n")
+            sys.exit(1)
+
+
 def main():
     os.chdir(faraday.server.config.FARADAY_BASE)
+    # check_if_db_up()
     check_alembic_version()
     # TODO RETURN TO prev CWD
     check_postgresql()

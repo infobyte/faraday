@@ -14,21 +14,27 @@ import sqlalchemy
 import datetime
 from collections import defaultdict
 from flask_classful import FlaskView
-from sqlalchemy.orm import joinedload, undefer
+from sqlalchemy.orm import joinedload, undefer, with_expression
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func, desc, asc
 from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
-from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
+from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaOpts, SQLAlchemyAutoSchemaMeta
 from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
 import flask_login
 
-from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
+from faraday.server.models import (Workspace,
+                                   db,
+                                   Command,
+                                   CommandObject,
+                                   count_vulnerability_severities,
+                                   _make_vuln_count_property,
+                                   _make_active_agents_count_property)
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -767,6 +773,25 @@ class FilterMixin(ListMixin):
         if severity_count and 'group_by' not in filters:
             filter_query = count_vulnerability_severities(filter_query, self.model_class,
                                                           all_severities=True, host_vulns=host_vulns)
+
+            filter_query = filter_query.options(
+                with_expression(
+                    Workspace.vulnerability_web_count,
+                    _make_vuln_count_property('vulnerability_web', use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.vulnerability_standard_count,
+                    _make_vuln_count_property('vulnerability', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.vulnerability_code_count,
+                    _make_vuln_count_property('vulnerability_code', use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.active_agents_count,
+                    _make_active_agents_count_property(),
+                ),
+            )
 
         return filter_query
 
@@ -1730,7 +1755,7 @@ class CustomModelConverter(ModelConverter):
             kwargs['validate'].append(Length(min=1))
 
 
-class CustomModelSchemaOpts(ModelSchemaOpts):
+class CustomSQLAlchemyAutoSchemaOpts(SQLAlchemyAutoSchemaOpts):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model_converter = CustomModelConverter
@@ -1755,14 +1780,14 @@ def old_isoformat(dt, *args, **kwargs):
 fields.DateTime.SERIALIZATION_FUNCS['iso'] = old_isoformat
 
 
-class AutoSchema(Schema, metaclass=ModelSchemaMeta):
+class AutoSchema(Schema, metaclass=SQLAlchemyAutoSchemaMeta):
     """
     A Marshmallow schema that does field introspection based on
     the SQLAlchemy model specified in Meta.model.
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
     the serialization and deserialization proccess.
     """
-    OPTIONS_CLASS = CustomModelSchemaOpts
+    OPTIONS_CLASS = CustomSQLAlchemyAutoSchemaOpts
 
     # Use NullToBlankString instead of fields.String by default on text fields
     TYPE_MAPPING = Schema.TYPE_MAPPING.copy()

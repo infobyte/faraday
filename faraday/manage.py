@@ -11,6 +11,7 @@ import sys
 import platform
 import logging
 
+os.environ['FARADAY_MANAGE_RUNNING'] = "1"
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
@@ -175,7 +176,8 @@ def create_superuser(username, email, password):
     with get_app().app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
             print(
-                "Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
+                "Can't create more users. The community edition only allows one user. "
+                "Please contact support for further information.")
             sys.exit(1)
 
         get_app().user_datastore.create_user(username=username,

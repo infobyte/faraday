@@ -5,7 +5,6 @@ import logging
 import os
 import string
 import datetime
-
 import bleach
 import pyotp
 import requests
@@ -16,6 +15,7 @@ from random import SystemRandom
 
 from faraday.settings import load_settings
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
+from faraday.server.extensions import socketio
 from faraday.server.models import User, Role
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
@@ -101,6 +101,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
     # Custom reset password
     from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
+    from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_reports import reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
@@ -120,6 +121,8 @@ def register_blueprints(app):
     app.register_blueprint(comment_api)
     app.register_blueprint(upload_api)
     app.register_blueprint(websocket_auth_api)
+    app.register_blueprint(websockets)
+
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
     app.register_blueprint(agent_api)
@@ -445,8 +448,15 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
 
     app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
+
+    register_extensions(app)
     load_settings()
+
     return app
+
+
+def register_extensions(app):
+    socketio.init_app(app)
 
 
 def minify_json_output(app):

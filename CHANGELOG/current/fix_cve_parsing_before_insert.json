@@ -1,0 +1,4 @@
+{
+	"level": "community",
+	"md": "Fix cve parsing in `vulnerability create` and `bulk create`"
+}

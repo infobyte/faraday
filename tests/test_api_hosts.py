@@ -511,6 +511,7 @@ class TestHostAPI:
         assert res.status_code == 200
         assert res.json['count'] == 0
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_invalid_service_port(self, test_client, session, workspace,
                                                      service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)

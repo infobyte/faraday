@@ -27,7 +27,7 @@ Check out our documentation for detailed information on how to install Faraday i
 ```shell
 $ pip install virtualenv
 $ virtualenv faraday_venv
-$ source faraday_env/bin/activate
+$ source faraday_venv/bin/activate
 $ git clone git@github.com:infobyte/faraday.git
 $ cd faraday
 $ git clone https://github.com/infobyte/faraday_angular_frontend.git faraday/frontend
@@ -37,8 +37,6 @@ $ pip install .
 For more information about the installation, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Install-Guide).
 
 ## Development
-
-You need Python 3.6+ and postgres to run the faraday server.
 
 If you want to develop for Faraday, please follow our [development setup for linux](https://github.com/infobyte/faraday/wiki/Development-setup) or [development setup for OSX](https://github.com/infobyte/faraday/wiki/Development-Installation-OSX).
 

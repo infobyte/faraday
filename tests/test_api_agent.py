@@ -546,6 +546,29 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         )
         assert res.status_code == 400
 
+    def test_run_agent_invalid_executor_argument(self, session, test_client):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        executor = ExecutorFactory.create(agent=agent)
+
+        session.add(executor)
+        session.commit()
+
+        payload = {
+            'executorData': {
+                "args": {
+                    "another_param_name": 'param_content'
+                },
+                "executor": executor.name
+            }
+        }
+
+        res = test_client.post(
+            urljoin(self.url(agent), 'run'),
+            json=payload
+        )
+
+        assert res.status_code == 400
+
     def test_invalid_body(self, test_client, session):
         agent = AgentFactory.create(workspaces=[self.workspace])
         session.add(agent)

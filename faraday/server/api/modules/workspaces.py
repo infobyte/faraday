@@ -4,7 +4,6 @@
 from datetime import timedelta, datetime
 
 import re
-from builtins import str
 
 import json
 import logging

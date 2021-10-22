@@ -42,7 +42,6 @@ include:
   - local: .gitlab/ci/build-ci/.testing-gitlab-ci.yml
 
   - local: .gitlab/ci/upload/.storage-gitlab-ci.yml
-  - local: .gitlab/ci/upload/.testing-gitlab-ci.yml
 
   - local: .gitlab/ci/deploy/deploy-gitlab-ci.yml
 

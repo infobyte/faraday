@@ -195,7 +195,7 @@ def get_server_pid(port):
     if not Path(str(FARADAY_SERVER_PID_FILE).format(port)).exists():
         return None
 
-    with open(str(FARADAY_SERVER_PID_FILE).format(port), 'r') as pid_file:
+    with open(str(FARADAY_SERVER_PID_FILE).format(port)) as pid_file:
         # If PID file is badly written, delete it and
         # assume server is not running
         try:

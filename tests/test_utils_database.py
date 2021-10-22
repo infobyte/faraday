@@ -18,9 +18,9 @@ from faraday.server.models import (
 )
 
 UNIQUE_FIELDS = {
-    License: [u'product', u'start_date', u'end_date'],
-    Service: [u'port', u'protocol', u'host_id', u'workspace_id'],
-    Host: [u'ip', u'workspace_id'],
+    License: ['product', 'start_date', 'end_date'],
+    Service: ['port', 'protocol', 'host_id', 'workspace_id'],
+    Host: ['ip', 'workspace_id'],
     Vulnerability: [
         'name',
         'description',
@@ -69,5 +69,3 @@ def test_unique_fields_workspace(obj_class, expected_unique_fields, session):
     unique_constraints = get_unique_fields(session, object_)
     for unique_constraint in unique_constraints:
         assert unique_constraint == expected_unique_fields
-
-# I'm Py3

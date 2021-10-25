@@ -3,7 +3,9 @@ from io import BytesIO
 from lxml.etree import Element, SubElement, tostring  # nosec
 # We don't use Element for parsing
 from flask import Blueprint, request, abort, send_file
+from marshmallow import Schema
 
+from faraday.server.api.base import GenericWorkspacedView
 from faraday.server.models import Workspace
 
 export_data_api = Blueprint('export_data_api', __name__)
@@ -11,40 +13,50 @@ export_data_api = Blueprint('export_data_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-@export_data_api.route('/v3/ws/<workspace_name>/export_data', methods=['GET'])
-def export_data(workspace_name):
-    """
-    ---
-    get:
-      tags: ["File","Workspace"]
-      description: Exports all the workspace data in a XML file
-      responses:
-        200:
-          description: Ok
-    """
+class EmptySchema(Schema):
+    pass
 
-    workspace = Workspace.query.filter_by(name=workspace_name).first()
-    if not workspace:
-        logger.error("No such workspace. Please, specify a valid workspace.")
-        abort(404, f"No such workspace: {workspace_name}")
 
-    export_format = request.args.get('format', '')
-    if not export_format:
-        logger.error("No format specified. Please, specify the format to export the data.")
-        abort(400, "No format specified.")
+class ExportDataView(GenericWorkspacedView):
+    route_base = 'export_data'
+    schema_class = EmptySchema
 
-    if export_format == 'xml_metasploit':
-        memory_file = xml_metasploit_format(workspace)
-        logger.info("GET: workspace´s data exported")
-        return send_file(
-            memory_file,
-            attachment_filename=f"Faraday-{workspace_name}-data.xml",
-            as_attachment=True,
-            cache_timeout=-1
-        )
-    else:
-        logger.error("Invalid format. Please, specify a valid format.")
-        abort(400, "Invalid format.")
+    def get(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["File","Workspace"]
+          description: Exports all the workspace data in a XML file
+          responses:
+            200:
+              description: Ok
+        """
+
+        workspace = Workspace.query.filter_by(name=workspace_name).first()
+        if not workspace:
+            logger.error("No such workspace. Please, specify a valid workspace.")
+            abort(404, f"No such workspace: {workspace_name}")
+
+        export_format = request.args.get('format', '')
+        if not export_format:
+            logger.error("No format specified. Please, specify the format to export the data.")
+            abort(400, "No format specified.")
+
+        if export_format == 'xml_metasploit':
+            memory_file = xml_metasploit_format(workspace)
+            logger.info("GET: workspace´s data exported")
+            return send_file(
+                memory_file,
+                attachment_filename=f"Faraday-{workspace_name}-data.xml",
+                as_attachment=True,
+                cache_timeout=-1
+            )
+        else:
+            logger.error("Invalid format. Please, specify a valid format.")
+            abort(400, "Invalid format.")
+
+
+ExportDataView.register(export_data_api)
 
 
 def xml_metasploit_format(workspace):

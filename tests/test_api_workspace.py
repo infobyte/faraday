@@ -178,11 +178,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
         assert len(ws[0]) == 2
         if ws[0][0]['date'] == create_date_today.strftime('%Y-%m-%d'):
-            assert ws[0][1] == {'critical': 2, 'date': create_date_5_days_ago.strftime('%Y-%m-%d')}
-            assert ws[0][0] == {'critical': 2, 'high': 2, 'date': create_date_today.strftime('%Y-%m-%d')}
+            assert ws[0][1] == {'critical': 2, 'high': 0, 'medium': 0, 'date': create_date_5_days_ago.strftime('%Y-%m-%d')}
+            assert ws[0][0] == {'critical': 2, 'high': 2, 'medium': 0, 'date': create_date_today.strftime('%Y-%m-%d')}
         else:
-            assert ws[0][0] == {'critical': 2, 'date': create_date_5_days_ago.strftime('%Y-%m-%d')}
-            assert ws[0][1] == {'critical': 2, 'high': 2, 'date': create_date_today.strftime('%Y-%m-%d')}
+            assert ws[0][0] == {'critical': 2, 'high': 0, 'medium': 0, 'date': create_date_5_days_ago.strftime('%Y-%m-%d')}
+            assert ws[0][1] == {'critical': 2, 'high': 2, 'medium': 0, 'date': create_date_today.strftime('%Y-%m-%d')}
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'

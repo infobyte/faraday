@@ -159,10 +159,16 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                     current_ws = workspace_name
                     histogram_dict[current_ws] = []
                     current_date = create_date
-                    histogram_dict[current_ws].append({'date': current_date})
+                    histogram_dict[current_ws].append({'date': current_date,
+                                                       'critical': 0,
+                                                       'high': 0,
+                                                       'medium': 0})
                 if current_date != create_date:
                     current_date = create_date
-                    histogram_dict[current_ws].append({'date': current_date})
+                    histogram_dict[current_ws].append({'date': current_date,
+                                                       'critical': 0,
+                                                       'high': 0,
+                                                       'medium': 0})
                 histogram_dict[current_ws][len(histogram_dict[current_ws]) - 1][severity] = count
 
         objects = []

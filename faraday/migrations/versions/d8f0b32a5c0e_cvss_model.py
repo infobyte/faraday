@@ -40,7 +40,7 @@ def upgrade():
                     )
     op.create_table('cvss_v3',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('attack_vector', sa.Enum('Network', 'A', 'L', 'P', name='cvss_attack_vector')),
+                    sa.Column('attack_vector', sa.Enum('N', 'A', 'L', 'P', name='cvss_attack_vector')),
                     sa.Column('attack_complexity', sa.Enum('L', 'H', name='cvss_attack_complexity')),
                     sa.Column('privileges_required', sa.Enum('N', 'L', 'H', name='cvss_privileges_required')),
                     sa.Column('user_interaction', sa.Enum('N', 'R', name='cvss_user_interaction')),

@@ -31,6 +31,9 @@ before_script:
 
 include:
   - local: .gitlab/ci/fetch-secrets.yaml
+  - local: .gitlab/ci/.rules-conditions.yml
+
+
   - local: .gitlab/ci/testing/.pretesting-gitlab-ci.yml
   - local: .gitlab/ci/testing/.nix-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml
@@ -46,6 +49,7 @@ include:
   - local: .gitlab/ci/deploy/deploy-gitlab-ci.yml
 
   - local: .gitlab/ci/publish/.set-tag-gitlab-ci.yml
+  - local: .gitlab/ci/publish/.mirror-to-github-gitlab-ci.yml
   - local: .gitlab/ci/publish/.docker-publish-gitlab-ci.yml
 
   - template: Security/Secret-Detection.gitlab-ci.yml

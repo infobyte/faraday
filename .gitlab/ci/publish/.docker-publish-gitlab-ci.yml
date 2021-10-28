@@ -14,8 +14,7 @@ docker-publish-dev:
     - docker image tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$VERSION
     - docker push "$CI_REGISTRY_IMAGE"
   rules:
-    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-      when: on_success
+    - !reference [ .on-master, rules ]
   needs: # dev won't wait for any previous stage, it will deploy instantly, and
       # then run tests in docker image (To be done)
     - job: generate_docker_tar_gz
@@ -35,7 +34,6 @@ docker-publish-prod:
     - docker image tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$VERSION
     - docker push $CI_REGISTRY_IMAGE:$VERSION
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
-      when: on_success
+    - !reference [ .on-community-tag, rules ]
   dependencies: # prod will wait for any previous stage
     - generate_docker_tar_gz

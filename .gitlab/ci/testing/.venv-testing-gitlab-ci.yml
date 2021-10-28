@@ -32,12 +32,10 @@
       - pip freeze
   allow_failure: true
   rules:
-      #- if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
-      - if: '$ALPHA_TEST' # FOR NOW, ASKED TO NOT CHARGE CI WORKER
+      # - !reference [ .pipeline-control-test, rules ]
+      # - !reference [ .dev-staging-master, rules ]
+      - if: '$ALPHA_TEST'
         when: on_success
-      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
-        when: never # FOR NOW, ASKED TO NOT CHARGE CI WORKER
-        #when: on_success
       - when: never
 
 
@@ -56,12 +54,10 @@
     - pip freeze
   allow_failure: true
   rules:
-      #- if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
-      - if: '$ALPHA_TEST' # FOR NOW, ASKED TO FIX #6474 first
+      # - !reference [ .pipeline-control-test, rules ]
+      # - !reference [ .dev-staging-master, rules ]
+      - if: '$ALPHA_TEST'
         when: on_success
-      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
-        when: never # FOR NOW, ASKED TO FIX #6474 first
-        #when: on_success
       - when: never
 
 unit_test 3.7:
@@ -74,7 +70,11 @@ unit_test 3.8:
 
 unit_test 3.9:
     extends: .latest_unit_test_base
-    image: python:3.9-rc
+    image: python:3.9
+
+unit_test 3.10:
+    extends: .latest_unit_test_base
+    image: python:3.10
 
 alpha_unit_test 3.7:
     extends: .alpha_unit_test_base
@@ -84,13 +84,17 @@ alpha_unit_test 3.8:
     extends: .alpha_unit_test_base
     image: python:3.8
     rules:
-      #- if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
-      - if: '$ALPHA_TEST'
-        when: on_success
-      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
-        when: never #on_success REACTIVATE WHEN HAVE TIME TO CHECK
-      - when: never
+        # - !reference [ .pipeline-control-test, rules ]
+        # - !reference [ .dev-staging-master, rules ]
+        - if: '$ALPHA_TEST'
+          when: on_success
+        - when: never
 
 alpha_unit_test 3.9:
     extends: .alpha_unit_test_base
-    image: python:3.9-rc
+    image: python:3.9
+
+
+alpha_unit_test 3.10:
+    extends: .alpha_unit_test_base
+    image: python:3.10

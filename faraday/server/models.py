@@ -1112,7 +1112,7 @@ class CVSSBase(db.Model):
 
     @hybrid_property
     def base_score(self):
-        if self._base_score:
+        if self._base_score is not None:
             return self._base_score
         return self._fixed_base_score
 
@@ -1242,7 +1242,7 @@ class CVSSV3(CVSSBase):
         if re.match(CVSS3GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
             score = 10
             if self.impact() <= 0:
-                return 0
+                return 0.0
             impact_plus_exploitability = self.impact() + self.exploitability()
             if self.scope == 'Unchanged':
                 if impact_plus_exploitability < 10:

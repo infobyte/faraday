@@ -1068,12 +1068,15 @@ class CVSS3GeneralConfig:
             '/I:(?P<integrity>[NLH])' \
             '/A:(?P<availability>[NLH])'
 
+    CHANGED = 'C'
+    UNCHANGED = 'U'
+
     # CVSSV3 ENUMS
     ATTACK_VECTOR_TYPES = ['N', 'A', 'L', 'P']
     ATTACK_COMPLEXITY_TYPES = ['L', 'H']
     PRIVILEGES_REQUIRED_TYPES = ['N', 'L', 'H']
     USER_INTERACTION_TYPES = ['N', 'R']
-    SCOPE_TYPES = ['U', 'C']
+    SCOPE_TYPES = [UNCHANGED, CHANGED]
     IMPACT_TYPES_V3 = ['N', 'L', 'H']
 
     # CVSSV3 SCORE
@@ -1230,7 +1233,7 @@ class CVSSV3(CVSSBase):
         return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
 
     def impact(self):
-        if self.scope == 'Unchanged':
+        if self.scope == CVSS3GeneralConfig.UNCHANGED:
             return 6.42 * self.isc_base()
         else:
             return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
@@ -1244,7 +1247,7 @@ class CVSSV3(CVSSBase):
             if self.impact() <= 0:
                 return 0.0
             impact_plus_exploitability = self.impact() + self.exploitability()
-            if self.scope == 'Unchanged':
+            if self.scope == CVSS3GeneralConfig.UNCHANGED:
                 if impact_plus_exploitability < 10:
                     score = impact_plus_exploitability
             else:

@@ -16,7 +16,7 @@ update_github:
         when: on_success
       - if: '$CI_COMMIT_REF_NAME == "white/staging"'
         variables:
-          DESTINY_BRANCH: staging
+          DESTINY_BRANCH: dev
         when: on_success
     tags:
         - faradaytests
@@ -29,7 +29,6 @@ tag_on_github:
       - !reference [.set-remote-github, script]
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - CHANGELOG/check_pre_tag.py
-      - git push github $CI_COMMIT_TAG:master
       - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
       - git push github v$FARADAY_VERSION
       - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm

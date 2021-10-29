@@ -1180,10 +1180,7 @@ class CVSSV2(CVSSBase):
     def calculate_base_score(self):
         if re.match(CVSS2GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
             score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
-            # round up score
-            # Where “Round up” is defined as the smallest number, specified to one decimal place,
-            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
-            return math.ceil(score * 10) / 10
+            return round(score, 1)
         return None
 
 

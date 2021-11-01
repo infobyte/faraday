@@ -1920,7 +1920,17 @@ class Workspace(Metadata):
                         FROM association_workspace_and_agents_table as assoc
                         JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
                         WHERE agent.active is TRUE
-                ) AS active_agents_count,
+                ) AS run_agent_date,
+                                (SELECT executor.last_run
+                        FROM executor
+                        JOIN agent ON executor.agent_id = agent.id
+                        JOIN association_workspace_and_agents_table ON
+                        agent.id = association_workspace_and_agents_table.agent_id
+                        and association_workspace_and_agents_table.workspace_id = workspace.id
+                        WHERE executor.last_run is not null
+                        ORDER BY executor.last_run DESC
+                        LIMIT 1
+                ) AS last_run_agent_date,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,
@@ -1933,6 +1943,8 @@ class Workspace(Metadata):
                 p_5.count_12 as vulnerability_low_count,
                 p_5.count_13 as vulnerability_informational_count,
                 p_5.count_14 as vulnerability_unclassified_count,
+                p_5.count_15 as vulnerability_open_count,
+                p_5.count_16 as vulnerability_confirmed_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -1965,7 +1977,9 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_11,
              COUNT(case when vulnerability.severity = 'low' then 1 else null end) as count_12,
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
-             COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14
+             COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14,
+             COUNT(case when vulnerability.status = 'open' OR vulnerability.status='re-opened' then 1 else null end) as count_15,
+             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}

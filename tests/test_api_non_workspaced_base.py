@@ -1,11 +1,9 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from builtins import str
 
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
@@ -45,7 +43,7 @@ class GenericAPITest:
         if obj is not None:
             id_ = str(getattr(obj, self.lookup_field)) if isinstance(
                 obj, self.model) else str(obj)
-            url += u'/' + id_
+            url += '/' + id_
         return url
 
 
@@ -69,7 +67,7 @@ class RetrieveTestsMixin:
         assert res.status_code == 200
         assert isinstance(res.json, dict)
 
-    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', 'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
         url = self.url(object_id)
@@ -153,7 +151,7 @@ class DeleteTestsMixin:
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
 
-    @pytest.mark.parametrize('object_id', [12300, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [12300, -1, 'xxx', 'áá'])
     def test_delete_non_existent_raises_404(self, test_client,
                                             object_id):
         res = test_client.delete(self.url(object_id))

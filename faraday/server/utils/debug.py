@@ -43,5 +43,3 @@ def profiled():
     # uncomment this to see who's calling what
     # ps.print_callers()
     debug_logger.debug(s.getvalue())
-
-# I'm Py3

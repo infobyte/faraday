@@ -1,4 +1,3 @@
-
 class MissingConfigurationError(Exception):
     """Raised when setting configuration is missing"""
     pass

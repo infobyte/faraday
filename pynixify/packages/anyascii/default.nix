@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "anyascii";
   version =
-    "0.2.0";
+    "0.3.0";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "1b6jdd9nx15py0jqjdn154m6m491517sqlk57bbyj3x4xzywadkh";
+        "14xmf2xz99gdmyzal7xwc997l05siipvcpqj6cxckik4zcqp9wi4";
     };
 
   # TODO FIXME

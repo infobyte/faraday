@@ -35,10 +35,8 @@ google_storage_deb_rpm_dev:
     - *google_storage_deb_rpm_base
     - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}*.*"
   rules:
-    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-      when: on_success
-    - if: '$BUILD_TEST || $FULL_TEST || $DAILY_TEST'
-      when: on_success
+    - !reference [ .on-master-staging, rules ]
+    - !reference [ .be-uploaded, rules ]
     - when: never
   needs:
     - job: generate_deb

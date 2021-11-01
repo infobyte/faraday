@@ -1,0 +1,37 @@
+update_github:
+    image: python:3
+    stage: publish
+    script:
+      - git remote set-url github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
+      - git push github $CI_COMMIT_REF_NAME:$DESTINY_BRANCH
+    rules:
+      - if: '$CI_COMMIT_REF_NAME == "white/master"'
+        variables:
+          DESTINY_BRANCH: master
+        when: on_success
+      - if: '$CI_COMMIT_REF_NAME == "white/staging"'
+        variables:
+          DESTINY_BRANCH: staging
+        when: on_success
+    tags:
+        - faradaytests
+
+
+tag_on_github:
+    image: python:3
+    stage: publish
+    script:
+      - git remote set-url github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
+      - export FARADAY_VERSION=$(eval $IMAGE_TAG)
+      - CHANGELOG/check_pre_tag.py
+      - git push github $CI_COMMIT_TAG:master
+      - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
+      - git push github v$FARADAY_VERSION
+      - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
+    rules:
+      - !reference [ .on-community-tag, rules ]
+    dependencies:
+      - generate_deb
+      - generate_rpm
+    tags:
+      - faradaytests

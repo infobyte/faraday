@@ -11,7 +11,6 @@ from setuptools import setup, find_packages
 # It ensures open() defaults to text mode with universal newlines,
 # and accepts an argument to specify the text encoding
 # Python 3 only projects can skip this import
-from io import open
 from re import search
 
 # Get the long description from the README file
@@ -25,7 +24,7 @@ Designed for simplicity, users should notice no difference between their own ter
 
 To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!"""
 
-with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
+with open('faraday/__init__.py', encoding='utf8') as f:
     version = search(r'__version__ = \'(.*?)\'', f.read()).group(1)
 
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775

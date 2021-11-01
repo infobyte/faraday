@@ -85,8 +85,8 @@ class TestUpdateHostnames:
         session.commit()
         assert len(session.new) == len(session.deleted) == len(
             session.dirty) == 0
-        assert set(new_value) == set(hn.name for hn in
-                                     host_with_hostnames.hostnames)
+        assert set(new_value) == {hn.name for hn in
+                                     host_with_hostnames.hostnames}
 
     def test_all(self, host, session):
         a = Hostname(workspace=host.workspace, host=host, name='a')
@@ -107,7 +107,7 @@ class TestUpdateHostnames:
         assert c.name == 'c'
 
         session.commit()
-        assert set(hn.name for hn in host.hostnames) == {'b', 'c'}
+        assert {hn.name for hn in host.hostnames} == {'b', 'c'}
 
     def test_change_one(self, host, session):
         hn = Hostname(workspace=host.workspace,

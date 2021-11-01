@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from builtins import chr, range
 
 import random
 import string
@@ -668,5 +667,3 @@ class RuleActionFactory(FaradayFactory):
     class Meta:
         model = RuleAction
         sqlalchemy_session = db.session
-
-# I'm Py3

@@ -244,7 +244,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint
         if obj is not None:
             id_ = str(obj.id) if isinstance(obj, self.model) else str(obj)
-            url += u'/' + id_
+            url += '/' + id_
         return url
 
     def create_raw_agent(self, active=False, token="TOKEN",

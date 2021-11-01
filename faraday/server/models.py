@@ -1183,7 +1183,7 @@ class CVSSV2(CVSSBase):
     def calculate_base_score(self):
         if re.match(CVSS2GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
             score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
-            return round(score, 1)  # pylint: disable=py2 compatible not required
+            return round(score, 1)  # pylint: disable=round-builtin
         return None
 
 

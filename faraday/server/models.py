@@ -999,7 +999,7 @@ class Host(Metadata):
 
 
 cve_vulnerability_association = db.Table('cve_association',
-    Column('vulnerability_id', Integer, db.ForeignKey('vulnerability.id'), nullable=False),
+    Column('vulnerability_id', Integer, db.ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False),
     Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
 )
 

@@ -68,9 +68,9 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
 
         # Add wildcards to both ends of a search term
         if is_direct_filter_search:
-            like_str = u'%' + field_filter.get(attribute) + u'%'
+            like_str = '%' + field_filter.get(attribute) + '%'
         elif is_free_text_search:
-            like_str = u'%' + free_text_search + u'%'
+            like_str = '%' + free_text_search + '%'
         else:
             continue
 
@@ -168,7 +168,7 @@ def get_or_create(session, model, defaults=None, **kwargs):
     if instance:
         return instance, False
     else:
-        params = dict((k, v) for k, v in kwargs.items() if not isinstance(v, ClauseElement))
+        params = {k: v for k, v in kwargs.items() if not isinstance(v, ClauseElement)}
         params.update(defaults or {})
         instance = model(**params)
         session.add(instance)
@@ -186,7 +186,7 @@ def _group_concat_postgresql(element, compiler, **kw):
     else:
         separator = ','
 
-    res = 'array_to_string(array_agg({0}), \'{1}\')'.format(
+    res = 'array_to_string(array_agg({}), \'{}\')'.format(
         compiler.process(element.clauses.clauses[0]),
         separator,
     )

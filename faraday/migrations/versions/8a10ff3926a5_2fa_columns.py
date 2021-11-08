@@ -30,4 +30,3 @@ def downgrade():
     op.drop_column('faraday_user', 'otp_secret')
     op.drop_column('faraday_user', 'state_otp')
     op.execute('DROP TYPE user_otp_states')
-# I'm Py3

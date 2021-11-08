@@ -5,14 +5,13 @@
 { buildPythonPackage
 , fetchPypi
 , lib
-, setuptools_scm
 }:
 
 buildPythonPackage rec {
   pname =
     "bidict";
   version =
-    "0.21.2";
+    "0.21.3";
 
   src =
     fetchPypi {
@@ -20,13 +19,8 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "02dy0b1k7qlhn7ajyzkrvxhyhjj0hzcq6ws3zjml9hkdz5znz92g";
+        "07gdwfrxh4x9jg62pwryvfdgyf89xfh7jjf9zyc43qvmmqgxh2ym";
     };
-
-  buildInputs =
-    [
-      setuptools_scm
-    ];
 
   # TODO FIXME
   doCheck =

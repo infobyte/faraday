@@ -75,8 +75,8 @@ class TestHostAPI:
         """
         Compare is the hosts in response are the same that in hosts.
         It only compares the IDs of each one, not other fields"""
-        hosts_in_list = set(host.id for host in hosts)
-        hosts_in_response = set(host['id'] for host in response.json['rows'])
+        hosts_in_list = {host.id for host in hosts}
+        hosts_in_response = {host['id'] for host in response.json['rows']}
         assert hosts_in_list == hosts_in_response
 
     def test_list_retrieves_all_items_from_workspace(self, test_client,
@@ -402,8 +402,8 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url() + '?service=IRC')
         assert res.status_code == 200
-        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
-        expected_host_ids = set(host.id for host in hosts)
+        shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
+        expected_host_ids = {host.id for host in hosts}
         assert shown_hosts_ids == expected_host_ids
 
     @pytest.mark.usefixtures('ignore_nplusone')
@@ -425,8 +425,8 @@ class TestHostAPI:
             )
         )
         assert res.status_code == 200
-        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
-        expected_host_ids = set(host.id for host in hosts)
+        shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
+        expected_host_ids = {host.id for host in hosts}
         assert shown_hosts_ids == expected_host_ids
 
     def test_filter_by_service_port(self, test_client, session, workspace,
@@ -440,8 +440,8 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url() + '?port=25')
         assert res.status_code == 200
-        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
-        expected_host_ids = set(host.id for host in hosts)
+        shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
+        expected_host_ids = {host.id for host in hosts}
         assert shown_hosts_ids == expected_host_ids
 
     @pytest.mark.usefixtures('ignore_nplusone')
@@ -461,8 +461,8 @@ class TestHostAPI:
             )
         )
         assert res.status_code == 200
-        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
-        expected_host_ids = set(host.id for host in hosts)
+        shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
+        expected_host_ids = {host.id for host in hosts}
         assert shown_hosts_ids == expected_host_ids
 
     @pytest.mark.usefixtures('ignore_nplusone')
@@ -568,8 +568,8 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url() + '?search=gopher')
         assert res.status_code == 200
-        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
-        expected_host_ids = set(host.id for host in expected_hosts)
+        shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
+        expected_host_ids = {host.id for host in expected_hosts}
         assert shown_hosts_ids == expected_host_ids
 
     @pytest.mark.usefixtures('host_with_hostnames')
@@ -580,8 +580,8 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url() + '?search=twitter')
         assert res.status_code == 200
-        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
-        expected_host_ids = set(host.id for host in expected_hosts)
+        shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
+        expected_host_ids = {host.id for host in expected_hosts}
         assert shown_hosts_ids == expected_host_ids
 
     def test_host_with_open_vuln_count_verification(self, test_client, session,
@@ -651,9 +651,9 @@ class TestHostAPI:
         }
         res = test_client.put(self.url(host_with_hostnames), data=data)
         assert res.status_code == 200
-        expected = set(["other.com", "test.com"])
+        expected = {"other.com", "test.com"}
         assert set(res.json['hostnames']) == expected
-        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
+        assert {hn.name for hn in host_with_hostnames.hostnames} == expected
 
     def test_create_host_with_default_gateway(self, test_client):
         raw_data = {
@@ -703,43 +703,43 @@ class TestHostAPI:
         assert res.status_code == 200
         updated_host = Host.query.filter_by(id=host.id).first()
         assert res.json == {
-            u'_id': host.id,
-            u'type': u'Host',
-            u'_rev': u'',
-            u'credentials': 0,
-            u'default_gateway': '',
-            u'description': u'',
-            u'hostnames': [],
-            u'id': host.id,
-            u'ip': u'10.31.112.21',
-            u'mac': '',
-            u'metadata': {
-                u'command_id': None,
-                u'create_time': pytz.UTC.localize(updated_host.create_date).isoformat(),
-                u'creator': u'',
-                u'owner': host.creator.username,
-                u'update_action': 0,
-                u'update_controller_action': u'',
-                u'update_time': pytz.UTC.localize(updated_host.update_date).isoformat(),
-                u'update_user': None},
-            u'name': u'10.31.112.21',
-            u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
-            u'owned': False,
-            u'owner': host.creator.username,
-            u'services': 0,
-            u'service_summaries': [],
-            u'vulns': 0,
-            u"versions": [],
-            u'important': False,
-            u'severity_counts': {
-                u'critical': None,
-                u'high': None,
-                u'host_id': host.id,
-                u'info': None,
-                u'med': None,
-                u'low': None,
-                u'total': None,
-                u'unclassified': None
+            '_id': host.id,
+            'type': 'Host',
+            '_rev': '',
+            'credentials': 0,
+            'default_gateway': '',
+            'description': '',
+            'hostnames': [],
+            'id': host.id,
+            'ip': '10.31.112.21',
+            'mac': '',
+            'metadata': {
+                'command_id': None,
+                'create_time': pytz.UTC.localize(updated_host.create_date).isoformat(),
+                'creator': '',
+                'owner': host.creator.username,
+                'update_action': 0,
+                'update_controller_action': '',
+                'update_time': pytz.UTC.localize(updated_host.update_date).isoformat(),
+                'update_user': None},
+            'name': '10.31.112.21',
+            'os': 'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
+            'owned': False,
+            'owner': host.creator.username,
+            'services': 0,
+            'service_summaries': [],
+            'vulns': 0,
+            "versions": [],
+            'important': False,
+            'severity_counts': {
+                'critical': None,
+                'high': None,
+                'host_id': host.id,
+                'info': None,
+                'med': None,
+                'low': None,
+                'total': None,
+                'unclassified': None
             }
         }
 
@@ -968,7 +968,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTest
         })
 
         assert res.status_code == 400
-        assert res.json == {u'message': u'Command not found.'}
+        assert res.json == {'message': 'Command not found.'}
         assert len(command.command_objects) == 0
 
     def test_service_summaries(self, test_client, session, service_factory):
@@ -1136,14 +1136,14 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTest
         assert res.status_code == 200
         assert res.json["updated"] == 2
         expected = {"other.com", "test.com"}
-        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
-        assert set(hn.name for hn in self.first_object.hostnames) == expected
+        assert {hn.name for hn in host_with_hostnames.hostnames} == expected
+        assert {hn.name for hn in self.first_object.hostnames} == expected
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_update_host_without_hostnames(self, test_client, session,
                                                 host_with_hostnames):
         session.commit()
-        expected = set(hn.name for hn in host_with_hostnames.hostnames)
+        expected = {hn.name for hn in host_with_hostnames.hostnames}
         data = {
             "ids": [host_with_hostnames.id],
             "os": "NotAnOS"
@@ -1151,7 +1151,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTest
         res = test_client.patch(self.url(), data=data)
         assert res.status_code == 200
         assert res.json["updated"] == 1
-        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
+        assert {hn.name for hn in host_with_hostnames.hostnames} == expected
 
 
 def host_json():

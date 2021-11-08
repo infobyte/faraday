@@ -8,7 +8,15 @@ agent_integration_and_db_regression:
       strategy: depend
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        variables:
+          DISPATCHER_REF: master
+        when: on_success
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(staging)$/'
+        variables:
+          DISPATCHER_REF: staging
         when: on_success
       - if: '$INTEGRATION || $FULL_TEST || $DAILY_TEST'
+        variables:
+          DISPATCHER_REF: staging
         when: on_success
       - when: never

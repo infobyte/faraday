@@ -356,7 +356,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
         assert res.status_code == 201
         assert set(res.json['scope']) == set(desired_scope)
         workspace = Workspace.query.get(res.json['id'])
-        assert set(s.name for s in workspace.scope) == set(desired_scope)
+        assert {s.name for s in workspace.scope} == set(desired_scope)
 
     def test_update_with_scope(self, session, test_client, workspace):
         session.add(Scope(name='test.com', workspace=workspace))
@@ -370,7 +370,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
         res = test_client.put(self.url(obj=workspace), data=raw_data)
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
-        assert set(s.name for s in workspace.scope) == set(desired_scope)
+        assert {s.name for s in workspace.scope} == set(desired_scope)
 
     @pytest.mark.skip_sql_dialect('sqlite')
     def test_list_retrieves_all_items_from(self, test_client, logged_user):
@@ -425,10 +425,10 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
         res = test_client.patch(self.url(), data=raw_data)
         assert res.status_code == 200
         assert res.json['updated'] == 2
-        assert set(s.name for s in workspace.scope) == set(desired_scope)
-        assert set(s.name for s in self.first_object.scope) == set(desired_scope)
+        assert {s.name for s in workspace.scope} == set(desired_scope)
+        assert {s.name for s in self.first_object.scope} == set(desired_scope)
         raw_data = {"ids": [self.first_object.name], 'name': self.first_object.name + "a"}
         res = test_client.patch(self.url(), data=raw_data)
         assert res.status_code == 200
         assert res.json['updated'] == 1
-        assert set(s.name for s in self.first_object.scope) == set(desired_scope)
+        assert {s.name for s in self.first_object.scope} == set(desired_scope)

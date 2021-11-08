@@ -245,7 +245,7 @@ class HostsView(PaginatedMixin,
             for host_dict in hosts_reader:
                 try:
                     hostnames = parse_hosts(host_dict.pop('hostnames'))
-                    other_fields = {'owned': False, 'mac': u'00:00:00:00:00:00', 'default_gateway_ip': u'None'}
+                    other_fields = {'owned': False, 'mac': '00:00:00:00:00:00', 'default_gateway_ip': 'None'}
                     host_dict.update(other_fields)
                     host = super()._perform_create(host_dict, workspace_name)
                     host.workspace = workspace

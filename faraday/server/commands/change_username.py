@@ -23,6 +23,3 @@ def change_username(current_username, new_username):
                 print(f"Username {current_username} changed to {new_username}")
             else:
                 print("Username not changed.")
-
-
-# I'm Py3

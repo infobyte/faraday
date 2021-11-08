@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "ADD check if postgres db is running during server start"
-}

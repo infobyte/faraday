@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 ###
 # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 ###
-from builtins import str
 
 import ast
 import json
@@ -180,7 +178,7 @@ def update_vulnerability(api, vuln, key, value):
                 set_array(field, value, add=to_add)
                 action = f'Adding {value} to {key} list in vulnerability {vuln.name} with id {vuln.id}'
                 if not to_add:
-                    action = 'Removing %s from %s list in vulnerability %s with id %s' % (
+                    action = 'Removing {} from {} list in vulnerability {} with id {}'.format(
                         value, key, vuln.name, vuln.id)
 
                 logger.info(action)
@@ -217,7 +215,7 @@ def update_service(api, service, key, value):
                 set_array(field, value, add=to_add)
                 action = f'Adding {value} to {key} list in service {service.name} with id {service.id}'
                 if not to_add:
-                    action = 'Removing %s from %s list in service %s with id %s' % (
+                    action = 'Removing {} from {} list in service {} with id {}'.format(
                         value, key, service.name, service.id)
 
                 logger.info(action)
@@ -248,7 +246,7 @@ def update_host(api, host, key, value):
                 set_array(field, value, add=to_add)
                 action = f'Adding {value} to {key} list in host {host.name} with id {host.id}'
                 if not to_add:
-                    action = 'Removing %s from %s list in host %s with id %s' % (
+                    action = 'Removing {} from {} list in host {} with id {}'.format(
                         value, key, host.name, host.id)
 
                 logger.info(action)
@@ -367,7 +365,7 @@ def replace_rule(rule, value_item):
         return rule
 
     rule_str = json.dumps(rule)
-    r = re.findall("\{\{(.*?)\}\}", rule_str)
+    r = re.findall(r"\{\{(.*?)\}\}", rule_str)
     _vars = list(set(r))
     for var in _vars:
         value = value_item[var]
@@ -599,12 +597,12 @@ class Searcher:
                 action = action.strip('--')
                 array = action.split(':')
                 command = array[0]
-                expression = str(':').join(array[1:])
+                expression = ':'.join(array[1:])
 
                 if command == 'UPDATE':
                     array_exp = expression.split('=')
                     key = array_exp[0]
-                    value = str('=').join(array_exp[1:])
+                    value = '='.join(array_exp[1:])
                     if object_type in ['Vulnerabilityweb', 'Vulnerability_web', 'Vulnerability']:
                         self._update_vulnerability(obj, key, value)
 
@@ -629,7 +627,7 @@ class Searcher:
                 else:
                     if self.mail_notification:
                         subject = 'Faraday searcher alert'
-                        body = '%s %s have been modified by rule %s at %s' % (
+                        body = '{} {} have been modified by rule {} at {}'.format(
                             object_type, obj.name, rule['id'], str(datetime.utcnow()))
                         self.mail_notification.send_mail(expression, subject, body)
                         logger.info(f"Sending mail to: '{expression}'")
@@ -688,14 +686,14 @@ class Searcher:
                     if isinstance(field, str):
                         setattr(vuln, key, value)
                         logger.info(
-                            "Changing property %s to %s in vulnerability '%s' with id %s" % (
+                            "Changing property {} to {} in vulnerability '{}' with id {}".format(
                                 key, value, vuln.name, vuln.id))
                     else:
                         self.api.set_array(field, value, add=to_add, key=key, object=vuln)
-                        action = 'Adding %s to %s list in vulnerability %s with id %s' % (
+                        action = 'Adding {} to {} list in vulnerability {} with id {}'.format(
                             value, key, vuln.name, vuln.id)
                         if not to_add:
-                            action = 'Removing %s from %s list in vulnerability %s with id %s' % (
+                            action = 'Removing {} from {} list in vulnerability {} with id {}'.format(
                                 value, key, vuln.name, vuln.id)
 
                         logger.info(action)
@@ -703,7 +701,7 @@ class Searcher:
                 else:
                     vuln.custom_fields[key] = value
                     logger.info(
-                        "Changing custom field %s to %s in vulnerability '%s' with id %s" % (
+                        "Changing custom field {} to {} in vulnerability '{}' with id {}".format(
                             key, value, vuln.name, vuln.id))
 
         result = self.api.update_vulnerability(vuln)
@@ -729,13 +727,13 @@ class Searcher:
                 if isinstance(field, str):
                     setattr(service, key, value)
                     logger.info(
-                        "Changing property %s to %s in service '%s' with id %s" % (
+                        "Changing property {} to {} in service '{}' with id {}".format(
                             key, value, service.name, service.id))
                 else:
                     self.api.set_array(field, value, add=to_add, key=key, object=service)
                     action = f'Adding {value} to {key} list in service {service.name} with id {service.id}'
                     if not to_add:
-                        action = 'Removing %s from %s list in service %s with id %s' % (
+                        action = 'Removing {} from {} list in service {} with id {}'.format(
                             value, key, service.name, service.id)
 
                     logger.info(action)
@@ -765,7 +763,7 @@ class Searcher:
                     self.api.set_array(field, value, add=to_add, key=key, object=host)
                     action = f'Adding {value} to {key} list in host {host.ip} with id {host.id}'
                     if not to_add:
-                        action = 'Removing %s from %s list in host %s with id %s' % (
+                        action = 'Removing {} from {} list in host {} with id {}'.format(
                             value, key, host.ip, host.id)
 
                     logger.info(action)
@@ -815,7 +813,7 @@ def main(workspace, server_address, user, password, output, email_sender,
     signal.signal(signal.SIGINT, signal_handler)
 
     loglevel = log
-    with open(rules, 'r') as rules_file:
+    with open(rules) as rules_file:
         try:
             rules = json.loads(rules_file.read())
         except Exception:
@@ -877,4 +875,3 @@ def main(workspace, server_address, user, password, output, email_sender,
 
 if __name__ == "__main__":
     main()
-# I'm Py3

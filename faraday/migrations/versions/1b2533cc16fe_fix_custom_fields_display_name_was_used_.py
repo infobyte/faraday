@@ -73,5 +73,3 @@ def downgrade():
                         'json_data': json.dumps(custom_fields),
                         'vuln_id': vuln_id
                     })
-
-# I'm Py3

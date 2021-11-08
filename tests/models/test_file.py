@@ -56,4 +56,3 @@ def test_add_vulnweb_evidence(vulnerability_web, depotfile, session):
     assert len(vulnerability_web.evidence) == 1
     assert vulnerability_web.evidence[0].object_type == 'vulnerability'
     assert vulnerability_web.evidence[0].object_id == vulnerability_web.id
-# I'm Py3

@@ -32,9 +32,9 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkUpdateTestsMixin, Bul
 
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text',
-                u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None,
-                u'field_order': 1} in res.json
+        assert {'table_name': 'vulnerability', 'id': add_text_field.id, 'field_type': 'text',
+                'field_name': 'cvss', 'field_display_name': 'CVSS', 'field_metadata': None,
+                'field_order': 1} in res.json
 
     def test_custom_fields_field_name_cant_be_changed(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(
@@ -48,11 +48,11 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkUpdateTestsMixin, Bul
         session.commit()
 
         data = {
-            u'field_name': u'cvss 2',
-            u'field_type': 'int',
-            u'table_name': 'sarasa',
-            u'field_display_name': u'CVSS new',
-            u'field_order': 1
+            'field_name': 'cvss 2',
+            'field_type': 'int',
+            'table_name': 'sarasa',
+            'field_display_name': 'CVSS new',
+            'field_order': 1
         }
         res = test_client.put(self.url(add_text_field.id), data=data)
         assert res.status_code == 200
@@ -78,6 +78,6 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkUpdateTestsMixin, Bul
 
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
-                u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
-                u'field_order': 1} in res.json
+        assert {'table_name': 'vulnerability', 'id': add_choice_field.id, 'field_type': 'choice',
+                'field_name': 'gender', 'field_display_name': 'Gender', 'field_metadata': "['Male', 'Female']",
+                'field_order': 1} in res.json

@@ -37,10 +37,8 @@ generate_deb:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     rules:
-      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: on_success
-      - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
-        when: on_success
+      - !reference [.on-master-staging, rules]
+      - !reference [.be-built, rules]
       - when: never
 
 
@@ -91,10 +89,8 @@ generate_rpm:
             - "faraday-server_amd64.rpm"
         expire_in: 15 days
     rules:
-      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: on_success
-      - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
-        when: on_success
+      - !reference [.on-master-staging, rules]
+      - !reference [.be-built, rules]
       - when: never
 
 generate_docker_tar_gz:
@@ -115,7 +111,6 @@ generate_docker_tar_gz:
       paths:
         - faraday-server-docker.tar.gz
     rules:
-        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-          when: on_success
-        - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
-          when: on_success
+      - !reference [.on-master-staging, rules]
+      - !reference [.be-built, rules]
+      - when: never

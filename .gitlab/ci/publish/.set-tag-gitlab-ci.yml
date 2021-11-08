@@ -1,22 +1,3 @@
-tag_on_github:
-    image: python:3
-    stage: publish
-    before_script:
-    script:
-      - git remote set-url github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
-      - export FARADAY_VERSION=$(eval $IMAGE_TAG)
-      - CHANGELOG/check_pre_tag.py
-      - git push github $CI_COMMIT_TAG:master
-      - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/white.md)"
-      - git push github v$FARADAY_VERSION
-      - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
-    rules:
-      - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
-        when: on_success
-    dependencies:
-      - generate_deb
-      - generate_rpm
-
 publish_pypi:
     image: python:3
     stage: publish
@@ -27,5 +8,4 @@ publish_pypi:
       - python setup.py sdist bdist_wheel
       - twine upload -u $PYPI_USER -p $PYPI_PASS dist/* --verbose
     rules:
-      - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
-        when: on_success
+      - !reference [ .on-community-tag, rules ]

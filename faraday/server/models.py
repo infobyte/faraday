@@ -7,7 +7,7 @@ import math
 import operator
 import re
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import partial
 from random import SystemRandom
 
@@ -26,6 +26,7 @@ from sqlalchemy import (
     event,
     Table,
     literal,
+    Date,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -534,6 +535,29 @@ class VulnerabilityABC(Metadata):
     @property
     def parent(self):
         raise NotImplementedError('ABC property called')
+
+
+class SeveritiesHistogram(db.Model):
+    __tablename__ = "severities_histogram"
+
+    SEVERITIES_ALLOWED = ['medium', 'high', 'critical']
+
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('severities_histogram', cascade="all, delete-orphan")
+    )
+    date = Column(Date, default=date.today(), nullable=False)
+    medium = Column(Integer, nullable=False)
+    high = Column(Integer, nullable=False)
+    critical = Column(Integer, nullable=False)
+
+    # This method is required by event :_(
+    @property
+    def parent(self):
+        return
 
 
 class CustomAssociationSet(_AssociationSet):

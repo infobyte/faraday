@@ -7,9 +7,11 @@ See the file 'doc/LICENSE' for the license information
 import sys
 import logging
 import inspect
+from datetime import date
 from queue import Queue
 
 from sqlalchemy import event
+from sqlalchemy.orm.attributes import get_history
 
 from faraday.server.models import (
     Host,
@@ -17,6 +19,9 @@ from faraday.server.models import (
     TagObject,
     Comment,
     File,
+    VulnerabilityWeb,
+    SeveritiesHistogram,
+    Vulnerability,
 )
 from faraday.server.models import db
 
@@ -98,6 +103,63 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
                 "This should never happen!!!"
 
 
+def _create_or_update_histogram(session, workspace=None, medium=0, high=0, critical=0):
+    if workspace is None:
+        return
+
+    sh = SeveritiesHistogram.query.filter(SeveritiesHistogram.date == date.today(),
+                                          SeveritiesHistogram.workspace == workspace).first()
+    if sh is None:
+        sh = SeveritiesHistogram(workspace=workspace, medium=medium, high=high, critical=critical)
+        session.add(sh)
+    else:
+        sh.medium += medium
+        sh.high += high
+        sh.critical += critical
+        session.add(sh)
+
+
+def _alter_severity_histogram_data_on_vuln_creation(session, instance):
+    if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        medium = 1 if instance.severity == 'medium' else 0
+        high = 1 if instance.severity == 'high' else 0
+        critical = 1 if instance.severity == 'critical' else 0
+        _create_or_update_histogram(session, workspace=instance.workspace, medium=medium, high=high, critical=critical)
+
+
+def _alter_severity_histogram_data_on_vuln_update(session, instance):
+    vuln_severity_history = get_history(instance, 'severity')
+
+    # It's a recently created vuln or has no changes
+    if vuln_severity_history.unchanged:
+        return
+
+    medium = high = critical = 0
+    if vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        medium = -1 if vuln_severity_history.deleted[0] == 'medium' else 0
+        high = -1 if vuln_severity_history.deleted[0] == 'high' else 0
+        critical = -1 if vuln_severity_history.deleted[0] == 'critical' else 0
+
+    if vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        medium = 1 if vuln_severity_history.added[0] == 'medium' else medium
+        high = 1 if vuln_severity_history.added[0] == 'high' else high
+        critical = 1 if vuln_severity_history.added[0] == 'critical' else critical
+
+    _create_or_update_histogram(session, workspace=instance.workspace, medium=medium, high=high, critical=critical)
+
+
+def update_severities_histogram(session, flush_context, other):
+    # New vulnerabilities loaded
+    for instance in session.new:
+        if isinstance(instance, Vulnerability) or isinstance(instance, VulnerabilityWeb):
+            _alter_severity_histogram_data_on_vuln_creation(session, instance)
+
+    # Updated Vulns
+    for instance in session.dirty:
+        if isinstance(instance, Vulnerability) or isinstance(instance, VulnerabilityWeb):
+            _alter_severity_histogram_data_on_vuln_update(session, instance)
+
+
 # register the workspace verification for all objs that has workspace_id
 for name, obj in inspect.getmembers(sys.modules['faraday.server.models']):
     if inspect.isclass(obj) and getattr(obj, 'workspace_id', None):
@@ -116,3 +178,6 @@ event.listen(Service, 'after_delete', delete_object_event)
 # Update object bindings
 event.listen(Host, 'after_update', update_object_event)
 event.listen(Service, 'after_update', update_object_event)
+
+# Update Severities Histogram
+event.listen(db.session, "before_flush", update_severities_histogram)

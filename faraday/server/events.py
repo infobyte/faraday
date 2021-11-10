@@ -165,7 +165,7 @@ def alter_histogram_on_update(mapper, connection, instance):
                 medium, high, critical = _dicrease_severities_histogram(instance.severity)
                 _create_or_update_histogram(connection, instance.workspace.id, medium=medium, high=high,
                                              critical=critical)
-        else:
+        elif status.deleted[0] == 'closed':
             if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
                 medium, high, critical = _increase_severities_histogram(instance.severity)
                 _create_or_update_histogram(connection, instance.workspace.id, medium=medium, high=high,

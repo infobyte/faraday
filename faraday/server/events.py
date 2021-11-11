@@ -111,12 +111,12 @@ def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0,
         SeveritiesHistogram.workspace_id == workspace_id).first()
     if ws_id is None:
         connection.execute(
-            f"INSERT "
+            f"INSERT "  # nosec
             f"INTO severities_histogram (workspace_id, medium, high, critical, date) "
             f"VALUES ({workspace_id}, {medium}, {high}, {critical}, '{date.today()}')")
     else:
         connection.execute(
-            f"UPDATE severities_histogram "
+            f"UPDATE severities_histogram "  # nosec
             f"SET medium = medium + {medium}, high = high + {high}, critical = critical + {critical} "
             f"WHERE id = {ws_id[0]}")
 

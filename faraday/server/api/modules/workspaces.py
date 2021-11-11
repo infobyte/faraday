@@ -1,7 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from datetime import timedelta, datetime
+from datetime import timedelta, date
 
 import re
 
@@ -16,16 +16,15 @@ from sqlalchemy.orm import (
     with_expression
 )
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import func
 
 from faraday.server.models import (db,
                                    Workspace,
                                    _make_vuln_count_property,
                                    Vulnerability,
-                                   VulnerabilityGeneric,
                                    _make_active_agents_count_property,
                                    count_vulnerability_severities,
-                                   _last_run_agent_date)
+                                   _last_run_agent_date,
+                                   SeveritiesHistogram)
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -115,6 +114,14 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
+def init_date_range(from_day, days):
+    date_list = [{'date': from_day - timedelta(days=x),
+                  'critical': 0,
+                  'high': 0,
+                  'medium': 0} for x in range(days)]
+    return date_list
+
+
 class WorkspaceView(ReadWriteView, FilterMixin):
     route_base = 'ws'
     lookup_field = 'name'
@@ -141,35 +148,29 @@ class WorkspaceView(ReadWriteView, FilterMixin):
               description: Ok
         """
         histogram = flask.request.args.get('histogram', None)
+        histogram_days = int(flask.request.args.get('histogram_days', 20))
 
         query = self._get_base_query()
 
-        histogram_dict = dict()
         if histogram:
-            workspaces_histograms = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity, func.date_trunc('day', VulnerabilityGeneric.create_date), Workspace.name)\
-                .join(VulnerabilityGeneric)\
-                .filter(VulnerabilityGeneric.create_date > (datetime.today() - timedelta(days=20)), VulnerabilityGeneric.severity.in_(['medium', 'high', 'critical']))\
-                .group_by(VulnerabilityGeneric.severity, func.date_trunc('day', VulnerabilityGeneric.create_date), Workspace.name)\
-                .order_by(func.date_trunc('day', VulnerabilityGeneric.create_date).asc(), VulnerabilityGeneric.severity, Workspace.name).all()
+            histogram_dict = dict()
+            today = date.today()
+            workspaces_histograms = SeveritiesHistogram.query\
+                .filter(SeveritiesHistogram.date > (today - timedelta(days=histogram_days)))\
+                .order_by(SeveritiesHistogram.workspace_id.asc(), ).all()
 
             current_ws = None
-            current_date = None
-            for count, severity, create_date, workspace_name in workspaces_histograms:
-                if current_ws != workspace_name:
-                    current_ws = workspace_name
-                    histogram_dict[current_ws] = []
-                    current_date = create_date
-                    histogram_dict[current_ws].append({'date': current_date,
-                                                       'critical': 0,
-                                                       'high': 0,
-                                                       'medium': 0})
-                if current_date != create_date:
-                    current_date = create_date
-                    histogram_dict[current_ws].append({'date': current_date,
-                                                       'critical': 0,
-                                                       'high': 0,
-                                                       'medium': 0})
-                histogram_dict[current_ws][len(histogram_dict[current_ws]) - 1][severity] = count
+            for workspaces_histogram in workspaces_histograms:
+                if current_ws != workspaces_histogram.workspace.name:
+                    current_ws = workspaces_histogram.workspace.name
+                    histogram_dict[current_ws] = init_date_range(today, histogram_days)
+
+                for value in histogram_dict[current_ws]:
+                    if value['date'] == workspaces_histogram.date:
+                        value['medium'] = workspaces_histogram.medium
+                        value['high'] = workspaces_histogram.high
+                        value['critical'] = workspaces_histogram.critical
+                        continue
 
         objects = []
         for workspace_stat in query:
@@ -184,10 +185,12 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
 
-            workspace_stat_dict['histogram'] = dict()
             if histogram:
+                default_empty_histogram = init_date_range(today, histogram_days)
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
+                else:
+                    workspace_stat_dict['histogram'] = default_empty_histogram
 
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))

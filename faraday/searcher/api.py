@@ -1,8 +1,7 @@
 import json
 import logging
 import socket
-from urllib.parse import urlencode
-
+from urllib.parse import urlencode, urljoin, urlparse
 from requests.adapters import ConnectionError, ReadTimeout
 
 logger = logging.getLogger('Faraday searcher')
@@ -57,14 +56,13 @@ class Api:
                 raise UserWarning('Invalid username or password')
 
     def _url(self, path, is_get=False):
-        url = self.base + 'v3/' + path
+        url = urljoin(self.base, f'v3/{path}')
         if self.command_id and 'commands' not in url and not url.endswith('}') and not is_get:
-            if '?' in url:
-                url += f'&command_id={self.command_id}'
-            elif url.endswith('/'):
-                url = f'{url[:-1]}?command_id={self.command_id}'
+            if url.endswith('/'):
+                url = urljoin(url[:-1], f'?command_id={self.command_id}')
             else:
-                url += f'?command_id={self.command_id}'
+                q = urlparse(url).query
+                url = urljoin(url, f'?{q}&command_id={self.command_id}')
         return url
 
     def _get(self, url, object_name):

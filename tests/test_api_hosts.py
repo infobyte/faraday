@@ -6,11 +6,11 @@ See the file 'doc/LICENSE' for the license information
 '''
 import operator
 from io import BytesIO
-from posixpath import join as urljoin
+from posixpath import join
 
 import pytz
 
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 from random import choice
 from sqlalchemy.orm.util import was_deleted
 from hypothesis import given, strategies as st
@@ -61,13 +61,13 @@ class TestHostAPI:
 
     def url(self, host=None, workspace=None):
         workspace = workspace or self.workspace
-        url = API_PREFIX + workspace.name + '/hosts'
+        url = join(API_PREFIX + workspace.name, 'hosts')
         if host is not None:
-            url += '/' + str(host.id)
+            url = join(url, str(host.id))
         return url
 
     def services_url(self, host, workspace=None):
-        return self.url(host, workspace) + '/services'
+        return join(self.url(host, workspace), 'services')
 
     def compare_results(self, hosts, response):
         """
@@ -279,7 +279,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        url = self.url() + '?os=Unix'
+        url = urljoin(self.url(), '?os=Unix')
         res = test_client.get(url)
         assert res.status_code == 200
         self.compare_results(hosts, res)
@@ -297,7 +297,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        res = test_client.get(urljoin(self.url(), 'filter?q={"filters":[{"name": "os", "op":"eq", "val":"Unix"}]}'))
+        res = test_client.get(join(self.url(), 'filter?q={"filters":[{"name": "os", "op":"eq", "val":"Unix"}]}'))
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
@@ -311,7 +311,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        res = test_client.get(urljoin(self.url(), 'filter?q={"filters":[{"name": "os", "op":"eq", "val":"Unix"}],'
+        res = test_client.get(join(self.url(), 'filter?q={"filters":[{"name": "os", "op":"eq", "val":"Unix"}],'
                                                   '"offset":0, "limit":20}'))
         assert res.status_code == 200
         assert res.json['count'] == 30
@@ -321,7 +321,7 @@ class TestHostAPI:
         host_factory.create_batch(10, workspace=workspace, os='Unix')
         host_factory.create_batch(1, workspace=workspace, os='unix')
         session.commit()
-        res = test_client.get(urljoin(self.url(), 'filter?q={"filters":[{"name": "os", "op": "like", "val": "%nix"}], '
+        res = test_client.get(join(self.url(), 'filter?q={"filters":[{"name": "os", "op": "like", "val": "%nix"}], '
                                                   '"group_by":[{"field": "os"}], "order_by":[{"field": "os", "direction": "desc"}]}'))
         assert res.status_code == 200
         assert len(res.json['rows']) == 2
@@ -346,11 +346,11 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        res = test_client.get(self.url() + '?os__like=Unix %')
+        res = test_client.get(urljoin(self.url(), '?os__like=Unix %'))
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
-        res = test_client.get(self.url() + '?os__ilike=Unix %')
+        res = test_client.get(urljoin(self.url(), '?os__ilike=Unix %'))
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
@@ -372,7 +372,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        res = test_client.get(urljoin(
+        res = test_client.get(join(
             self.url(),
             'filter?q={"filters":[{"name": "os", "op":"like", "val":"Unix %"}]}'
         )
@@ -380,7 +380,7 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
-        res = test_client.get(urljoin(
+        res = test_client.get(join(
             self.url(),
             'filter?q={"filters":[{"name": "os", "op":"ilike", "val":"Unix %"}]}'
         )
@@ -398,7 +398,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=workspace)
 
         session.commit()
-        res = test_client.get(self.url() + '?service=IRC')
+        res = test_client.get(urljoin(self.url(), '?service=IRC'))
         assert res.status_code == 200
         shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
         expected_host_ids = {host.id for host in hosts}
@@ -417,7 +417,7 @@ class TestHostAPI:
         session.commit()
 
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 'filter?q={"filters":[{"name": "services__name", "op":"any", "val":"IRC"}]}'
             )
@@ -436,7 +436,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=workspace)
 
         session.commit()
-        res = test_client.get(self.url() + '?port=25')
+        res = test_client.get(urljoin(self.url(), '?port=25'))
         assert res.status_code == 200
         shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
         expected_host_ids = {host.id for host in hosts}
@@ -453,7 +453,7 @@ class TestHostAPI:
 
         session.commit()
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 'filter?q={"filters":[{"name": "services__port", "op":"any", "val":"25"}]}'
             )
@@ -479,7 +479,7 @@ class TestHostAPI:
         session.commit()
 
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 f'filter?q={{"filters":[{{"name": "ip", "op":"eq", "val":"{host.ip}"}}]}}'
             )
@@ -505,7 +505,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=workspace)
 
         session.commit()
-        res = test_client.get(self.url() + '?port=invalid_port')
+        res = test_client.get(urljoin(self.url(), '?port=invalid_port'))
         assert res.status_code == 200
         assert res.json['count'] == 0
 
@@ -520,7 +520,7 @@ class TestHostAPI:
 
         session.commit()
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 'filter?q={"filters":[{"name": "services__port", "op":"any", "val":"sarasa"}]}'
             )
@@ -529,7 +529,7 @@ class TestHostAPI:
 
     def test_filter_restless_by_invalid_field(self, test_client):
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 'filter?q={"filters":[{"name": "severity", "op":"any", "val":"sarasa"}]}'
             )
@@ -538,20 +538,20 @@ class TestHostAPI:
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_with_no_q_param(self, test_client, session, workspace, host_factory):
-        res = test_client.get(urljoin(self.url(), 'filter'))
+        res = test_client.get(join(self.url(), 'filter'))
         assert res.status_code == 200
         assert len(res.json['rows']) == HOSTS_COUNT
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_with_empty_q_param(self, test_client, session, workspace, host_factory):
-        res = test_client.get(urljoin(self.url(), 'filter?q'))
+        res = test_client.get(join(self.url(), 'filter?q'))
         assert res.status_code == 400
 
     def test_search_ip(self, test_client, session, workspace, host_factory):
         host = host_factory.create(ip="longname",
                                    workspace=workspace)
         session.commit()
-        res = test_client.get(self.url() + '?search=ONGNAM')
+        res = test_client.get(urljoin(self.url(), '?search=ONGNAM'))
         assert res.status_code == 200
         assert len(res.json['rows']) == 1
         assert res.json['rows'][0]['id'] == host.id
@@ -564,7 +564,7 @@ class TestHostAPI:
             service_factory.create(host=host, name="GOPHER 5",
                                    workspace=workspace)
         session.commit()
-        res = test_client.get(self.url() + '?search=gopher')
+        res = test_client.get(urljoin(self.url(), '?search=gopher'))
         assert res.status_code == 200
         shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
         expected_host_ids = {host.id for host in expected_hosts}
@@ -576,7 +576,7 @@ class TestHostAPI:
         for host in expected_hosts:
             host.set_hostnames(['staging.twitter.com'])
         session.commit()
-        res = test_client.get(self.url() + '?search=twitter')
+        res = test_client.get(urljoin(self.url(), '?search=twitter'))
         assert res.status_code == 200
         shown_hosts_ids = {obj['id'] for obj in res.json['rows']}
         expected_host_ids = {host.id for host in expected_hosts}
@@ -614,7 +614,7 @@ class TestHostAPI:
         vulnerability_factory.create(service=service, host=None, workspace=workspace)
         session.commit()
 
-        res = test_client.get(urljoin(self.url(host), 'services'))
+        res = test_client.get(join(self.url(host), 'services'))
         assert res.status_code == 200
         assert res.json[0]['vulns'] == 1
 
@@ -851,12 +851,12 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         expected_ids = [host.id for host in
                         sorted(Host.query.all(),
                                key=operator.attrgetter('description'))]
-        res = test_client.get(self.url() + '?sort=description&sort_dir=asc')
+        res = test_client.get(urljoin(self.url(), '?sort=description&sort_dir=asc'))
         assert res.status_code == 200
         assert [host['_id'] for host in res.json['data']] == expected_ids
 
         expected_ids.reverse()  # In place list reverse
-        res = test_client.get(self.url() + '?sort=description&sort_dir=desc')
+        res = test_client.get(urljoin(self.url(), '?sort=description&sort_dir=desc'))
         assert res.status_code == 200
         assert [host['_id'] for host in res.json['data']] == expected_ids
 
@@ -871,8 +871,8 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             session.flush()
             expected_ids.append(host.id)
         session.commit()
-        res = test_client.get(self.url(workspace=second_workspace)
-                              + '?sort=services&sort_dir=asc')
+        res = test_client.get(urljoin(self.url(workspace=second_workspace),
+                                      '?sort=services&sort_dir=asc'))
         assert res.status_code == 200
         assert [h['_id'] for h in res.json['data']] == expected_ids
 
@@ -893,8 +893,8 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
                 session.add(host)
                 session.commit()
                 expected.append(host)  # Put it on the end
-        res = test_client.get(self.url(workspace=second_workspace)
-                              + '?sort=metadata.update_time&sort_dir=asc')
+        res = test_client.get(urljoin(self.url(workspace=second_workspace),
+                              '?sort=metadata.update_time&sort_dir=asc'))
         assert res.status_code == 200, res.data
         assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
 
@@ -922,7 +922,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         command = EmptyCommandFactory.create()
         session.commit()
         assert len(command.command_objects) == 0
-        url = self.url(workspace=command.workspace) + '?' + urlencode({'command_id': command.id})
+        url = urljoin(self.url(workspace=command.workspace), f"?{urlencode({'command_id': command.id})}")
 
         res = test_client.post(url, data={
             "ip": "127.0.0.1",
@@ -940,7 +940,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         new_workspace = WorkspaceFactory.create()
         session.commit()
         assert len(command.command_objects) == 0
-        url = self.url(workspace=new_workspace) + '?' + urlencode({'command_id': command.id})
+        url = urljoin(self.url(workspace=new_workspace), f"?{urlencode({'command_id': command.id})}")
 
         res = test_client.post(url, data={
             "ip": "127.0.0.1",

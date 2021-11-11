@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+from posixpath import join
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
 import pytest
@@ -43,7 +43,7 @@ class GenericAPITest:
         if obj is not None:
             id_ = str(getattr(obj, self.lookup_field)) if isinstance(
                 obj, self.model) else str(obj)
-            url += '/' + id_
+            url = join(url, id_)
         return url
 
 

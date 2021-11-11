@@ -106,10 +106,10 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
 def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0, critical=0):
     if workspace_id is None:
         return
-    id = SeveritiesHistogram.query.with_entities('id').filter(
+    ws_id = SeveritiesHistogram.query.with_entities('id').filter(
         SeveritiesHistogram.date == date.today(),
         SeveritiesHistogram.workspace_id == workspace_id).first()
-    if id is None:
+    if ws_id is None:
         connection.execute(
             f"INSERT "
             f"INTO severities_histogram (workspace_id, medium, high, critical, date) "
@@ -118,7 +118,7 @@ def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0,
         connection.execute(
             f"UPDATE severities_histogram "
             f"SET medium = medium + {medium}, high = high + {high}, critical = critical + {critical} "
-            f"WHERE id = {id[0]}")
+            f"WHERE id = {ws_id[0]}")
 
 
 def _dicrease_severities_histogram(instance_severity, medium=0, high=0, critical=0):
@@ -150,10 +150,10 @@ def alter_histogram_on_update(mapper, connection, instance):
         if len(vuln_severity_history.unchanged) > 0:
             return
         medium = high = critical = 0
-        if vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        if vuln_severity_history.deleted and vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
             medium, high, critical = _dicrease_severities_histogram(vuln_severity_history.deleted[0])
 
-        if vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        if vuln_severity_history.added and vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
             medium, high, critical = _increase_severities_histogram(instance.severity,
                                                                     medium=medium,
                                                                     high=high,
@@ -164,12 +164,12 @@ def alter_histogram_on_update(mapper, connection, instance):
             if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
                 medium, high, critical = _dicrease_severities_histogram(instance.severity)
                 _create_or_update_histogram(connection, instance.workspace.id, medium=medium, high=high,
-                                             critical=critical)
+                                            critical=critical)
         elif status.deleted[0] == 'closed':
             if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
                 medium, high, critical = _increase_severities_histogram(instance.severity)
                 _create_or_update_histogram(connection, instance.workspace.id, medium=medium, high=high,
-                                             critical=critical)
+                                            critical=critical)
 
 
 def alter_histogram_on_delete(mapper, connection, instance):

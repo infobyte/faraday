@@ -165,12 +165,15 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                     current_ws = workspaces_histogram.workspace.name
                     histogram_dict[current_ws] = init_date_range(today, histogram_days)
 
-                for value in histogram_dict[current_ws]:
-                    if value['date'] == workspaces_histogram.date:
-                        value['medium'] = workspaces_histogram.medium
-                        value['high'] = workspaces_histogram.high
-                        value['critical'] = workspaces_histogram.critical
-                        continue
+                not_found = True
+                i = 0
+                while not_found and i < len(histogram_dict[current_ws]):
+                    if histogram_dict[current_ws][i]['date'] == workspaces_histogram.date:
+                        histogram_dict[current_ws][i]['medium'] = workspaces_histogram.medium
+                        histogram_dict[current_ws][i]['high'] = workspaces_histogram.high
+                        histogram_dict[current_ws][i]['critical'] = workspaces_histogram.critical
+                        not_found = False
+                    i += 1
 
         objects = []
         for workspace_stat in query:

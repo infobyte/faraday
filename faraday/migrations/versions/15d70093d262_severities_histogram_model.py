@@ -10,6 +10,10 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
+from sqlalchemy import func
+
+from faraday.server.models import VulnerabilityGeneric, SeveritiesHistogram, Workspace
+
 revision = '15d70093d262'
 down_revision = 'd8f0b32a5c0e'
 branch_labels = None
@@ -30,6 +34,28 @@ def upgrade():
     )
     op.create_index(op.f('ix_severities_histogram_workspace_id'), 'severities_histogram', ['workspace_id'], unique=False)
     # ### end Alembic commands ###
+
+    # Init histogram
+    bind = op.get_bind()
+    session = sa.orm.Session(bind=bind)
+    workspaces = session.query(Workspace).all()
+    for workspace in workspaces:
+        sh = SeveritiesHistogram(workspace=workspace, medium=0, high=0, critical=0)
+        session.add(sh)
+        session.commit()
+        vulnerabilities = VulnerabilityGeneric\
+            .query\
+            .with_entities(VulnerabilityGeneric.severity, func.count(VulnerabilityGeneric.severity))\
+            .filter(VulnerabilityGeneric.workspace_id == sh.workspace_id, VulnerabilityGeneric.status != 'closed')\
+            .group_by(VulnerabilityGeneric.severity).all()
+        for vulnerability in vulnerabilities:
+            if vulnerability[0] == 'medium':
+                sh.medium = vulnerability[1]
+            if vulnerability[0] == 'high':
+                sh.high = vulnerability[1]
+            if vulnerability[0] == 'critical':
+                sh.critical = vulnerability[1]
+        session.commit()
 
 
 def downgrade():

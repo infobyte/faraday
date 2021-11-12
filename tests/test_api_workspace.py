@@ -204,6 +204,25 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0
 
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=a')
+        assert res.status_code == 400
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
+        assert res.status_code == 400
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
+        assert res.status_code == 400
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=5')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 5
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=365')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 365
+
     @pytest.mark.parametrize('querystring', [
         '?status=closed'
     ])

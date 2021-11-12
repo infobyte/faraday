@@ -148,7 +148,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
               description: Ok
         """
         histogram = flask.request.args.get('histogram', None)
-        histogram_days = int(flask.request.args.get('histogram_days', 20))
+        histogram_days = flask.request.args.get('histogram_days', 20)
+
+        if not histogram_days.isnumeric() or histogram_days <= 0:
+            abort(400, 'Histogram days must be a number greater than 0')
 
         query = self._get_base_query()
 

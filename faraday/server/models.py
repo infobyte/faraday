@@ -498,13 +498,21 @@ class VulnerabilityABC(Metadata):
         'difficult',
         'infeasible'
     ]
+
+    SEVERITY_UNCLASSIFIED = 'unclassified'
+    SEVERITY_INFORMATIONAL = 'informational'
+    SEVERITY_LOW = 'low'
+    SEVERITY_MEDIUM = 'medium'
+    SEVERITY_HIGH = 'high'
+    SEVERITY_CRITICAL = 'critical'
+
     SEVERITIES = [
-        'unclassified',
-        'informational',
-        'low',
-        'medium',
-        'high',
-        'critical',
+        SEVERITY_UNCLASSIFIED,
+        SEVERITY_INFORMATIONAL,
+        SEVERITY_LOW,
+        SEVERITY_MEDIUM,
+        SEVERITY_HIGH,
+        SEVERITY_CRITICAL,
     ]
 
     __abstract__ = True
@@ -540,7 +548,9 @@ class VulnerabilityABC(Metadata):
 class SeveritiesHistogram(db.Model):
     __tablename__ = "severities_histogram"
 
-    SEVERITIES_ALLOWED = ['medium', 'high', 'critical']
+    SEVERITIES_ALLOWED = [VulnerabilityABC.SEVERITY_MEDIUM,
+                          VulnerabilityABC.SEVERITY_HIGH,
+                          VulnerabilityABC.SEVERITY_CRITICAL]
 
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -1342,11 +1352,16 @@ class Service(Metadata):
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
+    STATUS_OPEN = 'open'
+    STATUS_RE_OPENED = 're-opened'
+    STATUS_CLOSED = 'closed'
+    STATUS_RISK_ACCEPTED = 'risk-accepted'
+
     STATUSES = [
-        'open',
-        'closed',
-        're-opened',
-        'risk-accepted'
+        STATUS_OPEN,
+        STATUS_CLOSED,
+        STATUS_RE_OPENED,
+        STATUS_RISK_ACCEPTED
     ]
     VULN_TYPES = [
         'vulnerability',

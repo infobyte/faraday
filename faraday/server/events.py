@@ -151,10 +151,13 @@ def alter_histogram_on_update(mapper, connection, instance):
         if len(vuln_severity_history.unchanged) > 0:
             return
         medium = high = critical = 0
-        if vuln_severity_history.deleted and vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        if not vuln_severity_history.deleted or not vuln_severity_history.added:
+            logger.error("Vuln severity history is None. Could not update histogram.")
+            return
+        if vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
             medium, high, critical = _dicrease_severities_histogram(vuln_severity_history.deleted[0])
 
-        if vuln_severity_history.added and vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        if vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
             medium, high, critical = _increase_severities_histogram(instance.severity,
                                                                     medium=medium,
                                                                     high=high,

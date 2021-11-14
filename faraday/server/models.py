@@ -1677,7 +1677,7 @@ class Reference(Metadata):
 class ReferenceVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference",

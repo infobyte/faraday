@@ -134,25 +134,32 @@ def generate_histogram(from_date, days_before):
 
     ws_histogram = {}
     for ws_name, dates in grouped_histograms_by_ws:
+        first_date = None
         ws_histogram[ws_name] = {}
-        # fix counters
-        high = medium = critical = 0
+        # Convert to dict
         for d in dates:
-            high += d.high
-            medium += d.medium
-            critical += d.critical
-            ws_histogram[ws_name][d.date] = {'medium': medium, 'high': high, 'critical': critical}
+            if first_date is None:
+                first_date = d.date
+            ws_histogram[ws_name][d.date] = {'medium': d.medium, 'high': d.high, 'critical': d.critical}
 
         # fix histogram gaps
-        histogram_dict[ws_name] = init_date_range(from_date, days_before)
+        if (date.today() - first_date).days < days_before:
+            # move first_date to diff between first day and days required
+            first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
+        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x), 'critical': 0, 'high': 0, 'medium': 0} for x in range((date.today() - first_date).days + 1)]
 
         # merge counters with days required
+        high = medium = critical = 0
         for current_workspace_histogram_counters in histogram_dict[ws_name]:
             current_date = current_workspace_histogram_counters['date']
             if current_date in ws_histogram[ws_name]:
-                current_workspace_histogram_counters['medium'] = ws_histogram[ws_name][current_date]['medium']
-                current_workspace_histogram_counters['high'] = ws_histogram[ws_name][current_date]['high']
-                current_workspace_histogram_counters['critical'] = ws_histogram[ws_name][current_date]['critical']
+                medium += ws_histogram[ws_name][current_date]['medium']
+                high += ws_histogram[ws_name][current_date]['high']
+                critical += ws_histogram[ws_name][current_date]['critical']
+            current_workspace_histogram_counters['medium'] = high
+            current_workspace_histogram_counters['high'] = medium
+            current_workspace_histogram_counters['critical'] = critical
+        histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
 
     return histogram_dict
 

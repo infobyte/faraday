@@ -78,6 +78,3 @@ def create_logging_path(path_file):
 
 
 setup_logging()
-
-
-# I'm Py3

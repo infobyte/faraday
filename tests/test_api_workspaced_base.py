@@ -1,12 +1,10 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from builtins import str
-from posixpath import join as urljoin
+from posixpath import join
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
@@ -50,11 +48,11 @@ class GenericAPITest:
 
     def url(self, obj=None, workspace=None):
         workspace = workspace or self.workspace
-        url = API_PREFIX + workspace.name + '/' + self.api_endpoint
+        url = join(API_PREFIX + workspace.name, self.api_endpoint)
         if obj is not None:
             id_ = str(obj.id) if isinstance(
                 obj, self.model) else str(obj)
-            url += '/' + id_
+            url = join(url, id_)
         return url
 
 
@@ -103,7 +101,7 @@ class RetrieveTestsMixin:
         res = test_client.get(self.url(self.first_object, second_workspace))
         assert res.status_code == 404
 
-    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [123456789, -1, 'xxx', 'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
         url = self.url(object_id)
@@ -288,7 +286,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
+        res = test_client.get(join(self.url(), "count?group_by=creator_id"))
 
         assert res.status_code == 200, res.json
         res = res.get_json()
@@ -318,7 +316,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))
+        res = test_client.get(join(self.url(), "count?group_by=creator_id&order=desc"))
 
         assert res.status_code == 200, res.json
         res = res.get_json()

@@ -199,7 +199,7 @@ class VulnerabilitySchema(AutoSchema):
         for file_obj in obj.evidence:
             try:
                 res[file_obj.filename] = EvidenceSchema().dump(file_obj)
-            except IOError:
+            except OSError:
                 logger.warning("File not found. Did you move your server?")
 
         return res

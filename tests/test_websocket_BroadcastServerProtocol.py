@@ -1,4 +1,3 @@
-
 import pytest
 from faraday.server.models import Agent, Executor
 from faraday.server.websocket_factories import WorkspaceServerFactory, \

@@ -44,6 +44,16 @@ let
           inherit
             packageOverrides;
         };
+      python39 =
+        super.python39.override {
+          inherit
+            packageOverrides;
+        };
+      python310 =
+        super.python310.override {
+          inherit
+            packageOverrides;
+        };
     };
 
   nixpkgs =

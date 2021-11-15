@@ -1,0 +1,52 @@
+# When should run
+.dev-staging-master:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|staging|dev)$/'
+      when: on_success
+
+.on-master-staging:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|staging)$/'
+      when: on_success
+
+.on-master:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+      when: on_success
+
+.on-community-tag:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
+      when: on_success
+
+.pipeline-control-test:
+  rules:
+    - if: $FULL_TEST || $DAILY_TEST
+      when: on_success
+
+.be-built:
+  rules:
+    - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+      when: on_success
+
+.be-uploaded:
+  rules:
+    - if: '$BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+      when: on_success
+
+
+# Ignore
+.ignore-on-tag:
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+
+.ignore-on-master:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+      when: never
+
+.ignore-on-build:
+  rules:
+    - if: $BUILD_TEST
+      when: never

@@ -7,6 +7,7 @@ import re
 
 import json
 import logging
+from itertools import groupby
 
 import flask
 from flask import Blueprint, abort, make_response, jsonify
@@ -122,6 +123,40 @@ def init_date_range(from_day, days):
     return date_list
 
 
+def generate_histogram(from_date, days_before):
+    histogram_dict = dict()
+
+    workspaces_histograms = SeveritiesHistogram.query \
+        .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()
+
+    # group dates by workspace
+    grouped_histograms_by_ws = groupby(workspaces_histograms, lambda x: x.workspace.name)
+
+    ws_histogram = {}
+    for ws_name, dates in grouped_histograms_by_ws:
+        ws_histogram[ws_name] = {}
+        # fix counters
+        high = medium = critical = 0
+        for d in dates:
+            high += d.high
+            medium += d.medium
+            critical += d.critical
+            ws_histogram[ws_name][d.date] = {'medium': medium, 'high': high, 'critical': critical}
+
+        # fix histogram gaps
+        histogram_dict[ws_name] = init_date_range(from_date, days_before)
+
+        # merge counters with days required
+        for current_workspace_histogram_counters in histogram_dict[ws_name]:
+            current_date = current_workspace_histogram_counters['date']
+            if current_date in ws_histogram[ws_name]:
+                current_workspace_histogram_counters['medium'] = ws_histogram[ws_name][current_date]['medium']
+                current_workspace_histogram_counters['high'] = ws_histogram[ws_name][current_date]['high']
+                current_workspace_histogram_counters['critical'] = ws_histogram[ws_name][current_date]['critical']
+
+    return histogram_dict
+
+
 class WorkspaceView(ReadWriteView, FilterMixin):
     route_base = 'ws'
     lookup_field = 'name'
@@ -160,29 +195,6 @@ class WorkspaceView(ReadWriteView, FilterMixin):
 
         query = self._get_base_query()
 
-        if histogram:
-            histogram_dict = dict()
-            today = date.today()
-            workspaces_histograms = SeveritiesHistogram.query\
-                .filter(SeveritiesHistogram.date > (today - timedelta(days=histogram_days)))\
-                .order_by(SeveritiesHistogram.workspace_id.asc(), ).all()
-
-            current_ws = None
-            for workspaces_histogram in workspaces_histograms:
-                if current_ws != workspaces_histogram.workspace.name:
-                    current_ws = workspaces_histogram.workspace.name
-                    histogram_dict[current_ws] = init_date_range(today, histogram_days)
-
-                not_found = True
-                i = 0
-                while not_found and i < len(histogram_dict[current_ws]):
-                    if histogram_dict[current_ws][i]['date'] == workspaces_histogram.date:
-                        histogram_dict[current_ws][i]['medium'] = workspaces_histogram.medium
-                        histogram_dict[current_ws][i]['high'] = workspaces_histogram.high
-                        histogram_dict[current_ws][i]['critical'] = workspaces_histogram.critical
-                        not_found = False
-                    i += 1
-
         objects = []
         for workspace_stat in query:
             workspace_stat_dict = dict(workspace_stat)
@@ -197,11 +209,12 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                     workspace_stat_dict['scope'].append({'name': scope})
 
             if histogram:
-                default_empty_histogram = init_date_range(today, histogram_days)
+                today = date.today()
+                histogram_dict = generate_histogram(today, histogram_days)
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
-                    workspace_stat_dict['histogram'] = default_empty_histogram
+                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
 
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))

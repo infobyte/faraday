@@ -102,7 +102,8 @@ def register_blueprints(app):
     # Custom reset password
     from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
     from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.settings_reports import reports_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_reports import \
+        reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
 
@@ -497,7 +498,7 @@ class CustomLoginForm(LoginForm):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Username]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
-                                 f"Reason: [Invalid Username]")
+                           f"Reason: [Invalid Username]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
 
@@ -506,7 +507,7 @@ class CustomLoginForm(LoginForm):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
-                                 f"Reason: [Invalid Password]")
+                           f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
         self.password.data = remove_null_caracters(self.password.data)
@@ -514,7 +515,7 @@ class CustomLoginForm(LoginForm):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
-                                 f"Reason: [Invalid Password]")
+                           f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
         # if requires_confirmation(self.user):
@@ -524,7 +525,7 @@ class CustomLoginForm(LoginForm):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Disabled Account]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
-                                 f"Reason: [Disabled Account]")
+                           f"Reason: [Disabled Account]")
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True

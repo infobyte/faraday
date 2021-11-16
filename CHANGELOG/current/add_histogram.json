@@ -1,4 +1,4 @@
 {
 	"level": "community",
-	"md": "Add open and confirmed vulns in workspace stats"
+	"md": "Add open medium, high and critical vulns histogram"
 }

@@ -166,7 +166,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                                    confirmed=False, status='open', severity='critical')
 
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
-                                                    confirmed=True, status='closed', severity='high')
+                                                    confirmed=True, status='open', severity='high')
 
         vulns += vulnerability_web_factory.create_batch(2, workspace=second_workspace,
                                                     confirmed=True, status='open', severity='medium')

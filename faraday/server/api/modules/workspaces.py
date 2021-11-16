@@ -156,8 +156,8 @@ def generate_histogram(from_date, days_before):
                 medium += ws_histogram[ws_name][current_date]['medium']
                 high += ws_histogram[ws_name][current_date]['high']
                 critical += ws_histogram[ws_name][current_date]['critical']
-            current_workspace_histogram_counters['medium'] = high
-            current_workspace_histogram_counters['high'] = medium
+            current_workspace_histogram_counters['medium'] = medium
+            current_workspace_histogram_counters['high'] = high
             current_workspace_histogram_counters['critical'] = critical
         histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
 

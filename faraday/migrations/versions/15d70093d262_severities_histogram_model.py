@@ -40,21 +40,25 @@ def upgrade():
     session = sa.orm.Session(bind=bind)
     workspaces = session.query(Workspace).all()
     for workspace in workspaces:
-        sh = SeveritiesHistogram(workspace=workspace, medium=0, high=0, critical=0)
-        session.add(sh)
-        session.commit()
         vulnerabilities = VulnerabilityGeneric\
             .query\
-            .with_entities(VulnerabilityGeneric.severity, func.count(VulnerabilityGeneric.severity))\
-            .filter(VulnerabilityGeneric.workspace_id == sh.workspace_id, VulnerabilityGeneric.status.notin_(['closed', 'risk-accepted']))\
-            .group_by(VulnerabilityGeneric.severity).all()
+            .with_entities(func.date_trunc('day', VulnerabilityGeneric.create_date), VulnerabilityGeneric.severity, func.count(VulnerabilityGeneric.severity))\
+            .filter(VulnerabilityGeneric.workspace_id == workspace.id, VulnerabilityGeneric.status.notin_(['closed', 'risk-accepted']),
+                    VulnerabilityGeneric.severity.in_(['medium', 'high', 'critical']))\
+            .group_by(func.date_trunc('day', VulnerabilityGeneric.create_date), VulnerabilityGeneric.severity).all()
         for vulnerability in vulnerabilities:
-            if vulnerability[0] == 'medium':
-                sh.medium = vulnerability[1]
-            if vulnerability[0] == 'high':
-                sh.high = vulnerability[1]
-            if vulnerability[0] == 'critical':
-                sh.critical = vulnerability[1]
+            sh = session.query(SeveritiesHistogram).filter(SeveritiesHistogram.date == vulnerability[0],
+                                                           SeveritiesHistogram.workspace_id == workspace.id).first()
+            if sh is None:
+                sh = SeveritiesHistogram(date=vulnerability[0], workspace=workspace, medium=0, high=0, critical=0)
+                session.add(sh)
+                session.commit()
+            if vulnerability[1] == 'medium':
+                sh.medium = vulnerability[2]
+            if vulnerability[1] == 'high':
+                sh.high = vulnerability[2]
+            if vulnerability[1] == 'critical':
+                sh.critical = vulnerability[2]
         session.commit()
 
 

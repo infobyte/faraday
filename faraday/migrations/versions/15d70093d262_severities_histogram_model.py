@@ -46,7 +46,7 @@ def upgrade():
         vulnerabilities = VulnerabilityGeneric\
             .query\
             .with_entities(VulnerabilityGeneric.severity, func.count(VulnerabilityGeneric.severity))\
-            .filter(VulnerabilityGeneric.workspace_id == sh.workspace_id, VulnerabilityGeneric.status != 'closed')\
+            .filter(VulnerabilityGeneric.workspace_id == sh.workspace_id, VulnerabilityGeneric.status.notin_(['closed', 'risk-accepted']))\
             .group_by(VulnerabilityGeneric.severity).all()
         for vulnerability in vulnerabilities:
             if vulnerability[0] == 'medium':

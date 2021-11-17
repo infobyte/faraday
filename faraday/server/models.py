@@ -552,6 +552,8 @@ class SeveritiesHistogram(db.Model):
                           VulnerabilityABC.SEVERITY_HIGH,
                           VulnerabilityABC.SEVERITY_CRITICAL]
 
+    DEFAULT_DAYS_BEFORE = 20
+
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(

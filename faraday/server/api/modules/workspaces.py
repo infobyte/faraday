@@ -117,9 +117,9 @@ class WorkspaceSchema(AutoSchema):
 
 def init_date_range(from_day, days):
     date_list = [{'date': from_day - timedelta(days=x),
-                  'critical': 0,
-                  'high': 0,
-                  'medium': 0} for x in range(days)]
+                  Vulnerability.SEVERITY_MEDIUM: 0,
+                  Vulnerability.SEVERITY_HIGH: 0,
+                  Vulnerability.SEVERITY_CRITICAL: 0} for x in range(days)]
     return date_list
 
 
@@ -140,25 +140,31 @@ def generate_histogram(from_date, days_before):
         for d in dates:
             if first_date is None:
                 first_date = d.date
-            ws_histogram[ws_name][d.date] = {'medium': d.medium, 'high': d.high, 'critical': d.critical}
+            ws_histogram[ws_name][d.date] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
+                                             Vulnerability.SEVERITY_HIGH: d.high,
+                                             Vulnerability.SEVERITY_CRITICAL: d.critical}
 
         # fix histogram gaps
         if (date.today() - first_date).days < days_before:
             # move first_date to diff between first day and days required
             first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
-        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x), 'critical': 0, 'high': 0, 'medium': 0} for x in range((date.today() - first_date).days + 1)]
+        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x),
+                                    Vulnerability.SEVERITY_MEDIUM: 0,
+                                    Vulnerability.SEVERITY_HIGH: 0,
+                                    Vulnerability.SEVERITY_CRITICAL: 0}
+                                   for x in range((date.today() - first_date).days + 1)]
 
         # merge counters with days required
         high = medium = critical = 0
         for current_workspace_histogram_counters in histogram_dict[ws_name]:
             current_date = current_workspace_histogram_counters['date']
             if current_date in ws_histogram[ws_name]:
-                medium += ws_histogram[ws_name][current_date]['medium']
-                high += ws_histogram[ws_name][current_date]['high']
-                critical += ws_histogram[ws_name][current_date]['critical']
-            current_workspace_histogram_counters['medium'] = medium
-            current_workspace_histogram_counters['high'] = high
-            current_workspace_histogram_counters['critical'] = critical
+                medium += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_MEDIUM]
+                high += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_HIGH]
+                critical += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_CRITICAL]
+            current_workspace_histogram_counters[Vulnerability.SEVERITY_MEDIUM] = medium
+            current_workspace_histogram_counters[Vulnerability.SEVERITY_HIGH] = high
+            current_workspace_histogram_counters[Vulnerability.SEVERITY_CRITICAL] = critical
         histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
 
     return histogram_dict
@@ -189,16 +195,14 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             200:
               description: Ok
         """
-        histogram = flask.request.args.get('histogram', None)
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
 
         if histogram:
-            histogram_days = flask.request.args.get('histogram_days', "20")
-            if histogram_days.isnumeric():
-                histogram_days = int(histogram_days)
-                if histogram_days < 0:
-                    abort(400, 'Histogram days must be a number greater than 0')
-            else:
-                abort(400, 'Histogram days must be a number greater than 0')
+            today = date.today()
+            histogram_days = flask.request.args.get('histogram_days',
+                                                    type=int,
+                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE)
+            histogram_dict = generate_histogram(today, histogram_days)
 
         query = self._get_base_query()
 
@@ -216,8 +220,6 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                     workspace_stat_dict['scope'].append({'name': scope})
 
             if histogram:
-                today = date.today()
-                histogram_dict = generate_histogram(today, histogram_days)
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:

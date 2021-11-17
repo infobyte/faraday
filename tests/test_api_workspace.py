@@ -204,14 +204,14 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0
 
-        res = test_client.get('/v3/ws?histogram=true&histogram_days=a')
-        assert res.status_code == 400
+        res = test_client.get('/v3/ws?histogram=True&histogram_days=a')
+        assert res.status_code == 200
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
-        assert res.status_code == 400
+        assert res.status_code == 200
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
-        assert res.status_code == 400
+        assert res.status_code == 200
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=5')
         assert res.status_code == 200

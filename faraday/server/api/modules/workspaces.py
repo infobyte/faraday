@@ -199,9 +199,13 @@ class WorkspaceView(ReadWriteView, FilterMixin):
 
         if histogram:
             today = date.today()
+
             histogram_days = flask.request.args.get('histogram_days',
-                                                    type=int,
-                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE)
+                                                    type=lambda x: int(x)
+                                                    if x.isnumeric() and int(x) > 0
+                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                                    )
             histogram_dict = generate_histogram(today, histogram_days)
 
         query = self._get_base_query()

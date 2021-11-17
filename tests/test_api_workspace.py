@@ -206,12 +206,18 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         res = test_client.get('/v3/ws?histogram=True&histogram_days=a')
         assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
         assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
         assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=5')
         assert res.status_code == 200
@@ -222,6 +228,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.status_code == 200
         firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 365
+
+        res = test_client.get('/v3/ws?histogram=asdf&histogram_days=365')
+        assert res.status_code == 200
+        for ws in res.json:
+            assert 'histogram' not in ws
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'

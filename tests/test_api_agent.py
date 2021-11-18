@@ -6,7 +6,8 @@ See the file 'doc/LICENSE' for the license information
 
 from unittest import mock
 
-from posixpath import join as urljoin
+from posixpath import join
+from urllib.parse import urljoin
 import pyotp
 import pytest
 
@@ -241,10 +242,10 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin,
         assert '405' in exc_info.value.args[0]
 
     def workspaced_url(self, workspace, obj=None):
-        url = API_PREFIX + workspace.name + '/' + self.api_endpoint
+        url = urljoin(API_PREFIX, f"{workspace.name}{self.api_endpoint}")
         if obj is not None:
             id_ = str(obj.id) if isinstance(obj, self.model) else str(obj)
-            url += '/' + id_
+            url = urljoin(url, id_)
         return url
 
     def create_raw_agent(self, active=False, token="TOKEN",
@@ -394,7 +395,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin,
             },
         }
         res = test_client.post(
-            self.url(agent) + 'run/',
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 404
@@ -541,7 +542,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'csrf_token': csrf_token
         }
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 400
@@ -563,7 +564,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         }
 
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
 
@@ -574,7 +575,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         session.add(agent)
         session.commit()
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             data='[" broken]"{'
         )
         assert res.status_code == 400
@@ -596,7 +597,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             ('content-type', 'text/html'),
         ]
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             data=payload,
             headers=headers)
         assert res.status_code == 400
@@ -615,7 +616,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 400
@@ -642,7 +643,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 200
@@ -671,7 +672,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             },
         }
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 400
@@ -686,7 +687,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'executorData': '[][dassa',
         }
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 400
@@ -700,7 +701,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             'executorData': '',
         }
         res = test_client.post(
-            urljoin(self.url(agent), 'run'),
+            join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 400
@@ -709,5 +710,5 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         agent = AgentFactory.create(workspaces=[self.workspace])
         session.add(agent)
         session.commit()
-        res = test_client.get(urljoin(self.url(), 'get_manifests'))
+        res = test_client.get(join(self.url(), 'get_manifests'))
         assert res.status_code == 200

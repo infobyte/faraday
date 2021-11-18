@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from urllib.parse import urljoin
 
 import pytest
 
@@ -107,7 +108,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         credential = self.factory.create(host=host, service=None,
                                          workspace=self.workspace)
         session.commit()
-        res = test_client.get(self.url(workspace=credential.workspace) + f'?host_id={credential.host.id}')
+        res = test_client.get(urljoin(self.url(workspace=credential.workspace), f'?host_id={credential.host.id}'))
         assert res.status_code == 200
         assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.host.id]
         assert [cred['value']['parent_type'] for cred in res.json['rows']] == ['Host']
@@ -116,7 +117,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         service = ServiceFactory.create()
         credential = self.factory.create(service=service, host=None, workspace=service.workspace)
         session.commit()
-        res = test_client.get(self.url(workspace=credential.workspace) + f'?service={credential.service.id}')
+        res = test_client.get(urljoin(self.url(workspace=credential.workspace), f'?service={credential.service.id}'))
         assert res.status_code == 200
         assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.service.id]
         assert [cred['value']['parent_type'] for cred in res.json['rows']] == ['Service']
@@ -257,11 +258,11 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         ]
 
         # Desc order
-        response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=desc")
+        response = test_client.get(urljoin(self.url(workspace=second_workspace), "?sort=target&sort_dir=desc"))
         assert response.status_code == 200
         assert sorted(credentials_target, reverse=True) == [v['value']['target'] for v in response.json['rows']]
 
         # Asc order
-        response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=asc")
+        response = test_client.get(urljoin(self.url(workspace=second_workspace), "?sort=target&sort_dir=asc"))
         assert response.status_code == 200
         assert sorted(credentials_target) == [v['value']['target'] for v in response.json['rows']]

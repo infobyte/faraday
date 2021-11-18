@@ -12,7 +12,7 @@ import pytest
 try:
     from urllib import urlencode
 except ImportError as e:
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urljoin
 
 
 def with_0_and_n_objects(n=10):
@@ -45,7 +45,7 @@ class PaginationTestsMixin:
                 self.view_class.page_number_parameter_name] = page_number
         if per_page is not None:
             parameters[self.view_class.per_page_parameter_name] = per_page
-        return self.url() + '?' + urlencode(parameters)
+        return urljoin(self.url(), f'?{urlencode(parameters)}')
 
     @pytest.mark.parametrize("page_number", [None, 1, 2])
     @pytest.mark.usefixtures('pagination_test_logic')

@@ -6,8 +6,10 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import time
+from urllib.parse import urljoin
+
 import pytest
-from posixpath import join as urljoin
+from posixpath import join
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
@@ -27,7 +29,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 f'filter?q={{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}'
             )
@@ -39,7 +41,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name_zero_results_found(self, test_client):
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}]}'
             )
@@ -50,7 +52,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
     def test_filter_restless_by_description(self, test_client):
         self.first_object.description = "this is a new description"
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 f'filter?q={{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}'
                 ']}'
@@ -86,7 +88,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
 
         self.first_object.description = "this is a new description"
         res = test_client.get(
-            urljoin(
+            join(
                 self.url(),
                 f'filter?q={{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}'
                 ']}'
@@ -137,7 +139,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
 
         session.add_all(vulns)
         session.commit()
-        res = test_client.get(self.url(self.first_object) + querystring)
+        res = test_client.get(urljoin(self.url(self.first_object), querystring))
         assert res.status_code == 200
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 2
@@ -169,7 +171,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
 
         session.add_all(vulns)
         session.commit()
-        res = test_client.get(self.url(self.first_object) + querystring)
+        res = test_client.get(urljoin(self.url(self.first_object), querystring))
         assert res.status_code == 200
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 0
@@ -203,7 +205,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
 
         session.add_all(vulns)
         session.commit()
-        res = test_client.get(self.url(self.first_object) + querystring)
+        res = test_client.get(urljoin(self.url(self.first_object), querystring))
         assert res.status_code == 200
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 2
@@ -225,7 +227,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsM
                                                     confirmed=True)
         session.add_all(vulns)
         session.commit()
-        res = test_client.get(self.url(self.first_object) + querystring)
+        res = test_client.get(urljoin(self.url(self.first_object), querystring))
         assert res.status_code == 200
         assert res.json['stats']['total_vulns'] == 5
 

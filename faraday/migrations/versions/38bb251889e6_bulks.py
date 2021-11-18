@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: 38bb251889e6
-Revises: d8f0b32a5c0e
+Revises: 15d70093d262
 Create Date: 2021-07-30 02:12:00.706416+00:00
 
 """
@@ -9,7 +9,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '38bb251889e6'
-down_revision = 'd8f0b32a5c0e'
+down_revision = '15d70093d262'
 branch_labels = None
 depends_on = None
 

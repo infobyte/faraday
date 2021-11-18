@@ -1,10 +1,13 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from datetime import timedelta, date
+
 import re
 
 import json
 import logging
+from itertools import groupby
 
 import flask
 from flask import Blueprint, abort, make_response, jsonify
@@ -15,14 +18,14 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.orm.exc import NoResultFound
 
-
 from faraday.server.models import (db,
                                    Workspace,
                                    _make_vuln_count_property,
                                    Vulnerability,
                                    _make_active_agents_count_property,
                                    count_vulnerability_severities,
-                                   _last_run_agent_date)
+                                   _last_run_agent_date,
+                                   SeveritiesHistogram)
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -52,6 +55,13 @@ class WorkspaceSummarySchema(Schema):
     low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
     unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+
+
+class HistogramSchema(Schema):
+    date = fields.Date(dump_only=True, attribute='date')
+    medium = fields.Integer(dump_only=True, attribute='medium')
+    high = fields.Integer(dump_only=True, attribute='high')
+    critical = fields.Integer(dump_only=True, attribute='critical')
 
 
 class WorkspaceDurationSchema(Schema):
@@ -84,13 +94,14 @@ class WorkspaceSchema(AutoSchema):
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
     active_agents_count = fields.Integer(dump_only=True)
     last_run_agent_date = fields.DateTime(dump_only=True, attribute='last_run_agent_date')
+    histogram = fields.Nested(HistogramSchema(many=True))
 
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'active_agents_count', 'last_run_agent_date')
+                  'active_agents_count', 'last_run_agent_date', 'histogram')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -102,6 +113,61 @@ class WorkspaceSchema(AutoSchema):
             if data['start_date'] > data['end_date']:
                 raise ValidationError("start_date is bigger than end_date.")
         return data
+
+
+def init_date_range(from_day, days):
+    date_list = [{'date': from_day - timedelta(days=x),
+                  Vulnerability.SEVERITY_MEDIUM: 0,
+                  Vulnerability.SEVERITY_HIGH: 0,
+                  Vulnerability.SEVERITY_CRITICAL: 0} for x in range(days)]
+    return date_list
+
+
+def generate_histogram(from_date, days_before):
+    histogram_dict = dict()
+
+    workspaces_histograms = SeveritiesHistogram.query \
+        .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()
+
+    # group dates by workspace
+    grouped_histograms_by_ws = groupby(workspaces_histograms, lambda x: x.workspace.name)
+
+    ws_histogram = {}
+    for ws_name, dates in grouped_histograms_by_ws:
+        first_date = None
+        ws_histogram[ws_name] = {}
+        # Convert to dict
+        for d in dates:
+            if first_date is None:
+                first_date = d.date
+            ws_histogram[ws_name][d.date] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
+                                             Vulnerability.SEVERITY_HIGH: d.high,
+                                             Vulnerability.SEVERITY_CRITICAL: d.critical}
+
+        # fix histogram gaps
+        if (date.today() - first_date).days < days_before:
+            # move first_date to diff between first day and days required
+            first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
+        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x),
+                                    Vulnerability.SEVERITY_MEDIUM: 0,
+                                    Vulnerability.SEVERITY_HIGH: 0,
+                                    Vulnerability.SEVERITY_CRITICAL: 0}
+                                   for x in range((date.today() - first_date).days + 1)]
+
+        # merge counters with days required
+        high = medium = critical = 0
+        for current_workspace_histogram_counters in histogram_dict[ws_name]:
+            current_date = current_workspace_histogram_counters['date']
+            if current_date in ws_histogram[ws_name]:
+                medium += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_MEDIUM]
+                high += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_HIGH]
+                critical += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_CRITICAL]
+            current_workspace_histogram_counters[Vulnerability.SEVERITY_MEDIUM] = medium
+            current_workspace_histogram_counters[Vulnerability.SEVERITY_HIGH] = high
+            current_workspace_histogram_counters[Vulnerability.SEVERITY_CRITICAL] = critical
+        histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
+
+    return histogram_dict
 
 
 class WorkspaceView(ReadWriteView, FilterMixin):
@@ -129,7 +195,21 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             200:
               description: Ok
         """
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+
+        if histogram:
+            today = date.today()
+
+            histogram_days = flask.request.args.get('histogram_days',
+                                                    type=lambda x: int(x)
+                                                    if x.isnumeric() and int(x) > 0
+                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                                    )
+            histogram_dict = generate_histogram(today, histogram_days)
+
         query = self._get_base_query()
+
         objects = []
         for workspace_stat in query:
             workspace_stat_dict = dict(workspace_stat)
@@ -142,6 +222,13 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                 workspace_stat_dict['scope_raw'] = workspace_stat_dict['scope_raw'].split(',')
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
+
+            if histogram:
+                if workspace_stat_dict['name'] in histogram_dict:
+                    workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
+                else:
+                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
+
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 

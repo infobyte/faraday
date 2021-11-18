@@ -7,9 +7,11 @@ See the file 'doc/LICENSE' for the license information
 import sys
 import logging
 import inspect
+from datetime import date
 from queue import Queue
 
 from sqlalchemy import event
+from sqlalchemy.orm.attributes import get_history
 
 from faraday.server.models import (
     Host,
@@ -17,6 +19,9 @@ from faraday.server.models import (
     TagObject,
     Comment,
     File,
+    VulnerabilityWeb,
+    SeveritiesHistogram,
+    Vulnerability,
 )
 from faraday.server.models import db
 
@@ -98,6 +103,88 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
                 "This should never happen!!!"
 
 
+def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0, critical=0):
+    if workspace_id is None:
+        logger.error("Workspace with None value. Histogram could not be updated")
+        return
+    ws_id = SeveritiesHistogram.query.with_entities('id').filter(
+        SeveritiesHistogram.date == date.today(),
+        SeveritiesHistogram.workspace_id == workspace_id).first()
+    if ws_id is None:
+        connection.execute(
+            f"INSERT "  # nosec
+            f"INTO severities_histogram (workspace_id, medium, high, critical, date) "
+            f"VALUES ({workspace_id}, {medium}, {high}, {critical}, '{date.today()}')")
+    else:
+        connection.execute(
+            f"UPDATE severities_histogram "  # nosec
+            f"SET medium = medium + {medium}, high = high + {high}, critical = critical + {critical} "
+            f"WHERE id = {ws_id[0]}")
+
+
+def _dicrease_severities_histogram(instance_severity, medium=0, high=0, critical=0):
+    medium = -1 if instance_severity == Vulnerability.SEVERITY_MEDIUM else medium
+    high = -1 if instance_severity == Vulnerability.SEVERITY_HIGH else high
+    critical = -1 if instance_severity == Vulnerability.SEVERITY_CRITICAL else critical
+
+    return medium, high, critical
+
+
+def _increase_severities_histogram(instance_severity, medium=0, high=0, critical=0):
+    medium = 1 if instance_severity == Vulnerability.SEVERITY_MEDIUM else medium
+    high = 1 if instance_severity == Vulnerability.SEVERITY_HIGH else high
+    critical = 1 if instance_severity == Vulnerability.SEVERITY_CRITICAL else critical
+
+    return medium, high, critical
+
+
+def alter_histogram_on_insert(mapper, connection, instance):
+    if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+        medium, high, critical = _increase_severities_histogram(instance.severity)
+        _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical)
+
+
+def alter_histogram_on_update(mapper, connection, instance):
+    status = get_history(instance, 'status')
+    if len(status.unchanged) > 0:
+        vuln_severity_history = get_history(instance, 'severity')
+        if len(vuln_severity_history.unchanged) > 0:
+            return
+        medium = high = critical = 0
+        if not vuln_severity_history.deleted or not vuln_severity_history.added:
+            logger.error("Vuln severity history is None. Could not update histogram.")
+            return
+        if vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _dicrease_severities_histogram(vuln_severity_history.deleted[0])
+
+        if vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _increase_severities_histogram(instance.severity,
+                                                                    medium=medium,
+                                                                    high=high,
+                                                                    critical=critical)
+        _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical)
+    else:
+        if status.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
+                and status.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+            if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+                medium, high, critical = _dicrease_severities_histogram(instance.severity)
+                _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
+                                            critical=critical)
+        elif status.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
+                and status.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]:
+            if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+                medium, high, critical = _increase_severities_histogram(instance.severity)
+                _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
+                                            critical=critical)
+
+
+def alter_histogram_on_delete(mapper, connection, instance):
+    if instance.status != 'closed':
+        if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _dicrease_severities_histogram(instance.severity)
+            _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical)
+
+
 # register the workspace verification for all objs that has workspace_id
 for name, obj in inspect.getmembers(sys.modules['faraday.server.models']):
     if inspect.isclass(obj) and getattr(obj, 'workspace_id', None):
@@ -116,3 +203,11 @@ event.listen(Service, 'after_delete', delete_object_event)
 # Update object bindings
 event.listen(Host, 'after_update', update_object_event)
 event.listen(Service, 'after_update', update_object_event)
+
+# Severities Histogram
+event.listen(Vulnerability, "before_insert", alter_histogram_on_insert)
+event.listen(Vulnerability, "before_update", alter_histogram_on_update)
+event.listen(Vulnerability, "before_delete", alter_histogram_on_delete)
+event.listen(VulnerabilityWeb, "before_insert", alter_histogram_on_insert)
+event.listen(VulnerabilityWeb, "before_update", alter_histogram_on_update)
+event.listen(VulnerabilityWeb, "before_delete", alter_histogram_on_delete)

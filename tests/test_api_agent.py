@@ -14,7 +14,7 @@ import pytest
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
@@ -224,7 +224,7 @@ class TestAgentCreationAPI:
         assert res.status_code == 400
 
 
-class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
+class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentWithWorkspacesView
@@ -399,95 +399,6 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin,
             json=payload
         )
         assert res.status_code == 404
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_bulk_update_agent_add_a_workspace(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent1 = AgentFactory.create(workspaces=[workspace],
-                                    active=True)
-        agent2 = AgentFactory.create(workspaces=[workspace],
-                                     active=True)
-        session.commit()
-        data = {"ids": [agent1.id, agent2.id], "workspaces": [workspace.name, other_workspace.name]}
-
-        res = test_client.patch(self.url(), data=data)
-        assert res.status_code == 200
-        assert res.json['updated'] == 2
-        for agent in [agent1, agent2]:
-            workspaces = Agent.query.get(agent.id).workspaces
-            assert len(workspaces) == 2
-            assert workspace in workspaces
-            assert other_workspace in workspaces
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_bulk_update_agent_do_not_pass_workspaces(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace],
-                                    active=True)
-        session.commit()
-        data = {"ids": [agent.id], "name": "ASDADSASD"}
-
-        res = test_client.patch(self.url(), data=data)
-        assert res.status_code == 200
-        assert res.json['updated'] == 1
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 1
-        assert workspace in workspaces
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_bulk_update_agent_add_a_inexistent_workspace(self, test_client,
-                                                     session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace],
-                                    active=True)
-        session.commit()
-        data = {"ids": [agent.id], "workspaces": [workspace.name, "do_not_exist"]}
-        res = test_client.patch(self.url(), data=data)
-        assert res.status_code == 404
-        assert not res.is_json
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 1
-        assert workspace in workspaces
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_bulk_update_agent_delete_a_workspace(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent = AgentFactory.create(workspaces=[workspace, other_workspace],
-                                    active=True)
-        session.commit()
-        data = {"ids": [agent.id], "workspaces": [workspace.name]}
-        res = test_client.patch(self.url(), data=data)
-        assert res.status_code == 200
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 1
-        assert workspaces[0] == workspace
-
-    def test_bulk_delete_agents(self, test_client, session):
-        previous_count = session.query(Agent).count()
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent_a = AgentFactory.create(workspaces=[workspace])
-        agent_b = AgentFactory.create(workspaces=[workspace])
-        agent_c = AgentFactory.create(workspaces=[workspace])
-        # Test ondelete cascade for FKs
-        _ = ExecutorFactory.create(agent=agent_a)
-        for _ in range(3):
-            _ = ExecutorFactory.create(agent=agent_b)
-        session.commit()
-
-        data = {'ids': [agent_a.id, agent_b.id, agent_c.id]}
-        res = test_client.delete(self.url(), data=data)
-        assert res.status_code == 200
-        assert res.json['deleted'] == 3
-        assert previous_count == session.query(Agent).count()
 
 
 class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):

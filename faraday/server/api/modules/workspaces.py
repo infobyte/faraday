@@ -32,7 +32,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, BulkDeleteMixin, BulkUpdateMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, BulkDeleteMixin
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ def generate_histogram(from_date, days_before):
     return histogram_dict
 
 
-class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, BulkUpdateMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -448,26 +448,9 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, BulkUpdateMixin
         db.session.commit()
         return self._get_object(workspace_id).readonly
 
-    # We should want this, we should use _get_base_query, but for some cases as workspace, it needs a refactor first
-    def _bulk_update_query(self, ids, **kwargs):
-        # It IS better to as is but warn of ON CASCADE
-        return self.model_class.query.filter(self.model_class.name.in_(ids))
-
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.name.in_(ids))
-
-    def _pre_bulk_update(self, data, **kwargs):
-        scope = data.pop('scope', None)
-        ans_data = super()._pre_bulk_update(data, **kwargs)
-        if scope is not None:
-            ans_data["scope"] = scope
-        return ans_data
-
-    def _post_bulk_update(self, ids, extracted_data, **kwargs):
-        if "scope" in extracted_data:
-            for obj in self._bulk_update_query(ids).all():
-                obj.set_scope(extracted_data["scope"])
 
 
 WorkspaceView.register(workspace_api)

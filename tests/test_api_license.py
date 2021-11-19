@@ -14,9 +14,7 @@ from hypothesis import given, strategies as st
 from tests import factories
 from tests.test_api_non_workspaced_base import (
     ReadWriteAPITests,
-    API_PREFIX,
-    BulkUpdateTestsMixin,
-    BulkDeleteTestsMixin
+    API_PREFIX
 )
 from faraday.server.models import (
     License,
@@ -33,7 +31,7 @@ class LicenseEnvelopedView(LicenseView):
         return {"object_list": objects}
 
 
-class TestLicensesAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
+class TestLicensesAPI(ReadWriteAPITests):
     model = License
     factory = factories.LicenseFactory
     api_endpoint = 'licenses'

@@ -21,10 +21,7 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-
-    ReadOnlyMultiWorkspacedView,
-    BulkDeleteMixin,
-    BulkUpdateMixin
+    ReadOnlyMultiWorkspacedView
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
@@ -199,8 +196,6 @@ class AgentRunSchema(Schema):
 
 class AgentWithWorkspacesView(UpdateMixin,
                               DeleteMixin,
-                              BulkUpdateMixin,
-                              BulkDeleteMixin,
                               ReadOnlyView):
     route_base = 'agents'
     model_class = Agent
@@ -257,19 +252,6 @@ class AgentWithWorkspacesView(UpdateMixin,
         obj.workspaces = workspaces
 
         return obj
-
-    def _pre_bulk_update(self, data, **kwargs):
-        ans_data = dict()
-        if "workspaces" in data:
-            workspaces = self._get_workspaces_from_data(data, **kwargs)
-            ans_data["workspaces"] = workspaces
-        ans_data.update(super()._pre_bulk_update(data, **kwargs))
-        return ans_data
-
-    def _post_bulk_update(self, ids, extracted_data, **kwargs):
-        if "workspaces" in extracted_data:
-            for obj in self._bulk_update_query(ids).all():
-                obj.workspaces = extracted_data["workspaces"]
 
 
 class AgentView(ReadOnlyMultiWorkspacedView):

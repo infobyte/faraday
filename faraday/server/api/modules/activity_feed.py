@@ -10,9 +10,7 @@ from marshmallow import fields
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    PaginatedMixin,
-    BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    PaginatedMixin
 )
 from faraday.server.models import Command
 from faraday.server.schemas import PrimaryKeyRelatedField
@@ -62,7 +60,7 @@ class ActivityFeedSchema(AutoSchema):
                   'creator')
 
 
-class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
+class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
     route_base = 'activities'
     model_class = Command
     schema_class = ActivityFeedSchema

@@ -13,8 +13,7 @@ from faraday.server.api.base import (
     InvalidUsage,
     CreateWorkspacedMixin,
     GenericWorkspacedView,
-    BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    BulkDeleteWorkspacedMixin
 )
 from faraday.server.models import Comment
 comment_api = Blueprint('comment_api', __name__)
@@ -54,7 +53,7 @@ class CommentCreateMixing(CreateWorkspacedMixin):
         return super()._perform_create(data, workspace_name)
 
 
-class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkUpdateWorkspacedMixin, BulkDeleteWorkspacedMixin):
+class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin):
     route_base = 'comment'
     model_class = Comment
     schema_class = CommentSchema
@@ -63,7 +62,6 @@ class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkUpdateWorksp
 
 class UniqueCommentView(GenericWorkspacedView,
                         CommentCreateMixing,
-                        BulkUpdateWorkspacedMixin,
                         BulkDeleteWorkspacedMixin):
     """
         This view is used by the plugin engine to avoid duplicate comments

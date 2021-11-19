@@ -13,9 +13,7 @@ from marshmallow import fields, post_load, ValidationError
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    PaginatedMixin,
-    BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    PaginatedMixin
 )
 from faraday.server.models import Command, Workspace
 from faraday.server.schemas import MutableField, PrimaryKeyRelatedField, SelfNestedField, MetadataSchema
@@ -67,7 +65,7 @@ class CommandSchema(AutoSchema):
                   'params', 'user', 'creator', 'workspace', 'tool', 'import_source', 'metadata')
 
 
-class CommandView(PaginatedMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
+class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
     route_base = 'commands'
     model_class = Command
     schema_class = CommandSchema

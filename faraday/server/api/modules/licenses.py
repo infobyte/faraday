@@ -7,10 +7,7 @@ from marshmallow import fields
 from faraday.server.models import License
 from faraday.server.api.base import (
     ReadWriteView,
-
     AutoSchema,
-    BulkDeleteMixin,
-    BulkUpdateMixin
 )
 from faraday.server.schemas import (
     StrictDateTimeField,
@@ -33,7 +30,7 @@ class LicenseSchema(AutoSchema):
                   'notes')
 
 
-class LicenseView(ReadWriteView, BulkUpdateMixin, BulkDeleteMixin):
+class LicenseView(ReadWriteView):
     route_base = 'licenses'
     model_class = License
     schema_class = LicenseSchema

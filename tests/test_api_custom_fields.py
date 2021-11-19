@@ -1,7 +1,7 @@
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
@@ -10,7 +10,7 @@ from faraday.server.models import (
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
+class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkDeleteTestsMixin):
     model = CustomFieldsSchema
     factory = CustomFieldsSchemaFactory
     api_endpoint = 'custom_fields_schema'

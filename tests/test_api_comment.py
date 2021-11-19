@@ -8,11 +8,11 @@ See the file 'doc/LICENSE' for the license information
 from faraday.server.api.modules.comments import CommentView
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
-from tests.test_api_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
+from tests.test_api_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
 
 
-class TestCommentAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
+class TestCommentAPIGeneric(ReadWriteAPITests, BulkDeleteTestsMixin):
     model = Comment
     factory = factories.CommentFactory
     view_class = CommentView

@@ -40,8 +40,7 @@ def upgrade():
     session = sa.orm.Session(bind=bind)
     workspaces = session.query(Workspace).all()
     for workspace in workspaces:
-        vulnerabilities = VulnerabilityGeneric\
-            .query\
+        vulnerabilities = session.query(VulnerabilityGeneric) \
             .with_entities(func.date_trunc('day', VulnerabilityGeneric.create_date), VulnerabilityGeneric.severity, func.count(VulnerabilityGeneric.severity))\
             .filter(VulnerabilityGeneric.workspace_id == workspace.id, VulnerabilityGeneric.status.notin_(['closed', 'risk-accepted']),
                     VulnerabilityGeneric.severity.in_(['medium', 'high', 'critical']))\

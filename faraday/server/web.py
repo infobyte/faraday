@@ -10,6 +10,7 @@ import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
 from twisted.internet import reactor, error
+from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.util import Redirect
 from twisted.web.http import proxiedLogFormatter
@@ -35,6 +36,14 @@ FARADAY_APP = None
 logger = logging.getLogger(__name__)
 
 
+class FaradaySite(Site):
+    def getResourceFor(self, request):
+        resource = super().getResourceFor(request)
+        if isinstance(resource, twisted.web.resource.NoResource):
+            resource = self.resource.getChild("index.html", request)
+        return resource
+
+
 class CleanHttpHeadersResource(Resource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
@@ -44,12 +53,6 @@ class CleanHttpHeadersResource(Resource):
 class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
     def directoryListing(self):
         return ForbiddenResource()
-
-    def getChild(self, path, request):
-        child = super().getChild(path, request)
-        if isinstance(child, twisted.web.resource.NoResource):
-            child = super().getChild("index.html", request)
-        return child
 
     def render(self, request):
         ret = super().render(request)
@@ -137,9 +140,7 @@ class WebServer:
             self.stop_threads()
 
         log_path = CONST_FARADAY_HOME_PATH / 'logs' / 'access-logging.log'
-        site = twisted.web.server.Site(self.root_resource,
-                                       logPath=log_path,
-                                       logFormatter=proxiedLogFormatter)
+        site = FaradaySite(self.root_resource, logPath=log_path, logFormatter=proxiedLogFormatter)
         site.displayTracebacks = False
 
         try:

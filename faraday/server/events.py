@@ -103,7 +103,7 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
                 "This should never happen!!!"
 
 
-def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0, critical=0):
+def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0, critical=0, confirmed=0):
     if workspace_id is None:
         logger.error("Workspace with None value. Histogram could not be updated")
         return
@@ -113,12 +113,15 @@ def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0,
     if ws_id is None:
         connection.execute(
             f"INSERT "  # nosec
-            f"INTO severities_histogram (workspace_id, medium, high, critical, date) "
-            f"VALUES ({workspace_id}, {medium}, {high}, {critical}, '{date.today()}')")
+            f"INTO severities_histogram (workspace_id, medium, high, critical, date, confirmed) "
+            f"VALUES ({workspace_id}, {medium}, {high}, {critical}, '{date.today()}', {confirmed})")
     else:
         connection.execute(
             f"UPDATE severities_histogram "  # nosec
-            f"SET medium = medium + {medium}, high = high + {high}, critical = critical + {critical} "
+            f"SET medium = medium + {medium}, "
+            f"high = high + {high}, "
+            f"critical = critical + {critical}, "
+            f"confirmed = confirmed + {confirmed}"
             f"WHERE id = {ws_id[0]}")
 
 
@@ -141,17 +144,56 @@ def _increase_severities_histogram(instance_severity, medium=0, high=0, critical
 def alter_histogram_on_insert(mapper, connection, instance):
     if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
         medium, high, critical = _increase_severities_histogram(instance.severity)
-        _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical)
+        confirmed = 1 if instance.confirmed else 0
+
+        _create_or_update_histogram(connection,
+                                    instance.workspace_id,
+                                    medium=medium,
+                                    high=high,
+                                    critical=critical,
+                                    confirmed=confirmed)
+
+
+def get_confirmed_value(instance) -> int:
+    confirmed = get_history(instance, 'confirmed')
+    if len(confirmed.unchanged) > 0:
+        return 0
+    if not confirmed.deleted or not confirmed.added:
+        logger.error("Vuln confirmed history is None. Could not update confirmed value.")
+        return 0
+    if confirmed.deleted[0] is True:
+        return -1
+    else:
+        return 1
 
 
 def alter_histogram_on_update(mapper, connection, instance):
+    confirmed = get_history(instance, 'confirmed')
+    if len(confirmed.unchanged) > 0:
+        confirmed_counter = 0
+        confirmed_counter_on_close = -1 if confirmed.unchanged[0] is True else 0
+    else:
+        if not confirmed.deleted or not confirmed.added:
+            logger.error("Vuln confirmed history is None. Could not update confirmed value.")
+            return
+        if confirmed.deleted[0] is True:
+            confirmed_counter = -1
+            confirmed_counter_on_close = confirmed_counter
+        else:
+            confirmed_counter = 1
+            confirmed_counter_on_close = 0
+
     status = get_history(instance, 'status')
     if len(status.unchanged) > 0:
         vuln_severity_history = get_history(instance, 'severity')
         if len(vuln_severity_history.unchanged) > 0:
+            if confirmed_counter != 0:
+                _create_or_update_histogram(connection, instance.workspace_id, confirmed=confirmed_counter)
             return
         medium = high = critical = 0
         if not vuln_severity_history.deleted or not vuln_severity_history.added:
+            if confirmed_counter != 0:
+                _create_or_update_histogram(connection, instance.workspace_id, confirmed=confirmed_counter)
             logger.error("Vuln severity history is None. Could not update histogram.")
             return
         if vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
@@ -162,27 +204,33 @@ def alter_histogram_on_update(mapper, connection, instance):
                                                                     medium=medium,
                                                                     high=high,
                                                                     critical=critical)
-        _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical)
-    else:
-        if status.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
-                and status.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
-            if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-                medium, high, critical = _dicrease_severities_histogram(instance.severity)
-                _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
-                                            critical=critical)
-        elif status.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
-                and status.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]:
-            if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-                medium, high, critical = _increase_severities_histogram(instance.severity)
-                _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
-                                            critical=critical)
+        _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical, confirmed=confirmed)
+    elif status.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
+            and status.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+        if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _dicrease_severities_histogram(instance.severity)
+            _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
+                                        critical=critical, confirmed=confirmed_counter_on_close)
+    elif status.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
+            and status.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]:
+        if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _increase_severities_histogram(instance.severity)
+            _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
+                                        critical=critical, confirmed=confirmed_counter)
+    elif confirmed_counter != 0:
+        _create_or_update_histogram(connection, instance.workspace_id, confirmed=confirmed_counter)
 
 
 def alter_histogram_on_delete(mapper, connection, instance):
-    if instance.status != 'closed':
+    if instance.status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+        confirmed = -1 if instance.confirmed is True else 0
         if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
             medium, high, critical = _dicrease_severities_histogram(instance.severity)
-            _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical)
+            _create_or_update_histogram(connection, instance.workspace_id,
+                                        medium=medium,
+                                        high=high,
+                                        critical=critical,
+                                        confirmed=confirmed)
 
 
 # register the workspace verification for all objs that has workspace_id

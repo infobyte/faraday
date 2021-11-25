@@ -1260,7 +1260,7 @@ class BulkUpdateMixin:
         # TODO BULK_UPDATE_SCHEMA
         if not flask.request.json or 'ids' not in flask.request.json:
             flask.abort(400)
-        ids = flask.request.json['ids']
+        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
         objects = self._get_objects(ids, **kwargs)
         context = {'updating': True, 'objects': objects}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
@@ -1473,7 +1473,8 @@ class BulkDeleteMixin:
             flask.abort(400)
         # objs = self._get_objects(flask.request.json['ids'], **kwargs)
         # self._perform_bulk_delete(objs, **kwargs)
-        return self._perform_bulk_delete(flask.request.json['ids'], **kwargs), 200
+        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+        return self._perform_bulk_delete(ids, **kwargs), 200
 
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE

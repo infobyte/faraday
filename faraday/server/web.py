@@ -45,6 +45,12 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
     def directoryListing(self):
         return ForbiddenResource()
 
+    def getChild(self, path, request):
+        child = super().getChild(path, request)
+        if isinstance(child, twisted.web.resource.NoResource):
+            child = super().getChild("index.html", request)
+        return child
+
     def render(self, request):
         ret = super().render(request)
         if self.type == 'text/html':

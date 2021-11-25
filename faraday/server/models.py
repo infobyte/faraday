@@ -565,6 +565,7 @@ class SeveritiesHistogram(db.Model):
     medium = Column(Integer, nullable=False)
     high = Column(Integer, nullable=False)
     critical = Column(Integer, nullable=False)
+    confirmed = Column(Integer, nullable=False)
 
     # This method is required by event :_(
     @property

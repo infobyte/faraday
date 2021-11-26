@@ -60,9 +60,7 @@ class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkDeleteWorksp
     order_field = 'create_date'
 
 
-class UniqueCommentView(GenericWorkspacedView,
-                        CommentCreateMixing,
-                        BulkDeleteWorkspacedMixin):
+class UniqueCommentView(GenericWorkspacedView):
     """
         This view is used by the plugin engine to avoid duplicate comments
         when the same plugin and data was ran multiple times.

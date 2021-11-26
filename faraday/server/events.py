@@ -204,7 +204,13 @@ def alter_histogram_on_update(mapper, connection, instance):
                                                                     medium=medium,
                                                                     high=high,
                                                                     critical=critical)
-        _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high, critical=critical, confirmed=confirmed)
+        _create_or_update_histogram(connection,
+                                    instance.workspace_id,
+                                    medium=medium,
+                                    high=high,
+                                    critical=critical,
+                                    confirmed=confirmed_counter)
+
     elif status.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
             and status.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
         if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:

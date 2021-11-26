@@ -186,10 +186,12 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                 assert ws_date['medium'] == 0
                 assert ws_date['high'] == 3
                 assert ws_date['critical'] == 8
+                assert ws_date['confirmed'] == 3
             else:
                 assert ws_date['medium'] == 0
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0
+                assert ws_date['confirmed'] == 0
 
         second_ws = [ws['histogram'] for ws in res.json if ws['name'] == second_workspace.name]
         assert len(second_ws[0]) == 20
@@ -199,10 +201,12 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                 assert ws_date['medium'] == 2
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0
+                assert ws_date['confirmed'] == 4
             else:
                 assert ws_date['medium'] == 0
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0
+                assert ws_date['confirmed'] == 0
 
         res = test_client.get('/v3/ws?histogram=True&histogram_days=a')
         assert res.status_code == 200

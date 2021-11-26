@@ -62,6 +62,7 @@ class HistogramSchema(Schema):
     medium = fields.Integer(dump_only=True, attribute='medium')
     high = fields.Integer(dump_only=True, attribute='high')
     critical = fields.Integer(dump_only=True, attribute='critical')
+    confirmed = fields.Integer(dump_only=True, attribute='confirmed')
 
 
 class WorkspaceDurationSchema(Schema):
@@ -119,7 +120,8 @@ def init_date_range(from_day, days):
     date_list = [{'date': from_day - timedelta(days=x),
                   Vulnerability.SEVERITY_MEDIUM: 0,
                   Vulnerability.SEVERITY_HIGH: 0,
-                  Vulnerability.SEVERITY_CRITICAL: 0} for x in range(days)]
+                  Vulnerability.SEVERITY_CRITICAL: 0,
+                  'confirmed': 0} for x in range(days)]
     return date_list
 
 
@@ -142,7 +144,8 @@ def generate_histogram(from_date, days_before):
                 first_date = d.date
             ws_histogram[ws_name][d.date] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
                                              Vulnerability.SEVERITY_HIGH: d.high,
-                                             Vulnerability.SEVERITY_CRITICAL: d.critical}
+                                             Vulnerability.SEVERITY_CRITICAL: d.critical,
+                                             'confirmed': d.confirmed}
 
         # fix histogram gaps
         if (date.today() - first_date).days < days_before:
@@ -151,20 +154,23 @@ def generate_histogram(from_date, days_before):
         histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x),
                                     Vulnerability.SEVERITY_MEDIUM: 0,
                                     Vulnerability.SEVERITY_HIGH: 0,
-                                    Vulnerability.SEVERITY_CRITICAL: 0}
+                                    Vulnerability.SEVERITY_CRITICAL: 0,
+                                    'confirmed': 0}
                                    for x in range((date.today() - first_date).days + 1)]
 
         # merge counters with days required
-        high = medium = critical = 0
+        confirmed = high = medium = critical = 0
         for current_workspace_histogram_counters in histogram_dict[ws_name]:
             current_date = current_workspace_histogram_counters['date']
             if current_date in ws_histogram[ws_name]:
                 medium += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_MEDIUM]
                 high += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_HIGH]
                 critical += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_CRITICAL]
+                confirmed += ws_histogram[ws_name][current_date]['confirmed']
             current_workspace_histogram_counters[Vulnerability.SEVERITY_MEDIUM] = medium
             current_workspace_histogram_counters[Vulnerability.SEVERITY_HIGH] = high
             current_workspace_histogram_counters[Vulnerability.SEVERITY_CRITICAL] = critical
+            current_workspace_histogram_counters['confirmed'] = confirmed
         histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
 
     return histogram_dict

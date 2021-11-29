@@ -15,7 +15,7 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
     confirm = click.prompt('Confirm [Y/n]', type=bool)
     if confirm:
         version = sys.version_info
-        static_path = f"/opt/faraday/lib/python{version.major}.{version.minor}/site-packages/faraday/server/www/"
+        static_path = f"/opt/faraday/lib/python{version.major}.{version.minor}/site-packages/faraday/server/www"
         templates_path = Path(__file__).parent / 'templates'
         file_loader = FileSystemLoader(templates_path)
         env = Environment(loader=file_loader, autoescape=True)

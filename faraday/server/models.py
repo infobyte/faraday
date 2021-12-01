@@ -1740,7 +1740,7 @@ class ReferenceVulnerabilityAssociation(db.Model):
 class PolicyViolationVulnerabilityAssociation(db.Model):
     __tablename__ = 'policy_violation_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])

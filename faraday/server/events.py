@@ -11,6 +11,7 @@ from datetime import date
 from queue import Queue
 
 from sqlalchemy import event
+from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import get_history
 
 from faraday.server.models import (
@@ -19,9 +20,10 @@ from faraday.server.models import (
     TagObject,
     Comment,
     File,
-    VulnerabilityWeb,
     SeveritiesHistogram,
     Vulnerability,
+    VulnerabilityWeb,
+    VulnerabilityGeneric,
 )
 from faraday.server.models import db
 
@@ -154,77 +156,82 @@ def alter_histogram_on_insert(mapper, connection, instance):
                                     confirmed=confirmed)
 
 
-def get_confirmed_value(instance) -> int:
-    confirmed = get_history(instance, 'confirmed')
-    if len(confirmed.unchanged) > 0:
-        return 0
-    if not confirmed.deleted or not confirmed.added:
-        logger.error("Vuln confirmed history is None. Could not update confirmed value.")
-        return 0
-    if confirmed.deleted[0] is True:
-        return -1
-    else:
-        return 1
-
-
 def alter_histogram_on_update(mapper, connection, instance):
-    confirmed = get_history(instance, 'confirmed')
-    if len(confirmed.unchanged) > 0:
+    alter_histogram_on_update_general(connection,
+                                      instance.workspace_id,
+                                      status_history=get_history(instance, 'status'),
+                                      confirmed_history=get_history(instance, 'confirmed'),
+                                      severity_history=get_history(instance, 'severity'))
+
+
+def alter_histogram_on_update_general(connection, workspace_id, status_history=None,
+                                      confirmed_history=None, severity_history=None):
+    if len(confirmed_history.unchanged) > 0:
         confirmed_counter = 0
-        confirmed_counter_on_close = -1 if confirmed.unchanged[0] is True else 0
+        confirmed_counter_on_close = -1 if confirmed_history.unchanged[0] is True else 0
+        confirmed_counter_on_reopen = 1 if confirmed_history.unchanged[0] is True else 0
     else:
-        if not confirmed.deleted or not confirmed.added:
-            logger.error("Vuln confirmed history is None. Could not update confirmed value.")
+        if not confirmed_history.deleted or not confirmed_history.added:
+            logger.error("Confirmed history is None. Could not update confirmed value.")
             return
-        if confirmed.deleted[0] is True:
+        if confirmed_history.deleted[0] is True:
             confirmed_counter = -1
             confirmed_counter_on_close = confirmed_counter
+            confirmed_counter_on_reopen = 0
         else:
             confirmed_counter = 1
             confirmed_counter_on_close = 0
+            confirmed_counter_on_reopen = confirmed_counter
 
-    status = get_history(instance, 'status')
-    if len(status.unchanged) > 0:
-        vuln_severity_history = get_history(instance, 'severity')
-        if len(vuln_severity_history.unchanged) > 0:
-            if confirmed_counter != 0:
-                _create_or_update_histogram(connection, instance.workspace_id, confirmed=confirmed_counter)
+    if len(status_history.unchanged) > 0:
+        if len(severity_history.unchanged) > 0:
+            if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+                _create_or_update_histogram(connection, workspace_id, confirmed=confirmed_counter)
             return
         medium = high = critical = 0
-        if not vuln_severity_history.deleted or not vuln_severity_history.added:
-            if confirmed_counter != 0:
-                _create_or_update_histogram(connection, instance.workspace_id, confirmed=confirmed_counter)
-            logger.error("Vuln severity history is None. Could not update histogram.")
+        if not severity_history.deleted or not severity_history.added:
+            if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+                _create_or_update_histogram(connection, workspace_id, confirmed=confirmed_counter)
+            logger.error("Severity history is None. Could not update histogram.")
             return
-        if vuln_severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _dicrease_severities_histogram(vuln_severity_history.deleted[0])
 
-        if vuln_severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _increase_severities_histogram(instance.severity,
+        if severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _dicrease_severities_histogram(severity_history.deleted[0])
+
+        if severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _increase_severities_histogram(severity_history.added[0],
                                                                     medium=medium,
                                                                     high=high,
                                                                     critical=critical)
         _create_or_update_histogram(connection,
-                                    instance.workspace_id,
+                                    workspace_id,
                                     medium=medium,
                                     high=high,
                                     critical=critical,
                                     confirmed=confirmed_counter)
 
-    elif status.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
-            and status.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
-        if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _dicrease_severities_histogram(instance.severity)
-            _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
+    elif status_history.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
+            and status_history.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+        if len(severity_history.unchanged) > 0:
+            severity = severity_history.unchanged[0]
+        if len(severity_history.deleted) > 0:
+            severity = severity_history.deleted[0]
+        if severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _dicrease_severities_histogram(severity)
+            _create_or_update_histogram(connection, workspace_id, medium=medium, high=high,
                                         critical=critical, confirmed=confirmed_counter_on_close)
-    elif status.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
-            and status.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]:
-        if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _increase_severities_histogram(instance.severity)
-            _create_or_update_histogram(connection, instance.workspace_id, medium=medium, high=high,
-                                        critical=critical, confirmed=confirmed_counter)
+    elif status_history.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
+            and status_history.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]:
+        if len(severity_history.unchanged) > 0:
+            severity = severity_history.unchanged[0]
+        if len(severity_history.added) > 0:
+            severity = severity_history.added[0]
+        if severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+            medium, high, critical = _increase_severities_histogram(severity)
+            _create_or_update_histogram(connection, workspace_id, medium=medium, high=high,
+                                        critical=critical, confirmed=confirmed_counter_on_reopen)
     elif confirmed_counter != 0:
-        _create_or_update_histogram(connection, instance.workspace_id, confirmed=confirmed_counter)
+        _create_or_update_histogram(connection, workspace_id, confirmed=confirmed_counter)
 
 
 def alter_histogram_on_delete(mapper, connection, instance):
@@ -237,6 +244,56 @@ def alter_histogram_on_delete(mapper, connection, instance):
                                         high=high,
                                         critical=critical,
                                         confirmed=confirmed)
+
+
+def alter_histogram_on_before_compile_delete(query, delete_context):
+    for desc in query.column_descriptions:
+        query_copy = query
+        if desc['type'] is Vulnerability or \
+            desc['type'] is VulnerabilityGeneric or\
+                desc['type'] is VulnerabilityWeb:
+            query_copy = query_copy.with_entities('id', 'status', 'severity', 'confirmed', 'workspace_id')
+            instances = delete_context.session.execute(query_copy).fetchall()
+            for _, status, severity, confirmed, workspace_id in instances:
+                if status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+                    if severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+                        medium, high, critical = _dicrease_severities_histogram(severity)
+                        _create_or_update_histogram(delete_context.session,
+                                                    workspace_id,
+                                                    medium=medium,
+                                                    high=high,
+                                                    critical=critical,
+                                                    confirmed=-1 if confirmed is True else 0)
+
+
+def get_history_from_context_values(context_values, field, old_value):
+    field_history = type('history_dummy_class', (object,), {'added': [], 'unchanged': [old_value], 'deleted': []})()
+    if field in context_values:
+        if context_values[field] != old_value:
+            field_history.deleted.append(old_value)
+            field_history.added.append(context_values[field])
+            field_history.unchanged.pop()
+    return field_history
+
+
+def alter_histogram_on_before_compile_update(query, update_context):
+    for desc in query.column_descriptions:
+        query_copy = query
+        if desc['type'] is Vulnerability or \
+            desc['type'] is VulnerabilityGeneric or\
+                desc['type'] is VulnerabilityWeb:
+            query_copy = query_copy.with_entities('id', 'status', 'severity', 'confirmed', 'workspace_id')
+            instances = update_context.session.execute(query_copy).fetchall()
+            for _, old_status, old_severity, old_confirmed, workspace_id in instances:
+                status_history = get_history_from_context_values(update_context.values, 'status', old_status)
+                severity_history = get_history_from_context_values(update_context.values, 'severity', old_severity)
+                confirmed_history = get_history_from_context_values(update_context.values, 'confirmed', old_confirmed)
+
+                alter_histogram_on_update_general(update_context.session,
+                                                  workspace_id,
+                                                  status_history=status_history,
+                                                  confirmed_history=confirmed_history,
+                                                  severity_history=severity_history)
 
 
 # register the workspace verification for all objs that has workspace_id
@@ -259,9 +316,8 @@ event.listen(Host, 'after_update', update_object_event)
 event.listen(Service, 'after_update', update_object_event)
 
 # Severities Histogram
-event.listen(Vulnerability, "before_insert", alter_histogram_on_insert)
-event.listen(Vulnerability, "before_update", alter_histogram_on_update)
-event.listen(Vulnerability, "before_delete", alter_histogram_on_delete)
-event.listen(VulnerabilityWeb, "before_insert", alter_histogram_on_insert)
-event.listen(VulnerabilityWeb, "before_update", alter_histogram_on_update)
-event.listen(VulnerabilityWeb, "before_delete", alter_histogram_on_delete)
+event.listen(VulnerabilityGeneric, "before_insert", alter_histogram_on_insert, propagate=True)
+event.listen(VulnerabilityGeneric, "before_update", alter_histogram_on_update, propagate=True)
+event.listen(VulnerabilityGeneric, "after_delete", alter_histogram_on_delete, propagate=True)
+event.listen(Query, "before_compile_delete", alter_histogram_on_before_compile_delete)
+event.listen(Query, "before_compile_update", alter_histogram_on_before_compile_update)

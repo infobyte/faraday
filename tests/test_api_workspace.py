@@ -201,7 +201,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                 assert ws_date['medium'] == 2
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0
-                assert ws_date['confirmed'] == 4
+                assert ws_date['confirmed'] == 2
             else:
                 assert ws_date['medium'] == 0
                 assert ws_date['high'] == 0

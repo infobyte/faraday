@@ -10,6 +10,7 @@ import string
 from datetime import datetime, timedelta, date
 from functools import partial
 from random import SystemRandom
+from typing import Callable
 
 from sqlalchemy import (
     Boolean,
@@ -655,7 +656,7 @@ def _build_associationproxy_creator(model_class_name):
     return creator
 
 
-def _build_associationproxy_creator_non_workspaced(model_class_name):
+def _build_associationproxy_creator_non_workspaced(model_class_name, preprocess_value_func: Callable = None):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation/CVE with the
         corresponding name. This is not workspace aware"""
@@ -663,6 +664,10 @@ def _build_associationproxy_creator_non_workspaced(model_class_name):
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
         model_class = globals()[model_class_name]
+
+        if preprocess_value_func:
+            name = preprocess_value_func(name)
+
         child = model_class.query.filter(
             getattr(model_class, 'name') == name,
         ).first()
@@ -1426,7 +1431,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cve = association_proxy('cve_instances',
                              'name',
                              proxy_factory=CustomAssociationSet,
-                             creator=_build_associationproxy_creator_non_workspaced('CVE'))
+                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
     # TODO: Ver si el nombre deberia ser cvss_v2_id
     cvssv2_id = Column(

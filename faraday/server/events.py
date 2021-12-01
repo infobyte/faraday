@@ -248,22 +248,20 @@ def alter_histogram_on_delete(mapper, connection, instance):
 
 def alter_histogram_on_before_compile_delete(query, delete_context):
     for desc in query.column_descriptions:
-        query_copy = query
         if desc['type'] is Vulnerability or \
             desc['type'] is VulnerabilityGeneric or\
                 desc['type'] is VulnerabilityWeb:
-            query_copy = query_copy.with_entities('id', 'status', 'severity', 'confirmed', 'workspace_id')
-            instances = delete_context.session.execute(query_copy).fetchall()
-            for _, status, severity, confirmed, workspace_id in instances:
-                if status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
-                    if severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-                        medium, high, critical = _dicrease_severities_histogram(severity)
+            instances = query.all()
+            for instance in instances:
+                if instance.status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+                    if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+                        medium, high, critical = _dicrease_severities_histogram(instance.severity)
                         _create_or_update_histogram(delete_context.session,
-                                                    workspace_id,
+                                                    instance.workspace_id,
                                                     medium=medium,
                                                     high=high,
                                                     critical=critical,
-                                                    confirmed=-1 if confirmed is True else 0)
+                                                    confirmed=-1 if instance.confirmed is True else 0)
 
 
 def get_history_from_context_values(context_values, field, old_value):
@@ -278,19 +276,17 @@ def get_history_from_context_values(context_values, field, old_value):
 
 def alter_histogram_on_before_compile_update(query, update_context):
     for desc in query.column_descriptions:
-        query_copy = query
         if desc['type'] is Vulnerability or \
             desc['type'] is VulnerabilityGeneric or\
                 desc['type'] is VulnerabilityWeb:
-            query_copy = query_copy.with_entities('id', 'status', 'severity', 'confirmed', 'workspace_id')
-            instances = update_context.session.execute(query_copy).fetchall()
-            for _, old_status, old_severity, old_confirmed, workspace_id in instances:
-                status_history = get_history_from_context_values(update_context.values, 'status', old_status)
-                severity_history = get_history_from_context_values(update_context.values, 'severity', old_severity)
-                confirmed_history = get_history_from_context_values(update_context.values, 'confirmed', old_confirmed)
+            instances = query.all()
+            for instance in instances:
+                status_history = get_history_from_context_values(update_context.values, 'status', instance.status)
+                severity_history = get_history_from_context_values(update_context.values, 'severity', instance.severity)
+                confirmed_history = get_history_from_context_values(update_context.values, 'confirmed', instance.confirmed)
 
                 alter_histogram_on_update_general(update_context.session,
-                                                  workspace_id,
+                                                  instance.workspace_id,
                                                   status_history=status_history,
                                                   confirmed_history=confirmed_history,
                                                   severity_history=severity_history)

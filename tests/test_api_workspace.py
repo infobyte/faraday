@@ -182,7 +182,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert len(firs_ws[0]) == 20
         ws_histogram = firs_ws[0]
         for ws_date in ws_histogram:
-            if ws_date['date'] == f'{date.today().year}-{date.today().month}-{date.today().day}':
+            if ws_date['date'] == date.today().strftime("%Y-%m-%d"):
                 assert ws_date['medium'] == 0
                 assert ws_date['high'] == 3
                 assert ws_date['critical'] == 8
@@ -197,7 +197,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert len(second_ws[0]) == 20
         ws_histogram = second_ws[0]
         for ws_date in ws_histogram:
-            if ws_date['date'] == f'{date.today().year}-{date.today().month}-{date.today().day}':
+            if ws_date['date'] == date.today().strftime("%Y-%m-%d"):
                 assert ws_date['medium'] == 2
                 assert ws_date['high'] == 0
                 assert ws_date['critical'] == 0

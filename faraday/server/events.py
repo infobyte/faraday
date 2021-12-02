@@ -123,7 +123,7 @@ def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0,
             f"SET medium = medium + {medium}, "
             f"high = high + {high}, "
             f"critical = critical + {critical}, "
-            f"confirmed = confirmed + {confirmed}"
+            f"confirmed = confirmed + {confirmed} "
             f"WHERE id = {ws_id[0]}")
 
 

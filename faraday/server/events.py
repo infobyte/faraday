@@ -166,13 +166,18 @@ def alter_histogram_on_update(mapper, connection, instance):
 
 def alter_histogram_on_update_general(connection, workspace_id, status_history=None,
                                       confirmed_history=None, severity_history=None):
+
+    if not status_history or not confirmed_history or not severity_history:
+        logger.error("Not all history fields provided")
+        return
+
     if len(confirmed_history.unchanged) > 0:
         confirmed_counter = 0
         confirmed_counter_on_close = -1 if confirmed_history.unchanged[0] is True else 0
         confirmed_counter_on_reopen = 1 if confirmed_history.unchanged[0] is True else 0
     else:
         if not confirmed_history.deleted or not confirmed_history.added:
-            logger.error("Confirmed history is None. Could not update confirmed value.")
+            logger.error("Confirmed history deleted or added is None. Could not update confirmed value.")
             return
         if confirmed_history.deleted[0] is True:
             confirmed_counter = -1
@@ -192,7 +197,7 @@ def alter_histogram_on_update_general(connection, workspace_id, status_history=N
         if not severity_history.deleted or not severity_history.added:
             if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
                 _create_or_update_histogram(connection, workspace_id, confirmed=confirmed_counter)
-            logger.error("Severity history is None. Could not update histogram.")
+            logger.error("Severity history deleted or added is None. Could not update severity histogram.")
             return
 
         if severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:

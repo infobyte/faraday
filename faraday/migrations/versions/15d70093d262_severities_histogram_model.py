@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-from sqlalchemy import func
+from sqlalchemy import func, case
 
 from faraday.server.models import VulnerabilityGeneric, SeveritiesHistogram, Workspace
 
@@ -29,6 +29,7 @@ def upgrade():
     sa.Column('medium', sa.Integer(), nullable=False),
     sa.Column('high', sa.Integer(), nullable=False),
     sa.Column('critical', sa.Integer(), nullable=False),
+    sa.Column('confirmed', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -41,23 +42,29 @@ def upgrade():
     workspaces = session.query(Workspace).all()
     for workspace in workspaces:
         vulnerabilities = session.query(VulnerabilityGeneric) \
-            .with_entities(func.date_trunc('day', VulnerabilityGeneric.create_date), VulnerabilityGeneric.severity, func.count(VulnerabilityGeneric.severity))\
-            .filter(VulnerabilityGeneric.workspace_id == workspace.id, VulnerabilityGeneric.status.notin_(['closed', 'risk-accepted']),
+            .with_entities(func.date_trunc('day', VulnerabilityGeneric.create_date),
+                           VulnerabilityGeneric.severity,
+                           func.count(VulnerabilityGeneric.severity),
+                           func.sum(case([(VulnerabilityGeneric.confirmed, 1)], else_=0)))\
+            .filter(VulnerabilityGeneric.workspace_id == workspace.id,
+                    VulnerabilityGeneric.status.notin_(['closed', 'risk-accepted']),
                     VulnerabilityGeneric.severity.in_(['medium', 'high', 'critical']))\
             .group_by(func.date_trunc('day', VulnerabilityGeneric.create_date), VulnerabilityGeneric.severity).all()
-        for vulnerability in vulnerabilities:
-            sh = session.query(SeveritiesHistogram).filter(SeveritiesHistogram.date == vulnerability[0],
-                                                           SeveritiesHistogram.workspace_id == workspace.id).first()
-            if sh is None:
-                sh = SeveritiesHistogram(date=vulnerability[0], workspace=workspace, medium=0, high=0, critical=0)
-                session.add(sh)
+        for histogram_date, severity_type, severity_count, confirmed_count in vulnerabilities:
+            severity_histogram = session.query(SeveritiesHistogram)\
+                .filter(SeveritiesHistogram.date == histogram_date,
+                        SeveritiesHistogram.workspace_id == workspace.id).first()
+            if severity_histogram is None:
+                severity_histogram = SeveritiesHistogram(date=histogram_date, workspace=workspace, medium=0, high=0, critical=0, confirmed=0)
+                session.add(severity_histogram)
                 session.commit()
-            if vulnerability[1] == 'medium':
-                sh.medium = vulnerability[2]
-            if vulnerability[1] == 'high':
-                sh.high = vulnerability[2]
-            if vulnerability[1] == 'critical':
-                sh.critical = vulnerability[2]
+            if severity_type == 'medium':
+                severity_histogram.medium = severity_count
+            if severity_type == 'high':
+                severity_histogram.high = severity_count
+            if severity_type == 'critical':
+                severity_histogram.critical = severity_count
+            severity_histogram.confirmed += confirmed_count
         session.commit()
 
 

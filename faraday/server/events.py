@@ -11,6 +11,7 @@ from datetime import date
 from queue import Queue
 
 from sqlalchemy import event
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import get_history
 
@@ -284,11 +285,20 @@ def alter_histogram_on_before_compile_update(query, update_context):
         if desc['type'] is Vulnerability or \
             desc['type'] is VulnerabilityGeneric or\
                 desc['type'] is VulnerabilityWeb:
-            instances = query.all()
+            ids = [x[1] for x in filter(lambda x: x[0].startswith("id_"),
+                                        query.statement.compile(dialect=postgresql.dialect()).params.items())]
+            if ids:
+                # this can arise some issues with counters when other filters were applied to query but...
+                instances = update_context.session.query(VulnerabilityGeneric).filter(
+                    VulnerabilityGeneric.id.in_(ids)).all()
+            else:
+                instances = query.all()
+
             for instance in instances:
                 status_history = get_history_from_context_values(update_context.values, 'status', instance.status)
                 severity_history = get_history_from_context_values(update_context.values, 'severity', instance.severity)
-                confirmed_history = get_history_from_context_values(update_context.values, 'confirmed', instance.confirmed)
+                confirmed_history = get_history_from_context_values(update_context.values, 'confirmed',
+                                                                    instance.confirmed)
 
                 alter_histogram_on_update_general(update_context.session,
                                                   instance.workspace_id,

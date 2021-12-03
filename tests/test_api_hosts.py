@@ -22,10 +22,12 @@ from tests.test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
     PaginationTestsMixin,
+    BulkUpdateTestsMixin,
+    BulkDeleteTestsMixin
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView
-from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory
+from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory, HostnameFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -762,36 +764,31 @@ class TestHostAPI:
         assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
-    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts(self, test_client, session):
-        ws = WorkspaceFactory.create(name="abc")
-        host_1 = HostFactory.create(workspace=ws)
-        host_2 = HostFactory.create(workspace=ws)
+        host_1 = HostFactory.create(workspace=self.workspace)
+        host_2 = HostFactory.create(workspace=self.workspace)
         session.commit()
         hosts_ids = [host_1.id, host_2.id]
-        request_data = {'hosts_ids': hosts_ids}
+        request_data = {'ids': hosts_ids}
 
-        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts/bulk_delete', data=request_data)
+        delete_response = test_client.delete(self.url(), data=request_data)
 
-        deleted_hosts = delete_response.json['deleted_hosts']
+        deleted_hosts = delete_response.json['deleted']
         host_count_after_delete = db.session.query(Host).filter(
             Host.id.in_(hosts_ids),
-            Host.workspace_id == ws.id).count()
+            Host.workspace_id == self.workspace.id).count()
 
         assert delete_response.status_code == 200
         assert deleted_hosts == len(hosts_ids)
         assert host_count_after_delete == 0
 
-    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
-        ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': []}
 
-        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts/bulk_delete', data=request_data)
+        delete_response = test_client.delete(self.url(), data=request_data)
 
         assert delete_response.status_code == 400
 
-    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_from_another_workspace(self, test_client, session):
         workspace_1 = WorkspaceFactory.create(name='workspace_1')
         host_of_ws_1 = HostFactory.create(workspace=workspace_1)
@@ -800,21 +797,20 @@ class TestHostAPI:
         session.commit()
 
         # Try to delete workspace_2's host from workspace_1
-        request_data = {'hosts_ids': [host_of_ws_2.id]}
-        url = f'/v3/ws/{workspace_1.name}/hosts/bulk_delete'
+        request_data = {'ids': [host_of_ws_2.id]}
+        url = f'/v3/ws/{workspace_1.name}/hosts'
         delete_response = test_client.delete(url, data=request_data)
 
-        assert delete_response.json['deleted_hosts'] == 0
+        assert delete_response.status_code == 200
+        assert delete_response.json['deleted'] == 0
 
-    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
         ws = WorkspaceFactory.create(name="abc")
-        request_data = {'hosts_ids': [-1, 'test']}
-        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts/bulk_delete', data=request_data)
+        request_data = {'ids': [-1, 'test']}
+        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts', data=request_data)
 
-        assert delete_response.json['deleted_hosts'] == 0
+        assert delete_response.json['deleted'] == 0
 
-    @pytest.mark.skip("This was a v2 test, will be reimplemented")
     def test_bulk_delete_hosts_wrong_content_type(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         host_1 = HostFactory.create(workspace=ws)
@@ -822,18 +818,42 @@ class TestHostAPI:
         session.commit()
         hosts_ids = [host_1.id, host_2.id]
 
-        request_data = {'hosts_ids': hosts_ids}
+        request_data = {'ids': hosts_ids}
         headers = [('content-type', 'text/xml')]
 
         delete_response = test_client.delete(
-            f'/v3/ws/{ws.name}/hosts/bulk_delete',
+            f'/v3/ws/{ws.name}/hosts',
             data=request_data,
             headers=headers)
 
         assert delete_response.status_code == 400
 
+    def test_bulk_delete_with_references(self, test_client, session, workspace, host_factory, vulnerability_factory,
+                                         service_factory, credential_factory):
+        host_1 = host_factory.create(workspace=workspace)
+        service_factory.create(host=host_1, workspace=workspace)
+        vulnerability_factory.create(service=None, host=host_1, workspace=workspace)
+        host_1.hostnames.append(HostnameFactory.create(name='pepe1', workspace=workspace, host=host_1))
+        credential_factory.create(workspace=workspace, host=host_1)
 
-class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
+        host_2 = host_factory.create(workspace=workspace)
+        service_factory.create(host=host_2, workspace=workspace)
+        vulnerability_factory.create(service=None, host=host_2, workspace=workspace)
+        host_1.hostnames.append(HostnameFactory.create(name='pepe2', workspace=workspace, host=host_2))
+        credential_factory.create(workspace=workspace, host=host_2)
+
+        session.commit()
+
+        hosts_ids = [host_1.id, host_2.id]
+        request_data = {'ids': hosts_ids}
+        url = f'/v3/ws/{workspace.name}/hosts'
+        delete_response = test_client.delete(url, data=request_data)
+
+        assert delete_response.status_code == 200
+        assert delete_response.json['deleted'] == 2
+
+
+class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Host
     factory = factories.HostFactory
     api_endpoint = 'hosts'
@@ -1103,6 +1123,35 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             index_in_response_hosts = response_hosts.index(host)
 
             assert index_in_hosts_ids == index_in_response_hosts
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_host_with_hostnames(self, test_client, session,
+                                        host_with_hostnames):
+        session.commit()
+        data = {
+            "ids": [host_with_hostnames.id, self.first_object.id],
+            "hostnames": ["other.com", "test.com"],
+        }
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json["updated"] == 2
+        expected = {"other.com", "test.com"}
+        assert {hn.name for hn in host_with_hostnames.hostnames} == expected
+        assert {hn.name for hn in self.first_object.hostnames} == expected
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_host_without_hostnames(self, test_client, session,
+                                                host_with_hostnames):
+        session.commit()
+        expected = {hn.name for hn in host_with_hostnames.hostnames}
+        data = {
+            "ids": [host_with_hostnames.id],
+            "os": "NotAnOS"
+        }
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json["updated"] == 1
+        assert {hn.name for hn in host_with_hostnames.hostnames} == expected
 
 
 def host_json():

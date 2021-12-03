@@ -11,13 +11,15 @@ import pytest
 from tests import factories
 from tests.test_api_workspaced_base import (
     ReadWriteAPITests,
+    BulkUpdateTestsMixin,
+    BulkDeleteTestsMixin
 )
 from faraday.server.api.modules.credentials import CredentialView
 from faraday.server.models import Credential
 from tests.factories import HostFactory, ServiceFactory
 
 
-class TestCredentialsAPIGeneric(ReadWriteAPITests):
+class TestCredentialsAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Credential
     factory = factories.CredentialFactory
     view_class = CredentialView

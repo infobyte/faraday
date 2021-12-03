@@ -454,7 +454,7 @@ class Hostname(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
     host = relationship('Host', backref=backref("hostnames", cascade="all, delete-orphan"))
 
     # 1 workspace <--> N hostnames
@@ -728,7 +728,7 @@ class CommandObject(db.Model):
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
     command = relationship('Command', backref='command_objects')
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
 
     # 1 workspace <--> N command_objects
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -837,7 +837,7 @@ class Command(Metadata):
 
     # 1 workspace <--> N commands
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -1323,7 +1323,7 @@ class Service(Metadata):
 
     banner = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
     host = relationship(
         'Host',
         foreign_keys=[host_id],
@@ -1398,7 +1398,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_duplicate_id = Column(
         Integer,
-        ForeignKey('vulnerability.id'),
+        ForeignKey('vulnerability.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
     )
@@ -1408,7 +1408,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_template_id = Column(
         Integer,
-        ForeignKey('vulnerability_template.id'),
+        ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
     )
@@ -1542,7 +1542,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         'host_inner.id = service.host_id'))
     )
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True)
     host = relationship(
         'Host',
         backref=backref("vulnerabilities", cascade="all, delete-orphan"),
@@ -1603,8 +1603,10 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
-                                                                         index=True))
+        return VulnerabilityGeneric.__table__.c.get('service_id',
+                                                    Column(Integer,
+                                                           db.ForeignKey('service.id', ondelete='CASCADE'),
+                                                           index=True))
 
     @declared_attr
     def service(cls):
@@ -1633,7 +1635,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service_id(cls):
         return VulnerabilityGeneric.__table__.c.get(
-            'service_id', Column(Integer, db.ForeignKey('service.id'),
+            'service_id', Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'),
                                  nullable=False))
 
     @declared_attr
@@ -1659,7 +1661,7 @@ class VulnerabilityCode(VulnerabilityGeneric):
     start_line = Column(Integer, nullable=True)
     end_line = Column(Integer, nullable=True)
 
-    source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
+    source_code_id = Column(Integer, ForeignKey(SourceCode.id, ondelete='CASCADE'), index=True)
     source_code = relationship(
         SourceCode,
         backref='vulnerabilities',
@@ -1722,7 +1724,7 @@ class Reference(Metadata):
 class ReferenceVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference",
@@ -1739,7 +1741,7 @@ class ReferenceVulnerabilityAssociation(db.Model):
 class PolicyViolationVulnerabilityAssociation(db.Model):
     __tablename__ = 'policy_violation_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
@@ -1831,13 +1833,13 @@ class Credential(Metadata):
     description = BlankColumn(Text)
     name = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
     host = relationship(
         'Host',
         backref=backref("credentials", cascade="all, delete-orphan"),
         foreign_keys=[host_id])
 
-    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
+    service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
     service = relationship(
         'Service',
         backref=backref('credentials', cascade="all, delete-orphan"),
@@ -1897,7 +1899,7 @@ association_workspace_and_agents_table = Table(
     'association_workspace_and_agents_table',
     db.Model.metadata,
     Column('workspace_id', Integer, ForeignKey('workspace.id')),
-    Column('agent_id', Integer, ForeignKey('agent.id'))
+    Column('agent_id', Integer, ForeignKey('agent.id', ondelete='CASCADE'))
 )
 
 
@@ -2407,7 +2409,7 @@ class Comment(Metadata):
 
     text = BlankColumn(Text)
 
-    reply_to_id = Column(Integer, ForeignKey('comment.id'))
+    reply_to_id = Column(Integer, ForeignKey('comment.id', ondelete='SET NULL'))
     reply_to = relationship(
         'Comment',
         remote_side=[id],
@@ -2790,7 +2792,7 @@ class Executor(Metadata):
     __tablename__ = 'executor'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent_id = Column(Integer, ForeignKey('agent.id', ondelete='CASCADE'), index=True, nullable=False)
     agent = relationship(
         'Agent',
         backref=backref('executors', cascade="all, delete-orphan"),
@@ -2911,7 +2913,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_executions', cascade="all, delete-orphan")
     )
     parameters_data = Column(JSONType, nullable=False)
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
     command = relationship(
         'Command',
         foreign_keys=[command_id],
@@ -2954,7 +2956,7 @@ class RuleExecution(Metadata):
     end = Column(DateTime, nullable=True)
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
     rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
-    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='CASCADE'), index=True, nullable=False)
     command = relationship('Command', foreign_keys=[command_id],
                            backref=backref('rule_executions', cascade="all, delete-orphan"))
 

@@ -13,17 +13,17 @@ from posixpath import join
 
 from faraday.server.models import Workspace, Scope, SeveritiesHistogram
 from faraday.server.api.modules.workspaces import WorkspaceView
-from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
 
 
-class TestWorkspaceAPI(ReadWriteAPITests):
+class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     model = Workspace
     factory = factories.WorkspaceFactory
     api_endpoint = 'ws'
     lookup_field = 'name'
     view_class = WorkspaceView
-    patchable_fields = ['name']
+    patchable_fields = ['description']
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
@@ -461,9 +461,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert set(res.json['scope']) == set(desired_scope)
         assert {s.name for s in workspace.scope} == set(desired_scope)
 
-    @pytest.mark.skip  # TODO fix fox sqlite
-    def test_list_retrieves_all_items_from(self, test_client):
-        super().test_list_retrieves_all_items_from(test_client)
+    @pytest.mark.skip_sql_dialect('sqlite')
+    def test_list_retrieves_all_items_from(self, test_client, logged_user):
+        super().test_list_retrieves_all_items_from(test_client, logged_user)
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False

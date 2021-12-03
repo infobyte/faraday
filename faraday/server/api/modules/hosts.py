@@ -24,7 +24,10 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-    FilterWorkspacedMixin
+
+    FilterWorkspacedMixin,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -137,7 +140,9 @@ class HostFilterSet(FilterSet):
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView,
-                FilterWorkspacedMixin):
+                FilterWorkspacedMixin,
+                BulkDeleteWorkspacedMixin,
+                BulkUpdateWorkspacedMixin):
     route_base = 'hosts'
     model_class = Host
     order_field = desc(Host.vulnerability_critical_generic_count),\
@@ -399,44 +404,24 @@ class HostsView(PaginatedMixin,
                            or len(hosts)),
         }
 
-    # ### THIS WAS FROM V2
-    # TODO SCHEMA
-    # @route('bulk_delete/', methods=['DELETE'])
-    # def bulk_delete(self, workspace_name):
-    #     """
-    #     ---
-    #     delete:
-    #       tags: ["Bulk", "Host"]
-    #       description: Delete hosts in bulk
-    #       responses:
-    #         200:
-    #           description: Ok
-    #         400:
-    #           description: Bad request
-    #         403:
-    #           description: Forbidden
-    #     tags: ["Bulk", "Host"]
-    #     responses:
-    #       200:
-    #         description: Ok
-    #     """
-    #     workspace = self._get_workspace(workspace_name)
-    #     json_request = flask.request.get_json()
-    #     if not json_request:
-    #         flask.abort(400, 'Invalid request. Check the request data or the content type of the request')
-    #     hosts_ids = json_request.get('hosts_ids', [])
-    #     hosts_ids = [host_id for host_id in hosts_ids if isinstance(host_id, int)]
-    #     deleted_hosts = 0
-    #     if hosts_ids:
-    #         deleted_hosts = Host.query.filter(
-    #             Host.id.in_(hosts_ids),
-    #             Host.workspace_id == workspace.id).delete(synchronize_session='fetch')
-    #     else:
-    #         flask.abort(400, "Invalid request")
-    #
-    #     db.session.commit()
-    #     response = {'deleted_hosts': deleted_hosts}
-    #     return flask.jsonify(response)
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
+        return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+
+    def _pre_bulk_update(self, data, **kwargs):
+        hostnames = data.pop('hostnames', None)
+        ans_data = super()._pre_bulk_update(data, **kwargs)
+        if hostnames is not None:
+            ans_data["hostnames"] = hostnames
+        return ans_data
+
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        if "hostnames" in extracted_data:
+            for obj in self._bulk_update_query(ids, **kwargs).all():
+                obj.set_hostnames(extracted_data["hostnames"])
 
 
 HostsView.register(host_api)

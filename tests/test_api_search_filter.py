@@ -9,7 +9,11 @@ from random import randrange
 import pytest
 
 from tests.factories import SearchFilterFactory, UserFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests.test_api_non_workspaced_base import (
+    ReadWriteAPITests,
+    BulkUpdateTestsMixin,
+    BulkDeleteTestsMixin
+)
 from tests.test_api_agent import logout
 from tests.conftest import login_as
 from faraday.server.models import SearchFilter
@@ -18,7 +22,7 @@ from faraday.server.api.modules.search_filter import SearchFilterView
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestSearchFilterAPI(ReadWriteAPITests):
+class TestSearchFilterAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = SearchFilter
     factory = SearchFilterFactory
     api_endpoint = 'searchfilter'
@@ -117,4 +121,10 @@ class TestSearchFilterAPI(ReadWriteAPITests):
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         self.first_object.creator = logged_user
-        super().test_update_an_object_fails_with_empty_dict(test_client, logged_user)
+        super().test_patch_update_an_object_does_not_fail_with_partial_data(test_client, logged_user)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete(self, test_client, logged_user):
+        for obj in self.model.query.all():
+            obj.creator = logged_user
+        super().test_bulk_delete(test_client)

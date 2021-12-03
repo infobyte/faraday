@@ -32,7 +32,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, BulkDeleteMixin
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ def generate_histogram(from_date, days_before):
     return histogram_dict
 
 
-class WorkspaceView(ReadWriteView, FilterMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -453,6 +453,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
         return self._get_object(workspace_id).readonly
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.name.in_(ids))
 
 
 WorkspaceView.register(workspace_api)

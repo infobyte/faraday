@@ -34,7 +34,9 @@ from faraday.server.api.base import (
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage,
-    CountMultiWorkspacedMixin
+    CountMultiWorkspacedMixin,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -471,7 +473,9 @@ class VulnerabilityFilterSet(FilterSet):
 class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
                         ReadWriteWorkspacedView,
-                        CountMultiWorkspacedMixin):
+                        CountMultiWorkspacedMixin,
+                        BulkDeleteWorkspacedMixin,
+                        BulkUpdateWorkspacedMixin):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
@@ -1056,48 +1060,6 @@ class VulnerabilityView(PaginatedMixin,
                          as_attachment=True,
                          cache_timeout=-1)
 
-    @route('bulk_delete/', methods=['DELETE'])
-    def bulk_delete(self, workspace_name):
-        """
-        ---
-        delete:
-          tags: ["Bulk", "Vulnerability"]
-          description: Delete vulnerabilities in bulk
-          responses:
-            200:
-              description: Ok
-            400:
-              description: Bad request
-            403:
-              description: Forbidden
-        tags: ["Bulk", "Vulnerability"]
-        responses:
-          200:
-            description: Ok
-        """
-        workspace = self._get_workspace(workspace_name)
-        json_quest = request.get_json()
-        vulnerability_ids = json_quest.get('vulnerability_ids', [])
-        vulnerability_severities = json_quest.get('severities', [])
-        deleted_vulns = 0
-        vulns = []
-        if vulnerability_ids:
-            logger.info("Delete Vuln IDs: %s", vulnerability_ids)
-            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
-                                                      VulnerabilityGeneric.workspace_id == workspace.id)
-        elif vulnerability_severities:
-            logger.info("Delete Vuln Severities: %s", vulnerability_severities)
-            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
-                                                      VulnerabilityGeneric.workspace_id == workspace.id)
-        else:
-            flask.abort(400, "Invalid Request")
-        for vuln in vulns:
-            db.session.delete(vuln)
-            deleted_vulns += 1
-        db.session.commit()
-        response = {'deleted_vulns': deleted_vulns}
-        return flask.jsonify(response)
-
     @route('top_users', methods=['GET'])
     def top_users(self, workspace_name):
         """
@@ -1129,6 +1091,37 @@ class VulnerabilityView(PaginatedMixin,
             users.append(user)
         response = {'users': users}
         return flask.jsonify(response)
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        # TODO BULK_DELETE_SCHEMA
+        if not flask.request.json or 'severities' not in flask.request.json:
+            return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+        return self._perform_bulk_delete(flask.request.json['severities'], by='severity',
+                                         workspace_name=workspace_name, **kwargs), 200
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        query = VulnerabilityWeb.query.filter(VulnerabilityWeb.id.in_(ids))
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return query.filter(self.model_class.workspace_id == workspace.id)
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        if kwargs.get("by", "id") != "severity":
+            query = self.model_class.query.filter(self.model_class.id.in_(ids))
+        else:
+            query = self.model_class.query.filter(self.model_class.severity.in_(ids))
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return query.filter(self.model_class.workspace_id == workspace.id)
+
+    def _pre_bulk_update(self, data, **kwargs):
+        data.pop('type', '')  # It's forbidden to change vuln type!
+        data.pop('tool', '')
+        # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
+        data.pop('_attachments', [])
+        return super()._pre_bulk_update(data, **kwargs)
 
 
 VulnerabilityView.register(vulns_api)

@@ -7,7 +7,8 @@ from marshmallow import fields
 from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView
+    ReadWriteView,
+    BulkDeleteMixin
 )
 
 
@@ -36,18 +37,21 @@ class CustomFieldsSchemaSchema(AutoSchema):
                   )
 
 
-class CustomFieldsSchemaView(ReadWriteView):
+class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
     route_base = 'custom_fields_schema'
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
+
+    def _check_post_only_data(self, data):
+        for read_only_key in ['field_name', 'table_name', 'field_type']:
+            data.pop(read_only_key, None)
+        return data
 
     def _update_object(self, obj, data, **kwargs):
         """
             Field name must be read only
         """
-        for read_only_key in ['field_name', 'table_name', 'field_type']:
-            if read_only_key in data:
-                data.pop(read_only_key)
+        data = self._check_post_only_data(data)
         return super()._update_object(obj, data)
 
 

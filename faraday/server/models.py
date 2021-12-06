@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
+# Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 # See the file 'doc/LICENSE' for the license information
+
+# Standard library imports
 import json
 import logging
 import math
@@ -12,6 +14,7 @@ from functools import partial
 from random import SystemRandom
 from typing import Callable
 
+# Related third party imports
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -24,43 +27,40 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event,
     Table,
-    literal,
     Date,
+    event,
+    literal,
+    func,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import func
+from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (
     backref,
     column_property,
     query_expression,
-    with_expression
+    with_expression,
+    relationship,
 )
 from sqlalchemy.schema import DDL
-from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
-from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
-    _EngineConnector
+    _EngineConnector,
 )
-
+from flask_security import UserMixin, RoleMixin
 from depot.fields.sqlalchemy import UploadedFileField
 
-from faraday.server.fields import JSONType
-from flask_security import (
-    UserMixin, RoleMixin,
-)
-
-from faraday.server.fields import FaradayUploadedFile
+# Local application imports
+from faraday.server.fields import JSONType, FaradayUploadedFile
 from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
-    is_unique_constraint_violation)
+    is_unique_constraint_violation,
+)
 
 logger = logging.getLogger(__name__)
 

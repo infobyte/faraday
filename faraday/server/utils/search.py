@@ -26,7 +26,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm import ColumnProperty
 
-from faraday.server.models import User
+from faraday.server.models import User, CVE
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +114,8 @@ def _sub_operator(model, argument, fieldname):
 #: be described by the strings ``'=='``, ``'eq'``, ``'equals'``, etc.
 OPERATORS = {
     # Operators which accept a single argument.
-    'is_null': lambda f: f is None,
-    'is_not_null': lambda f: f is not None,
+    'is_null': lambda f: f == None,  # noqa E711
+    'is_not_null': lambda f: f != None,  # noqa E711
     'desc': lambda f: f.desc,
     'asc': lambda f: f.asc,
     # Operators which accept two arguments.
@@ -558,6 +558,8 @@ class QueryBuilder:
                     if relation_model not in joined_models:
                         if relation_model == User:
                             query = query.join(relation_model, model.creator_id == relation_model.id)
+                        elif relation_model == CVE:
+                            query = query.join(relation_model, model.cve_instances)
                         else:
                             query = query.join(relation_model)
                     joined_models.add(relation_model)

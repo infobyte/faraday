@@ -1581,9 +1581,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def target(self):
         return self.target_host_ip
 
-    @property
-    def has_duplicate(self):
-        return self.vulnerability_duplicate_id is None
+    @hybrid_property
+    def duplicate_parent(self):
+        return self.vulnerability_duplicate_id
 
     @property
     def hostnames(self):

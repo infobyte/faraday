@@ -363,26 +363,26 @@ class Metadata(db.Model):
     __abstract__ = True
 
     @declared_attr
-    def creator_id(cls):
+    def creator_id(self):
         return Column(
             Integer,
             ForeignKey('faraday_user.id', ondelete="SET NULL"),
             nullable=True)
 
     @declared_attr
-    def creator(cls):
-        return relationship('User', foreign_keys=[cls.creator_id])
+    def creator(self):
+        return relationship('User', foreign_keys=[self.creator_id])
 
     @declared_attr
-    def update_user_id(cls):
+    def update_user_id(self):
         return Column(
             Integer,
             ForeignKey('faraday_user.id', ondelete="SET NULL"),
             nullable=True)
 
     @declared_attr
-    def update_user(cls):
-        return relationship('User', foreign_keys=[cls.update_user_id])
+    def update_user(self):
+        return relationship('User', foreign_keys=[self.update_user_id])
 
     create_date = Column(DateTime, default=datetime.utcnow)
     update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -409,28 +409,24 @@ class SourceCode(Metadata):
         return
 
 
-def set_children_objects(instance, value, parent_field, child_field='id',
-                         workspaced=True):
+def set_children_objects(instance, value, parent_field, child_field='id', workspaced=True):
     """
     Override some kind of children of instance. This is useful in one
     to many relationships. It takes care of deleting not used children,
     adding new objects, and keeping the not modified ones the same.
-
     :param instance: instance of the parent object
-    :param value: list of childs (values of the child_field)
+    :param value: list of children (values of the child_field)
     :param parent_field: the parent field's relationship to the children name
     :param child_field: the "lookup field" of the children model
     :param workspaced: indicates if the parent model has a workspace
     """
     # Get the class of the children. Inspired in
     # https://stackoverflow.com/questions/6843144/how-to-find-sqlalchemy-remote-side-objects-class-or-class-name-without-db-queri
-    children_model = getattr(
-        type(instance), parent_field).property.mapper.class_
+    children_model = getattr(type(instance), parent_field).property.mapper.class_
 
     value = set(value)
     current_value = getattr(instance, parent_field)
-    current_value_fields = set(map(operator.attrgetter(child_field),
-                                   current_value))
+    current_value_fields = set(map(operator.attrgetter(child_field), current_value))
 
     for existing_child in current_value_fields:
         if existing_child not in value:

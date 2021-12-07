@@ -96,9 +96,9 @@ NOTIFICATION_METHODS = [
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
-    See http://docs.sqlalchemy.org/en/rel_1_0/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    See https://docs.sqlalchemy.org/en/14/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
     and https://bitbucket.org/zzzeek/sqlalchemy/issues/3561/sqlite-nested-transactions-fail-with
-    for furhter information"""
+    for further information"""
 
     def make_connector(self, app=None, bind=None):
         """Creates the connector for a given state and bind."""
@@ -118,7 +118,7 @@ class CustomEngineConnector(_EngineConnector):
         if (uri, echo) == self._connected_for:
             return self._engine
 
-        # Call original metohd and register events
+        # Call original method and register events
         rv = super().get_engine()
         if uri.startswith('sqlite://'):
             with self._lock:

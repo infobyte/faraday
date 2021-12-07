@@ -573,7 +573,7 @@ class SeveritiesHistogram(db.Model):
 
 class CustomAssociationSet(_AssociationSet):
     """
-    A custom associacion set that passes the creator method the both
+    A custom association set that passes the creator method the both
     the value and the instance of the parent object
     """
 
@@ -594,8 +594,7 @@ class CustomAssociationSet(_AssociationSet):
         else:
             getter, setter = parent._default_getset(parent.collection_class)
 
-        super().__init__(
-            lazy_collection, creator, getter, setter, parent)
+        super().__init__(lazy_collection, creator, getter, setter, parent)
 
     def _create(self, value):
         if getattr(self.lazy_collection, 'ref', False):
@@ -616,13 +615,13 @@ class CustomAssociationSet(_AssociationSet):
             session.rollback()
             for conflict_obj in conflict_objs:
                 if not hasattr(conflict_obj, 'name'):
-                    # The session can hold elements without a name (altough it shouldn't)
+                    # The session can hold elements without a name (although it shouldn't)
                     continue
                 if conflict_obj.name == value:
                     continue
-                persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
-                if persisted_conclict_obj:
-                    self.col.add(persisted_conclict_obj)
+                persisted_conflict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
+                if persisted_conflict_obj:
+                    self.col.add(persisted_conflict_obj)
             yield self.creator(value, parent_instance)
 
     def add(self, value):

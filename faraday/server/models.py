@@ -2706,32 +2706,6 @@ class Notification(db.Model):
         return
 
 
-class KnowledgeBase(db.Model):
-    __tablename__ = 'knowledge_base'
-    id = Column(Integer, primary_key=True)
-
-    vulnerability_template_id = Column(
-        Integer,
-        ForeignKey('vulnerability_template.id'),
-        index=True,
-        nullable=True,
-    )
-    vulnerability_template = relationship('VulnerabilityTemplate',
-                                          backref=backref('knowledge', cascade="all, delete-orphan"),
-                                          )
-
-    faraday_kb_id = Column(Text, nullable=False)
-    reference_id = Column(Integer, nullable=False)
-    script_name = Column(Text, nullable=False)
-    external_identifier = Column(Text, nullable=False)
-    tool_name = Column(Text, nullable=False)
-    false_positive = Column(Integer, nullable=False, default=0)
-    verified = Column(Integer, nullable=False, default=0)
-
-    __table_args__ = (UniqueConstraint('external_identifier', 'tool_name', 'reference_id',
-                                       name='uix_externalidentifier_toolname_referenceid'),)
-
-
 def rule_default_name(context):
     model = context.get_current_parameters()['model']
     create_date = context.get_current_parameters()['create_date']

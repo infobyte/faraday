@@ -166,12 +166,12 @@ def _make_active_agents_count_property():
 def _last_run_agent_date():
     query = select([text('executor.last_run')])
 
-    from_clause = table('executor')\
-        .join(Agent, text('executor.agent_id = agent.id'))\
+    from_clause = table('executor') \
+        .join(Agent, text('executor.agent_id = agent.id')) \
         .join(text('association_workspace_and_agents_table'),
               text('agent.id = association_workspace_and_agents_table.agent_id '
                    'and association_workspace_and_agents_table.workspace_id = workspace.id'))
-    query = query.select_from(from_clause).where(text('executor.last_run is not null')).\
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')). \
         order_by(Executor.last_run.desc()).limit(1)
 
     return query
@@ -204,10 +204,9 @@ def _make_command_created_related_object():
     )
 
 
-def _make_vuln_count_property(type_=None, confirmed=None,
-                              use_column_property=True, extra_query=None, get_hosts_vulns=False):
+def _make_vuln_count_property(type_=None, confirmed=None, use_column_property=True,
+                              extra_query=None, get_hosts_vulns=False):
     from_clause = table('vulnerability')
-
     if get_hosts_vulns:
         from_clause = from_clause.join(
             table("service"), text("vulnerability.service_id = service.id"),
@@ -279,6 +278,7 @@ def count_vulnerability_severities(query: str,
     :param medium: Medium severities will be counted if True
     :param low: Low severities will be counted if True
     :param unclassified: Unclassified severities will be counted  if True
+    :param host_vulns: Hosts will be counted  if True
     :return: Query with options added
     """
 
@@ -326,22 +326,22 @@ def count_vulnerability_severities(query: str,
     return query
 
 
-def _make_vuln_generic_count_by_severity(severity, tablename="host"):
+def _make_vuln_generic_count_by_severity(severity):
     assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
 
     vuln_count = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability')).
-            where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
-            as_scalar()
+        select_from(text('vulnerability')).
+        where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
     )
 
     vuln_web_count = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability, service')).
-            where(text('(vulnerability.service_id = service.id and '
-                       f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
-            as_scalar()
+        select_from(text('vulnerability, service')).
+        where(text('(vulnerability.service_id = service.id and '
+                   f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
     )
 
     vulnerability_generic_count = column_property(
@@ -1044,9 +1044,10 @@ class Host(Metadata):
 
 
 cve_vulnerability_association = db.Table('cve_association',
-    Column('vulnerability_id', Integer, db.ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False),
-    Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
-)
+                                         Column('vulnerability_id', Integer,
+                                                db.ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False),
+                                         Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
+                                         )
 
 
 class CVE(db.Model):
@@ -1081,11 +1082,11 @@ class CVE(db.Model):
 class CVSS2GeneralConfig:
     VERSION = '2'
     PATTERN = 'AV:(?P<access_vector>[LAN])' \
-            '/AC:(?P<access_complexity>[HML])' \
-            '/Au:(?P<authentication>[MSN])' \
-            '/C:(?P<confidentiality>[NPC])' \
-            '/I:(?P<integrity>[NPC])' \
-            '/A:(?P<availability>[NPC])'
+              '/AC:(?P<access_complexity>[HML])' \
+              '/Au:(?P<authentication>[MSN])' \
+              '/C:(?P<confidentiality>[NPC])' \
+              '/I:(?P<integrity>[NPC])' \
+              '/A:(?P<availability>[NPC])'
 
     # CVSSV2 ENUMS
     ACCESS_VECTOR_TYPES = ['L', 'N', 'A']
@@ -1103,13 +1104,13 @@ class CVSS2GeneralConfig:
 class CVSS3GeneralConfig:
     VERSION = '3'
     PATTERN = 'AV:(?P<attack_vector>[LANP])' \
-            '/AC:(?P<attack_complexity>[HL])' \
-            '/PR:(?P<privileges_required>[NLH])' \
-            '/UI:(?P<user_interaction>[NR])' \
-            '/S:(?P<scope>[UC])' \
-            '/C:(?P<confidentiality>[NLH])' \
-            '/I:(?P<integrity>[NLH])' \
-            '/A:(?P<availability>[NLH])'
+              '/AC:(?P<attack_complexity>[HL])' \
+              '/PR:(?P<privileges_required>[NLH])' \
+              '/UI:(?P<user_interaction>[NR])' \
+              '/S:(?P<scope>[UC])' \
+              '/C:(?P<confidentiality>[NLH])' \
+              '/I:(?P<integrity>[NLH])' \
+              '/A:(?P<availability>[NLH])'
 
     CHANGED = 'C'
     UNCHANGED = 'U'
@@ -1213,10 +1214,14 @@ class CVSSV2(CVSSBase):
             self.availability_impact = None
 
     def exploitability(self):
-        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
+        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * \
+               CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * \
+               CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
 
     def impact(self):
-        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
+        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (
+                1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (
+                                1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
 
     def fimpact(self):
         if self.impact() == 0:
@@ -1273,7 +1278,9 @@ class CVSSV3(CVSSBase):
             self.availability_impact = None
 
     def isc_base(self):
-        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
+        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (
+                1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (
+                            1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
 
     def impact(self):
         if self.scope == CVSS3GeneralConfig.UNCHANGED:
@@ -1282,7 +1289,10 @@ class CVSSV3(CVSSBase):
             return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
 
     def exploitability(self):
-        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
+        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * \
+               CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * \
+               CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * \
+               CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
 
     def calculate_base_score(self):
         if re.match(CVSS3GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
@@ -1431,9 +1441,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
                                  collection_class=set)
 
     cve = association_proxy('cve_instances',
-                             'name',
-                             proxy_factory=CustomAssociationSet,
-                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
+                            'name',
+                            proxy_factory=CustomAssociationSet,
+                            creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
     # TODO: Ver si el nombre deberia ser cvss_v2_id
     cvssv2_id = Column(
@@ -1745,8 +1755,12 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref=backref("policy_violation_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolation",
+                                    backref=backref("policy_violation_associations", cascade="all, delete-orphan"),
+                                    foreign_keys=[policy_violation_id])
+    vulnerability = relationship("Vulnerability", backref=backref("policy_violation_vulnerability_associations",
+                                                                  cascade="all, delete-orphan"),
+                                 foreign_keys=[vulnerability_id])
 
 
 class ReferenceTemplateVulnerabilityAssociation(db.Model):
@@ -1773,8 +1787,12 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolationTemplate", backref=backref("policy_violation_template_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
-    vulnerability = relationship("VulnerabilityTemplate", backref=backref("policy_violation_template_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolationTemplate", backref=backref("policy_violation_template_associations",
+                                                                               cascade="all, delete-orphan"),
+                                    foreign_keys=[policy_violation_id])
+    vulnerability = relationship("VulnerabilityTemplate",
+                                 backref=backref("policy_violation_template_vulnerability_associations",
+                                                 cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -2140,8 +2158,8 @@ def get(workspace_name):
 
 
 roles_users = db.Table('roles_users',
-        db.Column('user_id', db.Integer(), db.ForeignKey('faraday_user.id')),
-        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
+                       db.Column('user_id', db.Integer(), db.ForeignKey('faraday_user.id')),
+                       db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
 
 
 class Role(db.Model, RoleMixin):
@@ -2182,6 +2200,7 @@ class User(db.Model, UserMixin):
 
     roles = db.relationship('Role', secondary=roles_users,
                             backref='users')
+
     # TODO: add  many to many relationship to add permission to workspace
 
     @property
@@ -2505,9 +2524,11 @@ class EventType(db.Model):
 
 
 allowed_roles_association = db.Table('notification_allowed_roles',
-    Column('notification_subscription_id', Integer, db.ForeignKey('notification_subscription.id'), nullable=False),
-    Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'), nullable=False)
-)
+                                     Column('notification_subscription_id', Integer,
+                                            db.ForeignKey('notification_subscription.id'), nullable=False),
+                                     Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'),
+                                            nullable=False)
+                                     )
 
 
 class NotificationSubscription(Metadata):
@@ -2905,7 +2926,8 @@ class AgentExecution(Metadata):
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
-    executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))
+    executor = relationship('Executor', foreign_keys=[executor_id],
+                            backref=backref('executions', cascade="all, delete-orphan"))
     # 1 workspace <--> N agent_executions
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)

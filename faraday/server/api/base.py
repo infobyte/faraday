@@ -1285,17 +1285,6 @@ class BulkUpdateMixin:
     def _pre_bulk_update(self, data, **kwargs):
         return {}
 
-    def _remove_association_proxy_fields(self, data, **kwargs):
-        model_association_proxy_fields = self._get_model_association_proxy_fields()
-
-        association_proxy_fields = {}
-        for key in list(data):
-            parent = getattr(self.model_class, key).parent
-            field_name = getattr(parent, "target_collection", None)
-            if field_name in model_association_proxy_fields:
-                association_proxy_fields[key] = data.pop(key)
-        return association_proxy_fields
-
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
         pass
 
@@ -1304,14 +1293,7 @@ class BulkUpdateMixin:
             post_bulk_update_data = self._pre_bulk_update(data, **kwargs)
             if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
                 queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
-                association_proxy_data = self._remove_association_proxy_fields(data)
                 updated = queryset.update(data, synchronize_session='fetch')
-                if association_proxy_data:
-                    for obj in queryset.all():
-                        for (key, value) in association_proxy_data.items():
-                            setattr(obj, key, value)
-                            db.session.add(obj)
-                    db.session.commit()
                 self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name)
             else:
                 updated = 0

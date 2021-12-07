@@ -1103,7 +1103,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
-        query = VulnerabilityWeb.query.filter(VulnerabilityWeb.id.in_(ids))
+        query = self.model_class.query.filter(Vulnerability.id.in_(ids))
         workspace = self._get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 

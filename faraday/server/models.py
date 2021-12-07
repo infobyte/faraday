@@ -171,14 +171,15 @@ def _last_run_agent_date():
         .join(text('association_workspace_and_agents_table'),
               text('agent.id = association_workspace_and_agents_table.agent_id '
                    'and association_workspace_and_agents_table.workspace_id = workspace.id'))
-    query = query.select_from(from_clause).where(text('executor.last_run is not null')).order_by(Executor.last_run.desc()).limit(1)
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')).\
+        order_by(Executor.last_run.desc()).limit(1)
 
     return query
 
 
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
-    amount of childrens of some parent object"""
+    amount of children of some parent object"""
     children_id_field = f'{children_table}.id'
     parent_id_field = f'{parent_table}.id'
     children_rel_field = f'{children_table}.{parent_table}_id'

@@ -1127,6 +1127,8 @@ class VulnerabilityView(PaginatedMixin,
     def _pre_bulk_update(self, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
+        data.pop('service_id', '')
+        data.pop('host_id', '')
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
         super()._pre_bulk_update(data, **kwargs)
@@ -1134,7 +1136,7 @@ class VulnerabilityView(PaginatedMixin,
         model_association_proxy_fields = self._get_model_association_proxy_fields()
         association_proxy_fields = {}
         for key in list(data):
-            parent = getattr(self.model_class, key).parent
+            parent = getattr(VulnerabilityWeb, key).parent
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
                 association_proxy_fields[key] = data.pop(key)

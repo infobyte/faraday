@@ -738,12 +738,12 @@ class CommandObject(db.Model):
     create_date = Column(DateTime, default=datetime.utcnow)
 
     # the following properties are used to know if the command created the specified objects_type
-    # remeber that this table has a row instances per relationship.
+    # remember that this table has a row instances per relationship.
     # this created integer can be used to obtain the total object_type objects created.
     created = _make_command_created_related_object()
 
-    # We are currently using the column property created. however to avoid losing information
-    # we also store the a boolean to know if at the moment of created the object related to the
+    # We are currently using the column property created. However, to avoid losing information
+    # we also store a boolean to know if at the moment of created the object related to the
     # Command was created.
     created_persistent = Column(Boolean, nullable=False)
 
@@ -758,8 +758,7 @@ class CommandObject(db.Model):
 
     @classmethod
     def create(cls, obj, command, add_to_session=True, **kwargs):
-        co = cls(obj, workspace=command.workspace, command=command,
-                 created_persistent=True, **kwargs)
+        co = cls(obj, workspace=command.workspace, command=command, created_persistent=True, **kwargs)
         if add_to_session:
             db.session.add(co)
         return co
@@ -772,11 +771,10 @@ class CommandObject(db.Model):
             object_type = get_object_type_for(object_)
 
             # db.session.flush()
-            assert object_.id is not None, "object must have an ID. Try " \
-                                           "flushing the session"
+            assert object_.id is not None, "object must have an ID. Try flushing the session"
             kwargs['object_id'] = object_.id
             kwargs['object_type'] = object_type
-        return super().__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 def _make_created_objects_sum(object_type_filter):

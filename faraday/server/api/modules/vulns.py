@@ -1141,11 +1141,15 @@ class VulnerabilityView(PaginatedMixin,
         return association_proxy_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
-        queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
-        for obj in queryset.all():
-            for (key, value) in extracted_data.items():
-                setattr(obj, key, value)
-                db.session.add(obj)
+        if extracted_data:
+            queryset = self._bulk_update_query(
+                                               ids,
+                                               workspace_name=workspace_name,
+                                               **kwargs)
+            for obj in queryset.all():
+                for (key, value) in extracted_data.items():
+                    setattr(obj, key, value)
+                    db.session.add(obj)
 
 
 VulnerabilityView.register(vulns_api)

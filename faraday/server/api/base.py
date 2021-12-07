@@ -1276,7 +1276,11 @@ class BulkUpdateMixin:
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
     def _get_model_association_proxy_fields(self):
-        return [d.target_collection for d in inspect(self.model_class).all_orm_descriptors if d.extension_type.name == 'ASSOCIATION_PROXY']
+        return [
+            field.target_collection
+            for field in inspect(self.model_class).all_orm_descriptors
+            if field.extension_type.name == "ASSOCIATION_PROXY"
+        ]
 
     def _pre_bulk_update(self, data, **kwargs):
         return {}

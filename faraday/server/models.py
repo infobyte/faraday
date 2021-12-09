@@ -1594,14 +1594,14 @@ class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
 
     @declared_attr
-    def service_id(cls):
+    def service_id(self):
         return VulnerabilityGeneric.__table__.c.get('service_id',
                                                     Column(Integer,
                                                            db.ForeignKey('service.id', ondelete='CASCADE'),
                                                            index=True))
 
     @declared_attr
-    def service(cls):
+    def service(self):
         return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
     @property
@@ -1625,13 +1625,13 @@ class VulnerabilityWeb(VulnerabilityGeneric):
         super().__init__(*args, **kwargs)
 
     @declared_attr
-    def service_id(cls):
+    def service_id(self):
         return VulnerabilityGeneric.__table__.c.get(
             'service_id', Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'),
                                  nullable=False))
 
     @declared_attr
-    def service(cls):
+    def service(self):
         return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
 
     @property
@@ -1709,7 +1709,7 @@ class Reference(Metadata):
 
     @property
     def parent(self):
-        # TODO: fix this propery
+        # TODO: fix this property
         return
 
 
@@ -1720,13 +1720,10 @@ class ReferenceVulnerabilityAssociation(db.Model):
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference",
-                             backref=backref(
-                                 "reference_associations",
-                                 cascade="all, delete-orphan"),
+                             backref=backref("reference_associations", cascade="all, delete-orphan"),
                              foreign_keys=[reference_id])
     vulnerability = relationship("Vulnerability",
-                                 backref=backref("reference_vulnerability_associations",
-                                                 cascade="all, delete-orphan"),
+                                 backref=backref("reference_vulnerability_associations", cascade="all, delete-orphan"),
                                  foreign_keys=[vulnerability_id])
 
 
@@ -1739,8 +1736,9 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     policy_violation = relationship("PolicyViolation",
                                     backref=backref("policy_violation_associations", cascade="all, delete-orphan"),
                                     foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref=backref("policy_violation_vulnerability_associations",
-                                                                  cascade="all, delete-orphan"),
+    vulnerability = relationship("Vulnerability",
+                                 backref=backref("policy_violation_vulnerability_associations",
+                                                 cascade="all, delete-orphan"),
                                  foreign_keys=[vulnerability_id])
 
 

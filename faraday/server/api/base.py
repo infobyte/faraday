@@ -1295,7 +1295,7 @@ class BulkUpdateMixin:
             return flask.jsonify(response)
         except ValueError as e:
             db.session.rollback()
-            flask.abort(409, ValidationError(
+            flask.abort(400, ValidationError(
                {
                    'message': str(e),
                }

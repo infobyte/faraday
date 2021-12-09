@@ -893,22 +893,20 @@ class Host(Metadata):
         backref=backref("hosts", cascade="all, delete-orphan", passive_deletes=True)
     )
 
-    open_service_count = _make_generic_count_property(
-        'host', 'service', where=text("service.status = 'open'"))
+    open_service_count = _make_generic_count_property('host', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('host', 'service')
 
     __host_vulnerabilities = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability')).
-            where(text('vulnerability.host_id = host.id')).
-            as_scalar()
+        select_from(text('vulnerability')).
+        where(text('vulnerability.host_id = host.id')).
+        as_scalar()
     )
     __service_vulnerabilities = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability, service')).
-            where(text('vulnerability.service_id = service.id and '
-                       'service.host_id = host.id')).
-            as_scalar()
+        select_from(text('vulnerability, service')).
+        where(text('vulnerability.service_id = service.id and service.host_id = host.id')).
+        as_scalar()
     )
     vulnerability_count = column_property(
         # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),

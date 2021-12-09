@@ -1182,7 +1182,7 @@ class CVSSV2(CVSSBase):
         super().__init__(version=CVSS2GeneralConfig.VERSION, vector_string=vector_string,
                          _fixed_base_score=base_score, **kwargs)
 
-    def assign_vector_string(self, vector_string):
+    def assign_vector_string(self, vector_string, base_score=None):
         self._vector_string = vector_string
         vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
@@ -1207,8 +1207,8 @@ class CVSSV2(CVSSBase):
 
     def impact(self):
         return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (
-                1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (
-                                1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
+               1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (
+               1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
 
     def fimpact(self):
         if self.impact() == 0:
@@ -1242,7 +1242,7 @@ class CVSSV3(CVSSBase):
         super().__init__(version=CVSS3GeneralConfig.VERSION, vector_string=vector_string,
                          _fixed_base_score=base_score, **kwargs)
 
-    def assign_vector_string(self, vector_string):
+    def assign_vector_string(self, vector_string, base_score=None):
         self._vector_string = vector_string
         vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
@@ -1266,8 +1266,8 @@ class CVSSV3(CVSSBase):
 
     def isc_base(self):
         return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (
-                1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (
-                            1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
+               1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (
+               1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
 
     def impact(self):
         if self.scope == CVSS3GeneralConfig.UNCHANGED:
@@ -1297,7 +1297,8 @@ class CVSSV3(CVSSBase):
 
             # round up score
             # Where “Round up” is defined as the smallest number, specified to one decimal place,
-            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1;
+            # and Round up (4.00) is 4.0.
             return math.ceil(score * 10) / 10
         return None
 

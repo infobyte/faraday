@@ -1401,6 +1401,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
         index=True,
         nullable=True,
     )
+
+    # TODO: In next migrations we should consider to change the name of the attribute to duplicate_children
     duplicate_childs = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
                                     backref=backref('vulnerability_duplicate', remote_side=[id])
                                     )
@@ -1415,7 +1417,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
-    # 1 workspace <--> N vulnerabilites
+    # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
@@ -1433,7 +1435,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    # TODO: Ver si el nombre deberia ser cvss_v2_id
+    # TODO: Ver si el nombre debería ser cvss_v2_id
     cvssv2_id = Column(
         Integer,
         ForeignKey('cvss_v2.id'),
@@ -1441,7 +1443,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
     cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
 
-    # TODO: Ver si el nombre deberia ser cvss_v3_id
+    # TODO: Ver si el nombre debería ser cvss_v3_id
     cvssv3_id = Column(
         Integer,
         ForeignKey('cvss_v3.id'),
@@ -1475,8 +1477,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     evidence = relationship(
         "File",
-        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
-                    "File.object_type=='vulnerability')",
+        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, File.object_type=='vulnerability')",
         foreign_keys="File.object_id",
         cascade="all, delete-orphan"
     )
@@ -1484,61 +1485,55 @@ class VulnerabilityGeneric(VulnerabilityABC):
     tags = relationship(
         "Tag",
         secondary="tag_object",
-        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, "
-                    "TagObject.object_type=='vulnerability')",
+        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, TagObject.object_type=='vulnerability')",
         collection_class=set,
     )
 
     creator_command_id = column_property(
-        select([CommandObject.command_id])
-            .where(CommandObject.object_type == 'vulnerability')
-            .where(text('command_object.object_id = vulnerability.id'))
-            .where(CommandObject.workspace_id == workspace_id)
-            .order_by(asc(CommandObject.create_date))
-            .limit(1),
+        select([CommandObject.command_id]).
+        where(CommandObject.object_type == 'vulnerability').
+        where(text('command_object.object_id = vulnerability.id')).
+        where(CommandObject.workspace_id == workspace_id).
+        order_by(asc(CommandObject.create_date)).
+        limit(1),
         deferred=True)
 
     creator_command_tool = column_property(
-        select([Command.tool])
-            .select_from(join(Command, CommandObject,
-                              Command.id == CommandObject.command_id))
-            .where(CommandObject.object_type == 'vulnerability')
-            .where(text('command_object.object_id = vulnerability.id'))
-            .where(CommandObject.workspace_id == workspace_id)
-            .order_by(asc(CommandObject.create_date))
-            .limit(1),
+        select([Command.tool]).
+        select_from(join(Command, CommandObject, Command.id == CommandObject.command_id)).
+        where(CommandObject.object_type == 'vulnerability').
+        where(text('command_object.object_id = vulnerability.id')).
+        where(CommandObject.workspace_id == workspace_id).
+        order_by(asc(CommandObject.create_date)).
+        limit(1),
         deferred=True
     )
 
     _host_ip_query = (
-        select([Host.ip])
-            .where(text('vulnerability.host_id = host.id'))
+        select([Host.ip]).
+        where(text('vulnerability.host_id = host.id'))
     )
     _service_ip_query = (
-        select([text('host_inner.ip')])
-            .select_from(text('host as host_inner, service'))
-            .where(text('vulnerability.service_id = service.id and '
-                        'host_inner.id = service.host_id'))
+        select([text('host_inner.ip')]).
+        select_from(text('host as host_inner, service')).
+        where(text('vulnerability.service_id = service.id and host_inner.id = service.host_id'))
     )
     target_host_ip = column_property(
         case([
-            (text('vulnerability.host_id IS NOT null'),
-             _host_ip_query.as_scalar()),
-            (text('vulnerability.service_id IS NOT null'),
-             _service_ip_query.as_scalar())
+            (text('vulnerability.host_id IS NOT null'), _host_ip_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'), _service_ip_query.as_scalar())
         ]),
         deferred=True
     )
 
     _host_os_query = (
-        select([Host.os])
-            .where(text('vulnerability.host_id = host.id'))
+        select([Host.os]).
+        where(text('vulnerability.host_id = host.id'))
     )
     _service_os_query = (
-        select([text('host_inner.os')])
-            .select_from(text('host as host_inner, service'))
-            .where(text('vulnerability.service_id = service.id and '
-                        'host_inner.id = service.host_id'))
+        select([text('host_inner.os')]).
+        select_from(text('host as host_inner, service')).
+        where(text('vulnerability.service_id = service.id and host_inner.id = service.host_id'))
     )
 
     host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True)
@@ -1550,10 +1545,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     target_host_os = column_property(
         case([
-            (text('vulnerability.host_id IS NOT null'),
-             _host_os_query.as_scalar()),
-            (text('vulnerability.service_id IS NOT null'),
-             _service_os_query.as_scalar())
+            (text('vulnerability.host_id IS NOT null'), _host_os_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'), _service_os_query.as_scalar())
         ]),
         deferred=True
     )
@@ -1593,7 +1586,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         raise ValueError("Vulnerability has no service nor host")
 
     @declared_attr
-    def service(cls):
+    def service(self):
         return relationship('Service', backref=backref("vulnerabilitiesGeneric", cascade="all, delete-orphan"))
 
 

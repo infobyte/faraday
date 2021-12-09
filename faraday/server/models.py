@@ -778,41 +778,41 @@ class CommandObject(db.Model):
 
 
 def _make_created_objects_sum(object_type_filter):
-    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
-    where_conditions.append("command_object.command_id = command.id")
-    where_conditions.append("command_object.workspace_id = command.workspace_id")
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'",
+                        "command_object.command_id = command.id",
+                        "command_object.workspace_id = command.workspace_id"]
     return column_property(
         select([func.sum(CommandObject.created)]).
-            select_from(table('command_object')).
-            where(text(' and '.join(where_conditions)))
+        select_from(table('command_object')).
+        where(text(' and '.join(where_conditions)))
     )
 
 
 def _make_created_objects_sum_joined(object_type_filter, join_filters):
     """
-
     :param object_type_filter: can be any host, service, vulnerability, credential or any object created from commands.
     :param join_filters: Filter for vulnerability fields.
     :return: column property with sum of created objects.
     """
-    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
-    where_conditions.append("command_object.command_id = command.id")
-    where_conditions.append("vulnerability.id = command_object.object_id ")
-    where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'",
+                        "command_object.command_id = command.id",
+                        "vulnerability.id = command_object.object_id ",
+                        "command_object.workspace_id = vulnerability.workspace_id"]
     for attr, filter_value in join_filters.items():
         where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
-        select([func.sum(CommandObject.created)])
-            .select_from(table('command_object'))
-            .select_from(table('vulnerability'))
-            .where(text(' and '.join(where_conditions)))
+        select([func.sum(CommandObject.created)]).
+        select_from(table('command_object')).
+        select_from(table('vulnerability')).
+        where(text(' and '.join(where_conditions)))
     )
 
 
 class Command(Metadata):
     IMPORT_SOURCE = [
         'report',
-        # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
+        # all the files the tools export and faraday imports it from the reports directory,
+        # gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
         'agent'
     ]
@@ -839,14 +839,10 @@ class Command(Metadata):
     )
 
     sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
-
     sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability',
                                                                        {'type': '\'vulnerability_web\''})
-
     sum_created_hosts = _make_created_objects_sum('host')
-
     sum_created_services = _make_created_objects_sum('service')
-
     sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
     sum_created_vulnerability_high = _make_created_objects_sum_joined('vulnerability', {'severity': '\'high\''})
     sum_created_vulnerability_medium = _make_created_objects_sum_joined('vulnerability', {'severity': '\'medium\''})

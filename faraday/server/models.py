@@ -1903,8 +1903,7 @@ class Workspace(Metadata):
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')
-    open_service_count = _make_generic_count_property(
-        'workspace', 'service', where=text("service.status = 'open'"))
+    open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('workspace', 'service')
 
     vulnerability_web_count = query_expression()
@@ -2021,9 +2020,7 @@ class Workspace(Metadata):
                     GROUP BY w.id
                 ) AS p_5 ON p_5.w_id = workspace.id
         """
-        concat_func = 'string_agg'
-        if db.engine.dialect.name == 'sqlite':
-            concat_func = 'group_concat'
+        concat_func = 'group_concat' if db.engine.dialect.name == 'sqlite' else 'string_agg'
         filters = []
         params = {}
 

@@ -1293,6 +1293,13 @@ class BulkUpdateMixin:
             db.session.commit()
             response = {'updated': updated}
             return flask.jsonify(response)
+        except ValueError as e:
+            db.session.rollback()
+            flask.abort(409, ValidationError(
+               {
+                   'message': str(e),
+               }
+            ))
         except sqlalchemy.exc.IntegrityError as ex:
             if not is_unique_constraint_violation(ex):
                 raise

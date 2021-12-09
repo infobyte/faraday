@@ -1056,7 +1056,7 @@ class CVE(db.Model):
         return f'{self.id}'
 
     def __init__(self, name=None, **kwargs):
-        logger.debug("cve found %s", name)
+        logger.debug(f'cve found {name}')
         try:
             name = name.upper()
             _, year, identifier = name.split("-")

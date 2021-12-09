@@ -1766,12 +1766,14 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolationTemplate", backref=backref("policy_violation_template_associations",
-                                                                               cascade="all, delete-orphan"),
+    policy_violation = relationship("PolicyViolationTemplate",
+                                    backref=backref("policy_violation_template_associations",
+                                                    cascade="all, delete-orphan"),
                                     foreign_keys=[policy_violation_id])
     vulnerability = relationship("VulnerabilityTemplate",
                                  backref=backref("policy_violation_template_vulnerability_associations",
-                                                 cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
+                                                 cascade="all, delete-orphan"),
+                                 foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -1780,9 +1782,7 @@ class PolicyViolationTemplate(Metadata):
     name = NonBlankColumn(Text)
 
     __table_args__ = (
-        UniqueConstraint(
-            'name',
-            name='uix_policy_violation_template_name'),
+        UniqueConstraint('name', name='uix_policy_violation_template_name'),
     )
 
     def __init__(self, name=None, **kwargs):
@@ -1802,16 +1802,12 @@ class PolicyViolation(Metadata):
     )
     workspace = relationship(
         'Workspace',
-        backref=backref("policy_violations",
-                        cascade="all, delete-orphan"),
+        backref=backref("policy_violations", cascade="all, delete-orphan"),
         foreign_keys=[workspace_id],
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            'name',
-            'workspace_id',
-            name='uix_policy_violation_template_name_vulnerability_workspace'),
+        UniqueConstraint('name', 'workspace_id', name='uix_policy_violation_template_name_vulnerability_workspace'),
     )
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
@@ -1832,45 +1828,37 @@ class Credential(Metadata):
     name = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
-    host = relationship(
-        'Host',
-        backref=backref("credentials", cascade="all, delete-orphan"),
-        foreign_keys=[host_id])
+    host = relationship('Host',
+                        backref=backref("credentials", cascade="all, delete-orphan"),
+                        foreign_keys=[host_id])
 
     service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
-    service = relationship(
-        'Service',
-        backref=backref('credentials', cascade="all, delete-orphan"),
-        foreign_keys=[service_id],
-    )
+    service = relationship('Service',
+                           backref=backref('credentials', cascade="all, delete-orphan"),
+                           foreign_keys=[service_id])
 
     # 1 workspace <--> N credentials
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
-    workspace = relationship(
-        'Workspace',
-        foreign_keys=[workspace_id],
-        backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
-    )
+    workspace = relationship('Workspace',
+                             backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
+                             foreign_keys=[workspace_id])
 
     _host_ip_query = (
-        select([Host.ip])
-            .where(text('credential.host_id = host.id'))
+        select([Host.ip]).
+        where(text('credential.host_id = host.id'))
     )
 
     _service_ip_query = (
-        select([text('host_inner.ip || \'/\' || service.name')])
-            .select_from(text('host as host_inner, service'))
-            .where(text('credential.service_id = service.id and '
-                        'host_inner.id = service.host_id'))
+        select([text('host_inner.ip || \'/\' || service.name')]).
+        select_from(text('host as host_inner, service')).
+        where(text('credential.service_id = service.id and host_inner.id = service.host_id'))
     )
 
     target_ip = column_property(
         case([
-            (text('credential.host_id IS NOT null'),
-             _host_ip_query.as_scalar()),
-            (text('credential.service_id IS NOT null'),
-             _service_ip_query.as_scalar())
+            (text('credential.host_id IS NOT null'), _host_ip_query.as_scalar()),
+            (text('credential.service_id IS NOT null'), _service_ip_query.as_scalar())
         ]),
         deferred=True
     )

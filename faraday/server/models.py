@@ -2459,8 +2459,7 @@ class ExecutiveReport(Metadata):
     tags = relationship(
         "Tag",
         secondary="tag_object",
-        primaryjoin="and_(TagObject.object_id==ExecutiveReport.id, "
-                    "TagObject.object_type=='executive_report')",
+        primaryjoin="and_(TagObject.object_id==ExecutiveReport.id, TagObject.object_type=='executive_report')",
         collection_class=set,
     )
     filter = Column(JSONType, nullable=True, default=[])

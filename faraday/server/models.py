@@ -2179,6 +2179,8 @@ class User(db.Model, UserMixin):
 
     # TODO: add  many to many relationship to add permission to workspace
 
+    # TODO: Check if we have to consider implement __init__ method
+
     def __repr__(self):
         return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
 
@@ -2198,8 +2200,7 @@ class File(Metadata):
     name = BlankColumn(Text)  # TODO migration: check why blank is allowed
     filename = NonBlankColumn(Text)
     description = BlankColumn(Text)
-    content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
-                     nullable=False)  # plain attached file
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile), nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
@@ -2235,8 +2236,7 @@ class Methodology(Metadata):
     )
     template_id = Column(
         Integer,
-        ForeignKey('methodology_template.id',
-                   ondelete="SET NULL"),
+        ForeignKey('methodology_template.id', ondelete="SET NULL"),
         index=True,
         nullable=True,
     )
@@ -2288,15 +2288,15 @@ class TaskTemplate(TaskABC):
 class TaskAssignedTo(db.Model):
     __tablename__ = "task_assigned_to_association"
     id = Column(Integer, primary_key=True)
-    task_id = Column(
-        Integer, ForeignKey('task.id'), nullable=False)
+    task_id = Column(Integer, ForeignKey('task.id'), nullable=False)
     task = relationship('Task')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
     user = relationship(
         'User',
-        foreign_keys=[user_id],
-        backref=backref('assigned_tasks', cascade="all, delete-orphan"))
+        backref=backref('assigned_tasks', cascade="all, delete-orphan"),
+        foreign_keys=[user_id]
+    )
 
 
 class Task(TaskABC):

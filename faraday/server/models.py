@@ -2129,6 +2129,13 @@ class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
 
+    # TODO: Check if we should consider following methods
+    """def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name"""
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'
@@ -2160,10 +2167,7 @@ class User(db.Model, UserMixin):
     preferences = Column(JSONType, nullable=True, default={})
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref='users')
-
-    # TODO: add  many to many relationship to add permission to workspace
+    roles = db.relationship('Role', secondary=roles_users, backref='users')
 
     @property
     def roles_list(self):
@@ -2172,6 +2176,8 @@ class User(db.Model, UserMixin):
     workspace_permission_instances = relationship(
         "WorkspacePermission",
         cascade="all, delete-orphan")
+
+    # TODO: add  many to many relationship to add permission to workspace
 
     def __repr__(self):
         return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"

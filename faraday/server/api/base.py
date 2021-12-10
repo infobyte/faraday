@@ -1285,14 +1285,21 @@ class BulkUpdateMixin:
         try:
             post_bulk_update_data = self._pre_bulk_update(data, **kwargs)
             if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
-                updated = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs) \
-                    .update(data, synchronize_session='fetch')
+                queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
+                updated = queryset.update(data, synchronize_session='fetch')
                 self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name)
             else:
                 updated = 0
             db.session.commit()
             response = {'updated': updated}
             return flask.jsonify(response)
+        except ValueError as e:
+            db.session.rollback()
+            flask.abort(400, ValidationError(
+               {
+                   'message': str(e),
+               }
+            ))
         except sqlalchemy.exc.IntegrityError as ex:
             if not is_unique_constraint_violation(ex):
                 raise

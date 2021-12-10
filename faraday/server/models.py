@@ -2924,6 +2924,7 @@ class Condition(Metadata):
     field = Column(String)
     value = Column(String)
     operator = Column(String, default='equals')
+
     # 1 rule <--> N conditions
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     # rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)

@@ -2535,7 +2535,7 @@ class NotificationSubscriptionConfigBase(db.Model):
 
     @property
     def dst(self):
-        raise NotImplementedError('Notification subsciption base dst called. Must Be implemented.')
+        raise NotImplementedError('Notification subscription base dst called. Must Be implemented.')
 
 
 class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):
@@ -2705,9 +2705,10 @@ class KnowledgeBase(db.Model):
         index=True,
         nullable=True,
     )
-    vulnerability_template = relationship('VulnerabilityTemplate',
-                                          backref=backref('knowledge', cascade="all, delete-orphan"),
-                                          )
+    vulnerability_template = relationship(
+        'VulnerabilityTemplate',
+        backref=backref('knowledge', cascade="all, delete-orphan")
+    )
 
     faraday_kb_id = Column(Text, nullable=False)
     reference_id = Column(Integer, nullable=False)

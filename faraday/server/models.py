@@ -2092,8 +2092,7 @@ class Scope(Metadata):
     )
 
     __table_args__ = (
-        UniqueConstraint('name', 'workspace_id',
-                         name='uix_scope_name_workspace'),
+        UniqueConstraint('name', 'workspace_id', name='uix_scope_name_workspace'),
     )
 
     @property
@@ -2103,14 +2102,13 @@ class Scope(Metadata):
 
 class WorkspacePermission(db.Model):
     __tablename__ = "workspace_permission_association"
+    # TODO: Check if __table_args__ = {'extend_existing': True} should be consider here
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(
-        Integer, ForeignKey('workspace.id'), nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), nullable=False)
     workspace = relationship('Workspace')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-    user = relationship('User',
-                        foreign_keys=[user_id])
+    user = relationship('User', foreign_keys=[user_id])
 
     @property
     def parent(self):

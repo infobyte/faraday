@@ -2794,7 +2794,7 @@ class Executor(Metadata):
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
     __table_args__ = (
-        UniqueConstraint('name', 'agent_id', name='uix_executor_table_agent_id_name')
+        UniqueConstraint('name', 'agent_id', name='uix_executor_table_agent_id_name'),
     )
 
 

@@ -2737,6 +2737,7 @@ class Rule(Metadata):
     fields = Column(JSONType, nullable=True)
     enabled = Column(Boolean, nullable=False, default=True)
     actions = relationship("Action", secondary="rule_action", backref=backref("rules"), lazy='subquery')
+
     # 1 workspace <--> N rules
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -2754,7 +2755,7 @@ class Rule(Metadata):
 
     @property
     def object(self):
-        # TODO THIS MUST BE DELETED AND REIMPLEMENTED FOR NEWW METHODS
+        # TODO THIS MUST BE DELETED AND REIMPLEMENTED FOR NEW METHODS
         return json.dumps(
             [{condition.field: condition.value} for condition in self.conditions]
         )
@@ -2793,8 +2794,7 @@ class Executor(Metadata):
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
     __table_args__ = (
-        UniqueConstraint('name', 'agent_id',
-                         name='uix_executor_table_agent_id_name'),)
+        UniqueConstraint('name', 'agent_id', name='uix_executor_table_agent_id_name'),)
 
 
 class AgentsSchedule(Metadata):

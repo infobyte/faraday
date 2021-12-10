@@ -1154,7 +1154,7 @@ class CVSSBase(db.Model):
     def base_score(self, base_score):
         self._base_score = base_score
 
-    def assign_vector_string(self, vector_string, base_score):
+    def assign_vector_string(self, vector_string, base_score=None):
         raise NotImplementedError
 
     def calculate_base_score(self):

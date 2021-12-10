@@ -2794,7 +2794,8 @@ class Executor(Metadata):
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
     __table_args__ = (
-        UniqueConstraint('name', 'agent_id', name='uix_executor_table_agent_id_name'),)
+        UniqueConstraint('name', 'agent_id', name='uix_executor_table_agent_id_name')
+    )
 
 
 class AgentsSchedule(Metadata):
@@ -2823,11 +2824,11 @@ class AgentsSchedule(Metadata):
 
     @property
     def next_run(self):
-        raise NotImplementedError()
+        raise NotImplementedError()  # TODO: Check on black/dev implementation
 
     @property
     def parent(self):
-        return self.agent
+        return self.agent  # TODO: Check on black/dev implementation
 
 
 class RuleAction(Metadata):
@@ -2845,9 +2846,8 @@ class RuleAction(Metadata):
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    token = Column(Text, unique=True, nullable=False, default=lambda:
-    "".join([SystemRandom().choice(string.ascii_letters + string.digits)
-             for _ in range(64)]))
+    token = Column(Text, unique=True, nullable=False, default=lambda: "".
+                   join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     workspaces = relationship(
         'Workspace',
         secondary=association_workspace_and_agents_table,
@@ -2896,6 +2896,7 @@ class AgentExecution(Metadata):
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship('Executor', foreign_keys=[executor_id],
                             backref=backref('executions', cascade="all, delete-orphan"))
+
     # 1 workspace <--> N agent_executions
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)

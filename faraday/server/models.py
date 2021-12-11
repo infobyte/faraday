@@ -1402,7 +1402,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         index=True,
         nullable=True,
     )
-    duplicates_association = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
+    duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
                                     backref=backref('duplicates_main', remote_side=[id])
                                     )
 

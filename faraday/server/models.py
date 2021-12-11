@@ -1402,8 +1402,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
         index=True,
         nullable=True,
     )
-    duplicate_childs = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                    backref=backref('vulnerability_duplicate', remote_side=[id])
+    duplicates_association = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
+                                    backref=backref('duplicates_main', remote_side=[id])
                                     )
 
     vulnerability_template_id = Column(

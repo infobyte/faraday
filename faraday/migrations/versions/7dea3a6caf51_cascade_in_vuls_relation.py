@@ -43,16 +43,16 @@ def downgrade():
                existing_type=sa.Float(precision=3, asdecimal=1),
                type_=sa.REAL(),
                existing_nullable=True)
-    op.drop_constraint(None, 'vulnerability', type_='foreignkey')
-    op.create_foreign_key('vulnerability_service_id_fkey', 'vulnerability', 'service', ['service_id'], ['id'])
+    op.drop_constraint('vulnerability_service_id_fkey', 'vulnerability', type_='foreignkey')
+    op.create_foreign_key(None, 'vulnerability', 'service', ['service_id'], ['id'])
     op.alter_column('vulnerability', 'risk',
                existing_type=sa.Float(precision=3, asdecimal=1),
                type_=sa.REAL(),
                existing_nullable=True)
-    op.drop_constraint(None, 'reference_vulnerability_association', type_='foreignkey')
-    op.create_foreign_key('reference_vulnerability_association_vulnerability_id_fkey', 'reference_vulnerability_association', 'vulnerability', ['vulnerability_id'], ['id'])
-    op.drop_constraint(None, 'knowledge_base', type_='foreignkey')
-    op.create_foreign_key('knowledge_base_vulnerability_template_id_fkey', 'knowledge_base', 'vulnerability_template', ['vulnerability_template_id'], ['id'], ondelete='CASCADE')
-    op.drop_constraint(None, 'command', type_='foreignkey')
-    op.create_foreign_key('command_workspace_id_fkey', 'command', 'workspace', ['workspace_id'], ['id'])
+    op.drop_constraint('reference_vulnerability_association_vulnerability_id_fkey', 'reference_vulnerability_association', type_='foreignkey')
+    op.create_foreign_key(None, 'reference_vulnerability_association', 'vulnerability', ['vulnerability_id'], ['id'])
+    op.drop_constraint('knowledge_base_vulnerability_template_id_fkey', 'knowledge_base', type_='foreignkey')
+    op.create_foreign_key(None, 'knowledge_base', 'vulnerability_template', ['vulnerability_template_id'], ['id'], ondelete='CASCADE')
+    op.drop_constraint('command_workspace_id_fkey', 'command', type_='foreignkey')
+    op.create_foreign_key(None, 'command', 'workspace', ['workspace_id'], ['id'])
     # ### end Alembic commands ###

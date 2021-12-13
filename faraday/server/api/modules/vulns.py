@@ -20,6 +20,7 @@ from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_, func
+from sqlalchemy.inspection import inspect
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
@@ -1103,7 +1104,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
-        query = VulnerabilityWeb.query.filter(VulnerabilityWeb.id.in_(ids))
+        query = self.model_class.query.filter(self.model_class.id.in_(ids))
         workspace = self._get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
@@ -1116,12 +1117,41 @@ class VulnerabilityView(PaginatedMixin,
         workspace = self._get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
+    def _get_model_association_proxy_fields(self):
+        return [
+            field.target_collection
+            for field in inspect(self.model_class).all_orm_descriptors
+            if field.extension_type.name == "ASSOCIATION_PROXY"
+        ]
+
     def _pre_bulk_update(self, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
+        data.pop('service_id', '')
+        data.pop('host_id', '')
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
-        return super()._pre_bulk_update(data, **kwargs)
+        super()._pre_bulk_update(data, **kwargs)
+
+        model_association_proxy_fields = self._get_model_association_proxy_fields()
+        association_proxy_fields = {}
+        for key in list(data):
+            parent = getattr(VulnerabilityWeb, key).parent
+            field_name = getattr(parent, "target_collection", None)
+            if field_name and field_name in model_association_proxy_fields:
+                association_proxy_fields[key] = data.pop(key)
+        return association_proxy_fields
+
+    def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
+        if extracted_data:
+            queryset = self._bulk_update_query(
+                                               ids,
+                                               workspace_name=workspace_name,
+                                               **kwargs)
+            for obj in queryset.all():
+                for (key, value) in extracted_data.items():
+                    setattr(obj, key, value)
+                    db.session.add(obj)
 
 
 VulnerabilityView.register(vulns_api)

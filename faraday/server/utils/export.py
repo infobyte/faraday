@@ -1,7 +1,9 @@
+# Standard library imports
 import csv
-from io import StringIO, BytesIO
 import logging
+from io import StringIO, BytesIO
 
+# Local application imports
 from faraday.server.models import (
     db,
     Comment,
@@ -205,7 +207,8 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
 # Patch possible formula injection attacks
 def csv_escape(vuln_dict):
     for key, value in vuln_dict.items():
-        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') or str(value).startswith('@'):
+        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') \
+                or str(value).startswith('@'):
             # Convert value to str just in case is has another type (like a list or
             # dict). This would be done anyway by the csv writer.
             vuln_dict[key] = "'" + str(value)

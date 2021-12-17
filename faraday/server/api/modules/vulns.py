@@ -52,7 +52,9 @@ from faraday.server.models import (
     CustomFieldsSchema,
     VulnerabilityGeneric,
     User,
-    CVE
+    CVE,
+    CVSSV3,
+    CVSSV2
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -522,6 +524,8 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        cvssv2 = data.pop('cvssv2', None)
+        cvssv3 = data.pop('cvssv3', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -532,6 +536,18 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
+
+        if cvssv2:
+            obj.cvssv2 = CVSSV2(
+                vector_string=cvssv2['vector_string'] if 'vector_string' in cvssv2 else None,
+                base_score=cvssv2['base_score'] if 'base_score' in cvssv2 else None
+            )
+
+        if cvssv3:
+            obj.cvssv3 = CVSSV3(
+                vector_string=cvssv3['vector_string'] if 'vector_string' in cvssv3 else None,
+                base_score=cvssv3['base_score'] if 'base_score' in cvssv3 else None
+            )
 
         # parse cve and reference. Should be temporal.
         parsed_cve_list = []

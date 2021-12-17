@@ -117,6 +117,11 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
+class CVSSSchema(AutoSchema):
+    vector_string = fields.String()
+    base_score = fields.Float()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -133,7 +138,8 @@ class VulnerabilitySchema(AutoSchema):
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    cvss = fields.Method(serialize='get_cvss_refs', default=[])
+    cvssv2 = fields.Nested(CVSSSchema(), attribute='cvssv2')
+    cvssv3 = fields.Nested(CVSSSchema(), attribute='cvssv3')
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -181,7 +187,7 @@ class VulnerabilitySchema(AutoSchema):
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool', 'attachments_count',
-            'cvss', 'cwe', 'cve', 'owasp',
+            'cwe', 'cve', 'owasp', 'cvssv2', 'cvssv3'
             )
 
     def get_type(self, obj):
@@ -192,9 +198,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_cwe_refs(self, obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
-
-    def get_cvss_refs(self, obj):
-        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     def get_attachments(self, obj):
         res = {}
@@ -312,7 +315,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
-            'cve', 'cwe', 'owasp', 'cvss',
+            'cve', 'cwe', 'owasp', 'cvssv2', 'cvssv3'
         )
 
 

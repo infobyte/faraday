@@ -524,6 +524,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+
         cvssv2 = data.pop('cvssv2', None)
         cvssv3 = data.pop('cvssv3', None)
 
@@ -634,6 +635,8 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
+            joinedload(VulnerabilityGeneric.cvssv2),
+            joinedload(VulnerabilityGeneric.cvssv3),
         ]
 
         if flask.request.args.get('get_evidence'):

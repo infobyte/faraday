@@ -27,7 +27,7 @@ def manage(action, json_data, name):
     if name:
         name = name.lower()
     available_settings = get_all_settings()
-    if action in ('show', 'update'):
+    if action in ('show', 'update', 'clear'):
         if not name:
             click.secho(f"You must indicate a settings name to {action}", fg="red")
             sys.exit(1)
@@ -80,7 +80,9 @@ def manage(action, json_data, name):
                         click.secho("Updated!!", fg='green')
                 else:
                     click.secho("No changes where made to the settings", fg="green")
-
+        elif action == "clear":
+            click.secho(f"Clear settings for: {name}", fg="green")
+            settings.delete_configuration()
     else:
         click.secho("Available settings:", fg="green")
         for i in available_settings:

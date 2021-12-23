@@ -11,7 +11,10 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     FilterSetMeta,
     FilterAlchemyMixin,
-    InvalidUsage
+
+    InvalidUsage,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
 from faraday.server.models import Credential, Host, Service, Workspace, db
 from faraday.server.schemas import MutableField, SelfNestedField, MetadataSchema
@@ -109,7 +112,10 @@ class CredentialFilterSet(FilterSet):
         operators = (operators.Equal, )
 
 
-class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
+class CredentialView(FilterAlchemyMixin,
+                     ReadWriteWorkspacedView,
+                     BulkDeleteWorkspacedMixin,
+                     BulkUpdateWorkspacedMixin):
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema

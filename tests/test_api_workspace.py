@@ -4,26 +4,26 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+from datetime import date
 import time
 from urllib.parse import urljoin
 
 import pytest
 from posixpath import join
 
-from faraday.server.models import Workspace, Scope
+from faraday.server.models import Workspace, Scope, SeveritiesHistogram
 from faraday.server.api.modules.workspaces import WorkspaceView
-from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
 
 
-class TestWorkspaceAPI(ReadWriteAPITests):
+class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     model = Workspace
     factory = factories.WorkspaceFactory
     api_endpoint = 'ws'
     lookup_field = 'name'
     view_class = WorkspaceView
-    patchable_fields = ['name']
+    patchable_fields = ['description']
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
@@ -149,6 +149,94 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['last_run_agent_date'] is None
         assert res.json['stats']['opened_vulns'] == 10
         assert res.json['stats']['confirmed_vulns'] == 2
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_histogram(self,
+                        vulnerability_factory,
+                        vulnerability_web_factory,
+                        second_workspace,
+                        test_client,
+                        session):
+
+        session.query(SeveritiesHistogram).delete()
+        session.commit()
+
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                                   confirmed=False, status='open', severity='critical')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
+                                                    confirmed=True, status='open', severity='high')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=second_workspace,
+                                                    confirmed=True, status='open', severity='medium')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=second_workspace,
+                                                    confirmed=True, status='open', severity='low')
+
+        session.add_all(vulns)
+        session.commit()
+        res = test_client.get('/v3/ws?histogram=true')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
+        ws_histogram = firs_ws[0]
+        for ws_date in ws_histogram:
+            if ws_date['date'] == date.today().strftime("%Y-%m-%d"):
+                assert ws_date['medium'] == 0
+                assert ws_date['high'] == 3
+                assert ws_date['critical'] == 8
+                assert ws_date['confirmed'] == 3
+            else:
+                assert ws_date['medium'] == 0
+                assert ws_date['high'] == 0
+                assert ws_date['critical'] == 0
+                assert ws_date['confirmed'] == 0
+
+        second_ws = [ws['histogram'] for ws in res.json if ws['name'] == second_workspace.name]
+        assert len(second_ws[0]) == 20
+        ws_histogram = second_ws[0]
+        for ws_date in ws_histogram:
+            if ws_date['date'] == date.today().strftime("%Y-%m-%d"):
+                assert ws_date['medium'] == 2
+                assert ws_date['high'] == 0
+                assert ws_date['critical'] == 0
+                assert ws_date['confirmed'] == 2
+            else:
+                assert ws_date['medium'] == 0
+                assert ws_date['high'] == 0
+                assert ws_date['critical'] == 0
+                assert ws_date['confirmed'] == 0
+
+        res = test_client.get('/v3/ws?histogram=True&histogram_days=a')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 20
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=5')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 5
+
+        res = test_client.get('/v3/ws?histogram=true&histogram_days=365')
+        assert res.status_code == 200
+        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        assert len(firs_ws[0]) == 365
+
+        res = test_client.get('/v3/ws?histogram=asdf&histogram_days=365')
+        assert res.status_code == 200
+        for ws in res.json:
+            assert 'histogram' not in ws
 
     @pytest.mark.parametrize('querystring', [
         '?status=closed'
@@ -373,9 +461,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert set(res.json['scope']) == set(desired_scope)
         assert {s.name for s in workspace.scope} == set(desired_scope)
 
-    @pytest.mark.skip  # TODO fix fox sqlite
-    def test_list_retrieves_all_items_from(self, test_client):
-        super().test_list_retrieves_all_items_from(test_client)
+    @pytest.mark.skip_sql_dialect('sqlite')
+    def test_list_retrieves_all_items_from(self, test_client, logged_user):
+        super().test_list_retrieves_all_items_from(test_client, logged_user)
 
     def test_workspace_activation(self, test_client, workspace, session):
         workspace.active = False

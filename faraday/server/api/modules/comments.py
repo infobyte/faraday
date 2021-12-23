@@ -12,7 +12,8 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     InvalidUsage,
     CreateWorkspacedMixin,
-    GenericWorkspacedView
+    GenericWorkspacedView,
+    BulkDeleteWorkspacedMixin
 )
 from faraday.server.models import Comment
 comment_api = Blueprint('comment_api', __name__)
@@ -52,14 +53,15 @@ class CommentCreateMixing(CreateWorkspacedMixin):
         return super()._perform_create(data, workspace_name)
 
 
-class CommentView(CommentCreateMixing, ReadWriteWorkspacedView):
+class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin):
     route_base = 'comment'
     model_class = Comment
     schema_class = CommentSchema
     order_field = 'create_date'
 
 
-class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
+class UniqueCommentView(GenericWorkspacedView,
+                        CommentCreateMixing):
     """
         This view is used by the plugin engine to avoid duplicate comments
         when the same plugin and data was ran multiple times.

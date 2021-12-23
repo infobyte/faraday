@@ -8,7 +8,10 @@ import flask_login
 from faraday.server.models import SearchFilter
 from faraday.server.api.base import (
     ReadWriteView,
-    AutoSchema
+
+    AutoSchema,
+    BulkDeleteMixin,
+    BulkUpdateMixin
 )
 
 searchfilter_api = Blueprint('searchfilter_api', __name__)
@@ -24,7 +27,7 @@ class SearchFilterSchema(AutoSchema):
                   'json_query', 'user_query')
 
 
-class SearchFilterView(ReadWriteView):
+class SearchFilterView(ReadWriteView, BulkDeleteMixin, BulkUpdateMixin):
     route_base = 'searchfilter'
     model_class = SearchFilter
     schema_class = SearchFilterSchema

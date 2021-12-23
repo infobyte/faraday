@@ -102,7 +102,8 @@ def register_blueprints(app):
     # Custom reset password
     from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
     from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.settings_reports import reports_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_reports import \
+        reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
 
@@ -269,6 +270,7 @@ def expire_session(app, user):
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     user_logout_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
+    logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
 
 
 def user_logged_in_succesfull(app, user):
@@ -289,6 +291,7 @@ def user_logged_in_succesfull(app, user):
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
+    logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
 
 
 def uia_username_mapper(identity):
@@ -485,6 +488,7 @@ class CustomLoginForm(LoginForm):
         # want to skip the LoginForm validate logic
         if not super(LoginForm, self).validate():
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
+            logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             return False
         self.email.data = remove_null_caracters(self.email.data)
 
@@ -493,6 +497,8 @@ class CustomLoginForm(LoginForm):
         if self.user is None:
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Username]")
+            logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                           f"Reason: [Invalid Username]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
 
@@ -500,12 +506,16 @@ class CustomLoginForm(LoginForm):
         if not self.user.password:
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")
+            logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                           f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
         self.password.data = remove_null_caracters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")
+            logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                           f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
         # if requires_confirmation(self.user):
@@ -514,6 +524,8 @@ class CustomLoginForm(LoginForm):
         if not self.user.is_active:
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Disabled Account]")
+            logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
+                           f"Reason: [Disabled Account]")
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True

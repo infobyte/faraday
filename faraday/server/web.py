@@ -10,6 +10,7 @@ import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
 from twisted.internet import reactor, error
+from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.util import Redirect
 from twisted.web.http import proxiedLogFormatter
@@ -33,6 +34,14 @@ from faraday.server.config import faraday_server as server_config
 FARADAY_APP = None
 
 logger = logging.getLogger(__name__)
+
+
+class FaradaySite(Site):
+    def getResourceFor(self, request):
+        resource = super().getResourceFor(request)
+        if isinstance(resource, twisted.web.resource.NoResource):
+            resource = self.resource.getChild("index.html", request)
+        return resource
 
 
 class CleanHttpHeadersResource(Resource):
@@ -131,9 +140,7 @@ class WebServer:
             self.stop_threads()
 
         log_path = CONST_FARADAY_HOME_PATH / 'logs' / 'access-logging.log'
-        site = twisted.web.server.Site(self.root_resource,
-                                       logPath=log_path,
-                                       logFormatter=proxiedLogFormatter)
+        site = FaradaySite(self.root_resource, logPath=log_path, logFormatter=proxiedLogFormatter)
         site.displayTracebacks = False
 
         try:

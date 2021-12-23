@@ -11,7 +11,9 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     FilterSetMeta,
-    FilterAlchemyMixin
+    FilterAlchemyMixin,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
 from faraday.server.models import Host, Service, Workspace
 from faraday.server.schemas import (
@@ -76,8 +78,12 @@ class ServiceSchema(AutoSchema):
                 # Partial update?
                 return data
 
-            if host_id != self.context['object'].parent.id:
-                raise ValidationError('Can\'t change service parent.')
+            if 'object' in self.context:
+                if host_id != self.context['object'].parent.id:
+                    raise ValidationError('Can\'t change service parent.')
+            else:
+                if any([host_id != obj.parent.id for obj in self.context['objects']]):
+                    raise ValidationError('Can\'t change service parent.')
 
         else:
             if not host_id:
@@ -110,7 +116,7 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
+class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service

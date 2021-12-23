@@ -210,19 +210,9 @@ class AgentWithWorkspacesView(UpdateMixin,
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _update_object(self, obj, data, **kwargs):
-        """Perform changes in the selected object
-
-        It modifies the attributes of the SQLAlchemy model to match
-        the data passed by the Marshmallow schema.
-
-        It is common to overwrite this method to do something strange
-        with some specific field. Typically the new method should call
-        this one to handle the update of the rest of the fields.
-        """
+    def _get_workspaces_from_data(self, data, **kwargs):
         workspace_names = data.pop('workspaces', '')
         partial = False if 'partial' not in kwargs else kwargs['partial']
-
         if len(workspace_names) == 0 and not partial:
             abort(
                 make_response(
@@ -237,15 +227,25 @@ class AgentWithWorkspacesView(UpdateMixin,
                     400
                 )
             )
-
         workspace_names = [
             dict_["name"] for dict_ in workspace_names
         ]
-
-        workspaces = list(
+        return list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names
         )
+
+    def _update_object(self, obj, data, **kwargs):
+        """Perform changes in the selected object
+
+        It modifies the attributes of the SQLAlchemy model to match
+        the data passed by the Marshmallow schema.
+
+        It is common to overwrite this method to do something strange
+        with some specific field. Typically the new method should call
+        this one to handle the update of the rest of the fields.
+        """
+        workspaces = self._get_workspaces_from_data(data, **kwargs)
 
         super()._update_object(obj, data)
         obj.workspaces = workspaces

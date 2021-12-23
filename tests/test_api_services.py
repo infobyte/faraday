@@ -15,15 +15,15 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from tests.test_api_workspaced_base import ReadWriteAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin, BulkUpdateTestsMixin
 from faraday.server.models import (
-    Service
+    Service, Credential, Vulnerability
 )
-from tests.factories import HostFactory, EmptyCommandFactory
+from tests.factories import HostFactory, EmptyCommandFactory, CredentialFactory, VulnerabilityFactory
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestListServiceView(ReadWriteAPITests):
+class TestListServiceView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Service
     factory = factories.ServiceFactory
     api_endpoint = 'services'
@@ -334,3 +334,29 @@ class TestListServiceView(ReadWriteAPITests):
         res = test_client.post(self.url(), data=data)
         print(res.data)
         assert res.status_code == 400
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_update_cant_change_id(self, test_client):
+        super().test_bulk_update_cant_change_id(test_client)
+
+    def test_bulk_delete_with_references(self, test_client, session):
+        previous_creds = Credential.query.count()
+        previous_vulns = Vulnerability.query.count()
+        previous_services = Service.query.count()
+
+        service_1 = self.factory.create(workspace=self.workspace)
+        service_2 = self.factory.create(workspace=self.workspace)
+        service_3 = self.factory.create(workspace=self.workspace)
+
+        for _ in range(3):
+            CredentialFactory.create(service=service_1, workspace=self.workspace)
+            VulnerabilityFactory.create(service=service_2, workspace=self.workspace)
+            CredentialFactory.create(service=service_3, workspace=self.workspace)
+            VulnerabilityFactory.create(service=service_3, workspace=self.workspace)
+        session.commit()
+
+        raw_data = {'ids': [service_1.id, service_2.id, service_3.id]}
+        res = test_client.delete(self.url(), data=raw_data)
+
+        assert res.status_code == 200
+        assert res.json['deleted'] == 3

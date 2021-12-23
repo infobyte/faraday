@@ -746,7 +746,7 @@ class VulnerabilityView(PaginatedMixin,
                 )
                 db.session.commit()
                 message = 'Evidence upload was successful'
-                logger.info(f"POST: {message}")
+                logger.info(message)
                 return flask.jsonify({'message': message})
         else:
             flask.abort(404, "Vulnerability not found")
@@ -1015,7 +1015,7 @@ class VulnerabilityView(PaginatedMixin,
                 depot = DepotManager.get()
                 depot.delete(file_obj.content.get('file_id'))
                 message = 'Attachment was successfully deleted'
-                logger.info(f"DELETE: {message}")
+                logger.info(message)
                 return flask.jsonify({'message': message})
             else:
                 flask.abort(404, "File not found")
@@ -1054,7 +1054,7 @@ class VulnerabilityView(PaginatedMixin,
             filters = json.dumps(filters)
         vulns_query, _ = self._filter(filters, workspace_name)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
-        logger.info(f"GET: csv file with vulns from workspace {workspace_name} exported")
+        logger.info(f"csv file with vulns from workspace {workspace_name} exported")
         return send_file(memory_file,
                          attachment_filename=f"Faraday-SR-{workspace_name}.csv",
                          as_attachment=True,
@@ -1100,7 +1100,7 @@ class VulnerabilityView(PaginatedMixin,
             deleted_vulns += 1
         db.session.commit()
         response = {'deleted_vulns': deleted_vulns}
-        logger.info("DELETE: vulns deleted in bulk")
+        logger.info("Vulns deleted in bulk")
         return flask.jsonify(response)
 
     @route('top_users', methods=['GET'])

@@ -279,7 +279,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                                 ][0])
         db.session.add(agent)
         db.session.commit()
-        logger.info(f"DELETE: workspace {workspace_name} removed from agent {agent}")
+        logger.info(f"Workspace {workspace_name} removed from agent {agent}")
         return make_response({"description": "ok"}, 204)
 
     @route('/<int:agent_id>/run', methods=['POST'])
@@ -355,7 +355,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args')
             })
-            logger.info("POST: agent executed")
+            logger.info("Agent executed")
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")

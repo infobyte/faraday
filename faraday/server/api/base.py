@@ -988,9 +988,9 @@ class CreateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
-            logger.info(f"POST: {obj} created")
+            logger.info(f"{obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
-            logger.info(f"POST: couldn't create {obj}")
+            logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 if not_null_constraint_violation(ex):
                     flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
@@ -1102,9 +1102,9 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         try:
             db.session.add(obj)
             db.session.commit()
-            logger.info(f"POST: {obj} created")
+            logger.info(f"{obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
-            logger.info(f"POST: couldn't create {obj}")
+            logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1186,9 +1186,9 @@ class UpdateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
-            logger.info(f"PUT: {obj} updated")
+            logger.info(f"{obj} updated")
         except sqlalchemy.exc.IntegrityError as ex:
-            logger.info(f"PUT: couldn't update {obj}")
+            logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1464,7 +1464,7 @@ class DeleteMixin:
     def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
-        logger.info(f"DELETE: {obj} deleted")
+        logger.info(f"{obj} deleted")
 
 
 class BulkDeleteMixin:

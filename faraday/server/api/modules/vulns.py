@@ -124,6 +124,20 @@ class CVSSSchema(AutoSchema):
     base_score = fields.Float()
 
 
+class CVSSV2Schema(CVSSSchema):
+    @post_load
+    def make_csv(self, data, **kwargs):
+        return CVSSV2(vector_string=data['vector_string'] if 'vector_string' in data else None,
+                      base_score=data['base_score'] if 'base_score' in data else None)
+
+
+class CVSSV3Schema(CVSSSchema):
+    @post_load
+    def make_csv(self, data, **kwargs):
+        return CVSSV3(vector_string=data['vector_string'] if 'vector_string' in data else None,
+                      base_score=data['base_score'] if 'base_score' in data else None)
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -140,8 +154,8 @@ class VulnerabilitySchema(AutoSchema):
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    cvssv2 = fields.Nested(CVSSSchema(), attribute='cvssv2', allow_none=True)
-    cvssv3 = fields.Nested(CVSSSchema(), attribute='cvssv3', allow_none=True)
+    cvssv2 = fields.Nested(CVSSV2Schema(), attribute='cvssv2', allow_none=True)
+    cvssv3 = fields.Nested(CVSSV3Schema(), attribute='cvssv3', allow_none=True)
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -539,16 +553,10 @@ class VulnerabilityView(PaginatedMixin,
         obj.policy_violations = policyviolations
 
         if cvssv2:
-            obj.cvssv2 = CVSSV2(
-                vector_string=cvssv2['vector_string'] if 'vector_string' in cvssv2 else None,
-                base_score=cvssv2['base_score'] if 'base_score' in cvssv2 else None
-            )
+            obj.cvssv2 = cvssv2
 
         if cvssv3:
-            obj.cvssv3 = CVSSV3(
-                vector_string=cvssv3['vector_string'] if 'vector_string' in cvssv3 else None,
-                base_score=cvssv3['base_score'] if 'base_score' in cvssv3 else None
-            )
+            obj.cvssv3 = cvssv3
 
         # parse cve and reference. Should be temporal.
         parsed_cve_list = []
@@ -598,10 +606,21 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
 
+        # CVSS relationship
+        if 'cvssv2' in data:
+            if obj.cvssv2:
+                db.session.delete(obj.cvssv2)
+            obj.cvssv2 = data['cvssv2']
+        if 'cvssv3' in data:
+            if obj.cvssv3:
+                db.session.delete(obj.cvssv3)
+            obj.cvssv3 = data['cvssv3']
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         attachments = data.pop('_attachments', None if partial else {})
+
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:

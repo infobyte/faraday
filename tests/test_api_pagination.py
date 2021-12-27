@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -13,7 +12,7 @@ import pytest
 try:
     from urllib import urlencode
 except ImportError as e:
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urljoin
 
 
 def with_0_and_n_objects(n=10):
@@ -46,7 +45,7 @@ class PaginationTestsMixin:
                 self.view_class.page_number_parameter_name] = page_number
         if per_page is not None:
             parameters[self.view_class.per_page_parameter_name] = per_page
-        return self.url() + '?' + urlencode(parameters)
+        return urljoin(self.url(), f'?{urlencode(parameters)}')
 
     @pytest.mark.parametrize("page_number", [None, 1, 2])
     @pytest.mark.usefixtures('pagination_test_logic')
@@ -78,7 +77,7 @@ class PaginationTestsMixin:
         self.create_many_objects(session, object_count)
         res = test_client.get(self.page_url(-1, 10))
         assert res.status_code == 200
-        assert res.json == {u'data': []}
+        assert res.json == {'data': []}
 
     @pytest.mark.usefixtures('pagination_test_logic')
     @pytest.mark.pagination
@@ -102,7 +101,7 @@ class PaginationTestsMixin:
         self.create_many_objects(session, 5)
         res = test_client.get(self.page_url(2, 5))
         assert res.status_code == 200
-        assert res.json == {u'data': []}
+        assert res.json == {'data': []}
 
     @pytest.mark.usefixtures('pagination_test_logic')
     @pytest.mark.pagination

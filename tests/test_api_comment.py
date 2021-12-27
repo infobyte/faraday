@@ -8,11 +8,11 @@ See the file 'doc/LICENSE' for the license information
 from faraday.server.api.modules.comments import CommentView
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
-from tests.test_api_workspaced_base import ReadWriteAPITests
+from tests.test_api_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
 
 
-class TestCommentAPIGeneric(ReadWriteAPITests):
+class TestCommentAPIGeneric(ReadWriteAPITests, BulkDeleteTestsMixin):
     model = Comment
     factory = factories.CommentFactory
     view_class = CommentView
@@ -65,13 +65,13 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         raw_comment = self._create_raw_comment('service', service.id)
         res = test_client.post(self.url(workspace=second_workspace), data=raw_comment)
         assert res.status_code == 400
-        assert res.json == {u'message': u"Can't comment object of another workspace"}
+        assert res.json == {'message': "Can't comment object of another workspace"}
 
     def test_cannot_create_comment_of_inexistent_object(self, test_client, session):
         raw_comment = self._create_raw_comment('service', 456464556)
         res = test_client.post(self.url(workspace=self.workspace), data=raw_comment)
         assert res.status_code == 400
-        assert res.json == {u'message': u"Can't comment inexistent object"}
+        assert res.json == {'message': "Can't comment inexistent object"}
 
     def test_create_unique_comment_for_plugins(self, session, test_client):
         """
@@ -122,3 +122,18 @@ class TestCommentAPIGeneric(ReadWriteAPITests):
         get_comments = test_client.get(self.url(workspace=workspace))
         expected = ['first', 'second', 'third', 'fourth']
         assert expected == [comment['text'] for comment in get_comments.json]
+
+    def test_bulk_delete_with_references(self, session, test_client):
+        previous_count = session.query(Comment).count()
+        comment_first = factories.CommentFactory.create(workspace=self.workspace, text='first')
+        comment_second = factories.CommentFactory.create(workspace=self.workspace, text='second', reply_to=comment_first)
+        _ = factories.CommentFactory.create(workspace=self.workspace, text='third', reply_to=comment_second)
+        comment_fourth = factories.CommentFactory.create(workspace=self.workspace, text='fourth')
+        session.commit()
+
+        data = {'ids': [comment_first.id, comment_fourth.id]}
+        res = test_client.delete(self.url(), data=data)
+
+        assert res.status_code == 200
+        assert res.json['deleted'] == 2
+        assert previous_count + 2 == session.query(Comment).count()

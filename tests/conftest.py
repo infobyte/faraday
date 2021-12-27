@@ -299,5 +299,3 @@ def skip_by_sql_dialect(app, request):
 def csrf_token(logged_user, test_client):
     session_response = test_client.get('/session')
     return session_response.json.get('csrf_token')
-
-# I'm Py3

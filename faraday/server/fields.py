@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from builtins import str
 
 import json
 import imghdr
@@ -125,4 +124,3 @@ class JSONType(sa.types.TypeDecorator):
         if value is not None:
             value = json.loads(value)
         return value
-# I'm Py3

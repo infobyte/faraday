@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -13,7 +12,10 @@ import pytz
 from hypothesis import given, strategies as st
 
 from tests import factories
-from tests.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
+from tests.test_api_non_workspaced_base import (
+    ReadWriteAPITests,
+    API_PREFIX
+)
 from faraday.server.models import (
     License,
 )
@@ -33,7 +35,8 @@ class TestLicensesAPI(ReadWriteAPITests):
     model = License
     factory = factories.LicenseFactory
     api_endpoint = 'licenses'
-    patchable_fields = ["products"]
+    view_class = LicenseView
+    patchable_fields = ["product"]
 
     # @pytest.mark.skip(reason="Not a license actually test")
     def test_envelope_list(self, test_client, app):

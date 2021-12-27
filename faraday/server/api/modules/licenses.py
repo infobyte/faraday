@@ -7,7 +7,7 @@ from marshmallow import fields
 from faraday.server.models import License
 from faraday.server.api.base import (
     ReadWriteView,
-    AutoSchema
+    AutoSchema,
 )
 from faraday.server.schemas import (
     StrictDateTimeField,

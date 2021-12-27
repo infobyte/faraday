@@ -67,4 +67,3 @@ def downgrade():
     op.drop_table('notification')
     # op.drop_constraint(None, 'notification_user_id_fkey', type_='foreignkey')
     # op.drop_constraint(None, 'notification_workspace_id_fkey', type_='foreignkey')
-# I'm Py3

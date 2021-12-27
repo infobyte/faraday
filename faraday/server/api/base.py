@@ -201,7 +201,7 @@ class GenericView(FlaskView):
         """
         return getattr(self.model_class, self.lookup_field)
 
-    def _validate_object_id(self, object_id):
+    def _validate_object_id(self, object_id, raise_error=True):
         """
         By default, it validates the value of the lookup field set by the user
         in the URL by calling ``self.lookup_field_type(object_id)``.
@@ -211,7 +211,10 @@ class GenericView(FlaskView):
         try:
             self.lookup_field_type(object_id)
         except ValueError:
-            flask.abort(404, 'Invalid format of lookup field')
+            if raise_error:
+                flask.abort(404, 'Invalid format of lookup field')
+            return False
+        return True
 
     def _get_base_query(self):
         """Return the initial query all views should use
@@ -289,6 +292,22 @@ class GenericView(FlaskView):
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, f'Object with id "{object_id}" not found')
+        return obj
+
+    def _get_objects(self, object_ids, eagerload=False, **kwargs):
+        """
+        Given the object_id and extra route params, get an instance of
+        ``self.model_class``
+        """
+        object_ids = [object_id for object_id in object_ids if self._validate_object_id(object_id, raise_error=False)]
+        if eagerload:
+            query = self._get_eagerloaded_query(**kwargs)
+        else:
+            query = self._get_base_query(**kwargs)
+        try:
+            obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
+        except NoResultFound:
+            return []
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -1225,6 +1244,89 @@ class UpdateMixin:
         return self._dump(obj, kwargs), 200
 
 
+class BulkUpdateMixin:
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['PATCH'])
+    def bulk_update(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Update a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        # TODO BULK_UPDATE_SCHEMA
+        if not flask.request.json or 'ids' not in flask.request.json:
+            flask.abort(400)
+        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+        objects = self._get_objects(ids, **kwargs)
+        context = {'updating': True, 'objects': objects}
+        data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
+                                flask.request)
+        # just in case an schema allows id as writable.
+        data.pop('id', None)
+        data.pop('ids', None)
+
+        return self._perform_bulk_update(ids, data, **kwargs), 200
+
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.id.in_(ids))
+
+    def _pre_bulk_update(self, data, **kwargs):
+        return {}
+
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        pass
+
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+        try:
+            post_bulk_update_data = self._pre_bulk_update(data, **kwargs)
+            if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
+                queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
+                updated = queryset.update(data, synchronize_session='fetch')
+                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name)
+            else:
+                updated = 0
+            db.session.commit()
+            response = {'updated': updated}
+            return flask.jsonify(response)
+        except ValueError as e:
+            db.session.rollback()
+            flask.abort(400, ValidationError(
+               {
+                   'message': str(e),
+               }
+            ))
+        except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
+            db.session.rollback()
+            workspace = None
+            if workspace_name:
+                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace)
+            if conflict_obj is not None:
+                flask.abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj),
+                    }
+                ))
+            elif len(ids) >= 2:
+                flask.abort(409, ValidationError(
+                    {
+                        'message': 'Updating more than one object with unique data',
+                        'data': data
+                    }
+                ))
+            else:
+                raise
+
+
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<workspace_name>/<route_base>/<id>/ route
 
@@ -1314,6 +1416,25 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         return super().patch(object_id, workspace_name=workspace_name)
 
 
+class BulkUpdateWorkspacedMixin(BulkUpdateMixin):
+
+    @route('', methods=['PATCH'])
+    def bulk_update(self, workspace_name, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        return super().bulk_update(workspace_name=workspace_name)
+
+    def _bulk_update_query(self, ids, **kwargs):
+        workspace = self._get_workspace(kwargs["workspace_name"])
+        return super()._bulk_update_query(ids).filter(self.model_class.workspace_id == workspace.id)
+
+
 class DeleteMixin:
     """Add DELETE /<id>/ route"""
 
@@ -1339,6 +1460,38 @@ class DeleteMixin:
     def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
+
+
+class BulkDeleteMixin:
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        # TODO BULK_DELETE_SCHEMA
+        if not flask.request.json or 'ids' not in flask.request.json:
+            flask.abort(400)
+        # objs = self._get_objects(flask.request.json['ids'], **kwargs)
+        # self._perform_bulk_delete(objs, **kwargs)
+        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+        return self._perform_bulk_delete(ids, **kwargs), 200
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.id.in_(ids))
+
+    def _perform_bulk_delete(self, ids, **kwargs):
+        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
+        db.session.commit()
+        response = {'deleted': deleted}
+        return flask.jsonify(response)
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
@@ -1371,6 +1524,26 @@ class DeleteWorkspacedMixin(DeleteMixin):
             obj.workspace = self._get_workspace(workspace_name)
 
         return super()._perform_delete(obj, workspace_name)
+
+
+class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        return super().bulk_delete(workspace_name=workspace_name)
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return super()._bulk_delete_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 
 class CountWorkspacedMixin:

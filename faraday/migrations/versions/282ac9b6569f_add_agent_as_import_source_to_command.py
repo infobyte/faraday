@@ -45,7 +45,7 @@ def upgrade():
 
 def downgrade():
     # Convert 'asset_owner' status into 'client'
-    op.execute(cmd.update().where(cmd.c.import_source == u'agent')
+    op.execute(cmd.update().where(cmd.c.import_source == 'agent')
                .values(import_source=None))
     # Create a temporary "_role" type, convert and drop the "new" type
     tmp_type.create(op.get_bind(), checkfirst=False)

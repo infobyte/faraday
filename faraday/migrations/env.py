@@ -1,4 +1,3 @@
-
 import logging
 import faraday.server.config
 from faraday.server.web import get_app
@@ -79,4 +78,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-# I'm Py3

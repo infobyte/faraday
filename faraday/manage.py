@@ -144,8 +144,8 @@ def validate_user_unique_field(ctx, param, value):
         except OperationalError:
             logger = logging.getLogger(__name__)
             logger.error(
-                ('Could not connect to PostgreSQL. Please check: '
-                 'if database is running or if the configuration settings are correct.')
+                'Could not connect to PostgreSQL. Please check: '
+                 'if database is running or if the configuration settings are correct.'
             )
             sys.exit(1)
 
@@ -200,9 +200,9 @@ def create_tables():
         if not conn_string:
             logger = logging.getLogger(__name__)
             logger.error(
-                ('No database configuration found. Please check: '
+                'No database configuration found. Please check: '
                  'if the database is running or if the configuration settings are correct. '
-                 'For first time installations execute: faraday-manage initdb')
+                 'For first time installations execute: faraday-manage initdb'
             )
             sys.exit(1)
         InitDB()._create_tables(conn_string)
@@ -281,7 +281,7 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
 
 
 @click.command(help="Manage settings")
-@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list'], case_sensitive=False),
+@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list', 'clear'], case_sensitive=False),
               default='list', show_default=True, help="Action")
 @click.option('--data', type=str, required=False, callback=manage_settings.settings_format_validation,
               help="Settings config in json")
@@ -309,5 +309,3 @@ cli.add_command(settings)
 
 if __name__ == '__main__':
     cli()
-
-# I'm Py3

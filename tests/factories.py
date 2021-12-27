@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from builtins import chr, range
 
 import random
 import string
@@ -54,7 +53,7 @@ from faraday.server.models import (
     Action,
     RuleAction,
     Condition,
-    Role
+    Role, RuleExecution
 )
 
 
@@ -133,6 +132,7 @@ class UserFactory(FaradayFactory):
 class WorkspaceFactory(FaradayFactory):
 
     name = FuzzyText(chars=string.ascii_lowercase + string.digits)
+    description = FuzzyText()
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -339,7 +339,6 @@ class VulnerabilityFactory(VulnerabilityGenericFactory,
 
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
-    description = FuzzyText()
     type = "vulnerability"
 
     @classmethod
@@ -667,6 +666,15 @@ class RuleActionFactory(FaradayFactory):
 
     class Meta:
         model = RuleAction
+        sqlalchemy_session = db.session
+
+
+class RuleExecutionFactory(FaradayFactory):
+    rule = factory.SubFactory(RuleFactory)
+    command = factory.SubFactory(CommandFactory)
+
+    class Meta:
+        model = RuleExecution
         sqlalchemy_session = db.session
 
 # I'm Py3

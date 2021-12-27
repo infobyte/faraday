@@ -3,11 +3,14 @@
 # See the file 'doc/LICENSE' for the license information
 import json
 import logging
+import math
 import operator
+import re
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import partial
 from random import SystemRandom
+from typing import Callable
 
 from sqlalchemy import (
     Boolean,
@@ -24,6 +27,7 @@ from sqlalchemy import (
     event,
     Table,
     literal,
+    Date,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -450,7 +454,7 @@ class Hostname(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
     host = relationship('Host', backref=backref("hostnames", cascade="all, delete-orphan"))
 
     # 1 workspace <--> N hostnames
@@ -495,13 +499,21 @@ class VulnerabilityABC(Metadata):
         'difficult',
         'infeasible'
     ]
+
+    SEVERITY_UNCLASSIFIED = 'unclassified'
+    SEVERITY_INFORMATIONAL = 'informational'
+    SEVERITY_LOW = 'low'
+    SEVERITY_MEDIUM = 'medium'
+    SEVERITY_HIGH = 'high'
+    SEVERITY_CRITICAL = 'critical'
+
     SEVERITIES = [
-        'unclassified',
-        'informational',
-        'low',
-        'medium',
-        'high',
-        'critical',
+        SEVERITY_UNCLASSIFIED,
+        SEVERITY_INFORMATIONAL,
+        SEVERITY_LOW,
+        SEVERITY_MEDIUM,
+        SEVERITY_HIGH,
+        SEVERITY_CRITICAL,
     ]
 
     __abstract__ = True
@@ -532,6 +544,34 @@ class VulnerabilityABC(Metadata):
     @property
     def parent(self):
         raise NotImplementedError('ABC property called')
+
+
+class SeveritiesHistogram(db.Model):
+    __tablename__ = "severities_histogram"
+
+    SEVERITIES_ALLOWED = [VulnerabilityABC.SEVERITY_MEDIUM,
+                          VulnerabilityABC.SEVERITY_HIGH,
+                          VulnerabilityABC.SEVERITY_CRITICAL]
+
+    DEFAULT_DAYS_BEFORE = 20
+
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('severities_histogram', cascade="all, delete-orphan")
+    )
+    date = Column(Date, default=date.today(), nullable=False)
+    medium = Column(Integer, nullable=False)
+    high = Column(Integer, nullable=False)
+    critical = Column(Integer, nullable=False)
+    confirmed = Column(Integer, nullable=False)
+
+    # This method is required by event :_(
+    @property
+    def parent(self):
+        return
 
 
 class CustomAssociationSet(_AssociationSet):
@@ -617,7 +657,7 @@ def _build_associationproxy_creator(model_class_name):
     return creator
 
 
-def _build_associationproxy_creator_non_workspaced(model_class_name):
+def _build_associationproxy_creator_non_workspaced(model_class_name, preprocess_value_func: Callable = None):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation/CVE with the
         corresponding name. This is not workspace aware"""
@@ -625,6 +665,10 @@ def _build_associationproxy_creator_non_workspaced(model_class_name):
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
         model_class = globals()[model_class_name]
+
+        if preprocess_value_func:
+            name = preprocess_value_func(name)
+
         child = model_class.query.filter(
             getattr(model_class, 'name') == name,
         ).first()
@@ -684,7 +728,7 @@ class CommandObject(db.Model):
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
     command = relationship('Command', backref='command_objects')
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
 
     # 1 workspace <--> N command_objects
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -793,7 +837,7 @@ class Command(Metadata):
 
     # 1 workspace <--> N commands
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -1033,6 +1077,233 @@ class CVE(db.Model):
             raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
 
 
+class CVSS2GeneralConfig:
+    VERSION = '2'
+    PATTERN = 'AV:(?P<access_vector>[LAN])' \
+            '/AC:(?P<access_complexity>[HML])' \
+            '/Au:(?P<authentication>[MSN])' \
+            '/C:(?P<confidentiality>[NPC])' \
+            '/I:(?P<integrity>[NPC])' \
+            '/A:(?P<availability>[NPC])'
+
+    # CVSSV2 ENUMS
+    ACCESS_VECTOR_TYPES = ['L', 'N', 'A']
+    ACCESS_COMPLEXITY_TYPES = ['L', 'M', 'H']
+    AUTHENTICATION_TYPES = ['N', 'S', 'M']
+    IMPACT_TYPES_V2 = ['N', 'P', 'C']
+
+    # CVSSV2 SCORE
+    ACCESS_VECTOR_SCORE = {'L': 0.395, 'A': 0.646, 'N': 1.0}
+    ACCESS_COMPLEXITY_SCORE = {'L': 0.71, 'M': 0.61, 'H': 0.35}
+    AUTHENTICATION_SCORE = {'N': 0.704, 'S': 0.56, 'M': 0.45}
+    IMPACT_SCORES_V2 = {'N': 0.0, 'P': 0.275, 'C': 0.660}
+
+
+class CVSS3GeneralConfig:
+    VERSION = '3'
+    PATTERN = 'AV:(?P<attack_vector>[LANP])' \
+            '/AC:(?P<attack_complexity>[HL])' \
+            '/PR:(?P<privileges_required>[NLH])' \
+            '/UI:(?P<user_interaction>[NR])' \
+            '/S:(?P<scope>[UC])' \
+            '/C:(?P<confidentiality>[NLH])' \
+            '/I:(?P<integrity>[NLH])' \
+            '/A:(?P<availability>[NLH])'
+
+    CHANGED = 'C'
+    UNCHANGED = 'U'
+
+    # CVSSV3 ENUMS
+    ATTACK_VECTOR_TYPES = ['N', 'A', 'L', 'P']
+    ATTACK_COMPLEXITY_TYPES = ['L', 'H']
+    PRIVILEGES_REQUIRED_TYPES = ['N', 'L', 'H']
+    USER_INTERACTION_TYPES = ['N', 'R']
+    SCOPE_TYPES = [UNCHANGED, CHANGED]
+    IMPACT_TYPES_V3 = ['N', 'L', 'H']
+
+    # CVSSV3 SCORE
+    ATTACK_VECTOR_SCORES = {'N': 0.85, 'A': 0.62, 'L': 0.55, 'P': 0.2}
+    ATTACK_COMPLEXITY_SCORES = {'L': 0.77, 'H': 0.44}
+    PRIVILEGES_REQUIRED_SCORES = {'U': {'N': 0.85, 'L': 0.62, 'H': 0.27},
+                                  'C': {'N': 0.85, 'L': 0.68, 'H': 0.5}}
+    USER_INTERACTION_SCORES = {'N': 0.85, 'R': 0.62}
+    SCOPE_SCORES = {'U': 6.42, 'C': 7.52}
+    IMPACT_SCORES_V3 = {'N': 0.0, 'L': 0.22, 'H': 0.56}
+
+
+class CVSSBase(db.Model):
+    __tablename__ = "cvss_base"
+    id = Column(Integer, primary_key=True)
+    version = Column(String(8), nullable=False)
+    _vector_string = Column('vector_string', String(64))
+    _base_score = Column('base_score', Float)
+    _fixed_base_score = Column('fixed_base_score', Float)
+
+    type = Column(String(24))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
+
+    @hybrid_property
+    def vector_string(self):
+        return self._vector_string
+
+    @vector_string.setter
+    def vector_string(self, vector_string):
+        self.assign_vector_string(vector_string)
+        self.base_score = self.calculate_base_score()
+
+    @hybrid_property
+    def base_score(self):
+        if self._base_score is not None:
+            return self._base_score
+        return self._fixed_base_score
+
+    @base_score.setter
+    def base_score(self, base_score):
+        self._base_score = base_score
+
+    def assign_vector_string(self, vector_string, base_score):
+        raise NotImplementedError
+
+    def calculate_base_score(self):
+        raise NotImplementedError
+
+    def __repr__(self):
+        return f'{self.vector_string}'
+
+
+class CVSSV2(CVSSBase):
+    __tablename__ = "cvss_v2"
+    id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
+    access_vector = Column(Enum(*CVSS2GeneralConfig.ACCESS_VECTOR_TYPES, name="cvss_access_vector"))
+    access_complexity = Column(Enum(*CVSS2GeneralConfig.ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"))
+    authentication = Column(Enum(*CVSS2GeneralConfig.AUTHENTICATION_TYPES, name="cvss_authentication"))
+    confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
+    integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
+    availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
+
+    __mapper_args__ = {
+        'polymorphic_identity': "v2"
+    }
+
+    def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
+        super().__init__(version=CVSS2GeneralConfig.VERSION, vector_string=vector_string,
+                         _fixed_base_score=base_score, **kwargs)
+
+    def assign_vector_string(self, vector_string):
+        self._vector_string = vector_string
+        vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
+        if vector_string_parsed:
+            self.access_vector = vector_string_parsed['access_vector']
+            self.access_complexity = vector_string_parsed['access_complexity']
+            self.authentication = vector_string_parsed['authentication']
+            self.confidentiality_impact = vector_string_parsed['confidentiality']
+            self.integrity_impact = vector_string_parsed['integrity']
+            self.availability_impact = vector_string_parsed['availability']
+        else:
+            self.access_vector = None
+            self.access_complexity = None
+            self.authentication = None
+            self.confidentiality_impact = None
+            self.integrity_impact = None
+            self.availability_impact = None
+
+    def exploitability(self):
+        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
+
+    def impact(self):
+        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
+
+    def fimpact(self):
+        if self.impact() == 0:
+            return 0
+        return 1.176
+
+    def calculate_base_score(self):
+        if re.match(CVSS2GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
+            score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
+            return round(score, 1)  # pylint: disable=round-builtin
+        return None
+
+
+class CVSSV3(CVSSBase):
+    __tablename__ = "cvss_v3"
+    id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
+    attack_vector = Column(Enum(*CVSS3GeneralConfig.ATTACK_VECTOR_TYPES, name="cvss_attack_vector"))
+    attack_complexity = Column(Enum(*CVSS3GeneralConfig.ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"))
+    privileges_required = Column(Enum(*CVSS3GeneralConfig.PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"))
+    user_interaction = Column(Enum(*CVSS3GeneralConfig.USER_INTERACTION_TYPES, name="cvss_user_interaction"))
+    scope = Column(Enum(*CVSS3GeneralConfig.SCOPE_TYPES, name="cvss_scope"))
+    confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
+    integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
+    availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
+
+    __mapper_args__ = {
+        'polymorphic_identity': "v3"
+    }
+
+    def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
+        super().__init__(version=CVSS3GeneralConfig.VERSION, vector_string=vector_string,
+                         _fixed_base_score=base_score, **kwargs)
+
+    def assign_vector_string(self, vector_string):
+        self._vector_string = vector_string
+        vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
+        if vector_string_parsed:
+            self.attack_vector = vector_string_parsed['attack_vector']
+            self.attack_complexity = vector_string_parsed['attack_complexity']
+            self.privileges_required = vector_string_parsed['privileges_required']
+            self.user_interaction = vector_string_parsed['user_interaction']
+            self.scope = vector_string_parsed['scope']
+            self.confidentiality_impact = vector_string_parsed['confidentiality']
+            self.integrity_impact = vector_string_parsed['integrity']
+            self.availability_impact = vector_string_parsed['availability']
+        else:
+            self.attack_vector = None
+            self.attack_complexity = None
+            self.privileges_required = None
+            self.user_interaction = None
+            self.scope = None
+            self.confidentiality_impact = None
+            self.integrity_impact = None
+            self.availability_impact = None
+
+    def isc_base(self):
+        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
+
+    def impact(self):
+        if self.scope == CVSS3GeneralConfig.UNCHANGED:
+            return 6.42 * self.isc_base()
+        else:
+            return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
+
+    def exploitability(self):
+        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
+
+    def calculate_base_score(self):
+        if re.match(CVSS3GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
+            score = 10
+            if self.impact() <= 0:
+                return 0.0
+            impact_plus_exploitability = self.impact() + self.exploitability()
+            if self.scope == CVSS3GeneralConfig.UNCHANGED:
+                if impact_plus_exploitability < 10:
+                    score = impact_plus_exploitability
+            else:
+                impact_plus_exploitability = impact_plus_exploitability * 1.08
+                if impact_plus_exploitability < 10:
+                    score = impact_plus_exploitability
+
+            # round up score
+            # Where “Round up” is defined as the smallest number, specified to one decimal place,
+            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+            return math.ceil(score * 10) / 10
+        return None
+
+
 class Service(Metadata):
     STATUSES = [
         'open',
@@ -1052,7 +1323,7 @@ class Service(Metadata):
 
     banner = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
     host = relationship(
         'Host',
         foreign_keys=[host_id],
@@ -1089,11 +1360,16 @@ class Service(Metadata):
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
+    STATUS_OPEN = 'open'
+    STATUS_RE_OPENED = 're-opened'
+    STATUS_CLOSED = 'closed'
+    STATUS_RISK_ACCEPTED = 'risk-accepted'
+
     STATUSES = [
-        'open',
-        'closed',
-        're-opened',
-        'risk-accepted'
+        STATUS_OPEN,
+        STATUS_CLOSED,
+        STATUS_RE_OPENED,
+        STATUS_RISK_ACCEPTED
     ]
     VULN_TYPES = [
         'vulnerability',
@@ -1122,7 +1398,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_duplicate_id = Column(
         Integer,
-        ForeignKey('vulnerability.id'),
+        ForeignKey('vulnerability.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
     )
@@ -1132,7 +1408,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_template_id = Column(
         Integer,
-        ForeignKey('vulnerability_template.id'),
+        ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
     )
@@ -1156,7 +1432,23 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cve = association_proxy('cve_instances',
                              'name',
                              proxy_factory=CustomAssociationSet,
-                             creator=_build_associationproxy_creator_non_workspaced('CVE'))
+                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
+
+    # TODO: Ver si el nombre deberia ser cvss_v2_id
+    cvssv2_id = Column(
+        Integer,
+        ForeignKey('cvss_v2.id'),
+        nullable=True
+    )
+    cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
+
+    # TODO: Ver si el nombre deberia ser cvss_v3_id
+    cvssv3_id = Column(
+        Integer,
+        ForeignKey('cvss_v3.id'),
+        nullable=True
+    )
+    cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
 
     reference_instances = relationship(
         "Reference",
@@ -1250,7 +1542,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         'host_inner.id = service.host_id'))
     )
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True)
     host = relationship(
         'Host',
         backref=backref("vulnerabilities", cascade="all, delete-orphan"),
@@ -1311,8 +1603,10 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
-                                                                         index=True))
+        return VulnerabilityGeneric.__table__.c.get('service_id',
+                                                    Column(Integer,
+                                                           db.ForeignKey('service.id', ondelete='CASCADE'),
+                                                           index=True))
 
     @declared_attr
     def service(cls):
@@ -1341,7 +1635,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service_id(cls):
         return VulnerabilityGeneric.__table__.c.get(
-            'service_id', Column(Integer, db.ForeignKey('service.id'),
+            'service_id', Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'),
                                  nullable=False))
 
     @declared_attr
@@ -1367,7 +1661,7 @@ class VulnerabilityCode(VulnerabilityGeneric):
     start_line = Column(Integer, nullable=True)
     end_line = Column(Integer, nullable=True)
 
-    source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
+    source_code_id = Column(Integer, ForeignKey(SourceCode.id, ondelete='CASCADE'), index=True)
     source_code = relationship(
         SourceCode,
         backref='vulnerabilities',
@@ -1430,7 +1724,7 @@ class Reference(Metadata):
 class ReferenceVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference",
@@ -1447,7 +1741,7 @@ class ReferenceVulnerabilityAssociation(db.Model):
 class PolicyViolationVulnerabilityAssociation(db.Model):
     __tablename__ = 'policy_violation_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
@@ -1539,13 +1833,13 @@ class Credential(Metadata):
     description = BlankColumn(Text)
     name = BlankColumn(Text)
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
+    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
     host = relationship(
         'Host',
         backref=backref("credentials", cascade="all, delete-orphan"),
         foreign_keys=[host_id])
 
-    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
+    service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
     service = relationship(
         'Service',
         backref=backref('credentials', cascade="all, delete-orphan"),
@@ -1605,7 +1899,7 @@ association_workspace_and_agents_table = Table(
     'association_workspace_and_agents_table',
     db.Model.metadata,
     Column('workspace_id', Integer, ForeignKey('workspace.id')),
-    Column('agent_id', Integer, ForeignKey('agent.id'))
+    Column('agent_id', Integer, ForeignKey('agent.id', ondelete='CASCADE'))
 )
 
 
@@ -1675,7 +1969,17 @@ class Workspace(Metadata):
                         FROM association_workspace_and_agents_table as assoc
                         JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
                         WHERE agent.active is TRUE
-                ) AS active_agents_count,
+                ) AS run_agent_date,
+                                (SELECT executor.last_run
+                        FROM executor
+                        JOIN agent ON executor.agent_id = agent.id
+                        JOIN association_workspace_and_agents_table ON
+                        agent.id = association_workspace_and_agents_table.agent_id
+                        and association_workspace_and_agents_table.workspace_id = workspace.id
+                        WHERE executor.last_run is not null
+                        ORDER BY executor.last_run DESC
+                        LIMIT 1
+                ) AS last_run_agent_date,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,
@@ -1688,6 +1992,8 @@ class Workspace(Metadata):
                 p_5.count_12 as vulnerability_low_count,
                 p_5.count_13 as vulnerability_informational_count,
                 p_5.count_14 as vulnerability_unclassified_count,
+                p_5.count_15 as vulnerability_open_count,
+                p_5.count_16 as vulnerability_confirmed_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -1720,7 +2026,9 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_11,
              COUNT(case when vulnerability.severity = 'low' then 1 else null end) as count_12,
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
-             COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14
+             COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14,
+             COUNT(case when vulnerability.status = 'open' OR vulnerability.status='re-opened' then 1 else null end) as count_15,
+             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}
@@ -2101,7 +2409,7 @@ class Comment(Metadata):
 
     text = BlankColumn(Text)
 
-    reply_to_id = Column(Integer, ForeignKey('comment.id'))
+    reply_to_id = Column(Integer, ForeignKey('comment.id', ondelete='SET NULL'))
     reply_to = relationship(
         'Comment',
         remote_side=[id],
@@ -2484,7 +2792,7 @@ class Executor(Metadata):
     __tablename__ = 'executor'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent_id = Column(Integer, ForeignKey('agent.id', ondelete='CASCADE'), index=True, nullable=False)
     agent = relationship(
         'Agent',
         backref=backref('executors', cascade="all, delete-orphan"),
@@ -2605,7 +2913,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_executions', cascade="all, delete-orphan")
     )
     parameters_data = Column(JSONType, nullable=False)
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
     command = relationship(
         'Command',
         foreign_keys=[command_id],
@@ -2648,7 +2956,7 @@ class RuleExecution(Metadata):
     end = Column(DateTime, nullable=True)
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
     rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
-    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='CASCADE'), index=True, nullable=False)
     command = relationship('Command', foreign_keys=[command_id],
                            backref=backref('rule_executions', cascade="all, delete-orphan"))
 

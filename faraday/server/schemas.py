@@ -362,5 +362,3 @@ class WorkerRuleSchema(Schema):
             key: value for key, value in data.items()
             if value
         }
-
-# I'm Py3

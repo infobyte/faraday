@@ -11,6 +11,7 @@ repos:
         exclude: '^faraday/server/www/'
     -   id: check-yaml
         exclude: '^faraday/server/www/'
+        args: [ --unsafe ]
     -   id: debug-statements
         exclude: '^faraday/server/www/'
 -   repo: https://gitlab.com/pycqa/flake8
@@ -48,3 +49,8 @@ repos:
         pass_filenames: false
         args: [--mode=ls, --local]
         stages: [push]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.29.0
+    hooks:
+    -   id: pyupgrade
+        args: [ --py3-plus , --py36-plus]

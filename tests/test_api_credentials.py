@@ -4,19 +4,22 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from urllib.parse import urljoin
 
 import pytest
 
 from tests import factories
 from tests.test_api_workspaced_base import (
     ReadWriteAPITests,
+    BulkUpdateTestsMixin,
+    BulkDeleteTestsMixin
 )
 from faraday.server.api.modules.credentials import CredentialView
 from faraday.server.models import Credential
 from tests.factories import HostFactory, ServiceFactory
 
 
-class TestCredentialsAPIGeneric(ReadWriteAPITests):
+class TestCredentialsAPIGeneric(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Credential
     factory = factories.CredentialFactory
     view_class = CredentialView
@@ -32,19 +35,19 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 200
         assert 'rows' in res.json
         for vuln in res.json['rows']:
-            assert set([u'_id', u'id', u'key', u'value']) == set(vuln.keys())
+            assert {'_id', 'id', 'key', 'value'} == set(vuln.keys())
             object_properties = [
-                u'_id',
-                u'couchdbid',
-                u'description',
-                u'metadata',
-                u'name',
-                u'owner',
-                u'password',
-                u'username',
-                u'host_ip',
-                u'service_name',
-                u'target'
+                '_id',
+                'couchdbid',
+                'description',
+                'metadata',
+                'name',
+                'owner',
+                'password',
+                'username',
+                'host_ip',
+                'service_name',
+                'target'
             ]
             expected = set(object_properties)
             result = set(vuln['value'].keys())
@@ -105,19 +108,19 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         credential = self.factory.create(host=host, service=None,
                                          workspace=self.workspace)
         session.commit()
-        res = test_client.get(self.url(workspace=credential.workspace) + f'?host_id={credential.host.id}')
+        res = test_client.get(urljoin(self.url(workspace=credential.workspace), f'?host_id={credential.host.id}'))
         assert res.status_code == 200
         assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.host.id]
-        assert [cred['value']['parent_type'] for cred in res.json['rows']] == [u'Host']
+        assert [cred['value']['parent_type'] for cred in res.json['rows']] == ['Host']
 
     def test_get_credentials_for_a_service_backwards_compatibility(self, session, test_client):
         service = ServiceFactory.create()
         credential = self.factory.create(service=service, host=None, workspace=service.workspace)
         session.commit()
-        res = test_client.get(self.url(workspace=credential.workspace) + f'?service={credential.service.id}')
+        res = test_client.get(urljoin(self.url(workspace=credential.workspace), f'?service={credential.service.id}'))
         assert res.status_code == 200
         assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.service.id]
-        assert [cred['value']['parent_type'] for cred in res.json['rows']] == [u'Service']
+        assert [cred['value']['parent_type'] for cred in res.json['rows']] == ['Service']
 
     def _generate_raw_update_data(self, name, username, password, parent_id):
         return {
@@ -179,9 +182,9 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 
         res = test_client.put(self.url(credential, workspace=credential.workspace), data=raw_data)
         assert res.status_code == 200
-        assert res.json['username'] == u'Username2'
-        assert res.json['password'] == u'Password3'
-        assert res.json['name'] == u'Name1'
+        assert res.json['username'] == 'Username2'
+        assert res.json['password'] == 'Password3'
+        assert res.json['name'] == 'Name1'
 
     @pytest.mark.parametrize("parent_type, parent_factory", [
         ("Host", HostFactory),
@@ -255,11 +258,11 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         ]
 
         # Desc order
-        response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=desc")
+        response = test_client.get(urljoin(self.url(workspace=second_workspace), "?sort=target&sort_dir=desc"))
         assert response.status_code == 200
         assert sorted(credentials_target, reverse=True) == [v['value']['target'] for v in response.json['rows']]
 
         # Asc order
-        response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=asc")
+        response = test_client.get(urljoin(self.url(workspace=second_workspace), "?sort=target&sort_dir=asc"))
         assert response.status_code == 200
         assert sorted(credentials_target) == [v['value']['target'] for v in response.json['rows']]

@@ -45,6 +45,13 @@ class Settings:
                 settings_config = self.clear_configuration(settings_config)
         return settings_config
 
+    def delete_configuration(self):
+        from faraday.server.web import get_app   # pylint: disable=import-outside-toplevel
+        with get_app().app_context():
+            db.session.query(Configuration).filter(Configuration.key == self.settings_key).delete()
+            db.session.commit()
+            self.__class__.value.fget.cache_clear()
+
     def get_default_config(self):
         return {}
 

@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "Fix bug in bulk update for m2m fields"
-}

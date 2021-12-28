@@ -89,20 +89,9 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
       # TODO: use python 3.8 after migrating to 20.09
       python37Packages.callPackage "${src}/nix/packages/pynixify" { };
 
-  in original.overridePythonAttrs (drv: {
-    # based in https://github.com/cript0nauta/pynixify/blob/main/default.nix
-    checkInputs = drv.checkInputs ++ [ nix nixfmtCustom bats ];
-
-    checkPhase = ''
-      mypy pynixify/ tests/ acceptance_tests/
-      pytest tests/ -m 'not usesnix'  # We can't run Nix inside Nix builds
-    '';
-
-    postInstall = ''
-      # Add nixfmt to pynixify's PATH
-      wrapProgram $out/bin/pynixify --prefix PATH : "${nixfmtCustom}/bin"
-    '';
-  });
+  in (import "${src}") {
+      nixfmt = nixfmtCustom;
+    };
 
   nixfmtCustom =
     # custom wrapper of nixfmt that sets the column width to 1. This will force

@@ -26,8 +26,8 @@ def upgrade():
     # Vuln -> cvss
     op.add_column('cvss_v2', sa.Column('vulnerability_id', sa.Integer(), nullable=True))
     op.add_column('cvss_v3', sa.Column('vulnerability_id', sa.Integer(), nullable=True))
-    op.create_foreign_key(None, 'cvss_v2', 'vulnerability', ['vulnerability_id'], ['id'])
-    op.create_foreign_key(None, 'cvss_v3', 'vulnerability', ['vulnerability_id'], ['id'])
+    op.create_foreign_key(None, 'cvss_v2', 'vulnerability', ['vulnerability_id'], ['id'], ondelete='CASCADE')
+    op.create_foreign_key(None, 'cvss_v3', 'vulnerability', ['vulnerability_id'], ['id'], ondelete='CASCADE')
 
 
 def downgrade():
@@ -38,5 +38,5 @@ def downgrade():
 
     op.add_column('vulnerability', sa.Column('cvssv2_id', sa.Integer(), nullable=True))
     op.add_column('vulnerability', sa.Column('cvssv3_id', sa.Integer(), nullable=True))
-    op.create_foreign_key(None, 'vulnerability', 'cvss_v2', ['cvssv2_id'], ['id'])
-    op.create_foreign_key(None, 'vulnerability', 'cvss_v3', ['cvssv3_id'], ['id'])
+    op.create_foreign_key(None, 'vulnerability', 'cvss_v2', ['cvssv2_id'], ['id'], ondelete='CASCADE')
+    op.create_foreign_key(None, 'vulnerability', 'cvss_v3', ['cvssv3_id'], ['id'], ondelete='CASCADE')

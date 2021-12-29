@@ -1489,11 +1489,9 @@ class BulkDeleteMixin:
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
     def _perform_bulk_delete(self, ids, **kwargs):
-        deleted = self._bulk_delete_query(ids, **kwargs).all()
-        for delete in deleted:
-            db.session.delete(delete)
+        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
         db.session.commit()
-        response = {'deleted': len(deleted)}
+        response = {'deleted': deleted}
         return flask.jsonify(response)
 
 

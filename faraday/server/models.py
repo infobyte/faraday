@@ -1186,7 +1186,7 @@ class CVSSV2(CVSSBase):
     availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
     vulnerability_id = Column(
         Integer,
-        ForeignKey('vulnerability.id'),
+        ForeignKey('vulnerability.id', ondelete="CASCADE"),
         nullable=True
     )
 
@@ -1247,7 +1247,7 @@ class CVSSV3(CVSSBase):
     availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
     vulnerability_id = Column(
         Integer,
-        ForeignKey('vulnerability.id'),
+        ForeignKey('vulnerability.id', ondelete="CASCADE"),
         nullable=True
     )
 
@@ -1444,8 +1444,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
                              proxy_factory=CustomAssociationSet,
                              creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    cvssv2 = relationship('CVSSV2', uselist=False, backref=backref('vulnerability'), cascade="all, delete, delete-orphan")
-    cvssv3 = relationship('CVSSV3', uselist=False, backref=backref('vulnerability'), cascade="all, delete, delete-orphan")
+    cvssv2 = relationship('CVSSV2', uselist=False, backref=backref('vulnerability'))
+    cvssv3 = relationship('CVSSV3', uselist=False, backref=backref('vulnerability'))
 
     reference_instances = relationship(
         "Reference",

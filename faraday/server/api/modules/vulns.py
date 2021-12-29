@@ -642,11 +642,9 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(Vulnerability.host)
                 .load_only(Host.id)  # Only hostnames are needed
                 .joinedload(Host.hostnames),
-
             joinedload(Vulnerability.service)
                 .joinedload(Service.host)
                 .joinedload(Host.hostnames),
-
             joinedload(VulnerabilityWeb.service)
                 .joinedload(Service.host)
                 .joinedload(Host.hostnames),
@@ -656,8 +654,8 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
-            joinedload(VulnerabilityGeneric.cvssv2),
-            joinedload(VulnerabilityGeneric.cvssv3),
+            joinedload(VulnerabilityGeneric.cvssv2).joinedload(CVSSV2.vulnerability),
+            joinedload(VulnerabilityGeneric.cvssv3).joinedload(CVSSV3.vulnerability),
         ]
 
         if flask.request.args.get('get_evidence'):

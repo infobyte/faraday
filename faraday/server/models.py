@@ -1184,6 +1184,11 @@ class CVSSV2(CVSSBase):
     confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
     integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
     availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
+    vulnerability_id = Column(
+        Integer,
+        ForeignKey('vulnerability.id'),
+        nullable=True
+    )
 
     __mapper_args__ = {
         'polymorphic_identity': "v2"
@@ -1240,6 +1245,11 @@ class CVSSV3(CVSSBase):
     confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
     integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
     availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
+    vulnerability_id = Column(
+        Integer,
+        ForeignKey('vulnerability.id'),
+        nullable=True
+    )
 
     __mapper_args__ = {
         'polymorphic_identity': "v3"
@@ -1434,21 +1444,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
                              proxy_factory=CustomAssociationSet,
                              creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    # TODO: Ver si el nombre deberia ser cvss_v2_id
-    cvssv2_id = Column(
-        Integer,
-        ForeignKey('cvss_v2.id'),
-        nullable=True
-    )
-    cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
-
-    # TODO: Ver si el nombre deberia ser cvss_v3_id
-    cvssv3_id = Column(
-        Integer,
-        ForeignKey('cvss_v3.id'),
-        nullable=True
-    )
-    cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
+    cvssv2 = relationship('CVSSV2', uselist=False, backref=backref('vulnerability'), cascade="all, delete, delete-orphan")
+    cvssv3 = relationship('CVSSV3', uselist=False, backref=backref('vulnerability'), cascade="all, delete, delete-orphan")
 
     reference_instances = relationship(
         "Reference",

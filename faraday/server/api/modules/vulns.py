@@ -606,15 +606,17 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
 
-        # CVSS relationship
         if 'cvssv2' in data:
+            cvssv2 = data.pop('cvssv2', None)
             if obj.cvssv2:
                 db.session.delete(obj.cvssv2)
-            obj.cvssv2 = data['cvssv2']
+            obj.cvssv2 = cvssv2
+
         if 'cvssv3' in data:
+            cvssv3 = data.pop('cvssv3', None)
             if obj.cvssv3:
                 db.session.delete(obj.cvssv3)
-            obj.cvssv3 = data['cvssv3']
+            obj.cvssv3 = cvssv3
 
         return super()._update_object(obj, data)
 

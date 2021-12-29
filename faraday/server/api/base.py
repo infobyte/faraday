@@ -1161,6 +1161,7 @@ class UpdateMixin:
                                 flask.request)
         # just in case an schema allows id as writable.
         data.pop('id', None)
+
         self._update_object(obj, data, partial=False)
         self._perform_update(object_id, obj, data, **kwargs)
 
@@ -1488,9 +1489,11 @@ class BulkDeleteMixin:
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
     def _perform_bulk_delete(self, ids, **kwargs):
-        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
+        deleted = self._bulk_delete_query(ids, **kwargs).all()
+        for delete in deleted:
+            db.session.delete(delete)
         db.session.commit()
-        response = {'deleted': deleted}
+        response = {'deleted': len(deleted)}
         return flask.jsonify(response)
 
 

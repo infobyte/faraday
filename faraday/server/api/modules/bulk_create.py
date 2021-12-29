@@ -33,9 +33,7 @@ from faraday.server.models import (
     AgentExecution,
     Workspace,
     Metadata,
-    CVE,
-    CVSSV3,
-    CVSSV2
+    CVE
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -429,16 +427,11 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         vuln.cve = parsed_cve_list
 
         if cvssv2:
-            vuln.cvssv2 = CVSSV2(
-                vector_string=cvssv2['vector_string'] if 'vector_string' in cvssv2 else None,
-                base_score=cvssv2['base_score'] if 'base_score' in cvssv2 else None
-            )
+            vuln.cvssv2 = cvssv2
 
         if cvssv3:
-            vuln.cvssv3 = CVSSV3(
-                vector_string=cvssv3['vector_string'] if 'vector_string' in cvssv3 else None,
-                base_score=cvssv3['base_score'] if 'base_score' in cvssv3 else None
-            )
+            vuln.cvssv3 = cvssv3
+
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()

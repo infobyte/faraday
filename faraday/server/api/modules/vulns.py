@@ -9,6 +9,7 @@ import re
 from base64 import b64encode, b64decode
 from json.decoder import JSONDecodeError
 from pathlib import Path
+from copy import deepcopy
 
 import flask
 from filteralchemy import Filter, FilterSet, operators
@@ -1170,6 +1171,7 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('tool', '')
         data.pop('service_id', '')
         data.pop('host_id', '')
+
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
         super()._pre_bulk_update(data, **kwargs)
@@ -1181,6 +1183,15 @@ class VulnerabilityView(PaginatedMixin,
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
                 association_proxy_fields[key] = data.pop(key)
+
+        if 'cvssv2' in data:
+            cvssv2 = data.pop('cvssv2', None)
+            association_proxy_fields['cvssv2'] = cvssv2
+
+        if 'cvssv3' in data:
+            cvssv3 = data.pop('cvssv3', None)
+            association_proxy_fields['cvssv3'] = cvssv3
+
         return association_proxy_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
@@ -1191,6 +1202,14 @@ class VulnerabilityView(PaginatedMixin,
                                                **kwargs)
             for obj in queryset.all():
                 for (key, value) in extracted_data.items():
+                    if key == 'cvssv2':
+                        if obj.cvssv2:
+                            db.session.delete(obj.cvssv2)
+                            value = deepcopy(value)
+                    if key == 'cvssv3':
+                        if obj.cvssv3:
+                            db.session.delete(obj.cvssv3)
+                            value = deepcopy(value)
                     setattr(obj, key, value)
                     db.session.add(obj)
 

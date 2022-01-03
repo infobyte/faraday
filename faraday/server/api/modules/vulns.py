@@ -155,8 +155,8 @@ class VulnerabilitySchema(AutoSchema):
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    cvssv2 = fields.Nested(CVSSV2Schema(), attribute='cvssv2', allow_none=True)
-    cvssv3 = fields.Nested(CVSSV3Schema(), attribute='cvssv3', allow_none=True)
+    cvssv2 = fields.Nested(CVSSSchema(), attribute='cvssv2', allow_none=True)
+    cvssv3 = fields.Nested(CVSSSchema(), attribute='cvssv3', allow_none=True)
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -539,7 +539,6 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
-
         cvssv2 = data.pop('cvssv2', None)
         cvssv3 = data.pop('cvssv3', None)
 
@@ -554,10 +553,16 @@ class VulnerabilityView(PaginatedMixin,
         obj.policy_violations = policyviolations
 
         if cvssv2:
-            obj.cvssv2 = cvssv2
+            try:
+                obj.cvssv2 = CVSSV2(**cvssv2)
+            except ValueError:
+                logger.error(f"Malformed cvss v2 {cvssv2}")
 
         if cvssv3:
-            obj.cvssv3 = cvssv3
+            try:
+                obj.cvssv3 = CVSSV3(**cvssv3)
+            except ValueError:
+                logger.error(f"Malformed cvss v3 {cvssv3}")
 
         # parse cve and reference. Should be temporal.
         parsed_cve_list = []
@@ -609,15 +614,26 @@ class VulnerabilityView(PaginatedMixin,
 
         if 'cvssv2' in data:
             cvssv2 = data.pop('cvssv2', None)
-            if obj.cvssv2:
-                db.session.delete(obj.cvssv2)
-            obj.cvssv2 = cvssv2
+            try:
+                cvssv2_obj = None
+                if cvssv2 is not None:
+                    cvssv2_obj = CVSSV2(**cvssv2)
+                if obj.cvssv2:
+                    db.session.delete(obj.cvssv2)
+                obj.cvssv2 = cvssv2_obj
+            except ValueError:
+                logger.error(f"Malformed cvss2 {cvssv2}")
 
-        if 'cvssv3' in data:
-            cvssv3 = data.pop('cvssv3', None)
+        cvssv3 = data.pop('cvssv3', None)
+        try:
+            cvssv3_obj = None
+            if cvssv3 is not None:
+                cvssv3_obj = CVSSV3(**cvssv3)
             if obj.cvssv3:
                 db.session.delete(obj.cvssv3)
-            obj.cvssv3 = cvssv3
+            obj.cvssv3 = cvssv3_obj
+        except ValueError:
+            logger.error(f"Malformed cvss3 {cvssv3}")
 
         return super()._update_object(obj, data)
 
@@ -1186,11 +1202,17 @@ class VulnerabilityView(PaginatedMixin,
 
         if 'cvssv2' in data:
             cvssv2 = data.pop('cvssv2', None)
-            association_proxy_fields['cvssv2'] = cvssv2
+            try:
+                association_proxy_fields['cvssv2'] = CVSSV2(**cvssv2)
+            except ValueError:
+                logger.error(f"Malformed cvss2 {cvssv2}")
 
         if 'cvssv3' in data:
             cvssv3 = data.pop('cvssv3', None)
-            association_proxy_fields['cvssv3'] = cvssv3
+            try:
+                association_proxy_fields['cvssv3'] = CVSSV3(**cvssv3)
+            except ValueError:
+                logger.error(f"Malformed cvss3 {cvssv3}")
 
         return association_proxy_fields
 

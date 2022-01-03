@@ -33,7 +33,9 @@ from faraday.server.models import (
     AgentExecution,
     Workspace,
     Metadata,
-    CVE
+    CVE,
+    CVSSV2,
+    CVSSV3
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -427,10 +429,16 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         vuln.cve = parsed_cve_list
 
         if cvssv2:
-            vuln.cvssv2 = cvssv2
+            try:
+                vuln.cvssv2 = CVSSV2(**cvssv2)
+            except ValueError:
+                logger.error(f"Malformed cvss v2 {cvssv2}")
 
         if cvssv3:
-            vuln.cvssv3 = cvssv3
+            try:
+                vuln.cvssv3 = CVSSV3(**cvssv3)
+            except ValueError:
+                logger.error(f"Malformed cvss v3 {cvssv3}")
 
         # TODO attachments
         db.session.add(vuln)

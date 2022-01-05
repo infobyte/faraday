@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import json
 import logging
 import math
 import operator
@@ -2735,47 +2734,106 @@ class KnowledgeBase(db.Model):
 def rule_default_name(context):
     model = context.get_current_parameters()['model']
     create_date = context.get_current_parameters()['create_date']
-    return f'Rule for model {model} @ {create_date.isoformat()}'
+    return f'Job for model {model} @ {create_date.isoformat()}'
 
 
-class Rule(Metadata):
-    __tablename__ = 'rule'
+association_pipelines_and_jobs_table = Table(
+    'association_pipelines_and_jobs_table',
+    db.Model.metadata,
+    Column('pipeline_id', Integer, ForeignKey('pipeline.id')),
+    Column('workflow_id', Integer, ForeignKey('workflow.id'))
+)
+
+
+class Pipeline(Metadata):
+    __tablename__ = "pipeline"
     id = Column(Integer, primary_key=True)
-    description = Column(String, nullable=False, default="")
-    model = Column(String, nullable=False)
-    object_parent = Column(String, nullable=True)
-    fields = Column(JSONType, nullable=True)
-    enabled = Column(Boolean, nullable=False, default=True)
-    actions = relationship("Action", secondary="rule_action", backref=backref("rules"), lazy='subquery')
-    # 1 workspace <--> N rules
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
-        'Workspace',
-        backref=backref('rules', cascade="all, delete-orphan")
+    name = Column(String, default=f"Pipeline-{datetime.now()}", unique=True, nullable=False)
+    description = Column(String, default="", nullable=False)
+    jobs_order = Column(String, default="")
+    jobs = relationship(
+        'Workflow',
+        secondary=association_pipelines_and_jobs_table,
+        back_populates="pipelines"
     )
-    conditions = relationship("Condition", back_populates="rule",
-                              cascade="all, delete-orphan", passive_deletes=True, lazy='subquery')
+    # N to 1
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace = relationship('Workspace', backref=backref('pipelines', cascade="all, delete-orphan"))
+
+    enabled = Column(Boolean, nullable=False, default=False)
+    running = Column(Boolean, nullable=False, default=False)
+
+    @property
+    def parent(self):
+        return
+
+
+class Workflow(Metadata):
+    VALID_MODELS = ("vulnerability", "vulnerability_web", "host", "service")
+
+    __tablename__ = 'workflow'
+    id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True, default=rule_default_name)
+    description = Column(String, nullable=False, default='')
+    model = Column(Enum(*VALID_MODELS, name='valid_workflow_models'), nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True)
+    # run_on_updates = Column(Boolean, nullable=False, default=True)
+    # actions_order = Column(String, nullable=False, default='')
+    # N to N
+    # actions = relationship(
+    #     'Action',
+    #     secondary=association_workflows_and_actions_table,
+    #     back_populates="workflows"
+    # )
+    # N to N
+    pipelines = relationship(
+        'Pipeline',
+        secondary=association_pipelines_and_jobs_table,
+        back_populates="jobs"
+    )
+    # # N to 1
+    # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # workspace = relationship('Workspace', backref=backref('workflows', cascade="all, delete-orphan"))
+    # 1 to N
+    conditions = relationship('Condition', back_populates='workflow', cascade="all, delete-orphan")
+    # 1 to N
+    actions = relationship('Action', back_populates='workflow', cascade="all, delete-orphan")
+    # 1 to N
+    executions = relationship('WorkflowExecution', back_populates='workflow', cascade="all, delete-orphan")
+
+    # __table_args__ = (
+    #     UniqueConstraint('name', 'workspace_id', name='uix_name_workspaceid'),
+    # )
 
     @property
     def parent(self):
         return
 
     @property
-    def object(self):
-        # TODO THIS MUST BE DELETED AND REIMPLEMENTED FOR NEWW METHODS
-        return json.dumps(
-            [{condition.field: condition.value} for condition in self.conditions]
-        )
+    def root_condition(self):
+        for condition in self.conditions:
+            if condition.is_root:
+                return condition
+        return None
 
-    @property
-    def disabled(self):
-        return not self.enabled
 
-    @disabled.setter
-    def disabled(self, value):
-        self.enabled = not value
+class Condition(Metadata):
+    TYPES = ['and', 'or', 'xor', 'leaf']
+
+    __tablename__ = 'condition'
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey('condition.id'))
+    parent = relationship("Condition", remote_side=[id])
+    children = relationship("Condition", lazy="joined", join_depth=2)
+    type = Column(Enum(*TYPES, name='condition_types'))
+    field = Column(String(50), nullable=True)
+    operator = Column(String(50), nullable=True)
+    data = Column(String(50), nullable=True)
+    is_root = Column(Boolean, nullable=False, default=False)
+
+    # N to 1
+    workflow_id = Column(Integer, ForeignKey('workflow.id'), index=True, nullable=False)
+    workflow = relationship('Workflow', back_populates="conditions")
 
 
 class Action(Metadata):
@@ -2786,6 +2844,21 @@ class Action(Metadata):
     command = Column(String, nullable=False)
     field = Column(String, nullable=True)
     value = Column(String, nullable=True)
+    custom_field = Column(Boolean, default=False)
+
+    # N to 1
+    workflow_id = Column(Integer, ForeignKey('workflow.id'), index=True, nullable=True)
+    workflow = relationship('Workflow', back_populates="actions")
+
+
+class WorkflowExecution(Metadata):
+    __tablename__ = 'workflow_execution'
+    id = Column(Integer, primary_key=True)
+    successful = Column(Boolean, nullable=False)
+    message = Column(String, nullable=False)
+    workflow_id = Column(Integer, ForeignKey('workflow.id'), index=True, nullable=False)
+    workflow = relationship('Workflow', back_populates='executions')
+    object_and_id = Column(String, nullable=False)
 
 
 class Executor(Metadata):
@@ -2838,18 +2911,6 @@ class AgentsSchedule(Metadata):
     @property
     def parent(self):
         return self.agent
-
-
-class RuleAction(Metadata):
-    __tablename__ = 'rule_action'
-    id = Column(Integer, primary_key=True)
-    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
-    action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
-    action = relationship('Action', foreign_keys=[action_id],
-                          backref=backref('rule_actions', cascade="all, delete-orphan"))
-
-    __table_args__ = (UniqueConstraint('rule_id', 'action_id', name='rule_action_uc'),)
 
 
 class Agent(Metadata):
@@ -2924,45 +2985,11 @@ class AgentExecution(Metadata):
     def parent(self):
         return
 
-
-class Condition(Metadata):
-    __tablename__ = 'condition'
-
-    id = Column(Integer, primary_key=True)
-    field = Column(String)
-    value = Column(String)
-    operator = Column(String, default='equals')
-    # 1 rule <--> N conditions
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    # rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    # rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
-    rule_id = Column(Integer, ForeignKey('rule.id', ondelete="CASCADE"), index=True, nullable=False)
-    rule = relationship('Rule', back_populates="conditions")
-
-    @property
-    def parent(self):
-        return
-
-
-class RuleExecution(Metadata):
-    """
-        Searcher uses command_id to enable faraday activity tracking.
-        We then use this model to link rule execution with the command that the searcher
-        executed.
-    """
-    __tablename__ = 'rule_execution'
-    id = Column(Integer, primary_key=True)
-    start = Column(DateTime, nullable=True)
-    end = Column(DateTime, nullable=True)
-    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
-    command_id = Column(Integer, ForeignKey('command.id', ondelete='CASCADE'), index=True, nullable=False)
-    command = relationship('Command', foreign_keys=[command_id],
-                           backref=backref('rule_executions', cascade="all, delete-orphan"))
-
-    @property
-    def parent(self):
-        return
+    def notification_message(self, event, user=None):
+        if self.command.end_date:
+            return "Scan finished"
+        elif self.running:
+            return "Scan running"
 
 
 class SearchFilter(Metadata):

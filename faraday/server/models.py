@@ -1154,7 +1154,7 @@ class CVSSBase(db.Model):
     def base_score(self, base_score):
         self._base_score = base_score
 
-    def assign_vector_string(self, vector_string, base_score=None):
+    def assign_vector_string(self, vector_string):
         raise NotImplementedError
 
     def calculate_base_score(self):
@@ -1182,7 +1182,7 @@ class CVSSV2(CVSSBase):
         super().__init__(version=CVSS2GeneralConfig.VERSION, vector_string=vector_string,
                          _fixed_base_score=base_score, **kwargs)
 
-    def assign_vector_string(self, vector_string, base_score=None):
+    def assign_vector_string(self, vector_string):
         self._vector_string = vector_string
         vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:
@@ -1242,7 +1242,7 @@ class CVSSV3(CVSSBase):
         super().__init__(version=CVSS3GeneralConfig.VERSION, vector_string=vector_string,
                          _fixed_base_score=base_score, **kwargs)
 
-    def assign_vector_string(self, vector_string, base_score=None):
+    def assign_vector_string(self, vector_string):
         self._vector_string = vector_string
         vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
         if vector_string_parsed:

@@ -281,7 +281,7 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
 
 
 @click.command(help="Manage settings")
-@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list'], case_sensitive=False),
+@click.option('-a', '--action', type=click.Choice(['show', 'update', 'list', 'clear'], case_sensitive=False),
               default='list', show_default=True, help="Action")
 @click.option('--data', type=str, required=False, callback=manage_settings.settings_format_validation,
               help="Settings config in json")

@@ -1,7 +1,9 @@
+# Standard library imports
 import csv
-from io import StringIO, BytesIO
 import logging
+from io import StringIO, BytesIO
 
+# Local application imports
 from faraday.server.models import (
     db,
     Comment,
@@ -20,7 +22,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "target", "desc", "status", "hostnames", "comments", "owner",
         "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
         "data", "website", "path", "status_code", "request", "response", "method",
-        "params", "pname", "query", "policyviolations", "external_id", "impact_confidentiality",
+        "params", "pname", "query", "cve", "policyviolations", "external_id", "impact_confidentiality",
         "impact_integrity", "impact_availability", "impact_accountability", "update_date"
     ]
 
@@ -183,6 +185,7 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
         "params": vuln.get('params', None),
         "pname": vuln.get('pname', None),
         "query": vuln.get('query', None),
+        "cve": vuln.get('cve', None),
         "policyviolations": vuln.get('policyviolations', None),
         "external_id": vuln.get('external_id', None),
         "impact_confidentiality": vuln["impact"]["confidentiality"],
@@ -204,7 +207,8 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
 # Patch possible formula injection attacks
 def csv_escape(vuln_dict):
     for key, value in vuln_dict.items():
-        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') or str(value).startswith('@'):
+        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') \
+                or str(value).startswith('@'):
             # Convert value to str just in case is has another type (like a list or
             # dict). This would be done anyway by the csv writer.
             vuln_dict[key] = "'" + str(value)

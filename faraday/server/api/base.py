@@ -511,7 +511,7 @@ class ListMixin:
 
         objects, pagination_metadata = self._paginate(query)
         if not isinstance(objects, list):
-            objects.limit(None).offset(0)
+            objects = objects.limit(None).offset(0)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
 

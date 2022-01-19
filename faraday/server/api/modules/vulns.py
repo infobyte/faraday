@@ -153,7 +153,7 @@ class VulnerabilitySchema(AutoSchema):
     severity = SeverityField(required=True)
     status = fields.Method(
         serialize='get_status',
-        validate=OneOf(Vulnerability.STATUSES + ['opened']),
+        validate=OneOf(Vulnerability.STATUSES + ['open']),
         deserialize='load_status')
     type = fields.Method(serialize='get_type',
                          deserialize='load_type',
@@ -219,14 +219,14 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_status(self, obj):
         if obj.status == 'open':
-            return 'opened'
+            return 'open'
         return obj.status
 
     def get_issuetracker(self, obj):
         return {}
 
     def load_status(self, value):
-        if value == 'opened':
+        if value == 'open':
             return 'open'
         return value
 
@@ -431,8 +431,7 @@ class VulnerabilityFilterSet(FilterSet):
         allow_none=True))
     status_code = StatusCodeFilter(fields.Int())
     status = Filter(fields.Function(
-        deserialize=lambda val: 'open' if val == 'opened' else val,
-        validate=OneOf(Vulnerability.STATUSES + ['opened'])
+        validate=OneOf(Vulnerability.STATUSES)
     ))
     hostnames = HostnamesFilter(fields.Str())
     confirmed = Filter(fields.Boolean())

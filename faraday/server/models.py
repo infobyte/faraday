@@ -2369,6 +2369,97 @@ class Task(TaskABC):
         return self.methodology
 
 
+project_task_user_association = db.Table('project_task_user_association',
+                                         db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
+                                         db.Column('user_id', db.Integer(),
+                                                   db.ForeignKey('faraday_user.id', ondelete='CASCADE'))
+                                         )
+
+task_dependencies_association = db.Table('task_dependencies_association',
+                                         db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
+                                         db.Column('task_dependency_id', db.Integer(),
+                                                   db.ForeignKey('project_task.id', ondelete='CASCADE'))
+                                         )
+
+vulnerabilities_related_association = db.Table('vulnerabilities_related_association',
+                                               db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
+                                               db.Column('vulnerability_id', db.Integer(),
+                                                         db.ForeignKey('vulnerability.id', ondelete='CASCADE'))
+                                         )
+
+
+class PlannerProject(Metadata):
+    __tablename__ = 'planner_project'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text)
+
+    @property
+    def parent(self):
+        return
+
+
+class ProjectTask(Metadata):
+
+    TASK_STATUS_NEW = 'new'
+    TASK_STATUS_REVIEW = 'review'
+    TASK_STATUS_COMPLETED = 'completed'
+    TASK_STATUS_IN_PROGRESS = 'in progress'
+
+    STATUSES = [
+        TASK_STATUS_NEW,
+        TASK_STATUS_REVIEW,
+        TASK_STATUS_COMPLETED,
+        TASK_STATUS_IN_PROGRESS,
+    ]
+
+    NORMAL_TASK = 'task'
+    MILESTONE = 'milestone'
+
+    TASK_TYPES = [
+        NORMAL_TASK,
+        MILESTONE
+    ]
+
+    __tablename__ = 'project_task'
+    id = Column(Integer, primary_key=True)
+
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    status = Column(Enum(*STATUSES, name='project_task_statuses'), nullable=False)
+    type = Column(Enum(*TASK_TYPES, name='project_task_types'), nullable=False)
+
+    users_assigned = relationship(
+        "User",
+        secondary="project_task_user_association")
+
+    task_dependencies = relationship(
+        "Task",
+        secondary="task_dependencies_association",
+        primaryjoin=id == task_dependencies_association.c.task_id,
+        secondaryjoin=id == task_dependencies_association.c.task_dependency_id
+    )
+
+    vulnerabilities_related = relationship(
+        "VulnerabilityGeneric",
+        secondary="vulnerabilities_related_association",
+    )
+
+    project_id = Column(
+        Integer,
+        ForeignKey('planner_project.id'),
+        index=True,
+        nullable=False,
+    )
+    project = relationship(
+        'PlannerProject',
+        backref=backref('tasks', cascade="all, delete-orphan")
+    )
+
+    @property
+    def parent(self):
+        return None
+
+
 class License(Metadata):
     __tablename__ = 'license'
     id = Column(Integer, primary_key=True)

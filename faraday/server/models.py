@@ -1401,8 +1401,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
         index=True,
         nullable=True,
     )
-    duplicate_childs = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                    backref=backref('vulnerability_duplicate', remote_side=[id])
+    duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
+                                    backref=backref('duplicates_main', remote_side=[id])
                                     )
 
     vulnerability_template_id = Column(
@@ -1580,9 +1580,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def target(self):
         return self.target_host_ip
 
-    @property
-    def has_duplicate(self):
-        return self.vulnerability_duplicate_id is None
+    @hybrid_property
+    def duplicate_parent(self):
+        return self.vulnerability_duplicate_id
 
     @property
     def hostnames(self):
@@ -2703,32 +2703,6 @@ class Notification(db.Model):
     @property
     def parent(self):
         return
-
-
-class KnowledgeBase(db.Model):
-    __tablename__ = 'knowledge_base'
-    id = Column(Integer, primary_key=True)
-
-    vulnerability_template_id = Column(
-        Integer,
-        ForeignKey('vulnerability_template.id'),
-        index=True,
-        nullable=True,
-    )
-    vulnerability_template = relationship('VulnerabilityTemplate',
-                                          backref=backref('knowledge', cascade="all, delete-orphan"),
-                                          )
-
-    faraday_kb_id = Column(Text, nullable=False)
-    reference_id = Column(Integer, nullable=False)
-    script_name = Column(Text, nullable=False)
-    external_identifier = Column(Text, nullable=False)
-    tool_name = Column(Text, nullable=False)
-    false_positive = Column(Integer, nullable=False, default=0)
-    verified = Column(Integer, nullable=False, default=0)
-
-    __table_args__ = (UniqueConstraint('external_identifier', 'tool_name', 'reference_id',
-                                       name='uix_externalidentifier_toolname_referenceid'),)
 
 
 def rule_default_name(context):

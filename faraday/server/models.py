@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 
 # Standard library imports
-import json
 import logging
 import math
 import operator
@@ -1402,7 +1401,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         nullable=True,
     )
     duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                         backref=backref('duplicates_main', remote_side=[id])
+                                                                              backref=backref('duplicates_main', remote_side=[id])
                                          )
 
     vulnerability_template_id = Column(

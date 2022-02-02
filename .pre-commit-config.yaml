@@ -1,7 +1,7 @@
 default_stages: [commit]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.1.0
+    rev: v4.1.0
     hooks:
     -   id: trailing-whitespace
         exclude: '^faraday/server/www/'
@@ -15,13 +15,13 @@ repos:
     -   id: debug-statements
         exclude: '^faraday/server/www/'
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 3.9.2
     hooks:
     -   id: flake8
         exclude: '^faraday/server/www/'
         additional_dependencies: [flake8-typing-imports==1.9.0]
 -   repo: https://github.com/ikamensh/flynt/
-    rev: '0.56'
+    rev: '0.76'
     hooks:
     -   id: flynt
         args: [ -df ]
@@ -50,7 +50,7 @@ repos:
         args: [--mode=ls, --local]
         stages: [push]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.0
+    rev: v2.31.0
     hooks:
     -   id: pyupgrade
         args: [ --py3-plus , --py36-plus]

@@ -715,7 +715,7 @@ class FilterWorkspacedMixin(ListMixin):
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
             try:
@@ -830,7 +830,7 @@ class FilterMixin(ListMixin):
             if offset:
                 filter_query = filter_query.offset(offset)
             count = filter_query.count()
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
             filter_query = self._generate_filter_query(

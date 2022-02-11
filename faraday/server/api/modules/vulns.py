@@ -893,8 +893,7 @@ class VulnerabilityView(PaginatedMixin,
             if offset:
                 vulns = vulns.offset(offset)
 
-            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(
-                vulns.all())
+            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
             return vulns, total_vulns.count()
         else:
             vulns = self._generate_filter_query(

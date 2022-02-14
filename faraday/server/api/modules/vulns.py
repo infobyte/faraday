@@ -218,8 +218,6 @@ class VulnerabilitySchema(AutoSchema):
         return 'Service' if obj.service_id is not None else 'Host'
 
     def get_status(self, obj):
-        if obj.status == 'open':
-            return 'opened'
         return obj.status
 
     def get_issuetracker(self, obj):

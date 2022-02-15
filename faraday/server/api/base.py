@@ -1,49 +1,52 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-import json
+
+# Standard library imports
 import logging
+import datetime
+import json
 from json import JSONDecodeError
 from typing import Tuple
-
-import flask
-import sqlalchemy
-import datetime
 from collections import defaultdict
-from flask_classful import FlaskView
+
+# Related third party imports
+import flask
+import flask_login
+import sqlalchemy
+from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload, undefer, with_expression
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
-from sqlalchemy import func, desc, asc
+from sqlalchemy.sql.elements import BooleanClauseList
+from flask_classful import FlaskView, route
 from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaOpts, SQLAlchemyAutoSchemaMeta
-from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
-from flask_classful import route
-import flask_login
 
-from faraday.server.models import (Workspace,
-                                   db,
-                                   Command,
-                                   CommandObject,
-                                   count_vulnerability_severities,
-                                   _make_vuln_count_property,
-                                   _make_active_agents_count_property)
+# Local application imports
+from faraday.server.models import (
+    Workspace,
+    Command,
+    CommandObject,
+    db,
+    count_vulnerability_severities,
+    _make_vuln_count_property,
+    _make_active_agents_count_property,
+)
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
-    not_null_constraint_violation
-    )
+    not_null_constraint_violation,
+)
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
-
 from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)

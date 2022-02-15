@@ -91,7 +91,7 @@ class GenericView(FlaskView):
     Then, you should register it with your app by using the ``register``
     classmethod.
 
-    .. _Django REST Framework generic viewsets: http://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
+    .. _Django REST Framework generic viewsets: https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
     """
 
     # Must-implement attributes
@@ -112,7 +112,7 @@ class GenericView(FlaskView):
     #: Arguments that are passed to the view but shouldn't change the route
     #: rule. This should be used when route_prefix is parametrized
     #:
-    #: You tipically won't need this, unless you're creating nested views.
+    #: You typically won't need this, unless you're creating nested views.
     #: For example GenericWorkspacedView use this so the workspace name is
     #: prepended to the view URL
     base_args = []
@@ -143,7 +143,7 @@ class GenericView(FlaskView):
     #:     you set lookup_field_type to `string`
     lookup_field = 'id'
 
-    #: A function that converts the string paremeter passed in the URL to the
+    #: A function that converts the string parameter passed in the URL to the
     #: value that will be queried in the database.
     #: It defaults to int to match the type of the default lookup_field_type
     #: (id)
@@ -153,7 +153,7 @@ class GenericView(FlaskView):
 
     #: List of relationships to eagerload in list and retrieve views.
     #:
-    #: This is useful when you when you want to retrieve all childrens
+    #: This is useful when you when you want to retrieve all children
     #: of an object in an API response, like for example if you want
     #: to have all hostnames of each host in the hosts endpoint.
     get_joinedloads = []  # List of relationships to eagerload
@@ -193,7 +193,7 @@ class GenericView(FlaskView):
         return self._get_schema_class()(**kwargs)
 
     def _set_schema_context(self, context, **kwargs):
-        """This function can be overriden to update the context passed
+        """This function can be overridden to update the context passed
         to the schema.
         """
         return context
@@ -237,7 +237,7 @@ class GenericView(FlaskView):
         object with many childs makes many SQL requests that tends to be
         slow.
 
-        You tipically won't need to overwrite this method, but to set
+        You typically won't need to overwrite this method, but to set
         get_joinedloads and get_undefer attributes that are used by
         this method.
 
@@ -264,8 +264,8 @@ class GenericView(FlaskView):
     def _filter_query(self, query):
         """Return a new SQLAlchemy query with some filters applied.
 
-        By default it doesn't do anything. It is overriden by
-        :class:`FilterAlchemyMixin` to give support to Filteralchemy
+        By default it doesn't do anything. It is overridden by
+        :class:`FilterAlchemyMixin` to give support to FilterAlchemy
         filters.
 
         .. warning::
@@ -286,6 +286,7 @@ class GenericView(FlaskView):
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
+        obj = None
         self._validate_object_id(object_id)
         if eagerload:
             query = self._get_eagerloaded_query(**kwargs)
@@ -325,7 +326,8 @@ class GenericView(FlaskView):
         except ObjectDeletedError:
             return []
 
-    def _parse_data(self, schema, request, *args, **kwargs):
+    @staticmethod
+    def _parse_data(schema, request, *args, **kwargs):
         """Deserializes from a Flask request to a dict with valid
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
@@ -369,15 +371,16 @@ class GenericView(FlaskView):
             response.status_code = error.status_code
             return response
 
-        # @app.errorhandler(404)
+        """# @app.errorhandler(404)
         def handle_not_found(err):  # pylint: disable=unused-variable
             response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
-            return flask.jsonify(response), 404
+            return flask.jsonify(response), 404"""
 
         @app.errorhandler(500)
         def handle_server_error(err):  # pylint: disable=unused-variable
             response = {'success': False,
-                        'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
+                        'message': f"Exception: {err.original_exception}" if faraday_server.debug else
+                        'Internal Server Error'}
             return flask.jsonify(response), 500
 
 
@@ -396,7 +399,9 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    def _get_workspace(self, workspace_name):
+    @staticmethod
+    def _get_workspace(workspace_name):
+        ws = None
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
@@ -423,7 +428,7 @@ class GenericWorkspacedView(GenericView):
         return obj
 
     def _set_schema_context(self, context, **kwargs):
-        """Overriden to pass the workspace name to the schema"""
+        """Overridden to pass the workspace name to the schema"""
         context.update(kwargs)
         return context
 
@@ -432,7 +437,7 @@ class GenericWorkspacedView(GenericView):
         if hasattr(sup, 'before_request'):
             sup.before_request(name, *args, **kwargs)
         if (self._get_workspace(kwargs['workspace_name']).readonly
-            and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
+                and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
@@ -472,7 +477,8 @@ class ListMixin:
         """
         return objects
 
-    def _paginate(self, query):
+    @staticmethod
+    def _paginate(query):
         """Overwrite this to implement pagination in the list endpoint.
 
         This is typically overwritten by SortableMixin.
@@ -527,15 +533,15 @@ class SortableMixin:
 
     Works for both workspaced and non-workspaced views.
     """
-    sort_field_paremeter_name = "sort"
-    sort_direction_paremeter_name = "sort_dir"
+    sort_field_parameter_name = "sort"
+    sort_direction_parameter_name = "sort_dir"
     sort_pass_silently = False
     default_sort_direction = "asc"
     sort_model_class = None  # Override to use a model with more fields
 
     def _get_order_field(self, **kwargs):
         try:
-            order_field = flask.request.args[self.sort_field_paremeter_name]
+            order_field = flask.request.args[self.sort_field_parameter_name]
         except KeyError:
             # Sort field not specified, return the default
             return self.order_field
@@ -580,7 +586,7 @@ class SortableMixin:
             field = getattr(model_class, order_field + '_id')
         else:
             field = getattr(model_class, order_field)
-        sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
+        sort_dir = flask.request.args.get(self.sort_direction_parameter_name,
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):
             if self.sort_pass_silently:
@@ -1016,7 +1022,7 @@ class CreateMixin:
         return obj
 
 
-class CommandMixin():
+class CommandMixin:
     """
         Created the command obj to log model activity after a command
         execution via the api (ex. from plugins)
@@ -1024,7 +1030,8 @@ class CommandMixin():
         NOTE: GET parameters are also available in POST requests
     """
 
-    def _set_command_id(self, obj, created):
+    @staticmethod
+    def _set_command_id(obj, created):
         try:
             # validates the data type from user input.
             command_id = int(flask.request.args.get('command_id', None))
@@ -1376,7 +1383,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         return super().put(object_id, workspace_name=workspace_name)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
-        # # Make sure that if I created new objects, I had properly commited them
+        # # Make sure that if I created new objects, I had properly committed them
         # assert not db.session.new
 
         with db.session.no_autoflush:
@@ -1605,11 +1612,12 @@ class CountWorkspacedMixin:
         group_by = f'{table_name}.{group_by}'
 
         count = self._filter_query(
-            db.session.query(self.model_class)
-                .join(Workspace)
-                .group_by(group_by)
-                .filter(Workspace.name == workspace_name,
-                        *self.count_extra_filters))
+            db.session.query(self.model_class).
+            join(Workspace).
+            group_by(group_by).
+            filter(Workspace.name == workspace_name,
+                   *self.count_extra_filters)
+        )
 
         # order
         order_by = group_by
@@ -1779,7 +1787,8 @@ class CustomSQLAlchemyAutoSchemaOpts(SQLAlchemyAutoSchemaOpts):
 # backwards-compatible. Yes, it's horrible.
 # Also, I'm putting it here because this file will be always imported in a very
 # early stage, before defining any schemas.
-# This commit broke backwards compatibility: https://github.com/marshmallow-code/marshmallow/commit/610ec20ea3be89684f7e4df8035d163c3561c904
+# This commit broke backwards compatibility:
+# https://github.com/marshmallow-code/marshmallow/commit/610ec20ea3be89684f7e4df8035d163c3561c904
 # TODO check if we can remove this
 def old_isoformat(dt, *args, **kwargs):
     """Return the ISO8601-formatted UTC representation of a datetime object."""
@@ -1798,7 +1807,7 @@ class AutoSchema(Schema, metaclass=SQLAlchemyAutoSchemaMeta):
     A Marshmallow schema that does field introspection based on
     the SQLAlchemy model specified in Meta.model.
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
-    the serialization and deserialization proccess.
+    the serialization and deserialization process.
     """
     OPTIONS_CLASS = CustomSQLAlchemyAutoSchemaOpts
 
@@ -1814,7 +1823,7 @@ class AutoSchema(Schema, metaclass=SQLAlchemyAutoSchemaMeta):
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.
 
-    It is used to make filteralchemy support not nullable columns"""
+    It is used to make FilterAlchemy support not nullable columns"""
 
     def _add_column_kwargs(self, kwargs, column):
         super()._add_column_kwargs(kwargs, column)
@@ -1837,7 +1846,7 @@ class FilterSetMeta:
 def get_user_permissions(user):
     permissions = defaultdict(dict)
 
-    # Hardcode all permisions to allowed
+    # Hardcode all permissions to allowed
     ALLOWED = {'allowed': True, 'reason': None}
 
     # TODO schema

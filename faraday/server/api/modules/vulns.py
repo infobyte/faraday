@@ -498,12 +498,6 @@ class VulnerabilityView(PaginatedMixin,
     order_field = desc(VulnerabilityGeneric.confirmed), VulnerabilityGeneric.severity, VulnerabilityGeneric.create_date
     get_joinedloads = [Vulnerability.evidence, Vulnerability.creator]
 
-    unique_fields_by_class = {
-        'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
-        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
-                              'parameter_name', 'path', 'website')],
-    }
-
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
@@ -513,10 +507,6 @@ class VulnerabilityView(PaginatedMixin,
         'Vulnerability': VulnerabilitySchema,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
-
-    def _validate_uniqueness(self, obj, object_id=None):
-        unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
-        super()._validate_uniqueness(obj, object_id, unique_fields)
 
     def _get_schema_instance(self, route_kwargs, **kwargs):
         schema = super()._get_schema_instance(route_kwargs, **kwargs)

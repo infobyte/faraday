@@ -546,13 +546,13 @@ class VulnerabilityView(PaginatedMixin,
 
         db.session.flush()
 
+        self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:
                 obj.tool = obj.creator_command_tool
             else:
                 obj.tool = "Web UI"
         db.session.commit()
-        self._process_attachments(obj, attachments)
         return obj
 
     @staticmethod
@@ -844,18 +844,6 @@ class VulnerabilityView(PaginatedMixin,
                        vulnerability_class,
                        filters)
         vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
-        if hostname_filters:
-            or_filters = []
-            for hostname_filter in hostname_filters:
-                or_filters.append(Hostname.name == hostname_filter['val'])
-
-            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
-            vulns = vulns_host.union(
-                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
-
-        if hosts_os_filter:
-            os_value = hosts_os_filter['val']
-            vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
             options = [
@@ -884,6 +872,19 @@ class VulnerabilityView(PaginatedMixin,
                 VulnerabilityGeneric,
                 [Vulnerability, VulnerabilityWeb]
             ), *options)
+
+        if hostname_filters:
+            or_filters = []
+            for hostname_filter in hostname_filters:
+                or_filters.append(Hostname.name == hostname_filter['val'])
+
+            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
+            vulns = vulns_host.union(
+                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
+
+        if hosts_os_filter:
+            os_value = hosts_os_filter['val']
+            vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
         return vulns
 
     def _filter(self, filters, workspace_name):

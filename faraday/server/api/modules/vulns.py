@@ -864,6 +864,32 @@ class VulnerabilityView(PaginatedMixin,
                 joinedload(Vulnerability.service),
                 joinedload(VulnerabilityWeb.service),
             )
+            options = [
+                joinedload(Vulnerability.host).
+                    load_only(Host.id).  # Only hostnames are needed
+                    joinedload(Host.hostnames),
+
+                joinedload(Vulnerability.service).
+                    joinedload(Service.host).
+                    joinedload(Host.hostnames),
+
+                joinedload(VulnerabilityWeb.service).
+                    joinedload(Service.host).
+                    joinedload(Host.hostnames),
+
+                joinedload(VulnerabilityGeneric.update_user),
+                undefer(VulnerabilityGeneric.creator_command_id),
+                undefer(VulnerabilityGeneric.creator_command_tool),
+                undefer(VulnerabilityGeneric.target_host_ip),
+                undefer(VulnerabilityGeneric.target_host_os),
+                joinedload(VulnerabilityGeneric.tags),
+                noload(VulnerabilityGeneric.evidence)
+            ]
+
+            vulns = vulns.options(selectin_polymorphic(
+                VulnerabilityGeneric,
+                [Vulnerability, VulnerabilityWeb]
+            ), *options)
         return vulns
 
     def _filter(self, filters, workspace_name):

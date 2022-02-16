@@ -858,12 +858,6 @@ class VulnerabilityView(PaginatedMixin,
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
-            vulns = vulns.options(
-                joinedload(VulnerabilityGeneric.tags),
-                joinedload(Vulnerability.host),
-                joinedload(Vulnerability.service),
-                joinedload(VulnerabilityWeb.service),
-            )
             options = [
                 joinedload(Vulnerability.host).
                     load_only(Host.id).  # Only hostnames are needed

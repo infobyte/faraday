@@ -19,4 +19,5 @@ def upgrade():
 
 
 def downgrade():
-    op.execute('UPDATE  NOTIFICATION_SUBSCRIPTION_CONFIG_BASE SET active = false WHERE id IN (1, 11, 14, 21, 13)')
+    # we will not downgrade this change.
+    pass

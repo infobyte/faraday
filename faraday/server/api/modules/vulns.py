@@ -548,13 +548,13 @@ class VulnerabilityView(PaginatedMixin,
 
         db.session.flush()
 
+        self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:
                 obj.tool = obj.creator_command_tool
             else:
                 obj.tool = "Web UI"
         db.session.commit()
-        self._process_attachments(obj, attachments)
         return obj
 
     @staticmethod

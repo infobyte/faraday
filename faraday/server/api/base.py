@@ -417,6 +417,7 @@ class GenericWorkspacedView(GenericView):
 
     def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
+        obj = None
         if eagerload:
             query = self._get_eagerloaded_query(workspace_name)
         else:
@@ -563,7 +564,7 @@ class SortableMixin:
             field_instance = schema.fields[order_field]
         except KeyError:
             if self.sort_pass_silently:
-                logger.warn(f"Unknown field: {order_field}")
+                logger.warning(f"Unknown field: {order_field}")
                 return self.order_field
             raise InvalidUsage(f"Unknown field: {order_field}")
 
@@ -576,7 +577,7 @@ class SortableMixin:
         model_class = self.sort_model_class or self.model_class
         if order_field not in inspect(model_class).attrs:
             if self.sort_pass_silently:
-                logger.warn(f"Field not in the DB: {order_field}")
+                logger.warning(f"Field not in the DB: {order_field}")
                 return self.order_field
             # It could be something like fields.Method
             raise InvalidUsage(f"Field not in the DB: {order_field}")
@@ -590,7 +591,7 @@ class SortableMixin:
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):
             if self.sort_pass_silently:
-                logger.warn(f"Invalid value for sorting direction: {sort_dir}")
+                logger.warning(f"Invalid value for sorting direction: {sort_dir}")
                 return self.order_field
             raise InvalidUsage(f"Invalid value for sorting direction: {sort_dir}")
         try:
@@ -602,7 +603,7 @@ class SortableMixin:
                 return getattr(field, sort_dir)()
         except NotImplementedError:
             if self.sort_pass_silently:
-                logger.warn(f"field {order_field} doesn't support sorting")
+                logger.warning(f"field {order_field} doesn't support sorting")
                 return self.order_field
             # There are some fields that can't be used for sorting
             raise InvalidUsage(f"field {order_field} doesn't support sorting")
@@ -614,6 +615,7 @@ class PaginatedMixin:
     page_number_parameter_name = 'page'
 
     def _paginate(self, query):
+        page, per_page = None, None
         if self.per_page_parameter_name in flask.request.args:
 
             try:
@@ -702,6 +704,7 @@ class FilterWorkspacedMixin(ListMixin):
             flask.abort(400, "Invalid filters")
 
         workspace = self._get_workspace(workspace_name)
+        filter_query = None
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -815,6 +818,7 @@ class FilterMixin(ListMixin):
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
+        filter_query = None
         if 'group_by' not in filters:
             offset = None
             limit = None

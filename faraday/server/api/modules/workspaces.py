@@ -287,7 +287,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 workspace_name=object_id)
         return query
 
-    def _get_object(self, object_id, eagerload=False, **kwargs):
+    def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         """
         Given the object_id and extra route params, get an instance of
         ``self.model_class``

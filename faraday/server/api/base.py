@@ -219,7 +219,7 @@ class GenericView(FlaskView):
             return False
         return True
 
-    def _get_base_query(self):
+    def _get_base_query(self, *args, **kwargs):
         """Return the initial query all views should use
 
         .. warning::
@@ -281,7 +281,7 @@ class GenericView(FlaskView):
         """
         return query
 
-    def _get_object(self, object_id, eagerload=False, **kwargs):
+    def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         """
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
@@ -415,7 +415,7 @@ class GenericWorkspacedView(GenericView):
         return base.join(Workspace).filter(
             Workspace.id == self._get_workspace(workspace_name).id)
 
-    def _get_object(self, object_id, workspace_name, eagerload=False):
+    def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
         if eagerload:
             query = self._get_eagerloaded_query(workspace_name)

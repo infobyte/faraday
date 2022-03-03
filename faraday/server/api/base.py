@@ -462,6 +462,16 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
         )
 
 
+def get_filtered_data(filters, filter_query):
+    column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
+    rows = [list(zip(column_names, row)) for row in filter_query.all()]
+    data = []
+    for row in rows:
+        data.append({field[0]: field[1] for field in row})
+
+    return data, len(rows)
+
+
 class ListMixin:
     """Add GET / route"""
 
@@ -737,13 +747,8 @@ class FilterWorkspacedMixin(ListMixin):
                 )
             except AttributeError as e:
                 flask.abort(400, e)
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in filter_query.all()]
-            data = []
-            for row in rows:
-                data.append({field[0]: field[1] for field in row})
-
-            return data, len(rows)
+            data, rows_count = get_filtered_data(filters, filter_query)
+            return data, rows_count
 
 
 class FilterMixin(ListMixin):
@@ -852,13 +857,8 @@ class FilterMixin(ListMixin):
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in filter_query.all()]
-            data = []
-            for row in rows:
-                data.append({field[0]: field[1] for field in row})
-
-            return data, len(rows)
+            data, rows_count = get_filtered_data(filters, filter_query)
+            return data, rows_count
 
 
 class ListWorkspacedMixin(ListMixin):

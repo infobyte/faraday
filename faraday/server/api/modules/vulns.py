@@ -40,6 +40,7 @@ from faraday.server.api.base import (
     CountMultiWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
+    get_filtered_data,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -914,13 +915,9 @@ class VulnerabilityView(PaginatedMixin,
                 workspace,
                 marshmallow_params,
             )
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in vulns.all()]
-            vulns_data = []
-            for row in rows:
-                vulns_data.append({field[0]: field[1] for field in row})
+            vulns_data, rows_count = get_filtered_data(filters, vulns)
 
-            return vulns_data, len(rows)
+            return vulns_data, rows_count
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):

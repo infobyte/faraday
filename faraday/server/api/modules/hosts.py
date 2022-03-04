@@ -1,66 +1,61 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-from io import StringIO
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 
+# Standard library imports
 import logging
 import csv
-import flask
 import re
-from flask import Blueprint, make_response, jsonify, abort
+from io import StringIO
+
+# Related third party imports
+import wtforms
 import pytz
+import flask
+from flask import Blueprint, make_response, jsonify, abort
 from flask_classful import route
+from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
-import wtforms
-from flask_wtf.csrf import validate_csrf
 
+# Local application imports
 from faraday.server.utils.database import get_or_create
-
 from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-
     FilterWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    BulkUpdateWorkspacedMixin,
 )
+from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
     NullToBlankString,
     PrimaryKeyRelatedField,
-    SelfNestedField
+    SelfNestedField,
 )
 from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
-from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
-
 logger = logging.getLogger(__name__)
 
 
 class HostCountSchema(Schema):
-    host_id = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='id')
-    critical = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_critical_count')
-    high = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_high_count')
-    med = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_medium_count')
-    low = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_low_count')
-    info = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_informational_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_unclassified_count')
-    total = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_total_count')
+    host_id = fields.Integer(dump_only=True, allow_none=False, attribute='id')
+    critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
+    high = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
+    med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
+    low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
+    info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
+    total = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
 
 
 class HostSchema(AutoSchema):
@@ -100,12 +95,14 @@ class HostSchema(AutoSchema):
                   'important', 'severity_counts'
                   )
 
-    def get_service_summaries(self, obj):
+    @staticmethod
+    def get_service_summaries(obj):
         return [service.summary
                 for service in obj.services
                 if service.status == 'open']
 
-    def get_service_version(self, obj):
+    @staticmethod
+    def get_service_version(obj):
         return [service.version
                 for service in obj.services
                 if service.status == 'open']
@@ -258,7 +255,8 @@ class HostsView(PaginatedMixin,
                 else:
                     logger.debug("Host Created (%s)", host_dict)
                     hosts_created_count += 1
-            return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
+            return make_response(jsonify(hosts_created=hosts_created_count,
+                                         hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
             abort(400, f"Error parsing hosts CSV ({e})")
@@ -347,7 +345,11 @@ class HostsView(PaginatedMixin,
         res_dict = {'tools': []}
         for row in result:
             _, command = row
-            res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).isoformat()})
+            res_dict['tools'].append({'command': command.tool,
+                                      'user': command.user,
+                                      'params': command.params,
+                                      'command_id': command.id,
+                                      'create_date': command.create_date.replace(tzinfo=pytz.utc).isoformat()})
         return res_dict
 
     def _perform_create(self, data, **kwargs):
@@ -400,8 +402,7 @@ class HostsView(PaginatedMixin,
             })
         return {
             'rows': hosts,
-            'count': (pagination_metadata and pagination_metadata.total
-                           or len(hosts)),
+            'count': (pagination_metadata and pagination_metadata.total or len(hosts)),
         }
 
     @route('', methods=['DELETE'])

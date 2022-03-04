@@ -1,6 +1,5 @@
 # Standard library imports
 import logging
-import re
 import string
 import random
 import json
@@ -37,7 +36,6 @@ from faraday.server.models import (
     AgentExecution,
     Workspace,
     Metadata,
-    CVE,
 )
 from faraday.server.utils.database import (
     get_conflict_object,

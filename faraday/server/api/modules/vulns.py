@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 import io
 import logging
-import re
 import json
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
@@ -57,7 +56,6 @@ from faraday.server.models import (
     CustomFieldsSchema,
     VulnerabilityGeneric,
     User,
-    CVE,
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv

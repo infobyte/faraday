@@ -67,11 +67,11 @@ class TestCommentAPIGeneric(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert res.status_code == 400
         assert res.json == {'message': "Can't comment object of another workspace"}
 
-    def test_cannot_create_comment_of_inexistent_object(self, test_client, session):
+    def test_cannot_create_comment_of_nonexistent_object(self, test_client, session):
         raw_comment = self._create_raw_comment('service', 456464556)
         res = test_client.post(self.url(workspace=self.workspace), data=raw_comment)
         assert res.status_code == 400
-        assert res.json == {'message': "Can't comment inexistent object"}
+        assert res.json == {'message': "Can't comment non-existent object"}
 
     def test_create_unique_comment_for_plugins(self, session, test_client):
         """

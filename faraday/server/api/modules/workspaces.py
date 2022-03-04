@@ -1,41 +1,49 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-from datetime import timedelta, date
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 
+# Standard library imports
 import re
-
 import json
 import logging
+from datetime import timedelta, date
 from itertools import groupby
 
+# Related third party imports
 import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from sqlalchemy.orm import (
-    with_expression
-)
+from sqlalchemy.orm import with_expression
 from sqlalchemy.orm.exc import NoResultFound
 
-from faraday.server.models import (db,
-                                   Workspace,
-                                   _make_vuln_count_property,
-                                   Vulnerability,
-                                   _make_active_agents_count_property,
-                                   count_vulnerability_severities,
-                                   _last_run_agent_date,
-                                   SeveritiesHistogram)
+# Local application imports
+from faraday.server.models import (
+    db,
+    Workspace,
+    SeveritiesHistogram,
+    Vulnerability,
+    _make_vuln_count_property,
+    _make_active_agents_count_property,
+    count_vulnerability_severities,
+    _last_run_agent_date,
+)
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, BulkDeleteMixin
+from faraday.server.api.base import (
+    ReadWriteView,
+    AutoSchema,
+    FilterMixin,
+    BulkDeleteMixin,
+)
 
 logger = logging.getLogger(__name__)
-
 workspace_api = Blueprint('workspace_api', __name__)
 
 
@@ -125,7 +133,7 @@ def init_date_range(from_day, days):
     return date_list
 
 
-def generate_histogram(from_date, days_before):
+def generate_histogram(days_before):
     histogram_dict = dict()
 
     workspaces_histograms = SeveritiesHistogram.query \
@@ -201,6 +209,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
+        histogram_days, histogram_dict, today = None, None, None
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
 
         if histogram:
@@ -212,7 +221,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                                                     else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
                                                     default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
                                                     )
-            histogram_dict = generate_histogram(today, histogram_days)
+            histogram_dict = generate_histogram(histogram_days)
 
         query = self._get_base_query()
 
@@ -269,7 +278,8 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _get_querystring_boolean_field(self, field_name, default=None):
+    @staticmethod
+    def _get_querystring_boolean_field(field_name, default=None):
         try:
             val = bool(json.loads(flask.request.args[field_name]))
         except (KeyError, ValueError):
@@ -292,6 +302,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
+        obj = None
         confirmed = self._get_querystring_boolean_field('confirmed')
         active = self._get_querystring_boolean_field('active')
         status = flask.request.args.get('status')
@@ -363,7 +374,11 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 )
             )
 
-        query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
+        query = count_vulnerability_severities(query,
+                                               Workspace,
+                                               status=status,
+                                               confirmed=confirmed,
+                                               all_severities=True)
 
         try:
             obj = query.one()

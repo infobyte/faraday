@@ -63,6 +63,34 @@ def output_json(data, code, headers=None):
     return response
 
 
+def get_filtered_data(filters, filter_query):
+    column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
+    rows = [list(zip(column_names, row)) for row in filter_query.all()]
+    data = []
+    for row in rows:
+        data.append({field[0]: field[1] for field in row})
+
+    return data, len(rows)
+
+
+def get_group_by_and_sort_dir(model_class):
+    group_by = flask.request.args.get('group_by', None)
+    sort_dir = flask.request.args.get('order', "asc").lower()
+
+    # TODO migration: whitelist fields to avoid leaking a confidential
+    # field's value.
+    # Example: /users/count/?group_by=password
+    # Also we should check that the field exists in the db and isn't, for
+    # example, a relationship
+    if not group_by or group_by not in inspect(model_class).attrs:
+        flask.abort(400, {"message": "group_by is a required parameter"})
+
+    if sort_dir and sort_dir not in ('asc', 'desc'):
+        flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+
+    return group_by, sort_dir
+
+
 class InvalidUsage(Exception):
     status_code = 400
 
@@ -460,16 +488,6 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
                 name=self._get_workspace(workspace_name).name
             )
         )
-
-
-def get_filtered_data(filters, filter_query):
-    column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-    rows = [list(zip(column_names, row)) for row in filter_query.all()]
-    data = []
-    for row in rows:
-        data.append({field[0]: field[1] for field in row})
-
-    return data, len(rows)
 
 
 class ListMixin:
@@ -1595,19 +1613,7 @@ class CountWorkspacedMixin:
             'groups': [],
             'total_count': 0
         }
-        group_by = flask.request.args.get('group_by', None)
-        sort_dir = flask.request.args.get('order', "asc").lower()
-
-        # TODO migration: whitelist fields to avoid leaking a confidential
-        # field's value.
-        # Example: /users/count/?group_by=password
-        # Also we should check that the field exists in the db and isn't, for
-        # example, a relationship
-        if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(400, {"message": "group_by is a required parameter"})
-
-        if sort_dir and sort_dir not in ('asc', 'desc'):
-            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+        group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.
@@ -1702,19 +1708,7 @@ class CountMultiWorkspacedMixin:
         for workspace_name in workspace_names_list:
             self._get_workspace(workspace_name)
 
-        group_by = flask.request.args.get('group_by', None)
-        sort_dir = flask.request.args.get('order', "asc").lower()
-
-        # TODO migration: whitelist fields to avoid leaking a confidential
-        # field's value.
-        # Example: /users/count/?group_by=password
-        # Also we should check that the field exists in the db and isn't, for
-        # example, a relationship
-        if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(400, {"message": "group_by is a required parameter"})
-
-        if sort_dir and sort_dir not in ('asc', 'desc'):
-            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+        group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
 
         grouped_attr = getattr(self.model_class, group_by)
 

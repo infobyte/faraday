@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import logging
 import datetime
 import json
+import re
 from json import JSONDecodeError
 from typing import Tuple
 from collections import defaultdict
@@ -48,6 +49,7 @@ from faraday.server.utils.database import (
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
 from faraday.server.config import faraday_server
+from faraday.server.models import CVE
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,23 @@ def get_group_by_and_sort_dir(model_class):
         flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
     return group_by, sort_dir
+
+
+def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
+    vuln.references = references
+    vuln.policy_violations = policyviolations
+
+    # parse cve and reference. Should be temporal.
+    parsed_cve_list = []
+    for cve in cve_list:
+        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+    for cve in references:
+        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+    vuln.cve = parsed_cve_list
+
+    return vuln
 
 
 class InvalidUsage(Exception):

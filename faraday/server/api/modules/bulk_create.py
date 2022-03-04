@@ -44,7 +44,11 @@ from faraday.server.utils.database import (
     is_unique_constraint_violation,
     get_object_type_for,
 )
-from faraday.server.api.base import AutoSchema, GenericWorkspacedView
+from faraday.server.api.base import (
+    AutoSchema,
+    GenericWorkspacedView,
+    parse_cve_references_and_policyviolations,
+)
 from faraday.server.api.modules import (
     hosts,
     services,
@@ -129,7 +133,7 @@ class BulkServiceSchema(services.ServiceSchema):
         missing=[],
     )
 
-    def post_load_parent(self, data):
+    def post_load_parent(self, data, **kwargs):
         # Don't require the parent field
         return
 
@@ -415,18 +419,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     def update_vuln(_policyviolations, _references, _vuln, _cve_list):
 
-        _vuln.references = _references
-        _vuln.policy_violations = _policyviolations
-
-        # parse cve and reference. Should be temporal.
-        parsed_cve_list = []
-        for cve in _cve_list:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        for cve in _references:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        _vuln.cve = parsed_cve_list
+        _vuln = parse_cve_references_and_policyviolations(_vuln, _references, _policyviolations, _cve_list)
         # TODO attachments
         db.session.add(_vuln)
         db.session.commit()

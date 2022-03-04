@@ -1,32 +1,32 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-import flask
-
-from werkzeug.local import LocalProxy
-from werkzeug.datastructures import MultiDict
-from urllib.parse import urlparse
+# Standard library imports
 import re
 import logging
+from urllib.parse import urlparse
 
+# Related third party imports
+import flask
 from flask import current_app as app
 from flask import Blueprint, request, make_response
 from flask_security.signals import reset_password_instructions_sent
-from faraday.server import config
-
 from flask_security.recoverable import generate_reset_password_token, update_password
 from flask_security.views import anonymous_user_required
 from flask_security.utils import send_mail, config_value, get_token_status, verify_hash
 from flask_security.forms import ResetPasswordForm
+from werkzeug.local import LocalProxy
+from werkzeug.datastructures import MultiDict
 
+# Local application imports
+from faraday.server import config
 from faraday.server.models import User
 
 _security = LocalProxy(lambda: app.extensions['security'])
 _datastore = LocalProxy(lambda: _security.datastore)
-
 auth = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def forgot_password():
         200:
           description: Ok
     """
+    email = None
 
     if not config.smtp.is_enabled():
         logger.warning('Missing SMTP Config.')

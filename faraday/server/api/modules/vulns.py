@@ -2,32 +2,32 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+# Standard library imports
 import io
-import json
 import logging
 import re
-from base64 import b64encode, b64decode
+import json
 from json.decoder import JSONDecodeError
+from base64 import b64encode, b64decode
 from pathlib import Path
 
+# Related third party imports
 import flask
-from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
+from filteralchemy import Filter, FilterSet, operators
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_, func
 from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
+from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
-from faraday.server.utils.search import (
-    search,
-)
-
+# Local application imports
+from faraday.server.utils.search import search
 from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
@@ -37,8 +37,9 @@ from faraday.server.api.base import (
     InvalidUsage,
     CountMultiWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    BulkUpdateWorkspacedMixin,
 )
+from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
     db,
@@ -52,13 +53,11 @@ from faraday.server.models import (
     CustomFieldsSchema,
     VulnerabilityGeneric,
     User,
-    CVE
+    CVE,
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
-
 from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
     MutableField,
     SeverityField,
@@ -83,11 +82,13 @@ class EvidenceSchema(AutoSchema):
             'data'
         )
 
-    def get_content_type(self, file_obj):
+    @staticmethod
+    def get_content_type(file_obj):
         depot = DepotManager.get()
         return depot.get(file_obj.content.get('file_id')).content_type
 
-    def get_data(self, file_obj):
+    @staticmethod
+    def get_data(file_obj):
         depot = DepotManager.get()
         return b64encode(depot.get(file_obj.content.get('file_id')).read()).decode()
 
@@ -106,7 +107,8 @@ class CustomMetadataSchema(MetadataSchema):
     command_id = fields.Integer(dump_only=True, attribute='creator_command_id')
     creator = fields.Method('get_creator', dump_only=True)
 
-    def get_creator(self, obj):
+    @staticmethod
+    def get_creator(obj):
         if obj.tool:
             return obj.tool
         else:
@@ -184,19 +186,24 @@ class VulnerabilitySchema(AutoSchema):
             'cvss', 'cwe', 'cve', 'owasp',
             )
 
-    def get_type(self, obj):
+    @staticmethod
+    def get_type(obj):
         return obj.__class__.__name__
 
-    def get_owasp_refs(self, obj):
+    @staticmethod
+    def get_owasp_refs(obj):
         return [reference for reference in obj.references if 'owasp' in reference.lower()]
 
-    def get_cwe_refs(self, obj):
+    @staticmethod
+    def get_cwe_refs(obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
 
-    def get_cvss_refs(self, obj):
+    @staticmethod
+    def get_cvss_refs(obj):
         return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
-    def get_attachments(self, obj):
+    @staticmethod
+    def get_attachments(obj):
         res = {}
 
         for file_obj in obj.evidence:
@@ -207,30 +214,35 @@ class VulnerabilitySchema(AutoSchema):
 
         return res
 
-    def load_attachments(self, value):
+    @staticmethod
+    def load_attachments(value):
         return value
 
-    def get_parent(self, obj):
+    @staticmethod
+    def get_parent(obj):
         return obj.service_id or obj.host_id
 
-    def get_parent_type(self, obj):
+    @staticmethod
+    def get_parent_type(obj):
         assert obj.service_id is not None or obj.host_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
 
-    def get_status(self, obj):
-        if obj.status == 'open':
-            return 'opened'
+    @staticmethod
+    def get_status(obj):
         return obj.status
 
-    def get_issuetracker(self, obj):
+    @staticmethod
+    def get_issuetracker(obj):
         return {}
 
-    def load_status(self, value):
+    @staticmethod
+    def load_status(value):
         if value == 'opened':
             return 'open'
         return value
 
-    def load_type(self, value):
+    @staticmethod
+    def load_type(value):
         if value == 'Vulnerability':
             return 'vulnerability'
         if value == 'VulnerabilityWeb':
@@ -238,7 +250,8 @@ class VulnerabilitySchema(AutoSchema):
         else:
             raise ValidationError('Invalid vulnerability type.')
 
-    def load_parent(self, value):
+    @staticmethod
+    def load_parent(value):
         try:
             # sometimes api requests send str or unicode.
             value = int(value)
@@ -259,6 +272,7 @@ class VulnerabilitySchema(AutoSchema):
     def post_load_parent(self, data, **kwargs):
         # schema guarantees that parent_type exists.
         parent_class = None
+        parent_field = None
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
         if not (parent_type and parent_id):
@@ -382,7 +396,7 @@ class HostnamesFilter(Filter):
 
 
 class CustomILike(operators.Operator):
-    """A filter operator that puts a % in the beggining and in the
+    """A filter operator that puts a % in the beginning and in the
     end of the search string to force a partial search"""
 
     def __call__(self, query, model, attr, value):
@@ -440,14 +454,14 @@ class VulnerabilityFilterSet(FilterSet):
     def filter(self):
         """Generate a filtered query from request parameters.
 
-        :returns: Filtered SQLALchemy query
+        :returns: Filtered SQLAlchemy query
         """
         # TODO migration: this can became a normal filter instead of a custom
         # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
 
         # The web UI uses old field names. Translate them into the new field
-        # names to maintain backwards compatiblity
+        # names to maintain backwards compatibility
         param_mapping = {
             'query': 'query_string',
             'pname': 'parameter_name',
@@ -484,12 +498,6 @@ class VulnerabilityView(PaginatedMixin,
     order_field = desc(VulnerabilityGeneric.confirmed), VulnerabilityGeneric.severity, VulnerabilityGeneric.create_date
     get_joinedloads = [Vulnerability.evidence, Vulnerability.creator]
 
-    unique_fields_by_class = {
-        'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
-        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
-                              'parameter_name', 'path', 'website')],
-    }
-
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
@@ -500,18 +508,14 @@ class VulnerabilityView(PaginatedMixin,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
-    def _validate_uniqueness(self, obj, object_id=None):
-        unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
-        super()._validate_uniqueness(obj, object_id, unique_fields)
-
     def _get_schema_instance(self, route_kwargs, **kwargs):
         schema = super()._get_schema_instance(route_kwargs, **kwargs)
 
         return schema
 
     def _perform_create(self, data, **kwargs):
-        data = self._parse_data(self._get_schema_instance(kwargs),
-                                request)
+        data = self._parse_data(self._get_schema_instance(kwargs), request)
+        obj = None
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.
         # This will be set after setting the workspace
@@ -542,16 +546,17 @@ class VulnerabilityView(PaginatedMixin,
 
         db.session.flush()
 
+        self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:
                 obj.tool = obj.creator_command_tool
             else:
                 obj.tool = "Web UI"
         db.session.commit()
-        self._process_attachments(obj, attachments)
         return obj
 
-    def _process_attachments(self, obj, attachments):
+    @staticmethod
+    def _process_attachments(obj, attachments):
         old_attachments = db.session.query(File).options(
             joinedload(File.creator),
             joinedload(File.update_user)
@@ -598,17 +603,18 @@ class VulnerabilityView(PaginatedMixin,
         query = super()._get_eagerloaded_query(
             *args, **kwargs)
         options = [
-            joinedload(Vulnerability.host)
-                .load_only(Host.id)  # Only hostnames are needed
-                .joinedload(Host.hostnames),
+            joinedload(Vulnerability.host).
+            load_only(Host.id).  # Only hostnames are needed
+            joinedload(Host.hostnames),
 
-            joinedload(Vulnerability.service)
-                .joinedload(Service.host)
-                .joinedload(Host.hostnames),
+            joinedload(Vulnerability.service).
+            joinedload(Service.host).
+            joinedload(Host.hostnames),
 
-            joinedload(VulnerabilityWeb.service)
-                .joinedload(Service.host)
-                .joinedload(Host.hostnames),
+            joinedload(VulnerabilityWeb.service).
+            joinedload(Service.host).
+            joinedload(Host.hostnames),
+
             joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
@@ -823,7 +829,8 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
+    @staticmethod
+    def _generate_filter_query(vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
                            host_os_filter.get('name') == 'host__os']
 
@@ -860,9 +867,10 @@ class VulnerabilityView(PaginatedMixin,
         return vulns
 
     def _filter(self, filters, workspace_name):
+        hostname_filters = []
+        vulns = None
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
-            hostname_filters = []
             if filters:
                 filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError) as ex:
@@ -894,8 +902,7 @@ class VulnerabilityView(PaginatedMixin,
             if offset:
                 vulns = vulns.offset(offset)
 
-            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(
-                vulns.all())
+            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
             return vulns, total_vulns.count()
         else:
             vulns = self._generate_filter_query(
@@ -1046,8 +1053,7 @@ class VulnerabilityView(PaginatedMixin,
             custom_fields_columns.append(custom_field.field_name)
         if confirmed:
             if 'filters' not in filters:
-                filters = {}
-                filters['filters'] = []
+                filters = {'filters': []}
             filters['filters'].append({
                 "name": "confirmed",
                 "op": "==",

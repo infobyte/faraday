@@ -510,6 +510,8 @@ class ListMixin:
                 query = query.order_by(order_field)
 
         objects, pagination_metadata = self._paginate(query)
+        if not isinstance(objects, list):
+            objects = objects.limit(None).offset(0)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
 
@@ -713,7 +715,7 @@ class FilterWorkspacedMixin(ListMixin):
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
             try:
@@ -828,7 +830,7 @@ class FilterMixin(ListMixin):
             if offset:
                 filter_query = filter_query.offset(offset)
             count = filter_query.count()
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
             filter_query = self._generate_filter_query(

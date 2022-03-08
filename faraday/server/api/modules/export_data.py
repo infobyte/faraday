@@ -1,15 +1,21 @@
+# Standard library imports
 import logging
 from io import BytesIO
-from lxml.etree import Element, SubElement, tostring  # nosec
-# We don't use Element for parsing
+
+# Related third party imports
+from lxml.etree import (  # nosec
+    Element,  # We don't use Element for parsing
+    SubElement,
+    tostring,
+)
 from flask import Blueprint, request, abort, send_file
 from marshmallow import Schema
 
+# Local application imports
 from faraday.server.api.base import GenericWorkspacedView
 from faraday.server.models import Workspace
 
 export_data_api = Blueprint('export_data_api', __name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -203,8 +209,8 @@ def _build_vuln_web_element(vuln, vuln_tag):
     pname.text = vuln.parameter_name
     query = SubElement(vuln_tag, 'query')
     query.text = vuln.query_string
-    request = SubElement(vuln_tag, 'request')
-    request.text = vuln.request
+    _request = SubElement(vuln_tag, 'request')
+    _request.text = vuln.request
 
     vhost = SubElement(vuln_tag, 'vhost')
     vhost.text = str(vuln.service.host.ip)

@@ -310,13 +310,17 @@ class AgentView(ReadOnlyMultiWorkspacedView):
 
             # VALIDATE
             errors = {}
-            for param_name, param_data in executor_data["args"].items():
-                if executor.parameters_metadata.get(param_name):
-                    val_error = type_validate(executor.parameters_metadata[param_name]['type'], param_data)
-                    if val_error:
-                        errors[param_name] = val_error
-                else:
-                    errors['message'] = f'"{param_name}" not recognized as an executor argument'
+            if executor_data["args"]:
+                for param_name, param_data in executor_data["args"].items():
+                    if executor.parameters_metadata.get(param_name):
+                        val_error = type_validate(executor.parameters_metadata[param_name]['type'], param_data)
+                        if val_error:
+                            errors[param_name] = val_error
+                    else:
+                        errors['message'] = f'"{param_name}" not recognized as an executor argument'
+            else:
+                errors['message'] = f'Mandatory argument not passed to {executor.name} executor.'
+
             if errors:
                 response = jsonify(errors)
                 response.status_code = 400

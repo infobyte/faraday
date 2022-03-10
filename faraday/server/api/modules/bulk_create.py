@@ -577,6 +577,7 @@ class BulkCreateView(GenericWorkspacedView):
                     user_id
                 )
             )
+        logger.info(f"Faraday objects created in bulk for workspace {workspace}")
         return flask.jsonify(
             {
                 "message": "Created",

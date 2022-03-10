@@ -508,7 +508,6 @@ class ListMixin:
                 query = query.order_by(*order_field)
             else:
                 query = query.order_by(order_field)
-
         objects, pagination_metadata = self._paginate(query)
         if not isinstance(objects, list):
             objects = objects.limit(None).offset(0)
@@ -557,7 +556,6 @@ class SortableMixin:
                 logger.warn(f"Unknown field: {order_field}")
                 return self.order_field
             raise InvalidUsage(f"Unknown field: {order_field}")
-
         # Translate from the field name in the schema to the database field
         # name
         order_field = field_instance.attribute or order_field
@@ -992,7 +990,9 @@ class CreateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"{obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 if not_null_constraint_violation(ex):
                     flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
@@ -1104,7 +1104,9 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"{obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1186,7 +1188,9 @@ class UpdateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"{obj} updated")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1462,6 +1466,7 @@ class DeleteMixin:
     def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
+        logger.info(f"{obj} deleted")
 
 
 class BulkDeleteMixin:
@@ -1524,7 +1529,6 @@ class DeleteWorkspacedMixin(DeleteMixin):
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
-
         return super()._perform_delete(obj, workspace_name)
 
 
@@ -1607,14 +1611,12 @@ class CountWorkspacedMixin:
                 .group_by(group_by)
                 .filter(Workspace.name == workspace_name,
                         *self.count_extra_filters))
-
         # order
         order_by = group_by
         if sort_dir == 'desc':
             count = count.order_by(desc(order_by))
         else:
             count = count.order_by(asc(order_by))
-
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,

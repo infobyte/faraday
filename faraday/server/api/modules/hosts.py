@@ -258,6 +258,7 @@ class HostsView(PaginatedMixin,
                 else:
                     logger.debug("Host Created (%s)", host_dict)
                     hosts_created_count += 1
+            logger.info("Hosts created in bulk")
             return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)

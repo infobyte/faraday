@@ -429,6 +429,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
+        logger.info(f"Workspace {workspace_id} activated")
         return changed
 
     @route('/<workspace_id>/deactivate/', methods=["PUT"])
@@ -447,6 +448,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             description: Ok
         """
         changed = self._get_object(workspace_id).deactivate()
+        logger.info(f"Workspace {workspace_id} deactivated")
         db.session.commit()
         return changed
 
@@ -467,6 +469,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
+        logger.info(f"Change workspace {workspace_id} to readonly")
         return self._get_object(workspace_id).readonly
 
     def _bulk_delete_query(self, ids, **kwargs):

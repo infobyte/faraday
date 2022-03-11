@@ -30,6 +30,7 @@
 , flask_mail
 , flask_sqlalchemy
 , hypothesis
+, itsdangerous
 , lib
 , marshmallow
 , marshmallow-sqlalchemy
@@ -65,7 +66,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "3.19.0";
+    "4.0.0";
 
   src =
     lib.cleanSource
@@ -77,6 +78,7 @@ buildPythonPackage rec {
     ];
   propagatedBuildInputs =
     [
+      itsdangerous
       werkzeug
       autobahn
       alembic

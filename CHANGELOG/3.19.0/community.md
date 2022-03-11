@@ -8,3 +8,4 @@
  * Add cvss within vulnerability model
  * add check to see if workspace name is longer than 250 characters. In that case raises an error
  * change concat in urlstrings for join or urljoin
+ * Add cve to csv export

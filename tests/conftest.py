@@ -267,7 +267,6 @@ def login_as(test_client, user):
         # Without this line the test breaks. Taken from
         # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
         assert user.id is not None
-        db.session.add(user)
         sess['_user_id'] = user.fs_uniquifier  # TODO use public flask_login functions
         identity_changed.send(test_client.application,
                               identity=Identity(user.id))

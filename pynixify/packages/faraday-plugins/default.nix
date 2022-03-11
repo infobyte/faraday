@@ -11,6 +11,7 @@
 , html2text
 , lib
 , lxml
+, packaging
 , pytz
 , requests
 , simplejson
@@ -21,7 +22,7 @@ buildPythonPackage rec {
   pname =
     "faraday-plugins";
   version =
-    "1.5.9";
+    "1.6.0";
 
   src =
     fetchPypi {
@@ -29,7 +30,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0wkwan2vg7np0z1pwskpgwgnxxk9d46ffq1a3f5ai12ibwj9kwgh";
+        "03vxdfvs6g5dcar9cvxa34ff1jxinyzh0w3hps3c166qpx4rbd1j";
     };
 
   propagatedBuildInputs =
@@ -44,6 +45,7 @@ buildPythonPackage rec {
       dateutil
       colorama
       tabulate
+      packaging
     ];
 
   # TODO FIXME

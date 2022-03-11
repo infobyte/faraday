@@ -44,6 +44,7 @@ class ExportDataView(GenericWorkspacedView):
 
         if export_format == 'xml_metasploit':
             memory_file = xml_metasploit_format(workspace)
+            logger.info("Workspace´s data exported")
             return send_file(
                 memory_file,
                 attachment_filename=f"Faraday-{workspace_name}-data.xml",

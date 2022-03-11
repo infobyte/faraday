@@ -49,11 +49,11 @@ from faraday.server.models import (
     AgentExecution,
     SearchFilter,
     Executor,
-    Rule,
     Action,
-    RuleAction,
     Condition,
-    Role, RuleExecution
+    Role,
+    Workflow,
+    Pipeline
 )
 
 
@@ -631,50 +631,134 @@ class SearchFilterFactory(FaradayFactory):
 
 class ActionFactory(FaradayFactory):
     name = FuzzyText()
-    command = FuzzyChoice(['UPDATE', 'DELETE', 'ALERT'])
-    field = 'severity'
-    value = 'informational'
+    description = FuzzyText()
+    command = 'UPDATE'  # FuzzyChoice(['UPDATE', 'DELETE', 'ALERT'])
+    field = 'description'
+    value = 'ActionExecuted'
 
     class Meta:
         model = Action
         sqlalchemy_session = db.session
 
 
+class PipelineFactory(FaradayFactory):
+    name = FuzzyText()
+    jobs = []
+    enabled = True
+    workspace = None
+    workspace_id = None
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        dic = super().build_dict(**kwargs)
+        dic.pop("jobs")
+        dic.pop("workspace")
+        if "jobs_ids" not in dic:
+            dic["jobs_ids"] = [] if "jobs_ids" not in kwargs else kwargs["jobs_ids"]
+        for arg in kwargs:
+            if arg in dic:
+                dic[arg] = kwargs.get(arg)
+        return dic
+
+    class Meta:
+        model = Pipeline
+        sqlalchemy_session = db.session
+
+
+class WorkflowFactory(FaradayFactory):
+    model = 'vulnerability'
+    name = FuzzyText()
+    description = FuzzyText()
+    enabled = True
+    actions = []
+    conditions = []
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        dic = super().build_dict(**kwargs)
+        dic.pop("actions")
+        dic.pop("conditions")
+        if "tasks_ids" not in dic:
+            dic["tasks_ids"] = [] if "tasks_ids" not in kwargs else kwargs["tasks_ids"]
+        if "rules_json" not in dic:
+            dic["rules_json"] = [
+                {
+                    "type": "leaf",
+                    "field": "description",
+                    "operator": "==",
+                    "data": "test_data"
+                }
+            ] if "rules_json" not in kwargs else kwargs["rules_json"]
+
+        for arg in kwargs:
+            if arg in dic:
+                dic[arg] = kwargs.get(arg)
+        return dic
+
+    # @factory.post_generation
+    # def actions(self, create, extracted, **kwargs):
+    #     if isinstance(self, dict):
+    #         # Simple build, do nothing.
+    #         if extracted:
+    #             # A list of groups were passed in, use them
+    #             self['actions'] = []
+    #             for action in extracted:
+    #                 self['actions'].append(action.id)
+    #         else:
+    #             action = ActionFactory.create()
+    #             action2 = ActionFactory.create()
+    #             session = WorkflowFactory._meta.sqlalchemy_session
+    #             session.add(action)
+    #             session.add(action2)
+    #             session.commit()
+    #             self['actions'] = [action.id, action2.id]
+    #
+    #     elif extracted:
+    #         # A list of groups were passed in, use them
+    #         for action in extracted:
+    #             self.actions.append(action)
+    #     else:
+    #         action = ActionFactory.create()
+    #         action2 = ActionFactory.create()
+    #         session = WorkflowFactory._meta.sqlalchemy_session
+    #         session.add(action)
+    #         session.add(action2)
+    #         session.commit()
+    #         self.actions.append(action)
+    #         self.actions.append(action2)
+    #
+    # @factory.post_generation
+    # def conditions(self, create, extracted, **kwargs):
+    #     if isinstance(self, dict):
+    #         # Simple build, do nothing.
+    #         if extracted:
+    #             # A list of groups were passed in, use them
+    #             self['conditions'] = []
+    #             for condition in extracted:
+    #                 self['conditions'].append(ConditionSchema().dump(condition))
+    #         else:
+    #             self['conditions'] = [ConditionFactory.build_dict()]
+    #
+    #     elif extracted:
+    #         # A list of groups were passed in, use them
+    #         for condition in extracted:
+    #             self.conditions.append(condition)
+    #     else:
+    #         self.conditions.append(ConditionFactory())
+
+    class Meta:
+        model = Workflow
+        sqlalchemy_session = db.session
+
+
 class ConditionFactory(FaradayFactory):
     field = 'description'
-    value = FuzzyText()
-    operator = 'equals'
+    type = 'leaf'
+    data = FuzzyText()
+    operator = FuzzyChoice(['equals', 'not_equal_to', 'in', 'gt', 'lt', 'ge', 'le'])
+    workflow = None
+    parent = None
 
     class Meta:
         model = Condition
         sqlalchemy_session = db.session
-
-
-class RuleFactory(WorkspaceObjectFactory):
-    model = 'Vulnerability'
-    disabled = FuzzyChoice([True, False])
-    workspace = factory.SubFactory(WorkspaceFactory)
-
-    class Meta:
-        model = Rule
-        # sqlalchemy_session = db.session
-
-
-class RuleActionFactory(FaradayFactory):
-    rule = factory.SubFactory(RuleFactory)
-    action = factory.SubFactory(ActionFactory)
-
-    class Meta:
-        model = RuleAction
-        sqlalchemy_session = db.session
-
-
-class RuleExecutionFactory(FaradayFactory):
-    rule = factory.SubFactory(RuleFactory)
-    command = factory.SubFactory(CommandFactory)
-
-    class Meta:
-        model = RuleExecution
-        sqlalchemy_session = db.session
-
-# I'm Py3

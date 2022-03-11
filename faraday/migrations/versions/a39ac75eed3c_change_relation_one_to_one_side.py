@@ -1,7 +1,7 @@
 """Change relation one to one side
 
 Revision ID: a39ac75eed3c
-Revises: 5cf9660bba80
+Revises: 4bb882a7f9b5
 Create Date: 2021-12-29 13:17:55.131029+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'a39ac75eed3c'
-down_revision = '5cf9660bba80'
+down_revision = '4bb882a7f9b5'
 branch_labels = None
 depends_on = None
 

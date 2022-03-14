@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 import json
-import imghdr
+import magic
 from tempfile import SpooledTemporaryFile
 
 from PIL import Image
@@ -47,8 +47,9 @@ class FaradayUploadedFile(UploadedFile):
     def process_content(self, content, filename=None, content_type=None):
         if isinstance(content, str):
             content = content.encode('utf-8')
-        image_format = imghdr.what(None, h=content[:32])
-        if image_format:
+        mime_type = magic.from_buffer(content[:32], mime=True)
+        if "image" in mime_type:
+            image_format = mime_type.split('/')[-1]
             content_type = f'image/{image_format}'
             self.generate_thumbnail(content)
         return super().process_content(

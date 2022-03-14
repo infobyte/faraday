@@ -2976,6 +2976,37 @@ class Configuration(Metadata):
     value = Column(JSONType, nullable=False)
 
 
+class AnalyticGraphConfig:
+    VULNS_PER_HOST = 'vulnerabilities_per_host'
+    VULNS_PER_STATUS = 'vulnerabilities_per_status'
+    VULNS_PER_SEVERITY = 'vulnerabilities_per_severity'
+    TOP_TEN_MOST_AFFECTED_HOSTS = 'top_ten_most_affected_hosts'
+    TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
+    MONTH_EVOLUTION_BY_STATUS = 'month_evolution_by_status'
+    MONTH_EVOLUTION_BY_SEVERITY = 'month_evolution_by_severity'
+
+    GRAPH_TYPES = [
+        'VULNS_PER_HOST',
+        'VULNS_PER_STATUS',
+        'VULNS_PER_SEVERITY',
+        'TOP_TEN_MOST_AFFECTED_HOSTS',
+        'TOP_MOST_REPEATED_VULNS',
+        'MONTH_EVOLUTION_BY_STATUS',
+        'MONTH_EVOLUTION_BY_SEVERITY',
+    ]
+
+
+class AnalyticGraph(Metadata):
+    __tablename__ = "analytic_graph"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    type = Column(Enum(*AnalyticGraphConfig.GRAPH_TYPES, name='analytic_graph_types'), nullable=False)
+    filters = Column(JSONType, nullable=False)
+    data = Column(JSONType, nullable=False)
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

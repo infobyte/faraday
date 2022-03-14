@@ -82,7 +82,7 @@ class TestLogin:
 
         iat = int(time.time())
         exp = iat + 43200
-        jwt_data = {'user_id': alice.id, 'iat': iat, 'exp': exp}
+        jwt_data = {'user_id': 'invalid_token', 'iat': iat, 'exp': exp}
         token = jwt.encode(jwt_data, get_app().config['SECRET_KEY'], algorithm="HS512")
 
         headers = {'Authorization': f'Token {token}'}

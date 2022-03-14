@@ -58,7 +58,7 @@ class WorkspaceSummarySchema(Schema):
 
 
 class HistogramSchema(Schema):
-    date = fields.Date(dump_only=True, attribute='date')
+    date = fields.String(dump_only=True, attribute='date')
     medium = fields.Integer(dump_only=True, attribute='medium')
     high = fields.Integer(dump_only=True, attribute='high')
     critical = fields.Integer(dump_only=True, attribute='critical')
@@ -151,7 +151,7 @@ def generate_histogram(from_date, days_before):
         if (date.today() - first_date).days < days_before:
             # move first_date to diff between first day and days required
             first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
-        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x),
+        histogram_dict[ws_name] = [{'date': (first_date + timedelta(days=x)).strftime("%Y-%m-%d"),
                                     Vulnerability.SEVERITY_MEDIUM: 0,
                                     Vulnerability.SEVERITY_HIGH: 0,
                                     Vulnerability.SEVERITY_CRITICAL: 0,
@@ -260,14 +260,42 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
 
         """
         filters = flask.request.args.get('q', '{"filters": []}')
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        if histogram:
+            today = date.today()
+
+            histogram_days = flask.request.args.get('histogram_days',
+                                                    type=lambda x: int(x)
+                                                    if x.isnumeric() and int(x) > 0
+                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                                    )
+            histogram_dict = generate_histogram(today, histogram_days)
+
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
+        objects = []
+        for workspace_stat in filtered_objs:
+            workspace_stat_dict = dict(workspace_stat)
+            for key, _ in list(workspace_stat_dict.items()):
+                if key.startswith('workspace_'):
+                    new_key = key.replace('workspace_', '')
+                    workspace_stat_dict[new_key] = workspace_stat_dict[key]
+            workspace_stat_dict['scope'] = []
+
+            if histogram:
+                if workspace_stat_dict['name'] in histogram_dict:
+                    workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
+                else:
+                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
+
+            objects.append(workspace_stat_dict)
 
         class PageMeta:
             total = 0
 
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
-        return self._envelope_list(filtered_objs, pagination_metadata)
+        return self._envelope_list(objects, pagination_metadata)
 
     def _get_querystring_boolean_field(self, field_name, default=None):
         try:

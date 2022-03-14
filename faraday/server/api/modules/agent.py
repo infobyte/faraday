@@ -171,7 +171,6 @@ class AgentCreationView(CreateMixin, GenericView):
 
         agent = super()._perform_create(data, **kwargs)
         agent.workspaces = workspaces
-
         db.session.add(agent)
         db.session.commit()
 
@@ -280,6 +279,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                                 ][0])
         db.session.add(agent)
         db.session.commit()
+        logger.info(f"Workspace {workspace_name} removed from agent {agent}")
         return make_response({"description": "ok"}, 204)
 
     @route('/<int:agent_id>/run', methods=['POST'])
@@ -355,6 +355,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args')
             })
+            logger.info("Agent executed")
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")

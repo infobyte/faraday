@@ -117,7 +117,7 @@ class WorkspaceSchema(AutoSchema):
 
 
 def init_date_range(from_day, days):
-    date_list = [{'date': from_day - timedelta(days=x),
+    date_list = [{'date': (from_day - timedelta(days=x)).strftime("%Y-%m-%d"),
                   Vulnerability.SEVERITY_MEDIUM: 0,
                   Vulnerability.SEVERITY_HIGH: 0,
                   Vulnerability.SEVERITY_CRITICAL: 0,

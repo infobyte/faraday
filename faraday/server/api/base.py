@@ -1216,6 +1216,7 @@ class UpdateMixin:
                                 flask.request)
         # just in case an schema allows id as writable.
         data.pop('id', None)
+
         self._update_object(obj, data, partial=False)
         self._perform_update(object_id, obj, data, **kwargs)
 

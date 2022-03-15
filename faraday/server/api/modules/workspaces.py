@@ -142,10 +142,10 @@ def generate_histogram(from_date, days_before):
         for d in dates:
             if first_date is None:
                 first_date = d.date
-            ws_histogram[ws_name][d.date] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
-                                             Vulnerability.SEVERITY_HIGH: d.high,
-                                             Vulnerability.SEVERITY_CRITICAL: d.critical,
-                                             'confirmed': d.confirmed}
+            ws_histogram[ws_name][d.date.strftime("%Y-%m-%d")] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
+                                                                  Vulnerability.SEVERITY_HIGH: d.high,
+                                                                  Vulnerability.SEVERITY_CRITICAL: d.critical,
+                                                                  'confirmed': d.confirmed}
 
         # fix histogram gaps
         if (date.today() - first_date).days < days_before:

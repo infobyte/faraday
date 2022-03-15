@@ -1409,7 +1409,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         nullable=True,
     )
     duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                                                              backref=backref('duplicates_main', remote_side=[id])
+                                         backref=backref('duplicates_main', remote_side=[id])
                                          )
 
     vulnerability_template_id = Column(
@@ -2931,7 +2931,7 @@ class AgentExecution(Metadata):
     def parent(self):
         return
 
-    def notification_message(self, event, user=None):
+    def notification_message(self, _event, user=None):
         if self.command.end_date:
             return "Scan finished"
         elif self.running:

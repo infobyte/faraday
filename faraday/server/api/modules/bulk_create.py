@@ -36,9 +36,6 @@ from faraday.server.models import (
     AgentExecution,
     Workspace,
     Metadata,
-    CVE,
-    CVSSV2,
-    CVSSV3
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -48,7 +45,7 @@ from faraday.server.utils.database import (
 from faraday.server.api.base import (
     AutoSchema,
     GenericWorkspacedView,
-    parse_cve_references_and_policyviolations,
+    parse_cve_cvss_references_and_policyviolations,
 )
 from faraday.server.api.modules import (
     hosts,
@@ -420,42 +417,20 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(policyviolations, references, vuln, cve_list, cvssv2=None, cvssv3=None):
+    def update_vuln(_policyviolations, _references, _vuln, _cve_list, _cvssv2=None, _cvssv3=None):
 
-        vuln.references = references
-        vuln.policy_violations = policyviolations
-
-        # parse cve and reference. Should be temporal.
-        parsed_cve_list = []
-        for cve in cve_list:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        for cve in references:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        vuln.cve = parsed_cve_list
-
-        if cvssv2:
-            try:
-                vuln.cvssv2 = CVSSV2(**cvssv2)
-            except ValueError:
-                logger.error(f"Malformed cvss v2 {cvssv2}")
-
-        if cvssv3:
-            try:
-                vuln.cvssv3 = CVSSV3(**cvssv3)
-            except ValueError:
-                logger.error(f"Malformed cvss v3 {cvssv3}")
+        _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations,
+                                                               _cve_list, _cvssv2, _cvssv3)
 
         # TODO attachments
-        db.session.add(vuln)
+        db.session.add(_vuln)
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln, cve_list, cvssv2=cvssv2, cvssv3=cvssv3)
+        update_vuln(policyviolations, references, vuln, cve_list, _cvssv2=cvssv2, _cvssv3=cvssv3)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln, cve_list, cvssv2=cvssv2, cvssv3=cvssv3)
+        update_vuln(policyviolations, references, vuln, cve_list, _cvssv2=cvssv2, _cvssv3=cvssv3)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

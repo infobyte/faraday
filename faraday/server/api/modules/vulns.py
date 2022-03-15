@@ -41,7 +41,7 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_references_and_policyviolations,
+    parse_cve_cvss_references_and_policyviolations,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -57,7 +57,6 @@ from faraday.server.models import (
     CustomFieldsSchema,
     VulnerabilityGeneric,
     User,
-    CVE,
     CVSSV3,
     CVSSV2
 )
@@ -555,30 +554,8 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj.references = references
-        obj.policy_violations = policyviolations
-
-        if cvssv2:
-            try:
-                obj.cvssv2 = CVSSV2(**cvssv2)
-            except ValueError:
-                logger.error(f"Malformed cvss v2 {cvssv2}")
-
-        if cvssv3:
-            try:
-                obj.cvssv3 = CVSSV3(**cvssv3)
-            except ValueError:
-                logger.error(f"Malformed cvss v3 {cvssv3}")
-
-        # parse cve and reference. Should be temporal.
-        parsed_cve_list = []
-        for cve in cve_list:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        for cve in references:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        obj.cve = parsed_cve_list
+        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
+                                                             cve_list, cvssv2, cvssv3)
 
         db.session.flush()
 

@@ -1,17 +1,21 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Related third party imports
+import flask_login
 from flask import Blueprint
 from marshmallow import fields
-import flask_login
 
+# Local application imports
 from faraday.server.models import SearchFilter
 from faraday.server.api.base import (
     ReadWriteView,
-
     AutoSchema,
     BulkDeleteMixin,
-    BulkUpdateMixin
+    BulkUpdateMixin,
 )
 
 searchfilter_api = Blueprint('searchfilter_api', __name__)

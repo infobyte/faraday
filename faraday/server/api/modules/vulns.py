@@ -1,11 +1,12 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 
 # Standard library imports
 import io
 import logging
-import re
 import json
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
@@ -39,6 +40,8 @@ from faraday.server.api.base import (
     CountMultiWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
+    get_filtered_data,
+    parse_cve_cvss_references_and_policyviolations,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -54,7 +57,6 @@ from faraday.server.models import (
     CustomFieldsSchema,
     VulnerabilityGeneric,
     User,
-    CVE,
     CVSSV3,
     CVSSV2
 )
@@ -221,7 +223,8 @@ class VulnerabilitySchema(AutoSchema):
     def get_cwe_refs(obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
 
-    def get_attachments(self, obj):
+    @staticmethod
+    def get_attachments(obj):
         res = {}
 
         for file_obj in obj.evidence:
@@ -551,30 +554,8 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj.references = references
-        obj.policy_violations = policyviolations
-
-        if cvssv2:
-            try:
-                obj.cvssv2 = CVSSV2(**cvssv2)
-            except ValueError:
-                logger.error(f"Malformed cvss v2 {cvssv2}")
-
-        if cvssv3:
-            try:
-                obj.cvssv3 = CVSSV3(**cvssv3)
-            except ValueError:
-                logger.error(f"Malformed cvss v3 {cvssv3}")
-
-        # parse cve and reference. Should be temporal.
-        parsed_cve_list = []
-        for cve in cve_list:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        for cve in references:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        obj.cve = parsed_cve_list
+        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
+                                                             cve_list, cvssv2, cvssv3)
 
         db.session.flush()
 
@@ -659,15 +640,18 @@ class VulnerabilityView(PaginatedMixin,
         query = super()._get_eagerloaded_query(
             *args, **kwargs)
         options = [
-            joinedload(Vulnerability.host)
-                .load_only(Host.id)  # Only hostnames are needed
-                .joinedload(Host.hostnames),
-            joinedload(Vulnerability.service)
-                .joinedload(Service.host)
-                .joinedload(Host.hostnames),
-            joinedload(VulnerabilityWeb.service)
-                .joinedload(Service.host)
-                .joinedload(Host.hostnames),
+            joinedload(Vulnerability.host).
+            load_only(Host.id).  # Only hostnames are needed
+            joinedload(Host.hostnames),
+
+            joinedload(Vulnerability.service).
+            joinedload(Service.host).
+            joinedload(Host.hostnames),
+
+            joinedload(VulnerabilityWeb.service).
+            joinedload(Service.host).
+            joinedload(Host.hostnames),
+
             joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
@@ -968,13 +952,9 @@ class VulnerabilityView(PaginatedMixin,
                 workspace,
                 marshmallow_params,
             )
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in vulns.all()]
-            vulns_data = []
-            for row in rows:
-                vulns_data.append({field[0]: field[1] for field in row})
+            vulns_data, rows_count = get_filtered_data(filters, vulns)
 
-            return vulns_data, len(rows)
+            return vulns_data, rows_count
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):

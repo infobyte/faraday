@@ -124,7 +124,8 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
-def init_date_range(from_day, days):
+def init_date_range(days):
+    from_day = date.today()
     date_list = [{'date': (from_day - timedelta(days=x)).strftime("%Y-%m-%d"),
                   Vulnerability.SEVERITY_MEDIUM: 0,
                   Vulnerability.SEVERITY_HIGH: 0,
@@ -209,7 +210,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
-        histogram_days, histogram_dict, today = None, None, None
+        histogram_days, histogram_dict = None, None
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
 
         if histogram:
@@ -240,7 +241,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
-                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
+                    workspace_stat_dict['histogram'] = init_date_range(histogram_days)
 
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
@@ -266,11 +267,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 description: invalid q was sent to the server
 
         """
+        histogram_days, histogram_dict = None, None
         filters = flask.request.args.get('q', '{"filters": []}')
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
         if histogram:
-            today = date.today()
-
             histogram_days = flask.request.args.get('histogram_days',
                                                     type=lambda x: int(x)
                                                     if x.isnumeric() and int(x) > 0
@@ -293,7 +293,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
-                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
+                    workspace_stat_dict['histogram'] = init_date_range(histogram_days)
 
             objects.append(workspace_stat_dict)
 

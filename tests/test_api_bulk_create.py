@@ -173,7 +173,6 @@ def test_create_existing_service(session, service):
 
 
 def test_create_host_vuln(session, host):
-    vuln_data['cvssv3'] = {'vector_string': 'AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:L'}
     data = bc.VulnerabilitySchema().load(vuln_data)
     bc._create_hostvuln(host.workspace, host, data)
     assert count(VulnerabilityGeneric, host.workspace) == 1
@@ -188,8 +187,6 @@ def test_create_host_vuln(session, host):
     assert set(vuln.references) == set(vuln_data['refs'])
     assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
     assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
-    assert vuln.cvssv3.vector_string == 'AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:L'
-    assert vuln.cvssv3.base_score == 9.9
     assert vuln.tool == "some_tool"
 
 

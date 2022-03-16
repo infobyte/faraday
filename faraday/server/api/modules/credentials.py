@@ -1,20 +1,24 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Related third party imports
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError, validate
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from sqlalchemy.orm.exc import NoResultFound
 
+# Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     FilterSetMeta,
     FilterAlchemyMixin,
-
     InvalidUsage,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    BulkUpdateWorkspacedMixin,
 )
 from faraday.server.models import Credential, Host, Service, Workspace, db
 from faraday.server.schemas import MutableField, SelfNestedField, MetadataSchema
@@ -50,14 +54,17 @@ class CredentialSchema(AutoSchema):
     service_id = fields.Integer(load_only=True)
     metadata = SelfNestedField(MetadataSchema())
 
-    def get_parent(self, obj):
+    @staticmethod
+    def get_parent(obj):
         return obj.host_id or obj.service_id
 
-    def get_parent_type(self, obj):
+    @staticmethod
+    def get_parent_type(obj):
         assert obj.host_id is not None or obj.service_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
 
-    def get_target(self, obj):
+    @staticmethod
+    def get_target(obj):
         if obj.host is not None:
             return obj.host.ip
         else:

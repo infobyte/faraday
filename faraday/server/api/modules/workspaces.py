@@ -213,8 +213,6 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
 
         if histogram:
-            today = date.today()
-
             histogram_days = flask.request.args.get('histogram_days',
                                                     type=lambda x: int(x)
                                                     if x.isnumeric() and int(x) > 0
@@ -279,7 +277,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                                                     else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
                                                     default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
                                                     )
-            histogram_dict = generate_histogram(today, histogram_days)
+            histogram_dict = generate_histogram(histogram_days)
 
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
         objects = []

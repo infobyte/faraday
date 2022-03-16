@@ -49,7 +49,7 @@ from faraday.server.utils.database import (
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
 from faraday.server.config import faraday_server
-from faraday.server.models import CVE, CVSSV2, CVSSV3
+from faraday.server.models import CVE
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ def get_group_by_and_sort_dir(model_class):
     return group_by, sort_dir
 
 
-def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list, cvssv2, cvssv3):
+def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list):
     vuln.references = references
     vuln.policy_violations = policyviolations
 
@@ -106,18 +106,6 @@ def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviola
         parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
 
     vuln.cve = parsed_cve_list
-
-    if cvssv2:
-        try:
-            vuln.cvssv2 = CVSSV2(**cvssv2)
-        except ValueError:
-            logger.error(f"Malformed cvss v2 {cvssv2}")
-
-    if cvssv3:
-        try:
-            vuln.cvssv3 = CVSSV3(**cvssv3)
-        except ValueError:
-            logger.error(f"Malformed cvss v3 {cvssv3}")
 
     return vuln
 

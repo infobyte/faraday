@@ -11,7 +11,6 @@ import json
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
-from copy import deepcopy
 
 # Related third party imports
 import flask
@@ -56,9 +55,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User,
-    CVSSV3,
-    CVSSV2
+    User
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -124,25 +121,6 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
-class CVSSSchema(AutoSchema):
-    vector_string = fields.String()
-    base_score = fields.Float()
-
-
-class CVSSV2Schema(CVSSSchema):
-    @post_load
-    def make_csv(self, data, **kwargs):
-        return CVSSV2(vector_string=data['vector_string'] if 'vector_string' in data else None,
-                      base_score=data['base_score'] if 'base_score' in data else None)
-
-
-class CVSSV3Schema(CVSSSchema):
-    @post_load
-    def make_csv(self, data, **kwargs):
-        return CVSSV3(vector_string=data['vector_string'] if 'vector_string' in data else None,
-                      base_score=data['base_score'] if 'base_score' in data else None)
-
-
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -159,8 +137,7 @@ class VulnerabilitySchema(AutoSchema):
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    cvssv2 = fields.Nested(CVSSSchema(), attribute='cvssv2', allow_none=True)
-    cvssv3 = fields.Nested(CVSSSchema(), attribute='cvssv3', allow_none=True)
+    cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -208,7 +185,7 @@ class VulnerabilitySchema(AutoSchema):
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool', 'attachments_count',
-            'cwe', 'cve', 'owasp', 'cvssv2', 'cvssv3'
+            'cvss', 'cwe', 'cve', 'owasp',
             )
 
     @staticmethod
@@ -222,6 +199,10 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_cwe_refs(obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
+
+    @staticmethod
+    def get_cvss_refs(obj):
+        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     @staticmethod
     def get_attachments(obj):
@@ -347,7 +328,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
-            'cve', 'cwe', 'owasp', 'cvssv2', 'cvssv3'
+            'cve', 'cwe', 'owasp', 'cvss',
         )
 
 
@@ -544,8 +525,6 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
-        cvssv2 = data.pop('cvssv2', None)
-        cvssv3 = data.pop('cvssv3', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -555,7 +534,7 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400)
 
         obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
-                                                             cve_list, cvssv2, cvssv3)
+                                                             cve_list)
 
         db.session.flush()
 
@@ -596,34 +575,10 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
 
-        if 'cvssv2' in data:
-            cvssv2 = data.pop('cvssv2', None)
-            try:
-                cvssv2_obj = None
-                if cvssv2 is not None:
-                    cvssv2_obj = CVSSV2(**cvssv2)
-                if obj.cvssv2:
-                    db.session.delete(obj.cvssv2)
-                obj.cvssv2 = cvssv2_obj
-            except ValueError:
-                logger.error(f"Malformed cvss2 {cvssv2}")
-
-        cvssv3 = data.pop('cvssv3', None)
-        try:
-            cvssv3_obj = None
-            if cvssv3 is not None:
-                cvssv3_obj = CVSSV3(**cvssv3)
-            if obj.cvssv3:
-                db.session.delete(obj.cvssv3)
-            obj.cvssv3 = cvssv3_obj
-        except ValueError:
-            logger.error(f"Malformed cvss3 {cvssv3}")
-
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         attachments = data.pop('_attachments', None if partial else {})
-
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:
@@ -658,8 +613,6 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
-            joinedload(VulnerabilityGeneric.cvssv2).joinedload(CVSSV2.vulnerability),
-            joinedload(VulnerabilityGeneric.cvssv3).joinedload(CVSSV3.vulnerability),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -1186,21 +1139,6 @@ class VulnerabilityView(PaginatedMixin,
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
                 association_proxy_fields[key] = data.pop(key)
-
-        if 'cvssv2' in data:
-            cvssv2 = data.pop('cvssv2', None)
-            try:
-                association_proxy_fields['cvssv2'] = CVSSV2(**cvssv2)
-            except ValueError:
-                logger.error(f"Malformed cvss2 {cvssv2}")
-
-        if 'cvssv3' in data:
-            cvssv3 = data.pop('cvssv3', None)
-            try:
-                association_proxy_fields['cvssv3'] = CVSSV3(**cvssv3)
-            except ValueError:
-                logger.error(f"Malformed cvss3 {cvssv3}")
-
         return association_proxy_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
@@ -1211,14 +1149,6 @@ class VulnerabilityView(PaginatedMixin,
                                                **kwargs)
             for obj in queryset.all():
                 for (key, value) in extracted_data.items():
-                    if key == 'cvssv2':
-                        if obj.cvssv2:
-                            db.session.delete(obj.cvssv2)
-                            value = deepcopy(value)
-                    if key == 'cvssv3':
-                        if obj.cvssv3:
-                            db.session.delete(obj.cvssv3)
-                            value = deepcopy(value)
                     setattr(obj, key, value)
                     db.session.add(obj)
 

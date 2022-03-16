@@ -33,9 +33,7 @@ from faraday.server.models import (
     AgentExecution,
     Workspace,
     Metadata,
-    CVE,
-    CVSSV2,
-    CVSSV3
+    CVE
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -363,8 +361,6 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
     cve_list = vuln_data.pop('cve', [])
-    cvssv2 = vuln_data.pop('cvssv2', None)
-    cvssv3 = vuln_data.pop('cvssv3', None)
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -413,7 +409,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(policyviolations, references, vuln, cve_list, cvssv2=None, cvssv3=None):
+    def update_vuln(policyviolations, references, vuln, cve_list):
 
         vuln.references = references
         vuln.policy_violations = policyviolations
@@ -427,28 +423,15 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
 
         vuln.cve = parsed_cve_list
-
-        if cvssv2:
-            try:
-                vuln.cvssv2 = CVSSV2(**cvssv2)
-            except ValueError:
-                logger.error(f"Malformed cvss v2 {cvssv2}")
-
-        if cvssv3:
-            try:
-                vuln.cvssv3 = CVSSV3(**cvssv3)
-            except ValueError:
-                logger.error(f"Malformed cvss v3 {cvssv3}")
-
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln, cve_list, cvssv2=cvssv2, cvssv3=cvssv3)
+        update_vuln(policyviolations, references, vuln, cve_list)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln, cve_list, cvssv2=cvssv2, cvssv3=cvssv3)
+        update_vuln(policyviolations, references, vuln, cve_list)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

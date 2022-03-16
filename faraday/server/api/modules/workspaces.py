@@ -304,6 +304,19 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
 
+    def _add_to_filter(self, filter_query, **kwargs):
+        filter_query = filter_query.options(
+            with_expression(
+                Workspace.active_agents_count,
+                _make_active_agents_count_property(),
+            ),
+            with_expression(
+                Workspace.last_run_agent_date,
+                _last_run_agent_date(),
+            ),
+        )
+        return filter_query
+
     @staticmethod
     def _get_querystring_boolean_field(field_name, default=None):
         try:

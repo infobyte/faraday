@@ -1,15 +1,18 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+
+# Related third party imports
+import flask_login
 from flask import jsonify, Blueprint
 from flask_wtf.csrf import generate_csrf
 from marshmallow import Schema
 
+# Local application imports
 from faraday.server.api.base import get_user_permissions, GenericView
-import flask_login
 
 session_api = Blueprint('session_api', __name__)
 

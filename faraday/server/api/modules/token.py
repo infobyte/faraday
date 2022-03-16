@@ -1,18 +1,23 @@
+# Standard library imports
 import datetime
 import logging
 
-from itsdangerous import TimedJSONWebSignatureSerializer
-from flask import Blueprint, request
-from flask_security.utils import hash_data
-from flask import current_app as app
-from marshmallow import Schema
+# Related third party imports
 import flask_login
+from flask import (
+    Blueprint,
+    request,
+    current_app as app,
+)
+from flask_security.utils import hash_data
+from marshmallow import Schema
+from itsdangerous import TimedJSONWebSignatureSerializer
 
+# Local application imports
 from faraday.server.config import faraday_server
 from faraday.server.api.base import GenericView
 
 token_api = Blueprint('token_api', __name__)
-
 audit_logger = logging.getLogger('audit')
 
 
@@ -43,7 +48,8 @@ class TokenAuthView(GenericView):
         hashed_data = hash_data(flask_login.current_user.password) if flask_login.current_user.password else None
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         requested_at = datetime.datetime.utcnow()
-        audit_logger.info(f"User [{flask_login.current_user.username}] requested token from IP [{user_ip}] at [{requested_at}]")
+        audit_logger.info(f"User [{flask_login.current_user.username}] requested token from IP [{user_ip}] at "
+                          f"[{requested_at}]")
         return serializer.dumps({'user_id': user_id, "validation_check": hashed_data}).decode('utf-8')
 
 

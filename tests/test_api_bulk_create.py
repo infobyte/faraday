@@ -48,7 +48,7 @@ vuln_data = {
     'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
     'tool': 'some_tool',
     'data': 'test data',
-    'custom_fields': {}
+    'custom_fields': {},
 }
 
 vuln_web_data = {

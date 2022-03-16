@@ -1,20 +1,24 @@
+# Standard library imports
 import datetime
 import logging
 import time
 
-from flask import Blueprint, request
-from flask_security.utils import hash_data
-from flask import current_app as app
-from marshmallow import Schema
+# Related third party imports
 import flask_login
+from flask import (
+    Blueprint,
+    request,
+    current_app as app,
+)
+from flask_security.utils import hash_data
+from marshmallow import Schema
 import jwt
 
-
+# Local application imports
 from faraday.server.config import faraday_server
 from faraday.server.api.base import GenericView
 
 token_api = Blueprint('token_api', __name__)
-
 audit_logger = logging.getLogger('audit')
 
 
@@ -44,6 +48,8 @@ class TokenAuthView(GenericView):
         iat = int(time.time())
         exp = iat + int(faraday_server.api_token_expiration)
         jwt_data = {'user_id': user_id, "validation_check": hashed_data, 'iat': iat, 'exp': exp}
+        audit_logger.info(f"User [{flask_login.current_user.username}] requested token from IP [{user_ip}] at "
+                          f"[{requested_at}]")
         return jwt.encode(jwt_data, app.config['SECRET_KEY'], algorithm="HS512")
 
 

@@ -1,8 +1,11 @@
-from faraday.server.api.base import GenericView
-from faraday.server.models import User, db
+# Related third party imports
+import flask_login
 from flask import Blueprint, request, jsonify, abort
 from marshmallow import Schema, fields
-import flask_login
+
+# Local application imports
+from faraday.server.api.base import GenericView
+from faraday.server.models import User, db
 
 preferences_api = Blueprint('preferences_api', __name__)
 

@@ -1,8 +1,8 @@
 """add analytics saved graphics model
 
-Revision ID: 952532503446
+Revision ID: be1f942eba28
 Revises: a39ac75eed3c
-Create Date: 2022-03-14 20:43:14.965701+00:00
+Create Date: 2022-03-17 18:50:15.961217+00:00
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '952532503446'
+revision = 'be1f942eba28'
 down_revision = 'a39ac75eed3c'
 branch_labels = None
 depends_on = None
@@ -24,7 +24,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('type', sa.Enum('VULNS_PER_HOST', 'VULNS_PER_STATUS', 'VULNS_PER_SEVERITY', 'TOP_TEN_MOST_AFFECTED_HOSTS', 'TOP_MOST_REPEATED_VULNS', 'MONTH_EVOLUTION_BY_STATUS', 'MONTH_EVOLUTION_BY_SEVERITY', name='analytic_graph_types'), nullable=False),
+    sa.Column('type', sa.Enum('vulnerabilities_per_host', 'vulnerabilities_per_status', 'vulnerabilities_per_severity', 'top_ten_most_affected_hosts', 'top_ten_most_repeated_vulns', 'month_evolution_by_status', 'month_evolution_by_severity', name='analytic_graph_types'), nullable=False),
     sa.Column('filters', sa.JSON(), nullable=False),
     sa.Column('data', sa.JSON(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),

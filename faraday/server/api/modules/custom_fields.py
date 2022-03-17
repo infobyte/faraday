@@ -1,16 +1,20 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Related third party imports
 from flask import Blueprint
 from marshmallow import fields
 
+# Local application imports
 from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
-    BulkDeleteMixin
+    BulkDeleteMixin,
 )
-
 
 custom_fields_schema_api = Blueprint('custom_fields_schema_api', __name__)
 
@@ -42,7 +46,8 @@ class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
 
-    def _check_post_only_data(self, data):
+    @staticmethod
+    def _check_post_only_data(data):
         for read_only_key in ['field_name', 'table_name', 'field_type']:
             data.pop(read_only_key, None)
         return data

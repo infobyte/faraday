@@ -1,36 +1,40 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
 import string
 import random
 import logging
 from datetime import datetime
-import flask_login
-from flask_classful import route
-from marshmallow import Schema
 
-from faraday.server.api.base import GenericWorkspacedView
-from faraday.server.config import CONST_FARADAY_HOME_PATH
-from faraday.server.threads.reports_processor import REPORTS_QUEUE
+# Related third party imports
+import flask_login
 from flask import (
+    Blueprint,
     request,
     abort,
     make_response,
     jsonify,
-    Blueprint,
 )
-
+from flask_classful import route
 from flask_wtf.csrf import validate_csrf
+from marshmallow import Schema
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
-
-from faraday.server.utils.web import gzipped
-from faraday.server.models import Workspace, Command, db
-from faraday.settings.reports import ReportsSettings
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 
-upload_api = Blueprint('upload_reports', __name__)
+# Local application imports
+from faraday.server.api.base import GenericWorkspacedView
+from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.models import Workspace, Command, db
+from faraday.server.threads.reports_processor import REPORTS_QUEUE
+from faraday.server.utils.web import gzipped
+from faraday.settings.reports import ReportsSettings
 
+upload_api = Blueprint('upload_reports', __name__)
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +86,7 @@ class UploadReportView(GenericWorkspacedView):
         if report_file:
 
             chars = string.ascii_uppercase + string.digits
-            random_prefix = ''.join(random.choice(chars) for x in range(12))  # nosec
+            random_prefix = ''.join(random.choice(chars) for _ in range(12))  # nosec
             raw_report_filename = f'{random_prefix}_{secure_filename(report_file.filename)}'
 
             try:
@@ -92,9 +96,9 @@ class UploadReportView(GenericWorkspacedView):
                     output.write(report_file.read())
             except AttributeError:
                 logger.warning(
-                    "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
+                    "Upload reports in WEB-UI not configured, run Faraday client and try again...")
                 abort(make_response(
-                    jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"),
+                    jsonify(message="Upload reports not configured: Run faraday client and start Faraday server again"),
                     500))
             else:
                 logger.info(f"Get plugin for file: {file_path}")

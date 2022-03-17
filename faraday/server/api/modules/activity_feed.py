@@ -1,16 +1,22 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
 from datetime import datetime
 
+# Related third party imports
 import pytz
 from flask import Blueprint
 from marshmallow import fields
 
+# Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    PaginatedMixin
+    PaginatedMixin,
 )
 from faraday.server.models import Command
 from faraday.server.schemas import PrimaryKeyRelatedField
@@ -33,19 +39,24 @@ class ActivityFeedSchema(AutoSchema):
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
-    def load_itime(self, value):
+    @staticmethod
+    def load_itime(value):
         return datetime.utcfromtimestamp(value)
 
-    def get_itime(self, obj):
+    @staticmethod
+    def get_itime(obj):
         return obj.start_date.replace(tzinfo=pytz.utc).timestamp() * 1000
 
-    def get_sum_created_vulnerabilities(self, obj):
+    @staticmethod
+    def get_sum_created_vulnerabilities(obj):
         return obj.sum_created_vulnerabilities
 
-    def get_sum_created_hosts(self, obj):
+    @staticmethod
+    def get_sum_created_hosts(obj):
         return obj.sum_created_hosts
 
-    def get_sum_created_services(self, obj):
+    @staticmethod
+    def get_sum_created_services(obj):
         return obj.sum_created_services
 
     class Meta:

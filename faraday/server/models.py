@@ -1172,37 +1172,32 @@ class CVSSV2(CVSSBase):
     confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
     integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
     availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
-    vulnerability_id = Column(
-        Integer,
-        ForeignKey('vulnerability.id', ondelete="CASCADE"),
-        nullable=True
-    )
 
     __mapper_args__ = {
         'polymorphic_identity': "v2"
     }
 
     def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
-        if base_score and not 0.0 <= base_score <= 10.0:
-            raise ValueError("Base score must be between 0.0 and 10.0")
-        if vector_string:
-            vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string)
-            if not vector_string_parsed:
-                raise ValueError("Invalid cvssv2 vector string.")
         super().__init__(version=CVSS2GeneralConfig.VERSION, vector_string=vector_string,
                          _fixed_base_score=base_score, **kwargs)
 
     def assign_vector_string(self, vector_string):
-        if vector_string:
-            vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string)
-            if vector_string_parsed:
-                self.access_vector = vector_string_parsed['access_vector']
-                self.access_complexity = vector_string_parsed['access_complexity']
-                self.authentication = vector_string_parsed['authentication']
-                self.confidentiality_impact = vector_string_parsed['confidentiality']
-                self.integrity_impact = vector_string_parsed['integrity']
-                self.availability_impact = vector_string_parsed['availability']
-                self._vector_string = vector_string
+        self._vector_string = vector_string
+        vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
+        if vector_string_parsed:
+            self.access_vector = vector_string_parsed['access_vector']
+            self.access_complexity = vector_string_parsed['access_complexity']
+            self.authentication = vector_string_parsed['authentication']
+            self.confidentiality_impact = vector_string_parsed['confidentiality']
+            self.integrity_impact = vector_string_parsed['integrity']
+            self.availability_impact = vector_string_parsed['availability']
+        else:
+            self.access_vector = None
+            self.access_complexity = None
+            self.authentication = None
+            self.confidentiality_impact = None
+            self.integrity_impact = None
+            self.availability_impact = None
 
     def exploitability(self):
         return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * \
@@ -1237,39 +1232,36 @@ class CVSSV3(CVSSBase):
     confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
     integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
     availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
-    vulnerability_id = Column(
-        Integer,
-        ForeignKey('vulnerability.id', ondelete="CASCADE"),
-        nullable=True
-    )
 
     __mapper_args__ = {
         'polymorphic_identity': "v3"
     }
 
     def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
-        if base_score and not 0.0 <= base_score <= 10.0:
-            raise ValueError("Base score must be between 0.0 and 10.0")
-        if vector_string:
-            vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string)
-            if not vector_string_parsed:
-                raise ValueError("Invalid cvssv3 vector string.")
         super().__init__(version=CVSS3GeneralConfig.VERSION, vector_string=vector_string,
                          _fixed_base_score=base_score, **kwargs)
 
     def assign_vector_string(self, vector_string):
-        if vector_string:
-            vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string)
-            if vector_string_parsed:
-                self._vector_string = vector_string
-                self.attack_vector = vector_string_parsed['attack_vector']
-                self.attack_complexity = vector_string_parsed['attack_complexity']
-                self.privileges_required = vector_string_parsed['privileges_required']
-                self.user_interaction = vector_string_parsed['user_interaction']
-                self.scope = vector_string_parsed['scope']
-                self.confidentiality_impact = vector_string_parsed['confidentiality']
-                self.integrity_impact = vector_string_parsed['integrity']
-                self.availability_impact = vector_string_parsed['availability']
+        self._vector_string = vector_string
+        vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
+        if vector_string_parsed:
+            self.attack_vector = vector_string_parsed['attack_vector']
+            self.attack_complexity = vector_string_parsed['attack_complexity']
+            self.privileges_required = vector_string_parsed['privileges_required']
+            self.user_interaction = vector_string_parsed['user_interaction']
+            self.scope = vector_string_parsed['scope']
+            self.confidentiality_impact = vector_string_parsed['confidentiality']
+            self.integrity_impact = vector_string_parsed['integrity']
+            self.availability_impact = vector_string_parsed['availability']
+        else:
+            self.attack_vector = None
+            self.attack_complexity = None
+            self.privileges_required = None
+            self.user_interaction = None
+            self.scope = None
+            self.confidentiality_impact = None
+            self.integrity_impact = None
+            self.availability_impact = None
 
     def isc_base(self):
         return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (
@@ -1440,8 +1432,21 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    cvssv2 = relationship('CVSSV2', uselist=False, backref=backref('vulnerability'))
-    cvssv3 = relationship('CVSSV3', uselist=False, backref=backref('vulnerability'))
+    # TODO: Ver si el nombre deberia ser cvss_v2_id
+    cvssv2_id = Column(
+        Integer,
+        ForeignKey('cvss_v2.id'),
+        nullable=True
+    )
+    cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
+
+    # TODO: Ver si el nombre deberia ser cvss_v3_id
+    cvssv3_id = Column(
+        Integer,
+        ForeignKey('cvss_v3.id'),
+        nullable=True
+    )
+    cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
 
     reference_instances = relationship(
         "Reference",

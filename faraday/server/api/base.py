@@ -883,6 +883,7 @@ class FilterMixin(ListMixin):
             if offset:
                 filter_query = filter_query.offset(offset)
             count = filter_query.count()
+            filter_query = self._add_to_filter(filter_query)
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
@@ -894,6 +895,9 @@ class FilterMixin(ListMixin):
 
             data, rows_count = get_filtered_data(filters, filter_query)
             return data, rows_count
+
+    def _add_to_filter(self, filter_query, **kwargs):
+        return filter_query
 
 
 class ListWorkspacedMixin(ListMixin):

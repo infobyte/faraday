@@ -1,7 +1,7 @@
 """add analytics saved graphics model
 
 Revision ID: be1f942eba28
-Revises: a39ac75eed3c
+Revises: 4bb882a7f9b5
 Create Date: 2022-03-17 18:50:15.961217+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'be1f942eba28'
-down_revision = 'a39ac75eed3c'
+down_revision = '4bb882a7f9b5'
 branch_labels = None
 depends_on = None
 

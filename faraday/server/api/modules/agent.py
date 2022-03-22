@@ -1,19 +1,23 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
+import logging
 from datetime import datetime
 
-import flask
-import logging
-
+# Related third party imports
 import pyotp
-from faraday_agent_parameters_types.utils import type_validate, get_manifests
+import flask
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
+from faraday_agent_parameters_types.utils import type_validate, get_manifests
 
-
+# Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     UpdateMixin,
@@ -21,18 +25,23 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-    ReadOnlyMultiWorkspacedView
+    ReadOnlyMultiWorkspacedView,
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
-from faraday.server.models import Agent, Executor, AgentExecution, db, \
-    Workspace, Command
+from faraday.server.models import (
+    Agent,
+    Executor,
+    AgentExecution,
+    Workspace,
+    Command,
+    db,
+)
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -125,7 +134,8 @@ class AgentCreationView(CreateMixin, GenericView):
     schema_class = AgentCreationSchema
     get_joinedloads = [Agent.workspaces, Workspace.agents]
 
-    def _get_workspace(self, workspace_name):
+    @staticmethod
+    def _get_workspace(workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
@@ -201,7 +211,8 @@ class AgentWithWorkspacesView(UpdateMixin,
     schema_class = AgentWithWorkspacesSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
-    def _get_workspace(self, workspace_name):
+    @staticmethod
+    def _get_workspace(workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
@@ -306,7 +317,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
 
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
-                                         Executor.agent_id == agent_id).one()
+                                             Executor.agent_id == agent_id).one()
 
             # VALIDATE
             errors = {}

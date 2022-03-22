@@ -34,7 +34,7 @@ syslog-rfc5424-formatter>=1.1.1
 simplekv>=0.13.0
 Flask-KVSession-fork>=0.6.3
 distro>=1.4.0
-faraday-plugins>=1.6.0,<2.0.0
+faraday-plugins>=1.6.1,<2.0.0
 apispec>=4.0.0,<5.0.0
 apispec-webframeworks>=0.5.0
 pyyaml
@@ -42,4 +42,4 @@ Flask-SocketIO>=5.0.1
 pyotp>=2.6.0
 Flask-Limiter
 Flask-Mail
-faraday_agent_parameters_types>=1.0.3
+faraday-agent-parameters-types>=1.0.3

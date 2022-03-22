@@ -1,20 +1,28 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
 import logging
+
+# Related third party imports
 import flask
-from flask import Blueprint
-from flask import current_app as app
+from flask import (
+    Blueprint,
+    current_app as app,
+)
 from flask_classful import route
 from itsdangerous import BadData, TimestampSigner
 from marshmallow import Schema
 from sqlalchemy.orm.exc import NoResultFound
+
+# Local application imports
 from faraday.server.models import Agent
 from faraday.server.api.base import GenericWorkspacedView
 
-
 logger = logging.getLogger(__name__)
-
 websocket_auth_api = Blueprint('websocket_auth_api', __name__)
 
 
@@ -87,13 +95,14 @@ def require_agent_token():
     """If the request doesn't have a valid agent token in the Authorization
     header, abort the request. Otherwise, return the corresponding agent
     """
+    auth_type, token, agent = None, None, None
     if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] not in flask.request.headers:
         flask.abort(401)
     header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
     try:
         (auth_type, token) = header.split(None, 1)
     except ValueError:
-        logger.warn("Authorization header does not have type")
+        logger.warning("Authorization header does not have type")
         flask.abort(401)
     auth_type = auth_type.lower()
     if auth_type != 'agent':

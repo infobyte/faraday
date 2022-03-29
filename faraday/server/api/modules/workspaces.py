@@ -66,7 +66,7 @@ class WorkspaceSummarySchema(Schema):
 
 
 class HistogramSchema(Schema):
-    date = fields.Date(dump_only=True, attribute='date')
+    date = fields.String(dump_only=True, attribute='date')
     medium = fields.Integer(dump_only=True, attribute='medium')
     high = fields.Integer(dump_only=True, attribute='high')
     critical = fields.Integer(dump_only=True, attribute='critical')
@@ -124,8 +124,9 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
-def init_date_range(from_day, days):
-    date_list = [{'date': from_day - timedelta(days=x),
+def init_date_range(days):
+    from_day = date.today()
+    date_list = [{'date': (from_day - timedelta(days=x)).strftime("%Y-%m-%d"),
                   Vulnerability.SEVERITY_MEDIUM: 0,
                   Vulnerability.SEVERITY_HIGH: 0,
                   Vulnerability.SEVERITY_CRITICAL: 0,
@@ -150,16 +151,16 @@ def generate_histogram(days_before):
         for d in dates:
             if first_date is None:
                 first_date = d.date
-            ws_histogram[ws_name][d.date] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
-                                             Vulnerability.SEVERITY_HIGH: d.high,
-                                             Vulnerability.SEVERITY_CRITICAL: d.critical,
-                                             'confirmed': d.confirmed}
+            ws_histogram[ws_name][d.date.strftime("%Y-%m-%d")] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
+                                                                  Vulnerability.SEVERITY_HIGH: d.high,
+                                                                  Vulnerability.SEVERITY_CRITICAL: d.critical,
+                                                                  'confirmed': d.confirmed}
 
         # fix histogram gaps
         if (date.today() - first_date).days < days_before:
             # move first_date to diff between first day and days required
             first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
-        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x),
+        histogram_dict[ws_name] = [{'date': (first_date + timedelta(days=x)).strftime("%Y-%m-%d"),
                                     Vulnerability.SEVERITY_MEDIUM: 0,
                                     Vulnerability.SEVERITY_HIGH: 0,
                                     Vulnerability.SEVERITY_CRITICAL: 0,
@@ -209,12 +210,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
-        histogram_days, histogram_dict, today = None, None, None
+        histogram_days, histogram_dict = None, None
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
 
         if histogram:
-            today = date.today()
-
             histogram_days = flask.request.args.get('histogram_days',
                                                     type=lambda x: int(x)
                                                     if x.isnumeric() and int(x) > 0
@@ -242,7 +241,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
-                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
+                    workspace_stat_dict['histogram'] = init_date_range(histogram_days)
 
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
@@ -268,15 +267,55 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 description: invalid q was sent to the server
 
         """
+        histogram_days, histogram_dict = None, None
         filters = flask.request.args.get('q', '{"filters": []}')
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        if histogram:
+            histogram_days = flask.request.args.get('histogram_days',
+                                                    type=lambda x: int(x)
+                                                    if x.isnumeric() and int(x) > 0
+                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                                    )
+            histogram_dict = generate_histogram(histogram_days)
+
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
+        objects = []
+        for workspace_stat in filtered_objs:
+            workspace_stat_dict = dict(workspace_stat)
+            for key, _ in list(workspace_stat_dict.items()):
+                if key.startswith('workspace_'):
+                    new_key = key.replace('workspace_', '')
+                    workspace_stat_dict[new_key] = workspace_stat_dict[key]
+            workspace_stat_dict['scope'] = []
+
+            if histogram:
+                if workspace_stat_dict['name'] in histogram_dict:
+                    workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
+                else:
+                    workspace_stat_dict['histogram'] = init_date_range(histogram_days)
+
+            objects.append(workspace_stat_dict)
 
         class PageMeta:
             total = 0
 
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
-        return self._envelope_list(filtered_objs, pagination_metadata)
+        return self._envelope_list(objects, pagination_metadata)
+
+    def _add_to_filter(self, filter_query, **kwargs):
+        filter_query = filter_query.options(
+            with_expression(
+                Workspace.active_agents_count,
+                _make_active_agents_count_property(),
+            ),
+            with_expression(
+                Workspace.last_run_agent_date,
+                _last_run_agent_date(),
+            ),
+        )
+        return filter_query
 
     @staticmethod
     def _get_querystring_boolean_field(field_name, default=None):

@@ -1,5 +1,5 @@
 itsdangerous>=1.1.0,<2.1.0
-werkzeug>=1.0.0
+werkzeug>=1.0.0,<2.1.0
 autobahn>=17.10.1
 alembic>=0.9.9
 bcrypt>=3.1.4
@@ -17,7 +17,7 @@ marshmallow>=3.11.0,<3.13.0
 Pillow>=4.2.1
 psycopg2
 pgcli
-pyopenssl>=17.2.0
+pyopenssl>=17.2.0,<21.0.0
 python-dateutil>=2.6.0
 requests>=2.18.4
 pyasn1
@@ -32,7 +32,7 @@ filedepot>=0.5.0
 nplusone>=0.8.1
 syslog-rfc5424-formatter>=1.1.1
 simplekv>=0.13.0
-Flask-KVSession-fork>=0.6.3
+Flask-KVSession-fork>=0.6.4
 distro>=1.4.0
 faraday-plugins>=1.6.1,<2.0.0
 apispec>=4.0.0,<5.0.0

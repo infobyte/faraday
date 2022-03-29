@@ -3012,6 +3012,7 @@ class Analytics(Metadata):
     workspaces = Column(JSONType, nullable=False)
     hosts = Column(JSONType, nullable=False)
     data = Column(JSONType, nullable=False)
+    copies = Column(Integer, nullable=False, default=0)
 
 
 # This constraint uses Columns from different classes

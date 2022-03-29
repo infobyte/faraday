@@ -29,6 +29,7 @@ def upgrade():
     sa.Column('workspaces', sa.JSON(), nullable=False),
     sa.Column('hosts', sa.JSON(), nullable=False),
     sa.Column('data', sa.JSON(), nullable=False),
+    sa.Column('copies', sa.Integer(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),
     sa.Column('update_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['creator_id'], ['faraday_user.id'], ondelete='SET NULL'),

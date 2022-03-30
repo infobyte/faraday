@@ -30,7 +30,6 @@
 , flask_mail
 , flask_sqlalchemy
 , hypothesis
-, itsdangerous
 , lib
 , marshmallow
 , marshmallow-sqlalchemy
@@ -39,6 +38,7 @@
 , pillow
 , psycopg2
 , pyasn1
+, pyjwt
 , pylint
 , pyopenssl
 , pyotp
@@ -78,7 +78,7 @@ buildPythonPackage rec {
     ];
   propagatedBuildInputs =
     [
-      itsdangerous
+      pyjwt
       werkzeug
       autobahn
       alembic

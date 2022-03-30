@@ -1,41 +1,49 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-from datetime import timedelta, date
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 
+# Standard library imports
 import re
-
 import json
 import logging
+from datetime import timedelta, date
 from itertools import groupby
 
+# Related third party imports
 import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from sqlalchemy.orm import (
-    with_expression
-)
+from sqlalchemy.orm import with_expression
 from sqlalchemy.orm.exc import NoResultFound
 
-from faraday.server.models import (db,
-                                   Workspace,
-                                   _make_vuln_count_property,
-                                   Vulnerability,
-                                   _make_active_agents_count_property,
-                                   count_vulnerability_severities,
-                                   _last_run_agent_date,
-                                   SeveritiesHistogram)
+# Local application imports
+from faraday.server.models import (
+    db,
+    Workspace,
+    SeveritiesHistogram,
+    Vulnerability,
+    _make_vuln_count_property,
+    _make_active_agents_count_property,
+    count_vulnerability_severities,
+    _last_run_agent_date,
+)
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin, BulkDeleteMixin
+from faraday.server.api.base import (
+    ReadWriteView,
+    AutoSchema,
+    FilterMixin,
+    BulkDeleteMixin,
+)
 
 logger = logging.getLogger(__name__)
-
 workspace_api = Blueprint('workspace_api', __name__)
 
 
@@ -58,7 +66,7 @@ class WorkspaceSummarySchema(Schema):
 
 
 class HistogramSchema(Schema):
-    date = fields.Date(dump_only=True, attribute='date')
+    date = fields.String(dump_only=True, attribute='date')
     medium = fields.Integer(dump_only=True, attribute='medium')
     high = fields.Integer(dump_only=True, attribute='high')
     critical = fields.Integer(dump_only=True, attribute='critical')
@@ -116,8 +124,9 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
-def init_date_range(from_day, days):
-    date_list = [{'date': from_day - timedelta(days=x),
+def init_date_range(days):
+    from_day = date.today()
+    date_list = [{'date': (from_day - timedelta(days=x)).strftime("%Y-%m-%d"),
                   Vulnerability.SEVERITY_MEDIUM: 0,
                   Vulnerability.SEVERITY_HIGH: 0,
                   Vulnerability.SEVERITY_CRITICAL: 0,
@@ -125,7 +134,7 @@ def init_date_range(from_day, days):
     return date_list
 
 
-def generate_histogram(from_date, days_before):
+def generate_histogram(days_before):
     histogram_dict = dict()
 
     workspaces_histograms = SeveritiesHistogram.query \
@@ -142,16 +151,16 @@ def generate_histogram(from_date, days_before):
         for d in dates:
             if first_date is None:
                 first_date = d.date
-            ws_histogram[ws_name][d.date] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
-                                             Vulnerability.SEVERITY_HIGH: d.high,
-                                             Vulnerability.SEVERITY_CRITICAL: d.critical,
-                                             'confirmed': d.confirmed}
+            ws_histogram[ws_name][d.date.strftime("%Y-%m-%d")] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
+                                                                  Vulnerability.SEVERITY_HIGH: d.high,
+                                                                  Vulnerability.SEVERITY_CRITICAL: d.critical,
+                                                                  'confirmed': d.confirmed}
 
         # fix histogram gaps
         if (date.today() - first_date).days < days_before:
             # move first_date to diff between first day and days required
             first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
-        histogram_dict[ws_name] = [{'date': first_date + timedelta(days=x),
+        histogram_dict[ws_name] = [{'date': (first_date + timedelta(days=x)).strftime("%Y-%m-%d"),
                                     Vulnerability.SEVERITY_MEDIUM: 0,
                                     Vulnerability.SEVERITY_HIGH: 0,
                                     Vulnerability.SEVERITY_CRITICAL: 0,
@@ -201,18 +210,17 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
+        histogram_days, histogram_dict = None, None
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
 
         if histogram:
-            today = date.today()
-
             histogram_days = flask.request.args.get('histogram_days',
                                                     type=lambda x: int(x)
                                                     if x.isnumeric() and int(x) > 0
                                                     else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
                                                     default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
                                                     )
-            histogram_dict = generate_histogram(today, histogram_days)
+            histogram_dict = generate_histogram(histogram_days)
 
         query = self._get_base_query()
 
@@ -233,7 +241,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
-                    workspace_stat_dict['histogram'] = init_date_range(today, histogram_days)
+                    workspace_stat_dict['histogram'] = init_date_range(histogram_days)
 
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
@@ -259,17 +267,58 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 description: invalid q was sent to the server
 
         """
+        histogram_days, histogram_dict = None, None
         filters = flask.request.args.get('q', '{"filters": []}')
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        if histogram:
+            histogram_days = flask.request.args.get('histogram_days',
+                                                    type=lambda x: int(x)
+                                                    if x.isnumeric() and int(x) > 0
+                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                                    )
+            histogram_dict = generate_histogram(histogram_days)
+
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
+        objects = []
+        for workspace_stat in filtered_objs:
+            workspace_stat_dict = dict(workspace_stat)
+            for key, _ in list(workspace_stat_dict.items()):
+                if key.startswith('workspace_'):
+                    new_key = key.replace('workspace_', '')
+                    workspace_stat_dict[new_key] = workspace_stat_dict[key]
+            workspace_stat_dict['scope'] = []
+
+            if histogram:
+                if workspace_stat_dict['name'] in histogram_dict:
+                    workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
+                else:
+                    workspace_stat_dict['histogram'] = init_date_range(histogram_days)
+
+            objects.append(workspace_stat_dict)
 
         class PageMeta:
             total = 0
 
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
-        return self._envelope_list(filtered_objs, pagination_metadata)
+        return self._envelope_list(objects, pagination_metadata)
 
-    def _get_querystring_boolean_field(self, field_name, default=None):
+    def _add_to_filter(self, filter_query, **kwargs):
+        filter_query = filter_query.options(
+            with_expression(
+                Workspace.active_agents_count,
+                _make_active_agents_count_property(),
+            ),
+            with_expression(
+                Workspace.last_run_agent_date,
+                _last_run_agent_date(),
+            ),
+        )
+        return filter_query
+
+    @staticmethod
+    def _get_querystring_boolean_field(field_name, default=None):
         try:
             val = bool(json.loads(flask.request.args[field_name]))
         except (KeyError, ValueError):
@@ -287,11 +336,12 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 workspace_name=object_id)
         return query
 
-    def _get_object(self, object_id, eagerload=False, **kwargs):
+    def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         """
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
+        obj = None
         confirmed = self._get_querystring_boolean_field('confirmed')
         active = self._get_querystring_boolean_field('active')
         status = flask.request.args.get('status')
@@ -363,7 +413,11 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 )
             )
 
-        query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
+        query = count_vulnerability_severities(query,
+                                               Workspace,
+                                               status=status,
+                                               confirmed=confirmed,
+                                               all_severities=True)
 
         try:
             obj = query.one()
@@ -414,6 +468,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
+        logger.info(f"Workspace {workspace_id} activated")
         return changed
 
     @route('/<workspace_id>/deactivate/', methods=["PUT"])
@@ -432,6 +487,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             description: Ok
         """
         changed = self._get_object(workspace_id).deactivate()
+        logger.info(f"Workspace {workspace_id} deactivated")
         db.session.commit()
         return changed
 
@@ -452,6 +508,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
+        logger.info(f"Change workspace {workspace_id} to readonly")
         return self._get_object(workspace_id).readonly
 
     def _bulk_delete_query(self, ids, **kwargs):

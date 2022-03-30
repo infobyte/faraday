@@ -1,11 +1,12 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 
 # Standard library imports
 import io
 import logging
-import re
 import json
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
@@ -38,6 +39,8 @@ from faraday.server.api.base import (
     CountMultiWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
+    get_filtered_data,
+    parse_cve_cvss_references_and_policyviolations,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -52,8 +55,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User,
-    CVE,
+    User
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -531,18 +533,8 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj.references = references
-        obj.policy_violations = policyviolations
-
-        # parse cve and reference. Should be temporal.
-        parsed_cve_list = []
-        for cve in cve_list:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        for cve in references:
-            parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-        obj.cve = parsed_cve_list
+        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
+                                                             cve_list)
 
         db.session.flush()
 
@@ -757,6 +749,7 @@ class VulnerabilityView(PaginatedMixin,
                 )
                 db.session.commit()
                 message = 'Evidence upload was successful'
+                logger.info(message)
                 return flask.jsonify({'message': message})
         else:
             flask.abort(404, "Vulnerability not found")
@@ -912,13 +905,9 @@ class VulnerabilityView(PaginatedMixin,
                 workspace,
                 marshmallow_params,
             )
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in vulns.all()]
-            vulns_data = []
-            for row in rows:
-                vulns_data.append({field[0]: field[1] for field in row})
+            vulns_data, rows_count = get_filtered_data(filters, vulns)
 
-            return vulns_data, len(rows)
+            return vulns_data, rows_count
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -1025,7 +1014,9 @@ class VulnerabilityView(PaginatedMixin,
                 db.session.commit()
                 depot = DepotManager.get()
                 depot.delete(file_obj.content.get('file_id'))
-                return flask.jsonify({'message': 'Attachment was successfully deleted'})
+                message = 'Attachment was successfully deleted'
+                logger.info(message)
+                return flask.jsonify({'message': message})
             else:
                 flask.abort(404, "File not found")
         else:
@@ -1062,6 +1053,7 @@ class VulnerabilityView(PaginatedMixin,
             filters = json.dumps(filters)
         vulns_query, _ = self._filter(filters, workspace_name)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
+        logger.info(f"csv file with vulns from workspace {workspace_name} exported")
         return send_file(memory_file,
                          attachment_filename=f"Faraday-SR-{workspace_name}.csv",
                          as_attachment=True,
@@ -1135,6 +1127,7 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('tool', '')
         data.pop('service_id', '')
         data.pop('host_id', '')
+
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
         super()._pre_bulk_update(data, **kwargs)

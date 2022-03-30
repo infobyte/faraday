@@ -2,6 +2,10 @@ New features in the latest update
 =====================================
 
 
+4.0.1 [Mar 18th, 2022]:
+---
+ * Improve the logs
+
 4.0.0 [Feb 25th, 2022]:
 ---
  * Add a None limit and 0 offset to GET queries.

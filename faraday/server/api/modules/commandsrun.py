@@ -21,6 +21,22 @@ from faraday.server.schemas import MutableField, PrimaryKeyRelatedField, SelfNes
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
 
+def populate_command_dict(command):
+    return {
+                '_id': command.id,
+                'user': command.user,
+                'import_source': command.import_source,
+                'command': command.command,
+                'tool': command.tool,
+                'params': command.params,
+                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
+                'hosts_count': command.sum_created_hosts or 0,
+                'services_count': command.sum_created_services or 0,
+                'criticalIssue': command.sum_created_vulnerability_critical or 0,
+                'date': time.mktime(command.start_date.timetuple()) * 1000,
+            }
+
+
 class CommandSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     itime = fields.Method(serialize='get_itime', deserialize='load_itime', required=True, attribute='start_date')
@@ -32,16 +48,19 @@ class CommandSchema(AutoSchema):
     creator = PrimaryKeyRelatedField('username', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
 
-    def load_itime(self, value):
+    @staticmethod
+    def load_itime(value):
         try:
             return datetime.datetime.utcfromtimestamp(value)
         except ValueError:
             raise ValidationError('Invalid Itime Value')
 
-    def get_itime(self, obj):
+    @staticmethod
+    def get_itime(obj):
         return obj.start_date.replace(tzinfo=pytz.utc).timestamp() * 1000
 
-    def get_duration(self, obj):
+    @staticmethod
+    def get_duration(obj):
         # obj.start_date can't be None
         if obj.end_date:
             return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
@@ -89,7 +108,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         """
         ---
           tags: ["Command"]
-          description: Gets a summary of the lastest executed commands
+          description: Gets a summary of the latest executed commands
           responses:
             200:
               description: Ok
@@ -100,19 +119,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         res = []
         query = Command.query.join(Workspace).filter_by(name=workspace_name)
         for command in query.all():
-            res.append({
-                '_id': command.id,
-                'user': command.user,
-                'import_source': command.import_source,
-                'command': command.command,
-                'tool': command.tool,
-                'params': command.params,
-                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
-                'hosts_count': command.sum_created_hosts or 0,
-                'services_count': command.sum_created_services or 0,
-                'criticalIssue': command.sum_created_vulnerability_critical or 0,
-                'date': time.mktime(command.start_date.timetuple()) * 1000,
-            })
+            res.append(populate_command_dict(command))
         return res
 
     @route('/last', methods=['GET'])
@@ -129,19 +136,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             Command.start_date.desc()).first()
         command_obj = {}
         if command:
-            command_obj = {
-                '_id': command.id,
-                'user': command.user,
-                'import_source': command.import_source,
-                'command': command.command,
-                'tool': command.tool,
-                'params': command.params,
-                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
-                'hosts_count': command.sum_created_hosts or 0,
-                'services_count': command.sum_created_services or 0,
-                'criticalIssue': command.sum_created_vulnerability_critical or 0,
-                'date': time.mktime(command.start_date.timetuple()) * 1000,
-            }
+            command_obj = populate_command_dict(command)
         return flask.jsonify(command_obj)
 
 

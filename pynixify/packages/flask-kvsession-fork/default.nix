@@ -16,7 +16,7 @@ buildPythonPackage rec {
   pname =
     "flask-kvsession-fork";
   version =
-    "0.6.3";
+    "0.6.4";
 
   src =
     fetchPypi {
@@ -25,7 +25,7 @@ buildPythonPackage rec {
       pname =
         "Flask-KVSession-fork";
       sha256 =
-        "0j5ncqb2kwigs2h12vd5jwhj11ma2igw35yz9l79h2q2gg38nn8l";
+        "1ix5zsry2nrvl2vq5dix66g40ig6999q2ry2wf0w33w2rcxnm7kh";
     };
 
   propagatedBuildInputs =
@@ -46,6 +46,6 @@ buildPythonPackage rec {
       description =
         "Transparent server-side session support for flask";
       homepage =
-        "https://github.com/mbr/flask-kvsession";
+        "https://github.com/infobyte/flask-kvsession";
     };
 }

@@ -10,7 +10,8 @@ import pyotp
 import requests
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
+
+import jwt
 from random import SystemRandom
 
 from faraday.settings import load_settings
@@ -99,8 +100,6 @@ def register_blueprints(app):
     from faraday.server.api.modules.search_filter import searchfilter_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
-    # Custom reset password
-    from faraday.server.api.modules.auth import auth  # pylint:disable=import-outside-toplevel
     from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_reports import \
         reports_settings_api  # pylint:disable=import-outside-toplevel
@@ -133,7 +132,6 @@ def register_blueprints(app):
     app.register_blueprint(searchfilter_api)
     app.register_blueprint(preferences_api)
     app.register_blueprint(export_data_api)
-    app.register_blueprint(auth)
     app.register_blueprint(reports_settings_api)
     app.register_blueprint(dashboard_settings_api)
 
@@ -156,18 +154,17 @@ def register_handlers(app):
         flask.abort(403)
 
     def verify_token(token):
-        serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="api_token")
         try:
-            data = serialized.loads(token)
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS512"])
             user_id = data["user_id"]
             user = User.query.filter_by(fs_uniquifier=user_id).first()
             if not user or not verify_hash(data['validation_check'], user.password):
                 logger.warn('Invalid authentication token. token invalid after password change')
                 return None
             return user
-        except SignatureExpired:
+        except jwt.ExpiredSignatureError:
             return None  # valid token, but expired
-        except BadSignature:
+        except jwt.InvalidSignatureError:
             return None  # invalid token
 
     @app.login_manager.request_loader

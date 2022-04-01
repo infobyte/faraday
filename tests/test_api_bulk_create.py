@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
+import time
 
 import pytest
 from marshmallow import ValidationError
 from sqlalchemy import true, null, false
+import jwt
 
 from faraday.server.models import (
     db,
@@ -18,6 +20,7 @@ from faraday.server.models import (
 
 from faraday.server.api.modules import bulk_create as bc
 from tests.factories import CustomFieldsSchemaFactory
+from faraday.server.web import get_app
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 
 host_data = {
@@ -45,7 +48,7 @@ vuln_data = {
     'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
     'tool': 'some_tool',
     'data': 'test data',
-    'custom_fields': {}
+    'custom_fields': {},
 }
 
 vuln_web_data = {
@@ -816,10 +819,15 @@ class TestBulkCreateAPI:
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):
         url = f'/v3/ws/{workspace.name}/bulk_create'
+        iat = int(time.time())
+        exp = iat + 4200
+        jwt_data = {'user_id': "invalid_id", 'iat': iat, 'exp': exp}
+        token = jwt.encode(jwt_data, get_app().config['SECRET_KEY'], algorithm="HS512")
+
         res = test_client.post(
             url,
             data=dict(hosts=[host_data], command=command_data.copy()),
-            headers=[("authorization", f"{token_type} 1234")]
+            headers=[("authorization", f"{token_type} {token}")]
         )
         if token_type == 'token':
             # TODO change expected status code to 403

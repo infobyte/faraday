@@ -1,15 +1,20 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
 import datetime
 
+# Related third party imports
+import pyotp
 from flask import Blueprint
 from marshmallow import fields, Schema
-from faraday.server.api.base import (
-    GenericView,
-)
+
+# Local application imports
+from faraday.server.api.base import GenericView
 from faraday.server.config import faraday_server
-import pyotp
 
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
 

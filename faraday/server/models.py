@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
+# Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 # See the file 'doc/LICENSE' for the license information
+
+# Standard library imports
 import logging
 import math
 import operator
@@ -11,6 +13,7 @@ from functools import partial
 from random import SystemRandom
 from typing import Callable
 
+# Related third party imports
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -23,43 +26,40 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event,
     Table,
-    literal,
     Date,
+    event,
+    literal,
+    func,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import func
+from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (
     backref,
     column_property,
     query_expression,
-    with_expression
+    with_expression,
+    relationship,
 )
 from sqlalchemy.schema import DDL
-from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
-from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
-    _EngineConnector
+    _EngineConnector,
 )
-
+from flask_security import UserMixin, RoleMixin
 from depot.fields.sqlalchemy import UploadedFileField
 
-from faraday.server.fields import JSONType
-from flask_security import (
-    UserMixin, RoleMixin,
-)
-
-from faraday.server.fields import FaradayUploadedFile
+# Local application imports
+from faraday.server.fields import JSONType, FaradayUploadedFile
 from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
-    is_unique_constraint_violation)
+    is_unique_constraint_violation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -95,9 +95,9 @@ NOTIFICATION_METHODS = [
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
-    See http://docs.sqlalchemy.org/en/rel_1_0/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    See https://docs.sqlalchemy.org/en/14/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
     and https://bitbucket.org/zzzeek/sqlalchemy/issues/3561/sqlite-nested-transactions-fail-with
-    for furhter information"""
+    for further information"""
 
     def make_connector(self, app=None, bind=None):
         """Creates the connector for a given state and bind."""
@@ -117,7 +117,7 @@ class CustomEngineConnector(_EngineConnector):
         if (uri, echo) == self._connected_for:
             return self._engine
 
-        # Call original metohd and register events
+        # Call original method and register events
         rv = super().get_engine()
         if uri.startswith('sqlite://'):
             with self._lock:
@@ -165,19 +165,20 @@ def _make_active_agents_count_property():
 def _last_run_agent_date():
     query = select([text('executor.last_run')])
 
-    from_clause = table('executor')\
-        .join(Agent, text('executor.agent_id = agent.id'))\
+    from_clause = table('executor') \
+        .join(Agent, text('executor.agent_id = agent.id')) \
         .join(text('association_workspace_and_agents_table'),
               text('agent.id = association_workspace_and_agents_table.agent_id '
                    'and association_workspace_and_agents_table.workspace_id = workspace.id'))
-    query = query.select_from(from_clause).where(text('executor.last_run is not null')).order_by(Executor.last_run.desc()).limit(1)
+    query = query.select_from(from_clause).where(text('executor.last_run is not null')). \
+        order_by(Executor.last_run.desc()).limit(1)
 
     return query
 
 
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
-    amount of childrens of some parent object"""
+    amount of children of some parent object"""
     children_id_field = f'{children_table}.id'
     parent_id_field = f'{parent_table}.id'
     children_rel_field = f'{children_table}.{parent_table}_id'
@@ -202,10 +203,9 @@ def _make_command_created_related_object():
     )
 
 
-def _make_vuln_count_property(type_=None, confirmed=None,
-                              use_column_property=True, extra_query=None, get_hosts_vulns=False):
+def _make_vuln_count_property(type_=None, confirmed=None, use_column_property=True,
+                              extra_query=None, get_hosts_vulns=False):
     from_clause = table('vulnerability')
-
     if get_hosts_vulns:
         from_clause = from_clause.join(
             table("service"), text("vulnerability.service_id = service.id"),
@@ -277,6 +277,7 @@ def count_vulnerability_severities(query: str,
     :param medium: Medium severities will be counted if True
     :param low: Low severities will be counted if True
     :param unclassified: Unclassified severities will be counted  if True
+    :param host_vulns: Hosts will be counted  if True
     :return: Query with options added
     """
 
@@ -324,22 +325,22 @@ def count_vulnerability_severities(query: str,
     return query
 
 
-def _make_vuln_generic_count_by_severity(severity, tablename="host"):
+def _make_vuln_generic_count_by_severity(severity):
     assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
 
     vuln_count = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability')).
-            where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
-            as_scalar()
+        select_from(text('vulnerability')).
+        where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
     )
 
     vuln_web_count = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability, service')).
-            where(text('(vulnerability.service_id = service.id and '
-                       f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
-            as_scalar()
+        select_from(text('vulnerability, service')).
+        where(text('(vulnerability.service_id = service.id and '
+                   f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
     )
 
     vulnerability_generic_count = column_property(
@@ -361,26 +362,26 @@ class Metadata(db.Model):
     __abstract__ = True
 
     @declared_attr
-    def creator_id(cls):
+    def creator_id(self):
         return Column(
             Integer,
             ForeignKey('faraday_user.id', ondelete="SET NULL"),
             nullable=True)
 
     @declared_attr
-    def creator(cls):
-        return relationship('User', foreign_keys=[cls.creator_id])
+    def creator(self):
+        return relationship('User', foreign_keys=[self.creator_id])
 
     @declared_attr
-    def update_user_id(cls):
+    def update_user_id(self):
         return Column(
             Integer,
             ForeignKey('faraday_user.id', ondelete="SET NULL"),
             nullable=True)
 
     @declared_attr
-    def update_user(cls):
-        return relationship('User', foreign_keys=[cls.update_user_id])
+    def update_user(self):
+        return relationship('User', foreign_keys=[self.update_user_id])
 
     create_date = Column(DateTime, default=datetime.utcnow)
     update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -407,28 +408,24 @@ class SourceCode(Metadata):
         return
 
 
-def set_children_objects(instance, value, parent_field, child_field='id',
-                         workspaced=True):
+def set_children_objects(instance, value, parent_field, child_field='id', workspaced=True):
     """
     Override some kind of children of instance. This is useful in one
     to many relationships. It takes care of deleting not used children,
     adding new objects, and keeping the not modified ones the same.
-
     :param instance: instance of the parent object
-    :param value: list of childs (values of the child_field)
+    :param value: list of children (values of the child_field)
     :param parent_field: the parent field's relationship to the children name
     :param child_field: the "lookup field" of the children model
     :param workspaced: indicates if the parent model has a workspace
     """
     # Get the class of the children. Inspired in
     # https://stackoverflow.com/questions/6843144/how-to-find-sqlalchemy-remote-side-objects-class-or-class-name-without-db-queri
-    children_model = getattr(
-        type(instance), parent_field).property.mapper.class_
+    children_model = getattr(type(instance), parent_field).property.mapper.class_
 
     value = set(value)
     current_value = getattr(instance, parent_field)
-    current_value_fields = set(map(operator.attrgetter(child_field),
-                                   current_value))
+    current_value_fields = set(map(operator.attrgetter(child_field), current_value))
 
     for existing_child in current_value_fields:
         if existing_child not in value:
@@ -575,7 +572,7 @@ class SeveritiesHistogram(db.Model):
 
 class CustomAssociationSet(_AssociationSet):
     """
-    A custom associacion set that passes the creator method the both
+    A custom association set that passes the creator method the both
     the value and the instance of the parent object
     """
 
@@ -596,8 +593,7 @@ class CustomAssociationSet(_AssociationSet):
         else:
             getter, setter = parent._default_getset(parent.collection_class)
 
-        super().__init__(
-            lazy_collection, creator, getter, setter, parent)
+        super().__init__(lazy_collection, creator, getter, setter, parent)
 
     def _create(self, value):
         if getattr(self.lazy_collection, 'ref', False):
@@ -618,13 +614,13 @@ class CustomAssociationSet(_AssociationSet):
             session.rollback()
             for conflict_obj in conflict_objs:
                 if not hasattr(conflict_obj, 'name'):
-                    # The session can hold elements without a name (altough it shouldn't)
+                    # The session can hold elements without a name (although it shouldn't)
                     continue
                 if conflict_obj.name == value:
                     continue
-                persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
-                if persisted_conclict_obj:
-                    self.col.add(persisted_conclict_obj)
+                persisted_conflict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
+                if persisted_conflict_obj:
+                    self.col.add(persisted_conflict_obj)
             yield self.creator(value, parent_instance)
 
     def add(self, value):
@@ -741,12 +737,12 @@ class CommandObject(db.Model):
     create_date = Column(DateTime, default=datetime.utcnow)
 
     # the following properties are used to know if the command created the specified objects_type
-    # remeber that this table has a row instances per relationship.
+    # remember that this table has a row instances per relationship.
     # this created integer can be used to obtain the total object_type objects created.
     created = _make_command_created_related_object()
 
-    # We are currently using the column property created. however to avoid losing information
-    # we also store the a boolean to know if at the moment of created the object related to the
+    # We are currently using the column property created. However, to avoid losing information
+    # we also store a boolean to know if at the moment of created the object related to the
     # Command was created.
     created_persistent = Column(Boolean, nullable=False)
 
@@ -761,8 +757,7 @@ class CommandObject(db.Model):
 
     @classmethod
     def create(cls, obj, command, add_to_session=True, **kwargs):
-        co = cls(obj, workspace=command.workspace, command=command,
-                 created_persistent=True, **kwargs)
+        co = cls(obj, workspace=command.workspace, command=command, created_persistent=True, **kwargs)
         if add_to_session:
             db.session.add(co)
         return co
@@ -775,49 +770,48 @@ class CommandObject(db.Model):
             object_type = get_object_type_for(object_)
 
             # db.session.flush()
-            assert object_.id is not None, "object must have an ID. Try " \
-                                           "flushing the session"
+            assert object_.id is not None, "object must have an ID. Try flushing the session"
             kwargs['object_id'] = object_.id
             kwargs['object_type'] = object_type
-        return super().__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 def _make_created_objects_sum(object_type_filter):
-    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
-    where_conditions.append("command_object.command_id = command.id")
-    where_conditions.append("command_object.workspace_id = command.workspace_id")
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'",
+                        "command_object.command_id = command.id",
+                        "command_object.workspace_id = command.workspace_id"]
     return column_property(
         select([func.sum(CommandObject.created)]).
-            select_from(table('command_object')).
-            where(text(' and '.join(where_conditions)))
+        select_from(table('command_object')).
+        where(text(' and '.join(where_conditions)))
     )
 
 
 def _make_created_objects_sum_joined(object_type_filter, join_filters):
     """
-
     :param object_type_filter: can be any host, service, vulnerability, credential or any object created from commands.
     :param join_filters: Filter for vulnerability fields.
     :return: column property with sum of created objects.
     """
-    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
-    where_conditions.append("command_object.command_id = command.id")
-    where_conditions.append("vulnerability.id = command_object.object_id ")
-    where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'",
+                        "command_object.command_id = command.id",
+                        "vulnerability.id = command_object.object_id ",
+                        "command_object.workspace_id = vulnerability.workspace_id"]
     for attr, filter_value in join_filters.items():
         where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
-        select([func.sum(CommandObject.created)])
-            .select_from(table('command_object'))
-            .select_from(table('vulnerability'))
-            .where(text(' and '.join(where_conditions)))
+        select([func.sum(CommandObject.created)]).
+        select_from(table('command_object')).
+        select_from(table('vulnerability')).
+        where(text(' and '.join(where_conditions)))
     )
 
 
 class Command(Metadata):
     IMPORT_SOURCE = [
         'report',
-        # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
+        # all the files the tools export and faraday imports it from the reports directory,
+        # gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
         'agent'
     ]
@@ -844,14 +838,10 @@ class Command(Metadata):
     )
 
     sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
-
     sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability',
                                                                        {'type': '\'vulnerability_web\''})
-
     sum_created_hosts = _make_created_objects_sum('host')
-
     sum_created_services = _make_created_objects_sum('service')
-
     sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
     sum_created_vulnerability_high = _make_created_objects_sum_joined('vulnerability', {'severity': '\'high\''})
     sum_created_vulnerability_medium = _make_created_objects_sum_joined('vulnerability', {'severity': '\'medium\''})
@@ -902,22 +892,20 @@ class Host(Metadata):
         backref=backref("hosts", cascade="all, delete-orphan", passive_deletes=True)
     )
 
-    open_service_count = _make_generic_count_property(
-        'host', 'service', where=text("service.status = 'open'"))
+    open_service_count = _make_generic_count_property('host', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('host', 'service')
 
     __host_vulnerabilities = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability')).
-            where(text('vulnerability.host_id = host.id')).
-            as_scalar()
+        select_from(text('vulnerability')).
+        where(text('vulnerability.host_id = host.id')).
+        as_scalar()
     )
     __service_vulnerabilities = (
         select([func.count(text('vulnerability.id'))]).
-            select_from(text('vulnerability, service')).
-            where(text('vulnerability.service_id = service.id and '
-                       'service.host_id = host.id')).
-            as_scalar()
+        select_from(text('vulnerability, service')).
+        where(text('vulnerability.service_id = service.id and service.host_id = host.id')).
+        as_scalar()
     )
     vulnerability_count = column_property(
         # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),
@@ -1042,9 +1030,10 @@ class Host(Metadata):
 
 
 cve_vulnerability_association = db.Table('cve_association',
-    Column('vulnerability_id', Integer, db.ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False),
-    Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
-)
+                                         Column('vulnerability_id', Integer,
+                                                db.ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False),
+                                         Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
+                                         )
 
 
 class CVE(db.Model):
@@ -1066,7 +1055,7 @@ class CVE(db.Model):
         return f'{self.id}'
 
     def __init__(self, name=None, **kwargs):
-        logger.debug("cve found %s", name)
+        logger.debug(f'cve found {name}')
         try:
             name = name.upper()
             _, year, identifier = name.split("-")
@@ -1079,11 +1068,11 @@ class CVE(db.Model):
 class CVSS2GeneralConfig:
     VERSION = '2'
     PATTERN = 'AV:(?P<access_vector>[LAN])' \
-            '/AC:(?P<access_complexity>[HML])' \
-            '/Au:(?P<authentication>[MSN])' \
-            '/C:(?P<confidentiality>[NPC])' \
-            '/I:(?P<integrity>[NPC])' \
-            '/A:(?P<availability>[NPC])'
+              '/AC:(?P<access_complexity>[HML])' \
+              '/Au:(?P<authentication>[MSN])' \
+              '/C:(?P<confidentiality>[NPC])' \
+              '/I:(?P<integrity>[NPC])' \
+              '/A:(?P<availability>[NPC])'
 
     # CVSSV2 ENUMS
     ACCESS_VECTOR_TYPES = ['L', 'N', 'A']
@@ -1101,13 +1090,13 @@ class CVSS2GeneralConfig:
 class CVSS3GeneralConfig:
     VERSION = '3'
     PATTERN = 'AV:(?P<attack_vector>[LANP])' \
-            '/AC:(?P<attack_complexity>[HL])' \
-            '/PR:(?P<privileges_required>[NLH])' \
-            '/UI:(?P<user_interaction>[NR])' \
-            '/S:(?P<scope>[UC])' \
-            '/C:(?P<confidentiality>[NLH])' \
-            '/I:(?P<integrity>[NLH])' \
-            '/A:(?P<availability>[NLH])'
+              '/AC:(?P<attack_complexity>[HL])' \
+              '/PR:(?P<privileges_required>[NLH])' \
+              '/UI:(?P<user_interaction>[NR])' \
+              '/S:(?P<scope>[UC])' \
+              '/C:(?P<confidentiality>[NLH])' \
+              '/I:(?P<integrity>[NLH])' \
+              '/A:(?P<availability>[NLH])'
 
     CHANGED = 'C'
     UNCHANGED = 'U'
@@ -1164,7 +1153,7 @@ class CVSSBase(db.Model):
     def base_score(self, base_score):
         self._base_score = base_score
 
-    def assign_vector_string(self, vector_string, base_score):
+    def assign_vector_string(self, vector_string):
         raise NotImplementedError
 
     def calculate_base_score(self):
@@ -1211,10 +1200,14 @@ class CVSSV2(CVSSBase):
             self.availability_impact = None
 
     def exploitability(self):
-        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
+        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * \
+               CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * \
+               CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
 
     def impact(self):
-        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
+        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (
+               1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (
+               1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
 
     def fimpact(self):
         if self.impact() == 0:
@@ -1271,7 +1264,9 @@ class CVSSV3(CVSSBase):
             self.availability_impact = None
 
     def isc_base(self):
-        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
+        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (
+               1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (
+               1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
 
     def impact(self):
         if self.scope == CVSS3GeneralConfig.UNCHANGED:
@@ -1280,7 +1275,10 @@ class CVSSV3(CVSSBase):
             return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
 
     def exploitability(self):
-        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
+        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * \
+               CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * \
+               CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * \
+               CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
 
     def calculate_base_score(self):
         if re.match(CVSS3GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
@@ -1298,7 +1296,8 @@ class CVSSV3(CVSSBase):
 
             # round up score
             # Where “Round up” is defined as the smallest number, specified to one decimal place,
-            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1; and Round up (4.00) is 4.0.
+            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1;
+            # and Round up (4.00) is 4.0.
             return math.ceil(score * 10) / 10
         return None
 
@@ -1402,8 +1401,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
         nullable=True,
     )
     duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                    backref=backref('duplicates_main', remote_side=[id])
-                                    )
+                                         backref=backref('duplicates_main', remote_side=[id])
+                                         )
 
     vulnerability_template_id = Column(
         Integer,
@@ -1415,7 +1414,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
-    # 1 workspace <--> N vulnerabilites
+    # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
@@ -1429,9 +1428,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
                                  collection_class=set)
 
     cve = association_proxy('cve_instances',
-                             'name',
-                             proxy_factory=CustomAssociationSet,
-                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
+                            'name',
+                            proxy_factory=CustomAssociationSet,
+                            creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
     # TODO: Ver si el nombre deberia ser cvss_v2_id
     cvssv2_id = Column(
@@ -1475,8 +1474,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     evidence = relationship(
         "File",
-        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
-                    "File.object_type=='vulnerability')",
+        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, File.object_type=='vulnerability')",
         foreign_keys="File.object_id",
         cascade="all, delete-orphan"
     )
@@ -1484,61 +1482,55 @@ class VulnerabilityGeneric(VulnerabilityABC):
     tags = relationship(
         "Tag",
         secondary="tag_object",
-        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, "
-                    "TagObject.object_type=='vulnerability')",
+        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, TagObject.object_type=='vulnerability')",
         collection_class=set,
     )
 
     creator_command_id = column_property(
-        select([CommandObject.command_id])
-            .where(CommandObject.object_type == 'vulnerability')
-            .where(text('command_object.object_id = vulnerability.id'))
-            .where(CommandObject.workspace_id == workspace_id)
-            .order_by(asc(CommandObject.create_date))
-            .limit(1),
+        select([CommandObject.command_id]).
+        where(CommandObject.object_type == 'vulnerability').
+        where(text('command_object.object_id = vulnerability.id')).
+        where(CommandObject.workspace_id == workspace_id).
+        order_by(asc(CommandObject.create_date)).
+        limit(1),
         deferred=True)
 
     creator_command_tool = column_property(
-        select([Command.tool])
-            .select_from(join(Command, CommandObject,
-                              Command.id == CommandObject.command_id))
-            .where(CommandObject.object_type == 'vulnerability')
-            .where(text('command_object.object_id = vulnerability.id'))
-            .where(CommandObject.workspace_id == workspace_id)
-            .order_by(asc(CommandObject.create_date))
-            .limit(1),
+        select([Command.tool]).
+        select_from(join(Command, CommandObject, Command.id == CommandObject.command_id)).
+        where(CommandObject.object_type == 'vulnerability').
+        where(text('command_object.object_id = vulnerability.id')).
+        where(CommandObject.workspace_id == workspace_id).
+        order_by(asc(CommandObject.create_date)).
+        limit(1),
         deferred=True
     )
 
     _host_ip_query = (
-        select([Host.ip])
-            .where(text('vulnerability.host_id = host.id'))
+        select([Host.ip]).
+        where(text('vulnerability.host_id = host.id'))
     )
     _service_ip_query = (
-        select([text('host_inner.ip')])
-            .select_from(text('host as host_inner, service'))
-            .where(text('vulnerability.service_id = service.id and '
-                        'host_inner.id = service.host_id'))
+        select([text('host_inner.ip')]).
+        select_from(text('host as host_inner, service')).
+        where(text('vulnerability.service_id = service.id and host_inner.id = service.host_id'))
     )
     target_host_ip = column_property(
         case([
-            (text('vulnerability.host_id IS NOT null'),
-             _host_ip_query.as_scalar()),
-            (text('vulnerability.service_id IS NOT null'),
-             _service_ip_query.as_scalar())
+            (text('vulnerability.host_id IS NOT null'), _host_ip_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'), _service_ip_query.as_scalar())
         ]),
         deferred=True
     )
 
     _host_os_query = (
-        select([Host.os])
-            .where(text('vulnerability.host_id = host.id'))
+        select([Host.os]).
+        where(text('vulnerability.host_id = host.id'))
     )
     _service_os_query = (
-        select([text('host_inner.os')])
-            .select_from(text('host as host_inner, service'))
-            .where(text('vulnerability.service_id = service.id and '
-                        'host_inner.id = service.host_id'))
+        select([text('host_inner.os')]).
+        select_from(text('host as host_inner, service')).
+        where(text('vulnerability.service_id = service.id and host_inner.id = service.host_id'))
     )
 
     host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True)
@@ -1550,10 +1542,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     target_host_os = column_property(
         case([
-            (text('vulnerability.host_id IS NOT null'),
-             _host_os_query.as_scalar()),
-            (text('vulnerability.service_id IS NOT null'),
-             _service_os_query.as_scalar())
+            (text('vulnerability.host_id IS NOT null'), _host_os_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'), _service_os_query.as_scalar())
         ]),
         deferred=True
     )
@@ -1593,7 +1583,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         raise ValueError("Vulnerability has no service nor host")
 
     @declared_attr
-    def service(cls):
+    def service(self):
         return relationship('Service', backref=backref("vulnerabilitiesGeneric", cascade="all, delete-orphan"))
 
 
@@ -1601,14 +1591,14 @@ class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
 
     @declared_attr
-    def service_id(cls):
+    def service_id(self):
         return VulnerabilityGeneric.__table__.c.get('service_id',
                                                     Column(Integer,
                                                            db.ForeignKey('service.id', ondelete='CASCADE'),
                                                            index=True))
 
     @declared_attr
-    def service(cls):
+    def service(self):
         return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
     @property
@@ -1632,13 +1622,13 @@ class VulnerabilityWeb(VulnerabilityGeneric):
         super().__init__(*args, **kwargs)
 
     @declared_attr
-    def service_id(cls):
+    def service_id(self):
         return VulnerabilityGeneric.__table__.c.get(
             'service_id', Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'),
                                  nullable=False))
 
     @declared_attr
-    def service(cls):
+    def service(self):
         return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
 
     @property
@@ -1716,7 +1706,7 @@ class Reference(Metadata):
 
     @property
     def parent(self):
-        # TODO: fix this propery
+        # TODO: fix this property
         return
 
 
@@ -1727,13 +1717,10 @@ class ReferenceVulnerabilityAssociation(db.Model):
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference",
-                             backref=backref(
-                                 "reference_associations",
-                                 cascade="all, delete-orphan"),
+                             backref=backref("reference_associations", cascade="all, delete-orphan"),
                              foreign_keys=[reference_id])
     vulnerability = relationship("Vulnerability",
-                                 backref=backref("reference_vulnerability_associations",
-                                                 cascade="all, delete-orphan"),
+                                 backref=backref("reference_vulnerability_associations", cascade="all, delete-orphan"),
                                  foreign_keys=[vulnerability_id])
 
 
@@ -1743,8 +1730,13 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolation", backref=backref("policy_violation_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref=backref("policy_violation_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolation",
+                                    backref=backref("policy_violation_associations", cascade="all, delete-orphan"),
+                                    foreign_keys=[policy_violation_id])
+    vulnerability = relationship("Vulnerability",
+                                 backref=backref("policy_violation_vulnerability_associations",
+                                                 cascade="all, delete-orphan"),
+                                 foreign_keys=[vulnerability_id])
 
 
 class ReferenceTemplateVulnerabilityAssociation(db.Model):
@@ -1771,8 +1763,14 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
-    policy_violation = relationship("PolicyViolationTemplate", backref=backref("policy_violation_template_associations", cascade="all, delete-orphan"), foreign_keys=[policy_violation_id])
-    vulnerability = relationship("VulnerabilityTemplate", backref=backref("policy_violation_template_vulnerability_associations", cascade="all, delete-orphan"), foreign_keys=[vulnerability_id])
+    policy_violation = relationship("PolicyViolationTemplate",
+                                    backref=backref("policy_violation_template_associations",
+                                                    cascade="all, delete-orphan"),
+                                    foreign_keys=[policy_violation_id])
+    vulnerability = relationship("VulnerabilityTemplate",
+                                 backref=backref("policy_violation_template_vulnerability_associations",
+                                                 cascade="all, delete-orphan"),
+                                 foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -1781,9 +1779,7 @@ class PolicyViolationTemplate(Metadata):
     name = NonBlankColumn(Text)
 
     __table_args__ = (
-        UniqueConstraint(
-            'name',
-            name='uix_policy_violation_template_name'),
+        UniqueConstraint('name', name='uix_policy_violation_template_name'),
     )
 
     def __init__(self, name=None, **kwargs):
@@ -1803,16 +1799,12 @@ class PolicyViolation(Metadata):
     )
     workspace = relationship(
         'Workspace',
-        backref=backref("policy_violations",
-                        cascade="all, delete-orphan"),
+        backref=backref("policy_violations", cascade="all, delete-orphan"),
         foreign_keys=[workspace_id],
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            'name',
-            'workspace_id',
-            name='uix_policy_violation_template_name_vulnerability_workspace'),
+        UniqueConstraint('name', 'workspace_id', name='uix_policy_violation_template_name_vulnerability_workspace'),
     )
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
@@ -1833,45 +1825,37 @@ class Credential(Metadata):
     name = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
-    host = relationship(
-        'Host',
-        backref=backref("credentials", cascade="all, delete-orphan"),
-        foreign_keys=[host_id])
+    host = relationship('Host',
+                        backref=backref("credentials", cascade="all, delete-orphan"),
+                        foreign_keys=[host_id])
 
     service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
-    service = relationship(
-        'Service',
-        backref=backref('credentials', cascade="all, delete-orphan"),
-        foreign_keys=[service_id],
-    )
+    service = relationship('Service',
+                           backref=backref('credentials', cascade="all, delete-orphan"),
+                           foreign_keys=[service_id])
 
     # 1 workspace <--> N credentials
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
-    workspace = relationship(
-        'Workspace',
-        foreign_keys=[workspace_id],
-        backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
-    )
+    workspace = relationship('Workspace',
+                             backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
+                             foreign_keys=[workspace_id])
 
     _host_ip_query = (
-        select([Host.ip])
-            .where(text('credential.host_id = host.id'))
+        select([Host.ip]).
+        where(text('credential.host_id = host.id'))
     )
 
     _service_ip_query = (
-        select([text('host_inner.ip || \'/\' || service.name')])
-            .select_from(text('host as host_inner, service'))
-            .where(text('credential.service_id = service.id and '
-                        'host_inner.id = service.host_id'))
+        select([text('host_inner.ip || \'/\' || service.name')]).
+        select_from(text('host as host_inner, service')).
+        where(text('credential.service_id = service.id and host_inner.id = service.host_id'))
     )
 
     target_ip = column_property(
         case([
-            (text('credential.host_id IS NOT null'),
-             _host_ip_query.as_scalar()),
-            (text('credential.service_id IS NOT null'),
-             _service_ip_query.as_scalar())
+            (text('credential.host_id IS NOT null'), _host_ip_query.as_scalar()),
+            (text('credential.service_id IS NOT null'), _service_ip_query.as_scalar())
         ]),
         deferred=True
     )
@@ -1916,8 +1900,7 @@ class Workspace(Metadata):
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')
-    open_service_count = _make_generic_count_property(
-        'workspace', 'service', where=text("service.status = 'open'"))
+    open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('workspace', 'service')
 
     vulnerability_web_count = query_expression()
@@ -2034,9 +2017,7 @@ class Workspace(Metadata):
                     GROUP BY w.id
                 ) AS p_5 ON p_5.w_id = workspace.id
         """
-        concat_func = 'string_agg'
-        if db.engine.dialect.name == 'sqlite':
-            concat_func = 'group_concat'
+        concat_func = 'group_concat' if db.engine.dialect.name == 'sqlite' else 'string_agg'
         filters = []
         params = {}
 
@@ -2108,8 +2089,7 @@ class Scope(Metadata):
     )
 
     __table_args__ = (
-        UniqueConstraint('name', 'workspace_id',
-                         name='uix_scope_name_workspace'),
+        UniqueConstraint('name', 'workspace_id', name='uix_scope_name_workspace'),
     )
 
     @property
@@ -2119,14 +2099,13 @@ class Scope(Metadata):
 
 class WorkspacePermission(db.Model):
     __tablename__ = "workspace_permission_association"
+    # TODO: Check if __table_args__ = {'extend_existing': True} should be consider here
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(
-        Integer, ForeignKey('workspace.id'), nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), nullable=False)
     workspace = relationship('Workspace')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-    user = relationship('User',
-                        foreign_keys=[user_id])
+    user = relationship('User', foreign_keys=[user_id])
 
     @property
     def parent(self):
@@ -2138,8 +2117,8 @@ def get(workspace_name):
 
 
 roles_users = db.Table('roles_users',
-        db.Column('user_id', db.Integer(), db.ForeignKey('faraday_user.id')),
-        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
+                       db.Column('user_id', db.Integer(), db.ForeignKey('faraday_user.id')),
+                       db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
 
 
 class Role(db.Model, RoleMixin):
@@ -2178,9 +2157,7 @@ class User(db.Model, UserMixin):
     preferences = Column(JSONType, nullable=True, default={})
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref='users')
-    # TODO: add  many to many relationship to add permission to workspace
+    roles = db.relationship('Role', secondary=roles_users, backref='users')
 
     @property
     def roles_list(self):
@@ -2209,8 +2186,7 @@ class File(Metadata):
     name = BlankColumn(Text)  # TODO migration: check why blank is allowed
     filename = NonBlankColumn(Text)
     description = BlankColumn(Text)
-    content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
-                     nullable=False)  # plain attached file
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile), nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
@@ -2246,8 +2222,7 @@ class Methodology(Metadata):
     )
     template_id = Column(
         Integer,
-        ForeignKey('methodology_template.id',
-                   ondelete="SET NULL"),
+        ForeignKey('methodology_template.id', ondelete="SET NULL"),
         index=True,
         nullable=True,
     )
@@ -2590,8 +2565,7 @@ class ExecutiveReport(Metadata):
     tags = relationship(
         "Tag",
         secondary="tag_object",
-        primaryjoin="and_(TagObject.object_id==ExecutiveReport.id, "
-                    "TagObject.object_type=='executive_report')",
+        primaryjoin="and_(TagObject.object_id==ExecutiveReport.id, TagObject.object_type=='executive_report')",
         collection_class=set,
     )
     filter = Column(JSONType, nullable=True, default=[])
@@ -2623,9 +2597,11 @@ class EventType(db.Model):
 
 
 allowed_roles_association = db.Table('notification_allowed_roles',
-    Column('notification_subscription_id', Integer, db.ForeignKey('notification_subscription.id'), nullable=False),
-    Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'), nullable=False)
-)
+                                     Column('notification_subscription_id', Integer,
+                                            db.ForeignKey('notification_subscription.id'), nullable=False),
+                                     Column('allowed_role_id', Integer, db.ForeignKey('faraday_role.id'),
+                                            nullable=False)
+                                     )
 
 
 class NotificationSubscription(Metadata):
@@ -2665,7 +2641,7 @@ class NotificationSubscriptionConfigBase(db.Model):
 
     @property
     def dst(self):
-        raise NotImplementedError('Notification subsciption base dst called. Must Be implemented.')
+        raise NotImplementedError('Notification subscription base dst called. Must Be implemented.')
 
 
 class NotificationSubscriptionMailConfig(NotificationSubscriptionConfigBase):
@@ -2970,8 +2946,8 @@ class Executor(Metadata):
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
     __table_args__ = (
-        UniqueConstraint('name', 'agent_id',
-                         name='uix_executor_table_agent_id_name'),)
+        UniqueConstraint('name', 'agent_id', name='uix_executor_table_agent_id_name'),
+    )
 
 
 class AgentsSchedule(Metadata):
@@ -3010,9 +2986,8 @@ class AgentsSchedule(Metadata):
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    token = Column(Text, unique=True, nullable=False, default=lambda:
-    "".join([SystemRandom().choice(string.ascii_letters + string.digits)
-             for _ in range(64)]))
+    token = Column(Text, unique=True, nullable=False, default=lambda: "".
+                   join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     workspaces = relationship(
         'Workspace',
         secondary=association_workspace_and_agents_table,
@@ -3059,7 +3034,9 @@ class AgentExecution(Metadata):
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
-    executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))
+    executor = relationship('Executor', foreign_keys=[executor_id],
+                            backref=backref('executions', cascade="all, delete-orphan"))
+
     # 1 workspace <--> N agent_executions
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -3079,7 +3056,7 @@ class AgentExecution(Metadata):
     def parent(self):
         return
 
-    def notification_message(self, event, user=None):
+    def notification_message(self, _event, user=None):
         if self.command.end_date:
             return "Scan finished"
         elif self.running:

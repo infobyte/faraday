@@ -5,9 +5,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+import time
 import unittest
 import pytest
 
+import jwt
+
+from faraday.server.web import get_app
 from faraday.server.models import db
 
 
@@ -47,7 +51,11 @@ class TestAuthentication(BaseAPITestCase, unittest.TestCase):
         self.assertEqual(res.status_code, 401)
 
     def test_401_when_getting_an_existent_view_user_token(self):
-        res = self.app.get('/', headers={'authorization': 'token 1234'})
+        iat = int(time.time())
+        exp = iat + 4200
+        jwt_data = {'user_id': "invalid_id", 'iat': iat, 'exp': exp}
+        token = jwt.encode(jwt_data, get_app().config['SECRET_KEY'], algorithm="HS512")
+        res = self.app.get('/', headers={'authorization': f'token {token}'})
         self.assertEqual(res.status_code, 401)
 
     def test_401_when_posting_an_existent_view_and_not_logged(self):

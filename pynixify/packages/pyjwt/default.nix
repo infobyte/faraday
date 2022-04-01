@@ -4,29 +4,24 @@
 
 { buildPythonPackage
 , fetchPypi
-, importlib-metadata
 , lib
 }:
 
 buildPythonPackage rec {
   pname =
-    "click";
+    "pyjwt";
   version =
-    "8.1.0";
+    "2.3.0";
 
   src =
     fetchPypi {
       inherit
-        pname
         version;
+      pname =
+        "PyJWT";
       sha256 =
-        "1ljwrilh1q8ka0b1fyqxqi8pf8k343qizd4jl0x5srn7fcs22z4p";
+        "0hgfl0cdqrzywfg5wgjxfmsbwdy7d5736311fzbxrxh6dzav925q";
     };
-
-  propagatedBuildInputs =
-    [
-      importlib-metadata
-    ];
 
   # TODO FIXME
   doCheck =

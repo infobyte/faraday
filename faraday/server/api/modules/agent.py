@@ -321,7 +321,6 @@ class AgentView(ReadOnlyMultiWorkspacedView):
 
             # VALIDATE
             errors = {}
-            # if executor_data["args"]:
             for param_name, param_data in executor_data["args"].items():
                 if executor.parameters_metadata.get(param_name):
                     val_error = type_validate(executor.parameters_metadata[param_name]['type'], param_data)

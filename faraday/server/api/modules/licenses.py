@@ -1,13 +1,18 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Related third party imports
 from flask import Blueprint
 from marshmallow import fields
 
+# Local application imports
 from faraday.server.models import License
 from faraday.server.api.base import (
     ReadWriteView,
-    AutoSchema
+    AutoSchema,
 )
 from faraday.server.schemas import (
     StrictDateTimeField,

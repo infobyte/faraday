@@ -1,50 +1,55 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-import json
+
+# Standard library imports
 import logging
+import datetime
+import json
+import re
 from json import JSONDecodeError
 from typing import Tuple
-
-import flask
-import sqlalchemy
-import datetime
 from collections import defaultdict
-from flask_classful import FlaskView
+
+# Related third party imports
+import flask
+import flask_login
+import sqlalchemy
+from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload, undefer, with_expression
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
-from sqlalchemy import func, desc, asc
+from sqlalchemy.sql.elements import BooleanClauseList
+from flask_classful import FlaskView, route
 from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaOpts, SQLAlchemyAutoSchemaMeta
-from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
-from flask_classful import route
-import flask_login
 
-from faraday.server.models import (Workspace,
-                                   db,
-                                   Command,
-                                   CommandObject,
-                                   count_vulnerability_severities,
-                                   _make_vuln_count_property,
-                                   _make_active_agents_count_property)
+# Local application imports
+from faraday.server.models import (
+    Workspace,
+    Command,
+    CommandObject,
+    db,
+    count_vulnerability_severities,
+    _make_vuln_count_property,
+    _make_active_agents_count_property,
+)
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
-    not_null_constraint_violation
-    )
+    not_null_constraint_violation,
+)
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
-
 from faraday.server.config import faraday_server
+from faraday.server.models import CVE
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +63,51 @@ def output_json(data, code, headers=None):
         headers = {'Content-Type': content_type}
     response = flask.make_response(dumped, code, headers)
     return response
+
+
+def get_filtered_data(filters, filter_query):
+    column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
+    rows = [list(zip(column_names, row)) for row in filter_query.all()]
+    data = []
+    for row in rows:
+        data.append({field[0]: field[1] for field in row})
+
+    return data, len(rows)
+
+
+def get_group_by_and_sort_dir(model_class):
+    group_by = flask.request.args.get('group_by', None)
+    sort_dir = flask.request.args.get('order', "asc").lower()
+
+    # TODO migration: whitelist fields to avoid leaking a confidential
+    # field's value.
+    # Example: /users/count/?group_by=password
+    # Also we should check that the field exists in the db and isn't, for
+    # example, a relationship
+    if not group_by or group_by not in inspect(model_class).attrs:
+        flask.abort(400, {"message": "group_by is a required parameter"})
+
+    if sort_dir and sort_dir not in ('asc', 'desc'):
+        flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+
+    return group_by, sort_dir
+
+
+def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list):
+    vuln.references = references
+    vuln.policy_violations = policyviolations
+
+    # parse cve and reference. Should be temporal.
+    parsed_cve_list = []
+    for cve in cve_list:
+        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+    for cve in references:
+        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+
+    vuln.cve = parsed_cve_list
+
+    return vuln
 
 
 class InvalidUsage(Exception):
@@ -88,7 +138,7 @@ class GenericView(FlaskView):
     Then, you should register it with your app by using the ``register``
     classmethod.
 
-    .. _Django REST Framework generic viewsets: http://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
+    .. _Django REST Framework generic viewsets: https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
     """
 
     # Must-implement attributes
@@ -109,7 +159,7 @@ class GenericView(FlaskView):
     #: Arguments that are passed to the view but shouldn't change the route
     #: rule. This should be used when route_prefix is parametrized
     #:
-    #: You tipically won't need this, unless you're creating nested views.
+    #: You typically won't need this, unless you're creating nested views.
     #: For example GenericWorkspacedView use this so the workspace name is
     #: prepended to the view URL
     base_args = []
@@ -140,7 +190,7 @@ class GenericView(FlaskView):
     #:     you set lookup_field_type to `string`
     lookup_field = 'id'
 
-    #: A function that converts the string paremeter passed in the URL to the
+    #: A function that converts the string parameter passed in the URL to the
     #: value that will be queried in the database.
     #: It defaults to int to match the type of the default lookup_field_type
     #: (id)
@@ -150,7 +200,7 @@ class GenericView(FlaskView):
 
     #: List of relationships to eagerload in list and retrieve views.
     #:
-    #: This is useful when you when you want to retrieve all childrens
+    #: This is useful when you when you want to retrieve all children
     #: of an object in an API response, like for example if you want
     #: to have all hostnames of each host in the hosts endpoint.
     get_joinedloads = []  # List of relationships to eagerload
@@ -190,7 +240,7 @@ class GenericView(FlaskView):
         return self._get_schema_class()(**kwargs)
 
     def _set_schema_context(self, context, **kwargs):
-        """This function can be overriden to update the context passed
+        """This function can be overridden to update the context passed
         to the schema.
         """
         return context
@@ -201,7 +251,7 @@ class GenericView(FlaskView):
         """
         return getattr(self.model_class, self.lookup_field)
 
-    def _validate_object_id(self, object_id):
+    def _validate_object_id(self, object_id, raise_error=True):
         """
         By default, it validates the value of the lookup field set by the user
         in the URL by calling ``self.lookup_field_type(object_id)``.
@@ -211,9 +261,12 @@ class GenericView(FlaskView):
         try:
             self.lookup_field_type(object_id)
         except ValueError:
-            flask.abort(404, 'Invalid format of lookup field')
+            if raise_error:
+                flask.abort(404, 'Invalid format of lookup field')
+            return False
+        return True
 
-    def _get_base_query(self):
+    def _get_base_query(self, *args, **kwargs):
         """Return the initial query all views should use
 
         .. warning::
@@ -231,7 +284,7 @@ class GenericView(FlaskView):
         object with many childs makes many SQL requests that tends to be
         slow.
 
-        You tipically won't need to overwrite this method, but to set
+        You typically won't need to overwrite this method, but to set
         get_joinedloads and get_undefer attributes that are used by
         this method.
 
@@ -258,8 +311,8 @@ class GenericView(FlaskView):
     def _filter_query(self, query):
         """Return a new SQLAlchemy query with some filters applied.
 
-        By default it doesn't do anything. It is overriden by
-        :class:`FilterAlchemyMixin` to give support to Filteralchemy
+        By default it doesn't do anything. It is overridden by
+        :class:`FilterAlchemyMixin` to give support to FilterAlchemy
         filters.
 
         .. warning::
@@ -275,11 +328,12 @@ class GenericView(FlaskView):
         """
         return query
 
-    def _get_object(self, object_id, eagerload=False, **kwargs):
+    def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         """
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
+        obj = None
         self._validate_object_id(object_id)
         if eagerload:
             query = self._get_eagerloaded_query(**kwargs)
@@ -289,6 +343,22 @@ class GenericView(FlaskView):
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, f'Object with id "{object_id}" not found')
+        return obj
+
+    def _get_objects(self, object_ids, eagerload=False, **kwargs):
+        """
+        Given the object_id and extra route params, get an instance of
+        ``self.model_class``
+        """
+        object_ids = [object_id for object_id in object_ids if self._validate_object_id(object_id, raise_error=False)]
+        if eagerload:
+            query = self._get_eagerloaded_query(**kwargs)
+        else:
+            query = self._get_base_query(**kwargs)
+        try:
+            obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
+        except NoResultFound:
+            return []
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -303,7 +373,8 @@ class GenericView(FlaskView):
         except ObjectDeletedError:
             return []
 
-    def _parse_data(self, schema, request, *args, **kwargs):
+    @staticmethod
+    def _parse_data(schema, request, *args, **kwargs):
         """Deserializes from a Flask request to a dict with valid
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
@@ -347,15 +418,16 @@ class GenericView(FlaskView):
             response.status_code = error.status_code
             return response
 
-        # @app.errorhandler(404)
+        """# @app.errorhandler(404)
         def handle_not_found(err):  # pylint: disable=unused-variable
             response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
-            return flask.jsonify(response), 404
+            return flask.jsonify(response), 404"""
 
         @app.errorhandler(500)
         def handle_server_error(err):  # pylint: disable=unused-variable
             response = {'success': False,
-                        'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
+                        'message': f"Exception: {err.original_exception}" if faraday_server.debug else
+                        'Internal Server Error'}
             return flask.jsonify(response), 500
 
 
@@ -374,7 +446,9 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    def _get_workspace(self, workspace_name):
+    @staticmethod
+    def _get_workspace(workspace_name):
+        ws = None
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
@@ -388,8 +462,9 @@ class GenericWorkspacedView(GenericView):
         return base.join(Workspace).filter(
             Workspace.id == self._get_workspace(workspace_name).id)
 
-    def _get_object(self, object_id, workspace_name, eagerload=False):
+    def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
+        obj = None
         if eagerload:
             query = self._get_eagerloaded_query(workspace_name)
         else:
@@ -401,7 +476,7 @@ class GenericWorkspacedView(GenericView):
         return obj
 
     def _set_schema_context(self, context, **kwargs):
-        """Overriden to pass the workspace name to the schema"""
+        """Overridden to pass the workspace name to the schema"""
         context.update(kwargs)
         return context
 
@@ -410,7 +485,7 @@ class GenericWorkspacedView(GenericView):
         if hasattr(sup, 'before_request'):
             sup.before_request(name, *args, **kwargs)
         if (self._get_workspace(kwargs['workspace_name']).readonly
-            and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
+                and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
@@ -450,7 +525,8 @@ class ListMixin:
         """
         return objects
 
-    def _paginate(self, query):
+    @staticmethod
+    def _paginate(query):
         """Overwrite this to implement pagination in the list endpoint.
 
         This is typically overwritten by SortableMixin.
@@ -489,8 +565,9 @@ class ListMixin:
                 query = query.order_by(*order_field)
             else:
                 query = query.order_by(order_field)
-
         objects, pagination_metadata = self._paginate(query)
+        if not isinstance(objects, list):
+            objects = objects.limit(None).offset(0)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
 
@@ -503,15 +580,15 @@ class SortableMixin:
 
     Works for both workspaced and non-workspaced views.
     """
-    sort_field_paremeter_name = "sort"
-    sort_direction_paremeter_name = "sort_dir"
+    sort_field_parameter_name = "sort"
+    sort_direction_parameter_name = "sort_dir"
     sort_pass_silently = False
     default_sort_direction = "asc"
     sort_model_class = None  # Override to use a model with more fields
 
     def _get_order_field(self, **kwargs):
         try:
-            order_field = flask.request.args[self.sort_field_paremeter_name]
+            order_field = flask.request.args[self.sort_field_parameter_name]
         except KeyError:
             # Sort field not specified, return the default
             return self.order_field
@@ -533,10 +610,9 @@ class SortableMixin:
             field_instance = schema.fields[order_field]
         except KeyError:
             if self.sort_pass_silently:
-                logger.warn(f"Unknown field: {order_field}")
+                logger.warning(f"Unknown field: {order_field}")
                 return self.order_field
             raise InvalidUsage(f"Unknown field: {order_field}")
-
         # Translate from the field name in the schema to the database field
         # name
         order_field = field_instance.attribute or order_field
@@ -546,7 +622,7 @@ class SortableMixin:
         model_class = self.sort_model_class or self.model_class
         if order_field not in inspect(model_class).attrs:
             if self.sort_pass_silently:
-                logger.warn(f"Field not in the DB: {order_field}")
+                logger.warning(f"Field not in the DB: {order_field}")
                 return self.order_field
             # It could be something like fields.Method
             raise InvalidUsage(f"Field not in the DB: {order_field}")
@@ -556,11 +632,11 @@ class SortableMixin:
             field = getattr(model_class, order_field + '_id')
         else:
             field = getattr(model_class, order_field)
-        sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
+        sort_dir = flask.request.args.get(self.sort_direction_parameter_name,
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):
             if self.sort_pass_silently:
-                logger.warn(f"Invalid value for sorting direction: {sort_dir}")
+                logger.warning(f"Invalid value for sorting direction: {sort_dir}")
                 return self.order_field
             raise InvalidUsage(f"Invalid value for sorting direction: {sort_dir}")
         try:
@@ -572,7 +648,7 @@ class SortableMixin:
                 return getattr(field, sort_dir)()
         except NotImplementedError:
             if self.sort_pass_silently:
-                logger.warn(f"field {order_field} doesn't support sorting")
+                logger.warning(f"field {order_field} doesn't support sorting")
                 return self.order_field
             # There are some fields that can't be used for sorting
             raise InvalidUsage(f"field {order_field} doesn't support sorting")
@@ -584,6 +660,7 @@ class PaginatedMixin:
     page_number_parameter_name = 'page'
 
     def _paginate(self, query):
+        page, per_page = None, None
         if self.per_page_parameter_name in flask.request.args:
 
             try:
@@ -672,6 +749,7 @@ class FilterWorkspacedMixin(ListMixin):
             flask.abort(400, "Invalid filters")
 
         workspace = self._get_workspace(workspace_name)
+        filter_query = None
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -694,7 +772,7 @@ class FilterWorkspacedMixin(ListMixin):
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
             try:
@@ -704,13 +782,8 @@ class FilterWorkspacedMixin(ListMixin):
                 )
             except AttributeError as e:
                 flask.abort(400, e)
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in filter_query.all()]
-            data = []
-            for row in rows:
-                data.append({field[0]: field[1] for field in row})
-
-            return data, len(rows)
+            data, rows_count = get_filtered_data(filters, filter_query)
+            return data, rows_count
 
 
 class FilterMixin(ListMixin):
@@ -785,6 +858,7 @@ class FilterMixin(ListMixin):
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
+        filter_query = None
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -809,7 +883,8 @@ class FilterMixin(ListMixin):
             if offset:
                 filter_query = filter_query.offset(offset)
             count = filter_query.count()
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            filter_query = self._add_to_filter(filter_query)
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
             filter_query = self._generate_filter_query(
@@ -818,13 +893,11 @@ class FilterMixin(ListMixin):
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in filter_query.all()]
-            data = []
-            for row in rows:
-                data.append({field[0]: field[1] for field in row})
+            data, rows_count = get_filtered_data(filters, filter_query)
+            return data, rows_count
 
-            return data, len(rows)
+    def _add_to_filter(self, filter_query, **kwargs):
+        return filter_query
 
 
 class ListWorkspacedMixin(ListMixin):
@@ -971,7 +1044,9 @@ class CreateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"{obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 if not_null_constraint_violation(ex):
                     flask.abort(flask.make_response({'message': 'Be sure to send all required parameters.'}, 400))
@@ -992,7 +1067,7 @@ class CreateMixin:
         return obj
 
 
-class CommandMixin():
+class CommandMixin:
     """
         Created the command obj to log model activity after a command
         execution via the api (ex. from plugins)
@@ -1000,7 +1075,8 @@ class CommandMixin():
         NOTE: GET parameters are also available in POST requests
     """
 
-    def _set_command_id(self, obj, created):
+    @staticmethod
+    def _set_command_id(obj, created):
         try:
             # validates the data type from user input.
             command_id = int(flask.request.args.get('command_id', None))
@@ -1083,7 +1159,9 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"{obj} created")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1142,6 +1220,7 @@ class UpdateMixin:
                                 flask.request)
         # just in case an schema allows id as writable.
         data.pop('id', None)
+
         self._update_object(obj, data, partial=False)
         self._perform_update(object_id, obj, data, **kwargs)
 
@@ -1165,7 +1244,9 @@ class UpdateMixin:
         try:
             db.session.add(obj)
             db.session.commit()
+            logger.info(f"{obj} updated")
         except sqlalchemy.exc.IntegrityError as ex:
+            logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
@@ -1225,6 +1306,89 @@ class UpdateMixin:
         return self._dump(obj, kwargs), 200
 
 
+class BulkUpdateMixin:
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['PATCH'])
+    def bulk_update(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Update a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        # TODO BULK_UPDATE_SCHEMA
+        if not flask.request.json or 'ids' not in flask.request.json:
+            flask.abort(400)
+        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+        objects = self._get_objects(ids, **kwargs)
+        context = {'updating': True, 'objects': objects}
+        data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
+                                flask.request)
+        # just in case an schema allows id as writable.
+        data.pop('id', None)
+        data.pop('ids', None)
+
+        return self._perform_bulk_update(ids, data, **kwargs), 200
+
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.id.in_(ids))
+
+    def _pre_bulk_update(self, data, **kwargs):
+        return {}
+
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        pass
+
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+        try:
+            post_bulk_update_data = self._pre_bulk_update(data, **kwargs)
+            if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
+                queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
+                updated = queryset.update(data, synchronize_session='fetch')
+                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name)
+            else:
+                updated = 0
+            db.session.commit()
+            response = {'updated': updated}
+            return flask.jsonify(response)
+        except ValueError as e:
+            db.session.rollback()
+            flask.abort(400, ValidationError(
+               {
+                   'message': str(e),
+               }
+            ))
+        except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
+            db.session.rollback()
+            workspace = None
+            if workspace_name:
+                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace)
+            if conflict_obj is not None:
+                flask.abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj),
+                    }
+                ))
+            elif len(ids) >= 2:
+                flask.abort(409, ValidationError(
+                    {
+                        'message': 'Updating more than one object with unique data',
+                        'data': data
+                    }
+                ))
+            else:
+                raise
+
+
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<workspace_name>/<route_base>/<id>/ route
 
@@ -1269,7 +1433,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         return super().put(object_id, workspace_name=workspace_name)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
-        # # Make sure that if I created new objects, I had properly commited them
+        # # Make sure that if I created new objects, I had properly committed them
         # assert not db.session.new
 
         with db.session.no_autoflush:
@@ -1314,6 +1478,25 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         return super().patch(object_id, workspace_name=workspace_name)
 
 
+class BulkUpdateWorkspacedMixin(BulkUpdateMixin):
+
+    @route('', methods=['PATCH'])
+    def bulk_update(self, workspace_name, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        return super().bulk_update(workspace_name=workspace_name)
+
+    def _bulk_update_query(self, ids, **kwargs):
+        workspace = self._get_workspace(kwargs["workspace_name"])
+        return super()._bulk_update_query(ids).filter(self.model_class.workspace_id == workspace.id)
+
+
 class DeleteMixin:
     """Add DELETE /<id>/ route"""
 
@@ -1339,6 +1522,39 @@ class DeleteMixin:
     def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
+        logger.info(f"{obj} deleted")
+
+
+class BulkDeleteMixin:
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        # TODO BULK_DELETE_SCHEMA
+        if not flask.request.json or 'ids' not in flask.request.json:
+            flask.abort(400)
+        # objs = self._get_objects(flask.request.json['ids'], **kwargs)
+        # self._perform_bulk_delete(objs, **kwargs)
+        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+        return self._perform_bulk_delete(ids, **kwargs), 200
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        return self.model_class.query.filter(self.model_class.id.in_(ids))
+
+    def _perform_bulk_delete(self, ids, **kwargs):
+        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
+        db.session.commit()
+        response = {'deleted': deleted}
+        return flask.jsonify(response)
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
@@ -1369,8 +1585,27 @@ class DeleteWorkspacedMixin(DeleteMixin):
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
-
         return super()._perform_delete(obj, workspace_name)
+
+
+class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
+    # These mixin should be merged with DeleteMixin after v2 is removed
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Delete a group of {class_model} by ids."
+          responses:
+            204:
+              description: Ok
+        """
+        return super().bulk_delete(workspace_name=workspace_name)
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        return super()._bulk_delete_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 
 class CountWorkspacedMixin:
@@ -1406,19 +1641,7 @@ class CountWorkspacedMixin:
             'groups': [],
             'total_count': 0
         }
-        group_by = flask.request.args.get('group_by', None)
-        sort_dir = flask.request.args.get('order', "asc").lower()
-
-        # TODO migration: whitelist fields to avoid leaking a confidential
-        # field's value.
-        # Example: /users/count/?group_by=password
-        # Also we should check that the field exists in the db and isn't, for
-        # example, a relationship
-        if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(400, {"message": "group_by is a required parameter"})
-
-        if sort_dir and sort_dir not in ('asc', 'desc'):
-            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+        group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.
@@ -1427,19 +1650,18 @@ class CountWorkspacedMixin:
         group_by = f'{table_name}.{group_by}'
 
         count = self._filter_query(
-            db.session.query(self.model_class)
-                .join(Workspace)
-                .group_by(group_by)
-                .filter(Workspace.name == workspace_name,
-                        *self.count_extra_filters))
-
+            db.session.query(self.model_class).
+            join(Workspace).
+            group_by(group_by).
+            filter(Workspace.name == workspace_name,
+                   *self.count_extra_filters)
+        )
         # order
         order_by = group_by
         if sort_dir == 'desc':
             count = count.order_by(desc(order_by))
         else:
             count = count.order_by(asc(order_by))
-
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,
@@ -1512,19 +1734,7 @@ class CountMultiWorkspacedMixin:
         for workspace_name in workspace_names_list:
             self._get_workspace(workspace_name)
 
-        group_by = flask.request.args.get('group_by', None)
-        sort_dir = flask.request.args.get('order', "asc").lower()
-
-        # TODO migration: whitelist fields to avoid leaking a confidential
-        # field's value.
-        # Example: /users/count/?group_by=password
-        # Also we should check that the field exists in the db and isn't, for
-        # example, a relationship
-        if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(400, {"message": "group_by is a required parameter"})
-
-        if sort_dir and sort_dir not in ('asc', 'desc'):
-            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+        group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
 
         grouped_attr = getattr(self.model_class, group_by)
 
@@ -1601,7 +1811,8 @@ class CustomSQLAlchemyAutoSchemaOpts(SQLAlchemyAutoSchemaOpts):
 # backwards-compatible. Yes, it's horrible.
 # Also, I'm putting it here because this file will be always imported in a very
 # early stage, before defining any schemas.
-# This commit broke backwards compatibility: https://github.com/marshmallow-code/marshmallow/commit/610ec20ea3be89684f7e4df8035d163c3561c904
+# This commit broke backwards compatibility:
+# https://github.com/marshmallow-code/marshmallow/commit/610ec20ea3be89684f7e4df8035d163c3561c904
 # TODO check if we can remove this
 def old_isoformat(dt, *args, **kwargs):
     """Return the ISO8601-formatted UTC representation of a datetime object."""
@@ -1620,7 +1831,7 @@ class AutoSchema(Schema, metaclass=SQLAlchemyAutoSchemaMeta):
     A Marshmallow schema that does field introspection based on
     the SQLAlchemy model specified in Meta.model.
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
-    the serialization and deserialization proccess.
+    the serialization and deserialization process.
     """
     OPTIONS_CLASS = CustomSQLAlchemyAutoSchemaOpts
 
@@ -1636,7 +1847,7 @@ class AutoSchema(Schema, metaclass=SQLAlchemyAutoSchemaMeta):
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.
 
-    It is used to make filteralchemy support not nullable columns"""
+    It is used to make FilterAlchemy support not nullable columns"""
 
     def _add_column_kwargs(self, kwargs, column):
         super()._add_column_kwargs(kwargs, column)
@@ -1659,7 +1870,7 @@ class FilterSetMeta:
 def get_user_permissions(user):
     permissions = defaultdict(dict)
 
-    # Hardcode all permisions to allowed
+    # Hardcode all permissions to allowed
     ALLOWED = {'allowed': True, 'reason': None}
 
     # TODO schema

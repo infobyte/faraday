@@ -38,6 +38,7 @@
 , pillow
 , psycopg2
 , pyasn1
+, pyjwt
 , pylint
 , pyopenssl
 , pyotp
@@ -65,7 +66,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "3.18.0";
+    "4.0.2";
 
   src =
     lib.cleanSource
@@ -77,6 +78,7 @@ buildPythonPackage rec {
     ];
   propagatedBuildInputs =
     [
+      pyjwt
       werkzeug
       autobahn
       alembic

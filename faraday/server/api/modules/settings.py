@@ -1,17 +1,21 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-import flask
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
 import logging
+
+# Related third party imports
+import flask
 from flask import abort, make_response
 from marshmallow import Schema, ValidationError
 
+# Local application imports
 from faraday.settings import get_settings
 from faraday.settings.exceptions import InvalidConfigurationError
-
-from faraday.server.api.base import (
-    GenericView
-)
+from faraday.server.api.base import GenericView
 
 logger = logging.getLogger(__name__)
 

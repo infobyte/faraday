@@ -1,19 +1,23 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Standard library imports
+import logging
 from datetime import datetime
 
-import flask
-import logging
-
+# Related third party imports
 import pyotp
-from faraday_agent_parameters_types.utils import type_validate, get_manifests
+import flask
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
+from faraday_agent_parameters_types.utils import type_validate, get_manifests
 
-
+# Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     UpdateMixin,
@@ -21,18 +25,23 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-    ReadOnlyMultiWorkspacedView
+    ReadOnlyMultiWorkspacedView,
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
-from faraday.server.models import Agent, Executor, AgentExecution, db, \
-    Workspace, Command
+from faraday.server.models import (
+    Agent,
+    Executor,
+    AgentExecution,
+    Workspace,
+    Command,
+    db,
+)
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -125,7 +134,8 @@ class AgentCreationView(CreateMixin, GenericView):
     schema_class = AgentCreationSchema
     get_joinedloads = [Agent.workspaces, Workspace.agents]
 
-    def _get_workspace(self, workspace_name):
+    @staticmethod
+    def _get_workspace(workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
@@ -171,7 +181,6 @@ class AgentCreationView(CreateMixin, GenericView):
 
         agent = super()._perform_create(data, **kwargs)
         agent.workspaces = workspaces
-
         db.session.add(agent)
         db.session.commit()
 
@@ -202,7 +211,8 @@ class AgentWithWorkspacesView(UpdateMixin,
     schema_class = AgentWithWorkspacesSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
-    def _get_workspace(self, workspace_name):
+    @staticmethod
+    def _get_workspace(workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
@@ -211,19 +221,9 @@ class AgentWithWorkspacesView(UpdateMixin,
         except NoResultFound:
             flask.abort(404, f"No such workspace: {workspace_name}")
 
-    def _update_object(self, obj, data, **kwargs):
-        """Perform changes in the selected object
-
-        It modifies the attributes of the SQLAlchemy model to match
-        the data passed by the Marshmallow schema.
-
-        It is common to overwrite this method to do something strange
-        with some specific field. Typically the new method should call
-        this one to handle the update of the rest of the fields.
-        """
+    def _get_workspaces_from_data(self, data, **kwargs):
         workspace_names = data.pop('workspaces', '')
         partial = False if 'partial' not in kwargs else kwargs['partial']
-
         if len(workspace_names) == 0 and not partial:
             abort(
                 make_response(
@@ -238,15 +238,25 @@ class AgentWithWorkspacesView(UpdateMixin,
                     400
                 )
             )
-
         workspace_names = [
             dict_["name"] for dict_ in workspace_names
         ]
-
-        workspaces = list(
+        return list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names
         )
+
+    def _update_object(self, obj, data, **kwargs):
+        """Perform changes in the selected object
+
+        It modifies the attributes of the SQLAlchemy model to match
+        the data passed by the Marshmallow schema.
+
+        It is common to overwrite this method to do something strange
+        with some specific field. Typically the new method should call
+        this one to handle the update of the rest of the fields.
+        """
+        workspaces = self._get_workspaces_from_data(data, **kwargs)
 
         super()._update_object(obj, data)
         obj.workspaces = workspaces
@@ -280,6 +290,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                                 ][0])
         db.session.add(agent)
         db.session.commit()
+        logger.info(f"Workspace {workspace_name} removed from agent {agent}")
         return make_response({"description": "ok"}, 204)
 
     @route('/<int:agent_id>/run', methods=['POST'])
@@ -306,7 +317,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
 
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
-                                         Executor.agent_id == agent_id).one()
+                                             Executor.agent_id == agent_id).one()
 
             # VALIDATE
             errors = {}
@@ -317,6 +328,11 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                         errors[param_name] = val_error
                 else:
                     errors['message'] = f'"{param_name}" not recognized as an executor argument'
+
+            for param_name, _ in executor.parameters_metadata.items():
+                if executor.parameters_metadata[param_name]['mandatory'] and param_name not in executor_data['args']:
+                    errors['message'] = f'Mandatory argument {param_name} not passed to {executor.name} executor.'
+
             if errors:
                 response = jsonify(errors)
                 response.status_code = 400
@@ -355,6 +371,7 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args')
             })
+            logger.info("Agent executed")
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")

@@ -1,63 +1,61 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-from io import StringIO
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 
+# Standard library imports
 import logging
 import csv
-import flask
 import re
-from flask import Blueprint, make_response, jsonify, abort
+from io import StringIO
+
+# Related third party imports
+import wtforms
 import pytz
+import flask
+from flask import Blueprint, make_response, jsonify, abort
 from flask_classful import route
+from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
-import wtforms
-from flask_wtf.csrf import validate_csrf
 
+# Local application imports
 from faraday.server.utils.database import get_or_create
-
 from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-    FilterWorkspacedMixin
+    FilterWorkspacedMixin,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin,
 )
+from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
     NullToBlankString,
     PrimaryKeyRelatedField,
-    SelfNestedField
+    SelfNestedField,
 )
 from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
-from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
-
 logger = logging.getLogger(__name__)
 
 
 class HostCountSchema(Schema):
-    host_id = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='id')
-    critical = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_critical_count')
-    high = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_high_count')
-    med = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_medium_count')
-    low = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_low_count')
-    info = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_informational_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_unclassified_count')
-    total = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_total_count')
+    host_id = fields.Integer(dump_only=True, allow_none=False, attribute='id')
+    critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
+    high = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
+    med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
+    low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
+    info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
+    total = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
 
 
 class HostSchema(AutoSchema):
@@ -97,12 +95,14 @@ class HostSchema(AutoSchema):
                   'important', 'severity_counts'
                   )
 
-    def get_service_summaries(self, obj):
+    @staticmethod
+    def get_service_summaries(obj):
         return [service.summary
                 for service in obj.services
                 if service.status == 'open']
 
-    def get_service_version(self, obj):
+    @staticmethod
+    def get_service_version(obj):
         return [service.version
                 for service in obj.services
                 if service.status == 'open']
@@ -137,7 +137,9 @@ class HostFilterSet(FilterSet):
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView,
-                FilterWorkspacedMixin):
+                FilterWorkspacedMixin,
+                BulkDeleteWorkspacedMixin,
+                BulkUpdateWorkspacedMixin):
     route_base = 'hosts'
     model_class = Host
     order_field = desc(Host.vulnerability_critical_generic_count),\
@@ -253,7 +255,9 @@ class HostsView(PaginatedMixin,
                 else:
                     logger.debug("Host Created (%s)", host_dict)
                     hosts_created_count += 1
-            return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
+            logger.info("Hosts created in bulk")
+            return make_response(jsonify(hosts_created=hosts_created_count,
+                                         hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
             abort(400, f"Error parsing hosts CSV ({e})")
@@ -342,7 +346,11 @@ class HostsView(PaginatedMixin,
         res_dict = {'tools': []}
         for row in result:
             _, command = row
-            res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).isoformat()})
+            res_dict['tools'].append({'command': command.tool,
+                                      'user': command.user,
+                                      'params': command.params,
+                                      'command_id': command.id,
+                                      'create_date': command.create_date.replace(tzinfo=pytz.utc).isoformat()})
         return res_dict
 
     def _perform_create(self, data, **kwargs):
@@ -395,48 +403,27 @@ class HostsView(PaginatedMixin,
             })
         return {
             'rows': hosts,
-            'count': (pagination_metadata and pagination_metadata.total
-                           or len(hosts)),
+            'count': (pagination_metadata and pagination_metadata.total or len(hosts)),
         }
 
-    # ### THIS WAS FROM V2
-    # TODO SCHEMA
-    # @route('bulk_delete/', methods=['DELETE'])
-    # def bulk_delete(self, workspace_name):
-    #     """
-    #     ---
-    #     delete:
-    #       tags: ["Bulk", "Host"]
-    #       description: Delete hosts in bulk
-    #       responses:
-    #         200:
-    #           description: Ok
-    #         400:
-    #           description: Bad request
-    #         403:
-    #           description: Forbidden
-    #     tags: ["Bulk", "Host"]
-    #     responses:
-    #       200:
-    #         description: Ok
-    #     """
-    #     workspace = self._get_workspace(workspace_name)
-    #     json_request = flask.request.get_json()
-    #     if not json_request:
-    #         flask.abort(400, 'Invalid request. Check the request data or the content type of the request')
-    #     hosts_ids = json_request.get('hosts_ids', [])
-    #     hosts_ids = [host_id for host_id in hosts_ids if isinstance(host_id, int)]
-    #     deleted_hosts = 0
-    #     if hosts_ids:
-    #         deleted_hosts = Host.query.filter(
-    #             Host.id.in_(hosts_ids),
-    #             Host.workspace_id == workspace.id).delete(synchronize_session='fetch')
-    #     else:
-    #         flask.abort(400, "Invalid request")
-    #
-    #     db.session.commit()
-    #     response = {'deleted_hosts': deleted_hosts}
-    #     return flask.jsonify(response)
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
+        return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+
+    def _pre_bulk_update(self, data, **kwargs):
+        hostnames = data.pop('hostnames', None)
+        ans_data = super()._pre_bulk_update(data, **kwargs)
+        if hostnames is not None:
+            ans_data["hostnames"] = hostnames
+        return ans_data
+
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        if "hostnames" in extracted_data:
+            for obj in self._bulk_update_query(ids, **kwargs).all():
+                obj.set_hostnames(extracted_data["hostnames"])
 
 
 HostsView.register(host_api)

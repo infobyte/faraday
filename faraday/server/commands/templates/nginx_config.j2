@@ -9,8 +9,11 @@ server {
     ssl_certificate           {{ ssl_certificate }};
     ssl_certificate_key       {{ ssl_key }};
 
+    root {{ static_path }};
+    index index.html index.htm;
+
     location /{% if multitenant_url %}{{ multitenant_url }}/{% endif %} {
-        alias {{ static_path }};
+        try_files $uri $uri/ /index.html;
     }
 
     location {% if multitenant_url %}/{{ multitenant_url }}{% endif %}/_api/ {

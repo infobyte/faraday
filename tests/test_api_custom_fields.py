@@ -1,7 +1,7 @@
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
-from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 
 from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
 from faraday.server.models import (
@@ -10,14 +10,14 @@ from faraday.server.models import (
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestVulnerabilityCustomFields(ReadWriteAPITests):
+class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkDeleteTestsMixin):
     model = CustomFieldsSchema
     factory = CustomFieldsSchemaFactory
     api_endpoint = 'custom_fields_schema'
     # unique_fields = ['ip']
     # update_fields = ['ip', 'description', 'os']
     view_class = CustomFieldsSchemaView
-    patchable_fields = ['field_name']
+    patchable_fields = ['field_display_name']
 
     def test_custom_fields_data(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(

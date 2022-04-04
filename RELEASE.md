@@ -2,16 +2,50 @@ New features in the latest update
 =====================================
 
 
+4.0.2 [Apr 4th, 2022]:
+---
+ * models.py refactor
+ * add check to see if workspace name is longer than 250 characters. In that case raises an error
+ * Generate token with pyjwt
+
+4.0.1 [Mar 18th, 2022]:
+---
+ * Improve the logs
+
+4.0.0 [Feb 25th, 2022]:
+---
+ * Add a None limit and 0 offset to GET queries.
+
+3.19.0 [Dec 27th, 2021]:
+---
+ * ADD v3 bulks endpoints DELETE and EDIT (PATCH)
+ * Add logs of loggin, logout and log error to main log
+ * Fix bug in bulk update for m2m fields
+ * ADD clear settings command
+ * Add open medium, high and critical vulns histogram
+ * Fix integrity constraint error on cve update
+ * FIX static content for react
+ * Add cvss within vulnerability model
+ * add check to see if workspace name is longer than 250 characters. In that case raises an error
+ * change concat in urlstrings for join or urljoin
+ * Add cve to csv export
+
+3.18.1 [Nov 5th, 2021]:
+---
+Fix CVE issue
+
 3.18.0 [Oct 21st, 2021]:
 ---
  * Remove attachments in vulns filter endpoint
  * Add open and confirmed vulns in workspace stats
+ * Add migration disabling several notifications.
  * Add user id to session API endpoint
  * Add cve to vulnerability model
  * Change funcs to views
  * FIX report import
  * Add `last_run_agent_date` field to workspace endpoint
  * Fix cve parsing in `vulnerability create` and `bulk create`
+ * ADD check if postgres db is running during server start
  * Fix order_by in filters api
  * Fix 500 status code with invalid executor arguments
 

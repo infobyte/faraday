@@ -93,7 +93,7 @@ no-format-str:
     image: python:3
     stage: pre_testing
     script:
-      - pip install flynt
+      - pip install flynt==0.69
       - flynt -df faraday tests
     rules:
         - !reference [.ignore-on-tag, rules]

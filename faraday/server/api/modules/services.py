@@ -1,26 +1,32 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Related third party imports
 from flask import Blueprint, abort, make_response, jsonify
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
 
+# Local application imports
+from faraday.server.models import Host, Service, Workspace
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     FilterSetMeta,
-    FilterAlchemyMixin
+    FilterAlchemyMixin,
+    BulkDeleteWorkspacedMixin,
+    BulkUpdateWorkspacedMixin
 )
-from faraday.server.models import Host, Service, Workspace
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-
 
 services_api = Blueprint('services_api', __name__)
 
@@ -31,10 +37,11 @@ class ServiceSchema(AutoSchema):
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True,
                                    attribute='creator')
+    # Port is loaded via ports
     port = fields.Integer(dump_only=True, required=True,
-                          validate=[Range(min=0, error="The value must be greater than or equal to 0")])  # Port is loaded via ports
+                          validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     ports = MutableField(fields.Integer(required=True,
-                          validate=[Range(min=0, error="The value must be greater than or equal to 0")]),
+                                        validate=[Range(min=0, error="The value must be greater than or equal to 0")]),
                          fields.Method(deserialize='load_ports'),
                          required=True,
                          attribute='port')
@@ -48,7 +55,8 @@ class ServiceSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Service', dump_only=True)
     summary = fields.String(dump_only=True)
 
-    def load_ports(self, value):
+    @staticmethod
+    def load_ports(value):
         if not isinstance(value, list):
             raise ValidationError('ports must be a list')
         if len(value) != 1:
@@ -76,8 +84,12 @@ class ServiceSchema(AutoSchema):
                 # Partial update?
                 return data
 
-            if host_id != self.context['object'].parent.id:
-                raise ValidationError('Can\'t change service parent.')
+            if 'object' in self.context:
+                if host_id != self.context['object'].parent.id:
+                    raise ValidationError('Can\'t change service parent.')
+            else:
+                if any([host_id != obj.parent.id for obj in self.context['objects']]):
+                    raise ValidationError('Can\'t change service parent.')
 
         else:
             if not host_id:
@@ -110,7 +122,7 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
+class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service

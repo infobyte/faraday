@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from posixpath import join as urljoin
+from posixpath import join
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
@@ -48,11 +48,11 @@ class GenericAPITest:
 
     def url(self, obj=None, workspace=None):
         workspace = workspace or self.workspace
-        url = API_PREFIX + workspace.name + '/' + self.api_endpoint
+        url = join(API_PREFIX + workspace.name, self.api_endpoint)
         if obj is not None:
             id_ = str(obj.id) if isinstance(
                 obj, self.model) else str(obj)
-            url += '/' + id_
+            url = join(url, id_)
         return url
 
 
@@ -202,18 +202,17 @@ class UpdateTestsMixin:
     def test_update_an_object_readonly_fails(self, test_client, method):
         self.workspace.readonly = True
         db.session.commit()
-        for unique_field in self.unique_fields:
-            data = self.factory.build_dict()
-            old_field = getattr(self.objects[0], unique_field)
-            old_id = getattr(self.objects[0], 'id')
-            if method == "PUT":
-                res = test_client.put(self.url(self.first_object), data=data)
-            elif method == "PATCH":
-                res = test_client.patch(self.url(self.first_object), data=data)
-            db.session.commit()
-            assert res.status_code == 403
-            assert self.model.query.count() == OBJECT_COUNT
-            assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
+
+        data = self.factory.build_dict(workspace=self.workspace)
+        count = self.model.query.count()
+        if method == "PUT":
+            res = test_client.put(self.url(self.first_object),
+                                  data=data)
+        elif method == "PATCH":
+            res = test_client.patch(self.url(self.first_object),
+                                    data=data)
+        assert res.status_code == 403
+        assert self.model.query.count() == count
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_inactive_fails(self, test_client, method):
@@ -270,6 +269,134 @@ class UpdateTestsMixin:
         assert object_id == expected_id
 
 
+@pytest.mark.usefixtures('logged_user')
+class BulkUpdateTestsMixin:
+
+    @staticmethod
+    def control_data(test_suite, data: dict) -> dict:
+        return {
+            key: value for (key, value) in data.items()
+            if key in UpdateTestsMixin.control_patcheable_data(test_suite, data)
+            and key not in test_suite.unique_fields
+        }
+
+    def get_all_objs_and_ids(self):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+        return all_objs, all_objs_id
+
+    def test_bulk_update_an_object(self, test_client, logged_user):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
+
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
+        count = self.model.query.count()
+        data = BulkUpdateTestsMixin.control_data(self, data)
+
+        res = test_client.patch(self.url(), data={})
+        assert res.status_code == 400
+        data["ids"] = all_objs_id
+        res = test_client.patch(self.url(), data=data)
+
+        assert res.status_code == 200, (res.status_code, res.json)
+        assert self.model.query.count() == count
+        assert res.json['updated'] == len(all_objs)
+        for obj in self.model.query.all():
+            if getattr(obj, self.view_class.lookup_field) not in all_objs_id:
+                assert any(
+                    [
+                        data[updated_field] != getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
+            else:
+                assert all(
+                    [
+                        data[updated_field] == getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
+
+    def test_bulk_update_an_object_readonly_fails(self, test_client):
+        self.workspace.readonly = True
+        db.session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        count = self.model.query.count()
+        data["ids"] = all_objs_id
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 403
+        assert self.model.query.count() == count
+
+    def test_bulk_update_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = self.control_cant_change_data(data)
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        count = self.model.query.count()
+        data["ids"] = all_objs_id
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 403
+        assert self.model.query.count() == count
+
+    @pytest.mark.parametrize('existing', (True, False))
+    def test_bulk_update_fails_with_repeated_unique(self, test_client, session, existing):
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            if existing:
+                data[unique_field] = getattr(self.objects[3], unique_field)
+                data["ids"] = [getattr(self.objects[0], self.view_class.lookup_field)]
+            else:
+                data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)]
+            res = test_client.patch(self.url(), data=data)
+            assert res.status_code == 409
+            assert self.model.query.count() == OBJECT_COUNT
+
+    def test_bulk_update_cant_change_id(self, test_client):
+        raw_json = self.factory.build_dict(workspace=self.workspace)
+        raw_json = self.control_cant_change_data(raw_json)
+        raw_json['id'] = 100000
+        expected_id = self.first_object.id
+        raw_json["ids"] = [expected_id]
+        res = test_client.patch(self.url(), data=raw_json)
+        assert res.status_code == 200, (res.status_code, res.data)
+        assert self.model.query.filter(self.model.id == 100000).first() is None
+
+    def test_patch_bulk_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
+        """To do this the user should use a PATCH request"""
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        res = test_client.patch(self.url(), data={"ids": all_objs_id})
+        assert res.status_code == 200, (res.status_code, res.json)
+
+    def test_bulk_update_invalid_ids(self, test_client):
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        data['ids'] = [-1, 'test']
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 0
+        data['ids'] = [-1, 'test', self.first_object.__getattribute__(self.view_class.lookup_field)]
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 1
+
+    def test_bulk_update_wrong_content_type(self, test_client):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+
+        request_data = {'ids': all_objs_id}
+        headers = [('content-type', 'text/xml')]
+
+        res = test_client.patch(self.url(), data=request_data, headers=headers)
+        assert res.status_code == 400
+
+
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
 
@@ -286,7 +413,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        res = test_client.get(urljoin(self.url(), "count?group_by=creator_id"))
+        res = test_client.get(join(self.url(), "count?group_by=creator_id"))
 
         assert res.status_code == 200, res.json
         res = res.get_json()
@@ -316,7 +443,7 @@ class CountTestsMixin:
 
         session.commit()
 
-        res = test_client.get(urljoin(self.url(), "count?group_by=creator_id&order=desc"))
+        res = test_client.get(join(self.url(), "count?group_by=creator_id&order=desc"))
 
         assert res.status_code == 200, res.json
         res = res.get_json()
@@ -363,6 +490,82 @@ class DeleteTestsMixin:
         assert res.status_code == 404  # No content
         assert not was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT
+
+
+@pytest.mark.usefixtures('logged_user')
+class BulkDeleteTestsMixin:
+
+    def get_all_objs_and_ids(self):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+        return all_objs, all_objs_id
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete(self, test_client):
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        ignored_obj = all_objs[-1]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
+
+        res = test_client.delete(self.url(), data={})
+        assert res.status_code == 400
+        data = {"ids": all_objs_id}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 200
+        assert all([was_deleted(obj) for obj in all_objs])
+        assert res.json['deleted'] == len(all_objs)
+        assert not was_deleted(ignored_obj)
+        assert self.model.query.count() == 1
+
+    def test_bulk_delete_invalid_ids(self, test_client):
+        request_data = {'ids': [-1, 'test']}
+        count = self.model.query.count()
+        res = test_client.delete(self.url(), data=request_data)
+        assert res.status_code == 200
+        assert res.json['deleted'] == 0
+        assert self.model.query.count() == count
+
+    def test_bulk_delete_wrong_content_type(self, test_client):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
+        count = self.model.query.count()
+
+        request_data = {'ids': all_objs_id}
+        headers = [('content-type', 'text/xml')]
+
+        res = test_client.delete(self.url(), data=request_data, headers=headers)
+        assert res.status_code == 400
+        assert self.model.query.count() == count
+        assert all([not was_deleted(obj) for obj in all_objs])
+
+    def test_bulk_delete_readonly_fails(self, test_client, session):
+        self.workspace.readonly = True
+        session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = {"ids": all_objs_id}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 403  # No content
+        assert not any([was_deleted(obj) for obj in all_objs])
+        assert self.model.query.count() == OBJECT_COUNT
+
+    def test_delete_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+        data = {"ids": all_objs_id}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 403  # No content
+        assert not any([was_deleted(obj) for obj in all_objs])
+        assert self.model.query.count() == OBJECT_COUNT
+
+    def test_delete_from_other_workspace_fails(self, test_client):
+        all_objs, all_objs_id = self.get_all_objs_and_ids()
+
+        data = {"ids": all_objs_id + [10000000]}
+        res = test_client.delete(self.url(), data=data)
+        assert res.status_code == 204
+        assert all([was_deleted(obj) for obj in all_objs])
+        assert res.json['deleted'] == len(all_objs)
+        assert self.model.query.count() == 0
 
 
 class PaginationTestsMixin(OriginalPaginationTestsMixin):

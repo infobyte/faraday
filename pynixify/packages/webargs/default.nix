@@ -6,13 +6,14 @@
 , fetchPypi
 , lib
 , marshmallow
+, packaging
 }:
 
 buildPythonPackage rec {
   pname =
     "webargs";
   version =
-    "8.0.1";
+    "8.1.0";
 
   src =
     fetchPypi {
@@ -20,12 +21,13 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "052nard38lki662fqydlyip242n9i8w04yyh1axwz5zfa0i05kmw";
+        "0csxdbxdk25d4ga1gi52m5ys973h4q4zqa85fp7n68m2akqbgw7i";
     };
 
   propagatedBuildInputs =
     [
       marshmallow
+      packaging
     ];
 
   # TODO FIXME

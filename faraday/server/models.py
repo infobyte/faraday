@@ -2987,8 +2987,8 @@ class AnalyticsConfig:
     VULNS_PER_SEVERITY = 'vulnerabilities_per_severity'
     TOP_TEN_MOST_AFFECTED_HOSTS = 'top_ten_most_affected_hosts'
     TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
-    MONTH_EVOLUTION_BY_STATUS = 'month_evolution_by_status'
-    MONTH_EVOLUTION_BY_SEVERITY = 'month_evolution_by_severity'
+    MONTHLY_EVOLUTION_BY_STATUS = 'monthly_evolution_by_status'
+    MONTHLY_EVOLUTION_BY_SEVERITY = 'monthly_evolution_by_severity'
 
     TYPES = [
         VULNS_PER_HOST,
@@ -2996,8 +2996,8 @@ class AnalyticsConfig:
         VULNS_PER_SEVERITY,
         TOP_TEN_MOST_AFFECTED_HOSTS,
         TOP_TEN_MOST_REPEATED_VULNS,
-        MONTH_EVOLUTION_BY_STATUS,
-        MONTH_EVOLUTION_BY_SEVERITY,
+        MONTHLY_EVOLUTION_BY_STATUS,
+        MONTHLY_EVOLUTION_BY_SEVERITY,
     ]
 
 

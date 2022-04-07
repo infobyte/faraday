@@ -26,8 +26,6 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('type', sa.Enum('vulnerabilities_per_host', 'vulnerabilities_per_status', 'vulnerabilities_per_severity', 'top_ten_most_affected_hosts', 'top_ten_most_repeated_vulns', 'monthly_evolution_by_status', 'monthly_evolution_by_severity', name='analytics_types'), nullable=False),
     sa.Column('filters', sa.JSON(), nullable=False),
-    sa.Column('workspaces', sa.JSON(), nullable=False),
-    sa.Column('hosts', sa.JSON(), nullable=False),
     sa.Column('data', sa.JSON(), nullable=False),
     sa.Column('copies', sa.Integer(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),

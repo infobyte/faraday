@@ -3009,8 +3009,6 @@ class Analytics(Metadata):
     description = Column(Text, nullable=True)
     type = Column(Enum(*AnalyticsConfig.TYPES, name='analytics_types'), nullable=False)
     filters = Column(JSONType, nullable=False)
-    workspaces = Column(JSONType, nullable=False)
-    hosts = Column(JSONType, nullable=False)
     data = Column(JSONType, nullable=False)
     copies = Column(Integer, nullable=False, default=0)
 

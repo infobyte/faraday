@@ -11,7 +11,7 @@ from datetime import datetime
 # Related third party imports
 import pyotp
 import flask
-from flask import Blueprint, abort, request, make_response, jsonify
+from flask import Blueprint, abort, request, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
@@ -20,21 +20,15 @@ from faraday_agent_parameters_types.utils import type_validate, get_manifests
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
-    UpdateMixin,
-    DeleteMixin,
-    ReadOnlyView,
-    CreateMixin,
-    GenericView,
-    ReadOnlyMultiWorkspacedView,
+    ReadWriteView
 )
-from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import (
     Agent,
     Executor,
     AgentExecution,
     Workspace,
     Command,
-    db,
+    db
 )
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
@@ -93,46 +87,41 @@ class AgentSchema(AutoSchema):
         )
 
 
-class AgentWithWorkspacesSchema(AgentSchema):
-    workspaces = fields.Pluck(WorkspaceSchema, "name", many=True, required=True)
-
-    class Meta(AgentSchema.Meta):
-        fields = AgentSchema.Meta.fields + ('workspaces',)
-
-
 class AgentCreationSchema(Schema):
     id = fields.Integer(dump_only=True)
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
-    workspaces = fields.Pluck(WorkspaceSchema, "name", many=True, required=True)
 
     class Meta:
         fields = (
             'id',
             'name',
-            'token',
-            'workspaces',
+            'token'
         )
 
 
-class AgentCreationView(CreateMixin, GenericView):
-    """
-    ---
-      tags: ["Agent"]
-      description: Creates an agent
-      responses:
-        201:
-          description: Ok
-          content:
-            application/json:
-              schema: AgentCreationSchema
-        401:
-            description: Invalid token
-    """
-    route_base = 'agent_registration'
+class ExecutorDataSchema(Schema):
+    executor = fields.String(default=None)
+    args = fields.Dict(default=None)
+
+
+class AgentRunSchema(Schema):
+    executor_data = fields.Nested(
+        ExecutorDataSchema(unknown=EXCLUDE),
+        required=True
+    )
+    workspace_name = fields.String(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.unknown = EXCLUDE
+
+
+class AgentView(ReadWriteView):
+    route_base = 'agents'
     model_class = Agent
-    schema_class = AgentCreationSchema
-    get_joinedloads = [Agent.workspaces, Workspace.agents]
+    schema_class = AgentSchema
+    get_joinedloads = [Agent.creator, Agent.executors]
 
     @staticmethod
     def _get_workspace(workspace_name):
@@ -145,6 +134,7 @@ class AgentCreationView(CreateMixin, GenericView):
             flask.abort(404, f"No such workspace: {workspace_name}")
 
     def _perform_create(self, data, **kwargs):
+        data = self._parse_data(AgentCreationSchema(unknown=EXCLUDE), request)
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
@@ -153,148 +143,13 @@ class AgentCreationView(CreateMixin, GenericView):
                           interval=int(faraday_server.agent_token_expiration)
                           ).verify(token, valid_window=1):
             abort(401, "Invalid Token")
-
-        workspace_names = data.pop('workspaces')
-
-        if len(workspace_names) == 0:
-            abort(
-                make_response(
-                    jsonify(
-                        messages={
-                            "json": {
-                                "workspaces":
-                                    "Must include one workspace at least"
-                            }
-                        }
-                    ),
-                    400
-                )
-            )
-        workspace_names = [
-            dict_["name"] for dict_ in workspace_names
-        ]
-
-        workspaces = list(
-            self._get_workspace(workspace_name)
-            for workspace_name in workspace_names
-        )
-
         agent = super()._perform_create(data, **kwargs)
-        agent.workspaces = workspaces
         db.session.add(agent)
-        db.session.commit()
-
+        logger.info(f"Agent {agent} created")
         return agent
 
-
-class ExecutorDataSchema(Schema):
-    executor = fields.String(default=None)
-    args = fields.Dict(default=None)
-
-
-class AgentRunSchema(Schema):
-    executorData = fields.Nested(
-        ExecutorDataSchema(unknown=EXCLUDE),
-        required=True
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.unknown = EXCLUDE
-
-
-class AgentWithWorkspacesView(UpdateMixin,
-                              DeleteMixin,
-                              ReadOnlyView):
-    route_base = 'agents'
-    model_class = Agent
-    schema_class = AgentWithWorkspacesSchema
-    get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
-
-    @staticmethod
-    def _get_workspace(workspace_name):
-        try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
-            if not ws.active:
-                flask.abort(403, f"Disabled workspace: {workspace_name}")
-            return ws
-        except NoResultFound:
-            flask.abort(404, f"No such workspace: {workspace_name}")
-
-    def _get_workspaces_from_data(self, data, **kwargs):
-        workspace_names = data.pop('workspaces', '')
-        partial = False if 'partial' not in kwargs else kwargs['partial']
-        if len(workspace_names) == 0 and not partial:
-            abort(
-                make_response(
-                    jsonify(
-                        messages={
-                            "json": {
-                                "workspaces":
-                                    "Must include one workspace at least"
-                            }
-                        }
-                    ),
-                    400
-                )
-            )
-        workspace_names = [
-            dict_["name"] for dict_ in workspace_names
-        ]
-        return list(
-            self._get_workspace(workspace_name)
-            for workspace_name in workspace_names
-        )
-
-    def _update_object(self, obj, data, **kwargs):
-        """Perform changes in the selected object
-
-        It modifies the attributes of the SQLAlchemy model to match
-        the data passed by the Marshmallow schema.
-
-        It is common to overwrite this method to do something strange
-        with some specific field. Typically the new method should call
-        this one to handle the update of the rest of the fields.
-        """
-        workspaces = self._get_workspaces_from_data(data, **kwargs)
-
-        super()._update_object(obj, data)
-        obj.workspaces = workspaces
-
-        return obj
-
-
-class AgentView(ReadOnlyMultiWorkspacedView):
-    route_base = 'agents'
-    model_class = Agent
-    schema_class = AgentSchema
-    get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
-
-    @route('/<int:agent_id>', methods=['DELETE'])
-    def remove_workspace(self, workspace_name, agent_id):
-        """
-        ---
-          tags: ["Agent"]
-          description: Removes a workspace from an agent
-          responses:
-            400:
-              description: Bad request
-            204:
-              description: Ok
-        """
-        agent = self._get_object(agent_id, workspace_name)
-        agent.workspaces.remove([
-                                    workspace
-                                    for workspace in agent.workspaces
-                                    if workspace.name == workspace_name
-                                ][0])
-        db.session.add(agent)
-        db.session.commit()
-        logger.info(f"Workspace {workspace_name} removed from agent {agent}")
-        return make_response({"description": "ok"}, 204)
-
     @route('/<int:agent_id>/run', methods=['POST'])
-    def run_agent(self, workspace_name, agent_id):
+    def run_agent(self, agent_id):
         """
         ---
           tags: ["Agent"]
@@ -311,9 +166,9 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
-        agent = self._get_object(agent_id, workspace_name)
-        workspace = self._get_workspace(workspace_name)
-        executor_data = data['executorData']
+        agent = self._get_object(agent_id)
+        executor_data = data['executor_data']
+        workspace = self._get_workspace(data['workspace_name'])
 
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
@@ -380,8 +235,30 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 'command_id': command.id,
             })
 
+    @route('/active_agents', methods=['GET'])
+    def active_agents(self, **kwargs):
+        """
+        ---
+        get:
+          tags: ["Agent"]
+          summary: Get all manifests, Optionally choose latest version with parameter
+          parameters:
+          - in: version
+            name: agent_version
+            description: latest version to request
+
+          responses:
+            200:
+              description: Ok
+        """
+        try:
+            objects = self.model_class.query.filter(self.model_class.active).all()
+            return self._envelope_list(self._dump(objects, kwargs, many=True))
+        except ValueError as e:
+            flask.abort(400, e)
+
     @route('/get_manifests', methods=['GET'])
-    def manifests_get(self, workspace_name):
+    def manifests_get(self):
         """
         ---
         get:
@@ -402,6 +279,4 @@ class AgentView(ReadOnlyMultiWorkspacedView):
             flask.abort(400, e)
 
 
-AgentWithWorkspacesView.register(agent_api)
-AgentCreationView.register(agent_creation_api)
 AgentView.register(agent_api)

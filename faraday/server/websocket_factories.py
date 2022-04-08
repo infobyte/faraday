@@ -132,25 +132,10 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     assert execution_id is not None
                     agent_execution = AgentExecution.query.filter(AgentExecution.id == execution_id).first()
                     if agent_execution:
-
-                        if agent_execution.workspace.name not in \
-                                [
-                                    workspace.name
-                                    for workspace in agent.workspaces
-                                ]:
-                            logger.exception(
-                                ValueError(
-                                    f"The {agent.name} agent has permission "
-                                    f"to workspace {agent.workspaces} and "
-                                    "ask to write to workspace "
-                                    f"{agent_execution.workspace.name}"
-                                )
-                            )
-                        else:
-                            agent_execution.successful = message.get('successful', None)
-                            agent_execution.running = message.get('running', None)
-                            agent_execution.message = message.get('message', '')
-                            db.session.commit()
+                        agent_execution.successful = message.get('successful', None)
+                        agent_execution.running = message.get('running', None)
+                        agent_execution.message = message.get('message', '')
+                        db.session.commit()
                     else:
                         logger.exception(
                             NoResultFound(f"No row was found for agent executor id {execution_id}"))

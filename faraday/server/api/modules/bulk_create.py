@@ -486,7 +486,7 @@ class BulkCreateView(GenericWorkspacedView):
         if flask_login.current_user.is_anonymous:
             workspace = self._get_workspace(workspace_name)
 
-            if not workspace or workspace not in agent.workspaces:
+            if not workspace:
                 flask.abort(404, f"No such workspace: {workspace_name}")
 
             if "execution_id" not in data:

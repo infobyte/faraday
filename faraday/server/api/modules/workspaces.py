@@ -26,7 +26,6 @@ from faraday.server.models import (
     SeveritiesHistogram,
     Vulnerability,
     _make_vuln_count_property,
-    _make_active_agents_count_property,
     count_vulnerability_severities,
     _last_run_agent_date,
 )
@@ -101,7 +100,6 @@ class WorkspaceSchema(AutoSchema):
 
     create_date = fields.DateTime(attribute='create_date', dump_only=True)
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
-    active_agents_count = fields.Integer(dump_only=True)
     last_run_agent_date = fields.DateTime(dump_only=True, attribute='last_run_agent_date')
     histogram = fields.Nested(HistogramSchema(many=True))
 
@@ -110,7 +108,7 @@ class WorkspaceSchema(AutoSchema):
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'active_agents_count', 'last_run_agent_date', 'histogram')
+                  'last_run_agent_date', 'histogram')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -307,10 +305,6 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     def _add_to_filter(self, filter_query, **kwargs):
         filter_query = filter_query.options(
             with_expression(
-                Workspace.active_agents_count,
-                _make_active_agents_count_property(),
-            ),
-            with_expression(
                 Workspace.last_run_agent_date,
                 _last_run_agent_date(),
             ),
@@ -381,10 +375,6 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 _make_vuln_count_property('vulnerability_code',
                                           extra_query=extra_query,
                                           use_column_property=False),
-            ),
-            with_expression(
-                Workspace.active_agents_count,
-                _make_active_agents_count_property(),
             ),
             with_expression(
                 Workspace.last_run_agent_date,

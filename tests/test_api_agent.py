@@ -11,11 +11,10 @@ from urllib.parse import urljoin
 import pyotp
 import pytest
 
-from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
+from faraday.server.api.modules.agent import AgentView
 from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
-from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 
@@ -41,7 +40,7 @@ def logout(client, expected_status_codes):
     return res
 
 
-def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
+def get_raw_agent(name="My agent", active=None, token=None):
     raw_agent = {}
     if name is not None:
         raw_agent["name"] = name
@@ -49,10 +48,6 @@ def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
         raw_agent["active"] = active
     if token:
         raw_agent["token"] = token
-    if workspaces is not None:
-        raw_agent["workspaces"] = [
-            workspace.name for workspace in workspaces
-        ]
     return raw_agent
 
 
@@ -79,11 +74,6 @@ class TestAgentCreationAPI:
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_create_agent_valid_token(self, faraday_server_config, test_client,
                                       session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
         faraday_server_config.agent_token_expiration = 60
@@ -91,26 +81,15 @@ class TestAgentCreationAPI:
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name='new_agent',
-            token=pyotp.TOTP(secret, interval=60).now(),
-            workspaces=[workspace, other_workspace]
+            token=pyotp.TOTP(secret, interval=60).now()
         )
-        res = test_client.post('/v3/agent_registration', data=raw_data)
+        res = test_client.post('/v3/agents', data=raw_data)
         assert res.status_code == 201, (res.json, raw_data)
         assert len(session.query(Agent).all()) == initial_agent_count + 1
-        assert workspace.name in res.json['workspaces']
-        assert other_workspace.name in res.json['workspaces']
-        assert len(res.json['workspaces']) == 2
-        workspaces = Agent.query.get(res.json['id']).workspaces
-        assert len(workspaces) == 2
-        assert workspace in workspaces
-        assert other_workspace in workspaces
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_without_name_fails(self, faraday_server_config,
                                              test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
         faraday_server_config.agent_token_expiration = 60
@@ -119,10 +98,9 @@ class TestAgentCreationAPI:
         raw_data = get_raw_agent(
             name=None,
             token=pyotp.TOTP(secret, interval=60).now(),
-            workspaces=[workspace]
         )
         res = test_client.post(
-            '/v3/agent_registration',
+            '/v3/agents',
             data=raw_data
         )
         assert res.status_code == 400
@@ -131,33 +109,25 @@ class TestAgentCreationAPI:
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_invalid_token(self, faraday_server_config,
                                         test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        session.commit()
         secret = pyotp.random_base32()
         faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="INVALID",
             name="test agent",
-            workspaces=[workspace]
         )
-        res = test_client.post('/v3/agent_registration', data=raw_data)
+        res = test_client.post('/v3/agents', data=raw_data)
         assert res.status_code == 401
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_agent_token_not_set(self, faraday_server_config,
                                               test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        session.commit()
         faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
-            workspaces=[workspace],
         )
-        res = test_client.post('/v3/agent_registration', data=raw_data)
+        res = test_client.post('/v3/agents', data=raw_data)
         assert res.status_code == 400
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
@@ -166,80 +136,21 @@ class TestAgentCreationAPI:
         faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = {"PEPE": 'INVALID'}
-        res = test_client.post('/v3/agent_registration', data=raw_data)
-        assert res.status_code == 400
-
-    @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_empty_workspaces(self, faraday_server_config,
-                                           test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        session.commit()
-        secret = pyotp.random_base32()
-        faraday_server_config.agent_registration_secret = secret
-        faraday_server_config.agent_token_expiration = 60
-        logout(test_client, [302])
-        raw_data = get_raw_agent(
-            token=pyotp.TOTP(secret, interval=60).now(),
-            name="test agent",
-            workspaces=[]
-        )
-        res = test_client.post('/v3/agent_registration', data=raw_data)
-        assert res.status_code == 400
-
-    @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_inexistent_workspaces(self, faraday_server_config,
-                                                test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        session.commit()
-        secret = pyotp.random_base32()
-        faraday_server_config.agent_registration_secret = secret
-        faraday_server_config.agent_token_expiration = 60
-        logout(test_client, [302])
-        raw_data = get_raw_agent(
-            token=pyotp.TOTP(secret, interval=60).now(),
-            name="test agent",
-            workspaces=[]
-        )
-        raw_data["workspaces"] = ["donotexist"]
-        res = test_client.post('/v3/agent_registration', data=raw_data)
-        assert res.status_code == 404
-
-    @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_workspaces_not_set(self, faraday_server_config,
-                                             test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        session.commit()
-        secret = pyotp.random_base32()
-        faraday_server_config.agent_registration_secret = secret
-        faraday_server_config.agent_token_expiration = 60
-        logout(test_client, [302])
-        raw_data = get_raw_agent(
-            name="test agent",
-            token=pyotp.TOTP(secret, interval=60).now()
-        )
-        res = test_client.post('/v3/agent_registration', data=raw_data)
+        res = test_client.post('/v3/agents', data=raw_data)
         assert res.status_code == 400
 
 
-class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
+class TestAgentAPIGeneric(ReadWriteAPITests):
     model = Agent
     factory = factories.AgentFactory
-    view_class = AgentWithWorkspacesView
+    view_class = AgentView
     api_endpoint = 'agents'
     patchable_fields = ['name']
 
     def test_create_succeeds(self, test_client):
         with pytest.raises(AssertionError) as exc_info:
             super().test_create_succeeds(test_client)
-        assert '405' in exc_info.value.args[0]
-
-    def test_create_fails_with_empty_dict(self, test_client):
-        with pytest.raises(AssertionError) as exc_info:
-            super().test_create_fails_with_empty_dict(test_client)
-        assert '405' in exc_info.value.args[0]
+        assert '401' in exc_info.value.args[0]
 
     def workspaced_url(self, workspace, obj=None):
         url = urljoin(API_PREFIX, f"{workspace.name}{self.api_endpoint}")
@@ -248,124 +159,32 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
             url = urljoin(url, id_)
         return url
 
-    def create_raw_agent(self, active=False, token="TOKEN",
-                         workspaces=None):
-        return get_raw_agent(name="My agent", token=token, active=active,
-                             workspaces=workspaces)
-
-    def test_create_agent_invalid(self, test_client, session):
-        """
-            To create new agent use the
-            <Rule '/v3/agent_registration/' (POST, OPTIONS)
-        """
-        initial_agent_count = len(session.query(Agent).all())
-        raw_agent = self.create_raw_agent()
-        res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 405  # the only way to create agents is by using the token!
-        assert len(session.query(Agent).all()) == initial_agent_count
-
-    def test_get_not_workspaced(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace], active=True)
-        session.commit()
-        res = test_client.get(self.url(agent))
-        assert res.status_code == 200
-        assert len(res.json['workspaces']) == 1
-        assert workspace.name in res.json['workspaces'][0]
+    def create_raw_agent(self, active=False, token="TOKEN"):
+        return get_raw_agent(name="My agent", token=token, active=active)
 
     def test_update_agent(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace], active=True)
+        agent = AgentFactory.create(active=True)
         session.commit()
-        raw_agent = self.create_raw_agent(active=False, workspaces=[workspace])
+        raw_agent = self.create_raw_agent(active=False)
         res = test_client.put(self.url(agent.id), data=raw_agent)
         assert res.status_code == 200, (res.json, raw_agent)
         assert not res.json['active']
-        assert len(res.json['workspaces']) == 1
-        assert workspace.name in res.json['workspaces'][0]
-
-    def test_update_agent_add_a_workspace(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent = AgentFactory.create(workspaces=[workspace],
-                                    active=True)
-        session.commit()
-        raw_agent = self.create_raw_agent(
-            workspaces=[workspace, other_workspace]
-        )
-        res = test_client.put(self.url(agent.id), data=raw_agent)
-        assert res.status_code == 200
-        assert other_workspace.name in res.json['workspaces']
-        assert workspace.name in res.json['workspaces']
-        assert len(res.json['workspaces']) == 2
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 2
-        assert workspace in workspaces
-        assert other_workspace in workspaces
-
-    def test_update_agent_add_a_inexistent_workspace(self, test_client,
-                                                     session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent = AgentFactory.create(workspaces=[workspace],
-                                    active=True)
-        session.commit()
-        raw_agent = self.create_raw_agent(
-            workspaces=[workspace, other_workspace]
-        )
-        raw_agent["workspaces"] = ["donotexist"]
-        res = test_client.put(self.url(agent.id), data=raw_agent)
-        assert res.status_code == 404
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 1
-        assert workspace in workspaces
-
-    def test_update_agent_delete_a_workspace(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent = AgentFactory.create(workspaces=[workspace, other_workspace],
-                                    active=True)
-        session.commit()
-        raw_agent = self.create_raw_agent(workspaces=[workspace])
-        res = test_client.put(self.url(agent.id), data=raw_agent)
-        assert res.status_code == 200
-        assert len(res.json['workspaces']) == 1
-        assert other_workspace.name not in res.json['workspaces']
-        assert workspace.name in res.json['workspaces']
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 1
-        assert workspaces[0] == workspace
 
     def test_update_bug_case(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace])
+        agent = AgentFactory.create()
         session.add(agent)
         session.commit()
         update_data = {
             "id": 1,
             "name": "Agent test",
             "is_online": True,
-            "workspaces": [workspace.name]
         }
         res = test_client.put(self.url(agent.id), data=update_data)
         assert res.status_code == 200, (res.json, update_data)
-        assert workspace.name in res.json['workspaces']
-        assert len(res.json['workspaces']) == 1
 
     def test_delete_agent(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace])
+        agent = AgentFactory.create()
         session.commit()
         assert len(session.query(Agent).all()) == initial_agent_count + 1
         res = test_client.delete(self.url(agent.id))
@@ -378,9 +197,7 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
         other_workspace = WorkspaceFactory.create()
         session.add(other_workspace)
         session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
+        agent = AgentFactory.create()
         executor = ExecutorFactory.create(agent=agent)
 
         session.add(executor)
@@ -393,60 +210,17 @@ class TestAgentWithWorkspacesAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": executor.name
             },
+            "workspace_name": workspace.name
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
             json=payload
         )
-        assert res.status_code == 404
+        assert res.status_code == 400
 
-
-class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
-    model = Agent
-    factory = factories.AgentFactory
-    view_class = AgentView
-    api_endpoint = 'agents'
-
-    def test_get_workspaced(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        agent = AgentFactory.create(workspaces=[self.workspace], active=True)
-        session.commit()
-        res = test_client.get(self.url(agent))
-        assert res.status_code == 200
-        assert 'workspaces' not in res.json
-
-    def test_get_workspaced_other_fails(self, test_client, session):
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent = AgentFactory.create(workspaces=[other_workspace], active=True)
-        session.commit()
-        res = test_client.get(self.url(agent))
-        assert res.status_code == 404
-
-    def test_workspaced_delete(self, session, test_client):
-        initial_agent_count = len(session.query(Agent).all())
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        agent = AgentFactory.create(
-            workspaces=[self.workspace, other_workspace]
-        )
-        session.commit()
-        assert len(session.query(Agent).all()) == initial_agent_count + 1
-        res = test_client.delete(self.url(agent.id))
-        assert res.status_code == 204
-        assert len(session.query(Agent).all()) == initial_agent_count + 1
-        res = test_client.delete(self.url(agent.id))
-        assert res.status_code == 404
-        res = test_client.get(self.url(agent.id))
-        assert res.status_code == 404
-        workspaces = Agent.query.get(agent.id).workspaces
-        assert len(workspaces) == 1
-        assert other_workspace in workspaces
-
-    def test_run_agent_invalid_missing_executorData(self, csrf_token, session,
+    def test_run_agent_invalid_missing_executor_data(self, csrf_token, session,
                                                     test_client):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
         session.add(agent)
         session.commit()
         payload = {
@@ -459,19 +233,21 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_run_agent_invalid_executor_argument(self, session, test_client):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
         executor = ExecutorFactory.create(agent=agent)
+        workspace = WorkspaceFactory.create()
 
         session.add(executor)
         session.commit()
 
         payload = {
-            'executorData': {
+            'executor_data': {
                 "args": {
                     "another_param_name": 'param_content'
                 },
                 "executor": executor.name
-            }
+            },
+            "workspace_name": workspace.name
         }
 
         res = test_client.post(
@@ -482,7 +258,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_invalid_body(self, test_client, session):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
         session.add(agent)
         session.commit()
         res = test_client.post(
@@ -492,17 +268,19 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_invalid_content_type(self, test_client, session, csrf_token):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
+        workspace = WorkspaceFactory.create()
         session.add(agent)
         session.commit()
         payload = {
             'csrf_token': csrf_token,
-            'executorData': {
+            'executor_data': {
                 "args": {
                     "param1": True
                 },
                 "executor": "executor_name"
             },
+            "workspace_name": workspace.name
         }
         headers = [
             ('content-type', 'text/html'),
@@ -514,17 +292,19 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_invalid_executor(self, test_client, session, csrf_token):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
+        workspace = WorkspaceFactory.create()
         session.add(agent)
         session.commit()
         payload = {
             'csrf_token': csrf_token,
-            'executorData': {
+            'executor_data': {
                 "args": {
                     "param1": True
                 },
                 "executor": "executor_name"
             },
+            "workspace_name": workspace.name
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -533,9 +313,10 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_happy_path_valid_json(self, test_client, session, csrf_token):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
         executor = ExecutorFactory.create(agent=agent)
         executor2 = ExecutorFactory.create(agent=agent)
+        workspace = WorkspaceFactory.create()
 
         session.add(executor)
         session.commit()
@@ -546,12 +327,13 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
 
         payload = {
             'csrf_token': csrf_token,
-            'executorData': {
+            'executor_data': {
                 "args": {
                     "param_name": "test"
                 },
-                "executor": executor.name
+                "executor": executor.name,
             },
+            "workspace_name": workspace.name
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -559,7 +341,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         )
         assert res.status_code == 200
         command_id = res.json["command_id"]
-        command = Command.query.filter(Command.workspace_id == self.workspace.id).one()
+        command = Command.query.filter(Command.workspace_id == workspace.id).one()
         assert command_id == command.id
         assert agent.last_run is not None
         assert executor.last_run is not None
@@ -567,20 +349,22 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert agent.last_run == executor.last_run
 
     def test_invalid_parameter_type(self, test_client, session, csrf_token):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
         executor = ExecutorFactory.create(agent=agent)
+        workspace = WorkspaceFactory.create()
 
         session.add(executor)
         session.commit()
 
         payload = {
             'csrf_token': csrf_token,
-            'executorData': {
+            'executor_data': {
                 "args": {
                     "param_name": ["test"]
                 },
                 "executor": executor.name
             },
+            "workspace_name": workspace.name
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -588,14 +372,16 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         )
         assert res.status_code == 400
 
-    def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token,
+    def test_invalid_json_on_executor_data_breaks_the_api(self, csrf_token,
                                                          session, test_client):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        workspace = WorkspaceFactory.create()
+        agent = AgentFactory.create()
         session.add(agent)
         session.commit()
         payload = {
             'csrf_token': csrf_token,
             'executorData': '[][dassa',
+            "workspace_name": workspace.name
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -604,12 +390,14 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_run_agent(self, session, csrf_token, test_client):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
+        workspace = WorkspaceFactory.create()
         session.add(agent)
         session.commit()
         payload = {
             'csrf_token': csrf_token,
             'executorData': '',
+            "workspace_name": workspace.name
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -618,7 +406,7 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 400
 
     def test_get_manifests(self, session, csrf_token, test_client):
-        agent = AgentFactory.create(workspaces=[self.workspace])
+        agent = AgentFactory.create()
         session.add(agent)
         session.commit()
         res = test_client.get(join(self.url(), 'get_manifests'))

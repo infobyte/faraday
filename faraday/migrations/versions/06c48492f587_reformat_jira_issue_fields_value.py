@@ -24,8 +24,8 @@ def upgrade():
     config = session.query(Configuration).filter(Configuration.key == "jira_integration").first()
     if config:
         saved_config = config.value
-        for project_key, project_data in saved_config["projects"].items():
-            for it, it_data in project_data["ticket_config"].get("issue_types", {}).items():
+        for project_key, project_data in saved_config.get("projects", {}).items():
+            for it, it_data in project_data.get("ticket_config", {}).get("issue_types", {}).items():
                 for field_name, field_data in it_data["fields"].items():
                     if field_data["schema"]["type"] == "array" and field_data["schema"]["items"] in ["option", "component", "group", "version", "string", "user"]:
                         if len(field_data["value"]) > 0 and isinstance(field_data["value"][0], dict):

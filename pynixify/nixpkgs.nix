@@ -147,6 +147,11 @@ let
         ./packages/marshmallow-sqlalchemy
         { };
 
+      pyjwt =
+        self.callPackage
+        ./packages/pyjwt
+        { };
+
       pyotp =
         self.callPackage
         ./packages/pyotp

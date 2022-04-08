@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "bidict";
   version =
-    "0.21.4";
+    "0.22.0";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0vwz0xd9vr2l9j2alx1lipbxrkkwxbllnfq7ys58kppqwvxlzj22";
+        "1n2vkynb22f9pz9k0m4wnxwjla3whib5fafy2pkccz792lz6p0jw";
     };
 
   # TODO FIXME

@@ -328,6 +328,11 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                         errors[param_name] = val_error
                 else:
                     errors['message'] = f'"{param_name}" not recognized as an executor argument'
+
+            for param_name, _ in executor.parameters_metadata.items():
+                if executor.parameters_metadata[param_name]['mandatory'] and param_name not in executor_data['args']:
+                    errors['message'] = f'Mandatory argument {param_name} not passed to {executor.name} executor.'
+
             if errors:
                 response = jsonify(errors)
                 response.status_code = 400

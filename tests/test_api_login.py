@@ -1,6 +1,7 @@
 import pytest
 from flask_security.utils import hash_password
-from itsdangerous import TimedJSONWebSignatureSerializer
+import jwt
+import time
 
 from faraday.server.models import User
 from faraday.server.web import get_app
@@ -79,10 +80,12 @@ class TestLogin:
         session.add(ws)
         session.commit()
 
-        serializer = TimedJSONWebSignatureSerializer(get_app().config['SECRET_KEY'], expires_in=500, salt="token")
-        token = serializer.dumps({'user_id': alice.id})
+        iat = int(time.time())
+        exp = iat + 43200
+        jwt_data = {'user_id': 'invalid_token', 'iat': iat, 'exp': exp}
+        token = jwt.encode(jwt_data, get_app().config['SECRET_KEY'], algorithm="HS512")
 
-        headers = {'Authorization': b'Token ' + token}
+        headers = {'Authorization': f'Token {token}'}
 
         ws = test_client.get('/v3/ws/wonderland', headers=headers)
         assert ws.status_code == 401

@@ -51,8 +51,19 @@ bandit:
       - virtualenv -p python3 faraday_venv
       - source faraday_venv/bin/activate
       - pip3 install bandit
-      - "bandit -r ${CI_PROJECT_DIR}/faraday --format custom --skip B101 --msg-template \
-          \"{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}\""
+      - mkdir /results
+      - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101"
+    after_script:
+      - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+      - apt update
+      - apt-get install software-properties-common -y
+      - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com focal main"
+      - apt update
+      - apt install vault -y
+      - setcap cap_ipc_lock= /usr/bin/vault
+      - !reference [ .get_secrets, script ]
+      - pip3 install faraday-cli
+      - if [[ $(grep -c testcase /results/output.xml) -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
     rules:
         - !reference [.ignore-on-tag, rules]
         - when: on_success

@@ -24,6 +24,8 @@ google_storage_deb_rpm_dev:
   extends: .google_storage_deb_rpm
   variables:
     STORAGE_SPACE_BASE: gs://faraday-dev
+  tags:
+    - digitalocean-dev
   script:
     - apt-get update && apt-get install -y software-properties-common curl
     - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -

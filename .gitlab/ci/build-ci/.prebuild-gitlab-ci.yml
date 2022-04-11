@@ -32,6 +32,8 @@ generate_build_file:
 build_nix_python3:
   image: nixorg/nix
   stage: pre_build
+  tags:
+    - digitalocean-dev
   script:
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault

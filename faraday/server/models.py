@@ -2516,7 +2516,7 @@ class Comment(Metadata):
 
     # 1 workspace <--> N comments
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],

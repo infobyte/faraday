@@ -2373,10 +2373,12 @@ task_dependencies_association = db.Table('task_dependencies_association',
                                          )
 
 vulnerabilities_related_association = db.Table('vulnerabilities_related_association',
-                                               db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
+                                               db.Column('task_id', db.Integer(),
+                                                         db.ForeignKey('project_task.id'),
+                                                         primary_key=True),
                                                db.Column('vulnerability_id', db.Integer(),
-                                                         db.ForeignKey('vulnerability.id', ondelete='CASCADE'))
-                                         )
+                                                         db.ForeignKey('vulnerability.id', ondelete='CASCADE'),
+                                                         primary_key=True))
 
 
 class PlannerProject(Metadata):
@@ -2391,6 +2393,8 @@ class PlannerProject(Metadata):
     @property
     def start_date(self):
         if self.tasks:
+            if all([x.type == 'milestone' for x in self.tasks]):
+                return None
             return min(x.start_date for x in self.tasks if x.start_date is not None)
 
     @property

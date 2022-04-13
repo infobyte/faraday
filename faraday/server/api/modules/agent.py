@@ -144,8 +144,6 @@ class AgentView(ReadWriteView):
                           ).verify(token, valid_window=1):
             abort(401, "Invalid Token")
         agent = super()._perform_create(data, **kwargs)
-        db.session.add(agent)
-        logger.info(f"Agent {agent} created")
         return agent
 
     @route('/<int:agent_id>/run', methods=['POST'])

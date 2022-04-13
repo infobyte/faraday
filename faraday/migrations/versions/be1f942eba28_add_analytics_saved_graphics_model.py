@@ -22,7 +22,7 @@ def upgrade():
     sa.Column('create_date', sa.DateTime(), nullable=True),
     sa.Column('update_date', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('name', sa.Text(), nullable=False, unique=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('type', sa.Enum('vulnerabilities_per_host', 'vulnerabilities_per_status', 'vulnerabilities_per_severity', 'top_ten_most_affected_hosts', 'top_ten_most_repeated_vulns', 'monthly_evolution_by_status', 'monthly_evolution_by_severity', name='analytics_types'), nullable=False),
     sa.Column('filters', sa.JSON(), nullable=False),

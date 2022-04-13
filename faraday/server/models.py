@@ -2982,7 +2982,7 @@ class Analytics(Metadata):
     __tablename__ = "analytics"
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = Column(Text, nullable=False, unique=True)
     description = Column(Text, nullable=True)
     type = Column(Enum(*AnalyticsConfig.TYPES, name='analytics_types'), nullable=False)
     filters = Column(JSONType, nullable=False)

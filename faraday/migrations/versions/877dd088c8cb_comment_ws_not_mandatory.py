@@ -17,8 +17,9 @@ depends_on = None
 
 def upgrade():
     op.alter_column('comment', 'workspace_id', nullable=True)
-    op.execute("ALTER TYPE object_types ADD VALUE 'project_task'")
+    op.execute("ALTER TYPE object_types ADD VALUE IF NOT EXISTS 'project_task'")
 
 
 def downgrade():
+    op.execute("DELETE FROM comment WHERE object_type = 'project_task'")
     op.alter_column('comment', 'workspace_id', nullable=False)

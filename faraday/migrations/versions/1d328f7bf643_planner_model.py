@@ -64,7 +64,8 @@ def upgrade():
     sa.Column('task_id', sa.Integer(), nullable=True),
     sa.Column('vulnerability_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['task_id'], ['project_task.id'], ),
-    sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete='CASCADE')
+    sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('task_id', 'vulnerability_id', name='vuln_task_pkey'),
     )
     # op.alter_column('comment', 'workspace_id',
     #                 existing_type=sa.Integer(),

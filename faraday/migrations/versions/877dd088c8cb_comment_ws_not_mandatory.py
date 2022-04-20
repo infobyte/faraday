@@ -16,6 +16,9 @@ depends_on = None
 
 
 def upgrade():
+    if not op.get_context().as_sql:
+        connection = op.get_bind()
+        connection.execution_options(isolation_level='AUTOCOMMIT')
     op.alter_column('comment', 'workspace_id', nullable=True)
     op.execute("ALTER TYPE object_types ADD VALUE IF NOT EXISTS 'project_task'")
 

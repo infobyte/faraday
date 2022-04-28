@@ -12,7 +12,7 @@ buildPythonPackage rec {
   pname =
     "click";
   version =
-    "8.1.2";
+    "8.1.3";
 
   src =
     fetchPypi {
@@ -20,7 +20,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0whs38a2i0561kwbgigs6vic9r0a1887m2v1aw3rmv6r2kz0g5s7";
+        "13kvp8visj5xh9d43brnda6q0kc1s40flxa5cw0p0a9hzf5dr0kn";
     };
 
   propagatedBuildInputs =

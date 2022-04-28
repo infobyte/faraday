@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "syslog-rfc5424-formatter";
   version =
-    "1.2.2";
+    "1.2.3";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "113fc9wbsbb63clw74f7riyv37ar1131x8lc32q2cvqd523jqsns";
+        "1lv64ynwdz073xxmsjrj2dhi0l7a0jzg4251bkwbd4kazg1wkicv";
     };
 
   # TODO FIXME

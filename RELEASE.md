@@ -2,7 +2,7 @@ New features in the latest update
 =====================================
 
 
-4.0.2 [Apr 12th, 2022]:
+4.0.2 [Apr 28th, 2022]:
 ---
  * models.py refactor
  * add check to see if workspace name is longer than 250 characters. In that case raises an error

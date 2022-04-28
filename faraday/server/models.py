@@ -2193,107 +2193,231 @@ class Methodology(Metadata):
         return
 
 
-class TaskABC(Metadata):
-    __abstract__ = True
+# class TaskABC(Metadata):
+#     __abstract__ = True
+#
+#     id = Column(Integer, primary_key=True)
+#     name = NonBlankColumn(Text)
+#     description = BlankColumn(Text)
+#
+#
+# class TaskTemplate(TaskABC):
+#     __tablename__ = 'task_template'
+#     id = Column(Integer, primary_key=True)
+#
+#     __mapper_args__ = {
+#         'concrete': True
+#     }
+#
+#     template = relationship(
+#         'MethodologyTemplate',
+#         backref=backref('tasks', cascade="all, delete-orphan"))
+#     template_id = Column(
+#         Integer,
+#         ForeignKey('methodology_template.id'),
+#         index=True,
+#         nullable=False,
+#     )
+#
+#     # __table_args__ = (
+#     #     UniqueConstraint(template_id, name='uix_task_template_name_desc_template_delete'),
+#     # )
+#
+#
+# class TaskAssignedTo(db.Model):
+#     __tablename__ = "task_assigned_to_association"
+#     id = Column(Integer, primary_key=True)
+#     task_id = Column(
+#         Integer, ForeignKey('task.id'), nullable=False)
+#     task = relationship('Task')
+#
+#     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
+#     user = relationship(
+#         'User',
+#         foreign_keys=[user_id],
+#         backref=backref('assigned_tasks', cascade="all, delete-orphan"))
+#
+#
+# class Task(TaskABC):
+#     STATUSES = [
+#         'new',
+#         'in progress',
+#         'review',
+#         'completed',
+#     ]
+#
+#     __tablename__ = 'task'
+#     id = Column(Integer, primary_key=True)
+#
+#     due_date = Column(DateTime, nullable=True)
+#     status = Column(Enum(*STATUSES, name='task_statuses'), nullable=True)
+#
+#     __mapper_args__ = {
+#         'concrete': True
+#     }
+#
+#     assigned_to = relationship(
+#         "User",
+#         secondary="task_assigned_to_association")
+#
+#     methodology_id = Column(
+#         Integer,
+#         ForeignKey('methodology.id'),
+#         index=True,
+#         nullable=False,
+#     )
+#     methodology = relationship(
+#         'Methodology',
+#         backref=backref('tasks', cascade="all, delete-orphan")
+#     )
+#
+#     template_id = Column(
+#         Integer,
+#         ForeignKey('task_template.id'),
+#         index=True,
+#         nullable=True,
+#     )
+#     template = relationship('TaskTemplate', backref='tasks')
+#
+#     # 1 workspace <--> N tasks
+#     # 1 to N (the FK is placed in the child) and bidirectional (backref)
+#     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+#     workspace = relationship(
+#         'Workspace',
+#         backref=backref('tasks', cascade="all, delete-orphan")
+#     )
+#
+#     # __table_args__ = (
+#     #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
+#     # )
+#
+#     tag_instances = relationship(
+#         "Tag",
+#         secondary="tag_object",
+#         viewonly=True,
+#         # this avoid sqlalchemy to autocreate objects. assoc proxy creates objects.
+#         primaryjoin="and_(TagObject.object_id==Task.id, "
+#                     "TagObject.object_type=='task')",
+#         collection_class=set,
+#     )
+#
+#     tags = association_proxy(
+#         'tag_instances',
+#         'name',
+#         proxy_factory=CustomAssociationSet,
+#         creator=_build_associationproxy_creator_for_tags('Tag')
+#     )
+#
+#     @property
+#     def parent(self):
+#         return self.methodology
+#
+#
+project_task_user_association = db.Table('project_task_user_association',
+                                         db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
+                                         db.Column('user_id', db.Integer(),
+                                                   db.ForeignKey('faraday_user.id', ondelete='CASCADE'))
+                                         )
 
+task_dependencies_association = db.Table('task_dependencies_association',
+                                         db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
+                                         db.Column('task_dependency_id', db.Integer(),
+                                                   db.ForeignKey('project_task.id', ondelete='CASCADE'))
+                                         )
+
+vulnerabilities_related_association = db.Table('vulnerabilities_related_association',
+                                               db.Column('task_id', db.Integer(),
+                                                         db.ForeignKey('project_task.id'),
+                                                         primary_key=True),
+                                               db.Column('vulnerability_id', db.Integer(),
+                                                         db.ForeignKey('vulnerability.id', ondelete='CASCADE'),
+                                                         primary_key=True))
+
+
+class PlannerProject(Metadata):
+    __tablename__ = 'planner_project'
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
-    description = BlankColumn(Text)
-
-
-class TaskTemplate(TaskABC):
-    __tablename__ = 'task_template'
-    id = Column(Integer, primary_key=True)
-
-    __mapper_args__ = {
-        'concrete': True
-    }
-
-    template = relationship(
-        'MethodologyTemplate',
-        backref=backref('tasks', cascade="all, delete-orphan"))
-    template_id = Column(
-        Integer,
-        ForeignKey('methodology_template.id'),
-        index=True,
-        nullable=False,
-    )
-
-    # __table_args__ = (
-    #     UniqueConstraint(template_id, name='uix_task_template_name_desc_template_delete'),
-    # )
-
-
-class TaskAssignedTo(db.Model):
-    __tablename__ = "task_assigned_to_association"
-    id = Column(Integer, primary_key=True)
-    task_id = Column(Integer, ForeignKey('task.id'), nullable=False)
-    task = relationship('Task')
-
-    user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-    user = relationship(
-        'User',
-        backref=backref('assigned_tasks', cascade="all, delete-orphan"),
-        foreign_keys=[user_id]
-    )
-
-
-class Task(TaskABC):
-    STATUSES = [
-        'new',
-        'in progress',
-        'review',
-        'completed',
-    ]
-
-    __tablename__ = 'task'
-    id = Column(Integer, primary_key=True)
-
-    due_date = Column(DateTime, nullable=True)
-    status = Column(Enum(*STATUSES, name='task_statuses'), nullable=True)
-
-    __mapper_args__ = {
-        'concrete': True
-    }
-
-    assigned_to = relationship(
-        "User",
-        secondary="task_assigned_to_association")
-
-    methodology_id = Column(
-        Integer,
-        ForeignKey('methodology.id'),
-        index=True,
-        nullable=False,
-    )
-    methodology = relationship(
-        'Methodology',
-        backref=backref('tasks', cascade="all, delete-orphan")
-    )
-
-    template_id = Column(
-        Integer,
-        ForeignKey('task_template.id'),
-        index=True,
-        nullable=True,
-    )
-    template = relationship('TaskTemplate', backref='tasks')
-
-    # 1 workspace <--> N tasks
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
-        'Workspace',
-        backref=backref('tasks', cascade="all, delete-orphan")
-    )
-
-    # __table_args__ = (
-    #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
-    # )
 
     @property
     def parent(self):
-        return self.methodology
+        return
+
+    @property
+    def start_date(self):
+        if self.tasks:
+            if all([x.type == 'milestone' for x in self.tasks]):
+                return None
+            return min(x.start_date for x in self.tasks if x.start_date is not None)
+
+    @property
+    def end_date(self):
+        if self.tasks:
+            return max(x.end_date for x in self.tasks if x.end_date is not None)
+
+
+class ProjectTask(Metadata):
+
+    TASK_STATUS_NEW = 'new'
+    TASK_STATUS_REVIEW = 'review'
+    TASK_STATUS_COMPLETED = 'completed'
+    TASK_STATUS_IN_PROGRESS = 'in progress'
+
+    STATUSES = [
+        TASK_STATUS_NEW,
+        TASK_STATUS_REVIEW,
+        TASK_STATUS_COMPLETED,
+        TASK_STATUS_IN_PROGRESS,
+    ]
+
+    NORMAL_TASK = 'task'
+    MILESTONE = 'milestone'
+
+    TASK_TYPES = [
+        NORMAL_TASK,
+        MILESTONE
+    ]
+
+    __tablename__ = 'project_task'
+    id = Column(Integer, primary_key=True)
+
+    name = Column(String, nullable=False, default='')
+    description = Column(String, nullable=True)
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    status = Column(Enum(*STATUSES, name='project_task_statuses'), nullable=True)
+    type = Column(Enum(*TASK_TYPES, name='project_task_types'), nullable=False)
+
+    users_assigned = relationship(
+        "User",
+        secondary="project_task_user_association")
+
+    task_dependencies = relationship(
+        "ProjectTask",
+        secondary="task_dependencies_association",
+        primaryjoin=id == task_dependencies_association.c.task_id,
+        secondaryjoin=id == task_dependencies_association.c.task_dependency_id
+    )
+
+    vulnerabilities_related = relationship(
+        "VulnerabilityGeneric",
+        secondary="vulnerabilities_related_association",
+    )
+
+    project_id = Column(
+        Integer,
+        ForeignKey('planner_project.id'),
+        index=True,
+        nullable=False,
+    )
+    project = relationship(
+        'PlannerProject',
+        backref=backref('tasks', cascade="all, delete-orphan")
+    )
+
+    @property
+    def parent(self):
+        return None
 
 
 class License(Metadata):
@@ -2345,7 +2469,7 @@ class Comment(Metadata):
 
     # 1 workspace <--> N comments
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],

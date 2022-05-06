@@ -49,7 +49,6 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.schema import DDL
 from flask import (
-    request,
     current_app as app,
 )
 from flask_sqlalchemy import (

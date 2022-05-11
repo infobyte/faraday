@@ -135,7 +135,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.secret_key = None
         self.websocket_port = 9000
         self.session_timeout = 12
-        self.api_token_expiration = 43200  # Default as 12 hs
+        self.api_token_expiration = 86400  # Default as 24 hs
         self.agent_registration_secret = None
         self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False

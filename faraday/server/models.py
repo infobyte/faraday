@@ -8,12 +8,14 @@ import math
 import operator
 import re
 import string
+import time
 from datetime import datetime, timedelta, date
 from functools import partial
 from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
+import jwt
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -46,14 +48,19 @@ from sqlalchemy.orm import (
     relationship,
 )
 from sqlalchemy.schema import DDL
+from flask import (
+    current_app as app,
+)
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector,
 )
 from flask_security import UserMixin, RoleMixin
+from flask_security.utils import hash_data
 from depot.fields.sqlalchemy import UploadedFileField
 
 # Local application imports
+from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile
 from faraday.server.utils.database import (
     BooleanToIntColumn,
@@ -2130,6 +2137,15 @@ class User(db.Model, UserMixin):
             "email": self.email,
             "roles": self.roles_list,
         }
+
+    def get_token(self):
+        user_id = self.fs_uniquifier
+        hashed_data = hash_data(self.password) if self.password else None
+        iat = int(time.time())
+        exp = iat + int(faraday_server.api_token_expiration)
+        jwt_data = {'user_id': user_id, "validation_check": hashed_data, 'iat': iat, 'exp': exp}
+
+        return jwt.encode(jwt_data, app.config['SECRET_KEY'], algorithm="HS512")
 
 
 class File(Metadata):

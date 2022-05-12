@@ -2135,6 +2135,12 @@ class Role(db.Model, RoleMixin):
 
 
 class User(db.Model, UserMixin):
+    USER_TYPES = [
+        'ldap',
+        'local',
+        'saml'
+    ]
+
     __tablename__ = 'faraday_user'
     ADMIN_ROLE = 'admin'
     PENTESTER_ROLE = 'pentester'
@@ -2165,6 +2171,7 @@ class User(db.Model, UserMixin):
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
+    type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False)
 
     @property
     def roles_list(self):

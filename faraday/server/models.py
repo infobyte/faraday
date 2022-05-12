@@ -2135,12 +2135,6 @@ class Role(db.Model, RoleMixin):
 
 
 class User(db.Model, UserMixin):
-    USER_TYPES = [
-        'ldap',
-        'local',
-        'saml'
-    ]
-
     __tablename__ = 'faraday_user'
     ADMIN_ROLE = 'admin'
     PENTESTER_ROLE = 'pentester'
@@ -2148,6 +2142,7 @@ class User(db.Model, UserMixin):
     CLIENT_ROLE = 'client'
     ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
+    USER_TYPES = ['ldap', 'local', 'saml']
 
     id = Column(Integer, primary_key=True)
     username = NonBlankColumn(String(255), unique=True)
@@ -2171,7 +2166,7 @@ class User(db.Model, UserMixin):
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
-    type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False)
+    type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default='local')
 
     @property
     def roles_list(self):

@@ -793,7 +793,7 @@ class TestBulkCreateAPI:
         url = f'/v3/ws/{second_workspace.name}/bulk_create'
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], command=command_data.copy()),
+            data=dict(hosts=[host_data], command=command_data.copy(), execution_id=1),
             headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 404

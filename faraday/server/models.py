@@ -2987,7 +2987,7 @@ class Analytics(Metadata):
     type = Column(Enum(*AnalyticsConfig.TYPES, name='analytics_types'), nullable=False)
     filters = Column(JSONType, nullable=False)
     data = Column(JSONType, nullable=False)
-    copies = Column(Integer, nullable=False, default=0)
+    show_data_table = Column(Boolean, default=False)
 
 
 # This constraint uses Columns from different classes

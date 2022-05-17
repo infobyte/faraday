@@ -2152,7 +2152,6 @@ class User(db.Model, UserMixin):
     password = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=True)  # TBI
     name = BlankColumn(String(255))  # TBI
-    is_ldap = Column(Boolean(), nullable=False, default=False)
     last_login_at = Column(DateTime())  # flask-security
     current_login_at = Column(DateTime())  # flask-security
     last_login_ip = BlankColumn(String(100))  # flask-security
@@ -2180,7 +2179,7 @@ class User(db.Model, UserMixin):
         cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
+        return f"<{'LDAP ' if self.user_type == 'ldap' else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {

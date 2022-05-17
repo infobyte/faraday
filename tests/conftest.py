@@ -246,14 +246,12 @@ def create_user(app, session, username, email, password, **kwargs):
 @pytest.fixture
 def user(app, database, session):
     # print 'user', id(session), session
-    return create_user(app, session, 'test', 'user@test.com', 'password',
-                       is_ldap=False)
+    return create_user(app, session, 'test', 'user@test.com', 'password', user_type='local')
 
 
 @pytest.fixture
 def ldap_user(app, session):
-    return create_user(app, session, 'ldap', 'ldap@test.com', 'password',
-                       is_ldap=True)
+    return create_user(app, session, 'ldap', 'ldap@test.com', 'password', user_type='ldap')
 
 
 @pytest.fixture

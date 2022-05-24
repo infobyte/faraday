@@ -83,6 +83,10 @@ class UploadReportView(GenericWorkspacedView):
 
         report_file = request.files['file']
 
+        ignore_info = True if request.form.get('ignore_info') in ("True", "true") else False
+
+        dns_resolution = True if request.form.get('dns_resolution') in ("True", "true") else False
+
         if report_file:
 
             chars = string.ascii_uppercase + string.digits
@@ -131,7 +135,9 @@ class UploadReportView(GenericWorkspacedView):
                             command.id,
                             file_path,
                             plugin.id,
-                            flask_login.current_user.id
+                            flask_login.current_user.id,
+                            ignore_info,
+                            dns_resolution
                         )
                     )
                     return make_response(

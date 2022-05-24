@@ -22,6 +22,8 @@ in pkgs.mkShell {
       (pythonPkg.withPackages
         (ps:
           with ps;
-          [ ]))
+          [
+            faradaysec
+          ]))
     ];
 }

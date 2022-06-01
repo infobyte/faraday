@@ -8,12 +8,10 @@ from faraday.settings.base import Settings
 from faraday.settings.exceptions import InvalidConfigurationError
 from faraday.server.api.base import AutoSchema
 
-DEFAULT_IGNORE_INFO_SEVERITY = False
 DEFAULT_CUSTOM_PLUGINS_FOLDER = ""
 
 
 class ReportsSettingSchema(AutoSchema):
-    ignore_info_severity = fields.Boolean(required=True, default=DEFAULT_IGNORE_INFO_SEVERITY)
     custom_plugins_folder = fields.String(default=DEFAULT_CUSTOM_PLUGINS_FOLDER, required=True)
 
 
@@ -28,8 +26,7 @@ class ReportsSettings(Settings):
                 raise InvalidConfigurationError(f"{validated_config['custom_plugins_folder']} is not valid path")
 
     def get_default_config(self):
-        return {'ignore_info_severity': DEFAULT_IGNORE_INFO_SEVERITY,
-                'custom_plugins_folder': DEFAULT_CUSTOM_PLUGINS_FOLDER}
+        return {'custom_plugins_folder': DEFAULT_CUSTOM_PLUGINS_FOLDER}
 
 
 def init_setting():

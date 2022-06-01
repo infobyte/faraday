@@ -780,13 +780,24 @@ class VulnerabilityView(PaginatedMixin,
         """
         filters = request.args.get('q', '{}')
         filtered_vulns, count = self._filter(filters, workspace_name)
+        export_csv = request.args.get('export_csv', '')
 
         class PageMeta:
             total = 0
 
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
-        return self._envelope_list(filtered_vulns, pagination_metadata)
+        if export_csv.lower() == 'true':
+            custom_fields_columns = []
+            for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+                custom_fields_columns.append(custom_field.field_name)
+            memory_file = export_vulns_to_csv(filtered_vulns, custom_fields_columns)
+            return send_file(memory_file,
+                             attachment_filename=f"Faraday-SR-{workspace_name}.csv",
+                             as_attachment=True,
+                             cache_timeout=-1)
+        else:
+            return self._envelope_list(filtered_vulns, pagination_metadata)
 
     def _hostname_filters(self, filters):
         res_filters = []

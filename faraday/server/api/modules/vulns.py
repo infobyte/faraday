@@ -719,8 +719,6 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
         if request.args.get('group_by') == 'confirmed':
             res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
-        if request.args.get('group_by') == 'closed':
-            res['groups'] = [convert_group(group, 'closed') for group in res['groups']]
         return res
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])

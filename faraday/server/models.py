@@ -1917,6 +1917,7 @@ class Workspace(Metadata):
     active_agents_count = query_expression()
     last_run_agent_date = query_expression()
     vulnerability_open_count = query_expression(literal(0))
+    vulnerability_closed_count = query_expression(literal(0))
     vulnerability_confirmed_count = query_expression(literal(0))
 
     vulnerability_informational_count = query_expression()
@@ -1983,6 +1984,7 @@ class Workspace(Metadata):
                 p_5.count_14 as vulnerability_unclassified_count,
                 p_5.count_15 as vulnerability_open_count,
                 p_5.count_16 as vulnerability_confirmed_count,
+                p_5.count_17 as vulnerability_open_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -2017,7 +2019,8 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
              COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14,
              COUNT(case when vulnerability.status = 'open' OR vulnerability.status='re-opened' then 1 else null end) as count_15,
-             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16
+             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16,
+             COUNT(case when vulnerability.status = 'closed' then 1 else null end) as count_17,
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}

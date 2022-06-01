@@ -55,6 +55,7 @@ class WorkspaceSummarySchema(Schema):
     code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
     opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
+    closed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_closed_count')
     confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
     critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
     info_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')

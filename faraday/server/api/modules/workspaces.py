@@ -391,6 +391,12 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 Workspace.last_run_agent_date,
                 _last_run_agent_date(),
             ),
+            with_expression(
+                Workspace.vulnerability_closed_count,
+                _make_vuln_count_property(None,
+                                          extra_query=" status='closed' ",
+                                          use_column_property=False)
+            ),
         )
 
         # extra_query contains status filter

@@ -1,7 +1,7 @@
 """user_types_enum
 
 Revision ID: 905261860ad0
-Revises: 877dd088c8cb
+Revises: b31fa447f00c
 Create Date: 2022-05-13 15:19:34.717313+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '905261860ad0'
-down_revision = '877dd088c8cb'
+down_revision = 'b31fa447f00c'
 branch_labels = None
 depends_on = None
 

@@ -571,7 +571,9 @@ class BulkCreateView(GenericWorkspacedView):
                     command.id,
                     file_path,
                     None,
-                    user_id
+                    user_id,
+                    False,
+                    False
                 )
             )
         logger.info(f"Faraday objects created in bulk for workspace {workspace}")

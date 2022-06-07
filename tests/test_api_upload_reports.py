@@ -30,7 +30,9 @@ class TestFileUpload:
             file_contents = report.read()
         data = {
             'file': (BytesIO(file_contents), 'nmap_report.xml'),
-            'csrf_token': csrf_token
+            'csrf_token': csrf_token,
+            'ignore_info': False,
+            'dns_resolution': True
         }
 
         res = test_client.post(
@@ -44,6 +46,8 @@ class TestFileUpload:
         assert queue_elem[0] == ws.name
         assert queue_elem[3].lower() == "nmap"
         assert queue_elem[4] == logged_user.id
+        assert queue_elem[5] is False
+        assert queue_elem[6] is True
 
         # I'm testing a method which lost referene of workspace and logged_user within the test
         ws_id = ws.id
@@ -52,7 +56,7 @@ class TestFileUpload:
         from faraday.server.threads.reports_processor import process_report
         process_report(queue_elem[0], queue_elem[1],
                                     queue_elem[2], queue_elem[3],
-                                    queue_elem[4])
+                                    queue_elem[4], queue_elem[5], queue_elem[6])
         command = Command.query.filter(Command.workspace_id == ws_id).one()
         assert command
         assert command.creator_id == logged_user_id

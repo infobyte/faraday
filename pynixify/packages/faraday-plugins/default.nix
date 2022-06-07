@@ -22,7 +22,7 @@ buildPythonPackage rec {
   pname =
     "faraday-plugins";
   version =
-    "1.6.5";
+    "1.6.6";
 
   src =
     fetchPypi {
@@ -30,7 +30,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0rs06vfj4cka2h2vk0nc3h6fpxcmx4b6b1977b08dr6kbiajia7i";
+        "1piaib3qi9bmj1svn27vd4by1ywd2qrlhskyr5s15082jih4scdj";
     };
 
   propagatedBuildInputs =

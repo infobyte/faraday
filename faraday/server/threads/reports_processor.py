@@ -36,15 +36,17 @@ def send_report_data(workspace_name: str, command_id: int, report_json: dict,
 
 
 def process_report(workspace_name: str, command_id: int, file_path: Path,
-                   plugin_id: Optional[int], user_id: Optional[int]):
+                   plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool):
     from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
     with get_app().app_context():
         if plugin_id is not None:
             plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
-                                             ignore_info=ReportsSettings.settings.ignore_info_severity)
+                                             ignore_info=ignore_info,
+                                             hostname_resolution=dns_resolution)
             logger.info(f"Reports Manager: [Custom plugins folder: "
                         f"[{ReportsSettings.settings.custom_plugins_folder}]"
-                        f"[Ignore info severity: {ReportsSettings.settings.ignore_info_severity}]")
+                        f"[Ignore info severity: {ignore_info}]"
+                        f"[Hostname resolution: {dns_resolution}]")
             plugin = plugins_manager.get_plugin(plugin_id)
             if plugin:
                 try:
@@ -98,14 +100,20 @@ class ReportsManager(Thread):
         logger.info("Reports Manager Thread [Start]")
         while not self.__event.is_set():
             try:
-                tpl: Tuple[str, int, Path, int, int] = \
+                tpl: Tuple[str, int, Path, int, int, bool, bool] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
 
-                workspace_name, command_id, file_path, plugin_id, user_id = tpl
+                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution = tpl
 
                 logger.info(f"Processing raw report {file_path}")
                 if file_path.is_file():
-                    process_report(workspace_name, command_id, file_path, plugin_id, user_id)
+                    process_report(workspace_name,
+                                   command_id,
+                                   file_path,
+                                   plugin_id,
+                                   user_id,
+                                   ignore_info_bool,
+                                   dns_resolution)
                 else:
                     logger.warning(f"Report file [{file_path}] don't exists",
                                    file_path)

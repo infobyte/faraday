@@ -184,7 +184,7 @@ def create_superuser(username, email, password):
                                        email=email,
                                        password=hash_password(password),
                                        roles=['admin'],
-                                       is_ldap=False)
+                                       user_type='local')
         db.session.commit()
         click.echo(click.style(
             f'User {username} created successfully!',

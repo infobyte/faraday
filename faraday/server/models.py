@@ -2142,13 +2142,16 @@ class User(db.Model, UserMixin):
     CLIENT_ROLE = 'client'
     ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
+    LDAP_TYPE = 'ldap'
+    LOCAL_TYPE = 'local'
+    SAML_TYPE = 'saml'
+    USER_TYPES = [LDAP_TYPE, LOCAL_TYPE, SAML_TYPE]
 
     id = Column(Integer, primary_key=True)
     username = NonBlankColumn(String(255), unique=True)
     password = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=True)  # TBI
     name = BlankColumn(String(255))  # TBI
-    is_ldap = Column(Boolean(), nullable=False, default=False)
     last_login_at = Column(DateTime())  # flask-security
     current_login_at = Column(DateTime())  # flask-security
     last_login_ip = BlankColumn(String(100))  # flask-security
@@ -2165,6 +2168,7 @@ class User(db.Model, UserMixin):
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
+    user_type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default='local')
 
     @property
     def roles_list(self):
@@ -2175,7 +2179,7 @@ class User(db.Model, UserMixin):
         cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
+        return f"<{'LDAP ' if self.user_type == 'ldap' else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {

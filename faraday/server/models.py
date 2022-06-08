@@ -99,6 +99,10 @@ NOTIFICATION_METHODS = [
     'websocket'
 ]
 
+LDAP_TYPE = 'ldap'
+LOCAL_TYPE = 'local'
+SAML_TYPE = 'saml'
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -2142,9 +2146,6 @@ class User(db.Model, UserMixin):
     CLIENT_ROLE = 'client'
     ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
-    LDAP_TYPE = 'ldap'
-    LOCAL_TYPE = 'local'
-    SAML_TYPE = 'saml'
     USER_TYPES = [LDAP_TYPE, LOCAL_TYPE, SAML_TYPE]
 
     id = Column(Integer, primary_key=True)
@@ -2168,7 +2169,7 @@ class User(db.Model, UserMixin):
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
-    user_type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default='local')
+    user_type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default=LOCAL_TYPE)
 
     @property
     def roles_list(self):
@@ -2179,7 +2180,7 @@ class User(db.Model, UserMixin):
         cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<{'LDAP ' if self.user_type == 'ldap' else ''}User: {self.username}>"
+        return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {

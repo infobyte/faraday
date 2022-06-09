@@ -1,7 +1,7 @@
 """Add weight column in role
 
 Revision ID: 384784872dc1
-Revises: b31fa447f00c
+Revises: 905261860ad0
 Create Date: 2022-06-08 19:16:46.442418+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '384784872dc1'
-down_revision = 'b31fa447f00c'
+down_revision = '905261860ad0'
 branch_labels = None
 depends_on = None
 

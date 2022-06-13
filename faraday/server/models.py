@@ -2132,7 +2132,7 @@ class Role(db.Model, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    weight = db.Column(db.Integer(), nullable=True)
+    weight = db.Column(db.Integer(), nullable=False)
 
 
 class User(db.Model, UserMixin):

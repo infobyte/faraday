@@ -110,7 +110,9 @@ class AgentRunSchema(Schema):
         ExecutorDataSchema(unknown=EXCLUDE),
         required=True
     )
-    workspace_name = fields.String(required=True)
+    workspaces_names = fields.String(required=True)
+    ignore_info = fields.Boolean(required=False)
+    resolve_hostname = fields.Boolean(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -166,7 +168,9 @@ class AgentView(ReadWriteView):
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
         executor_data = data['executor_data']
-        workspace = self._get_workspace(data['workspace_name'])
+        ignore_info = data.get('ignore_info', False)
+        resolve_hostname = data.get('resolve_hostname', True)
+        workspaces = [self._get_workspace(workspace_name=workspace) for workspace in data['workspaces']]
 
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
@@ -192,37 +196,45 @@ class AgentView(ReadWriteView):
                 abort(response)
 
             params = ', '.join([f'{key}={value}' for (key, value) in executor_data["args"].items()])
-            command = Command(
-                import_source="agent",
-                tool=agent.name,
-                command=executor.name,
-                user='',
-                hostname='',
-                params=params,
-                start_date=datetime.utcnow(),
-                workspace=workspace
-            )
+            commands = [
+                Command(
+                    import_source="agent",
+                    tool=agent.name,
+                    command=executor.name,
+                    user='',
+                    hostname='',
+                    params=params,
+                    start_date=datetime.utcnow(),
+                    workspaces=workspace
+                )
+                for workspace in workspaces
+            ]
 
-            agent_execution = AgentExecution(
-                running=None,
-                successful=None,
-                message='',
-                executor=executor,
-                workspace_id=workspace.id,
-                parameters_data=executor_data["args"],
-                command=command
-            )
+            agent_executions = [
+                AgentExecution(
+                    running=None,
+                    successful=None,
+                    message='',
+                    executor=executor,
+                    workspaces=workspace.id,
+                    parameters_data=executor_data["args"],
+                    command=command
+                )
+                for workspace, command in zip(workspaces, commands)
+            ]
             executor.last_run = datetime.utcnow()
-            db.session.add(agent_execution)
+            for agent_execution in agent_executions:
+                db.session.add(agent_execution)
             db.session.commit()
 
             changes_queue.put({
-                'execution_id': agent_execution.id,
+                'execution_id': [agent_execution.id for agent_execution in agent_executions],
                 'agent_id': agent.id,
-                'workspace': agent_execution.workspace.name,
+                'workspaces': workspaces,
                 'action': 'RUN',
                 "executor": executor_data.get('executor'),
-                "args": executor_data.get('args')
+                "args": executor_data.get('args'),
+                "plugin_args": [ignore_info, resolve_hostname]
             })
             logger.info("Agent executed")
         except NoResultFound as e:
@@ -230,7 +242,7 @@ class AgentView(ReadWriteView):
             abort(400, "Can not find an agent execution with that id")
         else:
             return flask.jsonify({
-                'command_id': command.id,
+                'commands_id': [command.id for command in commands],
             })
 
     @route('/active_agents', methods=['GET'])

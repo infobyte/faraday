@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "Replace usage of is_ldap field of User model for user_type"
+}

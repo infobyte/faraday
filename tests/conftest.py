@@ -137,7 +137,9 @@ def database(app, request):
 
     db.app = app
     db.create_all()
-    db.engine.execute("INSERT INTO faraday_role(name) VALUES ('admin'),('pentester'),('client'),('asset_owner');")
+    db.engine.execute("INSERT INTO faraday_role(name, weight) "
+                      "VALUES ('admin', 10),('asset_owner', 20),('pentester', 30),('client', 40);"
+                      )
 
     request.addfinalizer(teardown)
     return db
@@ -246,14 +248,12 @@ def create_user(app, session, username, email, password, **kwargs):
 @pytest.fixture
 def user(app, database, session):
     # print 'user', id(session), session
-    return create_user(app, session, 'test', 'user@test.com', 'password',
-                       is_ldap=False)
+    return create_user(app, session, 'test', 'user@test.com', 'password', user_type='local')
 
 
 @pytest.fixture
 def ldap_user(app, session):
-    return create_user(app, session, 'ldap', 'ldap@test.com', 'password',
-                       is_ldap=True)
+    return create_user(app, session, 'ldap', 'ldap@test.com', 'password', user_type='ldap')
 
 
 @pytest.fixture

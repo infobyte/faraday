@@ -228,13 +228,16 @@ class AgentView(ReadWriteView):
             db.session.commit()
 
             changes_queue.put({
-                'execution_id': [agent_execution.id for agent_execution in agent_executions],
+                'executions_id': [agent_execution.id for agent_execution in agent_executions],
                 'agent_id': agent.id,
                 'workspaces': workspaces,
                 'action': 'RUN',
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args'),
-                "plugin_args": [ignore_info, resolve_hostname]
+                "plugin_args": {
+                    "ignore_info": ignore_info,
+                    "resolve_hotname": resolve_hostname
+                }
             })
             logger.info("Agent executed")
         except NoResultFound as e:

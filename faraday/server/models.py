@@ -1563,20 +1563,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         'polymorphic_on': type
     }
 
-    @property
-    def attachments(self):
-        return db.session.query(File).filter_by(
-            object_id=self.id,
-            object_type='vulnerability'
-        )
-
-    @property
-    def attachments_count(self):
-        return db.session.query(func.count(File.id)).filter_by(
-            object_id=self.id,
-            object_type='vulnerability'
-        ).scalar()
-
     @hybrid_property
     def target(self):
         return self.target_host_ip
@@ -2136,6 +2122,7 @@ class Role(db.Model, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
+    weight = db.Column(db.Integer(), nullable=False)
 
 
 class User(db.Model, UserMixin):

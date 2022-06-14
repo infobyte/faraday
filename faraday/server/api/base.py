@@ -845,6 +845,12 @@ class FilterMixin(ListMixin):
                     Workspace.active_agents_count,
                     _make_active_agents_count_property(),
                 ),
+                with_expression(
+                    Workspace.vulnerability_confirmed_count,
+                    _make_vuln_count_property(None,
+                                              confirmed=True,
+                                              use_column_property=False)
+                )
             )
 
         return filter_query

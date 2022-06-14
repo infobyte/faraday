@@ -1,4 +1,4 @@
 {
     "level": "community",
-    "md": "Remove workspaces from agents"
+    "md": "Remove workspaces agents relationship an now agent can run to multiple workspaces"
 }

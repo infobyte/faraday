@@ -110,7 +110,7 @@ class AgentRunSchema(Schema):
         ExecutorDataSchema(unknown=EXCLUDE),
         required=True
     )
-    workspaces_names = fields.String(required=True)
+    workspaces_names = fields.List(fields.String, required=True)
     ignore_info = fields.Boolean(required=False)
     resolve_hostname = fields.Boolean(required=False)
 
@@ -170,7 +170,7 @@ class AgentView(ReadWriteView):
         executor_data = data['executor_data']
         ignore_info = data.get('ignore_info', False)
         resolve_hostname = data.get('resolve_hostname', True)
-        workspaces = [self._get_workspace(workspace_name=workspace) for workspace in data['workspaces']]
+        workspaces = [self._get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
 
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
@@ -205,7 +205,7 @@ class AgentView(ReadWriteView):
                     hostname='',
                     params=params,
                     start_date=datetime.utcnow(),
-                    workspaces=workspace
+                    workspace=workspace
                 )
                 for workspace in workspaces
             ]
@@ -216,7 +216,7 @@ class AgentView(ReadWriteView):
                     successful=None,
                     message='',
                     executor=executor,
-                    workspaces=workspace.id,
+                    workspace_id=workspace.id,
                     parameters_data=executor_data["args"],
                     command=command
                 )
@@ -228,9 +228,9 @@ class AgentView(ReadWriteView):
             db.session.commit()
 
             changes_queue.put({
-                'executions_id': [agent_execution.id for agent_execution in agent_executions],
+                'execution_ids': [agent_execution.id for agent_execution in agent_executions],
                 'agent_id': agent.id,
-                'workspaces': workspaces,
+                'workspaces': [workspace.name for workspace in workspaces],
                 'action': 'RUN',
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args'),

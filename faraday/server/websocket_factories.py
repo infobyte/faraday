@@ -128,17 +128,18 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     agent = Agent.query.get(agent_id)
                     assert agent is not None  # TODO the agent could be deleted here
 
-                    execution_id = message.get('execution_id', None)
-                    assert execution_id is not None
-                    agent_execution = AgentExecution.query.filter(AgentExecution.id == execution_id).first()
-                    if agent_execution:
-                        agent_execution.successful = message.get('successful', None)
-                        agent_execution.running = message.get('running', None)
-                        agent_execution.message = message.get('message', '')
-                        db.session.commit()
-                    else:
-                        logger.exception(
-                            NoResultFound(f"No row was found for agent executor id {execution_id}"))
+                    execution_ids = message.get('execution_ids', None)
+                    assert execution_ids is not None
+                    for execution_id in execution_ids:
+                        agent_execution = AgentExecution.query.filter(AgentExecution.id == execution_id).first()
+                        if agent_execution:
+                            agent_execution.successful = message.get('successful', None)
+                            agent_execution.running = message.get('running', None)
+                            agent_execution.message = message.get('message', '')
+                            db.session.commit()
+                        else:
+                            logger.exception(
+                                NoResultFound(f"No row was found for agent executor id {execution_id}"))
 
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)

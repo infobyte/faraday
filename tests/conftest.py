@@ -18,7 +18,7 @@ from pytest_factoryboy import register
 from sqlalchemy import event
 
 from faraday.server.app import create_app
-from faraday.server.models import db
+from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
 from tests import factories
 
 TEST_DATA_PATH = Path(__file__).parent / 'data'
@@ -248,12 +248,12 @@ def create_user(app, session, username, email, password, **kwargs):
 @pytest.fixture
 def user(app, database, session):
     # print 'user', id(session), session
-    return create_user(app, session, 'test', 'user@test.com', 'password', user_type='local')
+    return create_user(app, session, 'test', 'user@test.com', 'password', user_type=LOCAL_TYPE)
 
 
 @pytest.fixture
 def ldap_user(app, session):
-    return create_user(app, session, 'ldap', 'ldap@test.com', 'password', user_type='ldap')
+    return create_user(app, session, 'ldap', 'ldap@test.com', 'password', user_type=LDAP_TYPE)
 
 
 @pytest.fixture

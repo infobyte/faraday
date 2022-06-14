@@ -839,6 +839,12 @@ class FilterMixin(ListMixin):
                 with_expression(
                     Workspace.vulnerability_code_count,
                     _make_vuln_count_property('vulnerability_code', use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.vulnerability_confirmed_count,
+                    _make_vuln_count_property(None,
+                                              confirmed=True,
+                                              use_column_property=False)
                 )
             )
 

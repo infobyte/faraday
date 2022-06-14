@@ -49,7 +49,7 @@ from faraday.server.commands import change_username
 from faraday.server.commands import nginx_config
 from faraday.server.commands import import_vulnerability_template
 from faraday.server.commands import manage_settings
-from faraday.server.models import db, User
+from faraday.server.models import db, User, LOCAL_TYPE
 from faraday.server.web import get_app
 from faraday_plugins.plugins.manager import PluginsManager
 from flask_security.utils import hash_password
@@ -184,7 +184,7 @@ def create_superuser(username, email, password):
                                        email=email,
                                        password=hash_password(password),
                                        roles=['admin'],
-                                       user_type='local')
+                                       user_type=LOCAL_TYPE)
         db.session.commit()
         click.echo(click.style(
             f'User {username} created successfully!',

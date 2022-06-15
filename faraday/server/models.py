@@ -2915,6 +2915,14 @@ class Executor(Metadata):
     )
 
 
+agents_schedule_workspace_table = Table(
+    "agents_schedule_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("agents_schedule_id", Integer, ForeignKey("agent_schedule.id")),
+)
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -2924,12 +2932,11 @@ class AgentsSchedule(Metadata):
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
 
-    # 1 workspace <--> N schedules
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # N workspace <--> N schedules
     workspace = relationship(
         'Workspace',
-        backref=backref('schedules', cascade="all, delete-orphan"),
+        secondary=agents_schedule_workspace_table,
+        backref='agent_schedule',
     )
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship(

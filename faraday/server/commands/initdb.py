@@ -107,7 +107,9 @@ class InitDB():
         engine = create_engine(conn_string)
         try:
             statement = text(
-                "INSERT INTO faraday_role(name) VALUES ('admin'),('pentester'),('client'),('asset_owner');"
+                "INSERT "
+                "INTO faraday_role(name, weight) "
+                "VALUES ('admin', 10),('asset_owner', 20),('pentester', 30),('client', 40);"
             )
             connection = engine.connect()
             connection.execute(statement)
@@ -255,11 +257,11 @@ class InitDB():
             statement = text("""
                 INSERT INTO faraday_user (
                             username, name, password,
-                            is_ldap, active, last_login_ip,
+                            user_type, active, last_login_ip,
                             current_login_ip, state_otp, fs_uniquifier
                         ) VALUES (
                             'faraday', 'Administrator', :password,
-                            false, true, '127.0.0.1',
+                            'local', true, '127.0.0.1',
                             '127.0.0.1', 'disabled', :fs_uniquifier
                         )
             """)

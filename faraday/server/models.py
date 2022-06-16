@@ -8,12 +8,14 @@ import math
 import operator
 import re
 import string
+import time
 from datetime import datetime, timedelta, date
 from functools import partial
 from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
+import jwt
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -46,14 +48,19 @@ from sqlalchemy.orm import (
     relationship,
 )
 from sqlalchemy.schema import DDL
+from flask import (
+    current_app as app,
+)
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector,
 )
 from flask_security import UserMixin, RoleMixin
+from flask_security.utils import hash_data
 from depot.fields.sqlalchemy import UploadedFileField
 
 # Local application imports
+from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile
 from faraday.server.utils.database import (
     BooleanToIntColumn,
@@ -91,6 +98,10 @@ NOTIFICATION_METHODS = [
     'webhook',
     'websocket'
 ]
+
+LDAP_TYPE = 'ldap'
+LOCAL_TYPE = 'local'
+SAML_TYPE = 'saml'
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -1552,20 +1563,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         'polymorphic_on': type
     }
 
-    @property
-    def attachments(self):
-        return db.session.query(File).filter_by(
-            object_id=self.id,
-            object_type='vulnerability'
-        )
-
-    @property
-    def attachments_count(self):
-        return db.session.query(func.count(File.id)).filter_by(
-            object_id=self.id,
-            object_type='vulnerability'
-        ).scalar()
-
     @hybrid_property
     def target(self):
         return self.target_host_ip
@@ -2125,6 +2122,7 @@ class Role(db.Model, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
+    weight = db.Column(db.Integer(), nullable=False)
 
 
 class User(db.Model, UserMixin):
@@ -2135,13 +2133,13 @@ class User(db.Model, UserMixin):
     CLIENT_ROLE = 'client'
     ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
+    USER_TYPES = [LDAP_TYPE, LOCAL_TYPE, SAML_TYPE]
 
     id = Column(Integer, primary_key=True)
     username = NonBlankColumn(String(255), unique=True)
     password = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=True)  # TBI
     name = BlankColumn(String(255))  # TBI
-    is_ldap = Column(Boolean(), nullable=False, default=False)
     last_login_at = Column(DateTime())  # flask-security
     current_login_at = Column(DateTime())  # flask-security
     last_login_ip = BlankColumn(String(100))  # flask-security
@@ -2158,6 +2156,7 @@ class User(db.Model, UserMixin):
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
+    user_type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default=LOCAL_TYPE)
 
     @property
     def roles_list(self):
@@ -2168,7 +2167,7 @@ class User(db.Model, UserMixin):
         cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
+        return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {
@@ -2177,6 +2176,15 @@ class User(db.Model, UserMixin):
             "email": self.email,
             "roles": self.roles_list,
         }
+
+    def get_token(self):
+        user_id = self.fs_uniquifier
+        hashed_data = hash_data(self.password) if self.password else None
+        iat = int(time.time())
+        exp = iat + int(faraday_server.api_token_expiration)
+        jwt_data = {'user_id': user_id, "validation_check": hashed_data, 'iat': iat, 'exp': exp}
+
+        return jwt.encode(jwt_data, app.config['SECRET_KEY'], algorithm="HS512")
 
 
 class File(Metadata):
@@ -3080,6 +3088,38 @@ class Configuration(Metadata):
     id = Column(Integer, primary_key=True)
     key = Column(String, unique=True, nullable=False)
     value = Column(JSONType, nullable=False)
+
+
+class AnalyticsConfig:
+    VULNS_PER_HOST = 'vulnerabilities_per_host'
+    VULNS_PER_STATUS = 'vulnerabilities_per_status'
+    VULNS_PER_SEVERITY = 'vulnerabilities_per_severity'
+    TOP_TEN_MOST_AFFECTED_HOSTS = 'top_ten_most_affected_hosts'
+    TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
+    MONTHLY_EVOLUTION_BY_STATUS = 'monthly_evolution_by_status'
+    MONTHLY_EVOLUTION_BY_SEVERITY = 'monthly_evolution_by_severity'
+
+    TYPES = [
+        VULNS_PER_HOST,
+        VULNS_PER_STATUS,
+        VULNS_PER_SEVERITY,
+        TOP_TEN_MOST_AFFECTED_HOSTS,
+        TOP_TEN_MOST_REPEATED_VULNS,
+        MONTHLY_EVOLUTION_BY_STATUS,
+        MONTHLY_EVOLUTION_BY_SEVERITY,
+    ]
+
+
+class Analytics(Metadata):
+    __tablename__ = "analytics"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    type = Column(Enum(*AnalyticsConfig.TYPES, name='analytics_types'), nullable=False)
+    filters = Column(JSONType, nullable=False)
+    data = Column(JSONType, nullable=False)
+    show_data_table = Column(Boolean, default=False)
 
 
 # This constraint uses Columns from different classes

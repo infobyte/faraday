@@ -483,14 +483,11 @@ class BulkCreateView(GenericWorkspacedView):
             agent = require_agent_token()
         data = self._parse_data(self._get_schema_instance({}), flask.request)
         json_data = flask.request.json
-        if flask_login.current_user.is_anonymous:
-            workspace = self._get_workspace(workspace_name)
+        workspace = self._get_workspace(workspace_name)
 
+        if 'execution_id' in data:
             if not workspace or workspace not in agent.workspaces:
                 flask.abort(404, f"No such workspace: {workspace_name}")
-
-            if "execution_id" not in data:
-                flask.abort(400, "argument expected: execution_id")
 
             execution_id = data["execution_id"]
 
@@ -550,11 +547,14 @@ class BulkCreateView(GenericWorkspacedView):
                     json_data['command']["end_date"] = data["command"]["end_date"].isoformat()
 
         else:
-            workspace = self._get_workspace(workspace_name)
+            if flask_login.current_user.is_anonymous:
+                flask.abort(400, "argument expected: execution_id")
+
             command = Command(**(data['command']))
             command.workspace = workspace
             db.session.add(command)
             db.session.commit()
+
         if data['hosts']:
             # Create random file
             chars = string.ascii_uppercase + string.digits
@@ -571,7 +571,9 @@ class BulkCreateView(GenericWorkspacedView):
                     command.id,
                     file_path,
                     None,
-                    user_id
+                    user_id,
+                    False,
+                    False
                 )
             )
         logger.info(f"Faraday objects created in bulk for workspace {workspace}")

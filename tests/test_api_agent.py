@@ -210,7 +210,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": executor.name
             },
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -247,7 +247,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": executor.name
             },
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
 
         res = test_client.post(
@@ -280,7 +280,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": "executor_name"
             },
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         headers = [
             ('content-type', 'text/html'),
@@ -304,7 +304,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": "executor_name"
             },
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -333,16 +333,16 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": executor.name,
             },
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
             json=payload
         )
         assert res.status_code == 200
-        command_id = res.json["command_id"]
+        command_id = res.json["commands_id"]
         command = Command.query.filter(Command.workspace_id == workspace.id).one()
-        assert command_id == command.id
+        assert command_id[0] == command.id
         assert agent.last_run is not None
         assert executor.last_run is not None
         assert executor2.last_run is None
@@ -364,7 +364,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                 },
                 "executor": executor.name
             },
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -381,7 +381,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         payload = {
             'csrf_token': csrf_token,
             'executorData': '[][dassa',
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         res = test_client.post(
             join(self.url(agent), 'run'),
@@ -397,7 +397,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         payload = {
             'csrf_token': csrf_token,
             'executorData': '',
-            "workspace_name": workspace.name
+            "workspaces_names": [workspace.name]
         }
         res = test_client.post(
             join(self.url(agent), 'run'),

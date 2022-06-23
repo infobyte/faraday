@@ -2933,7 +2933,7 @@ class AgentsSchedule(Metadata):
     last_run = Column(DateTime)
 
     # N workspace <--> N schedules
-    workspace = relationship(
+    workspaces = relationship(
         'Workspace',
         secondary=agents_schedule_workspace_table,
         backref='agent_schedule',

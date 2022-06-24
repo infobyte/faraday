@@ -2943,7 +2943,8 @@ class AgentsSchedule(Metadata):
         'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
+    ignore_info = Column(Boolean, default=False)
+    resolve_hostname = Column(Boolean, default=True)
     parameters = Column(JSONType, nullable=False, default={})
 
     @property

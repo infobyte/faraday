@@ -24,6 +24,8 @@ def upgrade():
     sa.ForeignKeyConstraint(['agents_schedule_id'], ['agent_schedule.id'], ),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], )
     )
+    op.add_column('agent_schedule', sa.Column('ignore_info', sa.Boolean(), nullable=True))
+    op.add_column('agent_schedule', sa.Column('resolve_hostname', sa.Boolean(), nullable=True))
     op.drop_table('association_workspace_and_agents_table')
     op.drop_index('ix_agent_schedule_workspace_id', table_name='agent_schedule')
     op.drop_constraint('agent_schedule_workspace_id_fkey', 'agent_schedule', type_='foreignkey')
@@ -42,5 +44,7 @@ def downgrade():
     sa.ForeignKeyConstraint(['agent_id'], ['agent.id'], name='association_workspace_and_agents_table_agent_id_fkey', ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], name='association_workspace_and_agents_table_workspace_id_fkey')
     )
+    op.drop_column('agent_schedule', 'resolve_hostname')
+    op.drop_column('agent_schedule', 'ignore_info')
     op.drop_table('agents_schedule_workspace_table')
     # ### end Alembic commands ###

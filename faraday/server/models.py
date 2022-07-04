@@ -1818,6 +1818,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
         'polymorphic_on': type
     }
 
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='vulnerability'
+        )
+
     @hybrid_property
     def target(self):
         return self.target_host_ip

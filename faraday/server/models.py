@@ -3026,9 +3026,9 @@ class AgentExecution(Metadata):
 
     def notification_message(self, _event, user=None):
         if self.command.end_date:
-            return "Scan finished"
+            return f"{self.executor.agent.name} finished"
         elif self.running:
-            return "Scan running"
+            return f"{self.executor.agent.name} running"
 
 
 class SearchFilter(Metadata):

@@ -167,7 +167,6 @@ class AgentView(ReadWriteView):
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
         username = flask_login.current_user.username
-        logger.info(username)
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
         executor_data = data['executor_data']

@@ -12,6 +12,7 @@ from datetime import datetime
 import pyotp
 import flask
 from flask import Blueprint, abort, request, jsonify
+import flask_login
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
@@ -165,6 +166,8 @@ class AgentView(ReadWriteView):
         """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
+        username = flask_login.current_user.username
+        logger.info(username)
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
         executor_data = data['executor_data']
@@ -201,7 +204,7 @@ class AgentView(ReadWriteView):
                     import_source="agent",
                     tool=agent.name,
                     command=executor.name,
-                    user='',
+                    user=username,
                     hostname='',
                     params=params,
                     start_date=datetime.utcnow(),
@@ -244,9 +247,9 @@ class AgentView(ReadWriteView):
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")
         else:
-            return flask.jsonify({
-                'commands_id': [command.id for command in commands],
-            })
+            return flask.jsonify(
+                [{"command_id": command.id, "workspace_name": workspace.name} for command, workspace in zip(commands, workspaces)]
+            )
 
     @route('/active_agents', methods=['GET'])
     def active_agents(self, **kwargs):

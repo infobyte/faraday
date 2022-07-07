@@ -246,9 +246,9 @@ class AgentView(ReadWriteView):
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")
         else:
-            return flask.jsonify(
-                [{"command_id": command.id, "workspace_name": workspace.name} for command, workspace in zip(commands, workspaces)]
-            )
+            return flask.jsonify({
+                'commands_id': [command.id for command in commands]
+            })
 
     @route('/active_agents', methods=['GET'])
     def active_agents(self, **kwargs):

@@ -26,7 +26,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm import ColumnProperty
 
-from faraday.server.models import User, CVE
+from faraday.server.models import User, CVE, Role
 
 logger = logging.getLogger(__name__)
 
@@ -601,7 +601,15 @@ class QueryBuilder:
                         field = getattr(relation_model, field_name_in_relation)
                         direction = getattr(field, val.direction)
                         if relation_model not in joined_models:
-                            query = query.join(relation_model, isouter=True)
+                            # TODO: is it possible to guess if relationship is a many to many
+                            if relation_model == Role:
+                                query = query.join(relation_model, User.roles)
+                            elif relation_model == User:
+                                query = query.join(relation_model, model.creator_id == relation_model.id)
+                            elif relation_model == CVE:
+                                query = query.join(relation_model, model.cve_instances)
+                            else:
+                                query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)
                         query = query.order_by(direction())
                     else:

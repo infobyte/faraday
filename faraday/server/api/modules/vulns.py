@@ -170,7 +170,6 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
-    attachments_count = fields.Integer(dump_only=True, attribute='attachments_count')
 
     class Meta:
         model = Vulnerability
@@ -181,10 +180,9 @@ class VulnerabilitySchema(AutoSchema):
             'hostnames', 'owner',
             'date', 'data', 'refs',
             'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations',
-            '_attachments',
+            'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool', 'attachments_count',
+            'custom_fields', 'external_id', 'tool',
             'cvss', 'cwe', 'cve', 'owasp',
             )
 
@@ -327,7 +325,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
+            'status_code', 'custom_fields', 'external_id', 'tool',
             'cve', 'cwe', 'owasp', 'cvss',
         )
 
@@ -794,13 +792,24 @@ class VulnerabilityView(PaginatedMixin,
         """
         filters = request.args.get('q', '{}')
         filtered_vulns, count = self._filter(filters, workspace_name)
+        export_csv = request.args.get('export_csv', '')
 
         class PageMeta:
             total = 0
 
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
-        return self._envelope_list(filtered_vulns, pagination_metadata)
+        if export_csv.lower() == 'true':
+            custom_fields_columns = []
+            for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+                custom_fields_columns.append(custom_field.field_name)
+            memory_file = export_vulns_to_csv(filtered_vulns, custom_fields_columns)
+            return send_file(memory_file,
+                             attachment_filename=f"Faraday-SR-{workspace_name}.csv",
+                             as_attachment=True,
+                             cache_timeout=-1)
+        else:
+            return self._envelope_list(filtered_vulns, pagination_metadata)
 
     def _hostname_filters(self, filters):
         res_filters = []

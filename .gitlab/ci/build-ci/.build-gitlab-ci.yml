@@ -93,7 +93,7 @@ generate_rpm:
       - !reference [.be-built, rules]
       - when: never
 
-generate_docker_tar_gz:
+generate_docker_tar_gz_dev:
     stage: build
     image: nixorg/nix
     tags:
@@ -105,7 +105,7 @@ generate_docker_tar_gz:
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
-        - !reference [ .clone_and_replace_www, script ]
+        - !reference [ .get_from_tar_and_replace_www, script ]
         - cachix use faradaysec
         - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
         - cp $(readlink result) faraday-server-docker.tar.gz
@@ -113,6 +113,69 @@ generate_docker_tar_gz:
       paths:
         - faraday-server-docker.tar.gz
     rules:
-      - !reference [.on-master-staging, rules]
-      - !reference [.be-built, rules]
+        - !reference [.be-built, rules]
+        # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
+        - !reference [.ignore-on-staging, rules]
+        - !reference [.ignore-on-master, rules]
+        - when: never
+    needs:
+        - project: faradaysec/faraday-react
+          job: npm_build
+          ref: community/dev
+          artifacts: true
+
+generate_docker_tar_gz_staging:
+    stage: build
+    image: nixorg/nix
+    tags:
+      - digitalocean-dev
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
+        - nix-env -if pynixify/nixpkgs.nix -A vault
+        - !reference [ .get_secrets, script ]
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - !reference [ .get_from_tar_and_replace_www, script ]
+        - cachix use faradaysec
+        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
+        - cp $(readlink result) faraday-server-docker.tar.gz
+    artifacts:
+      paths:
+        - faraday-server-docker.tar.gz
+    rules:
+        - !reference [.on-staging, rules]
+        - when: never
+    needs:
+        - project: faradaysec/faraday-react
+          job: npm_build
+          ref: community/staging
+          artifacts: true
+
+generate_docker_tar_gz_master:
+    stage: build
+    image: nixorg/nix
+    tags:
+      - digitalocean-dev
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
+        - nix-env -if pynixify/nixpkgs.nix -A vault
+        - !reference [ .get_secrets, script ]
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - !reference [ .get_from_tar_and_replace_www, script ]
+        - cachix use faradaysec
+        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
+        - cp $(readlink result) faraday-server-docker.tar.gz
+    artifacts:
+      paths:
+        - faraday-server-docker.tar.gz
+    rules:
+      - !reference [.on-master, rules]
       - when: never
+    needs:
+      - project: faradaysec/faraday-react
+        job: npm_build
+        ref: community/master
+        artifacts: true

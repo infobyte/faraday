@@ -2,10 +2,15 @@ publish_pypi:
     image: python:3
     stage: publish
     script:
-      - !reference [ .clone_and_replace_www, script ]
+      - !reference [ .get_from_tar_and_replace_www, script ]
       - apt-get update -qy
       - apt-get install twine -y
       - python setup.py sdist bdist_wheel
       - twine upload -u $PYPI_USER -p $PYPI_PASS dist/* --verbose
     rules:
       - !reference [ .on-community-tag, rules ]
+    needs:
+      - project: faradaysec/faraday-react
+        job: npm_build
+        ref: community/master
+        artifacts: true

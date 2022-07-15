@@ -412,6 +412,10 @@ class GenericView(FlaskView):
                 messages = ['Invalid request']
             return flask.jsonify(messages), 409
 
+        @app.errorhandler(403)
+        def handle_forbidden(err):  # pylint: disable=unused-variable
+            return flask.jsonify({"message": err.description}), 403
+
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):  # pylint: disable=unused-variable
             response = flask.jsonify(error.to_dict())

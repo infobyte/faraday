@@ -1,4 +1,4 @@
-generate_deb:
+generate_deb_dev:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
@@ -27,9 +27,9 @@ generate_deb:
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     needs:
-      - job: generate_build_file
+      - job: generate_build_file_dev
         artifacts: true
-      - job: build_nix_python3
+      - job: build_nix_python3_dev
         artifacts: true
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.deb'
@@ -37,12 +37,97 @@ generate_deb:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     rules:
-      - !reference [.on-master-staging, rules]
-      - !reference [.be-built, rules]
-      - when: never
+        - !reference [.be-built, rules]
+        # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
+        - !reference [.ignore-on-staging, rules]
+        - !reference [.ignore-on-master, rules]
+        - when: never
 
+generate_deb_staging:
+    image: registry.gitlab.com/faradaysec/devops
+    stage: build
+    before_script:
+        - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - mv py3.tar /
+        - cd /; tar xf py3.tar; cd -
 
-generate_rpm:
+    script:
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - cp -r /nix .
+        - mv ../../faraday-linux-installers-builder .
+        - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
+        - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+    needs:
+      - job: generate_build_file_staging
+        artifacts: true
+      - job: build_nix_python3_staging
+        artifacts: true
+    artifacts:
+        name: 'faraday_$CI_COMMIT_REF_NAME.deb'
+        paths:
+            - "faraday-server_amd64.deb"
+        expire_in: 15 days
+    rules:
+        - !reference [.on-staging, rules]
+        - when: never
+
+generate_deb_master:
+    image: registry.gitlab.com/faradaysec/devops
+    stage: build
+    before_script:
+        - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - mv py3.tar /
+        - cd /; tar xf py3.tar; cd -
+
+    script:
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - cp -r /nix .
+        - mv ../../faraday-linux-installers-builder .
+        - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
+        - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+    needs:
+      - job: generate_build_file_master
+        artifacts: true
+      - job: build_nix_python3_master
+        artifacts: true
+    artifacts:
+        name: 'faraday_$CI_COMMIT_REF_NAME.deb'
+        paths:
+            - "faraday-server_amd64.deb"
+        expire_in: 15 days
+    rules:
+        - !reference [.on-master, rules]
+        - when: never
+
+generate_rpm_dev:
     stage: build
     image: centos:7
     before_script:
@@ -79,9 +164,9 @@ generate_rpm:
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
     needs:
-      - job: generate_build_file
+      - job: generate_build_file_dev
         artifacts: true
-      - job: build_nix_python3
+      - job: build_nix_python3_dev
         artifacts: true
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
@@ -89,9 +174,111 @@ generate_rpm:
             - "faraday-server_amd64.rpm"
         expire_in: 15 days
     rules:
-      - !reference [.on-master-staging, rules]
-      - !reference [.be-built, rules]
-      - when: never
+        - !reference [.be-built, rules]
+        # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
+        - !reference [.ignore-on-staging, rules]
+        - !reference [.ignore-on-master, rules]
+        - when: never
+
+generate_rpm_staging:
+    stage: build
+    image: centos:7
+    before_script:
+      - yum -y upgrade
+      - yum -y install which git epel-release centos-release-scl
+      - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - mv py3.tar /
+      - cd /; tar xf py3.tar; cd -
+      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
+      - yum groups -y install "Development Tools"
+      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
+      - source /opt/rh/rh-ruby23/enable
+      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - source /opt/rh/rh-python36/enable
+      - pip install virtualenv
+      - pip install virtualenv-tools3
+    script:
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - cp -r /nix .
+        - mv ../../faraday-linux-installers-builder .
+        - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
+        - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+    needs:
+      - job: generate_build_file_staging
+        artifacts: true
+      - job: build_nix_python3_staging
+        artifacts: true
+    artifacts:
+        name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
+        paths:
+            - "faraday-server_amd64.rpm"
+        expire_in: 15 days
+    rules:
+        - !reference [.on-staging, rules]
+        - when: never
+
+generate_rpm_master:
+    stage: build
+    image: centos:7
+    before_script:
+      - yum -y upgrade
+      - yum -y install which git epel-release centos-release-scl
+      - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - mv py3.tar /
+      - cd /; tar xf py3.tar; cd -
+      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
+      - yum groups -y install "Development Tools"
+      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
+      - source /opt/rh/rh-ruby23/enable
+      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - source /opt/rh/rh-python36/enable
+      - pip install virtualenv
+      - pip install virtualenv-tools3
+    script:
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - cp -r /nix .
+        - mv ../../faraday-linux-installers-builder .
+        - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
+        - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+    needs:
+      - job: generate_build_file_master
+        artifacts: true
+      - job: build_nix_python3_master
+        artifacts: true
+    artifacts:
+        name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
+        paths:
+            - "faraday-server_amd64.rpm"
+        expire_in: 15 days
+    rules:
+        - !reference [.on-master, rules]
+        - when: never
 
 generate_docker_tar_gz_dev:
     stage: build

@@ -2166,6 +2166,7 @@ class Workspace(Metadata):
     vulnerability_web_count = query_expression()
     vulnerability_web_confirmed_count = query_expression()
     vulnerability_web_closed_count = query_expression()
+    vulnerability_web_confirmed_and_not_closed_count = query_expression()
 
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
@@ -2245,6 +2246,7 @@ class Workspace(Metadata):
                 p_5.count_18 as vulnerability_web_confirmed_count,
                 p_5.count_19 as vulnerability_web_closed_count,
                 p_5.count_20 as vulnerability_confirmed_and_not_closed_count,
+                p_5.count_21 as vulnerability_web_confirmed_and_not_closed_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -2283,7 +2285,8 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.status = 'closed' then 1 else null end) as count_17,
              COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.confirmed is True then 1 else null end) as count_18,
              COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.status = 'closed' then 1 else null end) as count_19,
-             COUNT(case when vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_20
+             COUNT(case when vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_20,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_21
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}

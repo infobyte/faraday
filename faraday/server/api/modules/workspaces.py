@@ -67,6 +67,7 @@ class WorkspaceSummarySchema(Schema):
     vulnerability_web_confirmed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_count')
     vulnerability_web_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_closed_count')
     vulnerability_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_and_not_closed_count')
+    vulnerability_web_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_and_not_closed_count')
 
 
 class HistogramSchema(Schema):
@@ -416,6 +417,13 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             with_expression(
                 Workspace.vulnerability_confirmed_and_not_closed_count,
                 _make_vuln_count_property(None,
+                                          confirmed=True,
+                                          extra_query=" status!='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_confirmed_and_not_closed_count,
+                _make_vuln_count_property('vulnerability_web',
                                           confirmed=True,
                                           extra_query=" status!='closed' ",
                                           use_column_property=False)

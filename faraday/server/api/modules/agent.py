@@ -114,6 +114,9 @@ class AgentRunSchema(Schema):
     workspaces_names = fields.List(fields.String, required=True)
     ignore_info = fields.Boolean(required=False)
     resolve_hostname = fields.Boolean(required=False)
+    vuln_tag = fields.List(fields.String, required=False)
+    service_tag = fields.List(fields.String, required=False)
+    host_tag = fields.List(fields.String, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -172,6 +175,9 @@ class AgentView(ReadWriteView):
         executor_data = data['executor_data']
         ignore_info = data.get('ignore_info', False)
         resolve_hostname = data.get('resolve_hostname', True)
+        vuln_tag = data.get('vuln_tag', "")
+        service_tag = data.get('service_tag', "")
+        host_tag = data.get('host_tag', "")
         workspaces = [self._get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
 
         try:
@@ -238,7 +244,10 @@ class AgentView(ReadWriteView):
                 "args": executor_data.get('args'),
                 "plugin_args": {
                     "ignore_info": ignore_info,
-                    "resolve_hotname": resolve_hostname
+                    "resolve_hotname": resolve_hostname,
+                    "vuln_tag": vuln_tag,
+                    "service_tag": service_tag,
+                    "host_tag": host_tag
                 }
             })
             logger.info("Agent executed")

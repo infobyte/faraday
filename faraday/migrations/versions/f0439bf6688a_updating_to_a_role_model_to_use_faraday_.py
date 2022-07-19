@@ -33,7 +33,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['faraday_user.id'], )
     )
 
-    op.execute("INSERT INTO faraday_role(name) VALUES ('admin'),('pentester'),('client'),('asset_owner');")
+    op.execute("INSERT INTO faraday_role(name) VALUES ('admin'),('asset_owner'),('pentester'),('client');")
 
     roles_users = sa.table(
         'roles_users',

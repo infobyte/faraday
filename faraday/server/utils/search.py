@@ -604,6 +604,10 @@ class QueryBuilder:
                             # TODO: is it possible to guess if relationship is a many to many
                             if relation_model == Role:
                                 query = query.join(relation_model, User.roles)
+                            elif relation_model == User:
+                                query = query.join(relation_model, model.creator_id == relation_model.id)
+                            elif relation_model == CVE:
+                                query = query.join(relation_model, model.cve_instances)
                             else:
                                 query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)

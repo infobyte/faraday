@@ -26,7 +26,7 @@ def upgrade():
 
     for user in res:
         op.execute(
-            t_users.update().where(t_users.c.username == user[0]).values({'username': {f'DELETED_USER_{user[0]}_0'}})
+            t_users.update().where(t_users.c.username == user[0]).values({'username': f'DELETED_USER_{user[0]}_0'})
         )
 
 

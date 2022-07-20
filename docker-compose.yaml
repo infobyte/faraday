@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   db:
-    image: postgres:14.1-alpine
+    image: postgres:12.7-alpine
     restart: always
     container_name: faraday_db
     environment:
@@ -18,24 +18,21 @@ services:
     ports:
       - '6379'
   app:
-    build: .
-    container_name: faraday
+    image: registry.gitlab.com/faradaysec/faraday:latest
     restart: always
     volumes:
-     - .:/src
-     - "/tmp/faraday:/home/faraday/.faraday:rw"
+     - "$HOME/.faraday:/home/faraday/.faraday:rw"
     environment:
       - PGSQL_USER=postgres
       - PGSQL_PASSWD=postgres
       - PGSQL_HOST=db
       - PGSQL_DBNAME=faraday
       - REDIS_SERVER=redis
-      - FARADAY_PASSWORD=1234
     depends_on:
      - db
      - redis
     ports:
-     - 5985:5985
+     - "5985:5985"
 volumes:
   db:
     driver: local

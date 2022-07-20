@@ -17,6 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends  build-essentia
 
 WORKDIR /home/faraday
 
+RUN mkdir -p /home/faraday/.faraday/config
+RUN mkdir -p /home/faraday/.faraday/logs
+RUN mkdir -p /home/faraday/.faraday/session
+RUN mkdir -p /home/faraday/.faraday/storage
+
+
 ENV PYTHONUNBUFFERED 1
 ENV FARADAY_HOME /home/faraday
 

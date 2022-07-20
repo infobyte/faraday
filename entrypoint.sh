@@ -18,7 +18,7 @@ if [ ! -f "$FARADAY_HOME/.faraday/config/server.ini" ]; then
     sed -i "s/connection_string = .*/$CONNECTION_STRING/"  $FARADAY_HOME/.faraday/config/server.ini
     if [ ! -z "$REDIS_SERVER" ]; then
       REDIS_STRING="redis_session_storage = $REDIS_SERVER"
-      sed -i "s/redis_session_storage = .*/$REDIS_STRING/"  $FARADAY_HOME/.faraday/config/server.ini
+      sed -i "s/#redis_session_storage = .*/$REDIS_STRING/"  $FARADAY_HOME/.faraday/config/server.ini
     fi
 else
     echo "$(date) Using existing server.ini"
@@ -27,7 +27,6 @@ else
 fi
 
 if [ ! -f "$FARADAY_HOME/.faraday/logs/alembic.log" ]; then
-  mkdir -p $FARADAY_HOME/.faraday/logs/
   touch $FARADAY_HOME/.faraday/logs/alembic.log
 fi
 

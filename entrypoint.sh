@@ -13,6 +13,10 @@ if [ ! -f "$FARADAY_HOME/.faraday/config/server.ini" ]; then
     CREATE_ADMIN=1
     echo "$(date) Creating server.ini"
     mkdir -p $FARADAY_HOME/.faraday/config
+    mkdir -p $FARADAY_HOME/.faraday/storage
+    mkdir -p $FARADAY_HOME/.faraday/logs
+    mkdir -p $FARADAY_HOME/.faraday/session
+    touch $FARADAY_HOME/.faraday/logs/alembic.log
     cp /docker_server.ini $FARADAY_HOME/.faraday/config/server.ini
     CONNECTION_STRING="connection_string = postgresql+psycopg2:\/\/$PGSQL_USER:$PGSQL_PASSWD@$PGSQL_HOST\/$PGSQL_DBNAME"
     sed -i "s/connection_string = .*/$CONNECTION_STRING/"  $FARADAY_HOME/.faraday/config/server.ini
@@ -24,10 +28,6 @@ else
     echo "$(date) Using existing server.ini"
     CREATE_TABLES=0
     CREATE_ADMIN=0
-fi
-
-if [ ! -f "$FARADAY_HOME/.faraday/logs/alembic.log" ]; then
-  touch $FARADAY_HOME/.faraday/logs/alembic.log
 fi
 
 if [ $CREATE_TABLES -eq 1 ]; then

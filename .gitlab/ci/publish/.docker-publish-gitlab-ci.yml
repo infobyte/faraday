@@ -37,3 +37,6 @@ docker-publish-prod:
     - !reference [ .on-community-tag, rules ]
   dependencies: # prod will wait for any previous stage
     - generate_docker_tar_gz_master
+  needs:
+    - job: generate_docker_tar_gz_master
+      artifacts: true

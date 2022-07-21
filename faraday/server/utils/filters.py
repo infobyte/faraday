@@ -29,7 +29,11 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 logger = logging.getLogger(__name__)
 
 
-def convert_filter_val_to_datetime(filter_: dict = "") -> typing.List:
+def generate_datetime_filter(filter_: dict = "") -> typing.List:
+    """
+    Add time to filter['val'] date
+    Return a new filter with time added. In case of `eq` or `==` operator will return a range of datetimes.
+    """
     if filter_['op'].lower() in ['>', 'gt', '<=', 'lte']:
         filter_['val'] = (parse(filter_['val']) + datetime.timedelta(hours=23,
                                                                      minutes=59,
@@ -132,7 +136,7 @@ class FlaskRestlessFilterSchema(Schema):
         if isinstance(field, (fields.Date, fields.DateTime)):
             try:
                 datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
-                return convert_filter_val_to_datetime(filter_)
+                return generate_datetime_filter(filter_)
             except ValueError:
                 raise ValidationError('Invalid date format. Dates should be in "%Y-%m-%d" format')
 

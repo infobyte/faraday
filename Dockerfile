@@ -3,8 +3,8 @@ FROM python:3.8-slim-buster
 WORKDIR /src
 
 COPY . /src
-COPY ./entrypoint.sh /entrypoint.sh
-COPY ./docker_server.ini /docker_server.ini
+COPY ./docker/entrypoint.sh /entrypoint.sh
+COPY ./docker/server.ini /docker_server.ini
 # deploy scripts
 
 RUN apt-get update && apt-get install -y --no-install-recommends  build-essential libgdk-pixbuf2.0-0 \

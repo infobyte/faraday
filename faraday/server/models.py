@@ -556,6 +556,261 @@ class SeveritiesHistogram(db.Model):
         return
 
 
+class VulnerabilityHitCount(db.Model):
+    __tablename__ = "vulnerability_hit_count"
+
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('vulnerability_hit_counts', cascade="all, delete-orphan")
+    )
+    date = Column(Date, nullable=False, default=datetime.utcnow())
+
+    # Low
+    low_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_open_total(self):
+        return self.low_open_unconfirmed + self.low_open_confirmed
+
+    low_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_risk_accepted_total(self):
+        return self.low_risk_accepted_unconfirmed + self.low_risk_accepted_confirmed
+
+    low_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_re_opened_total(self):
+        return self.low_re_opened_unconfirmed + self.low_re_opened_confirmed
+
+    low_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_closed_total(self):
+        return self.low_closed_unconfirmed + self.low_closed_confirmed
+
+    @hybrid_property
+    def low_total(self):
+        return self.low_open_total + self.low_risk_accepted_total + self.low_re_opened_total + self.low_closed_total
+
+    @hybrid_property
+    def low_confirmed_total(self):
+        return self.low_open_confirmed + self.low_risk_accepted_confirmed + self.low_re_opened_confirmed + self.low_closed_confirmed
+
+    # Medium
+    medium_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_open_total(self):
+        return self.medium_open_unconfirmed + self.medium_open_confirmed
+
+    medium_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_risk_accepted_total(self):
+        return self.medium_risk_accepted_unconfirmed + self.medium_risk_accepted_confirmed
+
+    medium_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_re_opened_total(self):
+        return self.medium_re_opened_unconfirmed + self.medium_re_opened_confirmed
+
+    medium_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_closed_total(self):
+        return self.medium_closed_unconfirmed + self.medium_closed_confirmed
+
+    @hybrid_property
+    def medium_total(self):
+        return self.medium_open_total + self.medium_risk_accepted_total + self.medium_re_opened_total + self.medium_closed_total
+
+    @hybrid_property
+    def medium_confirmed_total(self):
+        return self.medium_open_confirmed + self.medium_risk_accepted_confirmed + self.medium_re_opened_confirmed + self.medium_closed_confirmed
+
+    # High
+    high_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_open_total(self):
+        return self.high_open_unconfirmed + self.high_open_confirmed
+
+    high_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_risk_accepted_total(self):
+        return self.high_risk_accepted_unconfirmed + self.high_risk_accepted_confirmed
+
+    high_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_re_opened_total(self):
+        return self.high_re_opened_unconfirmed + self.high_re_opened_confirmed
+
+    high_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_closed_total(self):
+        return self.high_closed_unconfirmed + self.high_closed_confirmed
+
+    @hybrid_property
+    def high_total(self):
+        return self.high_open_total + self.high_risk_accepted_total + self.high_re_opened_total + self.high_closed_total
+
+    @hybrid_property
+    def high_confirmed_total(self):
+        return self.high_open_confirmed + self.high_risk_accepted_confirmed + self.high_re_opened_confirmed + self.high_closed_confirmed
+
+    # Critical
+    critical_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_open_total(self):
+        return self.critical_open_unconfirmed + self.critical_open_confirmed
+
+    critical_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_risk_accepted_total(self):
+        return self.critical_risk_accepted_unconfirmed + self.critical_risk_accepted_confirmed
+
+    critical_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_re_opened_total(self):
+        return self.critical_re_opened_unconfirmed + self.critical_re_opened_confirmed
+
+    critical_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_closed_total(self):
+        return self.critical_closed_unconfirmed + self.critical_closed_confirmed
+
+    @hybrid_property
+    def critical_total(self):
+        return self.critical_open_total + self.critical_risk_accepted_total + self.critical_re_opened_total + self.critical_closed_total
+
+    @hybrid_property
+    def critical_confirmed_total(self):
+        return self.critical_open_confirmed + self.critical_risk_accepted_confirmed + self.critical_re_opened_confirmed + self.critical_closed_confirmed
+
+    # Specific for open status
+    @hybrid_property
+    def low_open_total_custom(self):
+        return self.low_open_total + self.low_re_opened_total + self.low_risk_accepted_total
+
+    @hybrid_property
+    def low_open_confirmed_total_custom(self):
+        return self.low_open_confirmed + self.low_re_opened_confirmed + self.low_risk_accepted_confirmed
+
+    @hybrid_property
+    def medium_open_total_custom(self):
+        return self.medium_open_total + self.medium_re_opened_total + self.medium_risk_accepted_total
+
+    @hybrid_property
+    def medium_open_confirmed_total_custom(self):
+        return self.medium_open_confirmed + self.medium_re_opened_confirmed + self.medium_risk_accepted_confirmed
+
+    @hybrid_property
+    def high_open_total_custom(self):
+        return self.high_open_total + self.high_re_opened_total + self.high_risk_accepted_total
+
+    @hybrid_property
+    def high_open_confirmed_total_custom(self):
+        return self.high_open_confirmed + self.high_re_opened_confirmed + self.high_risk_accepted_confirmed
+
+    @hybrid_property
+    def critical_open_total_custom(self):
+        return self.critical_open_total + self.critical_re_opened_total + self.critical_risk_accepted_total
+
+    @hybrid_property
+    def critical_open_confirmed_total_custom(self):
+        return self.critical_open_confirmed + self.critical_re_opened_confirmed + self.critical_risk_accepted_confirmed
+
+    # total counts
+    @hybrid_property
+    def total(self):
+        return self.low_total + self.medium_total + self.high_total + self.critical_total
+
+    @hybrid_property
+    def total_confirmed(self):
+        return self.low_confirmed_total + self.medium_confirmed_total + self.high_confirmed_total + self.critical_confirmed_total
+
+    @hybrid_property
+    def total_open(self):
+        return self.low_open_total + self.medium_open_total + self.high_open_total + self.critical_open_total
+
+    @hybrid_property
+    def total_closed(self):
+        return self.low_closed_total + self.medium_closed_total + self.high_closed_total + self.critical_closed_total
+
+    @hybrid_property
+    def total_re_opened(self):
+        return self.low_re_opened_total + self.medium_re_opened_total + self.high_re_opened_total + self.critical_re_opened_total
+
+    @hybrid_property
+    def total_risk_accepted(self):
+        return self.low_risk_accepted_total + self.medium_risk_accepted_total + self.high_risk_accepted_total + self.critical_risk_accepted_total
+
+    @hybrid_property
+    def total_open_confirmed(self):
+        return self.low_open_confirmed + self.medium_open_confirmed + self.high_open_confirmed + self.critical_open_confirmed
+
+    @hybrid_property
+    def total_closed_confirmed(self):
+        return self.low_closed_confirmed + self.medium_closed_confirmed + self.high_closed_confirmed + self.critical_closed_confirmed
+
+    @hybrid_property
+    def total_re_opened_confirmed(self):
+        return self.low_re_opened_confirmed + self.medium_re_opened_confirmed + self.high_re_opened_confirmed + self.critical_re_opened_confirmed
+
+    @hybrid_property
+    def total_risk_accepted_confirmed(self):
+        return self.low_risk_accepted_confirmed + self.medium_risk_accepted_confirmed + self.high_risk_accepted_confirmed + self.critical_risk_accepted_confirmed
+
+    @hybrid_property
+    def total_status(self):
+        return self.total_open + self.total_closed + self.total_re_opened + self.total_risk_accepted
+
+    @hybrid_property
+    def total_status_confirmed(self):
+        return self.total_open_confirmed + self.total_closed_confirmed + self.total_re_opened_confirmed + self.total_risk_accepted_confirmed
+
+    @hybrid_property
+    def total_open_confirmed_total_custom(self):
+        return self.critical_open_confirmed_total_custom + self.high_open_confirmed_total_custom + self.medium_open_confirmed_total_custom + self.low_open_confirmed_total_custom
+
+    @hybrid_property
+    def total_open_total_custom(self):
+        return self.critical_open_total_custom + self.high_open_total_custom + self.medium_open_total_custom + self.low_open_total_custom
+
+    @property
+    def parent(self):
+        return
+
+
 class CustomAssociationSet(_AssociationSet):
     """
     A custom association set that passes the creator method the both
@@ -1537,6 +1792,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
+
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='vulnerability'
+        )
 
     @hybrid_property
     def target(self):

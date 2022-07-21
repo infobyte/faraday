@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "Move export CSV from its own endpoint to /filter endpoint as a request's argument"
-}

@@ -282,20 +282,14 @@ generate_rpm_master:
 
 generate_docker_tar_gz_dev:
     stage: build
-    image: nixorg/nix
     tags:
-      - digitalocean-dev
+      - shell
     script:
-        - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
-        - nix-env -if pynixify/nixpkgs.nix -A vault
-        - !reference [ .get_secrets, script ]
-        - mkdir -p ~/.config/cachix
-        - export USER=$(whoami)
-        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - !reference [ .get_from_tar_and_replace_www, script ]
-        - cachix use faradaysec
-        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
-        - cp $(readlink result) faraday-server-docker.tar.gz
+        - !reference [ .get_secrets, script ]
+        - docker build . -t faraday-community
+        - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
+        - docker rmi -f faraday-community
     artifacts:
       paths:
         - faraday-server-docker.tar.gz
@@ -313,20 +307,14 @@ generate_docker_tar_gz_dev:
 
 generate_docker_tar_gz_staging:
     stage: build
-    image: nixorg/nix
     tags:
-      - digitalocean-dev
+      - shell
     script:
-        - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
-        - nix-env -if pynixify/nixpkgs.nix -A vault
-        - !reference [ .get_secrets, script ]
-        - mkdir -p ~/.config/cachix
-        - export USER=$(whoami)
-        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - !reference [ .get_from_tar_and_replace_www, script ]
-        - cachix use faradaysec
-        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
-        - cp $(readlink result) faraday-server-docker.tar.gz
+        - !reference [ .get_secrets, script ]
+        - docker build . -t faraday-community
+        - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
+        - docker rmi -f faraday-community
     artifacts:
       paths:
         - faraday-server-docker.tar.gz
@@ -341,20 +329,14 @@ generate_docker_tar_gz_staging:
 
 generate_docker_tar_gz_master:
     stage: build
-    image: nixorg/nix
     tags:
-      - digitalocean-dev
+      - shell
     script:
-        - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
-        - nix-env -if pynixify/nixpkgs.nix -A vault
-        - !reference [ .get_secrets, script ]
-        - mkdir -p ~/.config/cachix
-        - export USER=$(whoami)
-        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - !reference [ .get_from_tar_and_replace_www, script ]
-        - cachix use faradaysec
-        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest --arg useLastCommit false
-        - cp $(readlink result) faraday-server-docker.tar.gz
+        - !reference [ .get_secrets, script ]
+        - docker build . -t faraday-community
+        - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
+        - docker rmi -f faraday-community
     artifacts:
       paths:
         - faraday-server-docker.tar.gz

@@ -1,6 +1,6 @@
 .set-remote-github:
   script:
-    - git remote set-url github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git || git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
+    - git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
 
 
 update_github:
@@ -22,20 +22,28 @@ update_github:
         - faradaytests
 
 
-#tag_on_github:
-#    image: python:3
-#    stage: publish
-#    script:
-#      - !reference [.set-remote-github, script]
-#      - export FARADAY_VERSION=$(eval $IMAGE_TAG)
-#      - CHANGELOG/check_pre_tag.py
-#      - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
-#      - git push github v$FARADAY_VERSION
-#      - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
-#    rules:
-#      - !reference [ .on-community-tag, rules ]
-#    dependencies:
-#      - generate_deb
-#      - generate_rpm
-#    tags:
-#      - faradaytests
+tag_on_github:
+    image: python:3
+    stage: publish
+    script:
+      - !reference [.set-remote-github, script]
+      - !reference [ .get_from_tar_and_replace_www, script ]
+      - export FARADAY_VERSION=$(eval $IMAGE_TAG)
+      - CHANGELOG/check_pre_tag.py
+      - git add *
+      - git commit -m "Front Updated"
+      - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
+      - git push github v$FARADAY_VERSION
+      - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
+    rules:
+      - !reference [ .on-community-tag, rules ]
+    dependencies:
+      - generate_deb_master
+      - generate_rpm_master
+    tags:
+      - faradaytests
+    needs:
+      - project: faradaysec/faraday-react
+        job: npm_build
+        ref: community/master
+        artifacts: true

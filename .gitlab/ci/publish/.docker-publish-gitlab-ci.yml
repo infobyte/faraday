@@ -29,7 +29,6 @@ docker-publish-prod:
     CI_REGISTRY_IMAGE: index.docker.io/faradaysec/faraday
   script:
     - !reference [ .get_secrets, script ]
-    - !reference [ .get_from_tar_and_replace_www, script ]
     - docker image tag registry.gitlab.com/faradaysec/faraday:latest $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:latest
     - docker image tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$VERSION
@@ -38,8 +37,3 @@ docker-publish-prod:
     - !reference [ .on-community-tag, rules ]
   dependencies: # prod will wait for any previous stage
     - generate_docker_tar_gz_master
-  needs:
-    - project: faradaysec/faraday-react
-      job: npm_build
-      ref: community/master
-      artifacts: true

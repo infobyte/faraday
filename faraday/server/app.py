@@ -446,8 +446,7 @@ def create_app(db_connection_string=None, testing=None):
     app.logger.propagate = False
     register_blueprints(app)
     register_handlers(app)
-
-    app.view_functions['agent_creation_api.AgentCreationView:post'].is_public = True
+    app.view_functions['agent_api.AgentView:post'].is_public = True
 
     register_extensions(app)
     load_settings()

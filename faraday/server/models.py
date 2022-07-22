@@ -152,38 +152,13 @@ class CustomEngineConnector(_EngineConnector):
 db = SQLAlchemy()
 
 
-def _make_active_agents_count_property():
-    query = select([func.count(text('1'))])
-
-    from_clause = table('association_workspace_and_agents_table').join(
-        Agent, text('agent.id = association_workspace_and_agents_table.agent_id '
-                    'and association_workspace_and_agents_table.workspace_id = workspace.id')
-    )
-    query = query.select_from(from_clause)
-
-    if db.session.bind.dialect.name == 'sqlite':
-        # SQLite has no "true" expression, we have to use the integer 1
-        # instead
-        query = query.where(text('agent.active = 1'))
-    elif db.session.bind.dialect.name == 'postgresql':
-        # I suppose that we're using PostgreSQL, that can't compare
-        # booleans with integers
-        query = query.where(text('agent.active = true'))
-
-    return query
-
-
 def _last_run_agent_date():
     query = select([text('executor.last_run')])
 
     from_clause = table('executor') \
-        .join(Agent, text('executor.agent_id = agent.id')) \
-        .join(text('association_workspace_and_agents_table'),
-              text('agent.id = association_workspace_and_agents_table.agent_id '
-                   'and association_workspace_and_agents_table.workspace_id = workspace.id'))
-    query = query.select_from(from_clause).where(text('executor.last_run is not null')). \
-        order_by(Executor.last_run.desc()).limit(1)
-
+        .join(AgentExecution, text('executor.id = agent_execution.executor_id'))
+    where_clause = text('executor.last_run is not null and agent_execution.workspace_id = workspace.id')
+    query = query.select_from(from_clause).where(where_clause).order_by(AgentExecution.create_date.desc()).limit(1)
     return query
 
 
@@ -2137,14 +2112,6 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-association_workspace_and_agents_table = Table(
-    'association_workspace_and_agents_table',
-    db.Model.metadata,
-    Column('workspace_id', Integer, ForeignKey('workspace.id')),
-    Column('agent_id', Integer, ForeignKey('agent.id', ondelete='CASCADE'))
-)
-
-
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2171,7 +2138,6 @@ class Workspace(Metadata):
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
-    active_agents_count = query_expression()
     last_run_agent_date = query_expression()
     vulnerability_open_count = query_expression(literal(0))
     vulnerability_closed_count = query_expression(literal(0))
@@ -2188,12 +2154,6 @@ class Workspace(Metadata):
     workspace_permission_instances = relationship(
         "WorkspacePermission",
         cascade="all, delete-orphan")
-
-    agents = relationship(
-        'Agent',
-        secondary=association_workspace_and_agents_table,
-        back_populates="workspaces",
-    )
 
     @classmethod
     def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
@@ -2213,20 +2173,13 @@ class Workspace(Metadata):
                     FROM host
                     WHERE host.workspace_id = workspace.id
                 ) AS host_count,
-                (SELECT count(*)
-                        FROM association_workspace_and_agents_table as assoc
-                        JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
-                        WHERE agent.active is TRUE
-                ) AS run_agent_date,
-                                (SELECT executor.last_run
-                        FROM executor
-                        JOIN agent ON executor.agent_id = agent.id
-                        JOIN association_workspace_and_agents_table ON
-                        agent.id = association_workspace_and_agents_table.agent_id
-                        and association_workspace_and_agents_table.workspace_id = workspace.id
-                        WHERE executor.last_run is not null
-                        ORDER BY executor.last_run DESC
-                        LIMIT 1
+                (SELECT executor.last_run
+                    FROM executor
+                    JOIN agent_execution ON executor.id = agent_execution.executor_id
+                    WHERE executor.last_run is not null and
+                    agent_execution.workspace_id = workspace.id
+                    ORDER BY agent_execution.create_date DESC
+                    LIMIT 1
                 ) AS last_run_agent_date,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
@@ -3241,6 +3194,14 @@ class Executor(Metadata):
     )
 
 
+agents_schedule_workspace_table = Table(
+    "agents_schedule_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("agents_schedule_id", Integer, ForeignKey("agent_schedule.id")),
+)
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -3250,19 +3211,19 @@ class AgentsSchedule(Metadata):
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
 
-    # 1 workspace <--> N schedules
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
+    # N workspace <--> N schedules
+    workspaces = relationship(
         'Workspace',
-        backref=backref('schedules', cascade="all, delete-orphan"),
+        secondary=agents_schedule_workspace_table,
+        backref='agent_schedule',
     )
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship(
         'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
+    ignore_info = Column(Boolean, default=False)
+    resolve_hostname = Column(Boolean, default=True)
     parameters = Column(JSONType, nullable=False, default={})
 
     @property
@@ -3279,11 +3240,6 @@ class Agent(Metadata):
     id = Column(Integer, primary_key=True)
     token = Column(Text, unique=True, nullable=False, default=lambda: "".
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
-    workspaces = relationship(
-        'Workspace',
-        secondary=association_workspace_and_agents_table,
-        back_populates="agents"
-    )
     name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)
 
@@ -3349,9 +3305,9 @@ class AgentExecution(Metadata):
 
     def notification_message(self, _event, user=None):
         if self.command.end_date:
-            return "Scan finished"
+            return f"{self.executor.agent.name} finished"
         elif self.running:
-            return "Scan running"
+            return f"{self.executor.agent.name} running"
 
 
 class SearchFilter(Metadata):

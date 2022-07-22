@@ -11,7 +11,7 @@ update_github:
       - !reference [ .get_from_tar_and_replace_www, script ]
       - git add *
       - git commit -m "Front Updated"
-      - git push github $CI_COMMIT_REF_NAME:$DESTINY_BRANCH
+      - git push --force github $CI_COMMIT_REF_NAME:$DESTINY_BRANCH
     rules:
       - if: '$CI_COMMIT_REF_NAME == "white/master"'
         variables:
@@ -38,7 +38,7 @@ tag_on_github:
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - CHANGELOG/check_pre_tag.py
       - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
-      - git push github v$FARADAY_VERSION
+      - git push --force github v$FARADAY_VERSION
       - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
     rules:
       - !reference [ .on-community-tag, rules ]

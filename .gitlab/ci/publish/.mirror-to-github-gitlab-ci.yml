@@ -9,9 +9,12 @@ update_github:
     script:
       - !reference [.set-remote-github, script]
       - !reference [ .get_from_tar_and_replace_www, script ]
-      - git add *
+      - git config user.email "devops@faradaysec.com"
+      - git config user.name "Devops"
+      - git add .
       - git commit -m "Front Updated"
-      - git push --force github $CI_COMMIT_REF_NAME:$DESTINY_BRANCH
+      - git branch
+      - git push --force github HEAD:master
     rules:
       - if: '$CI_COMMIT_REF_NAME == "white/master"'
         variables:

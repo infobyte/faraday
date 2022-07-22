@@ -55,6 +55,7 @@ class WorkspaceSummarySchema(Schema):
     code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
     opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
+    closed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_closed_count')
     confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
     critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
     info_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
@@ -63,6 +64,10 @@ class WorkspaceSummarySchema(Schema):
     low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
     unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+    vulnerability_web_confirmed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_count')
+    vulnerability_web_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_closed_count')
+    vulnerability_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_and_not_closed_count')
+    vulnerability_web_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_and_not_closed_count')
 
 
 class HistogramSchema(Schema):
@@ -389,6 +394,39 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             with_expression(
                 Workspace.last_run_agent_date,
                 _last_run_agent_date(),
+            ),
+            with_expression(
+                Workspace.vulnerability_closed_count,
+                _make_vuln_count_property(None,
+                                          extra_query=" status='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_confirmed_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          confirmed=True,
+                                          extra_query=" type='vulnerability_web' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_closed_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          extra_query=" status='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_confirmed_and_not_closed_count,
+                _make_vuln_count_property(None,
+                                          confirmed=True,
+                                          extra_query=" status!='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_confirmed_and_not_closed_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          confirmed=True,
+                                          extra_query=" status!='closed' ",
+                                          use_column_property=False)
             ),
         )
 

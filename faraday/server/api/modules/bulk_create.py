@@ -387,6 +387,8 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         else:
             vuln_data['tool'] = 'Web UI'
 
+    db.session.commit()
+
     run_date_string = vuln_data.pop('run_date', None)
     if run_date_string:
         try:
@@ -419,6 +421,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
         _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations,
                                                                _cve_list)
+
         # TODO attachments
         db.session.add(_vuln)
         db.session.commit()

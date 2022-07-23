@@ -121,6 +121,55 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
+class CVSS2Schema(AutoSchema):
+    vector_string = fields.String(attribute="cvss2_vector_string")
+    base_score = fields.Float(attribute="cvss2_base_score", required=False, dump_only=True)
+    temporal_score = fields.Float(attribute="cvss2_temporal_score", required=False, dump_only=True)
+    environmental_score = fields.Float(attribute="cvss2_environmental_score", required=False, dump_only=True)
+    access_vector = fields.String(attribute="cvss2_access_vector", dump_only=True, required=False)
+    access_complexity = fields.String(attribute="cvss2_access_complexity", dump_only=True, required=False)
+    authentication = fields.String(attribute="cvss2_authentication", dump_only=True, required=False)
+    impact = fields.String(attribute="cvss2_impact", dump_only=True, required=False)
+    integrity_impact = fields.String(attribute="cvss2_integrity_impact", dump_only=True, required=False)
+    availability_impact = fields.String(attribute="cvss2_availability_impact", dump_only=True, required=False)
+    exploitability = fields.String(attribute="cvssv2_exploitability", dump_only=True, required=False)
+    remediation_level = fields.String(attribute="cvssv2_remediation_level", dump_only=True, required=False)
+    report_confidence = fields.String(attribute="cvssv2_report_confidence", dump_only=True, required=False)
+    collateral_damage_potential = fields.String(attribute="cvssv2_collateral_damage_potential", dump_only=True, required=False)
+    target_distribution = fields.String(attribute="cvssv2_target_distribution", dump_only=True, required=False)
+    confidentiality_requirement = fields.String(attribute="cvssv2_confidentiality_requirement", dump_only=True, required=False)
+    integrity_requirement = fields.String(attribute="cvssv2_integrity_requirement", dump_only=True, required=False)
+    availability_requirement = fields.String(attribute="cvssv2_availability_requirement", dump_only=True, required=False)
+
+
+class CVSS3Schema(AutoSchema):
+    vector_string = fields.String(attribute="cvss3_vector_string")
+    base_score = fields.Float(attribute="cvss3_base_score", required=False, dump_only=True)
+    temporal_score = fields.Float(attribute="cvss3_temporal_score", required=False, dump_only=True)
+    environmental_score = fields.Float(attribute="cvss3_environmental_score", required=False, dump_only=True)
+    attack_vector = fields.String(attribute="cvss3_attack_vector", dump_only=True, required=False)
+    attack_complexity = fields.String(attribute="cvss3_attack_complexity", dump_only=True, required=False)
+    privilege_required = fields.String(attribute="cvss3_privilege_required", dump_only=True, required=False)
+    user_interaction = fields.String(attribute="cvss3_user_interaction", dump_only=True, required=False)
+    impact = fields.String(attribute="cvss3_impact", dump_only=True, required=False)
+    integrity_impact = fields.String(attribute="cvss3_integrity_impact", dump_only=True, required=False)
+    availability_impact = fields.String(attribute="cvss3_availability_impact", dump_only=True, required=False)
+    exploit_code_maturity = fields.String(attribute="cvss3_exploit_code_maturity", dump_only=True, required=False)
+    remediation_level = fields.String(attribute="cvss3_remediation_level", dump_only=True, required=False)
+    report_confidence = fields.String(attribute="cvss3_report_confidence", dump_only=True, required=False)
+    confidentiality_requirement = fields.String(attribute="cvss3_confidentiality_requirement", dump_only=True, required=False)
+    integrity_requirement = fields.String(attribute="cvss3_integrity_requirement", dump_only=True, required=False)
+    availability_requirement = fields.String(attribute="cvss3_availability_requirement", dump_only=True, required=False)
+    modified_attack_vector = fields.String(attribute="cvss3_modified_attack_vector", dump_only=True, required=False)
+    modified_attack_complexity = fields.String(attribute="cvss3_modified_attack_complexity", dump_only=True, required=False)
+    modified_privileges_required = fields.String(attribute="cvss3_modified_privileges_required", dump_only=True, required=False)
+    modified_user_interaction = fields.String(attribute="cvss3_modified_user_interaction", dump_only=True, required=False)
+    modified_scope = fields.String(attribute="cvss3_modified_scope", dump_only=True, required=False)
+    modified_confidentiality_impact = fields.String(attribute="cvss3_modified_confidentiality_impact", dump_only=True, required=False)
+    modified_integrity_impact = fields.String(attribute="cvss3_modified_integrity_impact", dump_only=True, required=False)
+    modified_availability_impact = fields.String(attribute="cvss3_modified_availability_impact", dump_only=True, required=False)
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -138,6 +187,8 @@ class VulnerabilitySchema(AutoSchema):
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
+    cvss2 = SelfNestedField(CVSS2Schema())
+    cvss3 = SelfNestedField(CVSS3Schema())
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -183,7 +234,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss', 'cwe', 'cve', 'owasp',
+            'cvss', 'cvss2', 'cvss3', 'cwe', 'cve', 'owasp',
             )
 
     @staticmethod
@@ -326,7 +377,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss',
+            'cve', 'cwe', 'owasp', 'cvss', 'cvss2', 'cvss3'
         )
 
 
@@ -523,6 +574,8 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        cvss2 = data.pop('cvss2', None)
+        cvss3 = data.pop('cvss3', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -532,7 +585,7 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400)
 
         obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
-                                                             cve_list)
+                                                             cve_list, cvss2=cvss2, cvss3=cvss3)
 
         db.session.flush()
 

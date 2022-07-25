@@ -429,10 +429,10 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln, cve_list)
+        update_vuln(policyviolations, references, vuln, cve_list, cvss2, cvss3)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln, cve_list)
+        update_vuln(policyviolations, references, vuln, cve_list, cvss2, cvss3)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

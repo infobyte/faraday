@@ -1517,7 +1517,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss2_vector_string, e)
 
-    cvss3_vector_string = Column(Text, nullable=True)
+    _cvss3_vector_string = Column(Text, nullable=True)
     cvss3_base_score = Column(Float)
     cvss3_temporal_score = Column(Float)
     cvss3_environmental_score = Column(Float)
@@ -1525,7 +1525,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cvss3_attack_complexity = Column(Text, nullable=True)
     cvss3_privilege_required = Column(Text, nullable=True)
     cvss3_user_interaction = Column(Text, nullable=True)
-    cvss3_impact = Column(Text, nullable=True)
+    cvss3_confidentiality_impact = Column(Text, nullable=True)
     cvss3_integrity_impact = Column(Text, nullable=True)
     cvss3_availability_impact = Column(Text, nullable=True)
     cvss3_exploit_code_maturity = Column(Text, nullable=True)

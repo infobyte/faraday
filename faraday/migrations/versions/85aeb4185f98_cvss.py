@@ -25,6 +25,17 @@ def upgrade():
     op.drop_table('cvss_base')
     op.drop_column('vulnerability', 'cvssv2_id')
     op.drop_column('vulnerability', 'cvssv3_id')
+    op.execute('drop type cvss_attack_complexity')
+    op.execute('drop type cvss_access_vector')
+    op.execute('drop type cvss_access_complexity')
+    op.execute('drop type cvss_attack_vector')
+    op.execute('drop type cvss_authentication')
+    op.execute('drop type cvss_privileges_required')
+    op.execute('drop type cvss_scope')
+    op.execute('drop type cvss_user_interaction')
+    op.execute('drop type cvss_impact_types_v2')
+    op.execute('drop type cvss_impact_types_v3')
+
     # ### end Alembic commands ###
 
 

@@ -43,4 +43,4 @@ pyotp>=2.6.0
 Flask-Limiter
 Flask-Mail
 faraday-agent-parameters-types>=1.0.3
-cvss>=2.4
+cvss

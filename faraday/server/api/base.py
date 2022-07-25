@@ -14,7 +14,6 @@ from typing import Tuple
 from collections import defaultdict
 
 # Related third party imports
-import cvss as cvss
 import flask
 import flask_login
 import sqlalchemy
@@ -108,121 +107,11 @@ def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviola
 
     vuln.cve = parsed_cve_list
 
-    # cvss2 = vuln_data.pop('cvss2', None)
-    # if cvss2:
-    #     if 'vector_string' in cvss2:
-    #         try:
-    #             cvss_instance = cvss.CVSS2(cvss2['vector_string'])
-    #             cvss2['cvss2_base_score'] = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
-    #             cvss2['cvss2_temporal_score'] = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
-    #             cvss2['cvss2_environmental_score'] = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
-    #             cvss2['cvss2_access_vector'] = cvss_instance.get_value_description('AV')
-    #             cvss2['cvss2_access_complexity'] = cvss_instance.get_value_description('AC')
-    #             cvss2['cvss2_authentication'] = cvss_instance.get_value_description('Au')
-    #             cvss2['cvss2_impact'] = cvss_instance.get_value_description('C')
-    #             cvss2['cvss2_integrity_impact'] = cvss_instance.get_value_description('I')
-    #             cvss2['cvss2_availability_impact'] = cvss_instance.get_value_description('A')
-    #             cvss2['cvssv2_exploitability'] = cvss_instance.get_value_description('E')
-    #             cvss2['cvssv2_remediation_evel'] = cvss_instance.get_value_description('RL')
-    #             cvss2['cvssv2_report_confidence'] = cvss_instance.get_value_description('RC')
-    #             cvss2['cvssv2_collateral_damage_potential'] = cvss_instance.get_value_description('CDP')
-    #             cvss2['cvssv2_target_distribution'] = cvss_instance.get_value_description('TD')
-    #             cvss2['cvssv2_confidentiality_requirement'] = cvss_instance.get_value_description('CR')
-    #             cvss2['cvssv2_integrity_requirement'] = cvss_instance.get_value_description('IR')
-    #             cvss2['cvssv2_availability_requirement'] = cvss_instance.get_value_description('AR')
-    #         except cvss.exceptions as e:
-    #             logger.error("Could not parse cvss %s. %s", cvss2['vector_string'], e)
-    #
-    # cvss3 = vuln_data.pop('cvss3', None)
-    # if cvss3:
-    #     if 'vector_string' in cvss3:
-    #         try:
-    #             cvss_instance = cvss.CVSS3(cvss3['vector_string'])
-    #             cvss3['cvss3_base_score'] = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
-    #             cvss3['cvss3_temporal_score'] = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
-    #             cvss3['cvss3_environmental_score'] = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
-    #             cvss3['cvss3_attack_vector'] = cvss.get_value_description('AV')
-    #             cvss3['cvss3_attack_complexity'] = cvss_instance.get_value_description('AC')
-    #             cvss3['cvss3_privileges_required'] = cvss_instance.get_value_description('PR')
-    #             cvss3['cvss3_user_interaction'] = cvss_instance.get_value_description('UI')
-    #             cvss3['cvss3_scope'] = cvss_instance.get_value_description('S')
-    #             cvss3['cvss3_confidentiality_impact'] = cvss_instance.get_value_description('C')
-    #             cvss3['cvss3_integrity_impact'] = cvss_instance.get_value_description('I')
-    #             cvss3['cvss3_availability_impact'] = cvss_instance.get_value_description('A')
-    #             cvss3['cvss3_exploit_code_maturity'] = cvss_instance.get_value_description('E')
-    #             cvss3['cvss3_remediation_level'] = cvss_instance.get_value_description('RL')
-    #             cvss3['cvss3_report_confidence'] = cvss_instance.get_value_description('RC')
-    #             cvss3['cvss3_confidentiality_requirement'] = cvss_instance.get_value_description('CR')
-    #             cvss3['cvss3_integrity_requirement'] = cvss_instance.get_value_description('IR')
-    #             cvss3['cvss3_availability_requirement'] = cvss_instance.get_value_description('AR')
-    #             cvss3['cvss3_modified_attack_vector'] = cvss_instance.get_value_description('MAV')
-    #             cvss3['cvss3_modified_attack_complexity'] = cvss_instance.get_value_description('MAC')
-    #             cvss3['cvss3_modified_privileges_required'] = cvss_instance.get_value_description('MPR')
-    #             cvss3['cvss3_modified_user_interaction'] = cvss_instance.get_value_description('MUI')
-    #             cvss3['cvss3_modified_scope'] = cvss_instance.get_value_description('MS')
-    #             cvss3['cvss3_modified_confidentiality_impact'] = cvss_instance.get_value_description('MC')
-    #             cvss3['cvss3_modified_integrity_impact'] = cvss_instance.get_value_description('MI')
-    #             cvss3['cvss3_modified_availability_impact'] = cvss_instance.get_value_description('MA')
-    #         except cvss.exceptions as e:
-    #             logger.error("Could not parse cvss %s. %s", cvss3['vector_string'], e)
-    # TODO: Hacer una funcion para esto
-    # TODO: Validar que tenga un str sino el lower puede explotar?
     if cvss2:
-        # Mejor que sea solo un string y no un dict. Total lo vamos a calcular siempre nosotros.
-        try:
-            cvss_instance = cvss.CVSS2(cvss2['cvss2_vector_string'])
-            vuln.cvss2_vector_string = cvss2['cvss2_vector_string']
-            vuln.cvss2_base_score = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
-            vuln.cvss2_temporal_score = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
-            vuln.cvss2_environmental_score = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
-            vuln.cvss2_access_vector = cvss_instance.get_value_description('AV').lower()
-            vuln.cvss2_access_complexity = cvss_instance.get_value_description('AC').lower()
-            vuln.cvss2_authentication = cvss_instance.get_value_description('Au').lower()
-            vuln.cvss2_impact = cvss_instance.get_value_description('C').lower()
-            vuln.cvss2_integrity_impact = cvss_instance.get_value_description('I').lower()
-            vuln.cvss2_availability_impact = cvss_instance.get_value_description('A').lower()
-            vuln.cvssv2_exploitability = cvss_instance.get_value_description('E').lower()
-            vuln.cvssv2_remediation_level = cvss_instance.get_value_description('RL').lower()
-            vuln.cvssv2_report_confidence = cvss_instance.get_value_description('RC').lower()
-            vuln.cvssv2_collateral_damage_potential = cvss_instance.get_value_description('CDP').lower()
-            vuln.cvssv2_target_distribution = cvss_instance.get_value_description('TD').lower()
-            vuln.cvssv2_confidentiality_requirement = cvss_instance.get_value_description('CR').lower()
-            vuln.cvssv2_integrity_requirement = cvss_instance.get_value_description('IR').lower()
-            vuln.cvssv2_availability_requirement = cvss_instance.get_value_description('AR').lower()
-        except cvss.exceptions as e:
-            logger.error("Could not parse cvss %s. %s", cvss2['vector_string'], e)
+        vuln.cvss2_vector_string = cvss2['cvss2_vector_string']
 
     if cvss3:
-        try:
-            cvss_instance = cvss.CVSS3(cvss3['cvss3_vector_string'])
-            vuln.cvss3_vector_string = cvss3['cvss3_vector_string']
-            vuln.cvss3_base_score = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
-            vuln.cvss3_temporal_score = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
-            vuln.cvss3_environmental_score = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
-            vuln.cvss3_attack_vector = cvss_instance.get_value_description('AV').lower()
-            vuln.cvss3_attack_complexity = cvss_instance.get_value_description('AC').lower()
-            vuln.cvss3_privileges_required = cvss_instance.get_value_description('PR').lower()
-            vuln.cvss3_user_interaction = cvss_instance.get_value_description('UI').lower()
-            vuln.cvss3_scope = cvss_instance.get_value_description('S').lower()
-            vuln.cvss3_confidentiality_impact = cvss_instance.get_value_description('C').lower()
-            vuln.cvss3_integrity_impact = cvss_instance.get_value_description('I').lower()
-            vuln.cvss3_availability_impact = cvss_instance.get_value_description('A').lower()
-            vuln.cvss3_exploit_code_maturity = cvss_instance.get_value_description('E').lower()
-            vuln.cvss3_remediation_level = cvss_instance.get_value_description('RL').lower()
-            vuln.cvss3_report_confidence = cvss_instance.get_value_description('RC').lower()
-            vuln.cvss3_confidentiality_requirement = cvss_instance.get_value_description('CR').lower()
-            vuln.cvss3_integrity_requirement = cvss_instance.get_value_description('IR').lower()
-            vuln.cvss3_availability_requirement = cvss_instance.get_value_description('AR').lower()
-            vuln.cvss3_modified_attack_vector = cvss_instance.get_value_description('MAV').lower()
-            vuln.cvss3_modified_attack_complexity = cvss_instance.get_value_description('MAC').lower()
-            vuln.cvss3_modified_privileges_required = cvss_instance.get_value_description('MPR').lower()
-            vuln.cvss3_modified_user_interaction = cvss_instance.get_value_description('MUI').lower()
-            vuln.cvss3_modified_scope = cvss_instance.get_value_description('MS').lower()
-            vuln.cvss3_modified_confidentiality_impact = cvss_instance.get_value_description('MC').lower()
-            vuln.cvss3_modified_integrity_impact = cvss_instance.get_value_description('MI').lower()
-            vuln.cvss3_modified_availability_impact = cvss_instance.get_value_description('MA').lower()
-        except cvss.exceptions as e:
-            logger.error("Could not parse cvss %s. %s", cvss3['vector_string'], e)
+        vuln.cvss3_vector_string = cvss3['cvss3_vector_string']
 
     return vuln
 

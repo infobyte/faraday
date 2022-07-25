@@ -367,6 +367,8 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
     cve_list = vuln_data.pop('cve', [])
+    cvss2 = vuln_data.pop('cvss2', None)
+    cvss3 = vuln_data.pop('cvss3', None)
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -417,10 +419,10 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(_policyviolations, _references, _vuln, _cve_list):
+    def update_vuln(_policyviolations, _references, _vuln, _cve_list, cvss2, cvss3):
 
         _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations,
-                                                               _cve_list)
+                                                               _cve_list, cvss2=cvss2, cvss3=cvss3)
 
         # TODO attachments
         db.session.add(_vuln)

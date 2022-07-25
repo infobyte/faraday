@@ -13,6 +13,7 @@ from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
+import cvss as cvss
 import jwt
 from sqlalchemy import (
     Boolean,
@@ -1459,8 +1460,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    # Should be in a separated model?
-    cvss2_vector_string = Column(Text, nullable=True)
+    _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
     cvss2_temporal_score = Column(Float)
     cvss2_environmental_score = Column(Float)
@@ -1470,14 +1470,52 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cvss2_impact = Column(Text, nullable=True)
     cvss2_integrity_impact = Column(Text, nullable=True)
     cvss2_availability_impact = Column(Text, nullable=True)
-    cvssv2_exploitability = Column(Text, nullable=True)
-    cvssv2_remediation_level = Column(Text, nullable=True)
-    cvssv2_report_confidence = Column(Text, nullable=True)
-    cvssv2_collateral_damage_potential = Column(Text, nullable=True)
-    cvssv2_target_distribution = Column(Text, nullable=True)
-    cvssv2_confidentiality_requirement = Column(Text, nullable=True)
-    cvssv2_integrity_requirement = Column(Text, nullable=True)
-    cvssv2_availability_requirement = Column(Text, nullable=True)
+    cvss2_exploitability = Column(Text, nullable=True)
+    cvss2_remediation_level = Column(Text, nullable=True)
+    cvss2_report_confidence = Column(Text, nullable=True)
+    cvss2_collateral_damage_potential = Column(Text, nullable=True)
+    cvss2_target_distribution = Column(Text, nullable=True)
+    cvss2_confidentiality_requirement = Column(Text, nullable=True)
+    cvss2_integrity_requirement = Column(Text, nullable=True)
+    cvss2_availability_requirement = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss2_vector_string(self):
+        return self._cvss2_vector_string
+
+    @cvss2_vector_string.setter
+    def cvss2_vector_string(self, vector_string):
+        self._cvss2_vector_string = vector_string
+        self.set_cvss2_attr()
+
+    # TODO: Validar que tenga un str sino el lower puede explotar?
+    def set_cvss2_attr(self):
+        """
+        Parse cvss2 and assign attributes
+        """
+        if not self.cvss2_vector_string:
+            return None
+        try:
+            cvss_instance = cvss.CVSS2(self.cvss2_vector_string)
+            self.cvss2_base_score = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
+            self.cvss2_temporal_score = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
+            self.cvss2_environmental_score = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
+            self.cvss2_access_vector = cvss_instance.get_value_description('AV').lower()
+            self.cvss2_access_complexity = cvss_instance.get_value_description('AC').lower()
+            self.cvss2_authentication = cvss_instance.get_value_description('Au').lower()
+            self.cvss2_impact = cvss_instance.get_value_description('C').lower()
+            self.cvss2_integrity_impact = cvss_instance.get_value_description('I').lower()
+            self.cvss2_availability_impact = cvss_instance.get_value_description('A').lower()
+            self.cvss2_exploitability = cvss_instance.get_value_description('E').lower()
+            self.cvss2_remediation_level = cvss_instance.get_value_description('RL').lower()
+            self.cvss2_report_confidence = cvss_instance.get_value_description('RC').lower()
+            self.cvss2_collateral_damage_potential = cvss_instance.get_value_description('CDP').lower()
+            self.cvss2_target_distribution = cvss_instance.get_value_description('TD').lower()
+            self.cvss2_confidentiality_requirement = cvss_instance.get_value_description('CR').lower()
+            self.cvss2_integrity_requirement = cvss_instance.get_value_description('IR').lower()
+            self.cvss2_availability_requirement = cvss_instance.get_value_description('AR').lower()
+        except Exception as e:
+            logger.error("Could not parse cvss %s. %s", self.cvss2_vector_string, e)
 
     cvss3_vector_string = Column(Text, nullable=True)
     cvss3_base_score = Column(Float)
@@ -1504,6 +1542,52 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cvss3_modified_confidentiality_impact = Column(Text, nullable=True)
     cvss3_modified_integrity_impact = Column(Text, nullable=True)
     cvss3_modified_availability_impact = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss3_vector_string(self):
+        return self._cvss3_vector_string
+
+    @cvss3_vector_string.setter
+    def cvss3_vector_string(self, vector_string):
+        self._cvss3_vector_string = vector_string
+        self.set_cvss3_attr()
+
+    def set_cvss3_attr(self):
+        """
+        Parse cvss2 and assign attributes
+        """
+        if not self.cvss3_vector_string:
+            return None
+
+        try:
+            cvss_instance = cvss.CVSS3(self.cvss3_vector_string)
+            self.cvss3_base_score = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
+            self.cvss3_temporal_score = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
+            self.cvss3_environmental_score = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
+            self.cvss3_attack_vector = cvss_instance.get_value_description('AV').lower()
+            self.cvss3_attack_complexity = cvss_instance.get_value_description('AC').lower()
+            self.cvss3_privileges_required = cvss_instance.get_value_description('PR').lower()
+            self.cvss3_user_interaction = cvss_instance.get_value_description('UI').lower()
+            self.cvss3_scope = cvss_instance.get_value_description('S').lower()
+            self.cvss3_confidentiality_impact = cvss_instance.get_value_description('C').lower()
+            self.cvss3_integrity_impact = cvss_instance.get_value_description('I').lower()
+            self.cvss3_availability_impact = cvss_instance.get_value_description('A').lower()
+            self.cvss3_exploit_code_maturity = cvss_instance.get_value_description('E').lower()
+            self.cvss3_remediation_level = cvss_instance.get_value_description('RL').lower()
+            self.cvss3_report_confidence = cvss_instance.get_value_description('RC').lower()
+            self.cvss3_confidentiality_requirement = cvss_instance.get_value_description('CR').lower()
+            self.cvss3_integrity_requirement = cvss_instance.get_value_description('IR').lower()
+            self.cvss3_availability_requirement = cvss_instance.get_value_description('AR').lower()
+            self.cvss3_modified_attack_vector = cvss_instance.get_value_description('MAV').lower()
+            self.cvss3_modified_attack_complexity = cvss_instance.get_value_description('MAC').lower()
+            self.cvss3_modified_privileges_required = cvss_instance.get_value_description('MPR').lower()
+            self.cvss3_modified_user_interaction = cvss_instance.get_value_description('MUI').lower()
+            self.cvss3_modified_scope = cvss_instance.get_value_description('MS').lower()
+            self.cvss3_modified_confidentiality_impact = cvss_instance.get_value_description('MC').lower()
+            self.cvss3_modified_integrity_impact = cvss_instance.get_value_description('MI').lower()
+            self.cvss3_modified_availability_impact = cvss_instance.get_value_description('MA').lower()
+        except Exception as e:
+            logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
 
     reference_instances = relationship(
         "Reference",

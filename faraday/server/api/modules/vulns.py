@@ -132,14 +132,14 @@ class CVSS2Schema(AutoSchema):
     impact = fields.String(attribute="cvss2_impact", dump_only=True, required=False)
     integrity_impact = fields.String(attribute="cvss2_integrity_impact", dump_only=True, required=False)
     availability_impact = fields.String(attribute="cvss2_availability_impact", dump_only=True, required=False)
-    exploitability = fields.String(attribute="cvssv2_exploitability", dump_only=True, required=False)
-    remediation_level = fields.String(attribute="cvssv2_remediation_level", dump_only=True, required=False)
-    report_confidence = fields.String(attribute="cvssv2_report_confidence", dump_only=True, required=False)
-    collateral_damage_potential = fields.String(attribute="cvssv2_collateral_damage_potential", dump_only=True, required=False)
-    target_distribution = fields.String(attribute="cvssv2_target_distribution", dump_only=True, required=False)
-    confidentiality_requirement = fields.String(attribute="cvssv2_confidentiality_requirement", dump_only=True, required=False)
-    integrity_requirement = fields.String(attribute="cvssv2_integrity_requirement", dump_only=True, required=False)
-    availability_requirement = fields.String(attribute="cvssv2_availability_requirement", dump_only=True, required=False)
+    exploitability = fields.String(attribute="cvss2_exploitability", dump_only=True, required=False)
+    remediation_level = fields.String(attribute="cvss2_remediation_level", dump_only=True, required=False)
+    report_confidence = fields.String(attribute="cvss2_report_confidence", dump_only=True, required=False)
+    collateral_damage_potential = fields.String(attribute="cvss2_collateral_damage_potential", dump_only=True, required=False)
+    target_distribution = fields.String(attribute="cvss2_target_distribution", dump_only=True, required=False)
+    confidentiality_requirement = fields.String(attribute="cvss2_confidentiality_requirement", dump_only=True, required=False)
+    integrity_requirement = fields.String(attribute="cvss2_integrity_requirement", dump_only=True, required=False)
+    availability_requirement = fields.String(attribute="cvss2_availability_requirement", dump_only=True, required=False)
 
 
 class CVSS3Schema(AutoSchema):

@@ -1,0 +1,4 @@
+{
+    "level": "community",
+    "md": "Fix migration f82a9136c408 checking if index and constrains exist before deleting"
+}

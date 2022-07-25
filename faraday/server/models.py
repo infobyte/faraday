@@ -1598,6 +1598,13 @@ class Service(Metadata):
         return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
 
 
+cwe_vulnerability_association = Table('cwe_vulnerability_association',
+                                      db.Model.metadata,
+                                      Column('cwe_id', Integer, ForeignKey('cwe.id')),
+                                      Column('vulnerability_id', Integer, ForeignKey('vulnerability.id'))
+                                      )
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUS_OPEN = 'open'
     STATUS_RE_OPENED = 're-opened'
@@ -1688,6 +1695,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
         nullable=True
     )
     cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
+
+    cwes = relationship('CWE', secondary=cwe_vulnerability_association, backref='vulnerability')
 
     reference_instances = relationship(
         "Reference",
@@ -2738,6 +2747,14 @@ class TagObject(db.Model):
 
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
+
+
+class CWE(Metadata):
+    __tablename__ = 'cwe'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+
+    vulnerabilities = relationship('Vulnerability', secondary=cwe_vulnerability_association, backref='cwe')
 
 
 class Comment(Metadata):

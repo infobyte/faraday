@@ -1696,7 +1696,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
     cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
 
-    cwes = relationship('CWE', secondary=cwe_vulnerability_association, backref='vulnerability')
+    cwe = relationship('CWE', secondary=cwe_vulnerability_association)
 
     reference_instances = relationship(
         "Reference",
@@ -2754,7 +2754,7 @@ class CWE(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text, unique=True)
 
-    vulnerabilities = relationship('Vulnerability', secondary=cwe_vulnerability_association, backref='cwe')
+    vulnerabilities = relationship('Vulnerability', secondary=cwe_vulnerability_association)
 
 
 class Comment(Metadata):

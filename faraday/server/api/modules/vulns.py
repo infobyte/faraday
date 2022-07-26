@@ -28,6 +28,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
 # Local application imports
+from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
     AutoSchema,
@@ -121,6 +122,10 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
+class CWESchema(AutoSchema):
+    name = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -136,7 +141,6 @@ class VulnerabilitySchema(AutoSchema):
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
-    cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
@@ -144,6 +148,7 @@ class VulnerabilitySchema(AutoSchema):
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
                                required=True)
+    cwe = fields.List(fields.Pluck(CWESchema(), "name"))
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     easeofresolution = fields.String(
         attribute='ease_of_resolution',
@@ -523,6 +528,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        cwe_list = data.pop('cwe', [])
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -533,6 +539,7 @@ class VulnerabilityView(PaginatedMixin,
 
         obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
                                                              cve_list)
+        obj.cwe = create_cwe(cwe_list)
 
         db.session.flush()
 
@@ -573,10 +580,21 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
 
+        cwe_list = data.pop('cwe', None)
+        if cwe_list:
+            # We need to instantiate cwe objects before updating
+            obj.cwe = create_cwe(cwe_list)
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         attachments = data.pop('_attachments', None if partial else {})
+
+        cwe_list = data.pop('cwe', None)
+        if cwe_list:
+            # We need to instantiate cwe objects before updating
+            obj.cwe = create_cwe(cwe_list)
+
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:
@@ -611,6 +629,7 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
+            joinedload(VulnerabilityGeneric.cwe),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -1162,6 +1181,11 @@ class VulnerabilityView(PaginatedMixin,
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
                 association_proxy_fields[key] = data.pop(key)
+
+        cwe_list = data.pop('cwe', None)
+        if cwe_list:
+            association_proxy_fields['cwe'] = create_cwe(cwe_list)
+
         return association_proxy_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):

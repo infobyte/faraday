@@ -108,6 +108,7 @@ generate_deb_master:
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
+        - gem install --no-ri --no-rdoc dotenv -v 2.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')

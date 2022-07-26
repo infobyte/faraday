@@ -33,6 +33,7 @@ from sqlalchemy import (
     event,
     literal,
     func,
+    Index,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select, text, table
@@ -506,7 +507,7 @@ class VulnerabilityABC(Metadata):
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = NonBlankColumn(Text, nullable=False)
     resolution = BlankColumn(Text)
-    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
+    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False, index=True)
     risk = Column(Float(3, 1), nullable=True)
 
     impact_accountability = Column(Boolean, default=False, nullable=False)
@@ -3373,6 +3374,12 @@ class Analytics(Metadata):
     data = Column(JSONType, nullable=False)
     show_data_table = Column(Boolean, default=False)
 
+
+# Indexes to speed up queries
+Index("idx_vulnerability_severity_hostid_serviceid",
+      VulnerabilityGeneric.__table__.c.severity,
+      VulnerabilityGeneric.__table__.c.host_id,
+      VulnerabilityGeneric.__table__.c.service_id)
 
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class

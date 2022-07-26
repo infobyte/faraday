@@ -1,27 +1,29 @@
-## About
 
-Faraday introduces a new concept - IPE (Integrated Penetration-Test Environment) a multiuser Penetration test IDE. Designed for distributing, indexing, and analyzing the data generated during a security audit.
+## Made for our Community!
 
-> Made for true pentesters!
-
+Offensive security had two difficult tasks: designing smart ways of getting new information, and keeping track of findings to improve further work. With Faraday, you may focus on pentesting while we help you with the rest. Just use it as your terminal and get your work organized on the run.
 Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
 
 Faraday crunches the data you load into different visualizations that are useful to managers and pentesters alike.
 
-![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/dashboard/dashboard.png)
+![GUI - Web](https://docs.faradaysec.com/images/activity-dashboard/Activity_Dashboard.png)
 
-Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities, users improve their own work. Do you remember the last time you programmed without an IDE? What IDEs are to programming, Faraday is to pentesting.
 
-[![asciicast](https://asciinema.org/a/384132.svg)](https://asciinema.org/a/384132)
+
 
 To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
 
-# Installation
+# Install Faraday!
 
-Refer to the [releases page](https://github.com/infobyte/faraday/releases) for the latest pre-made installers for all supported operating systems.
+Refer to the [releases page](https://github.com/infobyte/faraday/releases)
 
 Check out our documentation for detailed information on how to install Faraday in all of our supported platforms
+
+### Install with pypi
+```shell
+$ pip3 install faradaysec 
+```
 
 ### Install from repo
 ```shell
@@ -29,27 +31,86 @@ $ pip install virtualenv
 $ virtualenv faraday_venv
 $ source faraday_venv/bin/activate
 $ git clone git@github.com:infobyte/faraday.git
-$ cd faraday
-$ git clone https://github.com/infobyte/faraday_angular_frontend.git faraday/frontend
 $ pip install .
 ```
+### Install with Docker
+
+to run faraday in docker is mandatory to have a postgres instance running.
+
+```shell
+ docker run \
+     -v ~/.faraday/doc:/faraday-license \
+     -v ~/.faraday/storage:/faraday-storage \
+     -p 5985:5985 \
+     -e PGSQL_HOST='YOUR-DB-IP' \
+     -e PGSQL_PASSWD='mypgsqlpassword' \
+     -e LISTEN_ADDR='0.0.0.0' \
+     faradaysec/faraday:latest
+  ```
+
+Open the container and run Create tables
+
+```shell
+  faraday-manace create-tables
+ ```
+
+
+or use
+
+Docker compose with the file
+ ```shell
+version: '3.8'
+services:
+  db:
+    image: postgres:12.7-alpine
+    restart: always
+    container_name: faraday_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=faraday
+    ports:
+      - '5432:5432'
+    volumes:
+      - "db:/var/lib/postgresql/data:rw"
+  redis:
+    image: 'redis:6.2-alpine'
+    container_name: faraday_redis
+    ports:
+      - '6379'
+  app:
+    image: index.docker.io/faradaysec/faraday
+    restart: always
+    volumes:
+     - "$HOME/.faraday:/home/faraday/.faraday:rw"
+    environment:
+      - PGSQL_USER=postgres
+      - PGSQL_PASSWD=postgres
+      - PGSQL_HOST=db
+      - PGSQL_DBNAME=faraday
+      - REDIS_SERVER=redis
+    depends_on:
+     - db
+     - redis
+    ports:
+     - "5985:5985"
+volumes:
+  db:
+    driver: local
+ ```
 
 For more information about the installation, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Install-Guide).
 
-## Development
-
-If you want to develop for Faraday, please follow our [development setup for linux](https://github.com/infobyte/faraday/wiki/Development-setup) or [development setup for OSX](https://github.com/infobyte/faraday/wiki/Development-Installation-OSX).
-
-## Quickstart
+## Quickstart for linux / pypi
 
 Once you installed faraday packages, you will need to initialize the faraday database:
 
-```
+```shell
 # first add your user to the faraday group
 $ faraday-manage initdb
 ```
 
-This will give you a *randomly generated password* to log into the web UI.
+This will give you a **randomly generated password** to log into the web UI.
 Now you can start the server with:
 
 ```
@@ -59,24 +120,25 @@ $ sudo systemctl start faraday-server
 In your browser, now you can go to localhost:5985 and login with "faraday" as username, and the password generated in the initdb step.
 
 
-## New Features!
-
-All of Faraday's latest features and updates are always available on our [blog](https://medium.com/faraday).
-There are new entries every few weeks, don't forget to check out our amazing new improvements on its latest entry!
-
 ## API
 
 Check out the documentation of our API [here](https://api.faradaysec.com/).
 
-## Cli
+## Faraday-Cli
+Faraday-cli is an alternative to our GUI, providing easy access to the console tools, work in faraday from your own console!
 
-Try [faraday-cli](https://github.com/infobyte/faraday-cli) to easily upload for information to faraday.
+Check the open source repo [faraday-cli](https://github.com/infobyte/faraday-cli)
 
 Check out the documentation [here](https://docs.faraday-cli.faradaysec.com/).
 
+
+[![asciicast](https://asciinema.org/a/384132.svg)](https://asciinema.org/a/384132)
+
+
+
 ## Plugins list
 
-You feed data to Faraday from your favorite tools through Plugins. Right now there are more than [70+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
+You feed data to Faraday from your favorite tools through Plugins. Right now there are more than [80+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
 
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 
@@ -86,34 +148,23 @@ There are three Plugin types: **console** plugins which intercept and interpret 
 
 Faraday plugins code can be found in [faraday-plugin repository](https://github.com/infobyte/faraday_plugins)
 
-## Features
-
-### Workspaces
-
-Information is organized into various **Workspaces**. Each Workspace contains a pentest team's assignments and all the intel that is discovered.
-
 ### Agents
 
 [Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) helps user develop integrations with Faraday written in any language.
-Agents collects information from different network location using different tools. You can use [FaradaySEC](https://www.faradaysec.com) to orchestrate tool execution.
+Agents collects information from different network location using different tools. You can use [Faradaysec](https://www.faradaysec.com) to orchestrate tool execution.
 
-### CSV Exporting
-
-Faraday supports CSV Exporting from its WEB UI.
-[More information](Exporting-the-information)
 
 ## Links
 
 * Homepage: [FaradaySEC](https://www.faradaysec.com)
 * User forum: [Faraday Forum](https://github.com/infobyte/faraday/issues)
-* User's manual: [Faraday Wiki](https://github.com/infobyte/faraday/wiki) or check our [support portal](https://support.faradaysec.com/portal/home)
+* User's manual: [Faraday Wiki](https://docs.faradaysec.com) or check our [support portal](https://support.faradaysec.com/portal/home)
 * Download: [Download .deb/.rpm from releases page](https://github.com/infobyte/faraday/releases)
 * Commits RSS feed: https://github.com/infobyte/faraday/commits/master.atom
-* Issue tracker: [Github issue tracker](https://github.com/infobyte/faraday/issues)
-* Frequently Asked Questions: [FaradaySEC FAQ](https://github.com/infobyte/faraday/wiki/FAQ)
+* Issue tracker and feedback: [Github issue tracker](https://github.com/infobyte/faraday/issues)
+* Frequently Asked Questions: [FaradaySEC FAQ](https://docs.faradaysec.com/FAQ/)
 * Twitter: [@faradaysec](https://twitter.com/faradaysec)
-* [Demos](https://github.com/infobyte/faraday/wiki/Demos)
-* IRC: [ircs://irc.freenode.net/faraday-dev](ircs://irc.freenode.net/faraday-dev) [WebClient](https://webchat.freenode.net/?nick=wikiuser&channels=faraday-dev&prompt=1&uio=d4)
+* faraday / demo101 [Demos](https://demo101.faradaysec.com/#/login)
 * Releases: [Faraday Releases](https://github.com/infobyte/faraday/releases/)
 
 ## Presentations

@@ -213,6 +213,7 @@ def test_create_service_vuln(session, service):
     assert set(vuln.references) == set(vuln_data['refs'])
     assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
     assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
+    assert {cwe.name for cwe in vuln.cwe} == {cwe.upper() for cwe in vuln_data['cwe']}
     assert vuln.tool == "some_tool"
 
 

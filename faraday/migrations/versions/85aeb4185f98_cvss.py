@@ -1,6 +1,6 @@
 """cvss
 
-Revision ID: 85aeb4185f98
+Revision ID: 99a740945c44
 Revises: 384784872dc1
 Create Date: 2022-07-22 15:51:22.639999+00:00
 
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '85aeb4185f98'
-down_revision = '384784872dc1'
+down_revision = '99a740945c44'
 branch_labels = None
 depends_on = None
 

@@ -1476,20 +1476,35 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss2_base_score = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
             self.cvss2_temporal_score = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
             self.cvss2_environmental_score = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
-            self.cvss2_access_vector = cvss_instance.get_value_description('AV').lower()
-            self.cvss2_access_complexity = cvss_instance.get_value_description('AC').lower()
-            self.cvss2_authentication = cvss_instance.get_value_description('Au').lower()
-            self.cvss2_confidentiality_impact = cvss_instance.get_value_description('C').lower()
-            self.cvss2_integrity_impact = cvss_instance.get_value_description('I').lower()
-            self.cvss2_availability_impact = cvss_instance.get_value_description('A').lower()
-            self.cvss2_exploitability = cvss_instance.get_value_description('E').lower()
-            self.cvss2_remediation_level = cvss_instance.get_value_description('RL').lower()
-            self.cvss2_report_confidence = cvss_instance.get_value_description('RC').lower()
-            self.cvss2_collateral_damage_potential = cvss_instance.get_value_description('CDP').lower()
-            self.cvss2_target_distribution = cvss_instance.get_value_description('TD').lower()
-            self.cvss2_confidentiality_requirement = cvss_instance.get_value_description('CR').lower()
-            self.cvss2_integrity_requirement = cvss_instance.get_value_description('IR').lower()
-            self.cvss2_availability_requirement = cvss_instance.get_value_description('AR').lower()
+            self.cvss2_access_vector = None if cvss_instance.get_value_description('AV') == 'Not Defined'\
+                else cvss_instance.get_value_description('AV').lower()
+            self.cvss2_access_complexity = None if cvss_instance.get_value_description('AC') == 'Not Defined'\
+                else cvss_instance.get_value_description('AC').lower()
+            self.cvss2_authentication = None if cvss_instance.get_value_description('Au') == 'Not Defined'\
+                else cvss_instance.get_value_description('Au').lower()
+            self.cvss2_confidentiality_impact = None if cvss_instance.get_value_description('C') == 'Not Defined'\
+                else cvss_instance.get_value_description('C').lower()
+            self.cvss2_integrity_impact = None if cvss_instance.get_value_description('I') == 'Not Defined'\
+                else cvss_instance.get_value_description('I').lower()
+            self.cvss2_availability_impact = None if cvss_instance.get_value_description('A') == 'Not Defined'\
+                else cvss_instance.get_value_description('A').lower()
+            self.cvss2_exploitability = None if cvss_instance.get_value_description('E') == 'Not Defined'\
+                else cvss_instance.get_value_description('E').lower()
+            self.cvss2_remediation_level = None if cvss_instance.get_value_description('RL') == 'Not Defined'\
+                else cvss_instance.get_value_description('RL').lower()
+            self.cvss2_report_confidence = None if cvss_instance.get_value_description('RC') == 'Not Defined'\
+                else cvss_instance.get_value_description('RC').lower()
+            self.cvss2_collateral_damage_potential = None\
+                if cvss_instance.get_value_description('CDP') == 'Not Defined' \
+                else cvss_instance.get_value_description('CDP').lower()
+            self.cvss2_target_distribution = None if cvss_instance.get_value_description('TD') == 'Not Defined'\
+                else cvss_instance.get_value_description('TD').lower()
+            self.cvss2_confidentiality_requirement = None if cvss_instance.get_value_description('CR') == 'Not Defined'\
+                else cvss_instance.get_value_description('CR').lower()
+            self.cvss2_integrity_requirement = None if cvss_instance.get_value_description('IR') == 'Not Defined'\
+                else cvss_instance.get_value_description('IR').lower()
+            self.cvss2_availability_requirement = None if cvss_instance.get_value_description('AR') == 'Not Defined'\
+                else cvss_instance.get_value_description('AR').lower()
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss2_vector_string, e)
 
@@ -1540,28 +1555,50 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss3_base_score = cvss_instance.scores()[0] if cvss_instance.scores()[0] else 0.0
             self.cvss3_temporal_score = cvss_instance.scores()[1] if cvss_instance.scores()[1] else 0.0
             self.cvss3_environmental_score = cvss_instance.scores()[2] if cvss_instance.scores()[2] else 0.0
-            self.cvss3_attack_vector = cvss_instance.get_value_description('AV').lower()
-            self.cvss3_attack_complexity = cvss_instance.get_value_description('AC').lower()
-            self.cvss3_privileges_required = cvss_instance.get_value_description('PR').lower()
-            self.cvss3_user_interaction = cvss_instance.get_value_description('UI').lower()
-            self.cvss3_scope = cvss_instance.get_value_description('S').lower()
-            self.cvss3_confidentiality_impact = cvss_instance.get_value_description('C').lower()
-            self.cvss3_integrity_impact = cvss_instance.get_value_description('I').lower()
-            self.cvss3_availability_impact = cvss_instance.get_value_description('A').lower()
-            self.cvss3_exploit_code_maturity = cvss_instance.get_value_description('E').lower()
-            self.cvss3_remediation_level = cvss_instance.get_value_description('RL').lower()
-            self.cvss3_report_confidence = cvss_instance.get_value_description('RC').lower()
-            self.cvss3_confidentiality_requirement = cvss_instance.get_value_description('CR').lower()
-            self.cvss3_integrity_requirement = cvss_instance.get_value_description('IR').lower()
-            self.cvss3_availability_requirement = cvss_instance.get_value_description('AR').lower()
-            self.cvss3_modified_attack_vector = cvss_instance.get_value_description('MAV').lower()
-            self.cvss3_modified_attack_complexity = cvss_instance.get_value_description('MAC').lower()
-            self.cvss3_modified_privileges_required = cvss_instance.get_value_description('MPR').lower()
-            self.cvss3_modified_user_interaction = cvss_instance.get_value_description('MUI').lower()
-            self.cvss3_modified_scope = cvss_instance.get_value_description('MS').lower()
-            self.cvss3_modified_confidentiality_impact = cvss_instance.get_value_description('MC').lower()
-            self.cvss3_modified_integrity_impact = cvss_instance.get_value_description('MI').lower()
-            self.cvss3_modified_availability_impact = cvss_instance.get_value_description('MA').lower()
+            self.cvss3_attack_vector = None if cvss_instance.get_value_description('AV') == 'Not Defined'\
+                else cvss_instance.get_value_description('AV').lower()
+            self.cvss3_attack_complexity = None if cvss_instance.get_value_description('AC') == 'Not Defined'\
+                else cvss_instance.get_value_description('AC').lower()
+            self.cvss3_privileges_required = None if cvss_instance.get_value_description('PR') == 'Not Defined'\
+                else cvss_instance.get_value_description('PR').lower()
+            self.cvss3_user_interaction = None if cvss_instance.get_value_description('UI') == 'Not Defined'\
+                else cvss_instance.get_value_description('UI').lower()
+            self.cvss3_scope = None if cvss_instance.get_value_description('S') == 'Not Defined'\
+                else cvss_instance.get_value_description('S').lower()
+            self.cvss3_confidentiality_impact = None if cvss_instance.get_value_description('C') == 'Not Defined'\
+                else cvss_instance.get_value_description('C').lower()
+            self.cvss3_integrity_impact = None if cvss_instance.get_value_description('I') == 'Not Defined'\
+                else cvss_instance.get_value_description('I').lower()
+            self.cvss3_availability_impact = None if cvss_instance.get_value_description('A') == 'Not Defined'\
+                else cvss_instance.get_value_description('A').lower()
+            self.cvss3_exploit_code_maturity = None if cvss_instance.get_value_description('E') == 'Not Defined'\
+                else cvss_instance.get_value_description('E').lower()
+            self.cvss3_remediation_level = None if cvss_instance.get_value_description('RL') == 'Not Defined'\
+                else cvss_instance.get_value_description('RL').lower()
+            self.cvss3_report_confidence = None if cvss_instance.get_value_description('RC') == 'Not Defined'\
+                else cvss_instance.get_value_description('RC').lower()
+            self.cvss3_confidentiality_requirement = None if cvss_instance.get_value_description('CR') == 'Not Defined'\
+                else cvss_instance.get_value_description('CR').lower()
+            self.cvss3_integrity_requirement = None if cvss_instance.get_value_description('IR') == 'Not Defined'\
+                else cvss_instance.get_value_description('IR').lower()
+            self.cvss3_availability_requirement = None if cvss_instance.get_value_description('AR') == 'Not Defined'\
+                else cvss_instance.get_value_description('AR').lower()
+            self.cvss3_modified_attack_vector = None if cvss_instance.get_value_description('MAV') == 'Not Defined'\
+                else cvss_instance.get_value_description('MAV').lower()
+            self.cvss3_modified_attack_complexity = None if cvss_instance.get_value_description('MAC') == 'Not Defined'\
+                else cvss_instance.get_value_description('MAC').lower()
+            self.cvss3_modified_privileges_required = None if cvss_instance.get_value_description('MPR') == 'Not Defined'\
+                else cvss_instance.get_value_description('MPR').lower()
+            self.cvss3_modified_user_interaction = None if cvss_instance.get_value_description('MUI') == 'Not Defined'\
+                else cvss_instance.get_value_description('MUI').lower()
+            self.cvss3_modified_scope = None if cvss_instance.get_value_description('MS') == 'Not Defined'\
+                else cvss_instance.get_value_description('MS').lower()
+            self.cvss3_modified_confidentiality_impact = None if cvss_instance.get_value_description('MC') == 'Not Defined'\
+                else cvss_instance.get_value_description('MC').lower()
+            self.cvss3_modified_integrity_impact = None if cvss_instance.get_value_description('MI') == 'Not Defined'\
+                else cvss_instance.get_value_description('MI').lower()
+            self.cvss3_modified_availability_impact = None if cvss_instance.get_value_description('MA') == 'Not Defined'\
+                else cvss_instance.get_value_description('MA').lower()
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
 

@@ -163,7 +163,7 @@ You feed data to Faraday from your favorite tools through [Plugins](https://gith
 
 Right now there are more than [80+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
 
-![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
+![](./docs/images/plugins.jpg)
 
 There are three Plugin types: **console** plugins which intercept and interpret the output of the tools you execute, **report** plugins which allows you to import previously generated XMLs, and **online** plugins which access Faraday's API or allow Faraday to connect to external APIs and databases.
 

@@ -743,19 +743,33 @@ class VulnerabilityView(PaginatedMixin,
         """
         res = super().count(**kwargs)
 
-        def convert_group(group):
+        def convert_group(group, type):
             group = group.copy()
-            severity_map = {
-                "informational": "info",
-                "medium": "med"
-            }
-            severity = group['severity']
-            group['severity'] = group['name'] = severity_map.get(
-                severity, severity)
+
+            if type == "severity":
+                severity_map = {
+                    "informational": "info",
+                    "medium": "med"
+                }
+                severity = group[type]
+                group['severity'] = group['name'] = severity_map.get(
+                    severity, severity)
+            elif type == "confirmed":
+                confirmed_map = {
+                    1: "True",
+                    0: "False"
+                }
+                confirmed = group[type]
+                group[type] = group['name'] = confirmed_map.get(
+                    confirmed, confirmed)
+            else:
+                group['name'] = group[type]
             return group
 
         if request.args.get('group_by') == 'severity':
-            res['groups'] = [convert_group(group) for group in res['groups']]
+            res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
+        if request.args.get('group_by') == 'confirmed':
+            res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
         return res
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])

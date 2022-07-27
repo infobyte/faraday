@@ -32,6 +32,7 @@ from sqlalchemy import (
     event,
     literal,
     func,
+    Index,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select, text, table
@@ -151,38 +152,13 @@ class CustomEngineConnector(_EngineConnector):
 db = SQLAlchemy()
 
 
-def _make_active_agents_count_property():
-    query = select([func.count(text('1'))])
-
-    from_clause = table('association_workspace_and_agents_table').join(
-        Agent, text('agent.id = association_workspace_and_agents_table.agent_id '
-                    'and association_workspace_and_agents_table.workspace_id = workspace.id')
-    )
-    query = query.select_from(from_clause)
-
-    if db.session.bind.dialect.name == 'sqlite':
-        # SQLite has no "true" expression, we have to use the integer 1
-        # instead
-        query = query.where(text('agent.active = 1'))
-    elif db.session.bind.dialect.name == 'postgresql':
-        # I suppose that we're using PostgreSQL, that can't compare
-        # booleans with integers
-        query = query.where(text('agent.active = true'))
-
-    return query
-
-
 def _last_run_agent_date():
     query = select([text('executor.last_run')])
 
     from_clause = table('executor') \
-        .join(Agent, text('executor.agent_id = agent.id')) \
-        .join(text('association_workspace_and_agents_table'),
-              text('agent.id = association_workspace_and_agents_table.agent_id '
-                   'and association_workspace_and_agents_table.workspace_id = workspace.id'))
-    query = query.select_from(from_clause).where(text('executor.last_run is not null')). \
-        order_by(Executor.last_run.desc()).limit(1)
-
+        .join(AgentExecution, text('executor.id = agent_execution.executor_id'))
+    where_clause = text('executor.last_run is not null and agent_execution.workspace_id = workspace.id')
+    query = query.select_from(from_clause).where(where_clause).order_by(AgentExecution.create_date.desc()).limit(1)
     return query
 
 
@@ -530,7 +506,7 @@ class VulnerabilityABC(Metadata):
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = NonBlankColumn(Text, nullable=False)
     resolution = BlankColumn(Text)
-    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
+    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False, index=True)
     risk = Column(Float(3, 1), nullable=True)
 
     impact_accountability = Column(Boolean, default=False, nullable=False)
@@ -2012,14 +1988,6 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-association_workspace_and_agents_table = Table(
-    'association_workspace_and_agents_table',
-    db.Model.metadata,
-    Column('workspace_id', Integer, ForeignKey('workspace.id')),
-    Column('agent_id', Integer, ForeignKey('agent.id', ondelete='CASCADE'))
-)
-
-
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2037,13 +2005,18 @@ class Workspace(Metadata):
     open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('workspace', 'service')
 
+    # Web vulns
     vulnerability_web_count = query_expression()
+    vulnerability_web_confirmed_count = query_expression()
+    vulnerability_web_closed_count = query_expression()
+    vulnerability_web_confirmed_and_not_closed_count = query_expression()
+
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
-    active_agents_count = query_expression()
     last_run_agent_date = query_expression()
     vulnerability_open_count = query_expression(literal(0))
+    vulnerability_closed_count = query_expression(literal(0))
     vulnerability_confirmed_count = query_expression(literal(0))
 
     vulnerability_informational_count = query_expression()
@@ -2052,16 +2025,11 @@ class Workspace(Metadata):
     vulnerability_critical_count = query_expression()
     vulnerability_low_count = query_expression()
     vulnerability_unclassified_count = query_expression()
+    vulnerability_confirmed_and_not_closed_count = query_expression()
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",
         cascade="all, delete-orphan")
-
-    agents = relationship(
-        'Agent',
-        secondary=association_workspace_and_agents_table,
-        back_populates="workspaces",
-    )
 
     @classmethod
     def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
@@ -2081,20 +2049,13 @@ class Workspace(Metadata):
                     FROM host
                     WHERE host.workspace_id = workspace.id
                 ) AS host_count,
-                (SELECT count(*)
-                        FROM association_workspace_and_agents_table as assoc
-                        JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
-                        WHERE agent.active is TRUE
-                ) AS run_agent_date,
-                                (SELECT executor.last_run
-                        FROM executor
-                        JOIN agent ON executor.agent_id = agent.id
-                        JOIN association_workspace_and_agents_table ON
-                        agent.id = association_workspace_and_agents_table.agent_id
-                        and association_workspace_and_agents_table.workspace_id = workspace.id
-                        WHERE executor.last_run is not null
-                        ORDER BY executor.last_run DESC
-                        LIMIT 1
+                (SELECT executor.last_run
+                    FROM executor
+                    JOIN agent_execution ON executor.id = agent_execution.executor_id
+                    WHERE executor.last_run is not null and
+                    agent_execution.workspace_id = workspace.id
+                    ORDER BY agent_execution.create_date DESC
+                    LIMIT 1
                 ) AS last_run_agent_date,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
@@ -2110,6 +2071,11 @@ class Workspace(Metadata):
                 p_5.count_14 as vulnerability_unclassified_count,
                 p_5.count_15 as vulnerability_open_count,
                 p_5.count_16 as vulnerability_confirmed_count,
+                p_5.count_17 as vulnerability_closed_count,
+                p_5.count_18 as vulnerability_web_confirmed_count,
+                p_5.count_19 as vulnerability_web_closed_count,
+                p_5.count_20 as vulnerability_confirmed_and_not_closed_count,
+                p_5.count_21 as vulnerability_web_confirmed_and_not_closed_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -2144,7 +2110,12 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
              COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14,
              COUNT(case when vulnerability.status = 'open' OR vulnerability.status='re-opened' then 1 else null end) as count_15,
-             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16
+             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16,
+             COUNT(case when vulnerability.status = 'closed' then 1 else null end) as count_17,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.confirmed is True then 1 else null end) as count_18,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.status = 'closed' then 1 else null end) as count_19,
+             COUNT(case when vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_20,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_21
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}
@@ -3099,6 +3070,14 @@ class Executor(Metadata):
     )
 
 
+agents_schedule_workspace_table = Table(
+    "agents_schedule_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("agents_schedule_id", Integer, ForeignKey("agent_schedule.id")),
+)
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -3108,19 +3087,19 @@ class AgentsSchedule(Metadata):
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
 
-    # 1 workspace <--> N schedules
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
+    # N workspace <--> N schedules
+    workspaces = relationship(
         'Workspace',
-        backref=backref('schedules', cascade="all, delete-orphan"),
+        secondary=agents_schedule_workspace_table,
+        backref='agent_schedule',
     )
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship(
         'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
+    ignore_info = Column(Boolean, default=False)
+    resolve_hostname = Column(Boolean, default=True)
     parameters = Column(JSONType, nullable=False, default={})
 
     @property
@@ -3137,11 +3116,6 @@ class Agent(Metadata):
     id = Column(Integer, primary_key=True)
     token = Column(Text, unique=True, nullable=False, default=lambda: "".
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
-    workspaces = relationship(
-        'Workspace',
-        secondary=association_workspace_and_agents_table,
-        back_populates="agents"
-    )
     name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)
 
@@ -3207,9 +3181,9 @@ class AgentExecution(Metadata):
 
     def notification_message(self, _event, user=None):
         if self.command.end_date:
-            return "Scan finished"
+            return f"{self.executor.agent.name} finished"
         elif self.running:
-            return "Scan running"
+            return f"{self.executor.agent.name} running"
 
 
 class SearchFilter(Metadata):
@@ -3258,6 +3232,12 @@ class Analytics(Metadata):
     data = Column(JSONType, nullable=False)
     show_data_table = Column(Boolean, default=False)
 
+
+# Indexes to speed up queries
+Index("idx_vulnerability_severity_hostid_serviceid",
+      VulnerabilityGeneric.__table__.c.severity,
+      VulnerabilityGeneric.__table__.c.host_id,
+      VulnerabilityGeneric.__table__.c.service_id)
 
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class

@@ -9,6 +9,11 @@
     - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|staging)$/'
       when: on_success
 
+.on-staging:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(staging)$/'
+      when: on_success
+
 .on-master:
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
@@ -44,6 +49,11 @@
 .ignore-on-master:
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+      when: never
+
+.ignore-on-staging:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(staging)$/'
       when: never
 
 .ignore-on-build:

@@ -22,7 +22,7 @@ Check out our documentation for detailed information on how to install Faraday i
 
 ### Install with pypi
 ```shell
-$ pip3 install faradaysec 
+$ pip3 install faradaysec
 ```
 
 ### Install from repo
@@ -39,7 +39,7 @@ to run faraday in docker is mandatory to have a postgres instance running.
 
 ```shell
  docker run \
-     -v ~/.faraday/doc:/faraday-license \
+     -v $HOME/.faraday:/faraday-license \
      -v ~/.faraday/storage:/faraday-storage \
      -p 5985:5985 \
      -e PGSQL_HOST='YOUR-DB-IP' \
@@ -132,7 +132,7 @@ Check the open source repo [faraday-cli](https://github.com/infobyte/faraday-cli
 Check out the documentation [here](https://docs.faraday-cli.faradaysec.com/).
 
 
-[![asciicast](https://asciinema.org/a/384132.svg)](https://asciinema.org/a/384132)
+![Example](./docs/images/general.gif)
 
 
 

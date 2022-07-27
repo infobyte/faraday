@@ -223,12 +223,12 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         self.workspace_clients[workspace_name].remove(client)
 
     def join_agent(self, agent_connection, agent):
-        logger.info(f"Agent {agent.id} joined!")
+        logger.info(f"Agent {agent.name} id {agent.id} joined!")
         connected_agents[agent.id] = agent_connection
         return True
 
     def leave_agent(self, agent_connection, agent):
-        logger.info(f"Agent {agent.id} left")
+        logger.info(f"Agent {agent.name} id {agent.id} left")
         connected_agents.pop(agent.id)
         return True
 

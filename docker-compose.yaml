@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:12.7-alpine
+    restart: always
+    container_name: faraday_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=faraday
+    ports:
+      - '5432:5432'
+    volumes:
+      - "db:/var/lib/postgresql/data:rw"
+  redis:
+    image: 'redis:6.2-alpine'
+    container_name: faraday_redis
+    ports:
+      - '6379'
+  app:
+    image: index.docker.io/faradaysec/faraday
+    restart: always
+    volumes:
+     - "$HOME/.faraday:/home/faraday/.faraday:rw"
+    environment:
+      - PGSQL_USER=postgres
+      - PGSQL_PASSWD=postgres
+      - PGSQL_HOST=db
+      - PGSQL_DBNAME=faraday
+      - REDIS_SERVER=redis
+    depends_on:
+     - db
+     - redis
+    ports:
+     - "5985:5985"
+volumes:
+  db:
+    driver: local

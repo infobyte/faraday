@@ -553,26 +553,7 @@ class AgentFactory(FaradayFactory):
     name = FuzzyText()
     active = True
     id = FuzzyIncrementalInteger(1, 10000)
-
-    @factory.post_generation
-    def workspaces(self, create, extracted, **kwargs):
-        if not create:
-            # Simple build, do nothing.
-            if extracted:
-                # A list of groups were passed in, use them
-                self['workspaces'] = []
-                for workspace in extracted:
-                    self['workspaces'].append(workspace.name)
-            else:
-                self['workspaces'] = [WorkspaceFactory().name, WorkspaceFactory().name]
-
-        elif extracted:
-            # A list of groups were passed in, use them
-            for workspace in extracted:
-                self.workspaces.append(workspace)
-        else:
-            self.workspaces.append(WorkspaceFactory())
-            self.workspaces.append(WorkspaceFactory())
+    token = FuzzyText(length=6, chars=string.digits)
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -601,9 +582,6 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     )
     parameters_data = factory.LazyAttribute(
         lambda _: {"param_name": "param_value"}
-    )
-    workspace = factory.LazyAttribute(
-        lambda agent_execution: agent_execution.executor.agent.workspaces[0]
     )
     command = factory.SubFactory(
         EmptyCommandFactory,

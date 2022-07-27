@@ -782,26 +782,7 @@ class TestBulkCreateAPI:
         )
         assert res.status_code == 400, res.json
 
-    def test_bulk_create_with_agent_token_in_different_workspace_fails(
-            self, session, agent, second_workspace, test_client):
-        assert agent.workspaces
-        assert second_workspace not in agent.workspaces
-        session.add(second_workspace)
-        session.add(agent)
-        session.commit()
-        assert agent.token
-        url = f'/v3/ws/{second_workspace.name}/bulk_create'
-        res = test_client.post(
-            url,
-            data=dict(hosts=[host_data], command=command_data.copy(), execution_id=1),
-            headers=[("authorization", f"agent {agent.token}")]
-        )
-        assert res.status_code == 404
-        assert b'No such workspace' in res.data
-        assert count(Host, second_workspace) == 0
-
     def test_bulk_create_with_not_existent_workspace_fails(self, session, agent, test_client):
-        assert agent.workspaces
         session.add(agent)
         session.commit()
         assert agent.token
@@ -813,8 +794,6 @@ class TestBulkCreateAPI:
         )
         assert res.status_code == 404
         assert b'No such workspace' in res.data
-        for workspace in agent.workspaces:
-            assert count(Host, workspace) == 0
 
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):
@@ -843,51 +822,48 @@ class TestBulkCreateAPI:
         assert res.status_code == 401
         assert count(Host, workspace) == 0
 
-    def test_bulk_create_endpoint_with_agent_token_without_execution_id(self, session, agent, test_client):
+    def test_bulk_create_endpoint_with_agent_token_without_execution_id(self, session, workspace, agent, test_client):
         session.add(agent)
         session.commit()
-        for workspace in agent.workspaces:
-            assert count(Host, workspace) == 0
-            url = f'/v3/ws/{workspace.name}/bulk_create'
-            res = test_client.post(
-                url,
-                data=dict(hosts=[host_data], command=command_data.copy()),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-            assert res.status_code == 400
-            assert b"argument expected: execution_id" in res.data
-            assert count(Host, workspace) == 0
-            assert count(Command, workspace) == 0
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(
+            url,
+            data=dict(hosts=[host_data], command=command_data.copy()),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+        assert res.status_code == 400
+        assert b"argument expected: execution_id" in res.data
+        assert count(Host, workspace) == 0
+        assert count(Command, workspace) == 0
 
-    def test_bulk_create_endpoint_with_agent_token_with_param(self, session, agent_execution, test_client):
+    def test_bulk_create_endpoint_with_agent_token_with_param(self, session, workspace, agent_execution, test_client):
         agent = agent_execution.executor.agent
         session.add(agent_execution)
         session.commit()
-        for workspace in agent.workspaces:
-            agent_execution.workspace = workspace
-            agent_execution.command.workspace = workspace
-            session.add(agent_execution)
-            session.commit()
-            assert count(Host, workspace) == 0
-            assert count(Command, workspace) == 1
-            url = f'/v3/ws/{workspace.name}/bulk_create'
-            res = test_client.post(
-                url,
-                data=dict(hosts=[host_data], execution_id=agent_execution.id,
-                          command=command_data.copy()),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-            assert res.status_code == 201
-            assert count(Command, workspace) == 1
-            command = Command.query.filter(Command.workspace == workspace).one()
-            assert command.tool == agent.name
-            assert command.command == agent_execution.executor.name
-            params = ', '.join([f'{key}={value}' for (key, value) in agent_execution.parameters_data.items()])
-            assert command.params == str(params)
-            assert command.import_source == 'agent'
-            command_id = res.json["command_id"]
-            assert command.id == command_id
-            assert command.id == agent_execution.command.id
+        agent_execution.workspace = workspace
+        agent_execution.command.workspace = workspace
+        session.add(agent_execution)
+        session.commit()
+        assert count(Host, workspace) == 0
+        assert count(Command, workspace) == 1
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(
+            url,
+            data=dict(hosts=[host_data], execution_id=agent_execution.id,
+                      command=command_data.copy()),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+        assert res.status_code == 201
+        assert count(Command, workspace) == 1
+        command = Command.query.filter(Command.workspace == workspace).one()
+        assert command.tool == agent.name
+        assert command.command == agent_execution.executor.name
+        params = ', '.join([f'{key}={value}' for (key, value) in agent_execution.parameters_data.items()])
+        assert command.params == str(params)
+        assert command.import_source == 'agent'
+        command_id = res.json["command_id"]
+        assert command.id == command_id
+        assert command.id == agent_execution.command.id
 
     @pytest.mark.parametrize('start_date', [None, datetime.utcnow()])
     @pytest.mark.parametrize('duration', [None, 1200])
@@ -895,129 +871,123 @@ class TestBulkCreateAPI:
                                                    session,
                                                    test_client,
                                                    agent_execution_factory,
-                                                   start_date, duration):
+                                                   start_date, duration,
+                                                   workspace):
         agent_execution = agent_execution_factory.create()
         agent = agent_execution.executor.agent
         extra_agent_execution = agent_execution_factory.create()
 
-        for workspace in agent.workspaces:
-            agent_execution.executor.parameters_metadata = {}
-            agent_execution.parameters_data = {}
-            agent_execution.workspace = workspace
-            agent_execution.command.workspace = workspace
-            session.add(agent_execution)
-            session.add(extra_agent_execution)
-            session.commit()
-
-            command_dict = {}
-            if start_date:
-                command_dict.update({
-                    'tool': agent.name,  # Agent name
-                    'command': agent_execution.executor.name,
-                    'user': '',
-                    'hostname': '',
-                    'params': '',
-                    'import_source': 'agent',
-                    'start_date': str(start_date)
-                })
-            if duration:
-                command_dict.update({
-                    'tool': agent.name,  # Agent name
-                    'command': agent_execution.executor.name,
-                    'user': '',
-                    'hostname': '',
-                    'params': '',
-                    'import_source': 'agent',
-                    'duration': str(duration)
-                })
-
-            data_kwargs = {
-                "hosts": [host_data],
-                "execution_id": -1
-            }
-            if command_dict:
-                data_kwargs["command"] = command_dict
-            else:
-                data_kwargs["command"] = command_data.copy()
-
-            initial_host_count = Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count()
-            assert count(Command, workspace) == 1
-            url = f'/v3/ws/{workspace.name}/bulk_create'
-            res = test_client.post(
-                url,
-                data=dict(**data_kwargs),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-            assert res.status_code == 400
-
-            assert Host.query.filter(
-                Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
-            assert count(Command, workspace) == 1
-            data_kwargs["execution_id"] = extra_agent_execution.id
-            res = test_client.post(
-                url,
-                data=dict(**data_kwargs),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-            assert res.status_code == 400
-            assert Host.query.filter(
-                Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
-            assert count(Command, workspace) == 1
-            data_kwargs["execution_id"] = agent_execution.id
-            res = test_client.post(
-                url,
-                data=dict(**data_kwargs),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-
-            if start_date or duration is None:
-                assert res.status_code == 201, res.json
-                assert count(Command, workspace) == 1
-                command = Command.query.filter(Command.workspace == workspace).one()
-                assert command.tool == agent.name
-                assert command.command == agent_execution.executor.name
-                assert command.params == ""
-                assert command.import_source == 'agent'
-                command_id = res.json["command_id"]
-                assert command.id == command_id
-                assert command.id == agent_execution.command.id
-                assert command.start_date is not None
-                if duration is None:
-                    assert command.end_date is None
-                else:
-                    assert command.end_date == command.start_date + timedelta(microseconds=duration)
-            else:
-                assert res.status_code == 400, res.json
-
-    def test_bulk_create_endpoint_with_agent_token_readonly_workspace(self, session, agent, test_client):
-        for workspace in agent.workspaces:
-            workspace.readonly = True
-            session.add(agent)
-            session.add(workspace)
+        agent_execution.executor.parameters_metadata = {}
+        agent_execution.parameters_data = {}
+        agent_execution.workspace = workspace
+        agent_execution.command.workspace = workspace
+        session.add(agent_execution)
+        session.add(extra_agent_execution)
         session.commit()
-        for workspace in agent.workspaces:
-            url = f'/v3/ws/{workspace.name}/bulk_create'
-            res = test_client.post(
-                url,
-                data=dict(hosts=[host_data]),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-            assert res.status_code == 403
 
-    def test_bulk_create_endpoint_with_agent_token_disabled_workspace(self, session, agent, test_client):
-        for workspace in agent.workspaces:
-            workspace.active = False
-            session.add(agent)
-            session.add(workspace)
+        command_dict = {}
+        if start_date:
+            command_dict.update({
+                'tool': agent.name,  # Agent name
+                'command': agent_execution.executor.name,
+                'user': '',
+                'hostname': '',
+                'params': '',
+                'import_source': 'agent',
+                'start_date': str(start_date)
+            })
+        if duration:
+            command_dict.update({
+                'tool': agent.name,  # Agent name
+                'command': agent_execution.executor.name,
+                'user': '',
+                'hostname': '',
+                'params': '',
+                'import_source': 'agent',
+                'duration': str(duration)
+            })
+
+        data_kwargs = {
+            "hosts": [host_data],
+            "execution_id": -1
+        }
+        if command_dict:
+            data_kwargs["command"] = command_dict
+        else:
+            data_kwargs["command"] = command_data.copy()
+
+        initial_host_count = Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count()
+        assert count(Command, workspace) == 1
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(
+            url,
+            data=dict(**data_kwargs),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+        assert res.status_code == 400
+
+        assert Host.query.filter(
+            Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+        assert count(Command, workspace) == 1
+        data_kwargs["execution_id"] = extra_agent_execution.id
+        res = test_client.post(
+            url,
+            data=dict(**data_kwargs),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+        assert res.status_code == 400
+        assert Host.query.filter(
+            Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+        assert count(Command, workspace) == 1
+        data_kwargs["execution_id"] = agent_execution.id
+        res = test_client.post(
+            url,
+            data=dict(**data_kwargs),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+
+        if start_date or duration is None:
+            assert res.status_code == 201, res.json
+            assert count(Command, workspace) == 1
+            command = Command.query.filter(Command.workspace == workspace).one()
+            assert command.tool == agent.name
+            assert command.command == agent_execution.executor.name
+            assert command.params == ""
+            assert command.import_source == 'agent'
+            command_id = res.json["command_id"]
+            assert command.id == command_id
+            assert command.id == agent_execution.command.id
+            assert command.start_date is not None
+            if duration is None:
+                assert command.end_date is None
+            else:
+                assert command.end_date == command.start_date + timedelta(microseconds=duration)
+        else:
+            assert res.status_code == 400, res.json
+
+    def test_bulk_create_endpoint_with_agent_token_readonly_workspace(self, session, workspace, agent, test_client):
+        workspace.readonly = True
+        session.add(workspace)
         session.commit()
-        for workspace in agent.workspaces:
-            url = f'/v3/ws/{workspace.name}/bulk_create'
-            res = test_client.post(
-                url,
-                data=dict(hosts=[host_data]),
-                headers=[("authorization", f"agent {agent.token}")]
-            )
-            assert res.status_code == 403
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(
+            url,
+            data=dict(hosts=[host_data]),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+        assert res.status_code == 403
+
+    def test_bulk_create_endpoint_with_agent_token_disabled_workspace(self, session, agent, workspace, test_client):
+        workspace.active = False
+        session.add(workspace)
+        session.commit()
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(
+            url,
+            data=dict(hosts=[host_data]),
+            headers=[("authorization", f"agent {agent.token}")]
+        )
+        assert res.status_code == 403
 
     @pytest.mark.usefixtures('logged_user')
     def test_bulk_create_endpoint_raises_400_with_no_data(self, session, test_client, workspace):

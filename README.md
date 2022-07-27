@@ -1,5 +1,8 @@
+# ![logo](./docs/images/faraday_logo.svg)
 
-## Made for our Community!
+---
+
+### Made for our Community!
 
 Offensive security had two difficult tasks: designing smart ways of getting new information, and keeping track of findings to improve further work. With Faraday, you may focus on pentesting while we help you with the rest. Just use it as your terminal and get your work organized on the run.
 Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
@@ -14,50 +17,20 @@ Faraday crunches the data you load into different visualizations that are useful
 To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
 
-# Install Faraday!
+## Install
 
-Refer to the [releases page](https://github.com/infobyte/faraday/releases)
+---
 
-Check out our documentation for detailed information on how to install Faraday in all of our supported platforms
+### Install with Docker-compose
 
-### Install with pypi
+The easiest way to get faraday up and running is using our docker-compose
+
 ```shell
-$ pip3 install faradaysec
+$ wget FILE
+$ docker-compose up
 ```
+If you want to make changes on it here is it
 
-### Install from repo
-```shell
-$ pip install virtualenv
-$ virtualenv faraday_venv
-$ source faraday_venv/bin/activate
-$ git clone git@github.com:infobyte/faraday.git
-$ pip install .
-```
-### Install with Docker
-
-to run faraday in docker is mandatory to have a postgres instance running.
-
-```shell
- docker run \
-     -v $HOME/.faraday:/faraday-license \
-     -v ~/.faraday/storage:/faraday-storage \
-     -p 5985:5985 \
-     -e PGSQL_HOST='YOUR-DB-IP' \
-     -e PGSQL_PASSWD='mypgsqlpassword' \
-     -e LISTEN_ADDR='0.0.0.0' \
-     faradaysec/faraday:latest
-  ```
-
-Open the container and run Create tables
-
-```shell
-  faraday-manace create-tables
- ```
-
-
-or use
-
-Docker compose with the file
  ```shell
 version: '3.8'
 services:
@@ -88,7 +61,7 @@ services:
       - PGSQL_PASSWD=postgres
       - PGSQL_HOST=db
       - PGSQL_DBNAME=faraday
-      - REDIS_SERVER=redis
+      - REDIS_SERVER=redisshell
     depends_on:
      - db
      - redis
@@ -99,46 +72,96 @@ volumes:
     driver: local
  ```
 
-For more information about the installation, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Install-Guide).
+### Install with Docker
 
-## Quickstart for linux / pypi
-
-Once you installed faraday packages, you will need to initialize the faraday database:
+You need to have a postgres running
 
 ```shell
-# first add your user to the faraday group
+ $ docker run \
+     -v $HOME/.faraday:/home/faraday/.faraday \
+     -p 5985:5985 \
+     -e PGSQL_USER='postgres_user' \
+     -e PGSQL_HOST='postgres_ip' \
+     -e PGSQL_PASSWD='postgres_password' \
+     -e PGSQL_DBNAME='postgres_db_name' \
+     faradaysec/faraday:latest
+  ```
+
+### Install with pypi
+```shell
+$ pip3 install faradaysec
 $ faraday-manage initdb
+$ faraday-server
 ```
 
-This will give you a **randomly generated password** to log into the web UI.
-Now you can start the server with:
+### Install with deb/rpm
+Find the installers on our [releases page](https://github.com/infobyte/faraday/releases)
 
-```
+```shell
+$ sudo apt install faraday-server_amd64.deb
+# Add your user to the faraday group
+$ faraday-manage initdb
 $ sudo systemctl start faraday-server
 ```
 
-In your browser, now you can go to localhost:5985 and login with "faraday" as username, and the password generated in the initdb step.
+Add your user to the faraday group and then run
 
+### Install from repo
+```shell
+$ pip3 install virtualenv
+$ virtualenv faraday_venv
+$ source faraday_venv/bin/activate
+$ git clone git@github.com:infobyte/faraday.git
+$ pip3 install .
+$ faraday-manage initdb
+$ faraday-server
+```
+
+Check out our documentation for detailed information on how to install Faraday in all of our supported platforms
+
+For more information about the installation, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Install-Guide).
+
+
+In your browser now you can go to http://localhost:5985 and login with "faraday" as username, and the password given by the installation process
 
 ## API
 
+---
+
 Check out the documentation of our API [here](https://api.faradaysec.com/).
 
-## Faraday-Cli
-Faraday-cli is an alternative to our GUI, providing easy access to the console tools, work in faraday from your own console!
+## Faraday Cli
 
-Check the open source repo [faraday-cli](https://github.com/infobyte/faraday-cli)
+---
+
+Faraday-cli is an alternative to our GUI, providing easy access to the console tools, work in faraday from the terminal!
+
+```shell
+$ pip3 install faraday-cli
+```
+
+Check our [faraday-cli](https://github.com/infobyte/faraday-cli) repo
 
 Check out the documentation [here](https://docs.faraday-cli.faradaysec.com/).
 
 
 ![Example](./docs/images/general.gif)
 
+## Faraday Agents
+
+---
+
+[Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) is a tool that gives [Faraday](https://www.faradaysec.com) the ability to run scanners or tools remotely from the app and get the results.
 
 
-## Plugins list
 
-You feed data to Faraday from your favorite tools through Plugins. Right now there are more than [80+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
+## Plugins
+
+---
+
+You feed data to Faraday from your favorite tools through [Plugins](https://github.com/infobyte/faraday_plugins).
+
+Right now there are more than [80+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
 
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 
@@ -148,10 +171,6 @@ There are three Plugin types: **console** plugins which intercept and interpret 
 
 Faraday plugins code can be found in [faraday-plugin repository](https://github.com/infobyte/faraday_plugins)
 
-### Agents
-
-[Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) helps user develop integrations with Faraday written in any language.
-Agents collects information from different network location using different tools. You can use [Faradaysec](https://www.faradaysec.com) to orchestrate tool execution.
 
 
 ## Links

@@ -129,7 +129,7 @@ class CVSS2Schema(AutoSchema):
     access_vector = fields.String(attribute="cvss2_access_vector", dump_only=True, required=False)
     access_complexity = fields.String(attribute="cvss2_access_complexity", dump_only=True, required=False)
     authentication = fields.String(attribute="cvss2_authentication", dump_only=True, required=False)
-    impact = fields.String(attribute="cvss2_impact", dump_only=True, required=False)
+    confidentiality_impact = fields.String(attribute="cvss2_confidentiality_impact", dump_only=True, required=False)
     integrity_impact = fields.String(attribute="cvss2_integrity_impact", dump_only=True, required=False)
     availability_impact = fields.String(attribute="cvss2_availability_impact", dump_only=True, required=False)
     exploitability = fields.String(attribute="cvss2_exploitability", dump_only=True, required=False)

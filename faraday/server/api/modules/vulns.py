@@ -170,7 +170,6 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
-    attachments_count = fields.Integer(dump_only=True, attribute='attachments_count')
 
     class Meta:
         model = Vulnerability
@@ -181,10 +180,9 @@ class VulnerabilitySchema(AutoSchema):
             'hostnames', 'owner',
             'date', 'data', 'refs',
             'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations',
-            '_attachments',
+            'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool', 'attachments_count',
+            'custom_fields', 'external_id', 'tool',
             'cvss', 'cwe', 'cve', 'owasp',
             )
 
@@ -327,7 +325,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
+            'status_code', 'custom_fields', 'external_id', 'tool',
             'cve', 'cwe', 'owasp', 'cvss',
         )
 
@@ -692,19 +690,33 @@ class VulnerabilityView(PaginatedMixin,
         """
         res = super().count(**kwargs)
 
-        def convert_group(group):
+        def convert_group(group, type):
             group = group.copy()
-            severity_map = {
-                "informational": "info",
-                "medium": "med"
-            }
-            severity = group['severity']
-            group['severity'] = group['name'] = severity_map.get(
-                severity, severity)
+
+            if type == "severity":
+                severity_map = {
+                    "informational": "info",
+                    "medium": "med"
+                }
+                severity = group[type]
+                group['severity'] = group['name'] = severity_map.get(
+                    severity, severity)
+            elif type == "confirmed":
+                confirmed_map = {
+                    1: "True",
+                    0: "False"
+                }
+                confirmed = group[type]
+                group[type] = group['name'] = confirmed_map.get(
+                    confirmed, confirmed)
+            else:
+                group['name'] = group[type]
             return group
 
         if request.args.get('group_by') == 'severity':
-            res['groups'] = [convert_group(group) for group in res['groups']]
+            res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
+        if request.args.get('group_by') == 'confirmed':
+            res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
         return res
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])

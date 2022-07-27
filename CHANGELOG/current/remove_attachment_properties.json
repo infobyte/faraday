@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "Remove attachments and attachments_count properties from vulnerability. This improves performance."
-}

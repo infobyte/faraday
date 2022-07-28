@@ -37,7 +37,7 @@ def send_report_data(workspace_name: str, command_id: int, report_json: dict,
 
 def process_report(workspace_name: str, command_id: int, file_path: Path,
                    plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool,
-                   vuln_tag: Optional[list], host_tag: Optional[list], service_tag: Optional[list]):
+                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None):
     from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
     with get_app().app_context():
         if plugin_id is not None:
@@ -107,7 +107,7 @@ class ReportsManager(Thread):
         logger.info("Reports Manager Thread [Start]")
         while not self.__event.is_set():
             try:
-                tpl: Tuple[str, int, Path, int, int, bool, bool] = \
+                tpl: Tuple[str, int, Path, int, int, bool, bool, list, list] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
 
                 workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag,\

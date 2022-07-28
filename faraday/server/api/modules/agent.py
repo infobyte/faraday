@@ -244,7 +244,7 @@ class AgentView(ReadWriteView):
                 "args": executor_data.get('args'),
                 "plugin_args": {
                     "ignore_info": ignore_info,
-                    "resolve_hotname": resolve_hostname,
+                    "resolve_hostname": resolve_hostname,
                     "vuln_tag": vuln_tag,
                     "service_tag": service_tag,
                     "host_tag": host_tag

@@ -340,9 +340,9 @@ generate_docker_tar_gz_master:
     script:
         - !reference [ .get_from_tar_and_replace_www, script ]
         - !reference [ .get_secrets, script ]
-        - docker build . -t faraday
-        - docker save faraday:latest | gzip > faraday-server-docker.tar.gz
-        - docker rmi -f faraday
+        - docker build . -t $CI_REGISTRY_IMAGE
+        - docker save $CI_REGISTRY_IMAGE:latest | gzip > faraday-server-docker.tar.gz
+        - docker rmi -f $CI_REGISTRY_IMAGE
     artifacts:
       paths:
         - faraday-server-docker.tar.gz

@@ -124,8 +124,11 @@ class CVESchema(AutoSchema):
 class CVSS2Schema(AutoSchema):
     vector_string = fields.String(attribute="cvss2_vector_string")
     base_score = fields.Float(attribute="cvss2_base_score", required=False, dump_only=True)
+    base_severity = fields.String(attribute="cvss2_base_severity", dump_only=True, required=False)
     temporal_score = fields.Float(attribute="cvss2_temporal_score", required=False, dump_only=True)
+    temporal_severity = fields.String(attribute="cvss2_temporal_severity", dump_only=True, required=False)
     environmental_score = fields.Float(attribute="cvss2_environmental_score", required=False, dump_only=True)
+    environmental_severity = fields.String(attribute="cvss2_environmental_severity", dump_only=True, required=False)
     access_vector = fields.String(attribute="cvss2_access_vector", dump_only=True, required=False)
     access_complexity = fields.String(attribute="cvss2_access_complexity", dump_only=True, required=False)
     authentication = fields.String(attribute="cvss2_authentication", dump_only=True, required=False)
@@ -145,8 +148,11 @@ class CVSS2Schema(AutoSchema):
 class CVSS3Schema(AutoSchema):
     vector_string = fields.String(attribute="cvss3_vector_string")
     base_score = fields.Float(attribute="cvss3_base_score", required=False, dump_only=True)
+    base_severity = fields.String(attribute="cvss3_base_severity", dump_only=True, required=False)
     temporal_score = fields.Float(attribute="cvss3_temporal_score", required=False, dump_only=True)
+    temporal_severity = fields.String(attribute="cvss3_temporal_severity", dump_only=True, required=False)
     environmental_score = fields.Float(attribute="cvss3_environmental_score", required=False, dump_only=True)
+    environmental_severity = fields.String(attribute="cvss3_environmental_severity", dump_only=True, required=False)
     attack_vector = fields.String(attribute="cvss3_attack_vector", dump_only=True, required=False)
     attack_complexity = fields.String(attribute="cvss3_attack_complexity", dump_only=True, required=False)
     privileges_required = fields.String(attribute="cvss3_privileges_required", dump_only=True, required=False)

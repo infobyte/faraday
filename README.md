@@ -29,7 +29,7 @@ To read about the latest features check out the [release notes](https://github.c
 The easiest way to get faraday up and running is using our docker-compose
 
 ```shell
-$ wget https://github.com/infobyte/faraday/blob/master/docker-compose.yml
+$ wget https://raw.githubusercontent.com/infobyte/faraday/master/docker-compose.yaml
 $ docker-compose up
 ```
 If you want to customize, you can find an example config over here [Link](https://docs.faradaysec.com/Install-guide-Docker/)

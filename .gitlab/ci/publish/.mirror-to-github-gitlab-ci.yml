@@ -38,7 +38,7 @@ tag_on_github:
     stage: publish
     script:
       - !reference [.set-remote-github, script]
-      - pip3 install requests
+      - pip3 install requests click
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - git config user.email "devops@faradaysec.com"
       - git config user.name "Devops"

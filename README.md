@@ -11,7 +11,8 @@ Faraday was made to let you take advantage of the available tools in the communi
 
 Faraday aggregates and normalyzses the data you load, allowing exploring it into different visualizations that are useful to managers and analyst alike.
 
-![GUI - Web](./docs/images/manage.png)
+![manage](./docs/images/manage.png)
+![dashboard](./docs/images/dashboard.png)
 
 
 

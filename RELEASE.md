@@ -2,6 +2,14 @@ New features in the latest update
 =====================================
 
 
+4.0.4 [Jul 28th, 2022]:
+---
+ * Remove workspaces agents relationship an now agent can run to multiple workspaces
+ * Fix migration f82a9136c408 checking if index and constrains exist before deleting
+ * Added count to vulns closed
+ * Fix order_by `cve_instances__name` when no filter was provided
+ * Add index into vulnerability
+
 4.0.3 [Jun 16th, 2022]:
 ---
  * Replace usage of strings for user_types enumerator constants

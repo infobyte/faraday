@@ -11,7 +11,7 @@ Faraday was made to let you take advantage of the available tools in the communi
 
 Faraday aggregates and normalyzses the data you load, allowing exploring it into different visualizations that are useful to managers and analyst alike.
 
-![GUI - Web](https://docs.faradaysec.com/images/activity-dashboard/Activity_Dashboard.png)
+![GUI - Web](./docs/images/manage.png)
 
 
 
@@ -36,7 +36,7 @@ If you want to customize, you can find an example config over here [Link](https:
 
 ### Docker
 
-You need to have a [Postgres](https://github.com/infobyte/faraday/wiki/Install-Guide)  running first. 
+You need to have a [Postgres](https://github.com/infobyte/faraday/wiki/Install-Guide)  running first.
 
 ```shell
  $ docker run \
@@ -114,7 +114,7 @@ Check out the documentation [here](https://docs.faraday-cli.faradaysec.com/).
 
 [Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) is a tool that gives [Faraday](https://www.faradaysec.com) the ability to run scanners or tools remotely from the platform and get the results.
 
- 
+
 
 
 ## Plugins
@@ -125,9 +125,9 @@ Connect you favorite tools through our [plugins](https://github.com/infobyte/far
 
 ![](./docs/images/plugins.jpg)
 
-Missing your favorite one? [Create a Pull Request](https://github.com/infobyte/faraday_plugins/issues)! 
+Missing your favorite one? [Create a Pull Request](https://github.com/infobyte/faraday_plugins/issues)!
 
-There are two Plugin types: 
+There are two Plugin types:
 
 **Console** plugins which interpret the output of the tools you execute.
 
@@ -163,18 +163,16 @@ Creating custom plugins is super easy, [Read more about Plugins](http://github.c
 ## API
 
 ---
-You can access directly to our API, 
+You can access directly to our API,
 check out the documentation [here](https://api.faradaysec.com/).
 
 
 ## Links
 
 * Homepage: [faradaysec.com](https://www.faradaysec.com)
-* Documentation: [Faraday Docs](https://docs.faradaysec.com) 
+* Documentation: [Faraday Docs](https://docs.faradaysec.com)
 * Download: [Download .deb/.rpm from releases page](https://github.com/infobyte/faraday/releases)
 * Issue tracker and feedback: [Github issue tracker](https://github.com/infobyte/faraday/issues)
 * Frequently Asked Questions: [FaradaySEC FAQ](https://docs.faradaysec.com/FAQ/)
 * Twitter: [@faradaysec](https://twitter.com/faradaysec)
 * Try one of our [Demos](https://demo101.faradaysec.com/#/login)
-
-

@@ -8,9 +8,9 @@ VERSION = os.environ.get('FARADAY_VERSION')
 TOKEN = os.environ.get('GH_TOKEN')
 
 
-@click.option("--deb-file", required=True, type=click.Path(exists=True,dir_okay=False,resolve_path=True))
-@click.option("--rpm-file", required=True, type=click.Path(exists=True,dir_okay=False,resolve_path=True))
-def main(deb_file,rpm_file):
+@click.option("--deb-file", required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.option("--rpm-file", required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+def main(deb_file, rpm_file):
     release_data = dict()
     release_data["tag_name"] = f"v{VERSION}"
     release_data["name"] = f"v{VERSION}"

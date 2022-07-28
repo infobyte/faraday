@@ -238,7 +238,7 @@ class AgentView(ReadWriteView):
                 "args": executor_data.get('args'),
                 "plugin_args": {
                     "ignore_info": ignore_info,
-                    "resolve_hotname": resolve_hostname
+                    "resolve_hostname": resolve_hostname
                 }
             })
             logger.info("Agent executed")

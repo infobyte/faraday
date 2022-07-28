@@ -1,13 +1,15 @@
 # ![logo](./docs/images/faraday_logo.svg)
-
+![](https://img.shields.io/twitter/follow/faradaysec)
+![](https://img.shields.io/docker/pulls/faradaysec/faraday)
 ---
 
-### Made for our Community!
 
-Offensive security had two difficult tasks: designing smart ways of getting new information, and keeping track of findings to improve further work. With Faraday, you may focus on pentesting while we help you with the rest. Just use it as your terminal and get your work organized on the run.
+### Open Source Vulnerability Manager
+
+Security has two difficult tasks: designing smart ways of getting new information, and keeping track of findings to improve remediation efforts. With Faraday, you may focus on discovering vulnerabilities while we help you with the rest. Just use it in your terminal and get your work organized on the run.
 Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
 
-Faraday crunches the data you load into different visualizations that are useful to managers and pentesters alike.
+Faraday aggregates and normalyzses the data you load, allowing exploring it into different visualizations that are useful to managers and analyst alike.
 
 ![GUI - Web](https://docs.faradaysec.com/images/activity-dashboard/Activity_Dashboard.png)
 
@@ -21,7 +23,7 @@ To read about the latest features check out the [release notes](https://github.c
 
 ---
 
-### Install with Docker-compose
+### Docker-compose
 
 The easiest way to get faraday up and running is using our docker-compose
 
@@ -29,52 +31,12 @@ The easiest way to get faraday up and running is using our docker-compose
 $ wget https://github.com/infobyte/faraday/blob/master/docker-compose.yml
 $ docker-compose up
 ```
-If you want to make changes on it here is it
+If you want to customize, you can find an example config over here [Link](https://docs.faradaysec.com/Install-guide-Docker/)
 
- ```shell
-version: '3.8'
-services:
-  db:
-    image: postgres:12.7-alpine
-    restart: always
-    container_name: faraday_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=faraday
-    ports:
-      - '5432:5432'
-    volumes:
-      - "db:/var/lib/postgresql/data:rw"
-  redis:
-    image: 'redis:6.2-alpine'
-    container_name: faraday_redis
-    ports:
-      - '6379'
-  app:
-    image: index.docker.io/faradaysec/faraday
-    restart: always
-    volumes:
-     - "$HOME/.faraday:/home/faraday/.faraday:rw"
-    environment:
-      - PGSQL_USER=postgres
-      - PGSQL_PASSWD=postgres
-      - PGSQL_HOST=db
-      - PGSQL_DBNAME=faraday
-      - REDIS_SERVER=redisshell
-    depends_on:
-     - db
-     - redis
-    ports:
-     - "5985:5985"
-volumes:
-  db:
-    driver: local
- ```
 
-### Install with Docker
+### Docker
 
-You need to have a postgres running
+You need to have a [Postgres](https://github.com/infobyte/faraday/wiki/Install-Guide)  running first. 
 
 ```shell
  $ docker run \
@@ -87,15 +49,15 @@ You need to have a postgres running
      faradaysec/faraday:latest
   ```
 
-### Install with pypi
+### PyPi
 ```shell
 $ pip3 install faradaysec
 $ faraday-manage initdb
 $ faraday-server
 ```
 
-### Install with deb/rpm
-Find the installers on our [releases page](https://github.com/infobyte/faraday/releases)
+### Binary Packages (Debian/RPM)
+You can find the installers on our [releases page](https://github.com/infobyte/faraday/releases)
 
 ```shell
 $ sudo apt install faraday-server_amd64.deb
@@ -104,9 +66,11 @@ $ faraday-manage initdb
 $ sudo systemctl start faraday-server
 ```
 
-Add your user to the faraday group and then run
+Add your user to the `faraday` group and then run
 
-### Install from repo
+### Source
+If you want to run directly from this repo, this is the recommended way:
+
 ```shell
 $ pip3 install virtualenv
 $ virtualenv faraday_venv
@@ -124,17 +88,14 @@ For more information about the installation, check out our [Installation Wiki](h
 
 In your browser now you can go to http://localhost:5985 and login with "faraday" as username, and the password given by the installation process
 
-## API
-
----
-
-Check out the documentation of our API [here](https://api.faradaysec.com/).
 
 ## Faraday Cli
 
 ---
 
-Faraday-cli is an alternative to our GUI, providing easy access to the console tools, work in faraday from the terminal!
+Faraday-cli is our command line client, providing easy access to the console tools, work in faraday directly from the terminal!
+
+This is a great way to [automate scans](https://docs.faraday-cli.faradaysec.com/),  integrate it to [CI/CD pipeline](https://docs.faraday-cli.faradaysec.com/)  or just get [metrics](https://docs.faraday-cli.faradaysec.com/) from a workspace
 
 ```shell
 $ pip3 install faraday-cli
@@ -151,107 +112,69 @@ Check out the documentation [here](https://docs.faraday-cli.faradaysec.com/).
 
 ---
 
-[Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) is a tool that gives [Faraday](https://www.faradaysec.com) the ability to run scanners or tools remotely from the app and get the results.
+[Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) is a tool that gives [Faraday](https://www.faradaysec.com) the ability to run scanners or tools remotely from the platform and get the results.
 
+ 
 
 
 ## Plugins
 
 ---
 
-You feed data to Faraday from your favorite tools through [Plugins](https://github.com/infobyte/faraday_plugins).
-
-Right now there are more than [80+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
+Connect you favorite tools through our [plugins](https://github.com/infobyte/faraday_plugins). Right now there are more than [80+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among which you will find:
 
 ![](./docs/images/plugins.jpg)
 
-There are three Plugin types: **console** plugins which intercept and interpret the output of the tools you execute, **report** plugins which allows you to import previously generated XMLs, and **online** plugins which access Faraday's API or allow Faraday to connect to external APIs and databases.
+Missing your favorite one? [Create a Pull Request](https://github.com/infobyte/faraday_plugins/issues)! 
 
-[Read more about Plugins](http://github.com/infobyte/faraday/wiki/Plugin-List).
+There are two Plugin types: 
 
-Faraday plugins code can be found in [faraday-plugin repository](https://github.com/infobyte/faraday_plugins)
+**Console** plugins which interpret the output of the tools you execute.
 
+```shell
+$ faraday-cli tool run \"nmap www.exampledomain.com\"
+💻 Processing Nmap command
+Starting Nmap 7.80 ( https://nmap.org ) at 2021-02-22 14:13 -03
+Nmap scan report for www.exampledomain.com (10.196.205.130)
+Host is up (0.17s latency).
+rDNS record for 10.196.205.130: 10.196.205.130.bc.example.com
+Not shown: 996 filtered ports
+PORT     STATE  SERVICE
+80/tcp   open   http
+443/tcp  open   https
+2222/tcp open   EtherNetIP-1
+3306/tcp closed mysql
+Nmap done: 1 IP address (1 host up) scanned in 11.12 seconds
+⬆ Sending data to workspace: test
+✔ Done
+
+```
+
+
+**Report** plugins which allows you to import previously generated artifacts like XMLs, JSONs.
+
+```shell
+faraday-cli tool report burp.xml
+```
+
+Creating custom plugins is super easy, [Read more about Plugins](http://github.com/infobyte/faraday/wiki/Plugin-List).
+
+
+## API
+
+---
+You can access directly to our API, 
+check out the documentation [here](https://api.faradaysec.com/).
 
 
 ## Links
 
-* Homepage: [FaradaySEC](https://www.faradaysec.com)
-* User forum: [Faraday Forum](https://github.com/infobyte/faraday/issues)
-* User's manual: [Faraday Wiki](https://docs.faradaysec.com) or check our [support portal](https://support.faradaysec.com/portal/home)
+* Homepage: [faradaysec.com](https://www.faradaysec.com)
+* Documentation: [Faraday Docs](https://docs.faradaysec.com) 
 * Download: [Download .deb/.rpm from releases page](https://github.com/infobyte/faraday/releases)
-* Commits RSS feed: https://github.com/infobyte/faraday/commits/master.atom
 * Issue tracker and feedback: [Github issue tracker](https://github.com/infobyte/faraday/issues)
 * Frequently Asked Questions: [FaradaySEC FAQ](https://docs.faradaysec.com/FAQ/)
 * Twitter: [@faradaysec](https://twitter.com/faradaysec)
-* faraday / demo101 [Demos](https://demo101.faradaysec.com/#/login)
-* Releases: [Faraday Releases](https://github.com/infobyte/faraday/releases/)
-
-## Presentations
-
-* Ekoparty ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/argentina.png):
-    [2010](http://vimeo.com/16516987) -
-    [2014](https://www.youtube.com/watch?v=_j0T2S6Ppfo) -
-    [2017](http://blog.infobytesec.com/2017/10/ekoparty-2017-review_23.html) -
-    [2018](http://blog.infobytesec.com/2018/10/ekoparty-2018-review_18.html) -
-    [2019](https://medium.com/faraday/ekoparty-2019-review-abd1940ac8c6?source=collection_home---4------5-----------------------)
-
-* Black Hat:
-    * USA ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/usa.png):
-        [2011](http://www.infobytesec.com/down/Faraday_BH2011_Arsenal.pdf) -
-        [2015](https://www.blackhat.com/us-15/arsenal.html#faraday) -
-        [2016](https://www.blackhat.com/us-16/arsenal.html#faraday) -
-        [2017](https://www.blackhat.com/us-17/event-sponsors.html#faraday) -
-        [2018](https://www.blackhat.com/us-18/event-sponsors.html#faraday) -
-        [2019](https://medium.com/faraday/another-year-at-las-vegas-with-faraday-21b0edcf8d6?source=collection_home---4------8-----------------------)
-
-    * Asia ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/singapore.png):
-        [2016](https://www.blackhat.com/asia-16/arsenal.html#faraday) -
-        [2017](https://www.blackhat.com/asia-17/arsenal.html#faraday) -
-        [2018](https://www.blackhat.com/asia-18/arsenal.html#faraday-v3-collaborative-penetration-test-and-vulnerability-management-platform)
-
-    * Europe ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/europe.png):
-        [2015](https://www.blackhat.com/eu-15/arsenal.html#faraday) -
-        [2016](https://www.blackhat.com/eu-16/arsenal.html#faraday) -
-        [2019](https://medium.com/faraday/the-end-of-the-year-is-always-jam-packed-it-is-a-period-for-looking-back-and-celebrating-the-road-fcf5cb007a3a)
-
-* RSA USA ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/usa.png):
-    [2015](https://www.rsaconference.com/events/us15/expo-sponsors/exhibitor-list/1782/infobyte-llc)
-
-* HITBSecConf Dubai ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/uae.png):
-   [2018](https://conference.hitb.org/hitbsecconf2018dxb/hitb-armory/)
-
-* SecurityWeekly ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/usa.png):
-   [2016](http://securityweekly.com/2016/08/02/security-weekly-475-federico-kirschbaum/)
-
-* Zero Nights ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/russia.png):
-   [2016](https://www.slideshare.net/AlexanderLeonov2/enterprise-vulnerability-management-zeronights16)
-
-* AVTokyo ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/japan.png):
-    [2016](http://en.avtokyo.org/avtokyo2016/event) -
-    [2018](http://en.avtokyo.org/avtokyo2018/event)
-
-* Tel Aviv-Yafo ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/israel.png):
-   [2018](https://www.meetup.com/infobyte/events/254031671/)
-
-* SECCON ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/japan.png):
-   [2018](https://2018.seccon.jp/seccon/yorozu2018.html)
+* Try one of our [Demos](https://demo101.faradaysec.com/#/login)
 
 
-* PyConAr ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/argentina.png):
-   [2018](https://eventos.python.org.ar/events/pyconar2018/activity/75/) -
-   [2019](https://eventos.python.org.ar/events/pyconar2019/activity/251/)
-
-* 8.8 Chile ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/chile.png):
-   [2018](http://blog.infobytesec.com/2018/11/chronicles-of-trip-to-santiago-88-review.html)
-
-* CharruaCon ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/uruguay.png):
-   [2018](https://charrua.org/presentaciones2018/Love_is_in_the_air__Reverse_Engineering_a_hitty_drone.pdf)
-
-* NotPinkCon ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/argentina.png):
-   [2018](https://twitter.com/NotPinkCon)
-
-* plusCODE ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/argentina.png):
-   [2018](http://pluscode.cc/portfolio_page/introduccion-practica-al-hardware-hacking/)
-
-* BSides LATAM ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/brazil.png):
-   [2016](http://www.infobytesec.com/down/Faraday_BsideLatam_2016.pdf)

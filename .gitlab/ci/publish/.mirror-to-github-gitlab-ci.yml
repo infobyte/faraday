@@ -1,6 +1,6 @@
 .set-remote-github:
   script:
-    - git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
+    - git remote -v |grep github || git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/infobyte/faraday.git
 
 
 update_github:

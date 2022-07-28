@@ -1183,7 +1183,7 @@ class VulnerabilityView(PaginatedMixin,
                 association_proxy_fields[key] = data.pop(key)
 
         cwe_list = data.pop('cwe', None)
-        if cwe_list:
+        if cwe_list is not None:
             association_proxy_fields['cwe'] = create_cwe(cwe_list)
 
         return association_proxy_fields

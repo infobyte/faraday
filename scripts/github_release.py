@@ -35,8 +35,9 @@ def main(deb_file, rpm_file):
     for asset_file_data in [{"file": Path(deb_file), "mimetype": "application/vnd.debian.binary-package"},
                             {"file": Path(rpm_file), "mimetype": "application/x-redhat-package-manager"}]:
         asset_file = asset_file_data["file"]
+        print(f"Add asset {asset_file.name} to release: {VERSION}")
         res = requests.post(
-            f"https://api.github.com/repos/infobyte/faraday/releases/{release_id}/assets",
+            f"https://uploads.github.com/repos/infobyte/faraday/releases/{release_id}/assets?name={asset_file.name}",
             headers=headers,
             files={
                 'file': (

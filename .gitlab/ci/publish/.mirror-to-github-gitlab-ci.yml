@@ -39,6 +39,8 @@ tag_on_github:
     script:
       - !reference [.set-remote-github, script]
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
+      - git config user.email "devops@faradaysec.com"
+      - git config user.name "Devops"
       - CHANGELOG/check_pre_tag.py
       - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
       - git push --force github v$FARADAY_VERSION

@@ -17,7 +17,7 @@ def main(deb_file, rpm_file):
     release_data["tag_name"] = f"v{VERSION}"
     release_data["name"] = f"v{VERSION}"
     with open(
-            Path(__file__).parent.parent / 'CHANGELOG' / VERSION / 'white.md'
+            Path(__file__).parent.parent / 'CHANGELOG' / VERSION / 'community.md'
     ) as body_file:
         release_data["body"] = body_file.read()
 

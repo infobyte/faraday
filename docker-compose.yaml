@@ -20,6 +20,7 @@ services:
   app:
     image: index.docker.io/faradaysec/faraday
     restart: always
+    container_name: faraday_app
     volumes:
      - "$HOME/.faraday:/home/faraday/.faraday:rw"
     environment:

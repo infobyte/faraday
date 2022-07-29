@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import requests
 import click
+import mimetypes
 
 
 VERSION = os.environ.get('FARADAY_VERSION')
@@ -32,22 +33,16 @@ def main(deb_file, rpm_file):
     )
     res.raise_for_status()
     release_id = res.json()['id']
-    for asset_file_data in [{"file": Path(deb_file), "mimetype": "application/vnd.debian.binary-package"},
-                            {"file": Path(rpm_file), "mimetype": "application/x-redhat-package-manager"}]:
-        asset_file = asset_file_data["file"]
-        print(f"Add asset {asset_file.name} to release: {VERSION}")
-        res = requests.post(
-            f"https://uploads.github.com/repos/infobyte/faraday/releases/{release_id}/assets?name={asset_file.name}",
-            headers=headers,
-            files={
-                'file': (
-                    asset_file.name,
-                    open(asset_file, mode="rb"),
-                    asset_file_data["mimetype"]
-                )
-            }
-        )
+    for asset_file in (Path(deb_file), Path(rpm_file)):
+        mimetype = mimetypes.guess_type(asset_file)[0] or "application/octet-stream"
+        print(f"Add asset {asset_file.name} to release: {VERSION} with mimetype: {mimetype}")
+        headers["Content-Type"] = mimetype
+        params = (('name', asset_file.name),)
+        data = open(asset_file, mode="rb").read()
+        url = f"https://uploads.github.com/repos/infobyte/faraday/releases/{release_id}/assets"
+        res = requests.post(url, headers=headers, params=params, data=data)
         res.raise_for_status()
+        print(res.json())
 
 
 if __name__ == '__main__':

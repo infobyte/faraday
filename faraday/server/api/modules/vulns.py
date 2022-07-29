@@ -1209,6 +1209,8 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('tool', '')
         data.pop('service_id', '')
         data.pop('host_id', '')
+        cvss2 = data.pop('cvss2', None)
+        cvss3 = data.pop('cvss3', None)
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
@@ -1221,6 +1223,14 @@ class VulnerabilityView(PaginatedMixin,
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
                 association_proxy_fields[key] = data.pop(key)
+
+        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
+        # all fields and calculates the scores
+        if cvss2 is not None:
+            association_proxy_fields['cvss2_vector_string'] = cvss2['cvss2_vector_string']
+        if cvss3 is not None:
+            association_proxy_fields['cvss3_vector_string'] = cvss3['cvss3_vector_string']
+
         return association_proxy_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):

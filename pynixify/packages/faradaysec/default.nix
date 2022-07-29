@@ -11,6 +11,7 @@
 , buildPythonPackage
 , click
 , colorama
+, cvss
 , dateutil
 , distro
 , email_validator
@@ -123,6 +124,7 @@ buildPythonPackage rec {
       flask-limiter
       flask_mail
       faraday-agent-parameters-types
+      cvss
     ];
   checkInputs =
     [

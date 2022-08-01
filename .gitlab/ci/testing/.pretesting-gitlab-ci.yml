@@ -94,7 +94,7 @@ flake8:
     image: python:3
     stage: pre_testing
     script:
-      - pip install flake8
+      - pip install flake8==4.0.1
       - flake8 .
     rules:
         - !reference [.ignore-on-tag, rules]

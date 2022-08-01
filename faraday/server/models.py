@@ -1495,6 +1495,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss2_confidentiality_requirement = get_propper_value(cvss_instance, 'CR')
             self.cvss2_integrity_requirement = get_propper_value(cvss_instance, 'IR')
             self.cvss2_availability_requirement = get_propper_value(cvss_instance, 'AR')
+            self.cvss2_exploitability_score = get_score(cvss_instance, 'Ex')
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss2_vector_string, e)
 

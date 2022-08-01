@@ -92,7 +92,7 @@ def get_group_by_and_sort_dir(model_class):
     return group_by, sort_dir
 
 
-def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list):
+def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
     vuln.references = references
     vuln.policy_violations = policyviolations
 

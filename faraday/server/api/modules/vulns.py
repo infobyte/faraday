@@ -40,7 +40,7 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_cvss_references_and_policyviolations,
+    parse_cve_references_and_policyviolations,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -192,7 +192,6 @@ class VulnerabilitySchema(AutoSchema):
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    cvss = fields.Method(serialize='get_cvss_refs', default=[])
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
@@ -240,7 +239,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss', 'cvss2', 'cvss3', 'cwe', 'cve', 'owasp',
+            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp',
             )
 
     @staticmethod
@@ -254,10 +253,6 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_cwe_refs(obj):
         return [reference for reference in obj.references if 'cwe' in reference.lower()]
-
-    @staticmethod
-    def get_cvss_refs(obj):
-        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     @staticmethod
     def get_attachments(obj):
@@ -359,13 +354,22 @@ class VulnerabilitySchema(AutoSchema):
         return data
 
     @post_load
-    def post_load_cvss(self, data, **kwargs):
-        if 'cvss2' in data:
-            data['cvss2_vector_string'] = data.pop('cvss2')['cvss2_vector_string']
+    def post_load_cvss2(self, data, **kwargs):
+        return self._get_vector_string(data, 'cvss2')
 
-        if 'cvss3' in data:
-            data['cvss3_vector_string'] = data.pop('cvss3')['cvss3_vector_string']
+    @post_load
+    def post_load_cvss3(self, data, **kwargs):
+        return self._get_vector_string(data, 'cvss3')
 
+    def _get_vector_string(self, data, version):
+        if version not in ['cvss2', 'cvss3']:
+            return data
+
+        if version in data:
+            vector_string = f'{version}_vector_string'
+            cvss = data.pop(version)
+            if vector_string in cvss:
+                data[vector_string] = cvss[vector_string]
         return data
 
 
@@ -393,7 +397,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss', 'cvss2', 'cvss3'
+            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3'
         )
 
 
@@ -598,7 +602,7 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations, cve_list)
+        obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
 
         db.session.flush()
 

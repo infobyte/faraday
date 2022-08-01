@@ -45,7 +45,7 @@ from faraday.server.utils.database import (
 from faraday.server.api.base import (
     AutoSchema,
     GenericWorkspacedView,
-    parse_cve_cvss_references_and_policyviolations
+    parse_cve_references_and_policyviolations
 )
 from faraday.server.api.modules import (
     hosts,
@@ -419,7 +419,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     def update_vuln(_policyviolations, _references, _vuln, _cve_list):
 
-        _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations, _cve_list)
+        _vuln = parse_cve_references_and_policyviolations(_vuln, _references, _policyviolations, _cve_list)
 
         # TODO attachments
         db.session.add(_vuln)

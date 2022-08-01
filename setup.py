@@ -68,7 +68,7 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='Collaborative Penetration Test and Vulnerability Management '
+    description='Open Source Collaborative Penetration Test and Vulnerability Management '
                 'Platform https://www.faradaysec.com',  # Optional
 
     # This is an optional longer description of your project that represents
@@ -236,7 +236,6 @@ setup(
     # what's used to render the link text on PyPI.
     project_urls={  # Optional
         'Bug Reports': 'https://github.com/infobyte/faraday/issues',
-        # 'Funding': 'https://donate.pypi.org',
         'Say Thanks!': 'http://saythanks.io/to/faradaysec',
         'Source': 'https://github.com/infobyte/faraday/',
     },

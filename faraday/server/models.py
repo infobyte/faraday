@@ -13,7 +13,7 @@ from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
-import cvss as cvss
+import cvss
 import jwt
 from sqlalchemy import (
     Boolean,

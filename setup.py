@@ -13,16 +13,6 @@ from setuptools import setup, find_packages
 # Python 3 only projects can skip this import
 from re import search
 
-# Get the long description from the README file
-long_description = """Faraday introduces a new concept - IPE (Integrated Penetration-Test Environment) a multiuser Penetration test IDE. Designed for distributing, indexing, and analyzing the data generated during a security audit.
-
-Made for true pentesters!
-
-Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
-
-Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities, users improve their own work. Do you remember the last time you programmed without an IDE? What IDEs are to programming, Faraday is to pentesting.
-
-To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!"""
 
 with open('faraday/__init__.py', encoding='utf8') as f:
     version = search(r'__version__ = \'(.*?)\'', f.read()).group(1)
@@ -33,6 +23,9 @@ with open('requirements.txt') as fp:
 
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
+
+with open("README.md") as readme_file:
+    readme = readme_file.read()
 
 try:
     # When setuptools_scm is installed, it ignores the MANIFEST.in contents,
@@ -86,7 +79,7 @@ setup(
     #
     # This field corresponds to the "Description" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#description-optional
-    long_description=long_description,  # Optional
+    long_description=readme,  # Optional
     long_description_content_type='text/markdown',
     # Denotes that our long_description is in Markdown; valid values are
     # text/plain, text/x-rst, and text/markdown
@@ -140,8 +133,9 @@ setup(
         # These classifiers are *not* checked by 'pip install'. See instead
         # 'python_requires' below.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
 
     # This field adds keywords for your project which will appear on the
@@ -228,7 +222,6 @@ setup(
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
             'faraday-manage=faraday.manage:cli',
-            'faraday-searcher=faraday.searcher.searcher:main'
         ],
     },
 

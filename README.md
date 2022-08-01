@@ -89,6 +89,24 @@ For more information about the installation, check out our [Installation Wiki](h
 
 In your browser now you can go to http://localhost:5985 and login with "faraday" as username, and the password given by the installation process
 
+## Getting Started
+
+---
+
+Learn about Faraday holistic approach and rethink vulnerability management.
+
+- [Centralize your vulnerability data](https://faradaysec.com/centralize-vulnerability-data/)
+- [Automate the scanners you need](https://faradaysec.com/automate-scanners/)
+
+### Integrating faraday in your CI/CD
+
+**Setup Bandit and OWASP ZAP in your pipeline**
+- [GitHub](https://faradaysec.com/wp-content/whitepapers/Integrating%20Faraday%20-%20Part%20One.pdf) [PDF]
+- [Jenkins](https://faradaysec.com/wp-content/whitepapers/Integrating%20Faraday%20-%20Part%20Two.pdf) [PDF]
+- [TravisCI ](https://faradaysec.com/wp-content/whitepapers/Integrating%20Faraday%20-%20Part%20Three.pdf) [PDF]
+
+**Setup Bandit, OWASP ZAP and SonarQube in your pipeline**
+- [Gitlab](https://faradaysec.com/wp-content/whitepapers/Integrating%20Faraday%20-%20Part%20Four.pdf) [PDF]
 
 ## Faraday Cli
 

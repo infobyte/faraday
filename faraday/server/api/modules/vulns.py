@@ -358,6 +358,16 @@ class VulnerabilitySchema(AutoSchema):
         # service to host or viceverse
         return data
 
+    @post_load
+    def post_load_cvss(self, data, **kwargs):
+        if 'cvss2' in data:
+            data['cvss2_vector_string'] = data.pop('cvss2')['cvss2_vector_string']
+
+        if 'cvss3' in data:
+            data['cvss3_vector_string'] = data.pop('cvss3')['cvss3_vector_string']
+
+        return data
+
 
 class VulnerabilityWebSchema(VulnerabilitySchema):
     method = fields.String(default='')
@@ -580,8 +590,6 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
-        cvss2 = data.pop('cvss2', None)
-        cvss3 = data.pop('cvss3', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -590,8 +598,7 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
-                                                             cve_list, cvss2=cvss2, cvss3=cvss3)
+        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations, cve_list)
 
         db.session.flush()
 
@@ -1209,29 +1216,28 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('tool', '')
         data.pop('service_id', '')
         data.pop('host_id', '')
-        cvss2 = data.pop('cvss2', None)
-        cvss3 = data.pop('cvss3', None)
+
+        custom_behaviour_fields = {}
+
+        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
+        # vector string into fields and calculates the scores
+        if 'cvss2_vector_string' in data:
+            custom_behaviour_fields['cvss2_vector_string'] = data.pop('cvss2_vector_string')
+        if 'cvss3_vector_string' in data:
+            custom_behaviour_fields['cvss3_vector_string'] = data.pop('cvss3_vector_string')
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
         super()._pre_bulk_update(data, **kwargs)
 
         model_association_proxy_fields = self._get_model_association_proxy_fields()
-        association_proxy_fields = {}
         for key in list(data):
             parent = getattr(VulnerabilityWeb, key).parent
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
-                association_proxy_fields[key] = data.pop(key)
+                custom_behaviour_fields[key] = data.pop(key)
 
-        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
-        # all fields and calculates the scores
-        if cvss2 is not None:
-            association_proxy_fields['cvss2_vector_string'] = cvss2['cvss2_vector_string']
-        if cvss3 is not None:
-            association_proxy_fields['cvss3_vector_string'] = cvss3['cvss3_vector_string']
-
-        return association_proxy_fields
+        return custom_behaviour_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
         if extracted_data:

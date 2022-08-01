@@ -367,8 +367,6 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
     cve_list = vuln_data.pop('cve', [])
-    cvss2 = vuln_data.pop('cvss2', None)
-    cvss3 = vuln_data.pop('cvss3', None)
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -419,20 +417,19 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(_policyviolations, _references, _vuln, _cve_list, cvss2, cvss3):
+    def update_vuln(_policyviolations, _references, _vuln, _cve_list):
 
-        _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations,
-                                                               _cve_list, cvss2=cvss2, cvss3=cvss3)
+        _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations, _cve_list)
 
         # TODO attachments
         db.session.add(_vuln)
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln, cve_list, cvss2, cvss3)
+        update_vuln(policyviolations, references, vuln, cve_list)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln, cve_list, cvss2, cvss3)
+        update_vuln(policyviolations, references, vuln, cve_list)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

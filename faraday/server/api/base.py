@@ -92,7 +92,7 @@ def get_group_by_and_sort_dir(model_class):
     return group_by, sort_dir
 
 
-def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list, cvss2=None, cvss3=None):
+def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list):
     vuln.references = references
     vuln.policy_violations = policyviolations
 
@@ -105,12 +105,6 @@ def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviola
         parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
 
     vuln.cve = parsed_cve_list
-
-    if cvss2:
-        vuln.cvss2_vector_string = cvss2['cvss2_vector_string']
-
-    if cvss3:
-        vuln.cvss3_vector_string = cvss3['cvss3_vector_string']
 
     return vuln
 

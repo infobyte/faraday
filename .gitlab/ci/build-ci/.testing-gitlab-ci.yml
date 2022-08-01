@@ -3,7 +3,7 @@ smoke_test_deb:
     stage: build_testing  # TODO improve
     image: ubuntu:18.04
     needs:
-      - job: generate_deb
+      - job: generate_deb_dev
         artifacts: true
     script:
         - apt-get update -y
@@ -23,6 +23,8 @@ smoke_test_deb:
         - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
         - jobs
     rules:
-      - !reference [.on-master-staging, rules]
-      - !reference [.be-built, rules]
-      - when: never
+        - !reference [.be-uploaded, rules]
+        # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
+        - !reference [.ignore-on-staging, rules]
+        - !reference [.ignore-on-master, rules]
+        - when: never

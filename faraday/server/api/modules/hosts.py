@@ -31,7 +31,7 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin,
+    BulkUpdateWorkspacedMixin, CountMultiWorkspacedMixin,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -138,6 +138,7 @@ class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView,
                 FilterWorkspacedMixin,
+                CountMultiWorkspacedMixin,
                 BulkDeleteWorkspacedMixin,
                 BulkUpdateWorkspacedMixin):
     route_base = 'hosts'

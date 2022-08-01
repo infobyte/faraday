@@ -38,7 +38,6 @@ from faraday.server.models import (
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
-    _make_active_agents_count_property,
 )
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
@@ -411,6 +410,10 @@ class GenericView(FlaskView):
             else:
                 messages = ['Invalid request']
             return flask.jsonify(messages), 409
+
+        @app.errorhandler(403)
+        def handle_forbidden(err):  # pylint: disable=unused-variable
+            return flask.jsonify({"message": err.description}), 403
 
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):  # pylint: disable=unused-variable
@@ -840,10 +843,6 @@ class FilterMixin(ListMixin):
                 with_expression(
                     Workspace.vulnerability_code_count,
                     _make_vuln_count_property('vulnerability_code', use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.active_agents_count,
-                    _make_active_agents_count_property(),
                 ),
                 with_expression(
                     Workspace.vulnerability_confirmed_count,

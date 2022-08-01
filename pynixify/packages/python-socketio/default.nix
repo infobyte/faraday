@@ -13,7 +13,7 @@ buildPythonPackage rec {
   pname =
     "python-socketio";
   version =
-    "5.6.0";
+    "5.7.1";
 
   src =
     fetchPypi {
@@ -21,7 +21,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "1yi8wh8azy6x2n283v8g9pzbg66xrv51h94hhjrvq3ahxayymwpi";
+        "0ihd1z91sbypkicldh8w00xwj964kr4ggvh9vzbm9ja54p6s04ah";
     };
 
   propagatedBuildInputs =

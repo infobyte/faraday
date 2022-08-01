@@ -486,7 +486,7 @@ class BulkCreateView(GenericWorkspacedView):
         workspace = self._get_workspace(workspace_name)
 
         if 'execution_id' in data:
-            if not workspace or workspace not in agent.workspaces:
+            if not workspace:
                 flask.abort(404, f"No such workspace: {workspace_name}")
 
             execution_id = data["execution_id"]

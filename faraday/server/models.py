@@ -62,7 +62,15 @@ from depot.fields.sqlalchemy import UploadedFileField
 # Local application imports
 from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile
-from faraday.server.utils.cvss import get_propper_value, get_score, get_severity
+from faraday.server.utils.cvss import (
+    get_propper_value,
+    get_severity,
+    get_base_score,
+    get_temporal_score,
+    get_environmental_score,
+    get_exploitability_score,
+    get_impact_score
+)
 from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
@@ -1438,6 +1446,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
     _cvss2_vector_string = Column(Text, nullable=True)
+    cvss2_base_score = Column(Float)
+    cvss2_exploitability_score = Column(Float)
+    cvss2_impact_score = Column(Float)
     cvss2_base_severity = Column(Text, nullable=True)
     cvss2_temporal_score = Column(Float)
     cvss2_temporal_severity = Column(Text, nullable=True)
@@ -1475,11 +1486,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
             return None
         try:
             cvss_instance = cvss.CVSS2(self.cvss2_vector_string)
-            self.cvss2_base_score = get_score(cvss_instance, 'B')
+            self.cvss2_base_score = get_base_score(cvss_instance)
             self.cvss2_base_severity = get_severity(cvss_instance, 'B')
-            self.cvss2_temporal_score = get_score(cvss_instance, 'T')
+            self.cvss2_temporal_score = get_temporal_score(cvss_instance)
             self.cvss2_temporal_severity = get_severity(cvss_instance, 'T')
-            self.cvss2_environmental_score = get_score(cvss_instance, 'E')
+            self.cvss2_environmental_score = get_environmental_score(cvss_instance)
             self.cvss2_environmental_severity = get_severity(cvss_instance, 'E')
             self.cvss2_access_vector = get_propper_value(cvss_instance, 'AV')
             self.cvss2_access_complexity = get_propper_value(cvss_instance, 'AC')
@@ -1495,12 +1506,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss2_confidentiality_requirement = get_propper_value(cvss_instance, 'CR')
             self.cvss2_integrity_requirement = get_propper_value(cvss_instance, 'IR')
             self.cvss2_availability_requirement = get_propper_value(cvss_instance, 'AR')
-            self.cvss2_exploitability_score = get_score(cvss_instance, 'Ex')
+            self.cvss2_exploitability_score = get_exploitability_score(cvss_instance)
+            self.cvss2_impact_score = get_impact_score(cvss_instance)
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss2_vector_string, e)
 
     _cvss3_vector_string = Column(Text, nullable=True)
     cvss3_base_score = Column(Float)
+    cvss3_exploitability_score = Column(Float)
+    cvss3_impact_score = Column(Float)
     cvss3_base_severity = Column(Text, nullable=True)
     cvss3_temporal_score = Column(Float)
     cvss3_temporal_severity = Column(Text, nullable=True)
@@ -1546,11 +1560,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
         try:
             cvss_instance = cvss.CVSS3(self.cvss3_vector_string)
-            self.cvss3_base_score = get_score(cvss_instance, 'B')
+            self.cvss3_base_score = get_base_score(cvss_instance)
             self.cvss3_base_severity = get_severity(cvss_instance, 'B')
-            self.cvss3_temporal_score = get_score(cvss_instance, 'T')
+            self.cvss3_temporal_score = get_temporal_score(cvss_instance)
             self.cvss3_temporal_severity = get_severity(cvss_instance, 'T')
-            self.cvss3_environmental_score = get_score(cvss_instance, 'E')
+            self.cvss3_environmental_score = get_environmental_score(cvss_instance)
             self.cvss3_environmental_severity = get_severity(cvss_instance, 'E')
             self.cvss3_attack_vector = get_propper_value(cvss_instance, 'AV')
             self.cvss3_attack_complexity = get_propper_value(cvss_instance, 'AC')
@@ -1574,6 +1588,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss3_modified_confidentiality_impact = get_propper_value(cvss_instance, 'MC')
             self.cvss3_modified_integrity_impact = get_propper_value(cvss_instance, 'MI')
             self.cvss3_modified_availability_impact = get_propper_value(cvss_instance, 'MA')
+            self.cvss3_exploitability_score = get_exploitability_score(cvss_instance)
+            self.cvss3_impact_score = get_impact_score(cvss_instance)
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
 

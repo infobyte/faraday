@@ -9,25 +9,47 @@ logger = logging.getLogger(__name__)
 
 
 def get_special_score(cvss_instance, index: int) -> [None, float]:
-    cvss2_functions = [lambda cvss2: round_to_1_decimal(cvss_instance.impact_equation()), lambda cvss2: round_to_1_decimal(D('20') * cvss_instance.get_value('AV') * cvss_instance.get_value('AC') * cvss_instance.get_value('Au'))]
+    cvss2_functions = [lambda cvss2: round_to_1_decimal(cvss2.impact_equation()),
+                       lambda cvss2: round_to_1_decimal(D('20') * cvss2.get_value('AV') * cvss2.get_value('AC') * cvss2.get_value('Au'))]
     cvss3_functions = [lambda cvss3: round_up(cvss3.isc), lambda cvss3: round_up(cvss3.esc)]
 
     if isinstance(cvss_instance, CVSS3):
         return cvss3_functions[index](cvss_instance)
-    return cvss2_functions[int(index)](cvss_instance)
+    return cvss2_functions[index](cvss_instance)
 
 
 def get_score(cvss_instance, score: str) -> [None, float]:
     valid_scores = ['B', 'T', 'E']
     special_scores = ['Im', 'Ex']
-    if score not in valid_scores:
-        raise ValueError('Score must be one of %s', ', '.join(valid_scores))
 
     if score in special_scores:
-        return get_special_score(cvss_instance, special_scores.index(cvss_instance, score))
-    else:
-        index = valid_scores.index(score)
-        return cvss_instance.scores()[index]
+        return get_special_score(cvss_instance, special_scores.index(score))
+
+    if score not in valid_scores:
+        raise ValueError('Score must be one of %s', ', '.join(valid_scores + special_scores))
+
+    index = valid_scores.index(score)
+    return cvss_instance.scores()[index]
+
+
+def get_base_score(cvss_instance) -> [None, float]:
+    return get_score(cvss_instance, 'B')
+
+
+def get_temporal_score(cvss_instance) -> [None, float]:
+    return get_score(cvss_instance, 'T')
+
+
+def get_environmental_score(cvss_instance) -> [None, float]:
+    return get_score(cvss_instance, 'E')
+
+
+def get_impact_score(cvss_instance) -> [None, float]:
+    return get_score(cvss_instance, 'Im')
+
+
+def get_exploitability_score(cvss_instance) -> [None, float]:
+    return get_score(cvss_instance, 'Ex')
 
 
 def get_severity(cvss_instance, severity: str) -> [None, str]:

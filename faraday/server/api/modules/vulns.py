@@ -124,6 +124,8 @@ class CVESchema(AutoSchema):
 class CVSS2Schema(AutoSchema):
     vector_string = fields.String(attribute="cvss2_vector_string")
     base_score = fields.Float(attribute="cvss2_base_score", required=False, dump_only=True)
+    exploitability_score = fields.Float(attribute="cvss2_exploitability_score", required=False, dump_only=True)
+    impact_score = fields.Float(attribute="cvss2_impact_score", required=False, dump_only=True)
     base_severity = fields.String(attribute="cvss2_base_severity", dump_only=True, required=False)
     temporal_score = fields.Float(attribute="cvss2_temporal_score", required=False, dump_only=True)
     temporal_severity = fields.String(attribute="cvss2_temporal_severity", dump_only=True, required=False)
@@ -148,6 +150,8 @@ class CVSS2Schema(AutoSchema):
 class CVSS3Schema(AutoSchema):
     vector_string = fields.String(attribute="cvss3_vector_string")
     base_score = fields.Float(attribute="cvss3_base_score", required=False, dump_only=True)
+    exploitability_score = fields.Float(attribute="cvss3_exploitability_score", required=False, dump_only=True)
+    impact_score = fields.Float(attribute="cvss3_impact_score", required=False, dump_only=True)
     base_severity = fields.String(attribute="cvss3_base_severity", dump_only=True, required=False)
     temporal_score = fields.Float(attribute="cvss3_temporal_score", required=False, dump_only=True)
     temporal_severity = fields.String(attribute="cvss3_temporal_severity", dump_only=True, required=False)

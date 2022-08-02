@@ -38,10 +38,13 @@ tag_on_github:
     stage: publish
     script:
       - !reference [.set-remote-github, script]
+      - !reference [ .get_from_tar_and_replace_www, script ]
       - pip3 install requests click
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - git config user.email "devops@faradaysec.com"
       - git config user.name "Devops"
+      - git add .
+      - git commit -m "Front Updated"
       - CHANGELOG/check_pre_tag.py
       - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/community.md)"
       - git push --force github v$FARADAY_VERSION

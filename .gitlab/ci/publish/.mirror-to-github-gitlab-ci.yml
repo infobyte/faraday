@@ -65,10 +65,11 @@ upload_assets_to_github_tag:
       - scripts/github_release.py --deb-file ./faraday-server_amd64.deb --rpm-file ./faraday-server_amd64.rpm
     rules:
       - !reference [ .on-community-tag, rules ]
-    dependencies:
-      - generate_deb_master
-      - generate_rpm_master
     tags:
       - faradaytests
     needs:
       - job: tag_on_github
+      - job: generate_deb_master
+        artifacts: true
+      - job: generate_rpm_master
+        artifacts: true

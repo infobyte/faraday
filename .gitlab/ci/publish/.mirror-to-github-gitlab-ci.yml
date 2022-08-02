@@ -56,3 +56,8 @@ tag_on_github:
       - generate_rpm_master
     tags:
       - faradaytests
+    needs:
+      - project: faradaysec/faraday-react
+        job: npm_build
+        ref: community/master
+        artifacts: true

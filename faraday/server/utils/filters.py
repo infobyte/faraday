@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 """
 import logging
-import re
 import typing
 import numbers
 import datetime
@@ -15,7 +14,6 @@ from distutils.util import strtobool
 
 from dateutil.parser import parse
 from collections.abc import Iterable
-from dateutil.parser._parser import ParserError
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
 
@@ -26,7 +24,30 @@ from faraday.server.fields import JSONType
 
 VALID_OPERATORS = set(OPERATORS.keys()) - {'desc', 'asc'}
 
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
+
 logger = logging.getLogger(__name__)
+
+
+def generate_datetime_filter(filter_: dict = "") -> typing.List:
+    """
+    Add time to filter['val'] date
+    Return a new filter with time added. In case of `eq` or `==` operator will return a range of datetimes.
+    """
+    if filter_['op'].lower() in ['>', 'gt', '<=', 'lte']:
+        filter_['val'] = (parse(filter_['val']) + datetime.timedelta(hours=23,
+                                                                     minutes=59,
+                                                                     seconds=59)).strftime(DATETIME_FORMAT)
+    elif filter_['op'].lower() in ['==', 'eq']:
+        end_date = parse(filter_['val']) + datetime.timedelta(hours=23, minutes=59, seconds=59)
+        return [
+            {'name': filter_['name'], 'op': '>=', 'val': parse(filter_['val']).strftime(DATETIME_FORMAT)},
+            {'name': filter_['name'], 'op': '<=', 'val': end_date.strftime(DATETIME_FORMAT)},
+        ]
+    elif filter_['op'].lower() in ['>=', 'gte', '<', 'lt']:
+        filter_['val'] = parse(filter_['val']).isoformat()
+
+    return [filter_]
 
 
 class FlaskRestlessFilterSchema(Schema):
@@ -111,8 +132,16 @@ class FlaskRestlessFilterSchema(Schema):
             logger.warning(f"Column {column_name} could not be converted. {e}")
             return [filter_]
 
+        # Dates
+        if isinstance(field, (fields.Date, fields.DateTime)):
+            try:
+                datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
+                return generate_datetime_filter(filter_)
+            except ValueError:
+                raise ValidationError('Invalid date format. Dates should be in "%Y-%m-%d" format')
+
         if filter_['op'].lower() in ['ilike', 'like']:
-            # like muse be used with string
+            # like must be used with string
             if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):
                 raise ValidationError('Can\'t perfom ilike/like against numbers')
             if isinstance(column.type, JSONType):
@@ -120,32 +149,9 @@ class FlaskRestlessFilterSchema(Schema):
             if isinstance(field, fields.Boolean):
                 raise ValidationError('Can\'t perfom ilike/like against boolean type column')
 
-        # somes field are date/datetime.
-        # we use dateutil parse to validate the string value which contains a date or datetime
-        valid_date = False
-        try:
-            valid_date = isinstance(parse(filter_['val']), datetime.datetime)
-        except (ParserError, TypeError):
-            valid_date = False
-
-        if valid_date and isinstance(field, fields.DateTime):
-            if re.match(r'^\d{4}-\d{1,2}-\d{1,2}$', filter_['val']):
-                # If que have a valid date (not datetime)
-                # then we must search by range to avoid matching with datetime
-                start = parse(filter_['val'])
-                end = (start + datetime.timedelta(hours=23, minutes=59, seconds=59)).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-                start = start.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-                # here we transform the original filter and we add a range
-                # we could try to change search.py generated query, however changing the query will use
-                # postgresql syntax only (type cast)
-                return [
-                        {'name': filter_['name'], 'op': '>=', 'val': start},
-                        {'name': filter_['name'], 'op': '<=', 'val': end},
-                ]
-
         if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:
             # we check that operators can be only used against date or numbers
-            if not valid_date and not isinstance(filter_['val'], numbers.Number):
+            if not isinstance(filter_['val'], numbers.Number):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
 
             if not isinstance(field, (fields.Date, fields.DateTime, fields.Number)):
@@ -156,12 +162,8 @@ class FlaskRestlessFilterSchema(Schema):
             try:
                 strtobool(filter_['val'])
             except (AttributeError, ValueError):
-                raise ValidationError('Can\'t compare Boolean field against a non boolean value. Please use True or False')
-
-        if isinstance(field, (fields.Date, fields.DateTime)) and valid_date:
-            filter_['val'] = parse(filter_['val']).isoformat()  # bugfix: when user sends string like: 1/1/2020
-            return [filter_]
-
+                raise ValidationError('Can\'t compare Boolean field against a'
+                                      ' non boolean value. Please use True or False')
         # we try to deserialize the value, any error means that the value was not valid for the field typ3
         # previous checks were added since postgresql is very strict with operators.
         try:

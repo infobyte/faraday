@@ -110,18 +110,13 @@ def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviola
 
 
 def get_workspace(workspace_name):
-    ws = None
     try:
         ws = Workspace.query.filter_by(name=workspace_name).one()
         if not ws.active:
             flask.abort(403, f"Disabled workspace: {workspace_name}")
+        return ws
     except NoResultFound:
         flask.abort(404, f"No such workspace: {workspace_name}")
-    else:
-        if not flask_login.current_user.is_anonymous and \
-                not flask_login.current_user.has_workspace_permissions(ws):
-            flask.abort(404, f"No such workspace: {workspace_name}")
-    return ws
 
 
 class InvalidUsage(Exception):

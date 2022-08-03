@@ -3,6 +3,7 @@
       - rm faraday/server/www
       - ls
       - tar xfvz faraday-frontend.tar.gz
+      - rm faraday-frontend.tar.gz
       - mv build/ faraday/server/www/
 
 generate_build_file_dev:

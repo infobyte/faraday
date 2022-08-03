@@ -40,7 +40,7 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_cvss_references_and_policyviolations,
+    parse_cve_cvss_references_and_policyviolations, get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -893,7 +893,7 @@ class VulnerabilityView(PaginatedMixin,
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
         if 'group_by' not in filters:
             offset = None
@@ -997,7 +997,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace.name).first()
@@ -1099,7 +1099,7 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         limit = flask.request.args.get('limit', 1)
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
             .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
             .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
@@ -1126,7 +1126,7 @@ class VulnerabilityView(PaginatedMixin,
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         query = self.model_class.query.filter(self.model_class.id.in_(ids))
-        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
     def _bulk_delete_query(self, ids, **kwargs):
@@ -1135,7 +1135,7 @@ class VulnerabilityView(PaginatedMixin,
             query = self.model_class.query.filter(self.model_class.id.in_(ids))
         else:
             query = self.model_class.query.filter(self.model_class.severity.in_(ids))
-        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
     def _get_model_association_proxy_fields(self):

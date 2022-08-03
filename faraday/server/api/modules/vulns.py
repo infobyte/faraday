@@ -200,10 +200,6 @@ class VulnerabilitySchema(AutoSchema):
         return [reference for reference in obj.references if 'owasp' in reference.lower()]
 
     @staticmethod
-    def get_cwe_refs(obj):
-        return [reference for reference in obj.references if 'cwe' in reference.lower()]
-
-    @staticmethod
     def get_cvss_refs(obj):
         return [reference for reference in obj.references if 'cvss' in reference.lower()]
 

@@ -18,8 +18,7 @@ services:
     ports:
       - '6379'
   app:
-    #image: index.docker.io/faradaysec/faraday
-    build: .
+    image: index.docker.io/faradaysec/faraday
     restart: always
     container_name: faraday_app
     volumes:

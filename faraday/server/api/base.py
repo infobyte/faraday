@@ -109,6 +109,21 @@ def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviola
     return vuln
 
 
+def get_workspace(workspace_name):
+    ws = None
+    try:
+        ws = Workspace.query.filter_by(name=workspace_name).one()
+        if not ws.active:
+            flask.abort(403, f"Disabled workspace: {workspace_name}")
+    except NoResultFound:
+        flask.abort(404, f"No such workspace: {workspace_name}")
+    else:
+        if not flask_login.current_user.is_anonymous and \
+                not flask_login.current_user.has_workspace_permissions(ws):
+            flask.abort(404, f"No such workspace: {workspace_name}")
+    return ws
+
+
 class InvalidUsage(Exception):
     status_code = 400
 
@@ -449,21 +464,10 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    @staticmethod
-    def _get_workspace(workspace_name):
-        ws = None
-        try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
-            if not ws.active:
-                flask.abort(403, f"Disabled workspace: {workspace_name}")
-        except NoResultFound:
-            flask.abort(404, f"No such workspace: {workspace_name}")
-        return ws
-
     def _get_base_query(self, workspace_name):
         base = super()._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id == self._get_workspace(workspace_name).id)
+            Workspace.id == get_workspace(workspace_name).id)
 
     def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
@@ -487,7 +491,7 @@ class GenericWorkspacedView(GenericView):
         sup = super()
         if hasattr(sup, 'before_request'):
             sup.before_request(name, *args, **kwargs)
-        if (self._get_workspace(kwargs['workspace_name']).readonly
+        if (get_workspace(kwargs['workspace_name']).readonly
                 and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
@@ -507,7 +511,7 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.filter(
             self.model_class.workspaces.any(
-                name=self._get_workspace(workspace_name).name
+                name=get_workspace(workspace_name).name
             )
         )
 
@@ -751,7 +755,7 @@ class FilterWorkspacedMixin(ListMixin):
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         filter_query = None
         if 'group_by' not in filters:
             offset = None
@@ -1157,7 +1161,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
 
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
@@ -1170,7 +1174,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
-            workspace = self._get_workspace(workspace_name)
+            workspace = get_workspace(workspace_name)
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
                 flask.abort(409, ValidationError(
@@ -1442,7 +1446,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         # assert not db.session.new
 
         with db.session.no_autoflush:
-            obj.workspace = self._get_workspace(workspace_name)
+            obj.workspace = get_workspace(workspace_name)
 
         self._set_command_id(obj, False)
         return super()._perform_update(object_id, obj, data, workspace_name)
@@ -1498,7 +1502,7 @@ class BulkUpdateWorkspacedMixin(BulkUpdateMixin):
         return super().bulk_update(workspace_name=workspace_name)
 
     def _bulk_update_query(self, ids, **kwargs):
-        workspace = self._get_workspace(kwargs["workspace_name"])
+        workspace = get_workspace(kwargs["workspace_name"])
         return super()._bulk_update_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 
@@ -1589,7 +1593,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
-            obj.workspace = self._get_workspace(workspace_name)
+            obj.workspace = get_workspace(workspace_name)
         return super()._perform_delete(obj, workspace_name)
 
 
@@ -1609,7 +1613,7 @@ class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
         return super().bulk_delete(workspace_name=workspace_name)
 
     def _bulk_delete_query(self, ids, **kwargs):
-        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
         return super()._bulk_delete_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 
@@ -1737,7 +1741,7 @@ class CountMultiWorkspacedMixin:
 
         # Enforce workspace permission checking for each workspace
         for workspace_name in workspace_names_list:
-            self._get_workspace(workspace_name)
+            get_workspace(workspace_name)
 
         group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
 

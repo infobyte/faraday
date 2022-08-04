@@ -35,6 +35,7 @@ docker-publish-prod:
     - docker push $CI_REGISTRY_IMAGE:$VERSION
   rules:
     - !reference [ .on-community-tag, rules ]
+    - !reference [ .update_docker, rules ]
   dependencies: # prod will wait for any previous stage
     - generate_docker_tar_gz_master
   needs:

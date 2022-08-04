@@ -31,7 +31,7 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin, CountMultiWorkspacedMixin,
+    BulkUpdateWorkspacedMixin, CountMultiWorkspacedMixin, get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -225,7 +225,7 @@ class HostsView(PaginatedMixin,
             items = re.findall(r"([.a-zA-Z0-9_-]+)", list_string)
             return items
 
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
 
         logger.info("Create hosts from CSV")
         if 'file' not in flask.request.files:
@@ -337,7 +337,7 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
                                                        CommandObject.object_type == 'host',
                                                        Command.id == CommandObject.command_id,

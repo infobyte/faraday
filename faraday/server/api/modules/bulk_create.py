@@ -45,7 +45,8 @@ from faraday.server.utils.database import (
 from faraday.server.api.base import (
     AutoSchema,
     GenericWorkspacedView,
-    parse_cve_references_and_policyviolations
+    parse_cve_references_and_policyviolations,
+    get_workspace
 )
 from faraday.server.api.modules import (
     hosts,
@@ -485,7 +486,7 @@ class BulkCreateView(GenericWorkspacedView):
             agent = require_agent_token()
         data = self._parse_data(self._get_schema_instance({}), flask.request)
         json_data = flask.request.json
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
 
         if 'execution_id' in data:
             if not workspace:

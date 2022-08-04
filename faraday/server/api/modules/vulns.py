@@ -121,6 +121,10 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
+class OWASPSchema(AutoSchema):
+    name = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -134,9 +138,9 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
-    owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
+    owasp = fields.List(fields.Pluck(OWASPSchema(), "name"))
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
@@ -189,10 +193,6 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_type(obj):
         return obj.__class__.__name__
-
-    @staticmethod
-    def get_owasp_refs(obj):
-        return [reference for reference in obj.references if 'owasp' in reference.lower()]
 
     @staticmethod
     def get_cwe_refs(obj):
@@ -259,6 +259,13 @@ class VulnerabilitySchema(AutoSchema):
 
             raise ValidationError("Invalid parent type")
         return value
+
+    @post_load
+    def post_load_owasp(self, data, **kwargs):
+        owasp = data.pop('owasp', None)
+        if owasp:
+            data['owasp'] = [item['name'] for item in owasp]
+        return data
 
     @post_load
     def post_load_impact(self, data, **kwargs):

@@ -1599,6 +1599,13 @@ class Service(Metadata):
         return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
 
 
+owasp_vulnerability_association = Table('owasp_vulnerability_association',
+                                        db.Model.metadata,
+                                        Column('owasp_id', Integer, ForeignKey('owasp.id')),
+                                        Column('vulnerability_id', Integer, ForeignKey('vulnerability.id'))
+                                        )
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUS_OPEN = 'open'
     STATUS_RE_OPENED = 're-opened'
@@ -1673,6 +1680,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             'name',
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
+
+    owasp = relationship('OWASP', secondary=owasp_vulnerability_association)
 
     # TODO: Ver si el nombre deberia ser cvss_v2_id
     cvssv2_id = Column(
@@ -1943,6 +1952,14 @@ class Reference(Metadata):
     def parent(self):
         # TODO: fix this property
         return
+
+
+class OWASP(Metadata):
+    __tablename__ = 'owasp'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+
+    vulnerabilities = relationship('Vulnerability', secondary=owasp_vulnerability_association)
 
 
 class ReferenceVulnerabilityAssociation(db.Model):

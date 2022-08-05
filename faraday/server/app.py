@@ -47,7 +47,7 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
-from faraday.server.utils.invalid_chars import remove_null_caracters
+from faraday.server.utils.invalid_chars import remove_null_characters
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 logger = logging.getLogger(__name__)
@@ -486,7 +486,7 @@ class CustomLoginForm(LoginForm):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             return False
-        self.email.data = remove_null_caracters(self.email.data)
+        self.email.data = remove_null_characters(self.email.data)
 
         self.user = _datastore.find_user(username=self.email.data)
 
@@ -498,7 +498,7 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
 
-        self.user.password = remove_null_caracters(self.user.password)
+        self.user.password = remove_null_characters(self.user.password)
         if not self.user.password:
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")
@@ -506,7 +506,7 @@ class CustomLoginForm(LoginForm):
                            f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
-        self.password.data = remove_null_caracters(self.password.data)
+        self.password.data = remove_null_characters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")

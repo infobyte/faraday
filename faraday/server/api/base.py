@@ -1464,7 +1464,7 @@ class BulkUpdateMixin(FilterObjects):
         # Try filter if no ids
         elif flask.request.args.get('q', None) is not None:
             filtered_objects = self._process_filter_data(flask.request.args.get('q', '{"filters": []}'), workspace_name)
-            ids = list(x.get("id") for x in filtered_objects[0])
+            ids = list(x.get("obj_id") for x in filtered_objects[0])
         else:
             flask.abort(400)
 

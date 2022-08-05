@@ -189,17 +189,14 @@ def generate_histogram(days_before):
 
 
 def request_histogram():
-    histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
-
-    if histogram:
-        histogram_days = flask.request.args.get('histogram_days',
-                                                type=lambda x: int(x)
-                                                if x.isnumeric() and int(x) > 0
-                                                else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
-                                                default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
-                                                )
-        histogram_dict = generate_histogram(histogram_days)
-        return histogram_days, histogram_dict
+    histogram_days = flask.request.args.get('histogram_days',
+                                            type=lambda x: int(x)
+                                            if x.isnumeric() and int(x) > 0
+                                            else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                            default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                            )
+    histogram_dict = generate_histogram(histogram_days)
+    return histogram_days, histogram_dict
 
 
 class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
@@ -227,7 +224,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
-        histogram_days, histogram_dict = request_histogram()
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        histogram_days, histogram_dict = None, None
+        if histogram:
+            histogram_days, histogram_dict = request_histogram()
 
         query = self._get_base_query()
 
@@ -274,7 +274,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 description: invalid q was sent to the server
 
         """
-        histogram_days, histogram_dict = request_histogram()
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        histogram_days, histogram_dict = None, None
+        if histogram:
+            histogram_days, histogram_dict = request_histogram()
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
         objects = []

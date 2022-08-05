@@ -121,6 +121,11 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
+class ReferenceSchema(AutoSchema):
+    name = fields.String()
+    type = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -133,7 +138,7 @@ class VulnerabilitySchema(AutoSchema):
     description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
-    refs = fields.List(fields.String(), attribute='references')
+    refs = fields.Nested(ReferenceSchema(), attribute='reference_instances', many=True)
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])

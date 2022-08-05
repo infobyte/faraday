@@ -89,6 +89,12 @@ OBJECT_TYPES = [
     'task',
 ]
 
+REFERENCE_TYPES = [
+    'exploit',
+    'patch',
+    'other',
+]
+
 COMMENT_TYPES = [
     'system',
     'user'
@@ -1922,6 +1928,7 @@ class Reference(Metadata):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
+    type = Column(Enum(*REFERENCE_TYPES, name='reference_types'), default='other')
 
     # 1 workspace <--> N references
     # 1 to N (the FK is placed in the child) and bidirectional (backref)

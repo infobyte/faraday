@@ -818,7 +818,6 @@ class CustomAssociationSet(_AssociationSet):
     the value and the instance of the parent object
     """
 
-    # def __init__(self, lazy_collection, creator, getter, setter, parent):
     def __init__(self, lazy_collection, creator, value_attr, parent):
         """I have to override this method because the proxy_factory
         class takes different arguments than the hardcoded

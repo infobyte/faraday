@@ -2,14 +2,17 @@
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
+# Standard library imports
 import sys
+
+# Related third party imports
 from sqlalchemy import MetaData
 from sqlalchemy.orm import class_mapper
 
-from faraday.server import models
+# Local application imports
 import faraday.server.config
+from faraday.server import models
 
 
 class DatabaseSchema:

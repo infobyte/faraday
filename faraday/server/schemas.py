@@ -1,18 +1,20 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-import json
-import time
+# Standard library imports
 import datetime
+import json
 import logging
+import time
+
+# Related third party imports
+from dateutil.tz import tzutc
 from flask import g
 from marshmallow import fields, Schema, post_dump, EXCLUDE
 from marshmallow.utils import missing as missing_
 from marshmallow.exceptions import ValidationError
-from dateutil.tz import tzutc
 
 from faraday.server.models import (
     db,
@@ -59,7 +61,8 @@ class FaradayCustomField(fields.Field):
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)
             if type(serialized_value) == list:
-                res[custom_field.field_name] = [element['value'] if type(element) == dict else element for element in serialized_value]
+                res[custom_field.field_name] = [element['value'] if type(element) == dict
+                                                else element for element in serialized_value]
             else:
                 res[custom_field.field_name] = serialized_value
 
@@ -299,7 +302,8 @@ class StrictDateTimeField(fields.DateTime):
 class WorkerActionSchema(Schema):
     action = fields.Method('get_command')
 
-    def get_command(self, obj):
+    @staticmethod
+    def get_command(obj):
         if obj.command == 'UPDATE':
             return f"--{obj.command}:{obj.field}={obj.value}"
         if obj.command in ['DELETE', 'REMOVE']:
@@ -313,7 +317,8 @@ class WorkerActionSchema(Schema):
 class WorkerConditionSchema(Schema):
     condition = fields.Method('get_condition')
 
-    def get_condition(self, obj):
+    @staticmethod
+    def get_condition(obj):
         if obj.operator == "equals":
             operator = "="
         else:
@@ -331,7 +336,8 @@ class WorkerRuleSchema(Schema):
     disabled = fields.Boolean(allow_none=True, attribute='disabled')
     fields = fields.String(allow_none=False)
 
-    def get_object(self, rule):
+    @staticmethod
+    def get_object(rule):
         try:
             object_rules = json.loads(rule.object)
         except ValueError:

@@ -1,15 +1,22 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import logging
-from functools import lru_cache
-from typing import Dict, Optional
-from copy import deepcopy
 import os
 import signal
+from copy import deepcopy
+from functools import lru_cache
+from typing import Dict, Optional
 
-from faraday.server.utils.database import get_or_create
+# Local application imports
 from faraday.server.models import (
     db,
     Configuration
 )
+from faraday.server.utils.database import get_or_create
 
 logger = logging.getLogger(__name__)
 

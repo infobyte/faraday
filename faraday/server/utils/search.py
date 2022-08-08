@@ -230,7 +230,7 @@ class Filter:
 
     def __repr__(self):
         """Returns a string representation of this object."""
-        return '<Filter {} {} {}>'.format(self.fieldname, self.operator, self.argument or self.otherfield)
+        return f'<Filter {self.fieldname} {self.operator} {self.argument or self.otherfield}>'
 
     @staticmethod
     def from_dictionary(dictionary):

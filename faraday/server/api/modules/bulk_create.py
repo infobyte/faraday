@@ -247,19 +247,30 @@ def bulk_create(ws: Workspace,
     if 'command' in data:
         command = _update_command(command, data['command'])
 
-    total_hosts = len(data['hosts'])
-    if total_hosts > 0:
-        logger.debug(f"Needs to create {total_hosts} hosts...")
+    total_created_assets = db.session.query(Host).count()
+    hosts_to_create = len(data['hosts'])
+    created_hosts = 0
+    created_vulns = 0
+    if hosts_to_create > 0:
+        logger.debug(f"Needs to create {hosts_to_create} hosts...")
         for host in data['hosts']:
-            _create_host(ws, host, command)
+
+            _vulns = len(host['vulnerabilities']) if 'vulnerabilities' in host else 0
+            host_created = _create_host(ws, host, command)
+            if host_created:
+                created_hosts += 1
+                total_created_assets += 1
+                created_vulns += _vulns
+
+    total_secs = time.time() - start_time
+    logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} seconds, "
+                f"{created_hosts} of {hosts_to_create} hosts created, "
+                f"{created_vulns} vulnerabilities created")
 
     if 'command' in data and set_end_date:
         command.end_date = datetime.utcnow() if command.end_date is None else \
             command.end_date
         db.session.commit()
-
-    total_secs = time.time() - start_time
-    logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} secs")
 
 
 def _update_command(command: Command, command_data: dict):

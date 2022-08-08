@@ -1,7 +1,8 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
-# See the file 'doc/LICENSE' for the license information
-
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 # Standard library imports
 import logging
 import math
@@ -1673,7 +1674,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    # TODO: Ver si el nombre deberia ser cvss_v2_id
+    # TODO: Determine if the variable name should be cvss_v2_id
     cvssv2_id = Column(
         Integer,
         ForeignKey('cvss_v2.id'),
@@ -1681,7 +1682,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
     cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
 
-    # TODO: Ver si el nombre deberia ser cvss_v3_id
+    # TODO: Determine if the variable name should be cvss_v3_id
     cvssv3_id = Column(
         Integer,
         ForeignKey('cvss_v3.id'),

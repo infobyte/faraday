@@ -60,3 +60,8 @@
   rules:
     - if: $BUILD_TEST
       when: never
+
+.update_docker:
+  rules:
+    - if: $UPDATE_DOCKER_TEST
+      when: on_success

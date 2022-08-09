@@ -37,7 +37,7 @@ google_storage_deb_rpm_dev_dev:
     - *google_storage_deb_rpm_base
     - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}*.*"
   rules:
-    - !reference [.be-built, rules]
+    - !reference [.be-uploaded, rules]
     # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
     - !reference [.ignore-on-staging, rules]
     - !reference [.ignore-on-master, rules]

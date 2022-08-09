@@ -21,13 +21,12 @@ from faraday_agent_parameters_types.utils import type_validate, get_manifests
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView
+    ReadWriteView, get_workspace
 )
 from faraday.server.models import (
     Agent,
     Executor,
     AgentExecution,
-    Workspace,
     Command,
     db
 )
@@ -129,16 +128,6 @@ class AgentView(ReadWriteView):
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
 
-    @staticmethod
-    def _get_workspace(workspace_name):
-        try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
-            if not ws.active:
-                flask.abort(403, f"Disabled workspace: {workspace_name}")
-            return ws
-        except NoResultFound:
-            flask.abort(404, f"No such workspace: {workspace_name}")
-
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(AgentCreationSchema(unknown=EXCLUDE), request)
         token = data.pop('token')
@@ -178,7 +167,7 @@ class AgentView(ReadWriteView):
         vuln_tag = data.get('vuln_tag', "")
         service_tag = data.get('service_tag', "")
         host_tag = data.get('host_tag', "")
-        workspaces = [self._get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
+        workspaces = [get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
 
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],

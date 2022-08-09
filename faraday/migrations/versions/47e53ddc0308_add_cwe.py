@@ -1,7 +1,7 @@
 """add cwe
 
 Revision ID: 47e53ddc0308
-Revises: 99a740945c44
+Revises: 4d7a8fdd94e4
 Create Date: 2022-07-25 15:10:39.333211+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '47e53ddc0308'
-down_revision = '99a740945c44'
+down_revision = '4d7a8fdd94e4'
 branch_labels = None
 depends_on = None
 

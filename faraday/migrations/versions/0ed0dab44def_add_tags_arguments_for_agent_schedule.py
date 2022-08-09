@@ -1,7 +1,7 @@
 """add_tags_arguments_for_agent_schedule
 
 Revision ID: 0ed0dab44def
-Revises: f82a9136c408
+Revises: 4d7a8fdd94e4
 Create Date: 2022-07-19 13:31:17.646914+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '0ed0dab44def'
-down_revision = '99a740945c44'
+down_revision = '4d7a8fdd94e4'
 branch_labels = None
 depends_on = None
 

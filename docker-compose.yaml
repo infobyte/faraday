@@ -9,7 +9,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=faraday
     ports:
-      - '5432:5432'
+      - '5432'
     volumes:
       - "db:/var/lib/postgresql/data:rw"
   redis:
@@ -20,6 +20,7 @@ services:
   app:
     image: index.docker.io/faradaysec/faraday
     restart: always
+    container_name: faraday_app
     volumes:
      - "$HOME/.faraday:/home/faraday/.faraday:rw"
     environment:

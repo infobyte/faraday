@@ -28,9 +28,14 @@ else
     echo "$(date) Using existing server.ini"
     CREATE_TABLES=0
     CREATE_ADMIN=0
+    sleep 3
 fi
 
 if [ $CREATE_TABLES -eq 1 ]; then
+    echo "Waiting for postgres on $PGSQL_HOST"
+    while ! nc -z $PGSQL_HOST 5432; do
+      sleep 0.5
+    done
     echo "$(date) Creating tables on database $PGSQL_DBNAME..."
     faraday-manage create-tables
 fi

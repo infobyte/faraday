@@ -38,7 +38,7 @@ generate_deb_dev:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     rules:
-        - !reference [.be-built, rules]
+        - !reference [.be-uploaded, rules]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
         - !reference [.ignore-on-staging, rules]
         - !reference [.ignore-on-master, rules]
@@ -128,6 +128,7 @@ generate_deb_master:
         expire_in: 15 days
     rules:
         - !reference [.on-master, rules]
+        - !reference [.on-community-tag, rules]
         - when: never
 
 generate_rpm_dev:
@@ -178,7 +179,7 @@ generate_rpm_dev:
             - "faraday-server_amd64.rpm"
         expire_in: 15 days
     rules:
-        - !reference [.be-built, rules]
+        - !reference [.be-uploaded, rules]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
         - !reference [.ignore-on-staging, rules]
         - !reference [.ignore-on-master, rules]
@@ -284,6 +285,7 @@ generate_rpm_master:
         expire_in: 15 days
     rules:
         - !reference [.on-master, rules]
+        - !reference [.on-community-tag, rules]
         - when: never
 
 generate_docker_tar_gz_dev:
@@ -300,7 +302,7 @@ generate_docker_tar_gz_dev:
       paths:
         - faraday-server-docker.tar.gz
     rules:
-        - !reference [.be-built, rules]
+        - !reference [.be-uploaded, rules]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
         - !reference [.ignore-on-staging, rules]
         - !reference [.ignore-on-master, rules]
@@ -340,14 +342,16 @@ generate_docker_tar_gz_master:
     script:
         - !reference [ .get_from_tar_and_replace_www, script ]
         - !reference [ .get_secrets, script ]
-        - docker build . -t faraday-community
-        - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
-        - docker rmi -f faraday-community
+        - docker build . -t $CI_REGISTRY_IMAGE
+        - docker save $CI_REGISTRY_IMAGE:latest | gzip > faraday-server-docker.tar.gz
+        - docker rmi -f $CI_REGISTRY_IMAGE
     artifacts:
       paths:
         - faraday-server-docker.tar.gz
     rules:
       - !reference [.on-master, rules]
+      - !reference [ .on-community-tag, rules ]
+      - !reference [ .update_docker, rules ]
       - when: never
     needs:
       - project: faradaysec/faraday-react

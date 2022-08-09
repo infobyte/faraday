@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "Fix order_by `cve_instances__name` when no filter was provided"
-}

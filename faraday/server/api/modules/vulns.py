@@ -140,7 +140,7 @@ class VulnerabilitySchema(AutoSchema):
     refs = fields.List(fields.String(), attribute='references')
     cve = fields.List(fields.String(), attribute='cve')
     cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    owasp = fields.List(fields.Pluck(OWASPSchema(), "name"))
+    owasp = fields.List(fields.Pluck(OWASPSchema(), "name"), dump_only=True)
     cvss = fields.Method(serialize='get_cvss_refs', default=[])
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')

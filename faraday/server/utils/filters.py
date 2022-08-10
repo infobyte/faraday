@@ -91,7 +91,7 @@ class FlaskRestlessFilterSchema(Schema):
     def _validate_filter_types(self, filter_):
         """
             Compares the filter_ list against the model field and the value to be compared.
-            PostgreSQL is very strict con los types.
+            PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:

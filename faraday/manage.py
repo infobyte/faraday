@@ -75,12 +75,9 @@ def show_urls():
 
 
 @click.command(help="Show all URLs in OPENAPI format")
-@click.option('--no-servers', default=False, is_flag=True,
-              help="Avoids adding servers tag")
-@click.option('--server', required=False, prompt=False, default="localhost",
-              help="Server host/ip where to test api docs.")
-def openapi_yaml(server, no_servers):
-    openapi_format(format="yaml", server=server, no_servers=no_servers)
+@click.argument('server', required=True, default="http://localhost:5985")
+def openapi_swagger(server):
+    openapi_format(server=server)
 
 
 @click.command(help="Import Vulnerability templates")
@@ -302,7 +299,7 @@ cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
 cli.add_command(list_plugins)
 cli.add_command(rename_user)
-cli.add_command(openapi_yaml)
+cli.add_command(openapi_swagger)
 cli.add_command(generate_nginx_config)
 cli.add_command(import_vulnerability_templates)
 cli.add_command(settings)

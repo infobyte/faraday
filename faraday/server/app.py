@@ -13,6 +13,8 @@ from flask_limiter.util import get_remote_address
 
 import jwt
 from random import SystemRandom
+from faraday.server.api.modules.swagger import swagger_api
+
 
 from faraday.settings import load_settings
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
@@ -134,6 +136,7 @@ def register_blueprints(app):
     app.register_blueprint(export_data_api)
     app.register_blueprint(reports_settings_api)
     app.register_blueprint(dashboard_settings_api)
+    app.register_blueprint(swagger_api)
 
 
 def check_testing_configuration(testing, app):

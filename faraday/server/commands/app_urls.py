@@ -9,12 +9,15 @@ from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
 from faraday.server.web import get_app
+from faraday import __version__ as f_version
 import json
+from urllib.parse import urljoin
+from faraday.server.config import LOCAL_OPENAPI_FILE
 
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(format="yaml", server="localhost", no_servers=False, return_tags=False):
+def openapi_format(server, return_tags=False):
     extra_specs = {'info': {
         'description': 'The Faraday REST API enables you to interact with '
                        '[our server](https://github.com/infobyte/faraday).\n'
@@ -24,12 +27,16 @@ def openapi_format(format="yaml", server="localhost", no_servers=False, return_t
         'security': {"ApiKeyAuth": []}
     }
 
-    if not no_servers:
-        extra_specs['servers'] = [{'url': f'https://{server}/_api'}]
+    if not server.startswith('http'):
+        raise ValueError('Server must be an http url')
+
+    server = urljoin(server, "/_api")
+
+    extra_specs['servers'] = [{'url': server}]
 
     spec = APISpec(
-        title="Faraday API",
-        version="2",
+        title=f"Faraday {f_version} API",
+        version="v3",
         openapi_version="3.0.2",
         plugins=[FaradayAPIPlugin(), FlaskPlugin(), MarshmallowPlugin()],
         **extra_specs
@@ -66,10 +73,11 @@ def openapi_format(format="yaml", server="localhost", no_servers=False, return_t
         if return_tags:
             return sorted(tags)
 
-        if format.lower() == "yaml":
-            print(spec.to_yaml())
-        else:
-            print(json.dumps(spec.to_dict(), indent=2))
+        if not LOCAL_OPENAPI_FILE.parent.exists():
+            LOCAL_OPENAPI_FILE.parent.mkdir()
+
+        with open(LOCAL_OPENAPI_FILE, 'w') as f:
+            f.write(json.dumps(spec.to_dict(), indent=4))
 
 
 def show_all_urls():

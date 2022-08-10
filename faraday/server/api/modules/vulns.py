@@ -40,7 +40,7 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_cvss_references_and_policyviolations, get_workspace,
+    parse_cve_references_and_policyviolations, get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -544,7 +544,7 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
+        obj = parse_cve_references_and_policyviolations(obj, references, policyviolations,
                                                              cve_list)
 
         db.session.flush()

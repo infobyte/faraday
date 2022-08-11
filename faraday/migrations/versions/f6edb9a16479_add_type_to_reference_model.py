@@ -1,7 +1,7 @@
 """add type to reference model
 
 Revision ID: f6edb9a16479
-Revises: 4d7a8fdd94e4
+Revises: 581121b181d8
 Create Date: 2022-08-05 19:10:54.482312+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f6edb9a16479'
-down_revision = '4d7a8fdd94e4'
+down_revision = '581121b181d8'
 branch_labels = None
 depends_on = None
 

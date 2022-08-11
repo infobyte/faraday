@@ -207,7 +207,7 @@ class VulnerabilitySchema(AutoSchema):
     description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
-    refs = fields.List(fields.String(), attribute='references')
+    refs = fields.List(fields.Nested(ReferenceSchema, data_key='reference_instances'))
     cve = fields.List(fields.String(), attribute='cve')
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())

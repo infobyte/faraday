@@ -1,7 +1,7 @@
 """add owasp model
 
 Revision ID: 581121b181d8
-Revises: 4d7a8fdd94e4
+Revises: 47e53ddc0308
 Create Date: 2022-08-04 17:40:48.253598+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '581121b181d8'
-down_revision = '4d7a8fdd94e4'
+down_revision = '47e53ddc0308'
 branch_labels = None
 depends_on = None
 

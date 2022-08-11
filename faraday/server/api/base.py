@@ -38,6 +38,7 @@ from faraday.server.models import (
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
+    Reference,
 )
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
@@ -93,15 +94,18 @@ def get_group_by_and_sort_dir(model_class):
 
 
 def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
-    vuln.references = references
+    for reference in references:
+        reference_obj = Reference.query.filter(Reference.name == reference['name']).first()
+        if not reference_obj:
+            reference_obj = Reference(name=reference['name'], type=reference['type'], workspace_id=vuln.workspace_id)
+            db.session.add(reference_obj)
+        vuln.reference_instances.add(reference_obj)
+
     vuln.policy_violations = policyviolations
 
     # parse cve and reference. Should be temporal.
     parsed_cve_list = []
     for cve in cve_list:
-        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-    for cve in references:
         parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
 
     vuln.cve = parsed_cve_list

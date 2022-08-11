@@ -367,7 +367,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     assert not ('host' in kwargs and 'service' in kwargs)
 
     vuln_data.pop('_attachments', {})
-    references = vuln_data.pop('references', [])
+    references = vuln_data.pop('refs', [])
     cve_list = vuln_data.pop('cve', [])
     cwe_list = vuln_data.pop('cwe', [])
 

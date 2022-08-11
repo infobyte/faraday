@@ -18,7 +18,7 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow import Schema, fields, post_load, ValidationError, post_dump
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, or_, func
 from sqlalchemy.inspection import inspect
@@ -190,6 +190,11 @@ class OWASPSchema(AutoSchema):
     name = fields.String()
 
 
+class ReferenceSchema(AutoSchema):
+    name = fields.String()
+    type = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -248,12 +253,12 @@ class VulnerabilitySchema(AutoSchema):
             'issuetracker', 'description', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
-            'date', 'data', 'refs',
+            'date', 'data',
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp',
+            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances'
             )
 
     @staticmethod
@@ -279,6 +284,14 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_parent(obj):
         return obj.service_id or obj.host_id
+
+    @post_dump
+    def remove_reference_instances(self, data, **kwargs):
+        refs = data.pop('reference_instances')
+        data['refs'] = []
+        for ref in refs:
+            data['refs'].append({"name": ref.name, "type": ref.type})
+        return data
 
     @staticmethod
     def get_parent_type(obj):
@@ -404,13 +417,13 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'website', 'issuetracker', 'description', 'parent',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'pname', 'query', 'owner',
-            'path', 'date', 'data', 'response', 'refs',
+            'path', 'date', 'data', 'response',
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3'
+            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances'
         )
 
 
@@ -604,7 +617,7 @@ class VulnerabilityView(PaginatedMixin,
         # popped object has the expected type.
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
-        references = data.pop('references', [])
+        references = data.pop('refs', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
         cwe_list = data.pop('cwe', [])

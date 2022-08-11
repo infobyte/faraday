@@ -28,6 +28,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
 # Local application imports
+from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
     AutoSchema,
@@ -181,6 +182,10 @@ class CVSS3Schema(AutoSchema):
     modified_availability_impact = fields.String(attribute="cvss3_modified_availability_impact", dump_only=True, required=False)
 
 
+class CWESchema(AutoSchema):
+    name = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -196,7 +201,6 @@ class VulnerabilitySchema(AutoSchema):
     refs = fields.List(fields.String(), attribute='references')
     owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
-    cwe = fields.Method(serialize='get_cwe_refs', default=[])
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
@@ -205,6 +209,7 @@ class VulnerabilitySchema(AutoSchema):
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
                                required=True)
+    cwe = fields.List(fields.Pluck(CWESchema(), "name"))
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     easeofresolution = fields.String(
         attribute='ease_of_resolution',
@@ -254,10 +259,6 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_owasp_refs(obj):
         return [reference for reference in obj.references if 'owasp' in reference.lower()]
-
-    @staticmethod
-    def get_cwe_refs(obj):
-        return [reference for reference in obj.references if 'cwe' in reference.lower()]
 
     @staticmethod
     def get_attachments(obj):
@@ -599,6 +600,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        cwe_list = data.pop('cwe', [])
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -608,6 +610,7 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400)
 
         obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
+        obj.cwe = create_cwe(cwe_list)
 
         db.session.flush()
 
@@ -648,10 +651,21 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
 
+        cwe_list = data.pop('cwe', None)
+        if cwe_list:
+            # We need to instantiate cwe objects before updating
+            obj.cwe = create_cwe(cwe_list)
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         attachments = data.pop('_attachments', None if partial else {})
+
+        cwe_list = data.pop('cwe', None)
+        if cwe_list:
+            # We need to instantiate cwe objects before updating
+            obj.cwe = create_cwe(cwe_list)
+
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:
@@ -686,6 +700,7 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
+            joinedload(VulnerabilityGeneric.cwe),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -1234,6 +1249,10 @@ class VulnerabilityView(PaginatedMixin,
             custom_behaviour_fields['cvss2_vector_string'] = data.pop('cvss2_vector_string')
         if 'cvss3_vector_string' in data:
             custom_behaviour_fields['cvss3_vector_string'] = data.pop('cvss3_vector_string')
+
+        cwe_list = data.pop('cwe', None)
+        if cwe_list is not None:
+            custom_behaviour_fields['cwe'] = create_cwe(cwe_list)
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])

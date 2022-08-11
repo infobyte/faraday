@@ -1370,6 +1370,13 @@ class Service(Metadata):
         return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
 
 
+cwe_vulnerability_association = Table('cwe_vulnerability_association',
+                                      db.Model.metadata,
+                                      Column('cwe_id', Integer, ForeignKey('cwe.id')),
+                                      Column('vulnerability_id', Integer, ForeignKey('vulnerability.id'))
+                                      )
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUS_OPEN = 'open'
     STATUS_RE_OPENED = 're-opened'
@@ -1592,6 +1599,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss3_impact_score = get_impact_score(cvss_instance)
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
+
+    cwe = relationship('CWE', secondary=cwe_vulnerability_association)
 
     reference_instances = relationship(
         "Reference",
@@ -2642,6 +2651,14 @@ class TagObject(db.Model):
 
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
+
+
+class CWE(Metadata):
+    __tablename__ = 'cwe'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+
+    vulnerabilities = relationship('Vulnerability', secondary=cwe_vulnerability_association)
 
 
 class Comment(Metadata):

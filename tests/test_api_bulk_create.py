@@ -46,6 +46,7 @@ vuln_data = {
     },
     'refs': ['CVE-2021-1234', 'CVE-2020-0004'],
     'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
+    'cwe': ['cwe-123', 'CWE-485'],
     'tool': 'some_tool',
     'data': 'test data',
     'custom_fields': {},
@@ -190,6 +191,9 @@ def test_create_host_vuln(session, host):
     assert set(vuln.references) == set(vuln_data['refs'])
     assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
     assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
+    assert len(vuln.cwe) == len(vuln_data['cwe'])
+    # CWE should be saved uppercased. Let see..
+    assert {cwe.name for cwe in vuln.cwe} == {cwe.upper() for cwe in vuln_data['cwe']}
     assert vuln.tool == "some_tool"
 
 
@@ -209,6 +213,7 @@ def test_create_service_vuln(session, service):
     assert set(vuln.references) == set(vuln_data['refs'])
     assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
     assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
+    assert {cwe.name for cwe in vuln.cwe} == {cwe.upper() for cwe in vuln_data['cwe']}
     assert vuln.tool == "some_tool"
 
 

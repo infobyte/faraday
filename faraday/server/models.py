@@ -1377,6 +1377,13 @@ cwe_vulnerability_association = Table('cwe_vulnerability_association',
                                       )
 
 
+owasp_vulnerability_association = Table('owasp_vulnerability_association',
+                                        db.Model.metadata,
+                                        Column('owasp_id', Integer, ForeignKey('owasp.id')),
+                                        Column('vulnerability_id', Integer, ForeignKey('vulnerability.id'))
+                                        )
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUS_OPEN = 'open'
     STATUS_RE_OPENED = 're-opened'
@@ -1475,6 +1482,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cvss2_confidentiality_requirement = Column(Text, nullable=True)
     cvss2_integrity_requirement = Column(Text, nullable=True)
     cvss2_availability_requirement = Column(Text, nullable=True)
+
+    owasp = relationship('OWASP', secondary=owasp_vulnerability_association)
 
     @hybrid_property
     def cvss2_vector_string(self):
@@ -1855,6 +1864,14 @@ class Reference(Metadata):
     def parent(self):
         # TODO: fix this property
         return
+
+
+class OWASP(Metadata):
+    __tablename__ = 'owasp'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+
+    vulnerabilities = relationship('Vulnerability', secondary=owasp_vulnerability_association)
 
 
 class ReferenceVulnerabilityAssociation(db.Model):

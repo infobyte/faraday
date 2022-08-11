@@ -186,6 +186,10 @@ class CWESchema(AutoSchema):
     name = fields.String()
 
 
+class OWASPSchema(AutoSchema):
+    name = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -199,10 +203,10 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
-    owasp = fields.Method(serialize='get_owasp_refs', default=[])
     cve = fields.List(fields.String(), attribute='cve')
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
+    owasp = fields.List(fields.Pluck(OWASPSchema(), "name"), dump_only=True)
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
@@ -255,10 +259,6 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_type(obj):
         return obj.__class__.__name__
-
-    @staticmethod
-    def get_owasp_refs(obj):
-        return [reference for reference in obj.references if 'owasp' in reference.lower()]
 
     @staticmethod
     def get_attachments(obj):
@@ -317,6 +317,13 @@ class VulnerabilitySchema(AutoSchema):
 
             raise ValidationError("Invalid parent type")
         return value
+
+    @post_load
+    def post_load_owasp(self, data, **kwargs):
+        owasp = data.pop('owasp', None)
+        if owasp:
+            data['owasp'] = [item['name'] for item in owasp]
+        return data
 
     @post_load
     def post_load_impact(self, data, **kwargs):
@@ -701,6 +708,9 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
             joinedload(VulnerabilityGeneric.cwe),
+            joinedload(VulnerabilityGeneric.owasp),
+            joinedload(Vulnerability.owasp),
+            joinedload(VulnerabilityWeb.owasp),
         ]
 
         if flask.request.args.get('get_evidence'):

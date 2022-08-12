@@ -107,7 +107,7 @@ class ReportsManager(Thread):
         logger.info("Reports Manager Thread [Start]")
         while not self.__event.is_set():
             try:
-                tpl: Tuple[str, int, Path, int, int, bool, bool, list, list] = \
+                tpl: Tuple[str, int, Path, int, int, bool, bool, list, list, list] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
 
                 workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag,\

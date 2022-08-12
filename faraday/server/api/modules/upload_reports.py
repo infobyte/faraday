@@ -88,9 +88,6 @@ class UploadReportView(GenericWorkspacedView):
         dns_resolution = True if request.form.get('dns_resolution') in ("True", "true")\
             else False  # pylint: disable=R1719
 
-        vuln_tag = request.form.get('vuln_tag', [""])[0].split(",")
-        host_tag = request.form.get('host_tag', [""])[0].split(",")
-        service_tag = request.form.get('service_tag', [""])[0].split(",")
         if report_file:
 
             chars = string.ascii_uppercase + string.digits
@@ -142,9 +139,9 @@ class UploadReportView(GenericWorkspacedView):
                             flask_login.current_user.id,
                             ignore_info,
                             dns_resolution,
-                            vuln_tag,
-                            host_tag,
-                            service_tag
+                            None,
+                            None,
+                            None
                         )
                     )
                     return make_response(

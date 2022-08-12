@@ -575,6 +575,7 @@ class BulkCreateView(GenericWorkspacedView):
                     False,
                     False,
                     None,
+                    None,
                     None
                 )
             )

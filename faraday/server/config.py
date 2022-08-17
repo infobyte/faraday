@@ -9,6 +9,7 @@ import logging
 import os
 import shutil
 from configparser import ConfigParser
+from logging import DEBUG, INFO
 from pathlib import Path
 
 
@@ -16,7 +17,7 @@ CONST_FARADAY_HOME_PATH = Path(
     os.getenv('FARADAY_HOME', Path('~/').expanduser())
 ) / '.faraday'
 
-LOGGING_LEVEL = logging.INFO
+LOGGING_LEVEL = INFO
 
 FARADAY_BASE = Path(__file__).parent.parent
 FARADAY_SERVER_SESSIONS_DIR = CONST_FARADAY_HOME_PATH / 'session'
@@ -72,7 +73,7 @@ def parse_and_bind_configuration():
 
 
 def is_debug_mode():
-    return LOGGING_LEVEL is logging.DEBUG
+    return LOGGING_LEVEL is DEBUG
 
 
 class ConfigSection:

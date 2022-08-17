@@ -29,6 +29,7 @@ from depot.manager import DepotManager
 
 # Local application imports
 from faraday.server.utils.cwe import create_cwe
+from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
     AutoSchema,
@@ -676,16 +677,15 @@ class VulnerabilityView(PaginatedMixin,
             # We need to instantiate cwe objects before updating
             obj.cwe = create_cwe(cwe_list)
 
+        reference_list = data.pop('refs', None)
+        if reference_list:
+            # We need to instantiate reference objects before updating
+            obj.reference_instances = create_reference(reference_list, obj.workspace_id)
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         attachments = data.pop('_attachments', None if partial else {})
-
-        cwe_list = data.pop('cwe', None)
-        if cwe_list:
-            # We need to instantiate cwe objects before updating
-            obj.cwe = create_cwe(cwe_list)
-
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:
@@ -1276,6 +1276,10 @@ class VulnerabilityView(PaginatedMixin,
         cwe_list = data.pop('cwe', None)
         if cwe_list is not None:
             custom_behaviour_fields['cwe'] = create_cwe(cwe_list)
+
+        reference_list = data.pop('refs', None)
+        if reference_list is not None:
+            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, data['workspace_id'])
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])

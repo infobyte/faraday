@@ -38,7 +38,6 @@ from faraday.server.models import (
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
-    Reference,
 )
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
@@ -47,6 +46,7 @@ from faraday.server.utils.database import (
     not_null_constraint_violation,
 )
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.config import faraday_server
 from faraday.server.models import CVE
@@ -94,16 +94,11 @@ def get_group_by_and_sort_dir(model_class):
 
 
 def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
-    for reference in references:
-        reference_obj = Reference.query.filter(Reference.name == reference['name']).first()
-        if not reference_obj:
-            reference_obj = Reference(name=reference['name'], type=reference['type'], workspace_id=vuln.workspace_id)
-            db.session.add(reference_obj)
-        vuln.reference_instances.add(reference_obj)
+    vuln.reference_instances = create_reference(references, vuln.workspace_id)
 
     vuln.policy_violations = policyviolations
 
-    # parse cve and reference. Should be temporal.
+    # TODO: Check format with letters at the end CVE-2000-1234XXX. For now we are removing them from the string.
     parsed_cve_list = []
     for cve in cve_list:
         parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())

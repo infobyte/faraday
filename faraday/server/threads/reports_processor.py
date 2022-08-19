@@ -18,7 +18,7 @@ from faraday_plugins.plugins.manager import PluginsManager
 # Local application imports
 from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 from faraday.server.config import faraday_server
-from faraday.server.models import Workspace, Command, User
+from faraday.server.models import Workspace, Command, User, db
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
 
@@ -62,8 +62,11 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
                     vulns_data = plugin.get_data()
                     del vulns_data['command']['duration']
                 except Exception as e:
-                    logger.error("Processing Error: %s", e)
+                    logger.error(f"Processing Error: {e}")
                     logger.exception(e)
+                    command = Command.query.filter_by(id=command_id).first()
+                    command.command = "error"
+                    db.session.commit()
                     return
             else:
                 logger.error(f"No plugin detected for report [{file_path}]")

@@ -3,14 +3,15 @@
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
+# Related third party imports
 import click
 
+# Local application imports
+import faraday.server.config
+from faraday.server.commands.initdb import InitDB
 from faraday.server.models import db
 from faraday.server.web import get_app
-from faraday.server.commands.initdb import InitDB
-import faraday.server.config
 
 
 def reset_db_all():
@@ -36,7 +37,7 @@ def reset_db():
 
 
 @click.command()
-@click.option('--confirm/--no-confirme', prompt='Confirm database reset?')
+@click.option('--confirm/--not-confirm', prompt='Confirm database reset?')
 def main(confirm):
     if confirm:
         reset_db()

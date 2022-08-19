@@ -1,6 +1,16 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2020  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import logging
 import threading
+
+# Related third party imports
 import requests
+
+# Local application imports
 import faraday
 
 logger = logging.getLogger(__name__)

@@ -1,8 +1,16 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import functools
-from flask import Blueprint
-from flask_socketio import emit, disconnect
 import logging
+
+# Related third party imports
+from flask import Blueprint
 from flask_login import current_user
+from flask_socketio import emit, disconnect
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +29,6 @@ def authenticated_only(f):
 
 
 @authenticated_only
-def on_connect(self):
+def on_connect():
     logger.debug(f'{current_user.username} connected')
     emit('connected', {'data': f'{current_user.username} connected successfully to notifications namespace'})

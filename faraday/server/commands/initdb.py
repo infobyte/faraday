@@ -1,54 +1,50 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-
+# Standard library imports
 import getpass
+import os
 import string
 import uuid
-import os
 import sys
+from configparser import ConfigParser, NoSectionError
+from random import SystemRandom
+from subprocess import Popen  # nosec
+from tempfile import TemporaryFile
+
+# Related third party imports
 import click
 import psycopg2
-from alembic.config import Config
 from alembic import command
-from random import SystemRandom
-from tempfile import TemporaryFile
-from subprocess import Popen  # nosec
-
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.sql import text
-
-from faraday.server.utils.database import is_unique_constraint_violation
-
-from configparser import ConfigParser, NoSectionError
-
+from alembic.config import Config
+from colorama import Fore, init
 from flask import current_app
 from flask_security.utils import hash_password
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
+from sqlalchemy.sql import text
 
-from colorama import init
-from colorama import Fore
-from sqlalchemy.exc import OperationalError, ProgrammingError
-
+# Local application imports
 import faraday.server.config
-from faraday.server.config import CONST_FARADAY_HOME_PATH
-from faraday.server.config import LOCAL_CONFIG_FILE, FARADAY_BASE
+from faraday.server.config import CONST_FARADAY_HOME_PATH, LOCAL_CONFIG_FILE, FARADAY_BASE
+from faraday.server.utils.database import is_unique_constraint_violation
 
 init()
 
 
-class InitDB():
+class InitDB:
 
-    def _check_current_config(self, config):
+    @staticmethod
+    def _check_current_config(config):
         try:
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
                 reconfigure = input(
-                    f'Database section {Fore.YELLOW} already found{Fore.WHITE}. Do you want to reconfigure database? (yes/no) ')
+                    f'Database section {Fore.YELLOW} already found{Fore.WHITE}. '
+                    f'Do you want to reconfigure database? (yes/no) ')
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -103,7 +99,8 @@ class InitDB():
             print('User cancelled.')
             sys.exit(1)
 
-    def _create_roles(self, conn_string):
+    @staticmethod
+    def _create_roles(conn_string):
         engine = create_engine(conn_string)
         try:
             statement = text(
@@ -113,7 +110,7 @@ class InitDB():
             )
             connection = engine.connect()
             connection.execute(statement)
-        except sqlalchemy.exc.IntegrityError as ex:
+        except IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
                 print(
@@ -125,14 +122,16 @@ class InitDB():
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise
 
-    def _create_initial_notifications_config(self):
-        from faraday.server.models import (db,  # pylint:disable=import-outside-toplevel
-                                           Role,  # pylint:disable=import-outside-toplevel
-                                           NotificationSubscription,  # pylint:disable=import-outside-toplevel
-                                           NotificationSubscriptionWebSocketConfig,  # pylint:disable=import-outside-toplevel
-                                           EventType,  # pylint:disable=import-outside-toplevel
-                                           User,  # pylint:disable=import-outside-toplevel
-                                           ObjectType)  # pylint:disable=import-outside-toplevel
+    @staticmethod
+    def _create_initial_notifications_config():
+        from faraday.server.models \
+            import (db,  # pylint:disable=import-outside-toplevel
+                    Role,  # pylint:disable=import-outside-toplevel
+                    NotificationSubscription,  # pylint:disable=import-outside-toplevel
+                    NotificationSubscriptionWebSocketConfig,  # pylint:disable=import-outside-toplevel
+                    EventType,  # pylint:disable=import-outside-toplevel
+                    User,  # pylint:disable=import-outside-toplevel
+                    ObjectType)  # pylint:disable=import-outside-toplevel
 
         admin = User.ADMIN_ROLE
         pentester = User.PENTESTER_ROLE
@@ -192,7 +191,13 @@ class InitDB():
                        ('delete_host', False)
                        ]
 
-        default_initial_enabled_notifications_config = ['new_workspace', 'update_executivereport', 'new_agentexecution', 'new_command', 'new_comment']
+        default_initial_enabled_notifications_config = [
+            'new_workspace',
+            'update_executivereport',
+            'new_agentexecution',
+            'new_command',
+            'new_comment'
+        ]
 
         for event_type in event_types:
             enabled = False
@@ -280,38 +285,34 @@ class InitDB():
                 "role_id": role_id
             }
             connection.execute(text("INSERT INTO roles_users(user_id, role_id) VALUES (:user_id, :role_id)"), **params)
-        except sqlalchemy.exc.IntegrityError as ex:
+        except IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
                 already_created = True
-                print(
-                    "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
-                        yellow=Fore.YELLOW, white=Fore.WHITE))
+                print(f"{Fore.YELLOW}WARNING{Fore.WHITE}: Faraday administrator user already exists.")
             else:
-                print(
-                    "{yellow}WARNING{white}: Can't create administrator user.".format(
-                        yellow=Fore.YELLOW, white=Fore.WHITE))
+                print(f"{Fore.YELLOW}WARNING{Fore.WHITE}: Can't create administrator user.")
                 raise
         if not already_created:
-            print("Admin user created with \n\n{red}username: {white}faraday \n"
-                  "{red}password:{white} {"
-                  "user_password} \n".format(user_password=user_password,
-                                             white=Fore.WHITE, red=Fore.RED))
+            print(f"Admin user created with \n\n{Fore.RED}username: {Fore.WHITE}faraday \n "
+                  f"{Fore.RED}password:{Fore.WHITE} {user_password} \n")
 
-    def _configure_existing_postgres_user(self):
+    @staticmethod
+    def _configure_existing_postgres_user():
         username = input('Please enter the postgresql username: ')
         password = getpass.getpass('Please enter the postgresql password: ')
 
         return username, password
 
-    def _check_psql_output(self, current_psql_output_file, process_status):
+    @staticmethod
+    def _check_psql_output(current_psql_output_file, process_status):
         current_psql_output_file.seek(0)
         psql_output = current_psql_output_file.read().decode('utf-8')
         if 'unknown user: postgres' in psql_output:
             print(f'ERROR: Postgres user not found. Did you install package {Fore.BLUE}postgresql{Fore.WHITE}?')
         elif 'could not connect to server' in psql_output:
-            print(
-                f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
+            print(f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. '
+                  f'Please verify that it is running in port 5432 before executing setup script.')
         elif process_status > 0:
             current_psql_output_file.seek(0)
             print('ERROR: ' + psql_output)
@@ -320,7 +321,8 @@ class InitDB():
             current_psql_output_file.close()  # delete temp file
             sys.exit(process_status)
 
-    def generate_random_pw(self, pwlen):
+    @staticmethod
+    def generate_random_pw(pwlen):
         rng = SystemRandom()
         return "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(pwlen)])
 
@@ -329,9 +331,8 @@ class InitDB():
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
         """
-        print(
-            'This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(
-                blue=Fore.BLUE, white=Fore.WHITE))
+        print(f'This script will {Fore.BLUE} create a new postgres user {Fore.WHITE} and {Fore.BLUE} '
+              f'save faraday-server settings {Fore.WHITE}(server.ini).')
         username = os.environ.get("FARADAY_DATABASE_USER", 'faraday_postgresql')
         postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
@@ -352,17 +353,17 @@ class InitDB():
 
             try:
                 if not getattr(faraday.server.config, 'database', None):
-                    print(
-                        'Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
-                    print(
-                        'Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    print('Manual configuration? \n faraday_postgresql was found in PostgreSQL, '
+                          'but no connection string was found in server.ini.')
+                    print('Please configure [database] section with correct postgresql string. Ex. '
+                          'postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
                     sys.exit(1)
                 try:
                     password = faraday.server.config.database.connection_string.split(':')[2].split('@')[0]
                 except AttributeError:
                     print('Could not find connection string.')
-                    print(
-                        'Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    print('Please configure [database] section with correct postgresql string. Ex. '
+                          'postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
                     sys.exit(1)
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,
@@ -374,17 +375,15 @@ class InitDB():
                 connection.close()
             except psycopg2.Error as e:
                 if 'authentication failed' in str(e):
-                    print('{red}ERROR{white}: User {username} already '
-                          'exists'.format(white=Fore.WHITE,
-                                          red=Fore.RED,
-                                          username=username))
+                    print(f'{Fore.RED}ERROR{Fore.WHITE}: User {username} already exists')
                     sys.exit(1)
                 else:
                     raise
             return_code = 0
         return username, password, return_code
 
-    def _create_database(self, database_name, username, psql_log_file):
+    @staticmethod
+    def _create_database(database_name, username, psql_log_file):
         """
              This step uses the createdb command to add a new database.
         """
@@ -405,7 +404,8 @@ class InitDB():
             return_code = 0
         return database_name, return_code
 
-    def _save_config(self, config, username, password, database_name, hostname):
+    @staticmethod
+    def _save_config(config, username, password, database_name, hostname):
         """
              This step saves database configuration to server.ini
         """
@@ -434,7 +434,7 @@ class InitDB():
 
         if exists:
             print("Faraday tables already exist in the database. No tables will "
-                  "be created. If you want to ugprade the schema to the latest "
+                  "be created. If you want to upgrade the schema to the latest "
                   "version, you should run \"faraday-manage migrate\".")
             return
 
@@ -442,8 +442,8 @@ class InitDB():
             db.create_all()
         except OperationalError as ex:
             if 'could not connect to server' in str(ex):
-                print(
-                    f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
+                print(f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. '
+                      f'Please verify that it is running in port 5432 before executing setup script.')
                 sys.exit(1)
             elif 'password authentication failed' in str(ex):
                 print('ERROR: ')
@@ -456,8 +456,8 @@ class InitDB():
             sys.exit(1)
         except ImportError as ex:
             if 'psycopg2' in str(ex):
-                print(
-                    f'ERROR: Missing python depency {Fore.RED}psycopg2{Fore.WHITE}. Please install it with {Fore.BLUE}pip install psycopg2')
+                print(f'ERROR: Missing python dependency {Fore.RED}psycopg2{Fore.WHITE}. '
+                      f'Please install it with {Fore.BLUE}pip install psycopg2')
                 sys.exit(1)
             else:
                 raise

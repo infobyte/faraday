@@ -1,34 +1,33 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
+# Standard library imports
+import http.cookies
 import json
 import logging
-import itsdangerous
-
-import http.cookies
 from collections import defaultdict
 from queue import Empty
 
+# Related third party imports
+import itsdangerous
 import txaio
-
-from faraday.server.utils.database import get_or_create
 
 txaio.use_twisted()
 
 from twisted.internet import reactor
 from sqlalchemy.orm.exc import NoResultFound
-
 from autobahn.twisted.websocket import (
     WebSocketServerFactory,
     WebSocketServerProtocol
 )
 
-from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
+# Local application imports
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
+from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
+from faraday.server.utils.database import get_or_create
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +202,7 @@ class WorkspaceServerFactory(WebSocketServerFactory):
     def tick(self):
         """
             Uses changes_queue to broadcast messages to clients.
-            broadcast method knowns each client workspace.
+            broadcast method knows each client workspace.
         """
         try:
             msg = changes_queue.get_nowait()
@@ -222,12 +221,14 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         logger.debug(f'Leave workspace {workspace_name}')
         self.workspace_clients[workspace_name].remove(client)
 
-    def join_agent(self, agent_connection, agent):
+    @staticmethod
+    def join_agent(agent_connection, agent):
         logger.info(f"Agent {agent.id} joined!")
         connected_agents[agent.id] = agent_connection
         return True
 
-    def leave_agent(self, agent_connection, agent):
+    @staticmethod
+    def leave_agent(agent_connection, agent):
         logger.info(f"Agent {agent.id} left")
         connected_agents.pop(agent.id)
         return True
@@ -243,7 +244,8 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                     self.leave_workspace(client, workspace_name)
                     return
 
-    def unregister_agent(self, protocol):
+    @staticmethod
+    def unregister_agent(protocol):
         for (key, value) in connected_agents.copy().items():
             if value == protocol:
                 del connected_agents[key]

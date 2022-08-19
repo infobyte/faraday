@@ -1,36 +1,39 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import logging
 import multiprocessing
 import sys
-import logging
 from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, SIGUSR1, signal
 
+# Related third party imports
 import twisted.web
-from twisted.web.resource import Resource, ForbiddenResource
-
+from autobahn.twisted.websocket import listenWS
 from twisted.internet import reactor, error
+from twisted.web.http import proxiedLogFormatter
+from twisted.web.resource import Resource, ForbiddenResource
 from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.util import Redirect
-from twisted.web.http import proxiedLogFormatter
 from twisted.web.wsgi import WSGIResource
-from autobahn.twisted.websocket import (
-    listenWS
-)
 
+# Local application imports
 import faraday.server.config
-
-from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.app import create_app
+from faraday.server.config import (
+    CONST_FARADAY_HOME_PATH,
+    faraday_server as server_config,
+)
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
-from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
 
-from faraday.server.config import faraday_server as server_config
 FARADAY_APP = None
 
 logger = logging.getLogger(__name__)
@@ -94,13 +97,16 @@ class WebServer:
         self.root_resource.putChild(
             WebServer.API_URL_PATH, self.__build_api_resource())
 
-    def __build_web_resource(self):
+    @staticmethod
+    def __build_web_resource():
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
 
-    def __build_api_resource(self):
+    @staticmethod
+    def __build_api_resource():
         return FaradayWSGIResource(reactor, reactor.getThreadPool(), get_app())
 
-    def __build_websockets_resource(self):
+    @staticmethod
+    def __build_websockets_resource():
         url = f'ws://{server_config.bind_address}:{server_config.websocket_port}/websockets'
         logger.info(f'Starting websocket server at port '
                     f'{server_config.websocket_port} with bind address {server_config.bind_address}.')
@@ -108,7 +114,8 @@ class WebServer:
         factory.protocol = BroadcastServerProtocol
         return factory
 
-    def install_signal(self):
+    @staticmethod
+    def install_signal():
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
             signal(sig, SIG_DFL)
 
@@ -158,9 +165,10 @@ class WebServer:
             try:
                 listenWS(self.__build_websockets_resource(), interface=server_config.bind_address)
             except error.CannotListenError:
-                logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                logger.warning('Could not start websockets, address already open. '
+                               'This is ok is you wan to run multiple instances.')
             except Exception as ex:
-                logger.warn(f'Could not start websocket, error: {ex}')
+                logger.warning(f'Could not start websocket, error: {ex}')
             logger.info('Faraday Server is ready')
             reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             signal(SIGUSR1, self.restart_threads)

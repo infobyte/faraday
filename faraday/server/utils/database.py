@@ -1,15 +1,17 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import operator
 from functools import reduce
 
-import operator
 from sqlalchemy import distinct, Boolean
-from sqlalchemy.sql import func, asc, desc
-from sqlalchemy.sql.expression import ClauseElement
-from sqlalchemy.sql import expression
-from sqlalchemy.ext import compiler
 from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy.ext import compiler
+from sqlalchemy.sql import func, asc, desc
+from sqlalchemy.sql.expression import ClauseElement, FunctionElement
 
 
 class ORDER_DIRECTIONS:
@@ -175,7 +177,7 @@ def get_or_create(session, model, defaults=None, **kwargs):
         return instance, True
 
 
-class GroupConcat(expression.FunctionElement):
+class GroupConcat(FunctionElement):
     name = "group_concat"
 
 
@@ -193,7 +195,7 @@ def _group_concat_postgresql(element, compiler, **kw):
     return res
 
 
-class BooleanToIntColumn(expression.FunctionElement):
+class BooleanToIntColumn(FunctionElement):
 
     def __init__(self, expression):
         super().__init__()
@@ -313,7 +315,7 @@ UNIQUE_VIOLATION = '23505'
 def is_unique_constraint_violation(exception):
     from faraday.server.models import db  # pylint:disable=import-outside-toplevel
     if db.engine.dialect.name != 'postgresql':
-        # Not implemened for RDMS other than postgres, we can live without
+        # Not implemented for RDMS other than postgres, we can live without
         # this since it is just an extra check
         return True
     assert isinstance(exception.orig.pgcode, str)
@@ -326,7 +328,7 @@ NOT_NULL_VIOLATION = '23502'
 def not_null_constraint_violation(exception):
     from faraday.server.models import db  # pylint:disable=import-outside-toplevel
     if db.engine.dialect.name != 'postgresql':
-        # Not implemened for RDMS other than postgres, we can live without
+        # Not implemented for RDMS other than postgres, we can live without
         # this since it is just an extra check
         return True
     assert isinstance(exception.orig.pgcode, str)

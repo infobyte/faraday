@@ -249,19 +249,41 @@ def bulk_create(ws: Workspace,
     if 'command' in data:
         command = _update_command(command, data['command'])
 
-    total_hosts = len(data['hosts'])
-    if total_hosts > 0:
-        logger.debug(f"Needs to create {total_hosts} hosts...")
+    total_created_assets = db.session.query(Host).count()
+    hosts_to_create = len(data['hosts'])
+    created_hosts = 0
+    created_vulns = 0
+    created_services = 0
+    if hosts_to_create > 0:
+        logger.debug(f"Needs to create {hosts_to_create} hosts...")
         for host in data['hosts']:
-            _create_host(ws, host, command)
 
+            _vulns = len(host['vulnerabilities']) if 'vulnerabilities' in host else 0
+            _services = len(host['services']) if 'services' in host else 0
+
+            if 'services' in host:
+                for service in host['services']:
+                    _vulns += len(service['vulnerabilities'])
+
+            host_created = _create_host(ws, host, command)
+            if host_created:
+                created_hosts += 1
+                total_created_assets += 1
+                created_vulns += _vulns
+                created_services += _services
+
+        total_secs = time.time() - start_time
+        # creator, user, tool, sum_created_vulnerabilities, sum_created_vulnerability_web, workspace, agent_execution
+        logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} seconds, "
+                    f"{created_hosts} of {hosts_to_create} hosts created, "
+                    f"{created_vulns} vulnerabilities created, "
+                    f"{created_services} services created.")
+    else:
+        logger.info("No hosts to create")
     if 'command' in data and set_end_date:
         command.end_date = datetime.utcnow() if command.end_date is None else \
             command.end_date
         db.session.commit()
-
-    total_secs = time.time() - start_time
-    logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} secs")
 
 
 def _update_command(command: Command, command_data: dict):
@@ -300,6 +322,7 @@ def _create_host(ws, host_data, command=None):
         logger.debug(f"Needs to create {total_credentials} credentials...")
         for cred_data in credentials:
             _create_credential(ws, cred_data, command, host=host)
+    return created
 
 
 def _create_command_object_for(ws, created, obj, command):

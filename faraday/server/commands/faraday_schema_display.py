@@ -2,27 +2,31 @@
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
+# Standard library imports
 import sys
+
+# Related third party imports
 from sqlalchemy import MetaData
 from sqlalchemy.orm import class_mapper
 
-from faraday.server import models
+# Local application imports
 import faraday.server.config
+from faraday.server import models
 
 
-class DatabaseSchema():
+class DatabaseSchema:
 
     def run(self):
-        self._draw_entity_diagrama()
+        self._draw_entity_diagram()
         self._draw_uml_class_diagram()
 
     @property
     def description(self):
         return 'Generates an entity diagram and uml class diagram from the implemented model'
 
-    def _draw_entity_diagrama(self):
+    @staticmethod
+    def _draw_entity_diagram():
         # create the pydot graph object by autoloading all tables via a bound metadata object
         try:
             from sqlalchemy_schemadisplay import create_schema_graph  # pylint:disable=import-outside-toplevel
@@ -40,11 +44,12 @@ class DatabaseSchema():
             graph.write_png('entity_dbschema.png')  # write out the file
         except OSError as ex:
             if 'dot' in ex.strerror:
-                print('Rendering entity scheam requires dot. Please install it with: sudo apt install xdot')
+                print('Rendering entity schema requires dot. Please install it with: sudo apt install xdot')
                 sys.exit(1)
             raise
 
-    def _draw_uml_class_diagram(self):
+    @staticmethod
+    def _draw_uml_class_diagram():
         # lets find all the mappers in our model
         try:
             from sqlalchemy_schemadisplay import create_uml_graph  # pylint:disable=import-outside-toplevel

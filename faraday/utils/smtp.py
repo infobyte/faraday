@@ -1,9 +1,16 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2020  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import logging
 import smtplib
 import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+# Local application imports
 from faraday.settings.smtp import SMTPSettings
 
 logger = logging.getLogger(__name__)
@@ -27,9 +34,9 @@ class MailNotification:
         msg['Subject'] = subject
 
         msg.attach(MIMEText(body, 'plain'))
-        SMTP = smtplib.SMTP
+        smtp = smtplib.SMTP
         try:
-            with SMTP(host=self.smtp_host, port=self.smtp_port) as server_mail:
+            with smtp(host=self.smtp_host, port=self.smtp_port) as server_mail:
                 if self.smtp_ssl:
                     server_mail.starttls()
                 if self.smtp_username and self.smtp_password:

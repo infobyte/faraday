@@ -96,3 +96,12 @@ class TestDocs:
                         tags.add(tag)
 
         assert sorted(tags) == openapi_format(return_tags=True)
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestSwaggerApi:
+
+    def test_get_swagger_json(self, test_client):
+        response = test_client.get('/v3/swagger')
+        assert response.status_code == 200
+        assert response.content_type == 'application/json'

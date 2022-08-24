@@ -74,8 +74,8 @@ def show_urls():
     show_all_urls()
 
 
-@click.command(help="Show all URLs in OPENAPI format")
-@click.argument('server', required=True, default="http://localhost:5985")
+@click.command(help="Creates Faraday Swagger config file")
+@click.option('--server', prompt=True, default="http://localhost:5985")
 def openapi_swagger(server):
     openapi_format(server=server)
 

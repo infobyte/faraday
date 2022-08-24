@@ -55,9 +55,13 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User
+    User,
+    CommandObject,
+    Command
 )
-from faraday.server.utils.database import get_or_create
+from faraday.server.utils.database import (
+    get_or_create,
+)
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.schemas import (
@@ -170,6 +174,7 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
+    command_id = fields.Int(required=False)
 
     class Meta:
         model = Vulnerability
@@ -183,7 +188,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss', 'cwe', 'cve', 'owasp',
+            'cvss', 'cwe', 'cve', 'owasp', 'command_id'
             )
 
     @staticmethod
@@ -312,6 +317,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
     website = fields.String(default='')
     query = fields.String(attribute='query_string', default='')
     status_code = fields.Integer(allow_none=True)
+    command_id = fields.Int(required=False)
 
     class Meta:
         model = VulnerabilityWeb
@@ -326,7 +332,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss',
+            'cve', 'cwe', 'owasp', 'cvss', "command_id"
         )
 
 
@@ -523,6 +529,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        command_id = data.pop('command_id', [])
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -535,7 +542,14 @@ class VulnerabilityView(PaginatedMixin,
                                                              cve_list)
 
         db.session.flush()
-
+        if command_id:
+            command = Command.query.filter(Command.id == command_id).one_or_none()
+            if command:
+                command_object = CommandObject.create(
+                        obj=obj,
+                        command=command
+                        )
+                db.session.add(command_object)
         self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:

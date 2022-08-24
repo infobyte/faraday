@@ -66,16 +66,18 @@ Passing a method view function::
 
 
 """
+# Standard library imports
 import os
 import re
 import logging
-from flask import current_app
 
+# Related third party imports
 from apispec import BasePlugin, yaml_utils
 from apispec.exceptions import APISpecError
-
+from flask import current_app
 from flask.views import MethodView
 
+# Local application imports
 from faraday.server.api.base import GenericView
 
 RE_URL = re.compile(r"<(?:[^:<>]+:)?([^<>]+)>")
@@ -128,7 +130,8 @@ class FaradayAPIPlugin(BasePlugin):
                     class_model = 'No name'
                 # print(f'{view_name} / {class_model}')
                 logger.debug(
-                    f'{view_name} / {class_model} / {rule.methods} / {view_name} / {view_instance._get_schema_class().__name__}')
+                    f'{view_name} / {class_model} / {rule.methods} / {view_name} / '
+                    f'{view_instance._get_schema_class().__name__}')
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
                     view.__doc__.format(schema_class=view_instance._get_schema_class().__name__,
                                         class_model=class_model,
@@ -144,7 +147,8 @@ class FaradayAPIPlugin(BasePlugin):
                 class_model = 'No name'
             for method in rule.methods:
                 logger.debug(
-                    f'{view_name} / {class_model} / {rule.methods} / {method} / {view_instance._get_schema_class().__name__}')
+                    f'{view_name} / {class_model} / {rule.methods} / {method} / '
+                    f'{view_instance._get_schema_class().__name__}')
                 if method not in ['HEAD', 'OPTIONS'] or os.environ.get("FULL_API_DOC", None):
                     operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
                         view.__doc__.format(schema_class=view_instance._get_schema_class().__name__,

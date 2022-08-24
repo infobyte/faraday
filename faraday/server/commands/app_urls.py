@@ -1,16 +1,20 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
+# Standard library imports
+import json
+
+# Related third party imports
 import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
+
+# Local application imports
 from faraday.server.web import get_app
 from faraday import __version__ as f_version
-import json
 from urllib.parse import urljoin
 from faraday.server.config import LOCAL_OPENAPI_FILE
 
@@ -23,7 +27,8 @@ def openapi_format(server, return_tags=False):
                        '[our server](https://github.com/infobyte/faraday).\n'
                        'Use this API to interact or integrate with Faraday'
                        ' server. This page documents the REST API, with HTTP'
-                       ' response codes and example requests and responses.'},
+                       ' response codes and example requests and responses.'
+        },
         'security': {"ApiKeyAuth": []}
     }
 

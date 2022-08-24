@@ -1,5 +1,12 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 from typing import List
 
+# Local application imports
 from faraday.settings.base import LOADED_SETTINGS
 
 

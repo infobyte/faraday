@@ -1,56 +1,58 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import datetime
 import logging
 import os
 import string
-import datetime
-import bleach
-import pyotp
-import requests
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-import jwt
 from random import SystemRandom
 from faraday.server.api.modules.swagger import swagger_api
 
 
-from faraday.settings import load_settings
-from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from faraday.server.extensions import socketio
-from faraday.server.models import User, Role
-from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
-
+# Related third party imports
+import bleach
 import flask
 import flask_login
+import jwt
+import pyotp
+import requests
+from configparser import (
+    ConfigParser,
+    NoSectionError,
+    NoOptionError,
+    DuplicateSectionError,
+)
+from depot.manager import DepotManager
 from flask import Flask, session, g, request
 from flask.json import JSONEncoder
-from flask_sqlalchemy import get_debug_queries
-from flask_security import (
-    Security,
-    SQLAlchemyUserDatastore,
-)
+from flask_kvsession import KVSessionExtension
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_login import user_logged_out, user_logged_in
+from flask_security import Security, SQLAlchemyUserDatastore
 from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
     verify_and_update_password,
     verify_hash)
-
-from flask_kvsession import KVSessionExtension
+from flask_sqlalchemy import get_debug_queries
+from nplusone.ext.flask_sqlalchemy import NPlusOne
 from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator
-from flask_login import user_logged_out, user_logged_in
-from nplusone.ext.flask_sqlalchemy import NPlusOne
-from depot.manager import DepotManager
 
+# Local application imports
 import faraday.server.config
-# Load SQLAlchemy Events
 import faraday.server.events
+from faraday.server.config import CONST_FARADAY_HOME_PATH, LOCAL_CONFIG_FILE, copy_default_config_to_local
+from faraday.server.extensions import socketio
+from faraday.server.models import User, Role
+from faraday.server.utils.invalid_chars import remove_null_characters
 from faraday.server.utils.logger import LOGGING_HANDLERS
-from faraday.server.utils.invalid_chars import remove_null_caracters
-from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.settings import load_settings
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -162,7 +164,7 @@ def register_handlers(app):
             user_id = data["user_id"]
             user = User.query.filter_by(fs_uniquifier=user_id).first()
             if not user or not verify_hash(data['validation_check'], user.password):
-                logger.warn('Invalid authentication token. token invalid after password change')
+                logger.warning('Invalid authentication token. token invalid after password change')
                 return None
             return user
         except jwt.ExpiredSignatureError:
@@ -174,16 +176,17 @@ def register_handlers(app):
     def load_user_from_request(request):
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
             header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
+            auth_type, token = None, None
             try:
                 (auth_type, token) = header.split(None, 1)
             except ValueError:
-                logger.warn("Authorization header does not have type")
+                logger.warning("Authorization header does not have type")
                 flask.abort(401)
             auth_type = auth_type.lower()
             if auth_type == 'token':
                 user = verify_token(token)
                 if not user:
-                    logger.warn('Invalid authentication token.')
+                    logger.warning('Invalid authentication token.')
                     flask.abort(401)
                 else:
                     return user
@@ -198,7 +201,7 @@ def register_handlers(app):
                 if user and user.verify_and_update_password(password):
                     return user
             else:
-                logger.warn("Invalid authorization type")
+                logger.warning("Invalid authorization type")
                 flask.abort(401)
 
         # finally, return None if both methods did not login the user
@@ -225,12 +228,8 @@ def register_handlers(app):
         queries = get_debug_queries()
         max_query_time = max([q.duration for q in queries] or [0])
         if len(queries) > 15:
-            logger.warn("Too many queries done (%s) in endpoint %s. "
-                        "Maximum query time: %.2f",
-                        len(queries), flask.request.endpoint, max_query_time)
-            # from collections import Counter
-            # print '\n\n\n'.join(
-            #     map(str,Counter(q.statement for q in queries).most_common()))
+            logger.warning(f"Too many queries done ({len(queries)}) in endpoint {flask.request.endpoint}. "
+                           f"Maximum query time: {max_query_time:.2f}")
         return response
 
 
@@ -273,7 +272,7 @@ def expire_session(app, user):
     logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
 
 
-def user_logged_in_succesfull(app, user):
+def user_logged_in_successful(app, user):
     user_agent = request.headers.get('User-Agent')
     if user_agent.startswith('faraday-client/'):
         HOME_URL = "https://portal.faradaysec.com/api/v1/license_check"
@@ -347,7 +346,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
         'SECURITY_POST_RESET_VIEW': '/',
         'SECURITY_SEND_PASSWORD_RESET_EMAIL': True,
-        # For testing porpouse
+        # For testing purpose
         'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
@@ -381,13 +380,13 @@ def create_app(db_connection_string=None, testing=None):
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
     prefixed_store = PrefixDecorator('sessions_', store)
     KVSessionExtension(prefixed_store, app)
-    user_logged_in.connect(user_logged_in_succesfull, app)
+    user_logged_in.connect(user_logged_in_successful, app)
     user_logged_out.connect(expire_session, app)
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:
-        logger.warn(
-            'No storage section or path in the .faraday/config/server.ini. Setting the default value to .faraday/storage')
+        logger.warning('No storage section or path in the .faraday/config/server.ini. '
+                       'Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
 
     if not DepotManager.get('default'):
@@ -410,8 +409,8 @@ def create_app(db_connection_string=None, testing=None):
         logger.info(
             'Missing [database] section on server.ini. Please configure the database before running the server.')
     except NoOptionError:
-        logger.info(
-            'Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
+        logger.info('Missing connection_string on [database] section on server.ini. '
+                    'Please configure the database before running the server.')
 
     from faraday.server.models import db  # pylint:disable=import-outside-toplevel
     db.init_app(app)
@@ -489,7 +488,7 @@ class CustomLoginForm(LoginForm):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             return False
-        self.email.data = remove_null_caracters(self.email.data)
+        self.email.data = remove_null_characters(self.email.data)
 
         self.user = _datastore.find_user(username=self.email.data)
 
@@ -501,7 +500,7 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
 
-        self.user.password = remove_null_caracters(self.user.password)
+        self.user.password = remove_null_characters(self.user.password)
         if not self.user.password:
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")
@@ -509,7 +508,7 @@ class CustomLoginForm(LoginForm):
                            f"Reason: [Invalid Password]")
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
-        self.password.data = remove_null_caracters(self.password.data)
+        self.password.data = remove_null_characters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}] - "
                                  f"Reason: [Invalid Password]")

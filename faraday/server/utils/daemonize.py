@@ -1,20 +1,24 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-#
-# Copyright (C) 2005 Chad J. Schroeder
-# Modified version of a script created by Chad J. Schroeder, obtained from
-# http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+
+Copyright (C) 2005 Chad J. Schroeder
+Modified version of a script created by Chad J. Schroeder, obtained from
+https://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
+"""
+# Standard library imports
+import atexit
+import errno
+import logging
 import os
 import re
-import sys
-import errno
-import atexit
 import signal
-import logging
+import sys
 from functools import partial
 from pathlib import Path
 
+# Local application imports
 from faraday.server.config import (
     CONST_FARADAY_HOME_PATH,
     FARADAY_SERVER_PID_FILE,

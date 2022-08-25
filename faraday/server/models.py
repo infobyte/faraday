@@ -1500,11 +1500,38 @@ class VulnerabilityGeneric(VulnerabilityABC):
         self._cvss2_vector_string = vector_string
         self.set_cvss2_attrs()
 
+    def init_cvss2_attrs(self):
+        self._cvss2_vector_string = None
+        self.cvss2_base_score = None
+        self.cvss2_base_severity = None
+        self.cvss2_temporal_score = None
+        self.cvss2_temporal_severity = None
+        self.cvss2_environmental_score = None
+        self.cvss2_environmental_severity = None
+        self.cvss2_access_vector = None
+        self.cvss2_access_complexity = None
+        self.cvss2_authentication = None
+        self.cvss2_confidentiality_impact = None
+        self.cvss2_integrity_impact = None
+        self.cvss2_availability_impact = None
+        self.cvss2_exploitability = None
+        self.cvss2_remediation_level = None
+        self.cvss2_report_confidence = None
+        self.cvss2_collateral_damage_potential = None
+        self.cvss2_target_distribution = None
+        self.cvss2_confidentiality_requirement = None
+        self.cvss2_integrity_requirement = None
+        self.cvss2_availability_requirement = None
+        self.cvss2_exploitability_score = None
+        self.cvss2_impact_score = None
+        return None
+
     def set_cvss2_attrs(self):
         """
         Parse cvss2 and assign attributes
         """
         if not self.cvss2_vector_string:
+            self.init_cvss2_attrs()
             return None
         try:
             cvss_instance = cvss.CVSS2(self.cvss2_vector_string)
@@ -1573,11 +1600,46 @@ class VulnerabilityGeneric(VulnerabilityABC):
         self._cvss3_vector_string = vector_string
         self.set_cvss3_attrs()
 
+    def init_cvss3_attrs(self):
+        self._cvss3_vector_string = None
+        self.cvss3_base_score = None
+        self.cvss3_base_severity = None
+        self.cvss3_temporal_score = None
+        self.cvss3_temporal_severity = None
+        self.cvss3_environmental_score = None
+        self.cvss3_environmental_severity = None
+        self.cvss3_attack_vector = None
+        self.cvss3_attack_complexity = None
+        self.cvss3_privileges_required = None
+        self.cvss3_user_interaction = None
+        self.cvss3_scope = None
+        self.cvss3_confidentiality_impact = None
+        self.cvss3_integrity_impact = None
+        self.cvss3_availability_impact = None
+        self.cvss3_exploit_code_maturity = None
+        self.cvss3_remediation_level = None
+        self.cvss3_report_confidence = None
+        self.cvss3_confidentiality_requirement = None
+        self.cvss3_integrity_requirement = None
+        self.cvss3_availability_requirement = None
+        self.cvss3_modified_attack_vector = None
+        self.cvss3_modified_attack_complexity = None
+        self.cvss3_modified_privileges_required = None
+        self.cvss3_modified_user_interaction = None
+        self.cvss3_modified_scope = None
+        self.cvss3_modified_confidentiality_impact = None
+        self.cvss3_modified_integrity_impact = None
+        self.cvss3_modified_availability_impact = None
+        self.cvss3_exploitability_score = None
+        self.cvss3_impact_score = None
+        return None
+
     def set_cvss3_attrs(self):
         """
         Parse cvss2 and assign attributes
         """
         if not self.cvss3_vector_string:
+            self.init_cvss3_attrs()
             return None
 
         try:

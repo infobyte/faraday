@@ -1524,7 +1524,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         self.cvss2_availability_requirement = None
         self.cvss2_exploitability_score = None
         self.cvss2_impact_score = None
-        return None
 
     def set_cvss2_attrs(self):
         """
@@ -1632,7 +1631,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         self.cvss3_modified_availability_impact = None
         self.cvss3_exploitability_score = None
         self.cvss3_impact_score = None
-        return None
 
     def set_cvss3_attrs(self):
         """

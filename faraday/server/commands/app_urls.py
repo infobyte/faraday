@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+from pathlib import Path
+
 import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
@@ -17,7 +19,7 @@ from faraday.server.config import LOCAL_OPENAPI_FILE
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(server, return_tags=False):
+def openapi_format(server, modify_default, return_tags=False):
     extra_specs = {'info': {
         'description': 'The Faraday REST API enables you to interact with '
                        '[our server](https://github.com/infobyte/faraday).\n'
@@ -72,10 +74,14 @@ def openapi_format(server, return_tags=False):
         if return_tags:
             return sorted(tags)
 
-        if not LOCAL_OPENAPI_FILE.parent.exists():
-            LOCAL_OPENAPI_FILE.parent.mkdir()
+        if modify_default:
+            file_path = Path(__file__).parent.parent.parent / 'openapi' / 'faraday_swagger.json'
+        else:
+            file_path = LOCAL_OPENAPI_FILE
+            if not LOCAL_OPENAPI_FILE.parent.exists():
+                LOCAL_OPENAPI_FILE.parent.mkdir()
 
-        with open(LOCAL_OPENAPI_FILE, 'w') as f:
+        with open(file_path, 'w') as f:
             f.write(json.dumps(spec.to_dict(), indent=4))
 
 

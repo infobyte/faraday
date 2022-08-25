@@ -76,8 +76,9 @@ def show_urls():
 
 @click.command(help="Creates Faraday Swagger config file")
 @click.option('--server', prompt=True, default="http://localhost:5985")
-def openapi_swagger(server):
-    openapi_format(server=server)
+@click.option('--modify_default', default=False)
+def openapi_swagger(server, modify_default):
+    openapi_format(server=server, modify_default=modify_default)
 
 
 @click.command(help="Import Vulnerability templates")

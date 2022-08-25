@@ -13,21 +13,27 @@ from queue import Empty
 # Related third party imports
 import itsdangerous
 import txaio
-
 txaio.use_twisted()
-
-from twisted.internet import reactor
-from sqlalchemy.orm.exc import NoResultFound
+# pylint:disable=import-outside-level
 from autobahn.twisted.websocket import (
     WebSocketServerFactory,
     WebSocketServerProtocol
 )
+from sqlalchemy.orm.exc import NoResultFound
+from twisted.internet import reactor
 
 # Local application imports
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
-from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
+from faraday.server.models import (
+    db,
+    Workspace,
+    Agent,
+    Executor,
+    AgentExecution,
+)
 from faraday.server.utils.database import get_or_create
+# pylint:enable=import-outside-level
 
 logger = logging.getLogger(__name__)
 

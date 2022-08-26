@@ -124,14 +124,16 @@ class InitDB:
 
     @staticmethod
     def _create_initial_notifications_config():
-        from faraday.server.models \
-            import (db,  # pylint:disable=import-outside-toplevel
-                    Role,  # pylint:disable=import-outside-toplevel
-                    NotificationSubscription,  # pylint:disable=import-outside-toplevel
-                    NotificationSubscriptionWebSocketConfig,  # pylint:disable=import-outside-toplevel
-                    EventType,  # pylint:disable=import-outside-toplevel
-                    User,  # pylint:disable=import-outside-toplevel
-                    ObjectType)  # pylint:disable=import-outside-toplevel
+        # pylint:disable=import-outside-toplevel
+        from faraday.server.models import (
+            db,
+            Role,
+            NotificationSubscription,
+            NotificationSubscriptionWebSocketConfig,
+            EventType,
+            User,
+            ObjectType,
+        )
 
         admin = User.ADMIN_ROLE
         pentester = User.PENTESTER_ROLE

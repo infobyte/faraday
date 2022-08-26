@@ -357,7 +357,7 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
-        command_id = data.pop('command_id', [])
+        command_id = data.pop('command_id', None)
         host = super()._perform_create(data, **kwargs)
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name, host=host,

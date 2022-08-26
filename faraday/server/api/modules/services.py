@@ -152,7 +152,7 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspa
         }
 
     def _perform_create(self, data, **kwargs):
-        command_id = data.pop('command_id', [])
+        command_id = data.pop('command_id', None)
         port_number = data.get("port", "1")
         if not port_number.isdigit():
             abort(make_response(jsonify(message="Invalid Port number"), 400))

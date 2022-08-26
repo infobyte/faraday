@@ -527,7 +527,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
-        command_id = data.pop('command_id', [])
+        command_id = data.pop('command_id', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)

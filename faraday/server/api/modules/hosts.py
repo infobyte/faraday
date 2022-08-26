@@ -85,7 +85,7 @@ class HostSchema(AutoSchema):
     versions = fields.Method('get_service_version', dump_only=True)
     important = fields.Boolean(default=False)
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
-    command_id = fields.Int(required=False)
+    command_id = fields.Int(required=False, load_only=True)
 
     class Meta:
         model = Host

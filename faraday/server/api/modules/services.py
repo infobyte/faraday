@@ -118,7 +118,7 @@ class ServiceSchema(AutoSchema):
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials', 'vulns',
                   'name', 'version', '_id', 'port', 'ports',
-                  'metadata', 'summary', 'host_id')
+                  'metadata', 'summary', 'host_id', 'command_id')
 
 
 class ServiceFilterSet(FilterSet):
@@ -159,7 +159,7 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspa
         obj = super()._perform_create(data, **kwargs)
         if command_id:
             set_command_id(db.session, obj, True, command_id)
-            db.session.commit()
+        return obj
 
 
 ServiceView.register(services_api)

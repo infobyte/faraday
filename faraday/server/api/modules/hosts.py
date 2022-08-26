@@ -93,7 +93,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'important', 'severity_counts'
+                  'important', 'severity_counts', 'command_id'
                   )
 
     @staticmethod
@@ -363,7 +363,7 @@ class HostsView(PaginatedMixin,
             get_or_create(db.session, Hostname, name=name, host=host,
                           workspace=host.workspace)
         if command_id:
-            set_command_id(db.session, host, command_id)
+            set_command_id(db.session, host, True, command_id)
         db.session.commit()
         return host
 

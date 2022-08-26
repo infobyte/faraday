@@ -55,15 +55,14 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User,
-    CommandObject,
-    Command
+    User
 )
 from faraday.server.utils.database import (
     get_or_create,
 )
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.command import set_command_id
 from faraday.server.schemas import (
     MutableField,
     SeverityField,
@@ -174,7 +173,7 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
-    command_id = fields.Int(required=False)
+    command_id = fields.Int(required=False, load_only=True)
 
     class Meta:
         model = Vulnerability
@@ -317,7 +316,6 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
     website = fields.String(default='')
     query = fields.String(attribute='query_string', default='')
     status_code = fields.Integer(allow_none=True)
-    command_id = fields.Int(required=False)
 
     class Meta:
         model = VulnerabilityWeb
@@ -543,13 +541,7 @@ class VulnerabilityView(PaginatedMixin,
 
         db.session.flush()
         if command_id:
-            command = Command.query.filter(Command.id == command_id).one_or_none()
-            if command:
-                command_object = CommandObject.create(
-                        obj=obj,
-                        command=command
-                        )
-                db.session.add(command_object)
+            set_command_id(db.session, obj, True, command_id)
         self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:

@@ -23,6 +23,7 @@ from sqlalchemy import desc
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
+from faraday.server.utils.command import set_command_id
 from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
@@ -42,7 +43,6 @@ from faraday.server.schemas import (
     SelfNestedField,
 )
 from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
-
 host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,7 @@ class HostSchema(AutoSchema):
     versions = fields.Method('get_service_version', dump_only=True)
     important = fields.Boolean(default=False)
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
+    command_id = fields.Int(required=False)
 
     class Meta:
         model = Host
@@ -356,10 +357,13 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
+        command_id = data.pop('command_id', [])
         host = super()._perform_create(data, **kwargs)
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name, host=host,
                           workspace=host.workspace)
+        if command_id:
+            set_command_id(db.session, host, command_id)
         db.session.commit()
         return host
 

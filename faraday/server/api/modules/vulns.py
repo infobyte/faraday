@@ -57,9 +57,12 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     User
 )
-from faraday.server.utils.database import get_or_create
+from faraday.server.utils.database import (
+    get_or_create,
+)
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.command import set_command_id
 from faraday.server.schemas import (
     MutableField,
     SeverityField,
@@ -170,6 +173,7 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
+    command_id = fields.Int(required=False, load_only=True)
 
     class Meta:
         model = Vulnerability
@@ -183,7 +187,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss', 'cwe', 'cve', 'owasp',
+            'cvss', 'cwe', 'cve', 'owasp', 'command_id'
             )
 
     @staticmethod
@@ -326,7 +330,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss',
+            'cve', 'cwe', 'owasp', 'cvss', "command_id"
         )
 
 
@@ -523,6 +527,7 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        command_id = data.pop('command_id', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -535,7 +540,8 @@ class VulnerabilityView(PaginatedMixin,
                                                              cve_list)
 
         db.session.flush()
-
+        if command_id:
+            set_command_id(db.session, obj, True, command_id)
         self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:

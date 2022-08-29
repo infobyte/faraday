@@ -1,10 +1,14 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2021  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Related third party imports
 from marshmallow import fields
 
-from faraday.settings.base import Settings
+# Local application imports
 from faraday.server.api.base import AutoSchema
+from faraday.settings.base import Settings
 
 DEFAULT_SHOW_VULNS_BY_PRICE = False
 

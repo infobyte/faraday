@@ -1,22 +1,28 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import json
 import logging
 import os
-import threading
 from pathlib import Path
-from threading import Thread
 from queue import Queue, Empty
+from threading import Event, Thread
 from typing import Tuple, Optional
-import json
 
+# Related third party imports
 from faraday_plugins.plugins.manager import PluginsManager
-from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 
+# Local application imports
+from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
+from faraday.server.config import faraday_server
 from faraday.server.models import Workspace, Command, User
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
-from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)
-
 
 REPORTS_QUEUE = Queue()
 INTERVAL = 0.5
@@ -97,7 +103,7 @@ class ReportsManager(Thread):
     def __init__(self, upload_reports_queue, *args, **kwargs):
         super().__init__(name="ReportsManager-Thread", daemon=True, *args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
-        self.__event = threading.Event()
+        self.__event = Event()
 
     def stop(self):
         logger.info("Reports Manager Thread [Stopping...]")

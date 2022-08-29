@@ -1,23 +1,22 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-
-import json
+# Standard library imports
 import imghdr
+import json
 from tempfile import SpooledTemporaryFile
 
-from PIL import Image
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql.json import JSONB
-from depot.fields.upload import UploadedFile
-from depot.io.utils import file_from_content
-from depot.io.utils import INMEMORY_FILESIZE
-from depot.manager import DepotManager
-from webargs.core import ValidationError
+# Related third party imports
 import flask
+import sqlalchemy as sa
+from depot.fields.upload import UploadedFile
+from depot.io.utils import file_from_content, INMEMORY_FILESIZE
+from depot.manager import DepotManager
+from PIL import Image
+from sqlalchemy.dialects.postgresql.json import JSONB
+from webargs.core import ValidationError
 
 
 class FaradayUploadedFile(UploadedFile):
@@ -56,9 +55,10 @@ class FaradayUploadedFile(UploadedFile):
 
     def generate_thumbnail(self, content):
         content = file_from_content(content)
+        uploaded_image = None
         try:
             uploaded_image = Image.open(content)
-        except Exception:
+        except ValidationError:
             flask.abort(400, ValidationError(
                 {
                     'message': 'File Format',

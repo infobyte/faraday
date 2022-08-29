@@ -1,7 +1,8 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
-# See the file 'doc/LICENSE' for the license information
-
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 # Standard library imports
 import logging
 import math
@@ -818,7 +819,6 @@ class CustomAssociationSet(_AssociationSet):
     the value and the instance of the parent object
     """
 
-    # def __init__(self, lazy_collection, creator, getter, setter, parent):
     def __init__(self, lazy_collection, creator, value_attr, parent):
         """I have to override this method because the proxy_factory
         class takes different arguments than the hardcoded
@@ -1674,7 +1674,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    # TODO: Ver si el nombre deberia ser cvss_v2_id
+    # TODO: Determine if the variable name should be cvss_v2_id
     cvssv2_id = Column(
         Integer,
         ForeignKey('cvss_v2.id'),
@@ -1682,7 +1682,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
     cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
 
-    # TODO: Ver si el nombre deberia ser cvss_v3_id
+    # TODO: Determine if the variable name should be cvss_v3_id
     cvssv3_id = Column(
         Integer,
         ForeignKey('cvss_v3.id'),
@@ -2481,126 +2481,6 @@ class Methodology(Metadata):
         return
 
 
-# class TaskABC(Metadata):
-#     __abstract__ = True
-#
-#     id = Column(Integer, primary_key=True)
-#     name = NonBlankColumn(Text)
-#     description = BlankColumn(Text)
-#
-#
-# class TaskTemplate(TaskABC):
-#     __tablename__ = 'task_template'
-#     id = Column(Integer, primary_key=True)
-#
-#     __mapper_args__ = {
-#         'concrete': True
-#     }
-#
-#     template = relationship(
-#         'MethodologyTemplate',
-#         backref=backref('tasks', cascade="all, delete-orphan"))
-#     template_id = Column(
-#         Integer,
-#         ForeignKey('methodology_template.id'),
-#         index=True,
-#         nullable=False,
-#     )
-#
-#     # __table_args__ = (
-#     #     UniqueConstraint(template_id, name='uix_task_template_name_desc_template_delete'),
-#     # )
-#
-#
-# class TaskAssignedTo(db.Model):
-#     __tablename__ = "task_assigned_to_association"
-#     id = Column(Integer, primary_key=True)
-#     task_id = Column(
-#         Integer, ForeignKey('task.id'), nullable=False)
-#     task = relationship('Task')
-#
-#     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-#     user = relationship(
-#         'User',
-#         foreign_keys=[user_id],
-#         backref=backref('assigned_tasks', cascade="all, delete-orphan"))
-#
-#
-# class Task(TaskABC):
-#     STATUSES = [
-#         'new',
-#         'in progress',
-#         'review',
-#         'completed',
-#     ]
-#
-#     __tablename__ = 'task'
-#     id = Column(Integer, primary_key=True)
-#
-#     due_date = Column(DateTime, nullable=True)
-#     status = Column(Enum(*STATUSES, name='task_statuses'), nullable=True)
-#
-#     __mapper_args__ = {
-#         'concrete': True
-#     }
-#
-#     assigned_to = relationship(
-#         "User",
-#         secondary="task_assigned_to_association")
-#
-#     methodology_id = Column(
-#         Integer,
-#         ForeignKey('methodology.id'),
-#         index=True,
-#         nullable=False,
-#     )
-#     methodology = relationship(
-#         'Methodology',
-#         backref=backref('tasks', cascade="all, delete-orphan")
-#     )
-#
-#     template_id = Column(
-#         Integer,
-#         ForeignKey('task_template.id'),
-#         index=True,
-#         nullable=True,
-#     )
-#     template = relationship('TaskTemplate', backref='tasks')
-#
-#     # 1 workspace <--> N tasks
-#     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-#     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-#     workspace = relationship(
-#         'Workspace',
-#         backref=backref('tasks', cascade="all, delete-orphan")
-#     )
-#
-#     # __table_args__ = (
-#     #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
-#     # )
-#
-#     tag_instances = relationship(
-#         "Tag",
-#         secondary="tag_object",
-#         viewonly=True,
-#         # this avoid sqlalchemy to autocreate objects. assoc proxy creates objects.
-#         primaryjoin="and_(TagObject.object_id==Task.id, "
-#                     "TagObject.object_type=='task')",
-#         collection_class=set,
-#     )
-#
-#     tags = association_proxy(
-#         'tag_instances',
-#         'name',
-#         proxy_factory=CustomAssociationSet,
-#         creator=_build_associationproxy_creator_for_tags('Tag')
-#     )
-#
-#     @property
-#     def parent(self):
-#         return self.methodology
-#
-#
 project_task_user_association = db.Table('project_task_user_association',
                                          db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
                                          db.Column('user_id', db.Integer(),

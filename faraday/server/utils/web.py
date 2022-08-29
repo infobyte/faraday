@@ -1,10 +1,14 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-import gzip
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import functools
+import gzip
 from io import BytesIO as IO
 
+# Related third party imports
 from flask import after_this_request, request, abort, jsonify
 
 
@@ -49,8 +53,8 @@ def gzipped(f):
             response.direct_passthrough = False
 
             if (response.status_code < 200
-                or response.status_code >= 300
-                or 'Content-Encoding' in response.headers):
+                    or response.status_code >= 300
+                    or 'Content-Encoding' in response.headers):
                 return response
             gzip_buffer = IO()
             gzip_file = gzip.GzipFile(mode='wb',

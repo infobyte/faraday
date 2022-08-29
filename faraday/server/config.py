@@ -1,18 +1,15 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import errno
+import logging
 import os
 import shutil
-import errno
 from configparser import ConfigParser
-import logging
-
-from logging import (
-    DEBUG,
-    INFO,
-
-)
+from logging import DEBUG, INFO
 from pathlib import Path
 
 
@@ -101,7 +98,6 @@ class ConfigSection:
 
     @staticmethod
     def parse_section(section_name, __parser):
-        section = None
         if section_name == 'database':
             section = database
         elif section_name == 'faraday_server':

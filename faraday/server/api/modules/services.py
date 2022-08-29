@@ -12,7 +12,12 @@ from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
-from faraday.server.models import Host, Service, Workspace
+from faraday.server.models import (
+    Host,
+    Service,
+    Workspace,
+    db
+)
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
@@ -27,6 +32,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
+from faraday.server.utils.command import set_command_id
 
 services_api = Blueprint('services_api', __name__)
 
@@ -54,6 +60,7 @@ class ServiceSchema(AutoSchema):
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Service', dump_only=True)
     summary = fields.String(dump_only=True)
+    command_id = fields.Int(required=False, load_only=True)
 
     @staticmethod
     def load_ports(value):
@@ -111,7 +118,7 @@ class ServiceSchema(AutoSchema):
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials', 'vulns',
                   'name', 'version', '_id', 'port', 'ports',
-                  'metadata', 'summary', 'host_id')
+                  'metadata', 'summary', 'host_id', 'command_id')
 
 
 class ServiceFilterSet(FilterSet):
@@ -145,10 +152,14 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspa
         }
 
     def _perform_create(self, data, **kwargs):
+        command_id = data.pop('command_id', None)
         port_number = data.get("port", "1")
         if not port_number.isdigit():
             abort(make_response(jsonify(message="Invalid Port number"), 400))
-        return super()._perform_create(data, **kwargs)
+        obj = super()._perform_create(data, **kwargs)
+        if command_id:
+            set_command_id(db.session, obj, True, command_id)
+        return obj
 
 
 ServiceView.register(services_api)

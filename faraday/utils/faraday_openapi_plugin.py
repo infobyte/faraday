@@ -129,9 +129,8 @@ class FaradayAPIPlugin(BasePlugin):
                 else:
                     class_model = 'No name'
                 # print(f'{view_name} / {class_model}')
-                logger.debug(
-                    f'{view_name} / {class_model} / {rule.methods} / {view_name} / '
-                    f'{view_instance._get_schema_class().__name__}')
+                logger.debug(f'{view_name} / {class_model} / {rule.methods} / {view_name} / '
+                             f'{view_instance._get_schema_class().__name__}')
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
                     view.__doc__.format(schema_class=view_instance._get_schema_class().__name__,
                                         class_model=class_model,
@@ -146,9 +145,8 @@ class FaradayAPIPlugin(BasePlugin):
             else:
                 class_model = 'No name'
             for method in rule.methods:
-                logger.debug(
-                    f'{view_name} / {class_model} / {rule.methods} / {method} / '
-                    f'{view_instance._get_schema_class().__name__}')
+                logger.debug(f'{view_name} / {class_model} / {rule.methods} / {method} / '
+                             f'{view_instance._get_schema_class().__name__}')
                 if method not in ['HEAD', 'OPTIONS'] or os.environ.get("FULL_API_DOC", None):
                     operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
                         view.__doc__.format(schema_class=view_instance._get_schema_class().__name__,

@@ -19,7 +19,7 @@ from faraday.server.config import LOCAL_OPENAPI_FILE
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(server, modify_default, return_tags=False):
+def openapi_format(server, modify_default=False, return_tags=False):
     extra_specs = {'info': {
         'description': 'The Faraday REST API enables you to interact with '
                        '[our server](https://github.com/infobyte/faraday).\n'

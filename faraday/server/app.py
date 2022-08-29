@@ -8,6 +8,12 @@ import datetime
 import logging
 import os
 import string
+from configparser import (
+    ConfigParser,
+    NoSectionError,
+    NoOptionError,
+    DuplicateSectionError,
+)
 from random import SystemRandom
 
 # Related third party imports
@@ -17,12 +23,6 @@ import flask_login
 import jwt
 import pyotp
 import requests
-from configparser import (
-    ConfigParser,
-    NoSectionError,
-    NoOptionError,
-    DuplicateSectionError,
-)
 from depot.manager import DepotManager
 from flask import Flask, session, g, request
 from flask.json import JSONEncoder
@@ -36,21 +36,31 @@ from flask_security.utils import (
     _datastore,
     get_message,
     verify_and_update_password,
-    verify_hash)
+    verify_hash,
+)
 from flask_sqlalchemy import get_debug_queries
-from nplusone.ext.flask_sqlalchemy import NPlusOne
-from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator
+from simplekv.fs import FilesystemStore
 
 # Local application imports
 import faraday.server.config
 import faraday.server.events
-from faraday.server.config import CONST_FARADAY_HOME_PATH, LOCAL_CONFIG_FILE, copy_default_config_to_local
+from faraday.server.config import (
+    CONST_FARADAY_HOME_PATH,
+    LOCAL_CONFIG_FILE,
+    copy_default_config_to_local,
+)
 from faraday.server.extensions import socketio
-from faraday.server.models import User, Role
+from faraday.server.models import (
+    User,
+    Role,
+)
 from faraday.server.utils.invalid_chars import remove_null_characters
 from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.settings import load_settings
+
+# Don't move this import from here
+from nplusone.ext.flask_sqlalchemy import NPlusOne
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')

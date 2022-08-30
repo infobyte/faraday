@@ -15,6 +15,8 @@ from configparser import (
     DuplicateSectionError,
 )
 from random import SystemRandom
+from faraday.server.api.modules.swagger import swagger_api
+
 
 # Related third party imports
 import bleach
@@ -146,6 +148,7 @@ def register_blueprints(app):
     app.register_blueprint(export_data_api)
     app.register_blueprint(reports_settings_api)
     app.register_blueprint(dashboard_settings_api)
+    app.register_blueprint(swagger_api)
 
 
 def check_testing_configuration(testing, app):

@@ -1,50 +1,54 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-"""
-# Standard library imports
-import json
 
-# Related third party imports
+"""
+from pathlib import Path
+
 import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
-
-# Local application imports
 from faraday.server.web import get_app
+from faraday import __version__ as f_version
+import json
+from urllib.parse import urljoin
+from faraday.server.config import LOCAL_OPENAPI_FILE
+
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(format="yaml", server="localhost", no_servers=False, return_tags=False):
+def openapi_format(server, modify_default=False, return_tags=False):
     extra_specs = {'info': {
         'description': 'The Faraday REST API enables you to interact with '
                        '[our server](https://github.com/infobyte/faraday).\n'
                        'Use this API to interact or integrate with Faraday'
                        ' server. This page documents the REST API, with HTTP'
-                       ' response codes and example requests and responses.'
-        },
-        'security': {"ApiKeyAuth": []}
+                       ' response codes and example requests and responses.'},
+        'security': {"basicAuth": []}
     }
 
-    if not no_servers:
-        extra_specs['servers'] = [{'url': f'https://{server}/_api'}]
+    if not server.startswith('http'):
+        raise ValueError('Server must be an http url')
+
+    server = urljoin(server, "/_api")
+
+    extra_specs['servers'] = [{'url': server}]
 
     spec = APISpec(
-        title="Faraday API",
-        version="2",
+        title=f"Faraday {f_version} API",
+        version="v3",
         openapi_version="3.0.2",
         plugins=[FaradayAPIPlugin(), FlaskPlugin(), MarshmallowPlugin()],
         **extra_specs
     )
-    api_key_scheme = {
-        "type": "apiKey",
-        "in": "header",
-        "name": "Authorization"
+    auth_scheme = {
+        "type": "http",
+        "scheme": "Basic"
     }
 
-    spec.components.security_scheme("API_KEY", api_key_scheme)
+    spec.components.security_scheme("basicAuth", auth_scheme)
     response_401_unauthorized = {
         "description": "You are not authenticated or your API key is missing "
                        "or invalid"
@@ -70,10 +74,15 @@ def openapi_format(format="yaml", server="localhost", no_servers=False, return_t
         if return_tags:
             return sorted(tags)
 
-        if format.lower() == "yaml":
-            print(spec.to_yaml())
+        if modify_default:
+            file_path = Path(__file__).parent.parent.parent / 'openapi' / 'faraday_swagger.json'
         else:
-            print(json.dumps(spec.to_dict(), indent=2))
+            file_path = LOCAL_OPENAPI_FILE
+            if not LOCAL_OPENAPI_FILE.parent.exists():
+                LOCAL_OPENAPI_FILE.parent.mkdir()
+
+        with open(file_path, 'w') as f:
+            f.write(json.dumps(spec.to_dict(), indent=4))
 
 
 def show_all_urls():

@@ -688,6 +688,14 @@ class VulnerabilityView(PaginatedMixin,
             # We need to instantiate reference objects before updating
             obj.reference_instances = create_reference(reference_list, obj.workspace_id)
 
+        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
+        # vector string into fields and calculates the scores
+        if 'cvss2_vector_string' in data:
+            obj.cvss2_vector_string = data.pop('cvss2_vector_string')
+
+        if 'cvss3_vector_string' in data:
+            obj.cvss3_vector_string = data.pop('cvss3_vector_string')
+
         return super()._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):

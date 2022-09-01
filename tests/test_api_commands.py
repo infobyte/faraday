@@ -342,16 +342,6 @@ class TestListCommandView(ReadWriteAPITests):
         assert res.json['commands'][0]['value']['duration'] == 61.442406
 
     @pytest.mark.usefixtures('ignore_nplusone')
-    def test_more_than_one_day_none_end_date_command_returns_msg(self, test_client):
-        command = self.factory(
-            start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 0),
-            end_date=None
-        )
-        res = test_client.get(self.url(workspace=command.workspace))
-        assert res.status_code == 200
-        assert res.json['commands'][0]['value']['duration'].lower() == "timeout"
-
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_less_than_one_day_none_end_date_command_returns_msg(self, test_client):
         command = self.factory(
             start_date=datetime.datetime.now(),

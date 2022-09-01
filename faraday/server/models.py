@@ -1378,15 +1378,17 @@ class Service(Metadata):
 
 cwe_vulnerability_association = Table('cwe_vulnerability_association',
                                       db.Model.metadata,
-                                      Column('cwe_id', Integer, ForeignKey('cwe.id')),
-                                      Column('vulnerability_id', Integer, ForeignKey('vulnerability.id'))
+                                      Column('cwe_id', Integer, ForeignKey('cwe.id', ondelete='CASCADE')),
+                                      Column('vulnerability_id', Integer, ForeignKey('vulnerability.id',
+                                                                                     ondelete='CASCADE'))
                                       )
 
 
 owasp_vulnerability_association = Table('owasp_vulnerability_association',
                                         db.Model.metadata,
-                                        Column('owasp_id', Integer, ForeignKey('owasp.id')),
-                                        Column('vulnerability_id', Integer, ForeignKey('vulnerability.id'))
+                                        Column('owasp_id', Integer, ForeignKey('owasp.id', ondelete='CASCADE')),
+                                        Column('vulnerability_id', Integer, ForeignKey('vulnerability.id',
+                                                                                       ondelete='CASCADE'))
                                         )
 
 
@@ -3240,65 +3242,6 @@ class Analytics(Metadata):
     filters = Column(JSONType, nullable=False)
     data = Column(JSONType, nullable=False)
     show_data_table = Column(Boolean, default=False)
-
-
-# ENRICHMENT
-cve_cwe_association = db.Table('cve_cwe_association',
-                               db.Column('cve_id', db.Integer(), db.ForeignKey('cve_enrichment.id')),
-                               db.Column('cwe_id', db.Integer(), db.ForeignKey('cwe_enrichment.id')),
-                               info={'bind_key': 'enrichment'}
-                               )
-
-owasp_cwe_association = db.Table('owasp_cwe_association',
-                                 db.Column('owasp_id', db.Integer(), db.ForeignKey('owasp_enrichment.id')),
-                                 db.Column('cwe_id', db.Integer(), db.ForeignKey('cwe_enrichment.id')),
-                                 info={'bind_key': 'enrichment'}
-                                 )
-
-
-class CVE_ENRICHMENT(db.Model):
-    __bind_key__ = 'enrichment'
-    __tablename__ = 'cve_enrichment'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-    description = Column(Text, nullable=True)
-    cvss2_vector_string = Column(Text)
-    cvss3_vector_string = Column(Text)
-    cvss2_base_score = Column(Float)
-    cvss3_base_score = Column(Float)
-
-
-class CWE_ENRICHMENT(db.Model):
-    __bind_key__ = 'enrichment'
-    __tablename__ = 'cwe_enrichment'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-    description = Column(Text)
-    top_position = Column(Integer, default=0)
-    cve = relationship('CVE_ENRICHMENT', secondary='cve_cwe_association', backref='cwe')
-
-
-class OWASP_ENRICHMENT(db.Model):
-    __bind_key__ = 'enrichment'
-    __tablename__ = 'owasp_enrichment'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-    description = Column(Text)
-    release = Column(Date, nullable=False)
-    latest = Column(Boolean, default=False)
-    cwe = relationship('CWE_ENRICHMENT', secondary='owasp_cwe_association', backref='owasp')
-
-
-class ReferenceEnrichment(db.Model):
-    __bind_key__ = 'enrichment'
-    __tablename__ = 'reference_enrichment'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-    cve_id = Column(Integer, ForeignKey('cve_enrichment.id'))
-    cve = relationship(CVE_ENRICHMENT, backref='references')
-    is_exploit = Column(Boolean, default=False)
-    is_patch = Column(Boolean, default=False)
-# ENRICHMENT END
 
 
 # Indexes to speed up queries

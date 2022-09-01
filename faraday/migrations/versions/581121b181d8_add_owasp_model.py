@@ -32,8 +32,8 @@ def upgrade():
     op.create_table('owasp_vulnerability_association',
     sa.Column('owasp_id', sa.Integer(), nullable=True),
     sa.Column('vulnerability_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['owasp_id'], ['owasp.id'], ),
-    sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], )
+    sa.ForeignKeyConstraint(['owasp_id'], ['owasp.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete='CASCADE')
     )
     # ### end Alembic commands ###
 

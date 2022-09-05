@@ -1,6 +1,6 @@
 """remove old cvss model and add a new one
 
-Revision ID: 85aeb4185f98
+Revision ID: 0ed0dab44def
 Revises: 4d7a8fdd94e4
 Create Date: 2022-07-22 15:51:22.639999+00:00
 
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '85aeb4185f98'
-down_revision = '4d7a8fdd94e4'
+down_revision = '0ed0dab44def'
 branch_labels = None
 depends_on = None
 

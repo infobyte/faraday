@@ -1929,6 +1929,9 @@ class Reference(Metadata):
     def __init__(self, name=None, workspace_id=None, **kwargs):
         super().__init__(name=name, workspace_id=workspace_id, **kwargs)
 
+    def __str__(self):
+        return f'{self.name}'
+
     @property
     def parent(self):
         # TODO: fix this property

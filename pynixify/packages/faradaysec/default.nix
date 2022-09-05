@@ -126,7 +126,6 @@ buildPythonPackage rec {
     ];
   checkInputs =
     [
-      flask
       factory_boy
       pylint
       pytest
@@ -144,7 +143,7 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com";
+        "Open Source Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com";
       homepage =
         "https://github.com/infobyte/faraday";
     };

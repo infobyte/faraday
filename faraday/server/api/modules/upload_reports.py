@@ -138,7 +138,10 @@ class UploadReportView(GenericWorkspacedView):
                             plugin.id,
                             flask_login.current_user.id,
                             ignore_info,
-                            dns_resolution
+                            dns_resolution,
+                            None,
+                            None,
+                            None
                         )
                     )
                     return make_response(

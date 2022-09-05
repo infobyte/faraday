@@ -42,17 +42,24 @@ def send_report_data(workspace_name: str, command_id: int, report_json: dict,
 
 
 def process_report(workspace_name: str, command_id: int, file_path: Path,
-                   plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool):
+                   plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool,
+                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None):
     from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
     with get_app().app_context():
         if plugin_id is not None:
             plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
                                              ignore_info=ignore_info,
-                                             hostname_resolution=dns_resolution)
+                                             hostname_resolution=dns_resolution,
+                                             vuln_tag=vuln_tag,
+                                             host_tag=host_tag,
+                                             service_tag=service_tag)
             logger.info(f"Reports Manager: [Custom plugins folder: "
                         f"[{ReportsSettings.settings.custom_plugins_folder}]"
                         f"[Ignore info severity: {ignore_info}]"
-                        f"[Hostname resolution: {dns_resolution}]")
+                        f"[Hostname resolution: {dns_resolution}]"
+                        f"[Vuln tag: {vuln_tag}]"
+                        f"[Host tag: {host_tag}]"
+                        f"[Service tag: {service_tag}]")
             plugin = plugins_manager.get_plugin(plugin_id)
             if plugin:
                 try:
@@ -109,10 +116,11 @@ class ReportsManager(Thread):
         logger.info("Reports Manager Thread [Start]")
         while not self.__event.is_set():
             try:
-                tpl: Tuple[str, int, Path, int, int, bool, bool] = \
+                tpl: Tuple[str, int, Path, int, int, bool, bool, list, list, list] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
 
-                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution = tpl
+                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag,\
+                host_tag, service_tag = tpl
 
                 logger.info(f"Processing raw report {file_path}")
                 if file_path.is_file():
@@ -122,7 +130,10 @@ class ReportsManager(Thread):
                                    plugin_id,
                                    user_id,
                                    ignore_info_bool,
-                                   dns_resolution)
+                                   dns_resolution,
+                                   vuln_tag,
+                                   host_tag,
+                                   service_tag)
                 else:
                     logger.warning(f"Report file [{file_path}] don't exists",
                                    file_path)

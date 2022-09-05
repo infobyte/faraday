@@ -596,7 +596,10 @@ class BulkCreateView(GenericWorkspacedView):
                     None,
                     user_id,
                     False,
-                    False
+                    False,
+                    None,
+                    None,
+                    None
                 )
             )
         logger.info(f"Faraday objects created in bulk for workspace {workspace}")

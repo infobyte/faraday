@@ -92,6 +92,11 @@ let
         ./packages/click
         { };
 
+      cvss =
+        self.callPackage
+        ./packages/cvss
+        { };
+
       faraday-agent-parameters-types =
         self.callPackage
         ./packages/faraday-agent-parameters-types

@@ -44,8 +44,9 @@ vuln_data = {
         'accountability': True,
         'availability': False,
     },
-    'refs': ['CVE-2021-1234', 'CVE-2020-0004'],
+    'refs': [{'name': 'CVE-2021-1234', 'type': 'other'}],
     'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
+    'cwe': ['cwe-123', 'CWE-485'],
     'tool': 'some_tool',
     'data': 'test data',
     'custom_fields': {},
@@ -187,9 +188,12 @@ def test_create_host_vuln(session, host):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert set(vuln.references) == set(vuln_data['refs'])
-    assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
-    assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
+    assert {f'{v.name}-{v.type}' for v in vuln.reference_instances} == {f"{v['name']}-{v['type']}" for v in vuln_data['refs']}
+    assert set(vuln.cve) == set(vuln_data['cve'])
+    assert len(vuln.cve) == len(set(vuln_data['cve']))
+    assert len(vuln.cwe) == len(vuln_data['cwe'])
+    # CWE should be saved uppercased. Let see..
+    assert {cwe.name for cwe in vuln.cwe} == {cwe.upper() for cwe in vuln_data['cwe']}
     assert vuln.tool == "some_tool"
 
 
@@ -206,9 +210,10 @@ def test_create_service_vuln(session, service):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert set(vuln.references) == set(vuln_data['refs'])
-    assert set(vuln.cve) == set(vuln_data['cve'] + vuln_data['refs'])
-    assert len(vuln.cve) == len(set(vuln_data['cve'] + vuln_data['refs']))
+    assert {f'{v.name}-{v.type}' for v in vuln.reference_instances} == {f"{v['name']}-{v['type']}" for v in vuln_data['refs']}
+    assert set(vuln.cve) == set(vuln_data['cve'])
+    assert len(vuln.cve) == len(set(vuln_data['cve']))
+    assert {cwe.name for cwe in vuln.cwe} == {cwe.upper() for cwe in vuln_data['cwe']}
     assert vuln.tool == "some_tool"
 
 
@@ -227,7 +232,7 @@ def test_create_not_fail_with_cve(session, host):
     data = bc.VulnerabilitySchema().load(with_erroneous_cve_list)
     bc._create_hostvuln(host.workspace, host, data)
     vuln = host.workspace.vulnerabilities[0]
-    assert set(vuln.cve) == set(['CVE-1999-0170', 'CVE-1999-0211', 'CVE-1999-0554', 'CVE-1111-9988'] + vuln_data['refs'])
+    assert set(vuln.cve) == {'CVE-1999-0170', 'CVE-1999-0211', 'CVE-1999-0554', 'CVE-1111-9988'}
 
 
 def test_creates_vuln_with_command_object_with_tool(session, service):
@@ -289,7 +294,7 @@ def test_create_existing_host_vuln(session, host, vulnerability_factory):
         'desc': vuln.description,
         'severity': vuln.severity,
         'type': 'Vulnerability',
-        'refs': ['new']
+        'refs': [{'name': 'new', 'type': 'other'}]
     }
     data = bc.VulnerabilitySchema().load(data)
     bc._create_hostvuln(host.workspace, host, data)

@@ -102,6 +102,7 @@ class WorkspaceSchema(AutoSchema):
         fields.List(fields.String)
     )
     active = fields.Boolean()
+    important = fields.Boolean(default=False)
 
     create_date = fields.DateTime(attribute='create_date', dump_only=True)
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
@@ -113,7 +114,8 @@ class WorkspaceSchema(AutoSchema):
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'last_run_agent_date', 'histogram')
+                  'last_run_agent_date', 'histogram',
+                  'important')
 
     @post_load
     def post_load_duration(self, data, **kwargs):

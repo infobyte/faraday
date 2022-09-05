@@ -62,12 +62,13 @@ class CommandSchema(AutoSchema):
     @staticmethod
     def get_duration(obj):
         # obj.start_date can't be None
-        if obj.end_date:
-            return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
-        else:
-            if (datetime.datetime.utcnow() - obj.start_date).total_seconds() > 86400:  # 86400 is 1d TODO BY CONFIG
-                return 'Timeout'
-            return 'In progress'
+        if obj.command != "error":
+            if obj.end_date:
+                return (obj.end_date - obj.start_date).seconds + (
+                            (obj.end_date - obj.start_date).microseconds / 1000000.0)
+            else:
+                return 'In progress'
+        return 'Error'
 
     @post_load
     def post_load_set_end_date_with_duration(self, data, **kwargs):

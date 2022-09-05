@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "python-engineio";
   version =
-    "4.3.3";
+    "4.3.4";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0p89niz71chzx6i73qhvgy2vjgxrh5n9scyjna80bill512lqiqq";
+        "1bhrvzjaa6fm59mmjb9xmfbrgq0caqm0vd62vkfcldlwg5rb1n6q";
     };
 
   # TODO FIXME

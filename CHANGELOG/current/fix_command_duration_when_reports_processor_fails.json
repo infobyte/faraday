@@ -1,0 +1,4 @@
+{
+    "level": "community",
+    "md": "Fix command duration when reports processor fails, in order to show an error message."
+}

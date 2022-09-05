@@ -42,4 +42,4 @@ Flask-SocketIO>=5.0.1
 pyotp>=2.6.0
 Flask-Limiter
 Flask-Mail
-faraday-agent-parameters-types>=1.0.3
+faraday-agent-parameters-types>=1.0.4

@@ -85,7 +85,7 @@ class UploadReportView(GenericWorkspacedView):
 
         ignore_info = True if request.form.get('ignore_info') in ("True", "true") else False  # pylint: disable=R1719
 
-        dns_resolution = True if request.form.get('dns_resolution') in ("True", "true")\
+        resolve_hostname = True if request.form.get('resolve_hostname') in ("True", "true")\
             else False  # pylint: disable=R1719
 
         if report_file:
@@ -138,7 +138,7 @@ class UploadReportView(GenericWorkspacedView):
                             plugin.id,
                             flask_login.current_user.id,
                             ignore_info,
-                            dns_resolution,
+                            resolve_hostname,
                             None,
                             None,
                             None

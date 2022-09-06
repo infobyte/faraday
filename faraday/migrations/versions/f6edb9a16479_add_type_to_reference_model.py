@@ -22,6 +22,7 @@ def upgrade():
                                                          'patch',
                                                          'other',
                                                          name='reference_types'), default='other', nullable=True))
+    op.execute("UPDATE reference set type='other'")
     # ### end Alembic commands ###
 
 

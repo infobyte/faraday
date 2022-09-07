@@ -11,6 +11,7 @@
 , buildPythonPackage
 , click
 , colorama
+, cryptography
 , cvss
 , dateutil
 , distro
@@ -98,6 +99,7 @@ buildPythonPackage rec {
       pillow
       psycopg2
       pgcli
+      cryptography
       pyopenssl
       dateutil
       requests

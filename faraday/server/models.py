@@ -2340,7 +2340,7 @@ class Scope(Metadata):
 
 class WorkspacePermission(db.Model):
     __tablename__ = "workspace_permission_association"
-    # TODO: Check if __table_args__ = {'extend_existing': True} should be consider here
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), nullable=False)
     workspace = relationship('Workspace')

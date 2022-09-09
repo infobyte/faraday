@@ -2153,10 +2153,6 @@ class Workspace(Metadata):
     vulnerability_unclassified_count = query_expression()
     vulnerability_confirmed_and_not_closed_count = query_expression()
 
-    workspace_permission_instances = relationship(
-        "WorkspacePermission",
-        cascade="all, delete-orphan")
-
     @classmethod
     def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
         """
@@ -2395,10 +2391,6 @@ class User(db.Model, UserMixin):
     @property
     def roles_list(self):
         return [role.name for role in self.roles]
-
-    workspace_permission_instances = relationship(
-        "WorkspacePermission",
-        cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"

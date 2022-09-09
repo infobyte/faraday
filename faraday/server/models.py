@@ -2114,6 +2114,14 @@ class Credential(Metadata):
         return self.host or self.service
 
 
+association_workspace_and_users_table = Table(
+    'workspace_permission_association',
+    db.Model.metadata,
+    Column('workspace_id', Integer, ForeignKey('workspace.id')),
+    Column('user_id', Integer, ForeignKey('faraday_user.id'))
+)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2152,6 +2160,12 @@ class Workspace(Metadata):
     vulnerability_low_count = query_expression()
     vulnerability_unclassified_count = query_expression()
     vulnerability_confirmed_and_not_closed_count = query_expression()
+
+    allowed_users = relationship(
+        'User',
+        secondary=association_workspace_and_users_table,
+        back_populates="workspaces"
+    )
 
     @classmethod
     def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
@@ -2391,6 +2405,12 @@ class User(db.Model, UserMixin):
     @property
     def roles_list(self):
         return [role.name for role in self.roles]
+
+    workspaces = relationship(
+        'Workspace',
+        secondary=association_workspace_and_users_table,
+        back_populates="allowed_users",
+    )
 
     def __repr__(self):
         return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"

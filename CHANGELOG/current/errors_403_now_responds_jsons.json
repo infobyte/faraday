@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "Now error 403 will respond a json, not a html"
-}

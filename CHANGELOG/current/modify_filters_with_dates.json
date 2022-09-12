@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "Modify way of filtering dates with `filters`. Now only 'YYYYMMDD' format supported."
-}

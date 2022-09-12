@@ -102,6 +102,7 @@ class WorkspaceSchema(AutoSchema):
         fields.List(fields.String)
     )
     active = fields.Boolean()
+    important = fields.Boolean(default=False)
 
     create_date = fields.DateTime(attribute='create_date', dump_only=True)
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
@@ -113,7 +114,8 @@ class WorkspaceSchema(AutoSchema):
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'last_run_agent_date', 'histogram')
+                  'last_run_agent_date', 'histogram',
+                  'important')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -188,6 +190,17 @@ def generate_histogram(days_before):
     return histogram_dict
 
 
+def request_histogram():
+    histogram_days = flask.request.args.get('histogram_days',
+                                            type=lambda x: int(x)
+                                            if x.isnumeric() and int(x) > 0
+                                            else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                            default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                            )
+    histogram_dict = generate_histogram(histogram_days)
+    return histogram_days, histogram_dict
+
+
 class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     route_base = 'ws'
     lookup_field = 'name'
@@ -213,17 +226,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
-        histogram_days, histogram_dict = None, None
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
-
+        histogram_days, histogram_dict = None, None
         if histogram:
-            histogram_days = flask.request.args.get('histogram_days',
-                                                    type=lambda x: int(x)
-                                                    if x.isnumeric() and int(x) > 0
-                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
-                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
-                                                    )
-            histogram_dict = generate_histogram(histogram_days)
+            histogram_days, histogram_dict = request_histogram()
 
         query = self._get_base_query()
 
@@ -240,7 +246,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
 
-            if histogram:
+            if histogram_dict:
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
@@ -270,18 +276,11 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 description: invalid q was sent to the server
 
         """
-        histogram_days, histogram_dict = None, None
-        filters = flask.request.args.get('q', '{"filters": []}')
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        histogram_days, histogram_dict = None, None
         if histogram:
-            histogram_days = flask.request.args.get('histogram_days',
-                                                    type=lambda x: int(x)
-                                                    if x.isnumeric() and int(x) > 0
-                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
-                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
-                                                    )
-            histogram_dict = generate_histogram(histogram_days)
-
+            histogram_days, histogram_dict = request_histogram()
+        filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
         objects = []
         for workspace_stat in filtered_objs:
@@ -292,7 +291,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                     workspace_stat_dict[new_key] = workspace_stat_dict[key]
             workspace_stat_dict['scope'] = []
 
-            if histogram:
+            if histogram_dict:
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:

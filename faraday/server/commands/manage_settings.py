@@ -1,13 +1,19 @@
-import sys
-import click
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import json
+import sys
 
-from faraday.server.web import get_app
-from faraday.server.models import (
-    db,
-    Configuration
-)
+# Related third party imports
+import click
+
+# Local application imports
+from faraday.server.models import Configuration, db
 from faraday.server.utils.database import get_or_create
+from faraday.server.web import get_app
 from faraday.settings import get_settings, get_all_settings, load_settings
 from faraday.settings.exceptions import InvalidConfigurationError
 

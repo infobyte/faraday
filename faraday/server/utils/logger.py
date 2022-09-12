@@ -1,13 +1,19 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import errno
 import logging
 import logging.handlers
-import faraday.server.config
-import errno
 import os
 
+# Related third party imports
 from syslog_rfc5424_formatter import RFC5424Formatter
+
+# Local application imports
+import faraday.server.config
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'faraday-server.log'
@@ -15,7 +21,8 @@ AUDIT_LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'audit.log'
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [pid:%(process)d] [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [pid:%(process)d] ' \
+             '[%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
 LOG_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []

@@ -1,12 +1,18 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import sys
+
+# Related third party imports
 import click
 
-from faraday.server.web import get_app
-from faraday.server.models import (
-    db,
-    CustomFieldsSchema
-)
+# Local application imports
+from faraday.server.models import CustomFieldsSchema, db
 from faraday.server.utils.database import get_or_create
+from faraday.server.web import get_app
 
 
 def add_custom_field_main():
@@ -20,7 +26,7 @@ def delete_custom_field_main():
 
 
 def delete_custom_field_wizard():
-    print('This wizard will guide you to DELETE custom field to the vulneraiblity model.')
+    print('This wizard will guide you to DELETE custom field to the vulnerability model.')
     print('All available custom fields are:')
     for custom_field in db.session.query(CustomFieldsSchema):
         print(f'* {custom_field.field_name}')
@@ -35,7 +41,7 @@ def delete_custom_field_wizard():
 
 
 def add_custom_field_wizard():
-    print('This wizard will guide you to ADD custom field to the vulneraiblity model.')
+    print('This wizard will guide you to ADD custom field to the vulnerability model.')
     field_name = click.prompt('Field name')
     field_display_name = click.prompt('Display name')
     field_type = click.prompt('Field type (int, str, list)', type=click.Choice(['int', 'str', 'list']))

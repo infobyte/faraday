@@ -1092,7 +1092,6 @@ class Command(Metadata):
         foreign_keys=[workspace_id],
         backref=backref('commands', cascade="all, delete-orphan")
     )
-    summary = Column(JSONType, nullable=True, default={})
 
     sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
     sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability',

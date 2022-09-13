@@ -54,6 +54,7 @@ class WorkspaceSummarySchema(Schema):
     code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
     opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
+    closed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_closed_count')
     confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
     critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
     info_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
@@ -62,6 +63,10 @@ class WorkspaceSummarySchema(Schema):
     low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
     unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+    vulnerability_web_confirmed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_count')
+    vulnerability_web_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_closed_count')
+    vulnerability_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_and_not_closed_count')
+    vulnerability_web_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_and_not_closed_count')
 
 
 class HistogramSchema(Schema):
@@ -97,6 +102,7 @@ class WorkspaceSchema(AutoSchema):
         fields.List(fields.String)
     )
     active = fields.Boolean()
+    important = fields.Boolean(default=False)
 
     create_date = fields.DateTime(attribute='create_date', dump_only=True)
     update_date = fields.DateTime(attribute='update_date', dump_only=True)
@@ -108,7 +114,8 @@ class WorkspaceSchema(AutoSchema):
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
                   'create_date', 'update_date', 'readonly',
-                  'last_run_agent_date', 'histogram')
+                  'last_run_agent_date', 'histogram',
+                  'important')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -183,6 +190,17 @@ def generate_histogram(days_before):
     return histogram_dict
 
 
+def request_histogram():
+    histogram_days = flask.request.args.get('histogram_days',
+                                            type=lambda x: int(x)
+                                            if x.isnumeric() and int(x) > 0
+                                            else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                            default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                            )
+    histogram_dict = generate_histogram(histogram_days)
+    return histogram_days, histogram_dict
+
+
 class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     route_base = 'ws'
     lookup_field = 'name'
@@ -208,17 +226,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             200:
               description: Ok
         """
-        histogram_days, histogram_dict = None, None
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
-
+        histogram_days, histogram_dict = None, None
         if histogram:
-            histogram_days = flask.request.args.get('histogram_days',
-                                                    type=lambda x: int(x)
-                                                    if x.isnumeric() and int(x) > 0
-                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
-                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
-                                                    )
-            histogram_dict = generate_histogram(histogram_days)
+            histogram_days, histogram_dict = request_histogram()
 
         query = self._get_base_query()
 
@@ -235,7 +246,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
 
-            if histogram:
+            if histogram_dict:
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
@@ -265,18 +276,11 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                 description: invalid q was sent to the server
 
         """
-        histogram_days, histogram_dict = None, None
-        filters = flask.request.args.get('q', '{"filters": []}')
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+        histogram_days, histogram_dict = None, None
         if histogram:
-            histogram_days = flask.request.args.get('histogram_days',
-                                                    type=lambda x: int(x)
-                                                    if x.isnumeric() and int(x) > 0
-                                                    else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
-                                                    default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
-                                                    )
-            histogram_dict = generate_histogram(histogram_days)
-
+            histogram_days, histogram_dict = request_histogram()
+        filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
         objects = []
         for workspace_stat in filtered_objs:
@@ -287,7 +291,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                     workspace_stat_dict[new_key] = workspace_stat_dict[key]
             workspace_stat_dict['scope'] = []
 
-            if histogram:
+            if histogram_dict:
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
@@ -379,6 +383,39 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             with_expression(
                 Workspace.last_run_agent_date,
                 _last_run_agent_date(),
+            ),
+            with_expression(
+                Workspace.vulnerability_closed_count,
+                _make_vuln_count_property(None,
+                                          extra_query=" status='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_confirmed_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          confirmed=True,
+                                          extra_query=" type='vulnerability_web' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_closed_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          extra_query=" status='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_confirmed_and_not_closed_count,
+                _make_vuln_count_property(None,
+                                          confirmed=True,
+                                          extra_query=" status!='closed' ",
+                                          use_column_property=False)
+            ),
+            with_expression(
+                Workspace.vulnerability_web_confirmed_and_not_closed_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          confirmed=True,
+                                          extra_query=" status!='closed' ",
+                                          use_column_property=False)
             ),
         )
 

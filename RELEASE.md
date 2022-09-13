@@ -2,7 +2,43 @@ New features in the latest update
 =====================================
 
 
-4.0.2 [Apr 28th, 2022]:
+4.1.0 [Sep 12th, 2022]:
+---
+ * Now error 403 will respond a json, not a html
+ * [FIX] Change resolve_hotname for resolve_hostname in agents
+ * Add filters as params for bulk_update
+ * Add Swagger view
+ * Modify way of filtering dates with `filters`. Now only 'YYYYMMDD' format supported.
+ * Add cvss v2 and v3 into model and api
+ * [ADD] Now if command_id is sent in a post for hosts, services or vulns, the created object is associated with that command_id if exist
+ * Add support for tagging when running an agent
+ * Clean up of commented code that's not needed anymore
+ * [FIX] Change dns_resolution to resolve_hostname
+ * Add CWE into model and api
+
+4.0.4 [Jul 28th, 2022]:
+---
+ * Remove workspaces agents relationship an now agent can run to multiple workspaces
+ * Fix migration f82a9136c408 checking if index and constrains exist before deleting
+ * Added count to vulns closed
+ * Fix order_by `cve_instances__name` when no filter was provided
+ * Add index into vulnerability
+
+4.0.3 [Jun 16th, 2022]:
+---
+ * Replace usage of strings for user_types enumerator constants
+ * Increase the default duration of faraday token
+ * Fix order by Role in Filters API
+ * Refactor of bulk create API
+ * Remove attachments and attachments_count properties from vulnerability. This improves performance.
+ * Get token from user model
+ * Ignore info and dns resolution as params when uploading report
+ * Replace usage of is_ldap field of User model for user_type
+ * Add user type enumerator
+ * Add `weight` in role model to sort arbitrarily
+ * Move export CSV from its own endpoint to /filter endpoint as a request's argument
+
+4.0.2 [Apr 4th, 2022]:
 ---
  * models.py refactor
  * add check to see if workspace name is longer than 250 characters. In that case raises an error

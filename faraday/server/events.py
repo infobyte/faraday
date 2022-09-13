@@ -1,20 +1,22 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-import sys
-import logging
+# Standard library imports
 import inspect
+import logging
+import sys
 from datetime import date
 from queue import Queue
 
+# Related third party imports
 from sqlalchemy import event
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import get_history
 
+# Local application imports
 from faraday.server.models import (
     Host,
     Service,
@@ -25,8 +27,8 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
+    db,
 )
-from faraday.server.models import db
 
 logger = logging.getLogger(__name__)
 changes_queue = Queue()
@@ -97,13 +99,13 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
     if inserted_instance.parent:
         assert (inserted_instance.workspace
                 == inserted_instance.parent.workspace), \
-                "Conflicting workspace assignation for objects. " \
-                "This should never happen!!!"
+            "Conflicting workspace assignation for objects. " \
+            "This should never happen!!!"
 
         assert (inserted_instance.workspace_id
                 == inserted_instance.parent.workspace_id), \
-                "Conflicting workspace_id assignation for objects. " \
-                "This should never happen!!!"
+            "Conflicting workspace_id assignation for objects. " \
+            "This should never happen!!!"
 
 
 def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0, critical=0, confirmed=0):
@@ -128,7 +130,7 @@ def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0,
             f"WHERE id = {ws_id[0]}")
 
 
-def _dicrease_severities_histogram(instance_severity, medium=0, high=0, critical=0):
+def _decrease_severities_histogram(instance_severity, medium=0, high=0, critical=0):
     medium = -1 if instance_severity == Vulnerability.SEVERITY_MEDIUM else medium
     high = -1 if instance_severity == Vulnerability.SEVERITY_HIGH else high
     critical = -1 if instance_severity == Vulnerability.SEVERITY_CRITICAL else critical
@@ -191,18 +193,20 @@ def alter_histogram_on_update_general(connection, workspace_id, status_history=N
 
     if len(status_history.unchanged) > 0:
         if len(severity_history.unchanged) > 0:
-            if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+            if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN,
+                                                                          Vulnerability.STATUS_RE_OPENED]:
                 _create_or_update_histogram(connection, workspace_id, confirmed=confirmed_counter)
             return
         medium = high = critical = 0
         if not severity_history.deleted or not severity_history.added:
-            if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+            if confirmed_counter != 0 and status_history.unchanged[0] in [Vulnerability.STATUS_OPEN,
+                                                                          Vulnerability.STATUS_RE_OPENED]:
                 _create_or_update_histogram(connection, workspace_id, confirmed=confirmed_counter)
             logger.error("Severity history deleted or added is None. Could not update severity histogram.")
             return
 
         if severity_history.deleted[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _dicrease_severities_histogram(severity_history.deleted[0])
+            medium, high, critical = _decrease_severities_histogram(severity_history.deleted[0])
 
         if severity_history.added[0] in SeveritiesHistogram.SEVERITIES_ALLOWED:
             medium, high, critical = _increase_severities_histogram(severity_history.added[0],
@@ -223,7 +227,7 @@ def alter_histogram_on_update_general(connection, workspace_id, status_history=N
         if len(severity_history.deleted) > 0:
             severity = severity_history.deleted[0]
         if severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _dicrease_severities_histogram(severity)
+            medium, high, critical = _decrease_severities_histogram(severity)
             _create_or_update_histogram(connection, workspace_id, medium=medium, high=high,
                                         critical=critical, confirmed=confirmed_counter_on_close)
     elif status_history.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
@@ -244,7 +248,7 @@ def alter_histogram_on_delete(mapper, connection, instance):
     if instance.status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
         confirmed = -1 if instance.confirmed is True else 0
         if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-            medium, high, critical = _dicrease_severities_histogram(instance.severity)
+            medium, high, critical = _decrease_severities_histogram(instance.severity)
             _create_or_update_histogram(connection, instance.workspace_id,
                                         medium=medium,
                                         high=high,
@@ -261,7 +265,7 @@ def alter_histogram_on_before_compile_delete(query, delete_context):
             for instance in instances:
                 if instance.status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
                     if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-                        medium, high, critical = _dicrease_severities_histogram(instance.severity)
+                        medium, high, critical = _decrease_severities_histogram(instance.severity)
                         _create_or_update_histogram(delete_context.session,
                                                     instance.workspace_id,
                                                     medium=medium,

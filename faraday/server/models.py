@@ -1,12 +1,11 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
-# See the file 'doc/LICENSE' for the license information
-
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 # Standard library imports
 import logging
-import math
 import operator
-import re
 import string
 import time
 from datetime import datetime, timedelta, date
@@ -15,6 +14,7 @@ from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
+import cvss
 import jwt
 from sqlalchemy import (
     Boolean,
@@ -33,6 +33,7 @@ from sqlalchemy import (
     event,
     literal,
     func,
+    Index,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select, text, table
@@ -62,6 +63,15 @@ from depot.fields.sqlalchemy import UploadedFileField
 # Local application imports
 from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile
+from faraday.server.utils.cvss import (
+    get_propper_value,
+    get_severity,
+    get_base_score,
+    get_temporal_score,
+    get_environmental_score,
+    get_exploitability_score,
+    get_impact_score
+)
 from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
@@ -86,6 +96,12 @@ OBJECT_TYPES = [
     'executive_report',
     'workspace',
     'task',
+]
+
+REFERENCE_TYPES = [
+    'exploit',
+    'patch',
+    'other',
 ]
 
 COMMENT_TYPES = [
@@ -506,7 +522,7 @@ class VulnerabilityABC(Metadata):
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = NonBlankColumn(Text, nullable=False)
     resolution = BlankColumn(Text)
-    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
+    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False, index=True)
     risk = Column(Float(3, 1), nullable=True)
 
     impact_accountability = Column(Boolean, default=False, nullable=False)
@@ -556,13 +572,267 @@ class SeveritiesHistogram(db.Model):
         return
 
 
+class VulnerabilityHitCount(db.Model):
+    __tablename__ = "vulnerability_hit_count"
+
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('vulnerability_hit_counts', cascade="all, delete-orphan")
+    )
+    date = Column(Date, nullable=False, default=datetime.utcnow())
+
+    # Low
+    low_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_open_total(self):
+        return self.low_open_unconfirmed + self.low_open_confirmed
+
+    low_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_risk_accepted_total(self):
+        return self.low_risk_accepted_unconfirmed + self.low_risk_accepted_confirmed
+
+    low_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_re_opened_total(self):
+        return self.low_re_opened_unconfirmed + self.low_re_opened_confirmed
+
+    low_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    low_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def low_closed_total(self):
+        return self.low_closed_unconfirmed + self.low_closed_confirmed
+
+    @hybrid_property
+    def low_total(self):
+        return self.low_open_total + self.low_risk_accepted_total + self.low_re_opened_total + self.low_closed_total
+
+    @hybrid_property
+    def low_confirmed_total(self):
+        return self.low_open_confirmed + self.low_risk_accepted_confirmed + self.low_re_opened_confirmed + self.low_closed_confirmed
+
+    # Medium
+    medium_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_open_total(self):
+        return self.medium_open_unconfirmed + self.medium_open_confirmed
+
+    medium_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_risk_accepted_total(self):
+        return self.medium_risk_accepted_unconfirmed + self.medium_risk_accepted_confirmed
+
+    medium_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_re_opened_total(self):
+        return self.medium_re_opened_unconfirmed + self.medium_re_opened_confirmed
+
+    medium_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    medium_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def medium_closed_total(self):
+        return self.medium_closed_unconfirmed + self.medium_closed_confirmed
+
+    @hybrid_property
+    def medium_total(self):
+        return self.medium_open_total + self.medium_risk_accepted_total + self.medium_re_opened_total + self.medium_closed_total
+
+    @hybrid_property
+    def medium_confirmed_total(self):
+        return self.medium_open_confirmed + self.medium_risk_accepted_confirmed + self.medium_re_opened_confirmed + self.medium_closed_confirmed
+
+    # High
+    high_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_open_total(self):
+        return self.high_open_unconfirmed + self.high_open_confirmed
+
+    high_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_risk_accepted_total(self):
+        return self.high_risk_accepted_unconfirmed + self.high_risk_accepted_confirmed
+
+    high_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_re_opened_total(self):
+        return self.high_re_opened_unconfirmed + self.high_re_opened_confirmed
+
+    high_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    high_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def high_closed_total(self):
+        return self.high_closed_unconfirmed + self.high_closed_confirmed
+
+    @hybrid_property
+    def high_total(self):
+        return self.high_open_total + self.high_risk_accepted_total + self.high_re_opened_total + self.high_closed_total
+
+    @hybrid_property
+    def high_confirmed_total(self):
+        return self.high_open_confirmed + self.high_risk_accepted_confirmed + self.high_re_opened_confirmed + self.high_closed_confirmed
+
+    # Critical
+    critical_open_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_open_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_open_total(self):
+        return self.critical_open_unconfirmed + self.critical_open_confirmed
+
+    critical_risk_accepted_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_risk_accepted_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_risk_accepted_total(self):
+        return self.critical_risk_accepted_unconfirmed + self.critical_risk_accepted_confirmed
+
+    critical_re_opened_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_re_opened_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_re_opened_total(self):
+        return self.critical_re_opened_unconfirmed + self.critical_re_opened_confirmed
+
+    critical_closed_unconfirmed = Column(Integer, nullable=False, default=0)
+    critical_closed_confirmed = Column(Integer, nullable=False, default=0)
+
+    @hybrid_property
+    def critical_closed_total(self):
+        return self.critical_closed_unconfirmed + self.critical_closed_confirmed
+
+    @hybrid_property
+    def critical_total(self):
+        return self.critical_open_total + self.critical_risk_accepted_total + self.critical_re_opened_total + self.critical_closed_total
+
+    @hybrid_property
+    def critical_confirmed_total(self):
+        return self.critical_open_confirmed + self.critical_risk_accepted_confirmed + self.critical_re_opened_confirmed + self.critical_closed_confirmed
+
+    # Specific for open status
+    @hybrid_property
+    def low_open_total_custom(self):
+        return self.low_open_total + self.low_re_opened_total + self.low_risk_accepted_total
+
+    @hybrid_property
+    def low_open_confirmed_total_custom(self):
+        return self.low_open_confirmed + self.low_re_opened_confirmed + self.low_risk_accepted_confirmed
+
+    @hybrid_property
+    def medium_open_total_custom(self):
+        return self.medium_open_total + self.medium_re_opened_total + self.medium_risk_accepted_total
+
+    @hybrid_property
+    def medium_open_confirmed_total_custom(self):
+        return self.medium_open_confirmed + self.medium_re_opened_confirmed + self.medium_risk_accepted_confirmed
+
+    @hybrid_property
+    def high_open_total_custom(self):
+        return self.high_open_total + self.high_re_opened_total + self.high_risk_accepted_total
+
+    @hybrid_property
+    def high_open_confirmed_total_custom(self):
+        return self.high_open_confirmed + self.high_re_opened_confirmed + self.high_risk_accepted_confirmed
+
+    @hybrid_property
+    def critical_open_total_custom(self):
+        return self.critical_open_total + self.critical_re_opened_total + self.critical_risk_accepted_total
+
+    @hybrid_property
+    def critical_open_confirmed_total_custom(self):
+        return self.critical_open_confirmed + self.critical_re_opened_confirmed + self.critical_risk_accepted_confirmed
+
+    # total counts
+    @hybrid_property
+    def total(self):
+        return self.low_total + self.medium_total + self.high_total + self.critical_total
+
+    @hybrid_property
+    def total_confirmed(self):
+        return self.low_confirmed_total + self.medium_confirmed_total + self.high_confirmed_total + self.critical_confirmed_total
+
+    @hybrid_property
+    def total_open(self):
+        return self.low_open_total + self.medium_open_total + self.high_open_total + self.critical_open_total
+
+    @hybrid_property
+    def total_closed(self):
+        return self.low_closed_total + self.medium_closed_total + self.high_closed_total + self.critical_closed_total
+
+    @hybrid_property
+    def total_re_opened(self):
+        return self.low_re_opened_total + self.medium_re_opened_total + self.high_re_opened_total + self.critical_re_opened_total
+
+    @hybrid_property
+    def total_risk_accepted(self):
+        return self.low_risk_accepted_total + self.medium_risk_accepted_total + self.high_risk_accepted_total + self.critical_risk_accepted_total
+
+    @hybrid_property
+    def total_open_confirmed(self):
+        return self.low_open_confirmed + self.medium_open_confirmed + self.high_open_confirmed + self.critical_open_confirmed
+
+    @hybrid_property
+    def total_closed_confirmed(self):
+        return self.low_closed_confirmed + self.medium_closed_confirmed + self.high_closed_confirmed + self.critical_closed_confirmed
+
+    @hybrid_property
+    def total_re_opened_confirmed(self):
+        return self.low_re_opened_confirmed + self.medium_re_opened_confirmed + self.high_re_opened_confirmed + self.critical_re_opened_confirmed
+
+    @hybrid_property
+    def total_risk_accepted_confirmed(self):
+        return self.low_risk_accepted_confirmed + self.medium_risk_accepted_confirmed + self.high_risk_accepted_confirmed + self.critical_risk_accepted_confirmed
+
+    @hybrid_property
+    def total_status(self):
+        return self.total_open + self.total_closed + self.total_re_opened + self.total_risk_accepted
+
+    @hybrid_property
+    def total_status_confirmed(self):
+        return self.total_open_confirmed + self.total_closed_confirmed + self.total_re_opened_confirmed + self.total_risk_accepted_confirmed
+
+    @hybrid_property
+    def total_open_confirmed_total_custom(self):
+        return self.critical_open_confirmed_total_custom + self.high_open_confirmed_total_custom + self.medium_open_confirmed_total_custom + self.low_open_confirmed_total_custom
+
+    @hybrid_property
+    def total_open_total_custom(self):
+        return self.critical_open_total_custom + self.high_open_total_custom + self.medium_open_total_custom + self.low_open_total_custom
+
+    @property
+    def parent(self):
+        return
+
+
 class CustomAssociationSet(_AssociationSet):
     """
     A custom association set that passes the creator method the both
     the value and the instance of the parent object
     """
 
-    # def __init__(self, lazy_collection, creator, getter, setter, parent):
     def __init__(self, lazy_collection, creator, value_attr, parent):
         """I have to override this method because the proxy_factory
         class takes different arguments than the hardcoded
@@ -1052,243 +1322,6 @@ class CVE(db.Model):
             raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
 
 
-class CVSS2GeneralConfig:
-    VERSION = '2'
-    PATTERN = 'AV:(?P<access_vector>[LAN])' \
-              '/AC:(?P<access_complexity>[HML])' \
-              '/Au:(?P<authentication>[MSN])' \
-              '/C:(?P<confidentiality>[NPC])' \
-              '/I:(?P<integrity>[NPC])' \
-              '/A:(?P<availability>[NPC])'
-
-    # CVSSV2 ENUMS
-    ACCESS_VECTOR_TYPES = ['L', 'N', 'A']
-    ACCESS_COMPLEXITY_TYPES = ['L', 'M', 'H']
-    AUTHENTICATION_TYPES = ['N', 'S', 'M']
-    IMPACT_TYPES_V2 = ['N', 'P', 'C']
-
-    # CVSSV2 SCORE
-    ACCESS_VECTOR_SCORE = {'L': 0.395, 'A': 0.646, 'N': 1.0}
-    ACCESS_COMPLEXITY_SCORE = {'L': 0.71, 'M': 0.61, 'H': 0.35}
-    AUTHENTICATION_SCORE = {'N': 0.704, 'S': 0.56, 'M': 0.45}
-    IMPACT_SCORES_V2 = {'N': 0.0, 'P': 0.275, 'C': 0.660}
-
-
-class CVSS3GeneralConfig:
-    VERSION = '3'
-    PATTERN = 'AV:(?P<attack_vector>[LANP])' \
-              '/AC:(?P<attack_complexity>[HL])' \
-              '/PR:(?P<privileges_required>[NLH])' \
-              '/UI:(?P<user_interaction>[NR])' \
-              '/S:(?P<scope>[UC])' \
-              '/C:(?P<confidentiality>[NLH])' \
-              '/I:(?P<integrity>[NLH])' \
-              '/A:(?P<availability>[NLH])'
-
-    CHANGED = 'C'
-    UNCHANGED = 'U'
-
-    # CVSSV3 ENUMS
-    ATTACK_VECTOR_TYPES = ['N', 'A', 'L', 'P']
-    ATTACK_COMPLEXITY_TYPES = ['L', 'H']
-    PRIVILEGES_REQUIRED_TYPES = ['N', 'L', 'H']
-    USER_INTERACTION_TYPES = ['N', 'R']
-    SCOPE_TYPES = [UNCHANGED, CHANGED]
-    IMPACT_TYPES_V3 = ['N', 'L', 'H']
-
-    # CVSSV3 SCORE
-    ATTACK_VECTOR_SCORES = {'N': 0.85, 'A': 0.62, 'L': 0.55, 'P': 0.2}
-    ATTACK_COMPLEXITY_SCORES = {'L': 0.77, 'H': 0.44}
-    PRIVILEGES_REQUIRED_SCORES = {'U': {'N': 0.85, 'L': 0.62, 'H': 0.27},
-                                  'C': {'N': 0.85, 'L': 0.68, 'H': 0.5}}
-    USER_INTERACTION_SCORES = {'N': 0.85, 'R': 0.62}
-    SCOPE_SCORES = {'U': 6.42, 'C': 7.52}
-    IMPACT_SCORES_V3 = {'N': 0.0, 'L': 0.22, 'H': 0.56}
-
-
-class CVSSBase(db.Model):
-    __tablename__ = "cvss_base"
-    id = Column(Integer, primary_key=True)
-    version = Column(String(8), nullable=False)
-    _vector_string = Column('vector_string', String(64))
-    _base_score = Column('base_score', Float)
-    _fixed_base_score = Column('fixed_base_score', Float)
-
-    type = Column(String(24))
-
-    __mapper_args__ = {
-        'polymorphic_on': type,
-        'polymorphic_identity': 'base'
-    }
-
-    @hybrid_property
-    def vector_string(self):
-        return self._vector_string
-
-    @vector_string.setter
-    def vector_string(self, vector_string):
-        self.assign_vector_string(vector_string)
-        self.base_score = self.calculate_base_score()
-
-    @hybrid_property
-    def base_score(self):
-        if self._base_score is not None:
-            return self._base_score
-        return self._fixed_base_score
-
-    @base_score.setter
-    def base_score(self, base_score):
-        self._base_score = base_score
-
-    def assign_vector_string(self, vector_string):
-        raise NotImplementedError
-
-    def calculate_base_score(self):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return f'{self.vector_string}'
-
-
-class CVSSV2(CVSSBase):
-    __tablename__ = "cvss_v2"
-    id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
-    access_vector = Column(Enum(*CVSS2GeneralConfig.ACCESS_VECTOR_TYPES, name="cvss_access_vector"))
-    access_complexity = Column(Enum(*CVSS2GeneralConfig.ACCESS_COMPLEXITY_TYPES, name="cvss_access_complexity"))
-    authentication = Column(Enum(*CVSS2GeneralConfig.AUTHENTICATION_TYPES, name="cvss_authentication"))
-    confidentiality_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
-    integrity_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
-    availability_impact = Column(Enum(*CVSS2GeneralConfig.IMPACT_TYPES_V2, name="cvss_impact_types_v2"))
-
-    __mapper_args__ = {
-        'polymorphic_identity': "v2"
-    }
-
-    def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
-        super().__init__(version=CVSS2GeneralConfig.VERSION, vector_string=vector_string,
-                         _fixed_base_score=base_score, **kwargs)
-
-    def assign_vector_string(self, vector_string):
-        self._vector_string = vector_string
-        vector_string_parsed = re.match(CVSS2GeneralConfig.PATTERN, vector_string if vector_string else '')
-        if vector_string_parsed:
-            self.access_vector = vector_string_parsed['access_vector']
-            self.access_complexity = vector_string_parsed['access_complexity']
-            self.authentication = vector_string_parsed['authentication']
-            self.confidentiality_impact = vector_string_parsed['confidentiality']
-            self.integrity_impact = vector_string_parsed['integrity']
-            self.availability_impact = vector_string_parsed['availability']
-        else:
-            self.access_vector = None
-            self.access_complexity = None
-            self.authentication = None
-            self.confidentiality_impact = None
-            self.integrity_impact = None
-            self.availability_impact = None
-
-    def exploitability(self):
-        return 20 * CVSS2GeneralConfig.ACCESS_VECTOR_SCORE[self.access_vector] * \
-               CVSS2GeneralConfig.ACCESS_COMPLEXITY_SCORE[self.access_complexity] * \
-               CVSS2GeneralConfig.AUTHENTICATION_SCORE[self.authentication]
-
-    def impact(self):
-        return 10.41 * (1 - (1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.confidentiality_impact]) * (
-               1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.integrity_impact]) * (
-               1 - CVSS2GeneralConfig.IMPACT_SCORES_V2[self.availability_impact]))
-
-    def fimpact(self):
-        if self.impact() == 0:
-            return 0
-        return 1.176
-
-    def calculate_base_score(self):
-        if re.match(CVSS2GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
-            score = (0.6 * self.impact() + 0.4 * self.exploitability() - 1.5) * self.fimpact()
-            return round(score, 1)  # pylint: disable=round-builtin
-        return None
-
-
-class CVSSV3(CVSSBase):
-    __tablename__ = "cvss_v3"
-    id = Column(Integer, ForeignKey('cvss_base.id'), primary_key=True)
-    attack_vector = Column(Enum(*CVSS3GeneralConfig.ATTACK_VECTOR_TYPES, name="cvss_attack_vector"))
-    attack_complexity = Column(Enum(*CVSS3GeneralConfig.ATTACK_COMPLEXITY_TYPES, name="cvss_attack_complexity"))
-    privileges_required = Column(Enum(*CVSS3GeneralConfig.PRIVILEGES_REQUIRED_TYPES, name="cvss_privileges_required"))
-    user_interaction = Column(Enum(*CVSS3GeneralConfig.USER_INTERACTION_TYPES, name="cvss_user_interaction"))
-    scope = Column(Enum(*CVSS3GeneralConfig.SCOPE_TYPES, name="cvss_scope"))
-    confidentiality_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
-    integrity_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
-    availability_impact = Column(Enum(*CVSS3GeneralConfig.IMPACT_TYPES_V3, name="cvss_impact_types_v3"))
-
-    __mapper_args__ = {
-        'polymorphic_identity': "v3"
-    }
-
-    def __init__(self, base_score: Float = None, vector_string=None, **kwargs):
-        super().__init__(version=CVSS3GeneralConfig.VERSION, vector_string=vector_string,
-                         _fixed_base_score=base_score, **kwargs)
-
-    def assign_vector_string(self, vector_string):
-        self._vector_string = vector_string
-        vector_string_parsed = re.match(CVSS3GeneralConfig.PATTERN, vector_string if vector_string else '')
-        if vector_string_parsed:
-            self.attack_vector = vector_string_parsed['attack_vector']
-            self.attack_complexity = vector_string_parsed['attack_complexity']
-            self.privileges_required = vector_string_parsed['privileges_required']
-            self.user_interaction = vector_string_parsed['user_interaction']
-            self.scope = vector_string_parsed['scope']
-            self.confidentiality_impact = vector_string_parsed['confidentiality']
-            self.integrity_impact = vector_string_parsed['integrity']
-            self.availability_impact = vector_string_parsed['availability']
-        else:
-            self.attack_vector = None
-            self.attack_complexity = None
-            self.privileges_required = None
-            self.user_interaction = None
-            self.scope = None
-            self.confidentiality_impact = None
-            self.integrity_impact = None
-            self.availability_impact = None
-
-    def isc_base(self):
-        return 1 - ((1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.confidentiality_impact]) * (
-               1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.integrity_impact]) * (
-               1 - CVSS3GeneralConfig.IMPACT_SCORES_V3[self.availability_impact]))
-
-    def impact(self):
-        if self.scope == CVSS3GeneralConfig.UNCHANGED:
-            return 6.42 * self.isc_base()
-        else:
-            return 7.52 * (self.isc_base() - 0.029) - 3.25 * (self.isc_base() - 0.02) ** 15
-
-    def exploitability(self):
-        return 8.22 * CVSS3GeneralConfig.ATTACK_VECTOR_SCORES[self.attack_vector] * \
-               CVSS3GeneralConfig.ATTACK_COMPLEXITY_SCORES[self.attack_complexity] * \
-               CVSS3GeneralConfig.PRIVILEGES_REQUIRED_SCORES[self.scope][self.privileges_required] * \
-               CVSS3GeneralConfig.USER_INTERACTION_SCORES[self.user_interaction]
-
-    def calculate_base_score(self):
-        if re.match(CVSS3GeneralConfig.PATTERN, self.vector_string if self.vector_string else ''):
-            score = 10
-            if self.impact() <= 0:
-                return 0.0
-            impact_plus_exploitability = self.impact() + self.exploitability()
-            if self.scope == CVSS3GeneralConfig.UNCHANGED:
-                if impact_plus_exploitability < 10:
-                    score = impact_plus_exploitability
-            else:
-                impact_plus_exploitability = impact_plus_exploitability * 1.08
-                if impact_plus_exploitability < 10:
-                    score = impact_plus_exploitability
-
-            # round up score
-            # Where “Round up” is defined as the smallest number, specified to one decimal place,
-            # that is equal to or higher than its input. For example, Round up (4.02) is 4.1;
-            # and Round up (4.00) is 4.0.
-            return math.ceil(score * 10) / 10
-        return None
-
-
 class Service(Metadata):
     STATUSES = [
         'open',
@@ -1342,6 +1375,22 @@ class Service(Metadata):
         else:
             version = ""
         return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
+
+
+cwe_vulnerability_association = Table('cwe_vulnerability_association',
+                                      db.Model.metadata,
+                                      Column('cwe_id', Integer, ForeignKey('cwe.id', ondelete='CASCADE')),
+                                      Column('vulnerability_id', Integer, ForeignKey('vulnerability.id',
+                                                                                     ondelete='CASCADE'))
+                                      )
+
+
+owasp_vulnerability_association = Table('owasp_vulnerability_association',
+                                        db.Model.metadata,
+                                        Column('owasp_id', Integer, ForeignKey('owasp.id', ondelete='CASCADE')),
+                                        Column('vulnerability_id', Integer, ForeignKey('vulnerability.id',
+                                                                                       ondelete='CASCADE'))
+                                        )
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1419,21 +1468,217 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
-    # TODO: Ver si el nombre deberia ser cvss_v2_id
-    cvssv2_id = Column(
-        Integer,
-        ForeignKey('cvss_v2.id'),
-        nullable=True
-    )
-    cvssv2 = relationship('CVSSV2', backref=backref('vulnerability_cvssv2'))
+    _cvss2_vector_string = Column(Text, nullable=True)
+    cvss2_base_score = Column(Float)
+    cvss2_exploitability_score = Column(Float)
+    cvss2_impact_score = Column(Float)
+    cvss2_base_severity = Column(Text, nullable=True)
+    cvss2_temporal_score = Column(Float)
+    cvss2_temporal_severity = Column(Text, nullable=True)
+    cvss2_environmental_score = Column(Float)
+    cvss2_environmental_severity = Column(Text, nullable=True)
+    cvss2_access_vector = Column(Text, nullable=True)
+    cvss2_access_complexity = Column(Text, nullable=True)
+    cvss2_authentication = Column(Text, nullable=True)
+    cvss2_confidentiality_impact = Column(Text, nullable=True)
+    cvss2_integrity_impact = Column(Text, nullable=True)
+    cvss2_availability_impact = Column(Text, nullable=True)
+    cvss2_exploitability = Column(Text, nullable=True)
+    cvss2_remediation_level = Column(Text, nullable=True)
+    cvss2_report_confidence = Column(Text, nullable=True)
+    cvss2_collateral_damage_potential = Column(Text, nullable=True)
+    cvss2_target_distribution = Column(Text, nullable=True)
+    cvss2_confidentiality_requirement = Column(Text, nullable=True)
+    cvss2_integrity_requirement = Column(Text, nullable=True)
+    cvss2_availability_requirement = Column(Text, nullable=True)
 
-    # TODO: Ver si el nombre deberia ser cvss_v3_id
-    cvssv3_id = Column(
-        Integer,
-        ForeignKey('cvss_v3.id'),
-        nullable=True
-    )
-    cvssv3 = relationship('CVSSV3', backref=backref('vulnerability_cvssv3'))
+    owasp = relationship('OWASP', secondary=owasp_vulnerability_association)
+
+    @hybrid_property
+    def cvss2_vector_string(self):
+        return self._cvss2_vector_string
+
+    @cvss2_vector_string.setter
+    def cvss2_vector_string(self, vector_string):
+        self._cvss2_vector_string = vector_string
+        self.set_cvss2_attrs()
+
+    def init_cvss2_attrs(self):
+        self._cvss2_vector_string = None
+        self.cvss2_base_score = None
+        self.cvss2_base_severity = None
+        self.cvss2_temporal_score = None
+        self.cvss2_temporal_severity = None
+        self.cvss2_environmental_score = None
+        self.cvss2_environmental_severity = None
+        self.cvss2_access_vector = None
+        self.cvss2_access_complexity = None
+        self.cvss2_authentication = None
+        self.cvss2_confidentiality_impact = None
+        self.cvss2_integrity_impact = None
+        self.cvss2_availability_impact = None
+        self.cvss2_exploitability = None
+        self.cvss2_remediation_level = None
+        self.cvss2_report_confidence = None
+        self.cvss2_collateral_damage_potential = None
+        self.cvss2_target_distribution = None
+        self.cvss2_confidentiality_requirement = None
+        self.cvss2_integrity_requirement = None
+        self.cvss2_availability_requirement = None
+        self.cvss2_exploitability_score = None
+        self.cvss2_impact_score = None
+
+    def set_cvss2_attrs(self):
+        """
+        Parse cvss2 and assign attributes
+        """
+        if not self.cvss2_vector_string:
+            self.init_cvss2_attrs()
+            return None
+        try:
+            cvss_instance = cvss.CVSS2(self.cvss2_vector_string)
+            self.cvss2_base_score = get_base_score(cvss_instance)
+            self.cvss2_base_severity = get_severity(cvss_instance, 'B')
+            self.cvss2_temporal_score = get_temporal_score(cvss_instance)
+            self.cvss2_temporal_severity = get_severity(cvss_instance, 'T')
+            self.cvss2_environmental_score = get_environmental_score(cvss_instance)
+            self.cvss2_environmental_severity = get_severity(cvss_instance, 'E')
+            self.cvss2_access_vector = get_propper_value(cvss_instance, 'AV')
+            self.cvss2_access_complexity = get_propper_value(cvss_instance, 'AC')
+            self.cvss2_authentication = get_propper_value(cvss_instance, 'Au')
+            self.cvss2_confidentiality_impact = get_propper_value(cvss_instance, 'C')
+            self.cvss2_integrity_impact = get_propper_value(cvss_instance, 'I')
+            self.cvss2_availability_impact = get_propper_value(cvss_instance, 'A')
+            self.cvss2_exploitability = get_propper_value(cvss_instance, 'E')
+            self.cvss2_remediation_level = get_propper_value(cvss_instance, 'RL')
+            self.cvss2_report_confidence = get_propper_value(cvss_instance, 'RC')
+            self.cvss2_collateral_damage_potential = get_propper_value(cvss_instance, 'CDP')
+            self.cvss2_target_distribution = get_propper_value(cvss_instance, 'TD')
+            self.cvss2_confidentiality_requirement = get_propper_value(cvss_instance, 'CR')
+            self.cvss2_integrity_requirement = get_propper_value(cvss_instance, 'IR')
+            self.cvss2_availability_requirement = get_propper_value(cvss_instance, 'AR')
+            self.cvss2_exploitability_score = get_exploitability_score(cvss_instance)
+            self.cvss2_impact_score = get_impact_score(cvss_instance)
+        except Exception as e:
+            logger.error("Could not parse cvss %s. %s", self.cvss2_vector_string, e)
+
+    _cvss3_vector_string = Column(Text, nullable=True)
+    cvss3_base_score = Column(Float)
+    cvss3_exploitability_score = Column(Float)
+    cvss3_impact_score = Column(Float)
+    cvss3_base_severity = Column(Text, nullable=True)
+    cvss3_temporal_score = Column(Float)
+    cvss3_temporal_severity = Column(Text, nullable=True)
+    cvss3_environmental_score = Column(Float)
+    cvss3_environmental_severity = Column(Text, nullable=True)
+    cvss3_attack_vector = Column(Text, nullable=True)
+    cvss3_attack_complexity = Column(Text, nullable=True)
+    cvss3_privileges_required = Column(Text, nullable=True)
+    cvss3_user_interaction = Column(Text, nullable=True)
+    cvss3_confidentiality_impact = Column(Text, nullable=True)
+    cvss3_integrity_impact = Column(Text, nullable=True)
+    cvss3_availability_impact = Column(Text, nullable=True)
+    cvss3_exploit_code_maturity = Column(Text, nullable=True)
+    cvss3_remediation_level = Column(Text, nullable=True)
+    cvss3_report_confidence = Column(Text, nullable=True)
+    cvss3_confidentiality_requirement = Column(Text, nullable=True)
+    cvss3_integrity_requirement = Column(Text, nullable=True)
+    cvss3_availability_requirement = Column(Text, nullable=True)
+    cvss3_modified_attack_vector = Column(Text, nullable=True)
+    cvss3_modified_attack_complexity = Column(Text, nullable=True)
+    cvss3_modified_privileges_required = Column(Text, nullable=True)
+    cvss3_modified_user_interaction = Column(Text, nullable=True)
+    cvss3_modified_scope = Column(Text, nullable=True)
+    cvss3_modified_confidentiality_impact = Column(Text, nullable=True)
+    cvss3_modified_integrity_impact = Column(Text, nullable=True)
+    cvss3_modified_availability_impact = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss3_vector_string(self):
+        return self._cvss3_vector_string
+
+    @cvss3_vector_string.setter
+    def cvss3_vector_string(self, vector_string):
+        self._cvss3_vector_string = vector_string
+        self.set_cvss3_attrs()
+
+    def init_cvss3_attrs(self):
+        self._cvss3_vector_string = None
+        self.cvss3_base_score = None
+        self.cvss3_base_severity = None
+        self.cvss3_temporal_score = None
+        self.cvss3_temporal_severity = None
+        self.cvss3_environmental_score = None
+        self.cvss3_environmental_severity = None
+        self.cvss3_attack_vector = None
+        self.cvss3_attack_complexity = None
+        self.cvss3_privileges_required = None
+        self.cvss3_user_interaction = None
+        self.cvss3_scope = None
+        self.cvss3_confidentiality_impact = None
+        self.cvss3_integrity_impact = None
+        self.cvss3_availability_impact = None
+        self.cvss3_exploit_code_maturity = None
+        self.cvss3_remediation_level = None
+        self.cvss3_report_confidence = None
+        self.cvss3_confidentiality_requirement = None
+        self.cvss3_integrity_requirement = None
+        self.cvss3_availability_requirement = None
+        self.cvss3_modified_attack_vector = None
+        self.cvss3_modified_attack_complexity = None
+        self.cvss3_modified_privileges_required = None
+        self.cvss3_modified_user_interaction = None
+        self.cvss3_modified_scope = None
+        self.cvss3_modified_confidentiality_impact = None
+        self.cvss3_modified_integrity_impact = None
+        self.cvss3_modified_availability_impact = None
+        self.cvss3_exploitability_score = None
+        self.cvss3_impact_score = None
+
+    def set_cvss3_attrs(self):
+        """
+        Parse cvss2 and assign attributes
+        """
+        if not self.cvss3_vector_string:
+            self.init_cvss3_attrs()
+            return None
+
+        try:
+            cvss_instance = cvss.CVSS3(self.cvss3_vector_string)
+            self.cvss3_base_score = get_base_score(cvss_instance)
+            self.cvss3_base_severity = get_severity(cvss_instance, 'B')
+            self.cvss3_temporal_score = get_temporal_score(cvss_instance)
+            self.cvss3_temporal_severity = get_severity(cvss_instance, 'T')
+            self.cvss3_environmental_score = get_environmental_score(cvss_instance)
+            self.cvss3_environmental_severity = get_severity(cvss_instance, 'E')
+            self.cvss3_attack_vector = get_propper_value(cvss_instance, 'AV')
+            self.cvss3_attack_complexity = get_propper_value(cvss_instance, 'AC')
+            self.cvss3_privileges_required = get_propper_value(cvss_instance, 'PR')
+            self.cvss3_user_interaction = get_propper_value(cvss_instance, 'UI')
+            self.cvss3_scope = get_propper_value(cvss_instance, 'S')
+            self.cvss3_confidentiality_impact = get_propper_value(cvss_instance, 'C')
+            self.cvss3_integrity_impact = get_propper_value(cvss_instance, 'I')
+            self.cvss3_availability_impact = get_propper_value(cvss_instance, 'A')
+            self.cvss3_exploit_code_maturity = get_propper_value(cvss_instance, 'E')
+            self.cvss3_remediation_level = get_propper_value(cvss_instance, 'RL')
+            self.cvss3_report_confidence = get_propper_value(cvss_instance, 'RC')
+            self.cvss3_confidentiality_requirement = get_propper_value(cvss_instance, 'CR')
+            self.cvss3_integrity_requirement = get_propper_value(cvss_instance, 'IR')
+            self.cvss3_availability_requirement = get_propper_value(cvss_instance, 'AR')
+            self.cvss3_modified_attack_vector = get_propper_value(cvss_instance, 'MAV')
+            self.cvss3_modified_attack_complexity = get_propper_value(cvss_instance, 'MAC')
+            self.cvss3_modified_privileges_required = get_propper_value(cvss_instance, 'MPR')
+            self.cvss3_modified_user_interaction = get_propper_value(cvss_instance, 'MUI')
+            self.cvss3_modified_scope = get_propper_value(cvss_instance, 'MS')
+            self.cvss3_modified_confidentiality_impact = get_propper_value(cvss_instance, 'MC')
+            self.cvss3_modified_integrity_impact = get_propper_value(cvss_instance, 'MI')
+            self.cvss3_modified_availability_impact = get_propper_value(cvss_instance, 'MA')
+            self.cvss3_exploitability_score = get_exploitability_score(cvss_instance)
+            self.cvss3_impact_score = get_impact_score(cvss_instance)
+        except Exception as e:
+            logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
+
+    cwe = relationship('CWE', secondary=cwe_vulnerability_association)
 
     reference_instances = relationship(
         "Reference",
@@ -1538,6 +1783,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
+
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='vulnerability'
+        )
 
     @hybrid_property
     def target(self):
@@ -1660,6 +1912,7 @@ class Reference(Metadata):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
+    type = Column(Enum(*REFERENCE_TYPES, name='reference_types'), default='other')
 
     # 1 workspace <--> N references
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -1677,10 +1930,21 @@ class Reference(Metadata):
     def __init__(self, name=None, workspace_id=None, **kwargs):
         super().__init__(name=name, workspace_id=workspace_id, **kwargs)
 
+    def __str__(self):
+        return f'{self.name}'
+
     @property
     def parent(self):
         # TODO: fix this property
         return
+
+
+class OWASP(Metadata):
+    __tablename__ = 'owasp'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+
+    vulnerabilities = relationship('Vulnerability', secondary=owasp_vulnerability_association)
 
 
 class ReferenceVulnerabilityAssociation(db.Model):
@@ -1851,6 +2115,14 @@ class Credential(Metadata):
         return self.host or self.service
 
 
+association_workspace_and_users_table = Table(
+    'workspace_permission_association',
+    db.Model.metadata,
+    Column('workspace_id', Integer, ForeignKey('workspace.id')),
+    Column('user_id', Integer, ForeignKey('faraday_user.id'))
+)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -1868,12 +2140,18 @@ class Workspace(Metadata):
     open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('workspace', 'service')
 
+    # Web vulns
     vulnerability_web_count = query_expression()
+    vulnerability_web_confirmed_count = query_expression()
+    vulnerability_web_closed_count = query_expression()
+    vulnerability_web_confirmed_and_not_closed_count = query_expression()
+
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
     last_run_agent_date = query_expression()
     vulnerability_open_count = query_expression(literal(0))
+    vulnerability_closed_count = query_expression(literal(0))
     vulnerability_confirmed_count = query_expression(literal(0))
 
     vulnerability_informational_count = query_expression()
@@ -1882,10 +2160,13 @@ class Workspace(Metadata):
     vulnerability_critical_count = query_expression()
     vulnerability_low_count = query_expression()
     vulnerability_unclassified_count = query_expression()
+    vulnerability_confirmed_and_not_closed_count = query_expression()
 
-    workspace_permission_instances = relationship(
-        "WorkspacePermission",
-        cascade="all, delete-orphan")
+    allowed_users = relationship(
+        'User',
+        secondary=association_workspace_and_users_table,
+        back_populates="workspaces"
+    )
 
     @classmethod
     def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
@@ -1927,6 +2208,11 @@ class Workspace(Metadata):
                 p_5.count_14 as vulnerability_unclassified_count,
                 p_5.count_15 as vulnerability_open_count,
                 p_5.count_16 as vulnerability_confirmed_count,
+                p_5.count_17 as vulnerability_closed_count,
+                p_5.count_18 as vulnerability_web_confirmed_count,
+                p_5.count_19 as vulnerability_web_closed_count,
+                p_5.count_20 as vulnerability_confirmed_and_not_closed_count,
+                p_5.count_21 as vulnerability_web_confirmed_and_not_closed_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -1961,7 +2247,12 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
              COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14,
              COUNT(case when vulnerability.status = 'open' OR vulnerability.status='re-opened' then 1 else null end) as count_15,
-             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16
+             COUNT(case when vulnerability.confirmed is True then 1 else null end) as count_16,
+             COUNT(case when vulnerability.status = 'closed' then 1 else null end) as count_17,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.confirmed is True then 1 else null end) as count_18,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.status = 'closed' then 1 else null end) as count_19,
+             COUNT(case when vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_20,
+             COUNT(case when vulnerability.type = 'vulnerability_web' AND vulnerability.confirmed is True AND vulnerability.status != 'closed' then 1 else null end) as count_21
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}
@@ -2050,7 +2341,7 @@ class Scope(Metadata):
 
 class WorkspacePermission(db.Model):
     __tablename__ = "workspace_permission_association"
-    # TODO: Check if __table_args__ = {'extend_existing': True} should be consider here
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), nullable=False)
     workspace = relationship('Workspace')
@@ -2116,9 +2407,11 @@ class User(db.Model, UserMixin):
     def roles_list(self):
         return [role.name for role in self.roles]
 
-    workspace_permission_instances = relationship(
-        "WorkspacePermission",
-        cascade="all, delete-orphan")
+    workspaces = relationship(
+        'Workspace',
+        secondary=association_workspace_and_users_table,
+        back_populates="allowed_users",
+    )
 
     def __repr__(self):
         return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"
@@ -2202,126 +2495,6 @@ class Methodology(Metadata):
         return
 
 
-# class TaskABC(Metadata):
-#     __abstract__ = True
-#
-#     id = Column(Integer, primary_key=True)
-#     name = NonBlankColumn(Text)
-#     description = BlankColumn(Text)
-#
-#
-# class TaskTemplate(TaskABC):
-#     __tablename__ = 'task_template'
-#     id = Column(Integer, primary_key=True)
-#
-#     __mapper_args__ = {
-#         'concrete': True
-#     }
-#
-#     template = relationship(
-#         'MethodologyTemplate',
-#         backref=backref('tasks', cascade="all, delete-orphan"))
-#     template_id = Column(
-#         Integer,
-#         ForeignKey('methodology_template.id'),
-#         index=True,
-#         nullable=False,
-#     )
-#
-#     # __table_args__ = (
-#     #     UniqueConstraint(template_id, name='uix_task_template_name_desc_template_delete'),
-#     # )
-#
-#
-# class TaskAssignedTo(db.Model):
-#     __tablename__ = "task_assigned_to_association"
-#     id = Column(Integer, primary_key=True)
-#     task_id = Column(
-#         Integer, ForeignKey('task.id'), nullable=False)
-#     task = relationship('Task')
-#
-#     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-#     user = relationship(
-#         'User',
-#         foreign_keys=[user_id],
-#         backref=backref('assigned_tasks', cascade="all, delete-orphan"))
-#
-#
-# class Task(TaskABC):
-#     STATUSES = [
-#         'new',
-#         'in progress',
-#         'review',
-#         'completed',
-#     ]
-#
-#     __tablename__ = 'task'
-#     id = Column(Integer, primary_key=True)
-#
-#     due_date = Column(DateTime, nullable=True)
-#     status = Column(Enum(*STATUSES, name='task_statuses'), nullable=True)
-#
-#     __mapper_args__ = {
-#         'concrete': True
-#     }
-#
-#     assigned_to = relationship(
-#         "User",
-#         secondary="task_assigned_to_association")
-#
-#     methodology_id = Column(
-#         Integer,
-#         ForeignKey('methodology.id'),
-#         index=True,
-#         nullable=False,
-#     )
-#     methodology = relationship(
-#         'Methodology',
-#         backref=backref('tasks', cascade="all, delete-orphan")
-#     )
-#
-#     template_id = Column(
-#         Integer,
-#         ForeignKey('task_template.id'),
-#         index=True,
-#         nullable=True,
-#     )
-#     template = relationship('TaskTemplate', backref='tasks')
-#
-#     # 1 workspace <--> N tasks
-#     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-#     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-#     workspace = relationship(
-#         'Workspace',
-#         backref=backref('tasks', cascade="all, delete-orphan")
-#     )
-#
-#     # __table_args__ = (
-#     #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
-#     # )
-#
-#     tag_instances = relationship(
-#         "Tag",
-#         secondary="tag_object",
-#         viewonly=True,
-#         # this avoid sqlalchemy to autocreate objects. assoc proxy creates objects.
-#         primaryjoin="and_(TagObject.object_id==Task.id, "
-#                     "TagObject.object_type=='task')",
-#         collection_class=set,
-#     )
-#
-#     tags = association_proxy(
-#         'tag_instances',
-#         'name',
-#         proxy_factory=CustomAssociationSet,
-#         creator=_build_associationproxy_creator_for_tags('Tag')
-#     )
-#
-#     @property
-#     def parent(self):
-#         return self.methodology
-#
-#
 project_task_user_association = db.Table('project_task_user_association',
                                          db.Column('task_id', db.Integer(), db.ForeignKey('project_task.id')),
                                          db.Column('user_id', db.Integer(),
@@ -2460,6 +2633,14 @@ class TagObject(db.Model):
 
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
+
+
+class CWE(Metadata):
+    __tablename__ = 'cwe'
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+
+    vulnerabilities = relationship('Vulnerability', secondary=cwe_vulnerability_association)
 
 
 class Comment(Metadata):
@@ -3078,6 +3259,12 @@ class Analytics(Metadata):
     data = Column(JSONType, nullable=False)
     show_data_table = Column(Boolean, default=False)
 
+
+# Indexes to speed up queries
+Index("idx_vulnerability_severity_hostid_serviceid",
+      VulnerabilityGeneric.__table__.c.severity,
+      VulnerabilityGeneric.__table__.c.host_id,
+      VulnerabilityGeneric.__table__.c.service_id)
 
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class

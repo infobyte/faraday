@@ -1,13 +1,15 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-import time
-import cProfile
-import pstats
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import contextlib
-from io import StringIO
+import cProfile
 import logging
-
+import pstats
+import time
+from io import StringIO
 
 debug_logger = logging.getLogger(__name__)
 

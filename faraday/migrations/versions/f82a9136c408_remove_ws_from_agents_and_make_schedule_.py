@@ -27,8 +27,8 @@ def upgrade():
     op.add_column('agent_schedule', sa.Column('ignore_info', sa.Boolean(), nullable=True))
     op.add_column('agent_schedule', sa.Column('resolve_hostname', sa.Boolean(), nullable=True))
     op.drop_table('association_workspace_and_agents_table')
-    op.drop_index('ix_agent_schedule_workspace_id', table_name='agent_schedule')
-    op.drop_constraint('agent_schedule_workspace_id_fkey', 'agent_schedule', type_='foreignkey')
+    op.execute("DROP INDEX IF EXISTS ix_agent_schedule_workspace_id")
+    op.execute("ALTER TABLE agent_schedule DROP CONSTRAINT IF EXISTS agent_schedule_workspace_id_fkey")
     op.drop_column('agent_schedule', 'workspace_id')
     # ### end Alembic commands ###
 

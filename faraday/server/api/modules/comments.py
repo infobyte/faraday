@@ -23,7 +23,7 @@ from faraday.server.api.base import (
     InvalidUsage,
     CreateWorkspacedMixin,
     GenericWorkspacedView,
-    BulkDeleteWorkspacedMixin
+    BulkDeleteWorkspacedMixin, get_workspace
 )
 
 comment_api = Blueprint('comment_api', __name__)
@@ -55,7 +55,7 @@ class CommentCreateMixing(CreateWorkspacedMixin):
         }
         obj = db.session.query(model[data['object_type']]).get(
             data['object_id'])
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         if not obj:
             raise InvalidUsage('Can\'t comment non-existent object')
         if obj.workspace != workspace:
@@ -85,7 +85,7 @@ class UniqueCommentView(GenericWorkspacedView,
             text=data['text'],
             object_type=data['object_type'],
             object_id=data['object_id'],
-            workspace=self._get_workspace(workspace_name)
+            workspace=get_workspace(workspace_name)
         ).first()
 
         if comment is not None:

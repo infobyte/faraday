@@ -14,18 +14,23 @@
     :license: GNU AGPLv3+ or BSD
 
 """
+# Standard library imports
 import inspect
 import logging
 
-from sqlalchemy import func
-from sqlalchemy import and_, or_
-from sqlalchemy import inspect as sqlalchemy_inspect
+# Related third party imports
+from sqlalchemy import (
+    and_,
+    or_,
+    func,
+    inspect as sqlalchemy_inspect,
+)
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm import ColumnProperty
+from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
+# Local application imports
 from faraday.server.models import User, CVE, Role
 
 logger = logging.getLogger(__name__)
@@ -76,6 +81,7 @@ def _sub_operator(model, argument, fieldname):
     This function is for use with the ``has`` and ``any`` search operations.
 
     """
+    submodel = None
     if isinstance(model, InstrumentedAttribute):
         submodel = model.property.mapper.class_
     elif isinstance(model, AssociationProxy):
@@ -224,8 +230,7 @@ class Filter:
 
     def __repr__(self):
         """Returns a string representation of this object."""
-        return '<Filter {} {} {}>'.format(self.fieldname, self.operator,
-                                             self.argument or self.otherfield)
+        return f'<Filter {self.fieldname} {self.operator} {self.argument or self.otherfield}>'
 
     @staticmethod
     def from_dictionary(dictionary):
@@ -414,7 +419,7 @@ class QueryBuilder:
         operation will be applied to the field with name `fieldname` on the
         entity related to `model` whose name, as a string, is `relation`.
 
-        `operation` is a string representating the operation which will be
+        `operation` is a string representing the operation which will be
          executed between the field and the argument received. For example,
          ``'gt'``, ``'lt'``, ``'like'``, ``'in'`` etc.
 
@@ -441,7 +446,7 @@ class QueryBuilder:
         numargs = len(inspect.getargspec(opfunc).args)
         # raises AttributeError if `fieldname` or `relation` does not exist
         field = getattr(model, relation or fieldname)
-        # each of these will raise a TypeError if the wrong number of argments
+        # each of these will raise a TypeError if the wrong number of arguments
         # is supplied to `opfunc`.
         if numargs == 1:
             return opfunc(field)
@@ -506,8 +511,9 @@ class QueryBuilder:
                     try:
                         return create_filt(model, filt)
                     except AttributeError:
-                        # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
-                        raise AttributeError(f"Foreing field {filt.fieldname.split('__')[0]} not found in submodel")
+                        # Can't create the filter since the model or submodel
+                        # does not have the attribute (usually mapper)
+                        raise AttributeError(f"Foreign field {filt.fieldname.split('__')[0]} not found in submodel")
             raise AttributeError(f"Field {filt.fieldname} not found in model")
 
         return create_filters
@@ -542,14 +548,14 @@ class QueryBuilder:
         documentation for :func:`_create_operation` for more information.
 
         """
-        # TODO: Esto no se puede hacer abajo con el group by?
+        # TODO: Can't this be done with group by below?
         joined_models = set()
         query = session.query(model)
 
         if search_params.group_by:
             select_fields = [func.count()]
-            for groupby in search_params.group_by:
-                field_name = groupby.field
+            for group_by in search_params.group_by:
+                field_name = group_by.field
                 if '__' in field_name:
                     field_name, field_name_in_relation = field_name.split('__')
                     relation = getattr(model, field_name)
@@ -565,7 +571,7 @@ class QueryBuilder:
                     joined_models.add(relation_model)
                     select_fields.append(field)
                 else:
-                    select_fields.append(getattr(model, groupby.field))
+                    select_fields.append(getattr(model, group_by.field))
                 query = query.with_entities(*select_fields)
 
         # This function call may raise an exception.
@@ -604,6 +610,10 @@ class QueryBuilder:
                             # TODO: is it possible to guess if relationship is a many to many
                             if relation_model == Role:
                                 query = query.join(relation_model, User.roles)
+                            elif relation_model == User:
+                                query = query.join(relation_model, model.creator_id == relation_model.id)
+                            elif relation_model == CVE:
+                                query = query.join(relation_model, model.cve_instances)
                             else:
                                 query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)
@@ -620,15 +630,15 @@ class QueryBuilder:
 
         # Group the query.
         if search_params.group_by:
-            for groupby in search_params.group_by:
-                field_name = groupby.field
+            for group_by in search_params.group_by:
+                field_name = group_by.field
                 if '__' in field_name:
                     field_name, field_name_in_relation = field_name.split('__')
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_
                     field = getattr(relation_model, field_name_in_relation)
                 else:
-                    field = getattr(model, groupby.field)
+                    field = getattr(model, group_by.field)
                 query = query.group_by(field)
 
         # Apply limit and offset to the query.
@@ -640,18 +650,18 @@ class QueryBuilder:
         return query
 
 
-def create_query(session, model, searchparams, _ignore_order_by=False):
+def create_query(session, model, search_params, _ignore_order_by=False):
     """Returns a SQLAlchemy query object on the given `model` where the search
-    for the query is defined by `searchparams`.
+    for the query is defined by `search_params`.
 
     The returned query matches the set of all instances of `model` which meet
-    the parameters of the search given by `searchparams`. For more information
+    the parameters of the search given by `search_params`. For more information
     on search parameters, see :ref:`search`.
 
     `model` is a SQLAlchemy declarative model representing the database model
     to query.
 
-    `searchparams` is either a dictionary (as parsed from a JSON request from
+    `search_params` is either a dictionary (as parsed from a JSON request from
     the client, for example) or a :class:`SearchParameters` instance defining
     the parameters of the query (as returned by
     :func:`SearchParameters.from_dictionary`, for example).
@@ -662,9 +672,9 @@ def create_query(session, model, searchparams, _ignore_order_by=False):
     work around a limitation in SQLAlchemy.)
 
     """
-    if isinstance(searchparams, dict):
-        searchparams = SearchParameters.from_dictionary(searchparams)
-    return QueryBuilder.create_query(session, model, searchparams,
+    if isinstance(search_params, dict):
+        search_params = SearchParameters.from_dictionary(search_params)
+    return QueryBuilder.create_query(session, model, search_params,
                                      _ignore_order_by)
 
 

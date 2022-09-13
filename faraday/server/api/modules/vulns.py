@@ -18,7 +18,7 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow import Schema, fields, post_load, ValidationError, post_dump
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, or_, func
 from sqlalchemy.inspection import inspect
@@ -28,6 +28,8 @@ from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
 # Local application imports
+from faraday.server.utils.cwe import create_cwe
+from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
     AutoSchema,
@@ -40,7 +42,8 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_cvss_references_and_policyviolations,
+    parse_cve_references_and_policyviolations,
+    get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.fields import FaradayUploadedFile
@@ -57,9 +60,12 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     User
 )
-from faraday.server.utils.database import get_or_create
+from faraday.server.utils.database import (
+    get_or_create,
+)
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.command import set_command_id
 from faraday.server.schemas import (
     MutableField,
     SeverityField,
@@ -121,6 +127,78 @@ class CVESchema(AutoSchema):
     name = fields.String()
 
 
+class CVSS2Schema(AutoSchema):
+    vector_string = fields.String(attribute="cvss2_vector_string")
+    base_score = fields.Float(attribute="cvss2_base_score", required=False, dump_only=True)
+    exploitability_score = fields.Float(attribute="cvss2_exploitability_score", required=False, dump_only=True)
+    impact_score = fields.Float(attribute="cvss2_impact_score", required=False, dump_only=True)
+    base_severity = fields.String(attribute="cvss2_base_severity", dump_only=True, required=False)
+    temporal_score = fields.Float(attribute="cvss2_temporal_score", required=False, dump_only=True)
+    temporal_severity = fields.String(attribute="cvss2_temporal_severity", dump_only=True, required=False)
+    environmental_score = fields.Float(attribute="cvss2_environmental_score", required=False, dump_only=True)
+    environmental_severity = fields.String(attribute="cvss2_environmental_severity", dump_only=True, required=False)
+    access_vector = fields.String(attribute="cvss2_access_vector", dump_only=True, required=False)
+    access_complexity = fields.String(attribute="cvss2_access_complexity", dump_only=True, required=False)
+    authentication = fields.String(attribute="cvss2_authentication", dump_only=True, required=False)
+    confidentiality_impact = fields.String(attribute="cvss2_confidentiality_impact", dump_only=True, required=False)
+    integrity_impact = fields.String(attribute="cvss2_integrity_impact", dump_only=True, required=False)
+    availability_impact = fields.String(attribute="cvss2_availability_impact", dump_only=True, required=False)
+    exploitability = fields.String(attribute="cvss2_exploitability", dump_only=True, required=False)
+    remediation_level = fields.String(attribute="cvss2_remediation_level", dump_only=True, required=False)
+    report_confidence = fields.String(attribute="cvss2_report_confidence", dump_only=True, required=False)
+    collateral_damage_potential = fields.String(attribute="cvss2_collateral_damage_potential", dump_only=True, required=False)
+    target_distribution = fields.String(attribute="cvss2_target_distribution", dump_only=True, required=False)
+    confidentiality_requirement = fields.String(attribute="cvss2_confidentiality_requirement", dump_only=True, required=False)
+    integrity_requirement = fields.String(attribute="cvss2_integrity_requirement", dump_only=True, required=False)
+    availability_requirement = fields.String(attribute="cvss2_availability_requirement", dump_only=True, required=False)
+
+
+class CVSS3Schema(AutoSchema):
+    vector_string = fields.String(attribute="cvss3_vector_string")
+    base_score = fields.Float(attribute="cvss3_base_score", required=False, dump_only=True)
+    exploitability_score = fields.Float(attribute="cvss3_exploitability_score", required=False, dump_only=True)
+    impact_score = fields.Float(attribute="cvss3_impact_score", required=False, dump_only=True)
+    base_severity = fields.String(attribute="cvss3_base_severity", dump_only=True, required=False)
+    temporal_score = fields.Float(attribute="cvss3_temporal_score", required=False, dump_only=True)
+    temporal_severity = fields.String(attribute="cvss3_temporal_severity", dump_only=True, required=False)
+    environmental_score = fields.Float(attribute="cvss3_environmental_score", required=False, dump_only=True)
+    environmental_severity = fields.String(attribute="cvss3_environmental_severity", dump_only=True, required=False)
+    attack_vector = fields.String(attribute="cvss3_attack_vector", dump_only=True, required=False)
+    attack_complexity = fields.String(attribute="cvss3_attack_complexity", dump_only=True, required=False)
+    privileges_required = fields.String(attribute="cvss3_privileges_required", dump_only=True, required=False)
+    user_interaction = fields.String(attribute="cvss3_user_interaction", dump_only=True, required=False)
+    confidentiality_impact = fields.String(attribute="cvss3_confidentiality_impact", dump_only=True, required=False)
+    integrity_impact = fields.String(attribute="cvss3_integrity_impact", dump_only=True, required=False)
+    availability_impact = fields.String(attribute="cvss3_availability_impact", dump_only=True, required=False)
+    exploit_code_maturity = fields.String(attribute="cvss3_exploit_code_maturity", dump_only=True, required=False)
+    remediation_level = fields.String(attribute="cvss3_remediation_level", dump_only=True, required=False)
+    report_confidence = fields.String(attribute="cvss3_report_confidence", dump_only=True, required=False)
+    confidentiality_requirement = fields.String(attribute="cvss3_confidentiality_requirement", dump_only=True, required=False)
+    integrity_requirement = fields.String(attribute="cvss3_integrity_requirement", dump_only=True, required=False)
+    availability_requirement = fields.String(attribute="cvss3_availability_requirement", dump_only=True, required=False)
+    modified_attack_vector = fields.String(attribute="cvss3_modified_attack_vector", dump_only=True, required=False)
+    modified_attack_complexity = fields.String(attribute="cvss3_modified_attack_complexity", dump_only=True, required=False)
+    modified_privileges_required = fields.String(attribute="cvss3_modified_privileges_required", dump_only=True, required=False)
+    modified_user_interaction = fields.String(attribute="cvss3_modified_user_interaction", dump_only=True, required=False)
+    modified_scope = fields.String(attribute="cvss3_modified_scope", dump_only=True, required=False)
+    modified_confidentiality_impact = fields.String(attribute="cvss3_modified_confidentiality_impact", dump_only=True, required=False)
+    modified_integrity_impact = fields.String(attribute="cvss3_modified_integrity_impact", dump_only=True, required=False)
+    modified_availability_impact = fields.String(attribute="cvss3_modified_availability_impact", dump_only=True, required=False)
+
+
+class CWESchema(AutoSchema):
+    name = fields.String()
+
+
+class OWASPSchema(AutoSchema):
+    name = fields.String()
+
+
+class ReferenceSchema(AutoSchema):
+    name = fields.String()
+    type = fields.String()
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -133,17 +211,18 @@ class VulnerabilitySchema(AutoSchema):
     description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
-    refs = fields.List(fields.String(), attribute='references')
-    owasp = fields.Method(serialize='get_owasp_refs', default=[])
+    refs = fields.List(fields.Nested(ReferenceSchema, data_key='reference_instances'))
     cve = fields.List(fields.String(), attribute='cve')
-    cwe = fields.Method(serialize='get_cwe_refs', default=[])
-    cvss = fields.Method(serialize='get_cvss_refs', default=[])
+    cvss2 = SelfNestedField(CVSS2Schema())
+    cvss3 = SelfNestedField(CVSS3Schema())
+    owasp = fields.List(fields.Pluck(OWASPSchema(), "name"), dump_only=True)
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
                                required=True)
+    cwe = fields.List(fields.Pluck(CWESchema(), "name"))
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     easeofresolution = fields.String(
         attribute='ease_of_resolution',
@@ -170,7 +249,8 @@ class VulnerabilitySchema(AutoSchema):
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
-    attachments_count = fields.Integer(dump_only=True, attribute='attachments_count')
+    command_id = fields.Int(required=False, load_only=True)
+    risk = fields.Float(data_key='risk', dump_only=True)
 
     class Meta:
         model = Vulnerability
@@ -179,30 +259,18 @@ class VulnerabilitySchema(AutoSchema):
             'issuetracker', 'description', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
-            'date', 'data', 'refs',
+            'date', 'data',
             'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations',
-            '_attachments',
+            'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool', 'attachments_count',
-            'cvss', 'cwe', 'cve', 'owasp',
+            'custom_fields', 'external_id', 'tool',
+            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
+            'risk'
             )
 
     @staticmethod
     def get_type(obj):
         return obj.__class__.__name__
-
-    @staticmethod
-    def get_owasp_refs(obj):
-        return [reference for reference in obj.references if 'owasp' in reference.lower()]
-
-    @staticmethod
-    def get_cwe_refs(obj):
-        return [reference for reference in obj.references if 'cwe' in reference.lower()]
-
-    @staticmethod
-    def get_cvss_refs(obj):
-        return [reference for reference in obj.references if 'cvss' in reference.lower()]
 
     @staticmethod
     def get_attachments(obj):
@@ -223,6 +291,14 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_parent(obj):
         return obj.service_id or obj.host_id
+
+    @post_dump
+    def remove_reference_instances(self, data, **kwargs):
+        refs = data.pop('reference_instances')
+        data['refs'] = []
+        for ref in refs:
+            data['refs'].append({"name": ref.name, "type": ref.type})
+        return data
 
     @staticmethod
     def get_parent_type(obj):
@@ -261,6 +337,13 @@ class VulnerabilitySchema(AutoSchema):
 
             raise ValidationError("Invalid parent type")
         return value
+
+    @post_load
+    def post_load_owasp(self, data, **kwargs):
+        owasp = data.pop('owasp', None)
+        if owasp:
+            data['owasp'] = [item['name'] for item in owasp]
+        return data
 
     @post_load
     def post_load_impact(self, data, **kwargs):
@@ -303,6 +386,25 @@ class VulnerabilitySchema(AutoSchema):
         # service to host or viceverse
         return data
 
+    @post_load
+    def post_load_cvss2(self, data, **kwargs):
+        return self._get_vector_string(data, 'cvss2')
+
+    @post_load
+    def post_load_cvss3(self, data, **kwargs):
+        return self._get_vector_string(data, 'cvss3')
+
+    def _get_vector_string(self, data, version):
+        if version not in ['cvss2', 'cvss3']:
+            return data
+
+        if version in data:
+            vector_string = f'{version}_vector_string'
+            cvss = data.pop(version)
+            if vector_string in cvss:
+                data[vector_string] = cvss[vector_string]
+        return data
+
 
 class VulnerabilityWebSchema(VulnerabilitySchema):
     method = fields.String(default='')
@@ -322,13 +424,14 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'website', 'issuetracker', 'description', 'parent',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'pname', 'query', 'owner',
-            'path', 'date', 'data', 'response', 'refs',
+            'path', 'date', 'data', 'response',
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool', 'attachments_count',
-            'cve', 'cwe', 'owasp', 'cvss',
+            'status_code', 'custom_fields', 'external_id', 'tool',
+            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
+            'risk'
         )
 
 
@@ -522,9 +625,11 @@ class VulnerabilityView(PaginatedMixin,
         # popped object has the expected type.
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
-        references = data.pop('references', [])
+        references = data.pop('refs', [])
         policyviolations = data.pop('policy_violations', [])
         cve_list = data.pop('cve', [])
+        cwe_list = data.pop('cwe', [])
+        command_id = data.pop('command_id', None)
 
         try:
             obj = super()._perform_create(data, **kwargs)
@@ -533,11 +638,12 @@ class VulnerabilityView(PaginatedMixin,
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
 
-        obj = parse_cve_cvss_references_and_policyviolations(obj, references, policyviolations,
-                                                             cve_list)
+        obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
+        obj.cwe = create_cwe(cwe_list)
 
         db.session.flush()
-
+        if command_id:
+            set_command_id(db.session, obj, True, command_id)
         self._process_attachments(obj, attachments)
         if not obj.tool:
             if obj.creator_command_tool:
@@ -574,6 +680,24 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
+
+        cwe_list = data.pop('cwe', None)
+        if cwe_list:
+            # We need to instantiate cwe objects before updating
+            obj.cwe = create_cwe(cwe_list)
+
+        reference_list = data.pop('refs', None)
+        if reference_list:
+            # We need to instantiate reference objects before updating
+            obj.reference_instances = create_reference(reference_list, obj.workspace_id)
+
+        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
+        # vector string into fields and calculates the scores
+        if 'cvss2_vector_string' in data:
+            obj.cvss2_vector_string = data.pop('cvss2_vector_string')
+
+        if 'cvss3_vector_string' in data:
+            obj.cvss3_vector_string = data.pop('cvss3_vector_string')
 
         return super()._update_object(obj, data)
 
@@ -613,6 +737,10 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.tags),
+            joinedload(VulnerabilityGeneric.cwe),
+            joinedload(VulnerabilityGeneric.owasp),
+            joinedload(Vulnerability.owasp),
+            joinedload(VulnerabilityWeb.owasp),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -692,19 +820,33 @@ class VulnerabilityView(PaginatedMixin,
         """
         res = super().count(**kwargs)
 
-        def convert_group(group):
+        def convert_group(group, type):
             group = group.copy()
-            severity_map = {
-                "informational": "info",
-                "medium": "med"
-            }
-            severity = group['severity']
-            group['severity'] = group['name'] = severity_map.get(
-                severity, severity)
+
+            if type == "severity":
+                severity_map = {
+                    "informational": "info",
+                    "medium": "med"
+                }
+                severity = group[type]
+                group['severity'] = group['name'] = severity_map.get(
+                    severity, severity)
+            elif type == "confirmed":
+                confirmed_map = {
+                    1: "True",
+                    0: "False"
+                }
+                confirmed = group[type]
+                group[type] = group['name'] = confirmed_map.get(
+                    confirmed, confirmed)
+            else:
+                group['name'] = group[type]
             return group
 
         if request.args.get('group_by') == 'severity':
-            res['groups'] = [convert_group(group) for group in res['groups']]
+            res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
+        if request.args.get('group_by') == 'confirmed':
+            res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
         return res
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])
@@ -881,7 +1023,7 @@ class VulnerabilityView(PaginatedMixin,
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
         if 'group_by' not in filters:
             offset = None
@@ -985,7 +1127,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace.name).first()
@@ -1087,7 +1229,7 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         limit = flask.request.args.get('limit', 1)
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
             .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
             .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
@@ -1114,7 +1256,7 @@ class VulnerabilityView(PaginatedMixin,
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         query = self.model_class.query.filter(self.model_class.id.in_(ids))
-        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
     def _bulk_delete_query(self, ids, **kwargs):
@@ -1123,7 +1265,7 @@ class VulnerabilityView(PaginatedMixin,
             query = self.model_class.query.filter(self.model_class.id.in_(ids))
         else:
             query = self.model_class.query.filter(self.model_class.severity.in_(ids))
-        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
         return query.filter(self.model_class.workspace_id == workspace.id)
 
     def _get_model_association_proxy_fields(self):
@@ -1139,18 +1281,35 @@ class VulnerabilityView(PaginatedMixin,
         data.pop('service_id', '')
         data.pop('host_id', '')
 
+        custom_behaviour_fields = {}
+
+        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
+        # vector string into fields and calculates the scores
+        if 'cvss2_vector_string' in data:
+            custom_behaviour_fields['cvss2_vector_string'] = data.pop('cvss2_vector_string')
+        if 'cvss3_vector_string' in data:
+            custom_behaviour_fields['cvss3_vector_string'] = data.pop('cvss3_vector_string')
+
+        cwe_list = data.pop('cwe', None)
+        if cwe_list is not None:
+            custom_behaviour_fields['cwe'] = create_cwe(cwe_list)
+
+        reference_list = data.pop('refs', None)
+        if reference_list is not None:
+            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, data['workspace_id'])
+
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
         super()._pre_bulk_update(data, **kwargs)
 
         model_association_proxy_fields = self._get_model_association_proxy_fields()
-        association_proxy_fields = {}
         for key in list(data):
             parent = getattr(VulnerabilityWeb, key).parent
             field_name = getattr(parent, "target_collection", None)
             if field_name and field_name in model_association_proxy_fields:
-                association_proxy_fields[key] = data.pop(key)
-        return association_proxy_fields
+                custom_behaviour_fields[key] = data.pop(key)
+
+        return custom_behaviour_fields
 
     def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
         if extracted_data:

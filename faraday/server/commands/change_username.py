@@ -1,8 +1,17 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import sys
+
+# Related third party imports
 import click
 
-from faraday.server.web import get_app
+# Local application imports
 from faraday.server.models import User, db
+from faraday.server.web import get_app
 
 
 def change_username(current_username, new_username):

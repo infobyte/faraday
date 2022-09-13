@@ -17,7 +17,7 @@ docker-publish-dev:
     - !reference [ .on-master, rules ]
   needs: # dev won't wait for any previous stage, it will deploy instantly, and
       # then run tests in docker image (To be done)
-    - job: generate_docker_tar_gz
+    - job: generate_docker_tar_gz_master
       artifacts: true
 
 docker-publish-prod:
@@ -35,5 +35,9 @@ docker-publish-prod:
     - docker push $CI_REGISTRY_IMAGE:$VERSION
   rules:
     - !reference [ .on-community-tag, rules ]
+    - !reference [ .update_docker, rules ]
   dependencies: # prod will wait for any previous stage
-    - generate_docker_tar_gz
+    - generate_docker_tar_gz_master
+  needs:
+    - job: generate_docker_tar_gz_master
+      artifacts: true

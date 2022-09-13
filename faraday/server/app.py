@@ -89,6 +89,7 @@ def setup_storage_path():
 def register_blueprints(app):
     from faraday.server.api.modules.info import info_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.commandsrun import commandsrun_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.global_commands import globalcommands_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.activity_feed import activityfeed_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.credentials import credentials_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.hosts import host_api  # pylint:disable=import-outside-toplevel
@@ -121,6 +122,7 @@ def register_blueprints(app):
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
+    app.register_blueprint(globalcommands_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(host_api)

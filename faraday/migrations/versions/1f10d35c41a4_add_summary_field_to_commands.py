@@ -11,7 +11,7 @@ import faraday
 
 # revision identifiers, used by Alembic.
 revision = '1f10d35c41a4'
-down_revision = 'f82a9136c408'
+down_revision = '0409e696eeec'
 branch_labels = None
 depends_on = None
 

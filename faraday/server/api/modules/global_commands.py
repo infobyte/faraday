@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import time
 import datetime
+import logging
 
 import pytz
 from flask import Blueprint
@@ -10,13 +11,14 @@ from marshmallow import fields, post_load, ValidationError
 
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView,
+    ReadOnlyView,
     PaginatedMixin
 )
 from faraday.server.models import Command
 from faraday.server.schemas import MutableField, PrimaryKeyRelatedField, SelfNestedField, MetadataSchema
 
 globalcommands_api = Blueprint('globalcommands_api', __name__)
+logger = logging.getLogger(__name__)
 
 
 def populate_command_dict(command):
@@ -36,10 +38,10 @@ def populate_command_dict(command):
 
 
 class SummarySchema(AutoSchema):
-    description = fields.string()
+    description = fields.String()
     status = fields.Boolean()
-    type = fields.string()
-    target = fields.string()
+    type = fields.String()
+    target = fields.String()
 
 
 class CommandSchema(AutoSchema):
@@ -90,8 +92,8 @@ class CommandSchema(AutoSchema):
                   'params', 'user', 'creator', 'workspace', 'tool', 'import_source', 'metadata')
 
 
-class CommandView(ReadWriteView, PaginatedMixin):
-    route_base = 'globla_command'
+class GlobalCommandView(ReadOnlyView, PaginatedMixin):
+    route_base = 'global_commands'
     model_class = Command
     schema_class = CommandSchema
     order_field = Command.start_date.desc()
@@ -109,4 +111,4 @@ class CommandView(ReadWriteView, PaginatedMixin):
         }
 
 
-CommandView.register(globalcommands_api)
+GlobalCommandView.register(globalcommands_api)

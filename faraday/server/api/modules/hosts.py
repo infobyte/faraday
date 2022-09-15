@@ -179,11 +179,11 @@ class HostsView(PaginatedMixin,
         stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
         if stats:
             # TODO: Improve counts query performance
-            options = [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
             query = Host.query_with_count(None, None, kwargs['workspace_name'])
-            options += [joinedload(relationship)
-                        for relationship in self.get_joinedloads]
+            options = [joinedload(relationship) for relationship in self.get_joinedloads]
             options += [undefer(column) for column in self.get_undefer]
+            options += [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
+
             query = query.options(*options)
             return self._envelope_list(self._dump(query, {}, many=True))
 

@@ -559,6 +559,7 @@ class ListMixin:
                 application/json:
                   schema: {schema_class}
         """
+        exclude = kwargs.pop('exclude', [])
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         order_field = self._get_order_field(**kwargs)
         if order_field is not None:
@@ -569,7 +570,7 @@ class ListMixin:
         objects, pagination_metadata = self._paginate(query)
         if not isinstance(objects, list):
             objects = objects.limit(None).offset(0)
-        return self._envelope_list(self._dump(objects, kwargs, many=True),
+        return self._envelope_list(self._dump(objects, kwargs, many=True, exclude=exclude),
                                    pagination_metadata)
 
 

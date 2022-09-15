@@ -158,8 +158,31 @@ class HostsView(PaginatedMixin,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
-    def _get_base_query(self, workspace_name):
-        return Host.query_with_count(None, None, workspace_name)
+    def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of hosts."
+            tags: ["Host"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: HostSchema
+          tags: ["Host"]
+          responses:
+            200:
+              description: Ok
+        """
+        stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
+        if stats:
+            # TODO: Improve counts query performance
+            objects = Host.query_with_count(None, None, kwargs['workspace_name'])
+            return self._envelope_list(self._dump(objects, {}, many=True))
+
+        kwargs['exclude'] = ['severity_counts']
+        return super().index(**kwargs)
 
     @route('/filter')
     def filter(self, workspace_name):

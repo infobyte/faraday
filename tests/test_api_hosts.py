@@ -596,7 +596,7 @@ class TestHostAPI:
 
         session.commit()
 
-        res = test_client.get(self.url())
+        res = test_client.get(f'{self.url()}?stats=true')
         assert res.status_code == 200
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.

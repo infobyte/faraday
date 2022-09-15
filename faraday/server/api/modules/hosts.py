@@ -184,7 +184,7 @@ class HostsView(PaginatedMixin,
             options += [joinedload(relationship)
                         for relationship in self.get_joinedloads]
             options += [undefer(column) for column in self.get_undefer]
-            query.options(*options)
+            query = query.options(*options)
             return self._envelope_list(self._dump(query, {}, many=True))
 
         kwargs['exclude'] = ['severity_counts']

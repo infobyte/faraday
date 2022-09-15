@@ -20,6 +20,7 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
@@ -178,8 +179,13 @@ class HostsView(PaginatedMixin,
         stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
         if stats:
             # TODO: Improve counts query performance
-            objects = Host.query_with_count(None, None, kwargs['workspace_name'])
-            return self._envelope_list(self._dump(objects, {}, many=True))
+            options = [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
+            query = Host.query_with_count(None, None, kwargs['workspace_name'])
+            options += [joinedload(relationship)
+                        for relationship in self.get_joinedloads]
+            options += [undefer(column) for column in self.get_undefer]
+            query.options(*options)
+            return self._envelope_list(self._dump(query, {}, many=True))
 
         kwargs['exclude'] = ['severity_counts']
         return super().index(**kwargs)

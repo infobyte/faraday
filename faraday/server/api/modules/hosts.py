@@ -426,6 +426,38 @@ class HostsView(PaginatedMixin,
         return query
 
     def patch(self, object_id, workspace_name=None, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         kwargs['exclude'] = ['severity_counts']
         return super().patch(object_id, workspace_name=workspace_name, **kwargs)
 

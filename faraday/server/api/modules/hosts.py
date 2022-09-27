@@ -425,6 +425,10 @@ class HostsView(PaginatedMixin,
                                  | match_hostname)
         return query
 
+    def patch(self, object_id, workspace_name=None, **kwargs):
+        kwargs['exclude'] = ['severity_counts']
+        return super().patch(object_id, workspace_name=workspace_name, **kwargs)
+
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []
         for index, host in enumerate(objects):

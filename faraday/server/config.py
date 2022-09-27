@@ -1,18 +1,15 @@
-# Faraday Penetration Test IDE
-# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
-
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import errno
+import logging
 import os
 import shutil
-import errno
 from configparser import ConfigParser
-import logging
-
-from logging import (
-    DEBUG,
-    INFO,
-
-)
+from logging import DEBUG, INFO
 from pathlib import Path
 
 
@@ -35,6 +32,7 @@ DEFAULT_CONFIG_FILE = FARADAY_BASE / 'server' / 'default.ini'
 REPORTS_VIEWS_DIR = FARADAY_BASE / 'views' / 'reports'
 LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config' / 'server.ini'
 LOCAL_REPORTS_FOLDER = CONST_FARADAY_HOME_PATH / 'uploaded_reports'
+LOCAL_OPENAPI_FILE = CONST_FARADAY_HOME_PATH / 'openapi' / 'faraday_swagger.json'
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 
@@ -101,7 +99,6 @@ class ConfigSection:
 
     @staticmethod
     def parse_section(section_name, __parser):
-        section = None
         if section_name == 'database':
             section = database
         elif section_name == 'faraday_server':

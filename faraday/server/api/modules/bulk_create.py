@@ -37,6 +37,7 @@ from faraday.server.models import (
     Workspace,
     Metadata
 )
+from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -45,7 +46,8 @@ from faraday.server.utils.database import (
 from faraday.server.api.base import (
     AutoSchema,
     GenericWorkspacedView,
-    parse_cve_cvss_references_and_policyviolations
+    parse_cve_references_and_policyviolations,
+    get_workspace
 )
 from faraday.server.api.modules import (
     hosts,
@@ -247,19 +249,41 @@ def bulk_create(ws: Workspace,
     if 'command' in data:
         command = _update_command(command, data['command'])
 
-    total_hosts = len(data['hosts'])
-    if total_hosts > 0:
-        logger.debug(f"Needs to create {total_hosts} hosts...")
+    total_created_assets = db.session.query(Host).count()
+    hosts_to_create = len(data['hosts'])
+    created_hosts = 0
+    created_vulns = 0
+    created_services = 0
+    if hosts_to_create > 0:
+        logger.debug(f"Needs to create {hosts_to_create} hosts...")
         for host in data['hosts']:
-            _create_host(ws, host, command)
 
+            _vulns = len(host['vulnerabilities']) if 'vulnerabilities' in host else 0
+            _services = len(host['services']) if 'services' in host else 0
+
+            if 'services' in host:
+                for service in host['services']:
+                    _vulns += len(service['vulnerabilities'])
+
+            host_created = _create_host(ws, host, command)
+            if host_created:
+                created_hosts += 1
+                total_created_assets += 1
+                created_vulns += _vulns
+                created_services += _services
+
+        total_secs = time.time() - start_time
+        # creator, user, tool, sum_created_vulnerabilities, sum_created_vulnerability_web, workspace, agent_execution
+        logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} seconds, "
+                    f"{created_hosts} of {hosts_to_create} hosts created, "
+                    f"{created_vulns} vulnerabilities created, "
+                    f"{created_services} services created.")
+    else:
+        logger.info("No hosts to create")
     if 'command' in data and set_end_date:
         command.end_date = datetime.utcnow() if command.end_date is None else \
             command.end_date
         db.session.commit()
-
-    total_secs = time.time() - start_time
-    logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} secs")
 
 
 def _update_command(command: Command, command_data: dict):
@@ -298,6 +322,7 @@ def _create_host(ws, host_data, command=None):
         logger.debug(f"Needs to create {total_credentials} credentials...")
         for cred_data in credentials:
             _create_credential(ws, cred_data, command, host=host)
+    return created
 
 
 def _create_command_object_for(ws, created, obj, command):
@@ -365,8 +390,9 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     assert not ('host' in kwargs and 'service' in kwargs)
 
     vuln_data.pop('_attachments', {})
-    references = vuln_data.pop('references', [])
+    references = vuln_data.pop('refs', [])
     cve_list = vuln_data.pop('cve', [])
+    cwe_list = vuln_data.pop('cwe', [])
 
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -386,6 +412,8 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             vuln_data['tool'] = command.tool
         else:
             vuln_data['tool'] = 'Web UI'
+
+    db.session.commit()
 
     run_date_string = vuln_data.pop('run_date', None)
     if run_date_string:
@@ -415,19 +443,19 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    def update_vuln(_policyviolations, _references, _vuln, _cve_list):
+    def update_vuln(_policyviolations, _references, _vuln, _cve_list, _cwe_list):
 
-        _vuln = parse_cve_cvss_references_and_policyviolations(_vuln, _references, _policyviolations,
-                                                               _cve_list)
+        _vuln = parse_cve_references_and_policyviolations(_vuln, _references, _policyviolations, _cve_list)
+        vuln.cwe = create_cwe(cwe_list)
         # TODO attachments
         db.session.add(_vuln)
         db.session.commit()
 
     if created:
-        update_vuln(policyviolations, references, vuln, cve_list)
+        update_vuln(policyviolations, references, vuln, cve_list, cwe_list)
     elif vuln.status == "closed":  # Implicit not created
         vuln.status = "re-opened"
-        update_vuln(policyviolations, references, vuln, cve_list)
+        update_vuln(policyviolations, references, vuln, cve_list, cwe_list)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):
@@ -483,7 +511,7 @@ class BulkCreateView(GenericWorkspacedView):
             agent = require_agent_token()
         data = self._parse_data(self._get_schema_instance({}), flask.request)
         json_data = flask.request.json
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
 
         if 'execution_id' in data:
             if not workspace:
@@ -573,7 +601,10 @@ class BulkCreateView(GenericWorkspacedView):
                     None,
                     user_id,
                     False,
-                    False
+                    False,
+                    None,
+                    None,
+                    None
                 )
             )
         logger.info(f"Faraday objects created in bulk for workspace {workspace}")

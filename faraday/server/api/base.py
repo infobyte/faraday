@@ -10,7 +10,7 @@ import datetime
 import json
 import re
 from json import JSONDecodeError
-from typing import Tuple
+from typing import Tuple, List, Dict
 from collections import defaultdict
 
 # Related third party imports
@@ -46,6 +46,7 @@ from faraday.server.utils.database import (
     not_null_constraint_violation,
 )
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.config import faraday_server
 from faraday.server.models import CVE
@@ -92,21 +93,29 @@ def get_group_by_and_sort_dir(model_class):
     return group_by, sort_dir
 
 
-def parse_cve_cvss_references_and_policyviolations(vuln, references, policyviolations, cve_list):
-    vuln.references = references
+def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
+    vuln.reference_instances = create_reference(references, vuln.workspace_id)
+
     vuln.policy_violations = policyviolations
 
-    # parse cve and reference. Should be temporal.
+    # TODO: Check format with letters at the end CVE-2000-1234XXX. For now we are removing them from the string.
     parsed_cve_list = []
     for cve in cve_list:
-        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
-
-    for cve in references:
         parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
 
     vuln.cve = parsed_cve_list
 
     return vuln
+
+
+def get_workspace(workspace_name):
+    try:
+        ws = Workspace.query.filter_by(name=workspace_name).one()
+        if not ws.active:
+            flask.abort(403, f"Disabled workspace: {workspace_name}")
+        return ws
+    except NoResultFound:
+        flask.abort(404, f"No such workspace: {workspace_name}")
 
 
 class InvalidUsage(Exception):
@@ -411,6 +420,10 @@ class GenericView(FlaskView):
                 messages = ['Invalid request']
             return flask.jsonify(messages), 409
 
+        @app.errorhandler(403)
+        def handle_forbidden(err):  # pylint: disable=unused-variable
+            return flask.jsonify({"message": err.description}), 403
+
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):  # pylint: disable=unused-variable
             response = flask.jsonify(error.to_dict())
@@ -445,21 +458,10 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    @staticmethod
-    def _get_workspace(workspace_name):
-        ws = None
-        try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
-            if not ws.active:
-                flask.abort(403, f"Disabled workspace: {workspace_name}")
-        except NoResultFound:
-            flask.abort(404, f"No such workspace: {workspace_name}")
-        return ws
-
     def _get_base_query(self, workspace_name):
         base = super()._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id == self._get_workspace(workspace_name).id)
+            Workspace.id == get_workspace(workspace_name).id)
 
     def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
@@ -483,7 +485,7 @@ class GenericWorkspacedView(GenericView):
         sup = super()
         if hasattr(sup, 'before_request'):
             sup.before_request(name, *args, **kwargs)
-        if (self._get_workspace(kwargs['workspace_name']).readonly
+        if (get_workspace(kwargs['workspace_name']).readonly
                 and flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
@@ -503,7 +505,7 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.filter(
             self.model_class.workspaces.any(
-                name=self._get_workspace(workspace_name).name
+                name=get_workspace(workspace_name).name
             )
         )
 
@@ -747,7 +749,7 @@ class FilterWorkspacedMixin(ListMixin):
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         filter_query = None
         if 'group_by' not in filters:
             offset = None
@@ -783,6 +785,138 @@ class FilterWorkspacedMixin(ListMixin):
                 flask.abort(400, e)
             data, rows_count = get_filtered_data(filters, filter_query)
             return data, rows_count
+
+
+class FilterObjects:
+
+    def _process_filter_data(self, filters, workspace_name=None):
+        filters = self._get_validated_filters_standalone(filters)
+        return self._filter_standalone(filters, None, False, False, workspace_name)
+
+    def _get_validated_filters_standalone(self, filters):
+        filters_to_validate = None
+
+        try:
+            filters_to_validate = FlaskRestlessSchema().load(json.loads(filters)) or {}
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        if hasattr(self, 'fields_to_exclude'):
+            if not self._validate_fields_standalone(filters_to_validate):
+                flask.abort(400, "Invalid filters")
+
+        return filters
+
+    def _generate_filter_query_standalone(self, filters, severity_count=False, host_vulns=False, workspace=None):
+        filter_query = search(db.session,
+                              self.model_class,
+                              filters)
+
+        if workspace:
+            filter_query = filter_query.filter(self.model_class.workspace == workspace)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=host_vulns)
+
+            filter_query = filter_query.options(
+                with_expression(
+                    Workspace.vulnerability_web_count,
+                    _make_vuln_count_property('vulnerability_web', use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.vulnerability_standard_count,
+                    _make_vuln_count_property('vulnerability', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.vulnerability_code_count,
+                    _make_vuln_count_property('vulnerability_code', use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.vulnerability_confirmed_count,
+                    _make_vuln_count_property(None,
+                                              confirmed=True,
+                                              use_column_property=False)
+                )
+            )
+
+        return filter_query
+
+    def _key_finder_standalone(self, key: str, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k == key:
+                    yield v
+
+                elif isinstance(v, dict) or isinstance(v, list):
+                    yield from self._key_finder_standalone(key, v)
+
+        elif isinstance(data, list):
+            for item in data:
+                yield from self._key_finder_standalone(key, item)
+
+    def _validate_fields_standalone(self, filters: Dict[str, List[Dict]]) -> bool:
+        intersection = set(self.fields_to_exclude).intersection(set(self._key_finder_standalone('name', filters)))
+        return not intersection
+
+    def _filter_standalone(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
+                severity_count=False, host_vulns=False, workspace_name=None) -> Tuple[list, int]:
+
+        marshmallow_params = {'many': True, 'context': {}}
+
+        self.schema_class = self.schema_class or self._get_schema_class()
+
+        try:
+            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        workspace = get_workspace(workspace_name) if workspace_name else None
+
+        filter_query = None
+        if 'group_by' not in filters:
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit')  # we need to remove pagination, since
+
+            try:
+                filter_query = self._generate_filter_query_standalone(
+                    filters,
+                    severity_count=severity_count,
+                    host_vulns=host_vulns,
+                    workspace=workspace
+                )
+            except AttributeError as e:
+                flask.abort(400, e)
+
+            if extra_alchemy_filters is not None:
+                filter_query = filter_query.filter(extra_alchemy_filters)
+            count = filter_query.count()
+            if limit:
+                filter_query = filter_query.limit(limit)
+            if offset:
+                filter_query = filter_query.offset(offset)
+            filter_query = self._add_to_filter_standalone(filter_query)
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
+            return json.loads(objs), count
+        else:
+            filter_query = self._generate_filter_query_standalone(
+                filters,
+                workspace=workspace
+            )
+            if extra_alchemy_filters is not None:
+                filter_query += filter_query.filter(extra_alchemy_filters)
+
+            data, rows_count = get_filtered_data(filters, filter_query)
+            return data, rows_count
+
+    def _add_to_filter_standalone(self, filter_query, **kwargs):
+        return filter_query
 
 
 class FilterMixin(ListMixin):
@@ -1153,7 +1287,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
 
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
@@ -1166,7 +1300,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             if not is_unique_constraint_violation(ex):
                 raise
             db.session.rollback()
-            workspace = self._get_workspace(workspace_name)
+            workspace = get_workspace(workspace_name)
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
                 flask.abort(409, ValidationError(
@@ -1307,7 +1441,7 @@ class UpdateMixin:
         return self._dump(obj, kwargs), 200
 
 
-class BulkUpdateMixin:
+class BulkUpdateMixin(FilterObjects):
     # These mixin should be merged with DeleteMixin after v2 is removed
 
     @route('', methods=['PATCH'])
@@ -1320,10 +1454,19 @@ class BulkUpdateMixin:
             204:
               description: Ok
         """
-        # TODO BULK_UPDATE_SCHEMA
-        if not flask.request.json or 'ids' not in flask.request.json:
+        workspace_name = kwargs.get('workspace_name') if 'workspace_name' in kwargs else None
+
+        # Try to get ids
+        if flask.request.json and 'ids' in flask.request.json:
+            ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+
+        # Try filter if no ids
+        elif flask.request.args.get('q', None) is not None:
+            filtered_objects = self._process_filter_data(flask.request.args.get('q', '{"filters": []}'), workspace_name)
+            ids = list(x.get("obj_id") for x in filtered_objects[0])
+        else:
             flask.abort(400)
-        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+
         objects = self._get_objects(ids, **kwargs)
         context = {'updating': True, 'objects': objects}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
@@ -1438,7 +1581,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         # assert not db.session.new
 
         with db.session.no_autoflush:
-            obj.workspace = self._get_workspace(workspace_name)
+            obj.workspace = get_workspace(workspace_name)
 
         self._set_command_id(obj, False)
         return super()._perform_update(object_id, obj, data, workspace_name)
@@ -1494,7 +1637,7 @@ class BulkUpdateWorkspacedMixin(BulkUpdateMixin):
         return super().bulk_update(workspace_name=workspace_name)
 
     def _bulk_update_query(self, ids, **kwargs):
-        workspace = self._get_workspace(kwargs["workspace_name"])
+        workspace = get_workspace(kwargs["workspace_name"])
         return super()._bulk_update_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 
@@ -1585,7 +1728,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
-            obj.workspace = self._get_workspace(workspace_name)
+            obj.workspace = get_workspace(workspace_name)
         return super()._perform_delete(obj, workspace_name)
 
 
@@ -1605,7 +1748,7 @@ class BulkDeleteWorkspacedMixin(BulkDeleteMixin):
         return super().bulk_delete(workspace_name=workspace_name)
 
     def _bulk_delete_query(self, ids, **kwargs):
-        workspace = self._get_workspace(kwargs.pop("workspace_name"))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
         return super()._bulk_delete_query(ids).filter(self.model_class.workspace_id == workspace.id)
 
 
@@ -1733,7 +1876,7 @@ class CountMultiWorkspacedMixin:
 
         # Enforce workspace permission checking for each workspace
         for workspace_name in workspace_names_list:
-            self._get_workspace(workspace_name)
+            get_workspace(workspace_name)
 
         group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
 

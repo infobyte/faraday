@@ -1,22 +1,28 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
+import json
 import logging
 import os
-import threading
 from pathlib import Path
-from threading import Thread
 from queue import Queue, Empty
+from threading import Event, Thread
 from typing import Tuple, Optional
-import json
 
+# Related third party imports
 from faraday_plugins.plugins.manager import PluginsManager
-from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 
-from faraday.server.models import Workspace, Command, User
+# Local application imports
+from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
+from faraday.server.config import faraday_server
+from faraday.server.models import Workspace, Command, User, db
 from faraday.server.utils.bulk_create import add_creator
 from faraday.settings.reports import ReportsSettings
-from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)
-
 
 REPORTS_QUEUE = Queue()
 INTERVAL = 0.5
@@ -36,17 +42,24 @@ def send_report_data(workspace_name: str, command_id: int, report_json: dict,
 
 
 def process_report(workspace_name: str, command_id: int, file_path: Path,
-                   plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool):
+                   plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool,
+                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None):
     from faraday.server.web import get_app  # pylint:disable=import-outside-toplevel
     with get_app().app_context():
         if plugin_id is not None:
             plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder,
                                              ignore_info=ignore_info,
-                                             hostname_resolution=dns_resolution)
+                                             hostname_resolution=dns_resolution,
+                                             vuln_tag=vuln_tag,
+                                             host_tag=host_tag,
+                                             service_tag=service_tag)
             logger.info(f"Reports Manager: [Custom plugins folder: "
                         f"[{ReportsSettings.settings.custom_plugins_folder}]"
                         f"[Ignore info severity: {ignore_info}]"
-                        f"[Hostname resolution: {dns_resolution}]")
+                        f"[Hostname resolution: {dns_resolution}]"
+                        f"[Vuln tag: {vuln_tag}]"
+                        f"[Host tag: {host_tag}]"
+                        f"[Service tag: {service_tag}]")
             plugin = plugins_manager.get_plugin(plugin_id)
             if plugin:
                 try:
@@ -56,8 +69,11 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
                     vulns_data = plugin.get_data()
                     del vulns_data['command']['duration']
                 except Exception as e:
-                    logger.error("Processing Error: %s", e)
+                    logger.error(f"Processing Error: {e}")
                     logger.exception(e)
+                    command = Command.query.filter_by(id=command_id).first()
+                    command.command = "error"
+                    db.session.commit()
                     return
             else:
                 logger.error(f"No plugin detected for report [{file_path}]")
@@ -90,7 +106,7 @@ class ReportsManager(Thread):
     def __init__(self, upload_reports_queue, *args, **kwargs):
         super().__init__(name="ReportsManager-Thread", daemon=True, *args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
-        self.__event = threading.Event()
+        self.__event = Event()
 
     def stop(self):
         logger.info("Reports Manager Thread [Stopping...]")
@@ -100,10 +116,11 @@ class ReportsManager(Thread):
         logger.info("Reports Manager Thread [Start]")
         while not self.__event.is_set():
             try:
-                tpl: Tuple[str, int, Path, int, int, bool, bool] = \
+                tpl: Tuple[str, int, Path, int, int, bool, bool, list, list, list] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
 
-                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution = tpl
+                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag,\
+                host_tag, service_tag = tpl
 
                 logger.info(f"Processing raw report {file_path}")
                 if file_path.is_file():
@@ -113,7 +130,10 @@ class ReportsManager(Thread):
                                    plugin_id,
                                    user_id,
                                    ignore_info_bool,
-                                   dns_resolution)
+                                   dns_resolution,
+                                   vuln_tag,
+                                   host_tag,
+                                   service_tag)
                 else:
                     logger.warning(f"Report file [{file_path}] don't exists",
                                    file_path)

@@ -2,6 +2,28 @@ New features in the latest update
 =====================================
 
 
+4.1.0 [Sep 12th, 2022]:
+---
+ * Now error 403 will respond a json, not a html
+ * [FIX] Change resolve_hotname for resolve_hostname in agents
+ * Add filters as params for bulk_update
+ * Add Swagger view
+ * Modify way of filtering dates with `filters`. Now only 'YYYYMMDD' format supported.
+ * Add cvss v2 and v3 into model and api
+ * [ADD] Now if command_id is sent in a post for hosts, services or vulns, the created object is associated with that command_id if exist
+ * Add support for tagging when running an agent
+ * Clean up of commented code that's not needed anymore
+ * [FIX] Change dns_resolution to resolve_hostname
+ * Add CWE into model and api
+
+4.0.4 [Jul 28th, 2022]:
+---
+ * Remove workspaces agents relationship an now agent can run to multiple workspaces
+ * Fix migration f82a9136c408 checking if index and constrains exist before deleting
+ * Added count to vulns closed
+ * Fix order_by `cve_instances__name` when no filter was provided
+ * Add index into vulnerability
+
 4.0.3 [Jun 16th, 2022]:
 ---
  * Replace usage of strings for user_types enumerator constants

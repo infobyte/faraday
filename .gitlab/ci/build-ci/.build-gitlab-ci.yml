@@ -22,6 +22,7 @@ generate_deb_dev:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
@@ -38,7 +39,7 @@ generate_deb_dev:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     rules:
-        - !reference [.be-built, rules]
+        - !reference [.be-uploaded, rules]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
         - !reference [.ignore-on-staging, rules]
         - !reference [.ignore-on-master, rules]
@@ -68,6 +69,7 @@ generate_deb_staging:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
@@ -111,6 +113,7 @@ generate_deb_master:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
@@ -128,6 +131,7 @@ generate_deb_master:
         expire_in: 15 days
     rules:
         - !reference [.on-master, rules]
+        - !reference [.on-community-tag, rules]
         - when: never
 
 generate_rpm_dev:
@@ -163,6 +167,7 @@ generate_rpm_dev:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
@@ -178,7 +183,7 @@ generate_rpm_dev:
             - "faraday-server_amd64.rpm"
         expire_in: 15 days
     rules:
-        - !reference [.be-built, rules]
+        - !reference [.be-uploaded, rules]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
         - !reference [.ignore-on-staging, rules]
         - !reference [.ignore-on-master, rules]
@@ -217,6 +222,7 @@ generate_rpm_staging:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
@@ -268,6 +274,7 @@ generate_rpm_master:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
@@ -284,6 +291,7 @@ generate_rpm_master:
         expire_in: 15 days
     rules:
         - !reference [.on-master, rules]
+        - !reference [.on-community-tag, rules]
         - when: never
 
 generate_docker_tar_gz_dev:
@@ -300,7 +308,7 @@ generate_docker_tar_gz_dev:
       paths:
         - faraday-server-docker.tar.gz
     rules:
-        - !reference [.be-built, rules]
+        - !reference [.be-uploaded, rules]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
         - !reference [.ignore-on-staging, rules]
         - !reference [.ignore-on-master, rules]
@@ -340,14 +348,16 @@ generate_docker_tar_gz_master:
     script:
         - !reference [ .get_from_tar_and_replace_www, script ]
         - !reference [ .get_secrets, script ]
-        - docker build . -t faraday-community
-        - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
-        - docker rmi -f faraday-community
+        - docker build . -t $CI_REGISTRY_IMAGE
+        - docker save $CI_REGISTRY_IMAGE:latest | gzip > faraday-server-docker.tar.gz
+        - docker rmi -f $CI_REGISTRY_IMAGE
     artifacts:
       paths:
         - faraday-server-docker.tar.gz
     rules:
       - !reference [.on-master, rules]
+      - !reference [ .on-community-tag, rules ]
+      - !reference [ .update_docker, rules ]
       - when: never
     needs:
       - project: faradaysec/faraday-react

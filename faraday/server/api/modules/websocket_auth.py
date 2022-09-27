@@ -20,7 +20,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
 from faraday.server.models import Agent
-from faraday.server.api.base import GenericWorkspacedView
+from faraday.server.api.base import GenericWorkspacedView, get_workspace
 
 logger = logging.getLogger(__name__)
 websocket_auth_api = Blueprint('websocket_auth_api', __name__)
@@ -44,7 +44,7 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
             200:
               description: Ok
         """
-        workspace = self._get_workspace(workspace_name)
+        workspace = get_workspace(workspace_name)
         signer = TimestampSigner(app.config['SECRET_KEY'], salt="websocket")
         token = signer.sign(str(workspace.id)).decode('utf-8')
         return {"token": token}

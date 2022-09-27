@@ -11,6 +11,8 @@
 , buildPythonPackage
 , click
 , colorama
+, cryptography
+, cvss
 , dateutil
 , distro
 , email_validator
@@ -66,7 +68,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "4.0.3";
+    "4.0.4";
 
   src =
     lib.cleanSource
@@ -97,6 +99,7 @@ buildPythonPackage rec {
       pillow
       psycopg2
       pgcli
+      cryptography
       pyopenssl
       dateutil
       requests
@@ -123,10 +126,10 @@ buildPythonPackage rec {
       flask-limiter
       flask_mail
       faraday-agent-parameters-types
+      cvss
     ];
   checkInputs =
     [
-      flask
       factory_boy
       pylint
       pytest
@@ -144,7 +147,7 @@ buildPythonPackage rec {
   meta =
     with lib; {
       description =
-        "Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com";
+        "Open Source Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com";
       homepage =
         "https://github.com/infobyte/faraday";
     };

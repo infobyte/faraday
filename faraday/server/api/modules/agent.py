@@ -127,9 +127,9 @@ class AgentView(ReadWriteView):
 
     def post(self, **kwargs):
         self.schema_class = AgentCreationSchema
-        r = super().post(**kwargs)
+        obj, status = super().post(**kwargs)
         self.schema_class = AgentSchema
-        return r
+        return obj, status
 
     def _perform_create(self, data, **kwargs):
         token = data.pop('token')

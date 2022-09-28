@@ -125,8 +125,13 @@ class AgentView(ReadWriteView):
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
 
+    def post(self, **kwargs):
+        self.schema_class = AgentCreationSchema
+        r = super().post(**kwargs)
+        self.schema_class = AgentSchema
+        return r
+
     def _perform_create(self, data, **kwargs):
-        data = self._parse_data(AgentCreationSchema(unknown=EXCLUDE), request)
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.

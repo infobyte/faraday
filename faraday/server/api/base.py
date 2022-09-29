@@ -559,6 +559,7 @@ class ListMixin:
                 application/json:
                   schema: {schema_class}
         """
+        exclude = kwargs.pop('exclude', [])
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         order_field = self._get_order_field(**kwargs)
         if order_field is not None:
@@ -569,7 +570,7 @@ class ListMixin:
         objects, pagination_metadata = self._paginate(query)
         if not isinstance(objects, list):
             objects = objects.limit(None).offset(0)
-        return self._envelope_list(self._dump(objects, kwargs, many=True),
+        return self._envelope_list(self._dump(objects, kwargs, many=True, exclude=exclude),
                                    pagination_metadata)
 
 
@@ -1429,6 +1430,7 @@ class UpdateMixin:
                 application/json:
                   schema: {schema_class}
         """
+        exclude = kwargs.pop('exclude', [])
         obj = self._get_object(object_id, **kwargs)
         context = {'updating': True, 'object': obj}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True),
@@ -1438,7 +1440,7 @@ class UpdateMixin:
         self._update_object(obj, data, partial=True)
         self._perform_update(object_id, obj, data, partial=True, **kwargs)
 
-        return self._dump(obj, kwargs), 200
+        return self._dump(obj, kwargs, exclude=exclude), 200
 
 
 class BulkUpdateMixin(FilterObjects):
@@ -1586,7 +1588,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         self._set_command_id(obj, False)
         return super()._perform_update(object_id, obj, data, workspace_name)
 
-    def patch(self, object_id, workspace_name=None):
+    def patch(self, object_id, workspace_name=None, **kwargs):
         """
         ---
           tags: ["{tag_name}"]
@@ -1619,7 +1621,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super().patch(object_id, workspace_name=workspace_name)
+        return super().patch(object_id, workspace_name=workspace_name, **kwargs)
 
 
 class BulkUpdateWorkspacedMixin(BulkUpdateMixin):

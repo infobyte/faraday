@@ -79,7 +79,6 @@ class AgentSchema(AutoSchema):
             'create_date',
             'update_date',
             'creator',
-            'token',
             'is_online',
             'active',
             'executors',

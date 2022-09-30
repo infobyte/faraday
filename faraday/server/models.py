@@ -532,11 +532,6 @@ class VulnerabilityABC(Metadata):
 
     external_id = BlankColumn(Text)
 
-    __table_args__ = (
-        CheckConstraint('1.0 <= risk AND risk <= 10.0',
-                        name='check_vulnerability_risk'),
-    )
-
     custom_fields = Column(JSONType)
 
     @property
@@ -2160,6 +2155,8 @@ class Workspace(Metadata):
     vulnerability_low_count = query_expression()
     vulnerability_unclassified_count = query_expression()
     vulnerability_confirmed_and_not_closed_count = query_expression()
+
+    important = Column(Boolean, default=False)
 
     allowed_users = relationship(
         'User',

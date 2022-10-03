@@ -237,7 +237,7 @@ class AgentView(ReadWriteView):
                     "host_tag": None
                 }
             })
-            logger.info("Agent executed")
+            logger.info(f"Agent {agent.name} executed with executer {executor.name}")
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")

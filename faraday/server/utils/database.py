@@ -280,10 +280,7 @@ def get_conflict_object(session, obj, data, workspace=None):
             try:
                 value = data[unique_field]
             except KeyError:
-                if column.default is None:
-                    # No default nor data value, ignore the field
-                    continue
-                value = column.default.arg
+                value = obj.__getattribute__(unique_field)
             filter_data.append(column == value)
 
         if 'workspace_id' in relations_fields:

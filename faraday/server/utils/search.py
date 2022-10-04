@@ -23,6 +23,7 @@ from sqlalchemy import (
     and_,
     or_,
     func,
+    nullslast,
     inspect as sqlalchemy_inspect,
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
@@ -617,11 +618,11 @@ class QueryBuilder:
                             else:
                                 query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)
-                        query = query.order_by(direction())
+                        query = query.order_by(nullslast(direction()))
                     else:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)
-                        query = query.order_by(direction())
+                        query = query.order_by(nullslast(direction()))
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

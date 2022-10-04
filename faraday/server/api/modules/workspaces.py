@@ -102,7 +102,7 @@ class WorkspaceSchema(AutoSchema):
         fields.List(fields.String)
     )
     active = fields.Boolean()
-    important = fields.Boolean(default=False)
+    important = fields.Integer(default=0, validate=lambda stars: stars in [0, 1, 2, 3])
 
     create_date = fields.DateTime(attribute='create_date', dump_only=True)
     update_date = fields.DateTime(attribute='update_date', dump_only=True)

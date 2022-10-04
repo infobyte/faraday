@@ -715,7 +715,7 @@ class TestHostAPI:
             "id": 4000,
             "icon": "windows",
             "versions": [],
-            "important": False,
+            "important": 0,
         }
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
@@ -749,7 +749,7 @@ class TestHostAPI:
             'service_summaries': [],
             'vulns': 0,
             "versions": [],
-            'important': False,
+            'important': 0,
             'severity_counts': {
                 'critical': None,
                 'high': None,

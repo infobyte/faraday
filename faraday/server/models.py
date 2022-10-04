@@ -1184,7 +1184,7 @@ class Host(Metadata):
     vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
     vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
 
-    important = Column(Boolean, nullable=False, default=False)
+    important = Column(Integer, default=0)
 
     @classmethod
     def query_with_count(cls, confirmed, host_ids, workspace_name):
@@ -2156,7 +2156,7 @@ class Workspace(Metadata):
     vulnerability_unclassified_count = query_expression()
     vulnerability_confirmed_and_not_closed_count = query_expression()
 
-    important = Column(Boolean, default=False)
+    important = Column(Integer, default=0)
 
     allowed_users = relationship(
         'User',

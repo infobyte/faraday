@@ -23,6 +23,7 @@ from sqlalchemy import (
     and_,
     or_,
     func,
+    nullsfirst,
     nullslast,
     inspect as sqlalchemy_inspect,
 )
@@ -621,14 +622,14 @@ class QueryBuilder:
                         if val.direction == 'desc':
                             query = query.order_by(nullslast(direction()))
                         else:
-                            query = query.order_by(direction())
+                            query = query.order_by(nullsfirst(direction()))
                     else:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)
                         if val.direction == 'desc':
                             query = query.order_by(nullslast(direction()))
                         else:
-                            query = query.order_by(direction())
+                            query = query.order_by(nullsfirst(direction()))
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

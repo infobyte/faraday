@@ -9,7 +9,7 @@
 Security has two difficult tasks: designing smart ways of getting new information, and keeping track of findings to improve remediation efforts. With Faraday, you may focus on discovering vulnerabilities while we help you with the rest. Just use it in your terminal and get your work organized on the run.
 Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
 
-Faraday aggregates and normalyzses the data you load, allowing exploring it into different visualizations that are useful to managers and analyst alike.
+Faraday aggregates and normalizes the data you load, allowing exploring it into different visualizations that are useful to managers and analysts alike.
 
 ![manage](./docs/images/manage.png)
 ![dashboard](./docs/images/dashboard.png)

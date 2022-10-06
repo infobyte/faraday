@@ -1,3 +1,8 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
 # Standard library imports
 import csv
 import logging
@@ -72,6 +77,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     hosts_data = _build_hosts_data(hosts_ids)
 
     for vuln in vulns:
+        row = None
         vuln_data = _build_vuln_data(vuln, custom_fields_columns, comments_dict)
         if vuln['parent_type'] == 'Host':
             host_id = vuln['parent']

@@ -20,9 +20,11 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
+from faraday.server.utils.command import set_command_id
 from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
@@ -42,7 +44,6 @@ from faraday.server.schemas import (
     SelfNestedField,
 )
 from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
-
 host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ class HostSchema(AutoSchema):
     versions = fields.Method('get_service_version', dump_only=True)
     important = fields.Boolean(default=False)
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
+    command_id = fields.Int(required=False, load_only=True)
 
     class Meta:
         model = Host
@@ -92,7 +94,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'important', 'severity_counts'
+                  'important', 'severity_counts', 'command_id'
                   )
 
     @staticmethod
@@ -157,8 +159,36 @@ class HostsView(PaginatedMixin,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
-    def _get_base_query(self, workspace_name):
-        return Host.query_with_count(None, None, workspace_name)
+    def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of hosts."
+            tags: ["Host"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: HostSchema
+          tags: ["Host"]
+          responses:
+            200:
+              description: Ok
+        """
+        stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
+        if stats:
+            # TODO: Improve counts query performance
+            query = Host.query_with_count(None, None, kwargs['workspace_name'])
+            options = [joinedload(relationship) for relationship in self.get_joinedloads]
+            options += [undefer(column) for column in self.get_undefer]
+            options += [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
+
+            query = query.options(*options)
+            return self._envelope_list(self._dump(query, {}, many=True))
+
+        kwargs['exclude'] = ['severity_counts']
+        return super().index(**kwargs)
 
     @route('/filter')
     def filter(self, workspace_name):
@@ -356,10 +386,13 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
+        command_id = data.pop('command_id', None)
         host = super()._perform_create(data, **kwargs)
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name, host=host,
                           workspace=host.workspace)
+        if command_id:
+            set_command_id(db.session, host, True, command_id)
         db.session.commit()
         return host
 
@@ -391,6 +424,42 @@ class HostsView(PaginatedMixin,
                                  | match_os
                                  | match_hostname)
         return query
+
+    def patch(self, object_id, workspace_name=None, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        kwargs['exclude'] = ['severity_counts']
+        return super().patch(object_id, workspace_name=workspace_name, **kwargs)
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

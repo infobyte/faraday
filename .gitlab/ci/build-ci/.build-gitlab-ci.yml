@@ -22,6 +22,7 @@ generate_deb_dev:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
@@ -68,6 +69,7 @@ generate_deb_staging:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
@@ -111,6 +113,7 @@ generate_deb_master:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
@@ -164,6 +167,7 @@ generate_rpm_dev:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
@@ -218,6 +222,7 @@ generate_rpm_staging:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
@@ -269,6 +274,7 @@ generate_rpm_master:
         - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc dotenv -v 2.7
+        - gem install --no-ri --no-rdoc public_suffix -v 4.0.7
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm

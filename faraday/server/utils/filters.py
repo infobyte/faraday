@@ -1,29 +1,35 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2020  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2020  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
-
 """
-import logging
-import typing
-import numbers
+# Standard library imports
 import datetime
-
-import marshmallow_sqlalchemy
+import logging
+import numbers
+import typing
+from collections.abc import Iterable
 from distutils.util import strtobool
 
+# Related third party imports
+import marshmallow_sqlalchemy
 from dateutil.parser import parse
-from collections.abc import Iterable
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
 
-from faraday.server.models import VulnerabilityWeb, Host, Service, VulnerabilityTemplate, Workspace, User
-from faraday.server.utils.search import OPERATORS
+# Local application imports
 from faraday.server.fields import JSONType
-
+from faraday.server.models import (
+    VulnerabilityWeb,
+    Host,
+    Service,
+    VulnerabilityTemplate,
+    Workspace,
+    User,
+)
+from faraday.server.utils.search import OPERATORS
 
 VALID_OPERATORS = set(OPERATORS.keys()) - {'desc', 'asc'}
-
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 logger = logging.getLogger(__name__)
@@ -32,7 +38,7 @@ logger = logging.getLogger(__name__)
 def generate_datetime_filter(filter_: dict = "") -> typing.List:
     """
     Add time to filter['val'] date
-    Return a new filter with time added. In case of `eq` or `==` operator will return a range of datetimes.
+    Return a new filter with time added. In case of `eq` or `==` operator will return a range of datetime objects.
     """
     if filter_['op'].lower() in ['>', 'gt', '<=', 'lte']:
         filter_['val'] = (parse(filter_['val']) + datetime.timedelta(hours=23,
@@ -85,11 +91,11 @@ class FlaskRestlessFilterSchema(Schema):
     def _validate_filter_types(self, filter_):
         """
             Compares the filter_ list against the model field and the value to be compared.
-            PostgreSQL is very hincha con los types.
+            PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
-            raise ValidationError('Value can\'t containt null chars')
+            raise ValidationError('Value can\'t contain null chars')
         converter = ModelConverter()
         column_name = filter_['name']
         if '__' in column_name:
@@ -143,11 +149,11 @@ class FlaskRestlessFilterSchema(Schema):
         if filter_['op'].lower() in ['ilike', 'like']:
             # like must be used with string
             if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):
-                raise ValidationError('Can\'t perfom ilike/like against numbers')
+                raise ValidationError('Can\'t perform ilike/like against numbers')
             if isinstance(column.type, JSONType):
-                raise ValidationError('Can\'t perfom ilike/like against JSON Type column')
+                raise ValidationError('Can\'t perform ilike/like against JSON Type column')
             if isinstance(field, fields.Boolean):
-                raise ValidationError('Can\'t perfom ilike/like against boolean type column')
+                raise ValidationError('Can\'t perform ilike/like against boolean type column')
 
         if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:
             # we check that operators can be only used against date or numbers
@@ -229,7 +235,7 @@ class FlaskRestlessOperator(Schema):
         # the next iteration is required for allow polymorphism in the list of filters
         for search_filter in data:
             # we try to validate against filter schema since the list could contain
-            # operatores mixed with filters in the list
+            # operators mixed with filters in the list
             valid_count = 0
             for schema in self.model_filter_schemas:
                 try:

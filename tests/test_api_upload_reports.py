@@ -32,7 +32,7 @@ class TestFileUpload:
             'file': (BytesIO(file_contents), 'nmap_report.xml'),
             'csrf_token': csrf_token,
             'ignore_info': False,
-            'dns_resolution': True
+            'resolve_hostname': True
         }
 
         res = test_client.post(

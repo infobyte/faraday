@@ -87,7 +87,6 @@ class AgentSchema(AutoSchema):
             'create_date',
             'update_date',
             'creator',
-            'token',
             'is_online',
             'active',
             'executors',
@@ -133,8 +132,13 @@ class AgentView(ReadWriteView):
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
 
+    def post(self, **kwargs):
+        self.schema_class = AgentCreationSchema
+        obj, status = super().post(**kwargs)
+        self.schema_class = AgentSchema
+        return obj, status
+
     def _perform_create(self, data, **kwargs):
-        data = self._parse_data(AgentCreationSchema(unknown=EXCLUDE), request)
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
@@ -223,7 +227,7 @@ class AgentView(ReadWriteView):
                 "args": executor_data.get('args'),
                 "plugin_args": plugins_args
             })
-            logger.info("Agent executed")
+            logger.info(f"Agent {agent.name} executed with executer {executor.name}")
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an executor with that agent id")

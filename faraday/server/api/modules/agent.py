@@ -120,6 +120,9 @@ class AgentRunSchema(Schema):
     workspaces_names = fields.List(fields.String, required=True)
     ignore_info = fields.Boolean(required=False)
     resolve_hostname = fields.Boolean(required=False)
+    vuln_tag = fields.List(fields.String, required=False)
+    service_tag = fields.List(fields.String, required=False)
+    host_tag = fields.List(fields.String, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -167,19 +170,22 @@ class AgentView(ReadWriteView):
         """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
-        username = flask_login.current_user.username
+        user = flask_login.current_user
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
         executor_data = data['executor_data']
         workspaces = [get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
         plugins_args = {
             "ignore_info": data.get('ignore_info', False),
-            "resolve_hostname": data.get('resolve_hostname', True)
+            "resolve_hostname": data.get('resolve_hostname', True),
+            "vuln_tag": data.get('vuln_tag', None),
+            "service_tag": data.get('service_tag', None),
+            "host_tag": data.get('host_tag', None)
         }
-        return self._run_agent(agent, executor_data, workspaces, plugins_args, username)
+        return self._run_agent(agent, executor_data, workspaces, plugins_args, user.username, user.id)
 
     @staticmethod
-    def _run_agent(agent: Agent, executor_data: dict, workspaces: list, plugins_args: dict, username: str):
+    def _run_agent(agent: Agent, executor_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                              Executor.agent_id == agent.id).one()
@@ -208,6 +214,7 @@ class AgentView(ReadWriteView):
             for workspace in workspaces:
                 command, agent_execution = get_command_and_agent_execution(executor=executor,
                                                                            workspace=workspace,
+                                                                           user_id=user_id,
                                                                            parameters=executor_data["args"],
                                                                            username=username)
                 commands.append(command)

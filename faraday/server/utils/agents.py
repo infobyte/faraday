@@ -1,7 +1,14 @@
-from datetime import datetime
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+# Standard library imports
 import logging
+from datetime import datetime
 from typing import Tuple
 
+# Local application imports
 from faraday.server.models import Command, AgentExecution, Executor, Workspace
 
 logger = logging.getLogger(__name__)
@@ -11,6 +18,7 @@ def get_command_and_agent_execution(
         executor: Executor,
         parameters: dict,
         workspace: Workspace,
+        user_id: int,
         username: str = '',
         hostname: str = '',
         message: str = ''
@@ -25,7 +33,8 @@ def get_command_and_agent_execution(
         hostname=hostname,
         params=params,
         start_date=datetime.utcnow(),
-        workspace=workspace
+        workspace=workspace,
+        creator_id=user_id
     )
 
     agent_execution = AgentExecution(

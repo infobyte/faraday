@@ -1918,7 +1918,8 @@ class Reference(Metadata):
     )
 
     __table_args__ = (
-        UniqueConstraint('name', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
+        UniqueConstraint('name', 'type', 'workspace_id',
+                         name='uix_reference_name_type_vulnerability_workspace'),
     )
 
     def __init__(self, name=None, workspace_id=None, **kwargs):

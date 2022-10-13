@@ -3175,6 +3175,9 @@ class Agent(Metadata):
             return _last_run
         return None
 
+    def __repr__(self):
+        return f"Agent {self.name}"
+
 
 class AgentExecution(Metadata):
     __tablename__ = 'agent_execution'

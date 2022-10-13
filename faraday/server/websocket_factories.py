@@ -229,13 +229,13 @@ class WorkspaceServerFactory(WebSocketServerFactory):
 
     @staticmethod
     def join_agent(agent_connection, agent):
-        logger.info(f"Agent {agent.id} joined!")
+        logger.info(f"Agent {agent.name} id {agent.id} joined!")
         connected_agents[agent.id] = agent_connection
         return True
 
     @staticmethod
     def leave_agent(agent_connection, agent):
-        logger.info(f"Agent {agent.id} left")
+        logger.info(f"Agent {agent.name} id {agent.id} left")
         connected_agents.pop(agent.id)
         return True
 

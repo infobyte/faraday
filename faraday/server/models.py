@@ -523,7 +523,8 @@ class VulnerabilityABC(Metadata):
     name = NonBlankColumn(Text, nullable=False)
     resolution = BlankColumn(Text)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False, index=True)
-    risk = Column(Float(3, 1), nullable=True)
+    risk = Column(Integer, nullable=True)
+    epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
 
     impact_accountability = Column(Boolean, default=False, nullable=False)
     impact_availability = Column(Boolean, default=False, nullable=False)
@@ -614,7 +615,8 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def low_confirmed_total(self):
-        return self.low_open_confirmed + self.low_risk_accepted_confirmed + self.low_re_opened_confirmed + self.low_closed_confirmed
+        return self.low_open_confirmed + self.low_risk_accepted_confirmed + self.low_re_opened_confirmed + \
+               self.low_closed_confirmed
 
     # Medium
     medium_open_unconfirmed = Column(Integer, nullable=False, default=0)
@@ -647,11 +649,13 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def medium_total(self):
-        return self.medium_open_total + self.medium_risk_accepted_total + self.medium_re_opened_total + self.medium_closed_total
+        return self.medium_open_total + self.medium_risk_accepted_total + self.medium_re_opened_total + \
+               self.medium_closed_total
 
     @hybrid_property
     def medium_confirmed_total(self):
-        return self.medium_open_confirmed + self.medium_risk_accepted_confirmed + self.medium_re_opened_confirmed + self.medium_closed_confirmed
+        return self.medium_open_confirmed + self.medium_risk_accepted_confirmed + self.medium_re_opened_confirmed + \
+               self.medium_closed_confirmed
 
     # High
     high_open_unconfirmed = Column(Integer, nullable=False, default=0)
@@ -688,7 +692,8 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def high_confirmed_total(self):
-        return self.high_open_confirmed + self.high_risk_accepted_confirmed + self.high_re_opened_confirmed + self.high_closed_confirmed
+        return self.high_open_confirmed + self.high_risk_accepted_confirmed + self.high_re_opened_confirmed + \
+               self.high_closed_confirmed
 
     # Critical
     critical_open_unconfirmed = Column(Integer, nullable=False, default=0)
@@ -721,11 +726,13 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def critical_total(self):
-        return self.critical_open_total + self.critical_risk_accepted_total + self.critical_re_opened_total + self.critical_closed_total
+        return self.critical_open_total + self.critical_risk_accepted_total + self.critical_re_opened_total + \
+               self.critical_closed_total
 
     @hybrid_property
     def critical_confirmed_total(self):
-        return self.critical_open_confirmed + self.critical_risk_accepted_confirmed + self.critical_re_opened_confirmed + self.critical_closed_confirmed
+        return self.critical_open_confirmed + self.critical_risk_accepted_confirmed + \
+               self.critical_re_opened_confirmed + self.critical_closed_confirmed
 
     # Specific for open status
     @hybrid_property
@@ -767,7 +774,8 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def total_confirmed(self):
-        return self.low_confirmed_total + self.medium_confirmed_total + self.high_confirmed_total + self.critical_confirmed_total
+        return self.low_confirmed_total + self.medium_confirmed_total + self.high_confirmed_total + \
+               self.critical_confirmed_total
 
     @hybrid_property
     def total_open(self):
@@ -779,27 +787,33 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def total_re_opened(self):
-        return self.low_re_opened_total + self.medium_re_opened_total + self.high_re_opened_total + self.critical_re_opened_total
+        return self.low_re_opened_total + self.medium_re_opened_total + self.high_re_opened_total + \
+               self.critical_re_opened_total
 
     @hybrid_property
     def total_risk_accepted(self):
-        return self.low_risk_accepted_total + self.medium_risk_accepted_total + self.high_risk_accepted_total + self.critical_risk_accepted_total
+        return self.low_risk_accepted_total + self.medium_risk_accepted_total + self.high_risk_accepted_total + \
+               self.critical_risk_accepted_total
 
     @hybrid_property
     def total_open_confirmed(self):
-        return self.low_open_confirmed + self.medium_open_confirmed + self.high_open_confirmed + self.critical_open_confirmed
+        return self.low_open_confirmed + self.medium_open_confirmed + self.high_open_confirmed + \
+               self.critical_open_confirmed
 
     @hybrid_property
     def total_closed_confirmed(self):
-        return self.low_closed_confirmed + self.medium_closed_confirmed + self.high_closed_confirmed + self.critical_closed_confirmed
+        return self.low_closed_confirmed + self.medium_closed_confirmed + self.high_closed_confirmed + \
+               self.critical_closed_confirmed
 
     @hybrid_property
     def total_re_opened_confirmed(self):
-        return self.low_re_opened_confirmed + self.medium_re_opened_confirmed + self.high_re_opened_confirmed + self.critical_re_opened_confirmed
+        return self.low_re_opened_confirmed + self.medium_re_opened_confirmed + self.high_re_opened_confirmed + \
+               self.critical_re_opened_confirmed
 
     @hybrid_property
     def total_risk_accepted_confirmed(self):
-        return self.low_risk_accepted_confirmed + self.medium_risk_accepted_confirmed + self.high_risk_accepted_confirmed + self.critical_risk_accepted_confirmed
+        return self.low_risk_accepted_confirmed + self.medium_risk_accepted_confirmed + \
+               self.high_risk_accepted_confirmed + self.critical_risk_accepted_confirmed
 
     @hybrid_property
     def total_status(self):
@@ -807,15 +821,18 @@ class VulnerabilityHitCount(db.Model):
 
     @hybrid_property
     def total_status_confirmed(self):
-        return self.total_open_confirmed + self.total_closed_confirmed + self.total_re_opened_confirmed + self.total_risk_accepted_confirmed
+        return self.total_open_confirmed + self.total_closed_confirmed + self.total_re_opened_confirmed + \
+               self.total_risk_accepted_confirmed
 
     @hybrid_property
     def total_open_confirmed_total_custom(self):
-        return self.critical_open_confirmed_total_custom + self.high_open_confirmed_total_custom + self.medium_open_confirmed_total_custom + self.low_open_confirmed_total_custom
+        return self.critical_open_confirmed_total_custom + self.high_open_confirmed_total_custom + \
+               self.medium_open_confirmed_total_custom + self.low_open_confirmed_total_custom
 
     @hybrid_property
     def total_open_total_custom(self):
-        return self.critical_open_total_custom + self.high_open_total_custom + self.medium_open_total_custom + self.low_open_total_custom
+        return self.critical_open_total_custom + self.high_open_total_custom + self.medium_open_total_custom + \
+               self.low_open_total_custom
 
     @property
     def parent(self):

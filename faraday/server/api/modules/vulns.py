@@ -186,6 +186,24 @@ class CVSS3Schema(AutoSchema):
     modified_availability_impact = fields.String(attribute="cvss3_modified_availability_impact", dump_only=True, required=False)
 
 
+class RiskSchema(AutoSchema):
+    score = fields.Float(attribute='risk', dump_only=True)
+    severity = fields.Method(serialize='get_risk_severity', dump_only=True)
+
+    @staticmethod
+    def get_risk_severity(obj):
+        if not obj.risk:
+            return None
+        if 0 <= obj.risk < 40:
+            return 'low'
+        if 40 <= obj.risk < 70:
+            return 'medium'
+        if 70 <= obj.risk < 90:
+            return 'high'
+        if 90 <= obj.risk <= 100:
+            return 'critical'
+
+
 class CWESchema(AutoSchema):
     name = fields.String()
 
@@ -250,7 +268,7 @@ class VulnerabilitySchema(AutoSchema):
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
     command_id = fields.Int(required=False, load_only=True)
-    risk = fields.Float(data_key='risk', dump_only=True)
+    risk = SelfNestedField(RiskSchema(), dump_only=True)
 
     class Meta:
         model = Vulnerability

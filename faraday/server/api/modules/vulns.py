@@ -187,7 +187,7 @@ class CVSS3Schema(AutoSchema):
 
 
 class RiskSchema(AutoSchema):
-    score = fields.Float(attribute='risk', dump_only=True)
+    score = fields.Int(attribute='risk', dump_only=True)
     severity = fields.Method(serialize='get_risk_severity', dump_only=True)
 
     @staticmethod

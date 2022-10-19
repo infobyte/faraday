@@ -524,7 +524,6 @@ class VulnerabilityABC(Metadata):
     resolution = BlankColumn(Text)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False, index=True)
     risk = Column(Integer, nullable=True)
-    epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
 
     impact_accountability = Column(Boolean, default=False, nullable=False)
     impact_availability = Column(Boolean, default=False, nullable=False)
@@ -1440,6 +1439,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     response = BlankColumn(Text)
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
+    epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
 
     vulnerability_duplicate_id = Column(
         Integer,

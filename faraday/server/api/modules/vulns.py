@@ -1314,7 +1314,8 @@ class VulnerabilityView(PaginatedMixin,
 
         reference_list = data.pop('refs', None)
         if reference_list is not None:
-            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, data['workspace_id'])
+            workspace = get_workspace(workspace_name=kwargs.get('workspace_name', None))
+            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, workspace.id)
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])

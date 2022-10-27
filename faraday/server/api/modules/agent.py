@@ -26,17 +26,21 @@ from faraday.server.api.base import (
 from faraday.server.models import (
     Agent,
     Executor,
-    AgentExecution,
-    Command,
-    db
+    db,
 )
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
+from faraday.server.utils.agents import get_command_and_agent_execution
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
+
+
+class AgentsScheduleSchema(AutoSchema):
+    id = fields.Integer(dump_only=True)
+    description = fields.String(required=True)
 
 
 class ExecutorSchema(AutoSchema):
@@ -46,15 +50,19 @@ class ExecutorSchema(AutoSchema):
     )
     id = fields.Integer(dump_only=True)
     name = fields.String(dump_only=True)
+    agent_id = fields.Integer(dump_only=True, attribute='agent_id')
     last_run = fields.DateTime(dump_only=True)
+    schedules = fields.Nested(AgentsScheduleSchema(), dump_only=True, many=True)
 
     class Meta:
         model = Executor
         fields = (
             'id',
             'name',
+            'agent_id',
             'last_run',
             'parameters_metadata',
+            'schedules'
         )
 
 
@@ -79,7 +87,6 @@ class AgentSchema(AutoSchema):
             'create_date',
             'update_date',
             'creator',
-            'token',
             'is_online',
             'active',
             'executors',
@@ -113,6 +120,9 @@ class AgentRunSchema(Schema):
     workspaces_names = fields.List(fields.String, required=True)
     ignore_info = fields.Boolean(required=False)
     resolve_hostname = fields.Boolean(required=False)
+    vuln_tag = fields.List(fields.String, required=False)
+    service_tag = fields.List(fields.String, required=False)
+    host_tag = fields.List(fields.String, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -125,8 +135,13 @@ class AgentView(ReadWriteView):
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
 
+    def post(self, **kwargs):
+        self.schema_class = AgentCreationSchema
+        obj, status = super().post(**kwargs)
+        self.schema_class = AgentSchema
+        return obj, status
+
     def _perform_create(self, data, **kwargs):
-        data = self._parse_data(AgentCreationSchema(unknown=EXCLUDE), request)
         token = data.pop('token')
         if not faraday_server.agent_registration_secret:
             # someone is trying to use the token, but no token was generated yet.
@@ -155,17 +170,25 @@ class AgentView(ReadWriteView):
         """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
-        username = flask_login.current_user.username
+        user = flask_login.current_user
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
         executor_data = data['executor_data']
-        ignore_info = data.get('ignore_info', False)
-        resolve_hostname = data.get('resolve_hostname', True)
         workspaces = [get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
+        plugins_args = {
+            "ignore_info": data.get('ignore_info', False),
+            "resolve_hostname": data.get('resolve_hostname', True),
+            "vuln_tag": data.get('vuln_tag', None),
+            "service_tag": data.get('service_tag', None),
+            "host_tag": data.get('host_tag', None)
+        }
+        return self._run_agent(agent, executor_data, workspaces, plugins_args, user.username, user.id)
 
+    @staticmethod
+    def _run_agent(agent: Agent, executor_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
-                                             Executor.agent_id == agent_id).one()
+                                             Executor.agent_id == agent.id).one()
 
             # VALIDATE
             errors = {}
@@ -186,33 +209,17 @@ class AgentView(ReadWriteView):
                 response.status_code = 400
                 abort(response)
 
-            params = ', '.join([f'{key}={value}' for (key, value) in executor_data["args"].items()])
-            commands = [
-                Command(
-                    import_source="agent",
-                    tool=agent.name,
-                    command=executor.name,
-                    user=username,
-                    hostname='',
-                    params=params,
-                    start_date=datetime.utcnow(),
-                    workspace=workspace
-                )
-                for workspace in workspaces
-            ]
+            commands = []
+            agent_executions = []
+            for workspace in workspaces:
+                command, agent_execution = get_command_and_agent_execution(executor=executor,
+                                                                           workspace=workspace,
+                                                                           user_id=user_id,
+                                                                           parameters=executor_data["args"],
+                                                                           username=username)
+                commands.append(command)
+                agent_executions.append(agent_execution)
 
-            agent_executions = [
-                AgentExecution(
-                    running=None,
-                    successful=None,
-                    message='',
-                    executor=executor,
-                    workspace_id=workspace.id,
-                    parameters_data=executor_data["args"],
-                    command=command
-                )
-                for workspace, command in zip(workspaces, commands)
-            ]
             executor.last_run = datetime.utcnow()
             for agent_execution in agent_executions:
                 db.session.add(agent_execution)
@@ -225,18 +232,12 @@ class AgentView(ReadWriteView):
                 'action': 'RUN',
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args'),
-                "plugin_args": {
-                    "ignore_info": ignore_info,
-                    "resolve_hostname": resolve_hostname,
-                    "vuln_tag": None,
-                    "service_tag": None,
-                    "host_tag": None
-                }
+                "plugin_args": plugins_args
             })
-            logger.info("Agent executed")
+            logger.info(f"Agent {agent.name} executed with executer {executor.name}")
         except NoResultFound as e:
             logger.exception(e)
-            abort(400, "Can not find an agent execution with that id")
+            abort(400, "Can not find an executor with that agent id")
         else:
             return flask.jsonify({
                 'commands_id': [command.id for command in commands]

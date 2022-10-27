@@ -13,7 +13,7 @@ buildPythonPackage rec {
   pname =
     "flask-socketio";
   version =
-    "5.3.0";
+    "5.3.1";
 
   src =
     fetchPypi {
@@ -22,7 +22,7 @@ buildPythonPackage rec {
       pname =
         "Flask-SocketIO";
       sha256 =
-        "1zkqchyy7gqm7csgqpyjcymkwf06z5p3y7qrmlx25inc7467sm7s";
+        "1ycbh9y0hb7sdiiych19gsmbgphn758gbcpmsn91srs12gyd03px";
     };
 
   propagatedBuildInputs =

@@ -20,6 +20,7 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
@@ -83,7 +84,7 @@ class HostSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Host', dump_only=True)
     service_summaries = fields.Method('get_service_summaries', dump_only=True)
     versions = fields.Method('get_service_version', dump_only=True)
-    important = fields.Boolean(default=False)
+    importance = fields.Integer(default=0, validate=lambda stars: stars in [0, 1, 2, 3])
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
 
@@ -93,7 +94,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'important', 'severity_counts', 'command_id'
+                  'importance', 'severity_counts', 'command_id'
                   )
 
     @staticmethod
@@ -158,8 +159,36 @@ class HostsView(PaginatedMixin,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
-    def _get_base_query(self, workspace_name):
-        return Host.query_with_count(None, None, workspace_name)
+    def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of hosts."
+            tags: ["Host"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: HostSchema
+          tags: ["Host"]
+          responses:
+            200:
+              description: Ok
+        """
+        stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
+        if stats:
+            # TODO: Improve counts query performance
+            query = Host.query_with_count(None, None, kwargs['workspace_name'])
+            options = [joinedload(relationship) for relationship in self.get_joinedloads]
+            options += [undefer(column) for column in self.get_undefer]
+            options += [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
+
+            query = query.options(*options)
+            return self._envelope_list(self._dump(query, {}, many=True))
+
+        kwargs['exclude'] = ['severity_counts']
+        return super().index(**kwargs)
 
     @route('/filter')
     def filter(self, workspace_name):
@@ -395,6 +424,42 @@ class HostsView(PaginatedMixin,
                                  | match_os
                                  | match_hostname)
         return query
+
+    def patch(self, object_id, workspace_name=None, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        kwargs['exclude'] = ['severity_counts']
+        return super().patch(object_id, workspace_name=workspace_name, **kwargs)
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

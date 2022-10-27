@@ -33,6 +33,13 @@ alembic_logger.addHandler(fh)
 # ... etc.
 
 
+def include_object(object, type_, name, reflected, compare_to):
+    bind_key = object.info.get("bind_key", None)
+    if bind_key:
+        return False
+    return True
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -47,7 +54,7 @@ def run_migrations_offline():
     """
     url = faraday.server.config.database.connection_string
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True)
+        url=url, target_metadata=target_metadata, literal_binds=True, include_object=include_object)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -68,7 +75,8 @@ def run_migrations_online():
                 connection=connection,
                 target_metadata=target_metadata,
                 compare_type=True,
-                transaction_per_migration=True
+                transaction_per_migration=True,
+                include_object=include_object
             )
 
             with context.begin_transaction():

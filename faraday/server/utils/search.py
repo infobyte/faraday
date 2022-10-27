@@ -23,6 +23,8 @@ from sqlalchemy import (
     and_,
     or_,
     func,
+    nullsfirst,
+    nullslast,
     inspect as sqlalchemy_inspect,
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
@@ -604,8 +606,6 @@ class QueryBuilder:
                         field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
                         relation_model = relation.mapper.class_
-                        field = getattr(relation_model, field_name_in_relation)
-                        direction = getattr(field, val.direction)
                         if relation_model not in joined_models:
                             # TODO: is it possible to guess if relationship is a many to many
                             if relation_model == Role:
@@ -617,11 +617,19 @@ class QueryBuilder:
                             else:
                                 query = query.join(relation_model, isouter=True)
                         joined_models.add(relation_model)
-                        query = query.order_by(direction())
+                        field = getattr(relation_model, field_name_in_relation)
+                        direction = getattr(field, val.direction)
+                        if val.direction == 'desc':
+                            query = query.order_by(nullslast(direction()))
+                        else:
+                            query = query.order_by(nullsfirst(direction()))
                     else:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)
-                        query = query.order_by(direction())
+                        if val.direction == 'desc':
+                            query = query.order_by(nullslast(direction()))
+                        else:
+                            query = query.order_by(nullsfirst(direction()))
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

@@ -2,6 +2,14 @@ New features in the latest update
 =====================================
 
 
+4.2.0 [Oct 27th, 2022]:
+---
+ * Add `stats` param in hosts endpoint.
+ * [FIX] Now get agents dosent returns tokens
+ * [FIX] Now when a constrain is violated faraday use the actual object to query if there is another object
+ * [MOD] Improve agents logs
+ * Add global commands and summary field in command's model
+
 4.1.0 [Sep 12th, 2022]:
 ---
  * Now error 403 will respond a json, not a html

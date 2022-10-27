@@ -1,4 +1,0 @@
-{
- "level": "community",
-  "md": "[FIX] Now when a constrain is violated faraday use the actual object to query if there is another object"
-}

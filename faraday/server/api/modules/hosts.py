@@ -84,7 +84,7 @@ class HostSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Host', dump_only=True)
     service_summaries = fields.Method('get_service_summaries', dump_only=True)
     versions = fields.Method('get_service_version', dump_only=True)
-    important = fields.Boolean(default=False)
+    importance = fields.Integer(default=0, validate=lambda stars: stars in [0, 1, 2, 3])
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
 
@@ -94,7 +94,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'important', 'severity_counts', 'command_id'
+                  'importance', 'severity_counts', 'command_id'
                   )
 
     @staticmethod

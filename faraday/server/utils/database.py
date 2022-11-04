@@ -280,11 +280,11 @@ def get_conflict_object(session, obj, data, workspace=None):
             try:
                 value = data[unique_field]
             except KeyError:
-                if column.default is None:
-                    # No default nor data value, ignore the field
-                    continue
-                value = column.default.arg
-            filter_data.append(column == value)
+                value = obj.__getattribute__(unique_field)
+                if not value and column.default:
+                    value = column.default.arg
+            if value:
+                filter_data.append(column == value)
 
         if 'workspace_id' in relations_fields:
             relations_fields.remove('workspace_id')
@@ -301,7 +301,6 @@ def get_conflict_object(session, obj, data, workspace=None):
                 if relation_id:
                     filter_data.append(
                         table.columns[relations_field] == relation_id)
-
         if filter_data:
             filter_data = reduce(operator.and_, filter_data)
             return session.query(klass).filter(filter_data).first()

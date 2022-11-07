@@ -106,7 +106,6 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
             logger.exception(e)
             logger.error("Save Error: %s", e)
             command_status_error(command_id)
-            return
 
 
 class ReportsManager(Thread):

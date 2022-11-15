@@ -293,7 +293,7 @@ def _update_command(command: Command, command_data: dict):
     return command
 
 
-def _create_host(ws, host_data, command: dict = None):
+def _create_host(ws, host_data, command: dict):
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services')
     credentials = host_data.pop('credentials')
@@ -385,7 +385,7 @@ def _create_service(ws, host, service_data, command: dict = None):
             _create_credential(ws, cred_data, command, service=service)
 
 
-def _create_vuln(ws, vuln_data, command: dict = None, **kwargs):
+def _create_vuln(ws, vuln_data, command: dict, **kwargs):
     """Create standard or web vulnerabilities"""
     assert 'host' in kwargs or 'service' in kwargs
     assert not ('host' in kwargs and 'service' in kwargs)

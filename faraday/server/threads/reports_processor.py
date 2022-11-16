@@ -28,6 +28,12 @@ REPORTS_QUEUE = Queue()
 INTERVAL = 0.5
 
 
+def command_status_error(command_id: int):
+    command = Command.query.filter_by(id=command_id).first()
+    command.command = "error"
+    db.session.commit()
+
+
 def send_report_data(workspace_name: str, command_id: int, report_json: dict,
                      user_id: Optional[int], set_end_date: bool):
     logger.info("Send Report data to workspace [%s]", workspace_name)
@@ -71,12 +77,11 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
                 except Exception as e:
                     logger.error(f"Processing Error: {e}")
                     logger.exception(e)
-                    command = Command.query.filter_by(id=command_id).first()
-                    command.command = "error"
-                    db.session.commit()
+                    command_status_error(command_id)
                     return
             else:
                 logger.error(f"No plugin detected for report [{file_path}]")
+                command_status_error(command_id)
                 return
         else:
             try:
@@ -85,6 +90,7 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
             except Exception as e:
                 logger.error("Loading data from json file: %s [%s]", file_path, e)
                 logger.exception(e)
+                command_status_error(command_id)
                 return
         if plugin_id is None:
             logger.debug("Removing file: %s", file_path)
@@ -99,6 +105,7 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
         except Exception as e:
             logger.exception(e)
             logger.error("Save Error: %s", e)
+            command_status_error(command_id)
 
 
 class ReportsManager(Thread):

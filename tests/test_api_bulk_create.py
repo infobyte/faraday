@@ -156,7 +156,9 @@ def test_create_host_with_services(session, workspace):
 
 def test_create_service(session, host):
     data = bc.BulkServiceSchema().load(service_data)
-    bc._create_service(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(host.workspace, host, data, command_dict)
     assert count(Service, host.workspace) == 1
     service = Service.query.filter(Service.workspace == host.workspace).one()
     assert service.name == 'http'
@@ -172,13 +174,17 @@ def test_create_existing_service(session, service):
         "protocol": service.protocol,
     }
     data = bc.BulkServiceSchema().load(data)
-    bc._create_service(service.workspace, service.host, data)
+    command = new_empty_command(service.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(service.workspace, service.host, data, command_dict)
     assert count(Service, service.host.workspace) == 1
 
 
 def test_create_host_vuln(session, host):
     data = bc.VulnerabilitySchema().load(vuln_data)
-    bc._create_hostvuln(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_hostvuln(host.workspace, host, data, command_dict)
     assert count(VulnerabilityGeneric, host.workspace) == 1
     assert count(Vulnerability, host.workspace) == 1
     vuln = host.workspace.vulnerabilities[0]
@@ -199,7 +205,9 @@ def test_create_host_vuln(session, host):
 
 def test_create_service_vuln(session, service):
     data = bc.VulnerabilitySchema().load(vuln_data)
-    bc._create_servicevuln(service.workspace, service, data)
+    command = new_empty_command(service.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_servicevuln(service.workspace, service, data, command_dict)
     assert count(VulnerabilityGeneric, service.workspace) == 1
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
@@ -217,20 +225,13 @@ def test_create_service_vuln(session, service):
     assert vuln.tool == "some_tool"
 
 
-def test_create_host_vuln_without_tool(session, host):
-    no_tool_data = vuln_data.copy()
-    no_tool_data.pop('tool')
-    data = bc.VulnerabilitySchema().load(no_tool_data)
-    bc._create_hostvuln(host.workspace, host, data)
-    vuln = host.workspace.vulnerabilities[0]
-    assert vuln.tool == "Web UI"
-
-
 def test_create_not_fail_with_cve(session, host):
     with_erroneous_cve_list = vuln_data.copy()
     with_erroneous_cve_list['cve'] = ['CVSS: 10.0', 'OSVDB:339, OSVDB:8750, OSVDB:11516', 'CVE-1999-0170, CVE-1999-0211, CVE-1999-0554', 'cve-1111-9988']
     data = bc.VulnerabilitySchema().load(with_erroneous_cve_list)
-    bc._create_hostvuln(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_hostvuln(host.workspace, host, data, command_dict)
     vuln = host.workspace.vulnerabilities[0]
     assert set(vuln.cve) == {'CVE-1999-0170', 'CVE-1999-0211', 'CVE-1999-0554', 'CVE-1111-9988'}
 
@@ -277,7 +278,7 @@ def test_cannot_create_host_vulnweb(session, host):
     data = vuln_data.copy()
     data['type'] = 'VulnerabilityWeb'
     with pytest.raises(ValidationError):
-        bc._create_hostvuln(host.workspace, host, data)
+        bc._create_hostvuln(host.workspace, host, data, command_data.copy())
     assert count(VulnerabilityGeneric, host.workspace) == 0
 
 
@@ -297,7 +298,9 @@ def test_create_existing_host_vuln(session, host, vulnerability_factory):
         'refs': [{'name': 'new', 'type': 'other'}]
     }
     data = bc.VulnerabilitySchema().load(data)
-    bc._create_hostvuln(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_hostvuln(host.workspace, host, data, command_dict)
     session.commit()
     assert count(Vulnerability, host.workspace) == 1
     vuln = Vulnerability.query.get(vuln.id)  # just in case it isn't refreshed
@@ -425,7 +428,9 @@ def test_create_service_with_vuln(session, host):
     service_data_ = service_data.copy()
     service_data_['vulnerabilities'] = [vuln_data]
     data = bc.BulkServiceSchema().load(service_data_)
-    bc._create_service(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(host.workspace, host, data, command_dict)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
     assert count(Vulnerability, service.workspace) == 1
@@ -439,7 +444,9 @@ def test_create_service_with_cred(session, host):
     service_data_ = service_data.copy()
     service_data_['credentials'] = [credential_data]
     data = bc.BulkServiceSchema().load(service_data_)
-    bc._create_service(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(host.workspace, host, data, command_dict)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
     assert count(Credential, service.workspace) == 1
@@ -481,7 +488,9 @@ def test_create_service_with_vulnweb(session, host):
     vuln_data_.update(vuln_web_data)
     service_data_['vulnerabilities'] = [vuln_data_]
     data = bc.BulkServiceSchema().load(service_data_)
-    bc._create_service(host.workspace, host, data)
+    command = new_empty_command(host.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(host.workspace, host, data, command_dict)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
     assert count(Vulnerability, service.workspace) == 0
@@ -694,7 +703,9 @@ def test_bulk_create_update_service(session, service):
         "owned": new_service_owned,
     }
     data = bc.BulkServiceSchema().load(data)
-    bc._create_service(service.workspace, service.host, data)
+    command = new_empty_command(service.workspace)
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(service.workspace, service.host, data, command_dict)
     assert count(Service, service.host.workspace) == 1
     assert service.version == new_service_version
     assert service.name == new_service_name

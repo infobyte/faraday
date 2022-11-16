@@ -358,7 +358,7 @@ def _update_service(service: Service, service_data: dict) -> Service:
     return service
 
 
-def _create_service(ws, host, service_data, command: dict = None):
+def _create_service(ws, host, service_data, command: dict):
     service_data = service_data.copy()
     _vulns = service_data.pop('vulnerabilities')
     creds = service_data.pop('credentials')
@@ -459,15 +459,15 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
         update_vuln(policyviolations, references, vuln, cve_list, cwe_list)
 
 
-def _create_hostvuln(ws, host, vuln_data, command: dict = None):
+def _create_hostvuln(ws, host, vuln_data, command: dict):
     _create_vuln(ws, vuln_data, command, host=host)
 
 
-def _create_servicevuln(ws, service, vuln_data, command: dict = None):
+def _create_servicevuln(ws, service, vuln_data, command: dict):
     _create_vuln(ws, vuln_data, command, service=service)
 
 
-def _create_credential(ws, cred_data, command: dict = None, **kwargs):
+def _create_credential(ws, cred_data, command: dict, **kwargs):
     cred_data = cred_data.copy()
     cred_data.update(kwargs)
     created, cred = get_or_create(ws, Credential, cred_data)

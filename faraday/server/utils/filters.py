@@ -173,7 +173,10 @@ class FlaskRestlessFilterSchema(Schema):
         # we try to deserialize the value, any error means that the value was not valid for the field typ3
         # previous checks were added since postgresql is very strict with operators.
         try:
-            field.deserialize(filter_['val'])
+            if isinstance(field, fields.String):
+                filter_['val'] = str(filter_['val'])
+            else:
+                field.deserialize(filter_['val'])
         except TypeError:
             raise ValidationError('Invalid value type')
 

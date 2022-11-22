@@ -607,6 +607,8 @@ class BulkCreateView(GenericWorkspacedView):
                     None
                 )
             )
+        else:
+            _update_command(command, data['command'])
         logger.info(f"Faraday objects created in bulk for workspace {workspace}")
         return flask.jsonify(
             {

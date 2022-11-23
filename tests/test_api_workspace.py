@@ -43,7 +43,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         vulns += vulnerability_factory.create_batch(1, workspace=ws,
                                                     confirmed=False, status='risk-accepted', severity='medium')
 
-        vulns += vulnerability_factory.create_batch(8, workspace=ws,
+        vulns += vulnerability_factory.create_batch(5, workspace=ws,
                                                     confirmed=False, status='closed', severity='high')
 
         vulns += vulnerability_factory.create_batch(3, workspace=ws,
@@ -57,12 +57,12 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "myws"}]}'))
 
         assert res.status_code == 200
-        assert res.json[0]['stats']['opened_vulns'] == 11
-        assert res.json[0]['stats']['closed_vulns'] == 14
+        assert res.json[0]['stats']['opened_vulns'] == 14
+        assert res.json[0]['stats']['closed_vulns'] == 11
         assert res.json[0]['stats']['info_vulns'] == 8
         assert res.json[0]['stats']['low_vulns'] == 5
         assert res.json[0]['stats']['medium_vulns'] == 1
-        assert res.json[0]['stats']['high_vulns'] == 8
+        assert res.json[0]['stats']['high_vulns'] == 5
         assert res.json[0]['stats']['critical_vulns'] == 6
         assert res.json[0]['stats']['confirmed_vulns'] == 8
 

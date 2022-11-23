@@ -984,7 +984,7 @@ class FilterMixin(ListMixin):
                 with_expression(
                     Workspace.vulnerability_open_count,
                     _make_vuln_count_property(None,
-                                              extra_query=" status='open' ",
+                                              extra_query=" status!='closed' ",
                                               use_column_property=False),
                 ),
                 with_expression(

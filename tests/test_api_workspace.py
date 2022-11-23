@@ -26,6 +26,47 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     patchable_fields = ['description']
 
     @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_fixed_stats_in_workspace(self, session, test_client, vulnerability_factory, workspace_factory):
+        ws = workspace_factory.create(name='myws')
+        session.add(ws)
+        session.commit()
+
+        vulns = vulnerability_factory.create_batch(8, workspace=ws,
+                                                   confirmed=False, status='open', severity='informational')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=ws,
+                                                    confirmed=True, status='closed', severity='low')
+
+        vulns += vulnerability_factory.create_batch(2, workspace=ws,
+                                                    confirmed=True, status='re-opened', severity='low')
+
+        vulns += vulnerability_factory.create_batch(1, workspace=ws,
+                                                    confirmed=False, status='risk-accepted', severity='medium')
+
+        vulns += vulnerability_factory.create_batch(8, workspace=ws,
+                                                    confirmed=False, status='closed', severity='high')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=ws,
+                                                    confirmed=False, status='open', severity='critical')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=ws,
+                                                    confirmed=True, status='closed', severity='critical')
+        session.add_all(vulns)
+        session.commit()
+
+        res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "myws"}]}'))
+
+        assert res.status_code == 200
+        assert res.json[0]['stats']['opened_vulns'] == 11
+        assert res.json[0]['stats']['closed_vulns'] == 14
+        assert res.json[0]['stats']['info_vulns'] == 8
+        assert res.json[0]['stats']['low_vulns'] == 5
+        assert res.json[0]['stats']['medium_vulns'] == 1
+        assert res.json[0]['stats']['high_vulns'] == 8
+        assert res.json[0]['stats']['critical_vulns'] == 6
+        assert res.json[0]['stats']['confirmed_vulns'] == 8
+
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
         res = test_client.get(
             join(

@@ -96,6 +96,15 @@ class FlaskRestlessFilterSchema(Schema):
         """
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
             raise ValidationError('Value can\'t contain null chars')
+        if isinstance(filter_['val'], str):
+            if filter_['val'].isnumeric():
+                filter_['val'] = int(filter_['val'])
+            else:
+                try:
+                    float_value = float(filter_['val'])
+                    filter_['val'] = float_value
+                except ValueError:
+                    pass
         converter = ModelConverter()
         column_name = filter_['name']
         if '__' in column_name:
@@ -155,7 +164,7 @@ class FlaskRestlessFilterSchema(Schema):
             if isinstance(field, fields.Boolean):
                 raise ValidationError('Can\'t perform ilike/like against boolean type column')
 
-        if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:
+        if filter_['op'].lower() in ['<', '>', '>=', '<=', 'ge', 'geq', 'lt']:
             # we check that operators can be only used against date or numbers
             if not isinstance(filter_['val'], numbers.Number):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
@@ -173,7 +182,10 @@ class FlaskRestlessFilterSchema(Schema):
         # we try to deserialize the value, any error means that the value was not valid for the field typ3
         # previous checks were added since postgresql is very strict with operators.
         try:
-            field.deserialize(filter_['val'])
+            if isinstance(field, fields.String):
+                filter_['val'] = str(filter_['val'])
+            else:
+                field.deserialize(filter_['val'])
         except TypeError:
             raise ValidationError('Invalid value type')
 

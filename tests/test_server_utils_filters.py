@@ -78,7 +78,7 @@ class TestFilters:
         assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_filters_fail(self):
-        _filter = [{"name": "host_id", "op": "eq", "val": "1"}]
+        _filter = [{"name": "host_id", "op": "eq", "val": 1}]
         assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_nested_filters(self):

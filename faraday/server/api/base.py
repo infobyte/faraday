@@ -959,9 +959,9 @@ class FilterMixin(ListMixin):
                               filters)
 
         if severity_count and 'group_by' not in filters:
+            # TODO: Refactor all stats
             filter_query = count_vulnerability_severities(filter_query, self.model_class,
                                                           all_severities=True, host_vulns=host_vulns)
-
             filter_query = filter_query.options(
                 with_expression(
                     Workspace.vulnerability_web_count,
@@ -980,7 +980,19 @@ class FilterMixin(ListMixin):
                     _make_vuln_count_property(None,
                                               confirmed=True,
                                               use_column_property=False)
-                )
+                ),
+                with_expression(
+                    Workspace.vulnerability_open_count,
+                    _make_vuln_count_property(None,
+                                              extra_query=" status!='closed' ",
+                                              use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.vulnerability_closed_count,
+                    _make_vuln_count_property(None,
+                                              extra_query=" status='closed' ",
+                                              use_column_property=False)
+                ),
             )
 
         return filter_query

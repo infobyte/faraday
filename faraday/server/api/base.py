@@ -959,9 +959,9 @@ class FilterMixin(ListMixin):
                               filters)
 
         if severity_count and 'group_by' not in filters:
+            # TODO: Refactor all stats
             filter_query = count_vulnerability_severities(filter_query, self.model_class,
                                                           all_severities=True, host_vulns=host_vulns)
-
             filter_query = filter_query.options(
                 with_expression(
                     Workspace.vulnerability_web_count,
@@ -980,7 +980,19 @@ class FilterMixin(ListMixin):
                     _make_vuln_count_property(None,
                                               confirmed=True,
                                               use_column_property=False)
-                )
+                ),
+                with_expression(
+                    Workspace.vulnerability_open_count,
+                    _make_vuln_count_property(None,
+                                              extra_query=" status!='closed' ",
+                                              use_column_property=False),
+                ),
+                with_expression(
+                    Workspace.vulnerability_closed_count,
+                    _make_vuln_count_property(None,
+                                              extra_query=" status='closed' ",
+                                              use_column_property=False)
+                ),
             )
 
         return filter_query
@@ -1671,7 +1683,7 @@ class DeleteMixin:
         logger.info(f"{obj} deleted")
 
 
-class BulkDeleteMixin:
+class BulkDeleteMixin(FilterObjects):
     # These mixin should be merged with DeleteMixin after v2 is removed
 
     @route('', methods=['DELETE'])
@@ -1685,11 +1697,16 @@ class BulkDeleteMixin:
               description: Ok
         """
         # TODO BULK_DELETE_SCHEMA
-        if not flask.request.json or 'ids' not in flask.request.json:
+        # Try to get ids
+        if flask.request.json and 'ids' in flask.request.json:
+            ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+
+        # Try filter if no ids
+        elif flask.request.args.get('q', None) is not None:
+            filtered_objects = self._process_filter_data(flask.request.args.get('q', '{"filters": []}'))
+            ids = list(x.get("obj_id") for x in filtered_objects[0])
+        else:
             flask.abort(400)
-        # objs = self._get_objects(flask.request.json['ids'], **kwargs)
-        # self._perform_bulk_delete(objs, **kwargs)
-        ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
         return self._perform_bulk_delete(ids, **kwargs), 200
 
     def _bulk_delete_query(self, ids, **kwargs):

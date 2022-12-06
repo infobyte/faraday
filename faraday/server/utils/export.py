@@ -27,8 +27,10 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "target", "desc", "status", "hostnames", "comments", "owner",
         "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
         "data", "website", "path", "status_code", "request", "response", "method",
-        "params", "pname", "query", "cve", "policyviolations", "external_id", "impact_confidentiality",
-        "impact_integrity", "impact_availability", "impact_accountability", "update_date"
+        "params", "pname", "query", "cve", "cvss2_vector_string", "cvss2_base_score",
+        "cvss3_vector_string", "cvss3_base_score", "cwe", "policyviolations", "external_id",
+        "impact_confidentiality", "impact_integrity", "impact_availability",
+        "impact_accountability", "update_date"
     ]
 
     if custom_fields_columns is None:
@@ -192,6 +194,11 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
         "pname": vuln.get('pname', None),
         "query": vuln.get('query', None),
         "cve": vuln.get('cve', None),
+        "cwe": vuln.get('cwe', None),
+        "cvss2_vector_string": vuln.get('cvss2').get('vector_string', None),
+        "cvss2_base_score": vuln.get('cvss2').get('base_score', None),
+        "cvss3_vector_string": vuln.get('cvss3').get('vector_string', None),
+        "cvss3_base_score": vuln.get('cvss3').get('base_score', None),
         "policyviolations": vuln.get('policyviolations', None),
         "external_id": vuln.get('external_id', None),
         "impact_confidentiality": vuln["impact"]["confidentiality"],

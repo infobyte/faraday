@@ -249,6 +249,8 @@ def bulk_create(ws: Workspace,
     if 'command' in data:
         command = _update_command(command, data['command'])
 
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
     total_created_assets = db.session.query(Host).count()
     hosts_to_create = len(data['hosts'])
     created_hosts = 0
@@ -265,7 +267,7 @@ def bulk_create(ws: Workspace,
                 for service in host['services']:
                     _vulns += len(service['vulnerabilities'])
 
-            host_created = _create_host(ws, host, command)
+            host_created = _create_host(ws, host, command_dict)
             if host_created:
                 created_hosts += 1
                 total_created_assets += 1
@@ -281,8 +283,7 @@ def bulk_create(ws: Workspace,
     else:
         logger.info("No hosts to create")
     if 'command' in data and set_end_date:
-        command.end_date = datetime.utcnow() if command.end_date is None else \
-            command.end_date
+        command.end_date = datetime.utcnow() if command.end_date is None else command.end_date
         db.session.commit()
 
 
@@ -292,7 +293,7 @@ def _update_command(command: Command, command_data: dict):
     return command
 
 
-def _create_host(ws, host_data, command=None):
+def _create_host(ws, host_data, command: dict):
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services')
     credentials = host_data.pop('credentials')
@@ -325,12 +326,12 @@ def _create_host(ws, host_data, command=None):
     return created
 
 
-def _create_command_object_for(ws, created, obj, command):
+def _create_command_object_for(ws, created, obj, command: dict):
     assert command is not None
     data = {
         'object_id': obj.id,
         'object_type': get_object_type_for(obj),
-        'command': command,
+        'command_id': command['id'],
         'created_persistent': created,
         'workspace': ws,
     }
@@ -357,7 +358,7 @@ def _update_service(service: Service, service_data: dict) -> Service:
     return service
 
 
-def _create_service(ws, host, service_data, command=None):
+def _create_service(ws, host, service_data, command: dict):
     service_data = service_data.copy()
     _vulns = service_data.pop('vulnerabilities')
     creds = service_data.pop('credentials')
@@ -384,7 +385,7 @@ def _create_service(ws, host, service_data, command=None):
             _create_credential(ws, cred_data, command, service=service)
 
 
-def _create_vuln(ws, vuln_data, command=None, **kwargs):
+def _create_vuln(ws, vuln_data, command: dict, **kwargs):
     """Create standard or web vulnerabilities"""
     assert 'host' in kwargs or 'service' in kwargs
     assert not ('host' in kwargs and 'service' in kwargs)
@@ -409,7 +410,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     tool = vuln_data.get('tool', '')
     if not tool:
         if command:
-            vuln_data['tool'] = command.tool
+            vuln_data['tool'] = command['tool']
         else:
             vuln_data['tool'] = 'Web UI'
 
@@ -458,15 +459,15 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         update_vuln(policyviolations, references, vuln, cve_list, cwe_list)
 
 
-def _create_hostvuln(ws, host, vuln_data, command=None):
+def _create_hostvuln(ws, host, vuln_data, command: dict):
     _create_vuln(ws, vuln_data, command, host=host)
 
 
-def _create_servicevuln(ws, service, vuln_data, command=None):
+def _create_servicevuln(ws, service, vuln_data, command: dict):
     _create_vuln(ws, vuln_data, command, service=service)
 
 
-def _create_credential(ws, cred_data, command=None, **kwargs):
+def _create_credential(ws, cred_data, command: dict, **kwargs):
     cred_data = cred_data.copy()
     cred_data.update(kwargs)
     created, cred = get_or_create(ws, Credential, cred_data)
@@ -607,6 +608,8 @@ class BulkCreateView(GenericWorkspacedView):
                     None
                 )
             )
+        else:
+            _update_command(command, data['command'])
         logger.info(f"Faraday objects created in bulk for workspace {workspace}")
         return flask.jsonify(
             {

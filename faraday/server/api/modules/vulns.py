@@ -184,6 +184,7 @@ class CVSS3Schema(AutoSchema):
     modified_confidentiality_impact = fields.String(attribute="cvss3_modified_confidentiality_impact", dump_only=True, required=False)
     modified_integrity_impact = fields.String(attribute="cvss3_modified_integrity_impact", dump_only=True, required=False)
     modified_availability_impact = fields.String(attribute="cvss3_modified_availability_impact", dump_only=True, required=False)
+    scope = fields.String(attribute="cvss3_scope", dump_only=True, required=False)
 
 
 class RiskSchema(AutoSchema):

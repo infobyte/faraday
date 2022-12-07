@@ -157,9 +157,95 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert res.status_code == 200
         assert res.json['stats']['hosts'] == 1
 
+    @pytest.mark.parametrize('query', [
+        {
+            'vulnerabilities': [{
+                'type': 'web',
+                'status': 'open',
+                'confirmed': True,
+                'severity': 'critical',
+                'count': 5
+            }],
+            'params': {
+                'confirmed': 'true',
+                'only_opened': 'true'
+            },
+            'result': {
+                'hosts': 5,
+                'services': 5,
+                'code_vulns': 0,
+                'web_vulns': 5,
+                'std_vulns': 0,
+                'critical_vulns': 5,
+                'high_vulns': 0,
+                'info_vulns': 0,
+                'low_vulns': 0,
+                'medium_vulns': 0,
+                'unclassified_vulns': 0,
+                'opened_vulns': 5,
+                're_opened_vulns': 0,
+                'risk_accepted_vulns': 0,
+                'closed_vulns': 0,
+                'total_vulns': 5,
+            }}
+    ])
+    def test_workspace_stats(self,
+                             vulnerability_factory,
+                             vulnerability_web_factory,
+                             test_client,
+                             session,
+                             query):
+
+        vulns = []
+        for vulnerability in query['vulnerabilities']:
+            if vulnerability['type'] == 'web':
+                vulns += vulnerability_web_factory.create_batch(vulnerability['count'],
+                                                                workspace=self.first_object,
+                                                                confirmed=vulnerability['confirmed'],
+                                                                status=vulnerability['status'],
+                                                                severity=vulnerability['severity'])
+            else:
+                vulns += vulnerability_factory.create_batch(vulnerability['count'],
+                                                            workspace=self.first_object,
+                                                            confirmed=vulnerability['confirmed'],
+                                                            status=vulnerability['status'],
+                                                            severity=vulnerability['severity'])
+        session.add_all(vulns)
+        session.commit()
+
+        params = f'?confirmed={query["params"]["confirmed"]}&only_opened={query["params"]["only_opened"]}'
+
+        res = test_client.get(urljoin(self.url(self.first_object), params))
+        assert res.status_code == 200
+
+        # Static fields
+        assert res.json['stats']['hosts'] == query['result']['hosts']
+        assert res.json['stats']['services'] == query['result']['services']
+
+        # vulnerability types
+        assert res.json['stats']['code_vulns'] == query['result']['code_vulns']
+        assert res.json['stats']['web_vulns'] == query['result']['web_vulns']
+        assert res.json['stats']['std_vulns'] == query['result']['std_vulns']
+
+        # vulnerability by severity
+        assert res.json['stats']['critical_vulns'] == query['result']['critical_vulns']
+        assert res.json['stats']['high_vulns'] == query['result']['high_vulns']
+        assert res.json['stats']['medium_vulns'] == query['result']['medium_vulns']
+        assert res.json['stats']['low_vulns'] == query['result']['low_vulns']
+        assert res.json['stats']['info_vulns'] == query['result']['info_vulns']
+        assert res.json['stats']['unclassified_vulns'] == query['result']['unclassified_vulns']
+
+        # vulnerability by status
+        assert res.json['stats']['opened_vulns'] == query['result']['opened_vulns']
+        assert res.json['stats']['re_opened_vulns'] == query['result']['re_opened_vulns']
+        assert res.json['stats']['risk_accepted_vulns'] == query['result']['risk_accepted_vulns']
+        assert res.json['stats']['closed_vulns'] == query['result']['closed_vulns']
+
+        assert res.json['stats']['total_vulns'] == query['result']['total_vulns']
+
     @pytest.mark.parametrize('querystring', [
-        '?confirmed=1&status=open',
-        '?confirmed=true&status=open'
+        '?confirmed=1&only_opened=true',
+        '?confirmed=true&only_opened=true'
     ])
     def test_vuln_count_open_confirmed(self,
                         vulnerability_factory,

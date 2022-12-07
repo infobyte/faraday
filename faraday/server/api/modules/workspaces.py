@@ -340,7 +340,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         obj = None
         confirmed = self._get_querystring_boolean_field('confirmed')
         only_opened = self._get_querystring_boolean_field('only_opened')
-        status = flask.request.args.get('status')
+        # status = flask.request.args.get('status')
 
         extra_query = None
         # if status and status in Vulnerability.STATUSES:
@@ -423,9 +423,9 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         # Vulnerabilities by severities
         query = count_vulnerability_severities(query,
                                                Workspace,
-                                               status=status,
                                                confirmed=confirmed,
-                                               all_severities=True)
+                                               all_severities=True,
+                                               only_opened=only_opened)
 
         try:
             obj = query.one()

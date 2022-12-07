@@ -256,7 +256,6 @@ def _make_vuln_count_property(type_=None, confirmed=None, use_column_property=Tr
 
 def count_vulnerability_severities(query: str,
                                    model: db.Model,
-                                   status: str = None,
                                    confirmed: bool = None,
                                    all_severities: bool = False,
                                    critical: bool = False,
@@ -271,7 +270,7 @@ def count_vulnerability_severities(query: str,
     We assume that vulnerability_SEVERITYNAME_count attr exists in the model passed by param
     :param query: Alchemy query to append options
     :param model: model class
-    :param status: vulnerability status
+    :param only_opened: Only risk-accepted, open and re-opened vulns with those status will be counted
     :param confirmed: if vuln is confirmed or not
     :param all_severities: All severities will be counted
     :param critical: Critical severities will be counted if True
@@ -316,17 +315,6 @@ def count_vulnerability_severities(query: str,
                                               confirmed=confirmed)
                 )
             )
-
-    # query = query.options(
-    #     with_expression(
-    #         getattr(model, 'vulnerability_total_count'),
-    #         _make_vuln_count_property(None,
-    #                                   extra_query=extra_query,
-    #                                   use_column_property=False,
-    #                                   get_hosts_vulns=host_vulns,
-    #                                   confirmed=confirmed)
-    #     )
-    # )
     return query
 
 

@@ -340,21 +340,13 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         obj = None
         confirmed = self._get_querystring_boolean_field('confirmed')
         only_opened = self._get_querystring_boolean_field('only_opened')
-        # status = flask.request.args.get('status')
 
         extra_query = ""
-        # if status and status in Vulnerability.STATUSES:
-        #     if status != Vulnerability.STATUS_OPEN:
-        #         extra_query = f"status!='closed'"
-        #     else:
-        #         extra_query = f"status='{status}'"
         if only_opened:
             extra_query = "status!='closed'"
 
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
-        # if active is not None:
-        #     query = query.filter_by(active=active)
 
         # Vulnerability Types
         query = query.options(

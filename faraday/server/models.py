@@ -293,11 +293,6 @@ def count_vulnerability_severities(query: str,
     }
 
     extra_query = None
-    # if status:
-    #     if status in Vulnerability.STATUSES:
-    #         extra_query = f"status = '{status}'"
-    #     else:
-    #         logging.warning(f"Incorrect status ({status}) requested ")
     if only_opened:
         extra_query = "status != 'closed'"
 

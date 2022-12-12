@@ -342,7 +342,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         only_opened = self._get_querystring_boolean_field('only_opened')
         # status = flask.request.args.get('status')
 
-        extra_query = None
+        extra_query = ""
         # if status and status in Vulnerability.STATUSES:
         #     if status != Vulnerability.STATUS_OPEN:
         #         extra_query = f"status!='closed'"

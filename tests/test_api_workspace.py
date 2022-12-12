@@ -45,6 +45,34 @@ vulnerabilities = [
         'confirmed': True,
         'severity': 'critical',
         'count': 1
+    },
+    {
+        'type': 'web',
+        'status': 'open',
+        'confirmed': False,
+        'severity': 'critical',
+        'count': 3
+    },
+    {
+        'type': 'web',
+        'status': 'risk-accepted',
+        'confirmed': False,
+        'severity': 'critical',
+        'count': 0
+    },
+    {
+        'type': 'std',
+        'status': 're-opened',
+        'confirmed': False,
+        'severity': 'critical',
+        'count': 2
+    },
+    {
+        'type': 'std',
+        'status': 'closed',
+        'confirmed': False,
+        'severity': 'critical',
+        'count': 1
     }
 ]
 
@@ -247,19 +275,19 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
                 'hosts': 5,
                 'services': 5,
                 'code_vulns': 0,
-                'web_vulns': 4,
+                'web_vulns': 3,
                 'std_vulns': 2,
-                'critical_vulns': 6,
+                'critical_vulns': 5,
                 'high_vulns': 0,
                 'info_vulns': 0,
                 'low_vulns': 0,
                 'medium_vulns': 0,
                 'unclassified_vulns': 0,
-                'opened_vulns': 2,
-                're_opened_vulns': 1,
-                'risk_accepted_vulns': 2,
-                'closed_vulns': 1,
-                'total_vulns': 6,
+                'opened_vulns': 3,
+                're_opened_vulns': 2,
+                'risk_accepted_vulns': 0,
+                'closed_vulns': 0,
+                'total_vulns': 5,
             }
         },
         {
@@ -271,17 +299,17 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
                 'hosts': 5,
                 'services': 5,
                 'code_vulns': 0,
-                'web_vulns': 4,
-                'std_vulns': 2,
+                'web_vulns': 3,
+                'std_vulns': 3,
                 'critical_vulns': 6,
                 'high_vulns': 0,
                 'info_vulns': 0,
                 'low_vulns': 0,
                 'medium_vulns': 0,
                 'unclassified_vulns': 0,
-                'opened_vulns': 2,
-                're_opened_vulns': 1,
-                'risk_accepted_vulns': 2,
+                'opened_vulns': 3,
+                're_opened_vulns': 2,
+                'risk_accepted_vulns': 0,
                 'closed_vulns': 1,
                 'total_vulns': 6,
             }

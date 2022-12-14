@@ -256,7 +256,6 @@ def _make_vuln_count_property(type_=None, confirmed=None, use_column_property=Tr
 
 def count_vulnerability_severities(query: str,
                                    model: db.Model,
-                                   status: str = None,
                                    confirmed: bool = None,
                                    all_severities: bool = False,
                                    critical: bool = False,
@@ -265,12 +264,13 @@ def count_vulnerability_severities(query: str,
                                    medium: bool = False,
                                    low: bool = False,
                                    unclassified: bool = False,
-                                   host_vulns: bool = False):
+                                   host_vulns: bool = False,
+                                   only_opened: bool = False):
     """
     We assume that vulnerability_SEVERITYNAME_count attr exists in the model passed by param
     :param query: Alchemy query to append options
     :param model: model class
-    :param status: vulnerability status
+    :param only_opened: Only risk-accepted, open and re-opened vulns with those status will be counted
     :param confirmed: if vuln is confirmed or not
     :param all_severities: All severities will be counted
     :param critical: Critical severities will be counted if True
@@ -293,11 +293,8 @@ def count_vulnerability_severities(query: str,
     }
 
     extra_query = None
-    if status:
-        if status in Vulnerability.STATUSES:
-            extra_query = f"status = '{status}'"
-        else:
-            logging.warning(f"Incorrect status ({status}) requested ")
+    if only_opened:
+        extra_query = "status != 'closed'"
 
     for severity_name, filter_severity in severities.items():
         if filter_severity:
@@ -313,17 +310,6 @@ def count_vulnerability_severities(query: str,
                                               confirmed=confirmed)
                 )
             )
-
-    query = query.options(
-        with_expression(
-            getattr(model, 'vulnerability_total_count'),
-            _make_vuln_count_property(None,
-                                      extra_query=extra_query,
-                                      use_column_property=False,
-                                      get_hosts_vulns=host_vulns,
-                                      confirmed=confirmed)
-        )
-    )
     return query
 
 
@@ -2152,27 +2138,27 @@ class Workspace(Metadata):
     open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('workspace', 'service')
 
-    # Web vulns
+    # Stats
+    # By vuln type
     vulnerability_web_count = query_expression()
-    vulnerability_web_confirmed_count = query_expression()
-    vulnerability_web_closed_count = query_expression()
-    vulnerability_web_confirmed_and_not_closed_count = query_expression()
-
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
-    vulnerability_total_count = query_expression()
-    last_run_agent_date = query_expression()
+    # By vuln status
     vulnerability_open_count = query_expression(literal(0))
+    vulnerability_re_opened_count = query_expression(literal(0))
+    vulnerability_risk_accepted_count = query_expression(literal(0))
     vulnerability_closed_count = query_expression(literal(0))
+    # By other
     vulnerability_confirmed_count = query_expression(literal(0))
+    last_run_agent_date = query_expression()
+    vulnerability_total_count = query_expression()
 
-    vulnerability_informational_count = query_expression()
-    vulnerability_medium_count = query_expression()
     vulnerability_high_count = query_expression()
     vulnerability_critical_count = query_expression()
+    vulnerability_medium_count = query_expression()
     vulnerability_low_count = query_expression()
+    vulnerability_informational_count = query_expression()
     vulnerability_unclassified_count = query_expression()
-    vulnerability_confirmed_and_not_closed_count = query_expression()
 
     importance = Column(Integer, default=0)
 

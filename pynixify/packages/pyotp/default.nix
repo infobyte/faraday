@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "pyotp";
   version =
-    "2.7.0";
+    "2.8.0";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "1dbcgpf576kmrpkx3ly8jq4g5g22r9n1rra55c1xqxyzl2mrz66f";
+        "0nlcm54zqild41pbmg5smlar2sqi12mk2qyyyz0qwbd9kmyy3xf2";
     };
 
   # TODO FIXME

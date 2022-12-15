@@ -12,7 +12,7 @@ buildPythonPackage rec {
   pname =
     "filedepot";
   version =
-    "0.8.0";
+    "0.9.0";
 
   src =
     fetchPypi {
@@ -20,7 +20,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "0j8q05fyrnhjscz7yi75blymdswviv8bl79j9m5m45if6p6nwc95";
+        "10bkyqfza3a4qxs3b0ihq7jfs97kwhwgzy901lrwvfpvl4c4a5m0";
     };
 
   propagatedBuildInputs =

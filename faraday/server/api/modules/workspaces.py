@@ -54,6 +54,8 @@ class WorkspaceSummarySchema(Schema):
     code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
     opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
+    re_opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_re_opened_count')
+    risk_accepted_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_risk_accepted_count')
     closed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_closed_count')
     confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
     critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
@@ -63,10 +65,6 @@ class WorkspaceSummarySchema(Schema):
     low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
     unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
-    vulnerability_web_confirmed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_count')
-    vulnerability_web_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_closed_count')
-    vulnerability_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_and_not_closed_count')
-    vulnerability_web_confirmed_and_not_closed_count = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_confirmed_and_not_closed_count')
 
 
 class HistogramSchema(Schema):
@@ -341,17 +339,16 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         obj = None
         confirmed = self._get_querystring_boolean_field('confirmed')
-        active = self._get_querystring_boolean_field('active')
-        status = flask.request.args.get('status')
+        only_opened = self._get_querystring_boolean_field('only_opened')
 
-        extra_query = None
-        if status and status in Vulnerability.STATUSES:
-            extra_query = f"status='{status}'"
+        extra_query = ""
+        if only_opened:
+            extra_query = "status!='closed'"
 
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
-        if active is not None:
-            query = query.filter_by(active=active)
+
+        # Vulnerability Types
         query = query.options(
             with_expression(
                 Workspace.vulnerability_web_count,
@@ -368,83 +365,59 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                                           use_column_property=False)
             ),
             with_expression(
+                Workspace.vulnerability_code_count,
+                _make_vuln_count_property('vulnerability_code',
+                                          confirmed=confirmed,
+                                          extra_query=extra_query,
+                                          use_column_property=False),
+            ),
+            with_expression(
                 Workspace.vulnerability_total_count,
                 _make_vuln_count_property(type_=None,
                                           confirmed=confirmed,
                                           extra_query=extra_query,
                                           use_column_property=False)
             ),
-            with_expression(
-                Workspace.vulnerability_code_count,
-                _make_vuln_count_property('vulnerability_code',
-                                          extra_query=extra_query,
-                                          use_column_property=False),
-            ),
-            with_expression(
-                Workspace.last_run_agent_date,
-                _last_run_agent_date(),
-            ),
-            with_expression(
-                Workspace.vulnerability_closed_count,
-                _make_vuln_count_property(None,
-                                          extra_query=" status='closed' ",
-                                          use_column_property=False)
-            ),
-            with_expression(
-                Workspace.vulnerability_web_confirmed_count,
-                _make_vuln_count_property('vulnerability_web',
-                                          confirmed=True,
-                                          extra_query=" type='vulnerability_web' ",
-                                          use_column_property=False)
-            ),
-            with_expression(
-                Workspace.vulnerability_web_closed_count,
-                _make_vuln_count_property('vulnerability_web',
-                                          extra_query=" status='closed' ",
-                                          use_column_property=False)
-            ),
-            with_expression(
-                Workspace.vulnerability_confirmed_and_not_closed_count,
-                _make_vuln_count_property(None,
-                                          confirmed=True,
-                                          extra_query=" status!='closed' ",
-                                          use_column_property=False)
-            ),
-            with_expression(
-                Workspace.vulnerability_web_confirmed_and_not_closed_count,
-                _make_vuln_count_property('vulnerability_web',
-                                          confirmed=True,
-                                          extra_query=" status!='closed' ",
-                                          use_column_property=False)
-            ),
         )
 
-        # extra_query contains status filter
-        if not extra_query or status == 'open':
+        # Vulnerability by status
+        if not only_opened:
             query = query.options(
-                with_expression(Workspace.vulnerability_open_count,
+                with_expression(Workspace.vulnerability_closed_count,
                                 _make_vuln_count_property(None,
-                                                          extra_query=" status='open' ",
+                                                          confirmed=confirmed,
+                                                          extra_query=" status='closed' ",
                                                           use_column_property=False),
                                 )
             )
 
-        if confirmed is not False:
-            query = query.options(
-                with_expression(
-                    Workspace.vulnerability_confirmed_count,
-                    _make_vuln_count_property(None,
-                                              confirmed=True,
-                                              extra_query=extra_query,
-                                              use_column_property=False)
-                )
-            )
+        query = query.options(
+            with_expression(Workspace.vulnerability_open_count,
+                            _make_vuln_count_property(None,
+                                                      confirmed=confirmed,
+                                                      extra_query=" status='open' ",
+                                                      use_column_property=False),
+                            ),
+            with_expression(Workspace.vulnerability_re_opened_count,
+                            _make_vuln_count_property(None,
+                                                      confirmed=confirmed,
+                                                      extra_query=" status='re-opened' ",
+                                                      use_column_property=False),
+                            ),
+            with_expression(Workspace.vulnerability_risk_accepted_count,
+                            _make_vuln_count_property(None,
+                                                      confirmed=confirmed,
+                                                      extra_query=" status='risk-accepted' ",
+                                                      use_column_property=False),
+                            ),
+        )
 
+        # Vulnerabilities by severities
         query = count_vulnerability_severities(query,
                                                Workspace,
-                                               status=status,
                                                confirmed=confirmed,
-                                               all_severities=True)
+                                               all_severities=True,
+                                               only_opened=only_opened)
 
         try:
             obj = query.one()

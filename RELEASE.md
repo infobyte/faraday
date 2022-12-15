@@ -2,6 +2,10 @@ New features in the latest update
 =====================================
 
 
+4.3.1 [Dec 15th, 2022]:
+---
+ * [ADD] Workspace api stats refactor
+
 4.3.0 [Dec 1st, 2022]:
 ---
  * [FIX] Update the associated command when a agent execution return empty

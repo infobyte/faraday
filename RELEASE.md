@@ -2,6 +2,10 @@ New features in the latest update
 =====================================
 
 
+4.3.2 [Jan 3rd, 2023]:
+---
+ * Change column type of advanced field in executive reports
+
 4.3.1 [Dec 15th, 2022]:
 ---
  * [ADD] Workspace api stats refactor

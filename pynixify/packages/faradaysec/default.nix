@@ -7,6 +7,7 @@
 , apispec-webframeworks
 , autobahn
 , bcrypt
+, bidict
 , bleach
 , buildPythonPackage
 , click
@@ -121,6 +122,7 @@ buildPythonPackage rec {
       apispec
       apispec-webframeworks
       pyyaml
+      bidict
       flask-socketio
       pyotp
       flask-limiter

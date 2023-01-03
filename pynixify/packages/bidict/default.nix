@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "bidict";
   version =
-    "0.22.1";
+    "0.22.0";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "07fqavlf8ydxcnr2ywylyf3asbrsqqs42pd08c4ns3l6wis7y3qy";
+        "1n2vkynb22f9pz9k0m4wnxwjla3whib5fafy2pkccz792lz6p0jw";
     };
 
   # TODO FIXME
@@ -27,6 +27,10 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib;
-    { };
+    with lib; {
+      description =
+        "The bidirectional mapping library for Python.";
+      homepage =
+        "https://bidict.readthedocs.io";
+    };
 }

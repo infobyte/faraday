@@ -2701,7 +2701,7 @@ class ExecutiveReport(Metadata):
     duplicate_detection = Column(Boolean, default=False, nullable=False)
     border_size = Column(Integer, default=3, nullable=True)
     advanced_filter = Column(Boolean, default=False, nullable=False)
-    advanced_filter_parsed = Column(String, nullable=False, default="")
+    advanced_filter_parsed = Column(Text, nullable=False, default="")
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(

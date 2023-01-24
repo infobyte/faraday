@@ -9,6 +9,7 @@ flask>=1.1,<=2.1.3
 Flask-SQLAlchemy>=2.3.1
 flask-classful>=0.14
 email_validator
+Flask-WTF>=0.15.1,<=1.0.1
 WTForms>=2.1
 flask-login>=0.5.0,<0.6.0
 Flask-Security-Too>=4.0.0,<5.0.0

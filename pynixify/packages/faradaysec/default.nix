@@ -7,6 +7,7 @@
 , apispec-webframeworks
 , autobahn
 , bcrypt
+, bidict
 , bleach
 , buildPythonPackage
 , click
@@ -68,7 +69,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "4.3.1";
+    "4.3.2";
 
   src =
     lib.cleanSource
@@ -121,6 +122,7 @@ buildPythonPackage rec {
       apispec
       apispec-webframeworks
       pyyaml
+      bidict
       flask-socketio
       pyotp
       flask-limiter

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Now sending a patching a vuln with empty list will remove all the relationships with all references. #7405"
-}

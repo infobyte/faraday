@@ -70,7 +70,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "4.3.2";
+    "4.3.3";
 
   src =
     lib.cleanSource

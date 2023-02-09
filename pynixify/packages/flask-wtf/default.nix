@@ -2,45 +2,35 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ blinker
-, buildPythonPackage
-, email_validator
+{ buildPythonPackage
 , fetchPypi
 , flask
-, flask-wtf
-, flask_login
-, flask_principal
 , itsdangerous
 , lib
-, passlib
+, wtforms
 }:
 
 buildPythonPackage rec {
   pname =
-    "flask-security-too";
+    "flask-wtf";
   version =
-    "4.1.5";
+    "1.0.1";
 
   src =
     fetchPypi {
       inherit
         version;
       pname =
-        "Flask-Security-Too";
+        "Flask-WTF";
       sha256 =
-        "10y6r4cdjzqfxx69rcl2w5haij8rmzhmj5dlnfjykzzgf1qcmj7p";
+        "1jd614662r6ifh4svs8zfwm4k8bal5z3n6pq607bas8gxrpmrzil";
     };
 
   propagatedBuildInputs =
     [
       flask
-      flask_login
-      flask_principal
-      flask-wtf
-      email_validator
+      wtforms
       itsdangerous
-      passlib
-      blinker
     ];
 
   # TODO FIXME
@@ -48,10 +38,6 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib; {
-      description =
-        "Simple security for Flask apps.";
-      homepage =
-        "https://github.com/Flask-Middleware/flask-security";
-    };
+    with lib;
+    { };
 }

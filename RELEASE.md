@@ -2,6 +2,12 @@ New features in the latest update
 =====================================
 
 
+4.3.3 [Feb 9th, 2023]:
+---
+ * [FIX] Add tags columns in AgentSchedule model in white version. #7341
+ * [FIX] Now sending a patching a vuln with empty list will remove all the relationships with all references. #7405
+ * [FIX] Migration cascade on KB #7396
+
 4.3.2 [Jan 3rd, 2023]:
 ---
  * Change column type of advanced field in executive reports

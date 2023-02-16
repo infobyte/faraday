@@ -706,7 +706,7 @@ class VulnerabilityView(PaginatedMixin,
             obj.cwe = create_cwe(cwe_list)
 
         reference_list = data.pop('refs', None)
-        if reference_list:
+        if reference_list is not None:
             # We need to instantiate reference objects before updating
             obj.reference_instances = create_reference(reference_list, obj.workspace_id)
 

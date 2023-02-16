@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "cvss";
   version =
-    "2.5";
+    "2.6";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "03msz04h8wdxpr9qczdsr5r8ix709w0afil6ya64jir6zg7lixk3";
+        "103cjcimlq9qq4dw9rsywafq0n3346m506chdpxz9my1q5x0r3qy";
     };
 
   # TODO FIXME
@@ -31,6 +31,6 @@ buildPythonPackage rec {
       description =
         "CVSS2/3 library with interactive calculator for Python 2 and Python 3";
       homepage =
-        "https://github.com/skontar/cvss";
+        "https://github.com/RedHatProductSecurity/cvss";
     };
 }

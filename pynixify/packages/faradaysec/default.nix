@@ -29,6 +29,7 @@
 , flask-limiter
 , flask-security-too
 , flask-socketio
+, flask-wtf
 , flask_login
 , flask_mail
 , flask_sqlalchemy
@@ -69,7 +70,7 @@ buildPythonPackage rec {
   pname =
     "faradaysec";
   version =
-    "4.3.2";
+    "4.3.3";
 
   src =
     lib.cleanSource
@@ -92,6 +93,7 @@ buildPythonPackage rec {
       flask_sqlalchemy
       flask-classful
       email_validator
+      flask-wtf
       wtforms
       flask_login
       flask-security-too

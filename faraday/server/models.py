@@ -3127,6 +3127,9 @@ class AgentsSchedule(Metadata):
     )
     ignore_info = Column(Boolean, default=False)
     resolve_hostname = Column(Boolean, default=True)
+    vuln_tag = Column(String, default="")
+    service_tag = Column(String, default="")
+    host_tag = Column(String, default="")
     parameters = Column(JSONType, nullable=False, default={})
 
     @property
@@ -3135,7 +3138,7 @@ class AgentsSchedule(Metadata):
 
     @property
     def parent(self):
-        return self.agent
+        return self.executor.agent
 
 
 class Agent(Metadata):

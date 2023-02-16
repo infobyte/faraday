@@ -142,6 +142,11 @@ let
         ./packages/flask-socketio
         { };
 
+      flask-wtf =
+        self.callPackage
+        ./packages/flask-wtf
+        { };
+
       marshmallow =
         self.callPackage
         ./packages/marshmallow

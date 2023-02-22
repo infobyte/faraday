@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Return public IP when behind a proxy. #7417"
+}

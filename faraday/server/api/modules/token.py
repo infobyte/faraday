@@ -4,10 +4,7 @@ from datetime import datetime
 
 # Related third party imports
 import flask_login
-from flask import (
-    Blueprint,
-    request,
-)
+from flask import Blueprint
 from marshmallow import Schema
 
 # Local application imports

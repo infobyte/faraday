@@ -12,6 +12,7 @@ from marshmallow import Schema
 
 # Local application imports
 from faraday.server.api.base import GenericView
+from faraday.server.app import request_user_ip
 
 token_api = Blueprint('token_api', __name__)
 audit_logger = logging.getLogger('audit')
@@ -36,7 +37,7 @@ class TokenAuthView(GenericView):
               description: Ok
         """
         token = flask_login.current_user.get_token()
-        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        user_ip = request_user_ip()
         requested_at = datetime.utcnow()
         audit_logger.info(f"User [{flask_login.current_user.username}] requested token from IP [{user_ip}] "
                           f"at [{requested_at}]")

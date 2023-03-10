@@ -65,9 +65,7 @@ bandit:
       - setcap -r /usr/bin/vault
       - !reference [ .get_secrets, script ]
       - pip3 install faraday-cli
-        #     - cat /results/output.xml
-        #    - TO_CHECK=`grep -c testcase /results/output.xml`
-        #      - if [[ $TO_CHECK -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
+      - if [[ $(grep -c testcase /results/output.xml) -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
     rules:
         - !reference [.ignore-on-tag, rules]
         - when: on_success

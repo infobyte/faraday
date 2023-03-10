@@ -539,12 +539,12 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert res.json['duration']['start_date'] == start_date
         assert res.json['duration']['end_date'] == end_date
 
-    def test_create_fails_with_mayus(self, session, test_client):
+    def test_create_succeeds_with_mayus(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()
         raw_data = {'name': 'sWtr'}
         res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-        assert workspace_count_previous == session.query(Workspace).count()
+        assert res.status_code == 201
+        assert workspace_count_previous + 1 == session.query(Workspace).count()
 
     def test_create_fails_with_special_character(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()

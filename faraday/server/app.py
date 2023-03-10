@@ -275,8 +275,8 @@ def save_new_agent_creation_token_secret():
 
 def request_user_ip():
     if not request.environ.get('HTTP_X_FORWARDED_FOR'):
-        return request.environ['REMOTE_ADDR']
-    return request.environ['HTTP_X_FORWARDED_FOR']
+        return request.environ.get('REMOTE_ADDR', None)
+    return request.environ.get('HTTP_X_FORWARDED_FOR', None)
 
 
 def expire_session(app, user):

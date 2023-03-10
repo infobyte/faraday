@@ -50,7 +50,7 @@ bandit:
       - pip3 install virtualenv
       - virtualenv -p python3 faraday_venv
       - source faraday_venv/bin/activate
-      - pip3 install bandit
+      - pip3 install bandit==1.7.4
       - mkdir /results
       - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101"
       - exit(0)

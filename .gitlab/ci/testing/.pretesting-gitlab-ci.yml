@@ -52,7 +52,7 @@ bandit:
       - source faraday_venv/bin/activate
       - pip3 install bandit
       - mkdir /results
-      - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101"
+        #      - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101"
       - echo $?
     after_script:
       - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -

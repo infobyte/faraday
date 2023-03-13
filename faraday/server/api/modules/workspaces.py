@@ -84,7 +84,7 @@ def validate_workspace_name(name):
     blacklist = ["filter"]
     if name in blacklist:
         raise ValidationError(f"Not possible to create workspace of name: {name}")
-    if not re.match(r"^[A-z0-9][A-z0-9_$()\s+-]{0,250}$", name):
+    if not re.match(r"^[A-z0-9\s][A-z0-9_$()\s+-]{0,250}$", name):
         raise ValidationError("The workspace name must validate with the regex "
                               "^[a-z0-9][a-z0-9_$()+-]{0,250}$")
 

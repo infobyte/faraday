@@ -72,7 +72,7 @@ bandit:
 build_and_push_to_cachix:
     tags:
         - faradaytests
-    image: nixorg/nix
+    image: nixos/nix
     stage: pre_testing
     variables:
       # Note: this size has to fit both our community, professional and corporate versions

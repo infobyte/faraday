@@ -35,7 +35,7 @@ pylint:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apk update
-        - apk install git bash
+        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix

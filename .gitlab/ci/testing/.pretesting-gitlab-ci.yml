@@ -78,6 +78,7 @@ build_and_push_to_cachix:
       # Note: this size has to fit both our community, professional and corporate versions
       MAX_CLOSURE_SIZE_IN_MB: 850
     script:
+        - yum -y install git
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk
@@ -87,7 +88,7 @@ build_and_push_to_cachix:
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - cachix use faradaysec
         - nix-build | cachix push faradaysec
-          #        - ./scripts/check-closure-size ./result
+        - ./scripts/check-closure-size ./result
     rules:
       - when: on_success
 

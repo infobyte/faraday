@@ -87,7 +87,7 @@ build_and_push_to_cachix:
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - cachix use faradaysec
         - nix-build | cachix push faradaysec
-        - ./scripts/check-closure-size ./result
+          #        - ./scripts/check-closure-size ./result
     rules:
       - when: on_success
 

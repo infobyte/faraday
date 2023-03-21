@@ -100,6 +100,10 @@ pylint:
 sqlite_test_nix:
     extends: .sqlite_test_nix_base
     image: nixos/nix:2.3.10
+    script:
+      - apk update
+      - apk add git bash
+
 
 
 postgresql_test_nix:

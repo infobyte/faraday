@@ -1,9 +1,11 @@
 pylint:
     tags:
         - faradaytests
-    image: nixorg/nix
+    image: nixos/nix:2.3.10
     stage: test  # This should be after build_and_push_to_cachix to improve performance
     script:
+        - apk update
+        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
@@ -95,9 +97,9 @@ pylint:
 
 sqlite_test_nix:
     extends: .sqlite_test_nix_base
-    image: nixorg/nix
+    image: nixos/nix:2.3.10
 
 
 postgresql_test_nix:
     extends: .postgresql_test_nix_base
-    image: nixorg/nix
+    image: nixos/nix:2.3.10

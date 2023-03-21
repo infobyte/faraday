@@ -79,7 +79,7 @@ build_and_push_to_cachix:
       MAX_CLOSURE_SIZE_IN_MB: 850
     script:
         - apk update
-        - apk add git
+        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk

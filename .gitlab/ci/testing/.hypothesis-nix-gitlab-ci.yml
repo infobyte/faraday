@@ -1,10 +1,12 @@
 test_hypothesis:
     tags:
         - hypothesis
-    image: nixorg/nix
+    image: nixos/nix:2.3.10
     stage: test
     allow_failure: true
     script:
+        - apk update
+        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix

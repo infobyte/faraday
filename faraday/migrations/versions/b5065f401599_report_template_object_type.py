@@ -16,9 +16,6 @@ depends_on = None
 
 
 def upgrade():
-    if not op.get_context().as_sql:
-        connection = op.get_bind()
-        connection.execution_options(isolation_level='AUTOCOMMIT')
     op.execute("ALTER TYPE object_types ADD VALUE IF NOT EXISTS 'report_template'")
 
 

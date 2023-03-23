@@ -96,6 +96,7 @@ OBJECT_TYPES = [
     'executive_report',
     'workspace',
     'task',
+    'report_template',
 ]
 
 REFERENCE_TYPES = [

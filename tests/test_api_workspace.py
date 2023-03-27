@@ -184,7 +184,16 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         session.add_all(vulns)
         session.commit()
 
-        res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "myws"}]}'))
+        res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "myws"}], '
+                                                    '"order_by": ['
+                                                    '{"field": "vulnerability_high_count", "direction": "desc"},'
+                                                    '{"field": "vulnerability_critical_count", "direction": "asc"},'
+                                                    '{"field": "vulnerability_medium_count", "direction": "desc"},'
+                                                    '{"field": "vulnerability_informational_count", "direction": "asc"},'
+                                                    '{"field": "vulnerability_low_count", "direction": "desc"},'
+                                                    '{"field": "name", "direction": "asc"},'
+                                                    '{"field": "importance", "direction": "asc"}'
+                                                    ']}'))
 
         assert res.status_code == 200
         assert res.json[0]['stats']['opened_vulns'] == 14

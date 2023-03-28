@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Add `not_any` filter operator which will retrieve results that not contains the value requested. #7494"
+}

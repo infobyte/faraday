@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed workspace sorting when asked to sort by calculated fields, such as vulnerability counts. #7384"
+}

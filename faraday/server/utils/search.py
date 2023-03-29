@@ -25,8 +25,12 @@ from sqlalchemy import (
     func,
     nullsfirst,
     nullslast,
+    text,
+    desc,
+    asc,
     inspect as sqlalchemy_inspect,
 )
+from sqlalchemy.sql.annotation import AnnotatedLabel
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import ColumnProperty
@@ -628,9 +632,15 @@ class QueryBuilder:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)
                         if val.direction == 'desc':
-                            query = query.order_by(nullslast(direction()))
+                            if isinstance(field.expression, AnnotatedLabel):
+                                query = query.order_by(nullslast(desc(text(val.field))))
+                            else:
+                                query = query.order_by(nullsfirst(direction()))
                         else:
-                            query = query.order_by(nullsfirst(direction()))
+                            if isinstance(field.expression, AnnotatedLabel):
+                                query = query.order_by(nullslast(asc(text(val.field))))
+                            else:
+                                query = query.order_by(nullsfirst(direction()))
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

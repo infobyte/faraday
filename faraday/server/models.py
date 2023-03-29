@@ -308,7 +308,7 @@ def count_vulnerability_severities(query: str,
                                               extra_query=_extra_query,
                                               use_column_property=False,
                                               get_hosts_vulns=host_vulns,
-                                              confirmed=confirmed)
+                                              confirmed=confirmed).label(f'vulnerability_{severity_name}_count')
                 )
             )
     return query

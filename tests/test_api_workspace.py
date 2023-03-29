@@ -158,7 +158,15 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_fixed_stats_in_workspace(self, session, test_client, vulnerability_factory, workspace_factory):
         ws = workspace_factory.create(name='myws')
+        ws2 = workspace_factory.create(name='Myws')
         session.add(ws)
+        session.add(ws2)
+        session.commit()
+
+        vulns = vulnerability_factory.create_batch(2, workspace=ws2,
+                                                    confirmed=False, status='closed', severity='high')
+
+        session.add_all(vulns)
         session.commit()
 
         vulns = vulnerability_factory.create_batch(8, workspace=ws,
@@ -184,9 +192,19 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         session.add_all(vulns)
         session.commit()
 
-        res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "myws"}]}'))
+        res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"like", "val": "%yws"}], '
+                                                    '"order_by": ['
+                                                    '{"field": "vulnerability_high_count", "direction": "desc"},'
+                                                    '{"field": "vulnerability_critical_count", "direction": "asc"},'
+                                                    '{"field": "vulnerability_medium_count", "direction": "desc"},'
+                                                    '{"field": "vulnerability_informational_count", "direction": "asc"},'
+                                                    '{"field": "vulnerability_low_count", "direction": "desc"},'
+                                                    '{"field": "name", "direction": "asc"},'
+                                                    '{"field": "importance", "direction": "asc"}'
+                                                    ']}'))
 
         assert res.status_code == 200
+        assert res.json[0]['name'] == ws.name
         assert res.json[0]['stats']['opened_vulns'] == 14
         assert res.json[0]['stats']['closed_vulns'] == 11
         assert res.json[0]['stats']['info_vulns'] == 8
@@ -195,6 +213,9 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert res.json[0]['stats']['high_vulns'] == 5
         assert res.json[0]['stats']['critical_vulns'] == 6
         assert res.json[0]['stats']['confirmed_vulns'] == 8
+
+        assert res.json[1]['name'] == ws2.name
+        assert res.json[1]['stats']['high_vulns'] == 2
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):

@@ -631,12 +631,12 @@ class QueryBuilder:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)
                         if val.direction == 'desc':
-                            if isinstance(field.expression, AnnotatedLabel):
+                            if isinstance(field.expression, AnnotatedLabel) and not field._is_internal_proxy:
                                 query = query.order_by(nullslast(desc(text(val.field))))
                             else:
                                 query = query.order_by(nullsfirst(direction()))
                         else:
-                            if isinstance(field.expression, AnnotatedLabel):
+                            if isinstance(field.expression, AnnotatedLabel) and not field._is_internal_proxy:
                                 query = query.order_by(nullslast(asc(text(val.field))))
                             else:
                                 query = query.order_by(nullsfirst(direction()))

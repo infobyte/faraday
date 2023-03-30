@@ -335,7 +335,7 @@ def _make_vuln_generic_count_by_severity(severity):
     vulnerability_generic_count = column_property(
         vuln_count + vuln_web_count,
         deferred=True
-    )
+    ).expression.label(f'vulnerability_{severity}_generic_count')
 
     return vulnerability_generic_count
 

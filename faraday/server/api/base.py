@@ -991,38 +991,38 @@ class FilterMixin(ListMixin):
             filter_query = filter_query.options(
                 with_expression(
                     Workspace.vulnerability_web_count,
-                    _make_vuln_count_property('vulnerability_web', use_column_property=False).label("vulnerability_web_count"),
+                    _make_vuln_count_property('vulnerability_web', use_column_property=False),
                 ),
                 with_expression(
                     Workspace.vulnerability_standard_count,
-                    _make_vuln_count_property('vulnerability', use_column_property=False).label("vulnerability_standard_count")
+                    _make_vuln_count_property('vulnerability', use_column_property=False)
                 ),
                 with_expression(
                     Workspace.vulnerability_code_count,
-                    _make_vuln_count_property('vulnerability_code', use_column_property=False).label("vulnerability_code_count"),
+                    _make_vuln_count_property('vulnerability_code', use_column_property=False),
                 ),
                 with_expression(
                     Workspace.vulnerability_confirmed_count,
                     _make_vuln_count_property(None,
                                               confirmed=True,
-                                              use_column_property=False).label("vulnerability_confirmed_count")
+                                              use_column_property=False)
                 ),
                 with_expression(
                     Workspace.vulnerability_open_count,
                     _make_vuln_count_property(None,
                                               extra_query=" status!='closed' ",
-                                              use_column_property=False).label("vulnerability_open_count"),
+                                              use_column_property=False),
                 ),
                 with_expression(
                     Workspace.vulnerability_closed_count,
                     _make_vuln_count_property(None,
                                               extra_query=" status='closed' ",
-                                              use_column_property=False).label("vulnerability_closed_count")
+                                              use_column_property=False)
                 ),
                 with_expression(
                     Workspace.vulnerability_total_count,
                     _make_vuln_count_property(type_=None,
-                                              use_column_property=False).label("vulnerability_total_count")
+                                              use_column_property=False)
                 )
             )
 

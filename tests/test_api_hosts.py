@@ -299,7 +299,16 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        res = test_client.get(join(self.url(), 'filter?q={"filters":[{"name": "os", "op":"eq", "val":"Unix"}]}'))
+        res = test_client.get(join(self.url(), 'filter?q={'
+                                               '"filters":[{"name": "os", "op":"eq", "val":"Unix"}], '
+                                               '"order_by": ['
+                                               '{'
+                                               '"field": "vulnerability_critical_generic_count", '
+                                               '"direction": "desc"'
+                                               '}'
+                                               '] '
+                                               '}'))
+
         assert res.status_code == 200
         self.compare_results(hosts, res)
 

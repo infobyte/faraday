@@ -273,12 +273,18 @@ def save_new_agent_creation_token_secret():
     faraday.server.config.faraday_server.agent_registration_secret = registration_secret
 
 
+def request_user_ip():
+    if not request.environ.get('HTTP_X_FORWARDED_FOR'):
+        return request.environ.get('REMOTE_ADDR', None)
+    return request.environ.get('HTTP_X_FORWARDED_FOR', None)
+
+
 def expire_session(app, user):
     logger.debug("Cleanup sessions")
     session.destroy()
     KVSessionExtension(app=app).cleanup_sessions(app)
 
-    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_ip = request_user_ip()
     user_logout_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
     logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
@@ -299,7 +305,7 @@ def user_logged_in_successful(app, user):
     logger.debug("Cleanup sessions")
     KVSessionExtension(app=app).cleanup_sessions(app)
 
-    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_ip = request_user_ip()
     user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
     logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
@@ -491,7 +497,7 @@ class CustomLoginForm(LoginForm):
 
     def validate(self):
 
-        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        user_ip = request_user_ip()
         time_now = datetime.datetime.utcnow()
 
         # Use super of LoginForm, not super of CustomLoginForm, since I

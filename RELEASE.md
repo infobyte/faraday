@@ -2,6 +2,12 @@ New features in the latest update
 =====================================
 
 
+4.3.4 [Apr 3rd, 2023]:
+---
+ * [FIX] Fix bandit vulns. #7430
+ * [FIX] Return public IP when behind a proxy. #7417
+ * [ADD] Add report_template as an object type. #7463
+
 4.3.3 [Feb 9th, 2023]:
 ---
  * [FIX] Add tags columns in AgentSchedule model in white version. #7341

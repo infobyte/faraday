@@ -63,6 +63,7 @@ bandit:
       - setcap cap_ipc_lock= /usr/bin/vault
       - !reference [ .get_secrets, script ]
       - pip3 install faraday-cli
+      - cat /results/output.xml
       - if [[ $(grep -c testcase /results/output.xml) -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
     rules:
         - !reference [.ignore-on-tag, rules]
@@ -71,12 +72,14 @@ bandit:
 build_and_push_to_cachix:
     tags:
         - faradaytests
-    image: nixorg/nix
+    image: nixos/nix:2.3.10
     stage: pre_testing
     variables:
       # Note: this size has to fit both our community, professional and corporate versions
       MAX_CLOSURE_SIZE_IN_MB: 850
     script:
+        - apk update
+        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk

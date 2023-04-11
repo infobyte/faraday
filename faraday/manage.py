@@ -66,7 +66,7 @@ def cli():
 
 
 def check_faraday_server(url):
-    return requests.get(url)
+    return requests.get(url, timeout=10)
 
 
 @click.command(help="Show all URLs in Faraday Server API")

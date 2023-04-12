@@ -1056,6 +1056,7 @@ class VulnerabilityView(PaginatedMixin,
                 joinedload(Vulnerability.host),
                 joinedload(Vulnerability.service),
                 joinedload(VulnerabilityWeb.service),
+                joinedload(VulnerabilityGeneric.cwe),
             )
         return vulns
 

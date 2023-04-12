@@ -2,6 +2,10 @@ New features in the latest update
 =====================================
 
 
+4.3.5 [Apr 12th, 2023]:
+---
+ * [FIX] Modify migration with autocommit. #7487
+
 4.3.4 [Apr 3rd, 2023]:
 ---
  * [FIX] Fix bandit vulns. #7430

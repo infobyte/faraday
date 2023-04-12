@@ -252,6 +252,10 @@ class VulnerabilitySchema(AutoSchema):
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
+    #
+    host_id = fields.Integer(attribute='host_id')
+    service_id = fields.Integer(attribute='service_id')
+    #
     severity = SeverityField(required=True)
     status = fields.Method(
         serialize='get_status',
@@ -284,7 +288,7 @@ class VulnerabilitySchema(AutoSchema):
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
             'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
-            'risk'
+            'risk', 'host_id', 'service_id'
             )
 
     @staticmethod
@@ -450,7 +454,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
             'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
-            'risk'
+            'risk', 'host_id', 'service_id'
         )
 
 
@@ -699,6 +703,30 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
+
+        # host
+        if 'host_id' in data:
+            new_host_id = data.pop("host_id")
+            if new_host_id:
+                if obj.type == 'vulnerability_web':
+                    flask.abort(400, "Vulnerability web can't have a host assigned")
+                host = Host.query.filter(Host.workspace_id == obj.workspace_id, Host.id == new_host_id).first()
+                if not host:
+                    # TODO: que deberia retornar? Para evitar enumeracion.
+                    flask.abort(400, "The host that you are trying to assign was not found")
+                obj.host_id = host.id
+                obj.service_id = None
+
+        # service
+        if 'service_id' in data:
+            new_service_id = data.pop("service_id")
+            if new_service_id:
+                service = Service.query.filter(Service.workspace_id == obj.workspace_id,
+                                               Service.id == new_service_id).first()
+                if not service:
+                    flask.abort(400, "The service that you are trying to assign was not found")
+                obj.service_id = service.id
+                obj.host_id = None
 
         cwe_list = data.pop('cwe', None)
         if cwe_list:

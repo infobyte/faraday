@@ -16,7 +16,8 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("ALTER TYPE object_types ADD VALUE IF NOT EXISTS 'report_template'")
+    with op.get_context().autocommit_block():
+        op.execute("ALTER TYPE object_types ADD VALUE IF NOT EXISTS 'report_template'")
 
 
 def downgrade():

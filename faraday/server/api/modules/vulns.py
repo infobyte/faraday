@@ -18,7 +18,7 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError, post_dump
+from marshmallow import Schema, fields, post_load, ValidationError, post_dump, pre_load
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, or_, func
 from sqlalchemy.inspection import inspect
@@ -407,6 +407,18 @@ class VulnerabilitySchema(AutoSchema):
         data[parent_field] = parent.id
         # TODO migration: check what happens when updating the parent from
         # service to host or viceverse
+        return data
+
+    @pre_load
+    def host_and_service(self, data, **kwargs):
+        """
+            Only one of host_id or service_id can be modified (at the same time) in patch.
+        """
+        partial = kwargs.get("partial", False)
+        if partial and\
+                'host_id' in data and \
+                'service_id' in data:
+            raise ValidationError("Host and service can't be modified simultaneously")
         return data
 
     @post_load

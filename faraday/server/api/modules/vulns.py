@@ -253,8 +253,8 @@ class VulnerabilitySchema(AutoSchema):
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
     #
-    host_id = fields.Integer(attribute='host_id')
-    service_id = fields.Integer(attribute='service_id')
+    host_id = fields.Integer(attribute='host_id', allow_none=True)
+    service_id = fields.Integer(attribute='service_id', allow_none=True)
     #
     severity = SeverityField(required=True)
     status = fields.Method(
@@ -419,6 +419,10 @@ class VulnerabilitySchema(AutoSchema):
                 'host_id' in data and \
                 'service_id' in data:
             raise ValidationError("Host and service can't be modified simultaneously")
+        else:
+            if 'host_id' in data and 'service_id' in data:
+                if data['host_id'] is None and data['service_id'] is None:
+                    raise ValidationError("Host and service cant't be null")
         return data
 
     @post_load

@@ -18,7 +18,7 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError, post_dump, pre_load
+from marshmallow import Schema, fields, post_load, ValidationError, post_dump
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, or_, func
 from sqlalchemy.inspection import inspect
@@ -252,10 +252,6 @@ class VulnerabilitySchema(AutoSchema):
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    #
-    # host_id = fields.Integer(attribute='host_id', allow_none=True)
-    # service_id = fields.Integer(attribute='service_id', allow_none=True)
-    #
     severity = SeverityField(required=True)
     status = fields.Method(
         serialize='get_status',
@@ -288,7 +284,6 @@ class VulnerabilitySchema(AutoSchema):
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
             'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
-            # 'risk', 'host_id', 'service_id'
             'risk'
             )
 
@@ -383,9 +378,6 @@ class VulnerabilitySchema(AutoSchema):
         parent_field = None
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
-        # if not (parent_type and parent_id):
-        #     # Probably a partial load, since they are required
-        #     return data
         if kwargs.get('partial', False):
             if not parent_type and not parent_id:
                 return data
@@ -422,22 +414,6 @@ class VulnerabilitySchema(AutoSchema):
         data[parent_field] = parent.id
         # TODO migration: check what happens when updating the parent from
         # service to host or viceverse
-        return data
-
-    @pre_load
-    def host_and_service(self, data, **kwargs):
-        """
-            Only one of host_id or service_id can be modified (at the same time) in patch.
-        """
-        partial = kwargs.get("partial", False)
-        if partial and\
-                'host_id' in data and \
-                'service_id' in data:
-            raise ValidationError("Host and service can't be modified simultaneously")
-        else:
-            if 'host_id' in data and 'service_id' in data:
-                if data['host_id'] is None and data['service_id'] is None:
-                    raise ValidationError("Host and service cant't be null")
         return data
 
     @post_load
@@ -485,7 +461,6 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
             'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
-            # 'risk', 'host_id', 'service_id'
             'risk'
         )
 
@@ -735,30 +710,6 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
-
-        # host
-        # if 'host_id' in data:
-        #     new_host_id = data.pop("host_id")
-        #     if new_host_id:
-        #         if obj.type == 'vulnerability_web':
-        #             flask.abort(400, "Vulnerability web can't have a host assigned")
-        #         host = Host.query.filter(Host.workspace_id == obj.workspace_id, Host.id == new_host_id).first()
-        #         if not host:
-        #             # TODO: que deberia retornar? Para evitar enumeracion.
-        #             flask.abort(400, "The host that you are trying to assign was not found")
-        #         obj.host_id = host.id
-        #         obj.service_id = None
-        #
-        # # service
-        # if 'service_id' in data:
-        #     new_service_id = data.pop("service_id")
-        #     if new_service_id:
-        #         service = Service.query.filter(Service.workspace_id == obj.workspace_id,
-        #                                        Service.id == new_service_id).first()
-        #         if not service:
-        #             flask.abort(400, "The service that you are trying to assign was not found")
-        #         obj.service_id = service.id
-        #         obj.host_id = None
 
         cwe_list = data.pop('cwe', None)
         if cwe_list:

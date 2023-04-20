@@ -378,13 +378,14 @@ class VulnerabilitySchema(AutoSchema):
         parent_field = None
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
-        if kwargs.get('partial', False):
-            if not parent_type and not parent_id:
-                return data
-            if parent_id and parent_type is None:
-                raise ValidationError('Trying to modify parent with no parent_type')
-            if parent_type and parent_id is None:
-                raise ValidationError('Trying to modify parent_type but parent not sent')
+
+        if not parent_type and not parent_id:
+            return data
+        if parent_id and parent_type is None:
+            raise ValidationError('Trying to modify parent with no parent_type')
+        if parent_type and parent_id is None:
+            raise ValidationError('Trying to modify parent_type but parent not sent')
+
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'

@@ -1,0 +1,4 @@
+{
+  "level": "prof",
+  "md": "[ADD] Add global assets endpoint and when the maximum number of hosts is exceeded, the command will have a warning. #7447"
+}

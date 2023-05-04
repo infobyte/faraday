@@ -183,7 +183,7 @@ Creating custom plugins is super easy, [Read more about Plugins](http://github.c
 
 ---
 You can access directly to our API,
-check out the documentation [here](https://api.faradaysec.com/).
+check out the documentation [here](https://docs.faradaysec.com/API-Server/).
 
 
 ## Links

@@ -282,17 +282,19 @@ class AgentView(ReadWriteView):
               description: Ok
         """
         try:
-            manifest = get_manifests(request.args.get("agent_version"))
-            manifest["burp"]["optional_environment_variables"] = [
-                manifest["burp"]["environment_variables"].pop(
-                    manifest["burp"]["environment_variables"].index("BURP_API_PULL_INTERVAL")
-                )
-            ]
-            manifest["tenableio"]["optional_environment_variables"] = [
-                manifest["tenableio"]["environment_variables"].pop(
-                    manifest["tenableio"]["environment_variables"].index("TENABLE_PULL_INTERVAL")
-                )
-            ]
+            manifest = get_manifests(request.args.get("agent_version")).copy()
+            if "BURP_API_PULL_INTERVAL" in manifest.get("burp", {}).get("environment_variables", ""):
+                manifest["burp"]["optional_environment_variables"] = [
+                    manifest["burp"].get("environment_variables").pop(
+                        manifest["burp"]["environment_variables"].index("BURP_API_PULL_INTERVAL")
+                    )
+                ]
+            if "TENABLE_PULL_INTERVAL" in manifest.get("tenableio", {}).get("environment_variables", ""):
+                manifest["tenableio"]["optional_environment_variables"] = [
+                    manifest["tenableio"]["environment_variables"].pop(
+                        manifest["tenableio"]["environment_variables"].index("TENABLE_PULL_INTERVAL")
+                    )
+                ]
             return flask.jsonify(manifest)
         except ValueError as e:
             flask.abort(400, e)

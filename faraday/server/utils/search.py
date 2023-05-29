@@ -155,6 +155,7 @@ OPERATORS = {
     # Operators which accept three arguments.
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
+    'not_any': lambda f, a, fn: ~f.any(_sub_operator(f, a, fn)),
 }
 
 

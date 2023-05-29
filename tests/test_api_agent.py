@@ -410,4 +410,6 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         session.add(agent)
         session.commit()
         res = test_client.get(join(self.url(), 'get_manifests'))
+        assert "BURP_API_PULL_INTERVAL" in res.json["burp"]["optional_environment_variables"]
+        assert "TENABLE_PULL_INTERVAL" in res.json["tenableio"]["optional_environment_variables"]
         assert res.status_code == 200

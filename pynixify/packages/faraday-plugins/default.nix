@@ -11,6 +11,7 @@
 , html2text
 , lib
 , lxml
+, markdown
 , packaging
 , pytz
 , requests
@@ -22,7 +23,7 @@ buildPythonPackage rec {
   pname =
     "faraday-plugins";
   version =
-    "1.11.0";
+    "1.12.0";
 
   src =
     fetchPypi {
@@ -30,7 +31,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "1yzvhzc4rm473057dvwmc2kv6yzp9zp9hhhaj7knn0jbc7rapv2i";
+        "0g4nfdyd4zmv7kdly1489q7mmsdm506hps1hs5l1sf4db37jwh17";
     };
 
   propagatedBuildInputs =
@@ -46,6 +47,7 @@ buildPythonPackage rec {
       colorama
       tabulate
       packaging
+      markdown
     ];
 
   # TODO FIXME

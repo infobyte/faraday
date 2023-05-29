@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Make get_manifest compatible with all version of dispatcher #7500"
-}

@@ -1,4 +1,4 @@
 {
     "level": "community",
-    "md": "[FIX] Add missing `scope` cvss3 field."
+    "md": "[FIX] Add missing `scope` cvss3 field. #7493"
 }

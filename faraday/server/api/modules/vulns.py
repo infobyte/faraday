@@ -353,7 +353,6 @@ class VulnerabilitySchema(AutoSchema):
             # sometimes api requests send str or unicode.
             value = int(value)
         except ValueError:
-
             raise ValidationError("Invalid parent type")
         return value
 
@@ -379,20 +378,33 @@ class VulnerabilitySchema(AutoSchema):
         parent_field = None
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
-        if not (parent_type and parent_id):
-            # Probably a partial load, since they are required
+
+        if not parent_type and not parent_id:
             return data
+        if parent_id and parent_type is None:
+            raise ValidationError('Trying to modify parent with no parent_type')
+        if parent_type and parent_id is None:
+            raise ValidationError('Trying to modify parent_type but parent not sent')
+
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'
+            data['service_id'] = None
         if parent_type == 'Service':
             parent_class = Service
             parent_field = 'service_id'
+            data['host_id'] = None
         if not parent_class:
             raise ValidationError('Unknown parent type')
-        if parent_type == 'Host' and data['type'] == 'vulnerability_web':
-            raise ValidationError('Trying to set a host for a vulnerability web')
-
+        if parent_type == 'Host':
+            if 'type' in data:
+                if data['type'] == 'vulnerability_web':
+                    raise ValidationError('Trying to set a host for a vulnerability web')
+            elif kwargs.get("partial", False):
+                vulnerability = self.context.get("object", None)
+                if vulnerability:
+                    if vulnerability.type == 'vulnerability_web':
+                        raise ValidationError('Trying to set a host for a vulnerability web')
         try:
             parent = db.session.query(parent_class).join(Workspace).filter(
                 Workspace.name == self.context['workspace_name'],
@@ -1028,6 +1040,7 @@ class VulnerabilityView(PaginatedMixin,
                 joinedload(Vulnerability.host),
                 joinedload(Vulnerability.service),
                 joinedload(VulnerabilityWeb.service),
+                joinedload(VulnerabilityGeneric.cwe),
             )
         return vulns
 

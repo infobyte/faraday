@@ -262,7 +262,7 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
 class HasParentHostOrService(WorkspaceObjectFactory):
     """
     Mixins for objects that must have either a host or a service,
-    but ont both, as a parent.
+    but not both, as a parent.
 
     By default it randomly select one of them and set the other to
     None, but this behavior can be modified as with other factory

@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "pyjwt";
   version =
-    "2.6.0";
+    "2.7.0";
 
   src =
     fetchPypi {
@@ -20,7 +20,7 @@ buildPythonPackage rec {
       pname =
         "PyJWT";
       sha256 =
-        "1z85kwr945rbzrn5wabrsmck5x8disa9wc7b3y5gci7w65z5qa39";
+        "0x70qffax798pbkcn3yd9kh99yzqzlss1ra98cnilp18qjis8v5x";
     };
 
   # TODO FIXME

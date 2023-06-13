@@ -82,12 +82,12 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
   pynixify = let
     src = builtins.fetchGit {
       url = "https://github.com/cript0nauta/pynixify.git";
-      ref = "2adb96d15aece07e49112a9757a241fbf306b390";
+      rev = "2adb96d15aece07e49112a9757a241fbf306b390";
     };
 
     original =
       # TODO: use python 3.8 after migrating to 20.09
-      python37Packages.callPackage "${src}/nix/packages/pynixify" { };
+      python3Packages.callPackage "${src}/nix/packages/pynixify" { };
 
   in original.overridePythonAttrs (drv: {
     # based in https://github.com/cript0nauta/pynixify/blob/main/default.nix

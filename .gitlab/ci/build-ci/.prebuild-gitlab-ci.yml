@@ -82,8 +82,6 @@ build_nix_python3_dev:
   tags:
     - digitalocean-dev
   script:
-    - apk update
-    - apk add git bash tar
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
     - !reference [ .get_secrets, script ]
@@ -121,8 +119,6 @@ build_nix_python3_staging:
   tags:
     - digitalocean-dev
   script:
-    - apk update
-    - apk add git bash tar
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
     - !reference [ .get_secrets, script ]
@@ -157,8 +153,6 @@ build_nix_python3_master:
   tags:
     - digitalocean-dev
   script:
-    - apk update
-    - apk add git bash tar
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
     - !reference [ .get_secrets, script ]

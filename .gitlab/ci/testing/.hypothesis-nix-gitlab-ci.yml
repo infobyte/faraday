@@ -5,8 +5,6 @@ test_hypothesis:
     stage: test
     allow_failure: true
     script:
-        - apk update
-        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix

@@ -1,7 +1,7 @@
 test_hypothesis:
     tags:
         - hypothesis
-    image: nixos/nix:2.3.10
+    image: nixos/nix:2.16.0
     stage: test
     allow_failure: true
     script:

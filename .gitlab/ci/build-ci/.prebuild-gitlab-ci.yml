@@ -77,7 +77,7 @@ generate_build_file_master:
           artifacts: true
 
 build_nix_python3_dev:
-  image: nixos/nix:2.3.10
+  image: nixos/nix:2.16.0
   stage: pre_build
   tags:
     - digitalocean-dev
@@ -116,7 +116,7 @@ build_nix_python3_dev:
       artifacts: true
 
 build_nix_python3_staging:
-  image: nixos/nix:2.3.10
+  image: nixos/nix:2.16.0
   stage: pre_build
   tags:
     - digitalocean-dev
@@ -152,7 +152,7 @@ build_nix_python3_staging:
       artifacts: true
 
 build_nix_python3_master:
-  image: nixos/nix:2.3.10
+  image: nixos/nix:2.16.0
   stage: pre_build
   tags:
     - digitalocean-dev

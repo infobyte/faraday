@@ -2,119 +2,17 @@ with import ./pynixify/nixpkgs.nix { };
 let
   version = builtins.head (builtins.match ".*'([0-9]+.[0-9]+(.[0-9]+)?)'.*"
     (builtins.readFile ./faraday/__init__.py));
+in { useLastCommit ? true }: rec {
 
-  pynixifyCommand = ''
-    pynixify --nixpkgs https://github.com/infobyte/nixpkgs/archive/83ced8f3060ca238a554dd43f60565fa6f7e98ef.tar.gz --local faradaysec --tests faradaysec
-  '';
-
-in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
-, systemUser ? "faraday", systemGroup ? "faraday", systemHome ? null
-, port ? 5985, websocketPort ? 9000, bindAddress ? "localhost"
-
-  # If true, will ignore the contents of the last commit as source, ignoring
-  # uncommited changes. Recommended to improve reproducibility
-, useLastCommit ? true }: rec {
-
-  faraday-server = python38.pkgs.faradaysec.overrideAttrs (old:
+  faraday-server = python3.pkgs.faradaysec.overrideAttrs (old:
     assert !builtins.hasAttr "checkInputs" old; {
       name = "faraday-server-${version}";
       doCheck = true;
       checkPhase = "true";
-      checkInputs = [ pynixify runPynixify ];
     } // lib.optionalAttrs useLastCommit {
       src = builtins.fetchGit {
         url = ./.;
         rev = "HEAD";
       };
     });
-
-  dockerImage = dockerTools.buildImage {
-    name = dockerName;
-    tag = dockerTag;
-    created = "now";
-    fromImage = null;
-    contents = [ faraday-server bash gnused coreutils ];
-    config = {
-      Cmd = [ ./scripts/docker-entrypoint.sh ];
-      ExposedPorts."5985/tcp" = { };
-      Volumes."/faraday-config" = { };
-      Volumes."/faraday-license" = { };
-      Volumes."/faraday-storage" = { };
-      Env = [ "FARADAY_HOME=/home/faraday" ];
-    };
-    extraCommands = ''
-      # Note: The current dir is the container's root file system
-      mkdir -p opt usr/bin
-      cp ${./scripts/docker-server.ini} server.ini
-      cp ${
-        ./scripts/docker-entrypoint.sh
-      } .  # Not required, but useful for debug
-      cp ${coreutils}/bin/env usr/bin/env
-      ln -s ${faraday-server} opt/faraday
-      ln -s /home/faraday/.faraday/storage faraday-storage
-      ln -s /home/faraday/.faraday/config faraday-config
-    '';
-  };
-
-  systemdUnit =
-    let home = if isNull systemHome then "/home/${systemUser}" else systemHome;
-    in writeText "faraday-server.service" ''
-      [Unit]
-      Description=Faraday Server
-      After=network.target
-
-      [Service]
-      Type=exec
-      UMask=2002
-      User=${systemUser}
-      Group=${systemGroup}
-      Environment=FARADAY_HOME=${home}
-      ExecStart=${faraday-server}/bin/faraday-server \
-        --port ${builtins.toString port} \
-        --websocket_port ${builtins.toString websocketPort} \
-        --bind_address ${bindAddress}
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
-    '';
-
-  pynixify = let
-    src = builtins.fetchGit {
-      url = "https://github.com/cript0nauta/pynixify.git";
-      rev = "f5adc88d58976134529489a5fc3e16df03bb2e73";
-    };
-
-    original =
-      # TODO: use python 3.8 after migrating to 20.09
-      python3Packages.callPackage "${src}/nix/packages/pynixify" { };
-
-  in original.overridePythonAttrs (drv: {
-    # based in https://github.com/cript0nauta/pynixify/blob/main/default.nix
-    checkInputs = drv.checkInputs ++ [ nix nixfmtCustom bats ];
-
-    checkPhase = ''
-      mypy pynixify/ tests/ acceptance_tests/
-      pytest tests/ -m 'not usesnix'  # We can't run Nix inside Nix builds
-    '';
-
-    postInstall = ''
-      # Add nixfmt to pynixify's PATH
-      wrapProgram $out/bin/pynixify --prefix PATH : "${nixfmtCustom}/bin"
-    '';
-  });
-
-  nixfmtCustom =
-    # custom wrapper of nixfmt that sets the column width to 1. This will force
-    # splitting function arguments into separate lines and prevent merge
-    # conflicts with our commercial versions.
-    writeShellScriptBin "nixfmt" ''
-      exec ${nixfmt}/bin/nixfmt --width=1 $@
-    '';
-
-  runPynixify =
-    writeShellScriptBin "run-pynixify" ''
-      export PATH=${pynixify}/bin:$PATH
-      ${pynixifyCommand}
-    '';
 }

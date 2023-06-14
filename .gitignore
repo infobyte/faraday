@@ -83,4 +83,4 @@ faraday/frontend/
 .cache
 
 #pynixify
-/pynixify/result/
+pynixify/result/

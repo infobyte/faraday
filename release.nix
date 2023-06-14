@@ -4,7 +4,7 @@ let
     (builtins.readFile ./faraday/__init__.py));
 
   pynixifyCommand = ''
-    pynixify --nixpkgs https://github.com/infobyte/nixpkgs/archive/98720fe237de55ca5779af5ee07407d0947b8deb.tar.gz --local faradaysec --tests faradaysec
+    pynixify --nixpkgs https://github.com/infobyte/nixpkgs/archive/83ced8f3060ca238a554dd43f60565fa6f7e98ef.tar.gz --local faradaysec --tests faradaysec
   '';
 
 in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
@@ -24,7 +24,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
     } // lib.optionalAttrs useLastCommit {
       src = builtins.fetchGit {
         url = ./.;
-        ref = "HEAD";
+        rev = "HEAD";
       };
     });
 
@@ -82,7 +82,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
   pynixify = let
     src = builtins.fetchGit {
       url = "https://github.com/cript0nauta/pynixify.git";
-      rev = "2adb96d15aece07e49112a9757a241fbf306b390";
+      rev = "f5adc88d58976134529489a5fc3e16df03bb2e73";
     };
 
     original =

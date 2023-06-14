@@ -81,3 +81,6 @@ _install
 faraday_plugins/
 faraday/frontend/
 .cache
+
+#pynixify
+/pynixify/result/

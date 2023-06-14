@@ -9,6 +9,8 @@ CLOSURE_SIZE="$(nix path-info --closure-size "${OUT_PATH}" | awk '{ print $2 }')
 
 if [ "$CLOSURE_SIZE" -gt "$MAX" ]; then
     echo "ERROR: closure size too big!"
+    echo "Max closure size $MAX"
+    echo "Current closure size $CLOSURE_SIZE"
     echo "Consider changing your dependencies or increasing MAX_CLOSURE_SIZE_IN_MB in .gitlab-ci.yml"
     nix path-info --human-readable --closure-size "${OUT_PATH}"
     exit 1

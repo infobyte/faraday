@@ -1,7 +1,7 @@
 #flask  # required to have flask shell inside nix-shell
 factory-boy>=2.10.0
 pylint
-pytest<6
+pytest>=6
 pytest-cov
 pytest-factoryboy>=2.0.1
 responses>=0.9.0

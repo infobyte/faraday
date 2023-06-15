@@ -86,7 +86,7 @@ class Settings:
         return valid_config
 
     @property
-    @lru_cache(maxsize=None) # pylint: disable=method-cache-max-size-none
+    @lru_cache(maxsize=None)
     def value(self) -> Dict:
         return self.load_configuration()
 

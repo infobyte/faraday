@@ -281,7 +281,8 @@ disable=blacklisted-name,
         unused-import,
         comparison-with-callable,
         unused-variable,
-        method-cache-max-size-none
+        method-cache-max-size-none,
+        consider-using-with
 
 
 

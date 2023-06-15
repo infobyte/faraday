@@ -52,8 +52,8 @@ class CommandSchema(AutoSchema):
     def load_itime(value):
         try:
             return datetime.datetime.utcfromtimestamp(value)
-        except ValueError:
-            raise ValidationError('Invalid Itime Value')
+        except ValueError as e:
+            raise ValidationError('Invalid Itime Value') from e
 
     @staticmethod
     def get_itime(obj):

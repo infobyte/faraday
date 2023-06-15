@@ -1591,6 +1591,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cvss3_modified_confidentiality_impact = Column(Text, nullable=True)
     cvss3_modified_integrity_impact = Column(Text, nullable=True)
     cvss3_modified_availability_impact = Column(Text, nullable=True)
+    cvss3_scope = Column(Text, nullable=True)
 
     @hybrid_property
     def cvss3_vector_string(self):

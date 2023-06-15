@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 CONST_FARADAY_HOME_PATH = Path(
-    os.getenv('FARADAY_HOME', Path('~/').expanduser())
+    os.getenv('FARADAY_HOME', Path('~/').expanduser())  # pylint:disable=invalid-envvar-default
 ) / '.faraday'
 
 LOGGING_LEVEL = INFO
@@ -79,23 +79,23 @@ def is_debug_mode():
 
 class ConfigSection:
     def parse(self, __parser):
-        for att in self.__dict__:
+        for att in self.__dict__:  # pylint:disable=consider-using-dict-items
             value = __parser.get(att)
             if value is None:
                 continue
             if isinstance(self.__dict__[att], bool):
-                if value in ("yes", "true", "t", "1", "True"):
-                    self.__setattr__(att, True)
+                if value.lower() in ("yes", "true", "t", "1"):
+                    setattr(self, att, True)
                 else:
-                    self.__setattr__(att, False)
+                    setattr(self, att, False)
             elif isinstance(self.__dict__[att], int):
-                self.__setattr__(att, int(value))
+                setattr(self, att, int(value))
 
             else:
-                self.__setattr__(att, value)
+                setattr(self, att, value)
 
     def set(self, option_name, value):
-        return self.__setattr__(option_name, value)
+        return setattr(self, option_name, value)
 
     @staticmethod
     def parse_section(section_name, __parser):

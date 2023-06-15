@@ -258,7 +258,7 @@ def save_new_secret_key(app):
     except NoSectionError:
         config.add_section('faraday_server')
         config.set('faraday_server', 'secret_key', secret_key)
-    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+    with open(LOCAL_CONFIG_FILE, 'w', encoding='utf-8') as configfile:
         config.write(configfile)
 
 
@@ -268,7 +268,7 @@ def save_new_agent_creation_token_secret():
     config.read(LOCAL_CONFIG_FILE)
     registration_secret = pyotp.random_base32()
     config.set('faraday_server', 'agent_registration_secret', registration_secret)
-    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+    with open(LOCAL_CONFIG_FILE, 'w', encoding='utf-8') as configfile:
         config.write(configfile)
     faraday.server.config.faraday_server.agent_registration_secret = registration_secret
 

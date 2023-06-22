@@ -73,8 +73,8 @@ class ServiceSchema(AutoSchema):
         if isinstance(port, str):
             try:
                 port = int(port)
-            except ValueError:
-                raise ValidationError('The value must be a number')
+            except ValueError as e:
+                raise ValidationError('The value must be a number') from e
         if port > 65535 or port < 1:
             raise ValidationError('The value must be in the range [1-65535]')
 
@@ -95,7 +95,7 @@ class ServiceSchema(AutoSchema):
                 if host_id != self.context['object'].parent.id:
                     raise ValidationError('Can\'t change service parent.')
             else:
-                if any([host_id != obj.parent.id for obj in self.context['objects']]):
+                if any(host_id != obj.parent.id for obj in self.context['objects']):
                     raise ValidationError('Can\'t change service parent.')
 
         else:
@@ -107,8 +107,8 @@ class ServiceSchema(AutoSchema):
                     Workspace.name == self.context['workspace_name'],
                     Host.id == host_id
                 ).one()
-            except NoResultFound:
-                raise ValidationError(f'Host with id {host_id} not found')
+            except NoResultFound as e:
+                raise ValidationError(f'Host with id {host_id} not found') from e
 
         return data
 

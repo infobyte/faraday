@@ -51,7 +51,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
-    comments_dict = dict()
+    comments_dict = {}
     hosts_ids = set()
     services_ids = set()
     vulns_ids = set()

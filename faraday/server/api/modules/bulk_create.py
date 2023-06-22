@@ -99,8 +99,8 @@ class PolymorphicVulnerabilityField(fields.Field):
     def _deserialize_item(self, value):
         try:
             type_ = value.get('type')
-        except AttributeError:
-            raise ValidationError("Value is expected to be an object")
+        except AttributeError as e:
+            raise ValidationError("Value is expected to be an object") from e
         if type_ == 'Vulnerability':
             schema = self.vuln_schema
         elif type_ == 'VulnerabilityWeb':

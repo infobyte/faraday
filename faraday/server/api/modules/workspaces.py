@@ -138,7 +138,7 @@ def init_date_range(days):
 
 
 def generate_histogram(days_before):
-    histogram_dict = dict()
+    histogram_dict = {}
 
     workspaces_histograms = SeveritiesHistogram.query \
         .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()

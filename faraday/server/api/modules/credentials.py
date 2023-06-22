@@ -99,8 +99,8 @@ class CredentialSchema(AutoSchema):
             parent = db.session.query(parent_class).join(Workspace).filter(
                 Workspace.name == self.context['workspace_name'],
                 parent_class.id == parent_id).one()
-        except NoResultFound:
-            raise InvalidUsage(f'Parent id not found: {parent_id}')
+        except NoResultFound as e:
+            raise InvalidUsage(f'Parent id not found: {parent_id}') from e
         data[parent_field] = parent.id
         data[not_parent_field] = None
         return data

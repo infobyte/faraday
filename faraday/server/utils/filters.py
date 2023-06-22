@@ -117,8 +117,8 @@ class FlaskRestlessFilterSchema(Schema):
         else:
             try:
                 column = getattr(self._model_class(), column_name)
-            except AttributeError:
-                raise ValidationError('Field does not exists')
+            except AttributeError as e:
+                raise ValidationError('Field does not exists') from e
 
         if not getattr(column, 'type', None) and filter_['op'].lower():
             if filter_['op'].lower() in ['eq', '==']:
@@ -152,8 +152,8 @@ class FlaskRestlessFilterSchema(Schema):
             try:
                 datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
                 return generate_datetime_filter(filter_)
-            except ValueError:
-                raise ValidationError('Invalid date format. Dates should be in "%Y-%m-%d" format')
+            except ValueError as e:
+                raise ValidationError('Invalid date format. Dates should be in "%Y-%m-%d" format') from e
 
         if filter_['op'].lower() in ['ilike', 'like']:
             # like must be used with string
@@ -176,9 +176,9 @@ class FlaskRestlessFilterSchema(Schema):
         if isinstance(field, fields.Boolean) and not isinstance(filter_['val'], bool):
             try:
                 strtobool(filter_['val'])
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError) as e:
                 raise ValidationError('Can\'t compare Boolean field against a'
-                                      ' non boolean value. Please use True or False')
+                                      ' non boolean value. Please use True or False') from e
         # we try to deserialize the value, any error means that the value was not valid for the field typ3
         # previous checks were added since postgresql is very strict with operators.
         try:
@@ -186,8 +186,8 @@ class FlaskRestlessFilterSchema(Schema):
                 filter_['val'] = str(filter_['val'])
             else:
                 field.deserialize(filter_['val'])
-        except TypeError:
-            raise ValidationError('Invalid value type')
+        except TypeError as e:
+            raise ValidationError('Invalid value type') from e
 
         return [filter_]
 

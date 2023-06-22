@@ -54,7 +54,7 @@ def createDaemon():
         # to insure that the next call to os.setsid is successful.
         pid = os.fork()
     except OSError as e:
-        raise Exception("%s [%d]" % (e.strerror, e.errno))
+        raise OSError(f"{e.strerror} [{e.errno}]") from e
 
     if pid == 0:  # The first child.
         # To become the session leader of this new session and the process group
@@ -102,7 +102,7 @@ def createDaemon():
             # a controlling terminal.
             pid = os.fork()  # Fork a second child.
         except OSError as e:
-            raise Exception("%s [%d]" % (e.strerror, e.errno))
+            raise OSError(f"{e.strerror} [{e.errno}]") from e
 
         if pid == 0:  # The second child.
             # Since the current working directory may be a mounted filesystem, we
@@ -199,7 +199,7 @@ def get_server_pid(port):
     if not Path(str(FARADAY_SERVER_PID_FILE).format(port)).exists():
         return None
 
-    with open(str(FARADAY_SERVER_PID_FILE).format(port)) as pid_file:
+    with open(str(FARADAY_SERVER_PID_FILE).format(port), encoding='utf-8') as pid_file:
         # If PID file is badly written, delete it and
         # assume server is not running
         try:
@@ -215,7 +215,7 @@ def get_server_pid(port):
 
 
 def create_pid_file(port):
-    with open(str(FARADAY_SERVER_PID_FILE).format(port), 'w') as pid_file:
+    with open(str(FARADAY_SERVER_PID_FILE).format(port), 'w', encoding='utf-8') as pid_file:
         pid_file.write(f'{os.getpid()}')
     atexit.register(partial(remove_pid_file, port))
 

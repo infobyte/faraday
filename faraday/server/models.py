@@ -47,6 +47,7 @@ from sqlalchemy.orm import (
     query_expression,
     with_expression,
     relationship,
+    undefer,
 )
 from sqlalchemy.schema import DDL
 from flask import (
@@ -1173,14 +1174,6 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
-    vulnerability_informational_count = query_expression()
-    vulnerability_medium_count = query_expression()
-    vulnerability_high_count = query_expression()
-    vulnerability_critical_count = query_expression()
-    vulnerability_low_count = query_expression()
-    vulnerability_unclassified_count = query_expression()
-    vulnerability_total_count = query_expression()
-
     vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
     vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
     vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
@@ -1191,80 +1184,17 @@ class Host(Metadata):
     importance = Column(Integer, default=0)
 
     @classmethod
-    def query_with_count(cls, confirmed, host_ids, workspace_name):
+    def query_with_count(cls, host_ids, workspace_name):
         query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            with_expression(
-                cls.vulnerability_informational_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    extra_query="vulnerability.severity='informational'",
-                    get_hosts_vulns=True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_medium_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    extra_query="vulnerability.severity='medium'",
-                    get_hosts_vulns=True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_high_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    extra_query="vulnerability.severity='high'",
-                    get_hosts_vulns=True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_critical_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    extra_query="vulnerability.severity='critical'",
-                    get_hosts_vulns=True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_low_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    extra_query="vulnerability.severity='low'",
-                    get_hosts_vulns=True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_unclassified_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    extra_query="vulnerability.severity='unclassified'",
-                    get_hosts_vulns=True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_total_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed=confirmed,
-                    use_column_property=False,
-                    get_hosts_vulns=True
-                )
-            ),
+            undefer(cls.vulnerability_critical_generic_count),
+            undefer(cls.vulnerability_high_generic_count),
+            undefer(cls.vulnerability_medium_generic_count),
+            undefer(cls.vulnerability_low_generic_count),
+            undefer(cls.vulnerability_info_generic_count),
+            undefer(cls.vulnerability_unclassified_generic_count),
         )
 
     @property

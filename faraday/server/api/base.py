@@ -735,20 +735,15 @@ class FilterWorkspacedMixin(ListMixin):
                               filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
-
         if severity_count and 'group_by' not in filters:
-            filter_query = count_vulnerability_severities(filter_query, self.model_class,
-                                                          all_severities=True, host_vulns=True)
             filter_query = filter_query.options(
-                with_expression(
-                    getattr(self.model_class, 'vulnerability_total_count'),
-                    _make_vuln_count_property(None,
-                                              use_column_property=False,
-                                              get_hosts_vulns=True
-                                              )
-                )
+                undefer(self.model_class.vulnerability_critical_generic_count),
+                undefer(self.model_class.vulnerability_high_generic_count),
+                undefer(self.model_class.vulnerability_medium_generic_count),
+                undefer(self.model_class.vulnerability_low_generic_count),
+                undefer(self.model_class.vulnerability_info_generic_count),
+                undefer(self.model_class.vulnerability_unclassified_generic_count),
             )
-
         return filter_query
 
     def _filter(self, filters, workspace_name, severity_count=False):

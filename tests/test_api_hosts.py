@@ -760,14 +760,14 @@ class TestHostAPI:
             "versions": [],
             'importance': 0,
             'severity_counts': {
-                'critical': None,
-                'high': None,
+                'critical': 0,
+                'high': 0,
                 'host_id': host.id,
-                'info': None,
-                'med': None,
-                'low': None,
-                'total': None,
-                'unclassified': None
+                'info': 0,
+                'med': 0,
+                'low': 0,
+                'total': 0,
+                'unclassified': 0
             }
         }
 

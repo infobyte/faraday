@@ -50,13 +50,19 @@ logger = logging.getLogger(__name__)
 
 class HostCountSchema(Schema):
     host_id = fields.Integer(dump_only=True, allow_none=False, attribute='id')
-    critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
-    high = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
-    med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
-    low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
-    info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
-    total = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+    critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_generic_count')
+    high = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_generic_count')
+    med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_generic_count')
+    low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_generic_count')
+    info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_info_generic_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_generic_count')
+    total = fields.Method('get_total_count', dump_only=True)
+
+    @staticmethod
+    def get_total_count(obj):
+        return obj.vulnerability_critical_generic_count + obj.vulnerability_high_generic_count\
+               + obj.vulnerability_medium_generic_count + obj.vulnerability_low_generic_count\
+               + obj.vulnerability_info_generic_count + obj.vulnerability_unclassified_generic_count
 
 
 class HostSchema(AutoSchema):
@@ -176,6 +182,7 @@ class HostsView(PaginatedMixin,
             200:
               description: Ok
         """
+        # TODO: Is it necessary to get stats from this endpoint?
         stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
         if stats:
             # TODO: Improve counts query performance

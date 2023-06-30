@@ -23,7 +23,7 @@ def add_creator(data, creator_user):
             cred["creator_id"] = creator_user.id
         hosts_.append(host)
 
-    response = dict(hosts=hosts_)
+    response = {'hosts': hosts_}
     if "command" in data:
         command = data['command']
         command["creator_id"] = creator_user.id

@@ -513,10 +513,11 @@ class QueryBuilder:
                         filt.fieldname.split('__')[0] in valid_model_fields:
                     try:
                         return create_filt(model, filt)
-                    except AttributeError:
+                    except AttributeError as e:
                         # Can't create the filter since the model or submodel
                         # does not have the attribute (usually mapper)
-                        raise AttributeError(f"Foreign field {filt.fieldname.split('__')[0]} not found in submodel")
+                        raise AttributeError(f"Foreign field {filt.fieldname.split('__')[0]} "
+                                             f"not found in submodel") from e
             raise AttributeError(f"Field {filt.fieldname} not found in model")
 
         return create_filters

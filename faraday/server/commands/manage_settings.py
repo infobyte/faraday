@@ -22,8 +22,8 @@ def settings_format_validation(ctx, param, value):
     if value is not None:
         try:
             json_data = json.loads(value)
-        except json.JSONDecodeError:
-            raise click.BadParameter("data must be in json")
+        except json.JSONDecodeError as e:
+            raise click.BadParameter("Data must be in json") from e
         else:
             return json_data
 

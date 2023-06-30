@@ -1315,9 +1315,9 @@ class CVE(db.Model):
             name = name.upper()
             _, year, identifier = name.split("-")
             super().__init__(name=name, year=year, identifier=identifier, **kwargs)
-        except ValueError:
+        except ValueError as e:
             logger.error("Invalid cve format. Should be CVE-YEAR-ID.")
-            raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.")
+            raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.") from e
 
 
 class Service(Metadata):
@@ -2450,7 +2450,7 @@ class File(Metadata):
 
 
 class UserAvatar(Metadata):
-    __tablename_ = 'user_avatar'
+    __tablename__ = 'user_avatar'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = BlankColumn(Text, unique=True)
@@ -2531,7 +2531,7 @@ class PlannerProject(Metadata):
     @property
     def start_date(self):
         if self.tasks:
-            if all([x.type == 'milestone' for x in self.tasks]):
+            if all(x.type == 'milestone' for x in self.tasks):
                 return None
             return min(x.start_date for x in self.tasks if x.start_date is not None)
 

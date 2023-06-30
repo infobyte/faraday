@@ -1,7 +1,7 @@
 """Severity and service_id index in vulnerability model
 
 Revision ID: dd3181b9b3e9
-Revises: 1145efa88414
+Revises: fa73865dc11c
 Create Date: 2023-06-30 17:24:57.775877+00:00
 
 """
@@ -9,7 +9,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'dd3181b9b3e9'
-down_revision = '1145efa88414'
+down_revision = 'fa73865dc11c'
 branch_labels = None
 depends_on = None
 

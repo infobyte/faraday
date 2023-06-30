@@ -3204,6 +3204,10 @@ Index("idx_vulnerability_severity_hostid_serviceid",
       VulnerabilityGeneric.__table__.c.host_id,
       VulnerabilityGeneric.__table__.c.service_id)
 
+Index("idx_vulnerability_severity_serviceid",
+      VulnerabilityGeneric.__table__.c.severity,
+      VulnerabilityGeneric.__table__.c.service_id)
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

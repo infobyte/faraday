@@ -745,9 +745,7 @@ class FilterWorkspacedMixin(ListMixin):
                 undefer(self.model_class.vulnerability_unclassified_generic_count),
                 undefer(self.model_class.credentials_count),
                 undefer(self.model_class.open_service_count),
-                undefer(self.model_class.vulnerability_count),
                 joinedload(self.model_class.hostnames),
-                joinedload(self.model_class.services),
                 joinedload(self.model_class.update_user),
                 joinedload(getattr(self.model_class, 'creator')).load_only('username'),
             )

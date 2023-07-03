@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[FIX] Vulnerabilities by severity stats modified in order to improve performance in hosts and filters view. #7501"
+  "md": "[FIX] Improve performance in `hosts` and `hosts/filter` views. #7501"
 }

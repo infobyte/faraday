@@ -3212,7 +3212,7 @@ Index("idx_vulnerability_severity_hostid_serviceid",
       VulnerabilityGeneric.__table__.c.host_id,
       VulnerabilityGeneric.__table__.c.service_id)
 
-Index("idx_vulnerability_severity_serviceid",
+Index("ix_vulnerability_severity_serviceid",
       VulnerabilityGeneric.__table__.c.severity,
       VulnerabilityGeneric.__table__.c.service_id)
 

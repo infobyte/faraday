@@ -81,3 +81,9 @@ _install
 faraday_plugins/
 faraday/frontend/
 .cache
+
+## OSX files
+.DS_Store
+
+# nix build
+result

@@ -352,8 +352,8 @@ class VulnerabilitySchema(AutoSchema):
         try:
             # sometimes api requests send str or unicode.
             value = int(value)
-        except ValueError:
-            raise ValidationError("Invalid parent type")
+        except ValueError as e:
+            raise ValidationError("Invalid parent type") from e
         return value
 
     @post_load
@@ -410,8 +410,8 @@ class VulnerabilitySchema(AutoSchema):
                 Workspace.name == self.context['workspace_name'],
                 parent_class.id == parent_id
             ).one()
-        except NoResultFound:
-            raise ValidationError(f'Parent id not found: {parent_id}')
+        except NoResultFound as e:
+            raise ValidationError(f'Parent id not found: {parent_id}') from e
         data[parent_field] = parent.id
         # TODO migration: check what happens when updating the parent from
         # service to host or viceverse

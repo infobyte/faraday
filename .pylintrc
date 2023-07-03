@@ -280,7 +280,9 @@ disable=blacklisted-name,
         map-builtin-not-iterating,
         unused-import,
         comparison-with-callable,
-        unused-variable
+        unused-variable,
+        method-cache-max-size-none,
+        consider-using-with
 
 
 
@@ -542,8 +544,7 @@ max-module-lines=1000
 # separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
 # `trailing-comma` allows a space between comma and closing bracket: (a, ).
 # `empty-line` allows space-only lines.
-no-space-check=trailing-comma,
-               dict-separator
+# no-space-check=trailing-comma, dict-separator
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -756,4 +757,4 @@ known-third-party=enchant
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
-overgeneral-exceptions=Exception
+overgeneral-exceptions=builtins.Exception

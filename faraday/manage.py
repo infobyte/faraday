@@ -54,7 +54,7 @@ from faraday.server.web import get_app
 from faraday_plugins.plugins.manager import PluginsManager
 from flask_security.utils import hash_password
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = {'help_option_names': ['-h', '--help']}
 
 
 # logger = logging.getLogger(__name__)
@@ -113,11 +113,8 @@ def database_schema():
 def sql_shell():
     conn_string = faraday.server.config.database.connection_string.strip("'")
     conn_string = urlparse(conn_string)
-    parsed_conn_string = ("user={username} password={password} host={hostname} dbname={dbname}"
-                          .format(username=conn_string.username,
-                                  password=conn_string.password,
-                                  hostname=conn_string.hostname,
-                                  dbname=conn_string.path[1:]))
+    parsed_conn_string = (f"user={conn_string.username} password={conn_string.password} host={conn_string.hostname} "
+                          f"dbname={conn_string.path[1:]}")
     pgcli = PGCli()
     pgcli.connect_uri(parsed_conn_string)
     pgcli.run_cli()

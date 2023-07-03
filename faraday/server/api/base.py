@@ -610,11 +610,11 @@ class SortableMixin:
 
         try:
             field_instance = schema.fields[order_field]
-        except KeyError:
+        except KeyError as e:
             if self.sort_pass_silently:
                 logger.warning(f"Unknown field: {order_field}")
                 return self.order_field
-            raise InvalidUsage(f"Unknown field: {order_field}")
+            raise InvalidUsage(f"Unknown field: {order_field}") from e
         # Translate from the field name in the schema to the database field
         # name
         order_field = field_instance.attribute or order_field
@@ -648,12 +648,12 @@ class SortableMixin:
                 return (getattr(field, sort_dir)(),) + self.order_field
             else:
                 return getattr(field, sort_dir)()
-        except NotImplementedError:
+        except NotImplementedError as e:
             if self.sort_pass_silently:
                 logger.warning(f"field {order_field} doesn't support sorting")
                 return self.order_field
             # There are some fields that can't be used for sorting
-            raise InvalidUsage(f"field {order_field} doesn't support sorting")
+            raise InvalidUsage(f"field {order_field} doesn't support sorting") from e
 
 
 class PaginatedMixin:

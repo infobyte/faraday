@@ -81,7 +81,7 @@ def openapi_format(server, modify_default=False, return_tags=False):
             if not LOCAL_OPENAPI_FILE.parent.exists():
                 LOCAL_OPENAPI_FILE.parent.mkdir()
 
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(spec.to_dict(), indent=4))
 
 

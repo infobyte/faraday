@@ -72,14 +72,12 @@ bandit:
 build_and_push_to_cachix:
     tags:
         - faradaytests
-    image: nixos/nix:2.3.10
+    image: nixos/nix:2.16.0
     stage: pre_testing
     variables:
       # Note: this size has to fit both our community, professional and corporate versions
       MAX_CLOSURE_SIZE_IN_MB: 850
     script:
-        - apk update
-        - apk add git bash
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk

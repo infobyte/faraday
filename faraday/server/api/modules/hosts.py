@@ -87,8 +87,6 @@ class HostSchema(AutoSchema):
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Host', dump_only=True)
-    service_summaries = fields.Method('get_service_summaries', dump_only=True)
-    versions = fields.Method('get_service_version', dump_only=True)
     importance = fields.Integer(default=0, validate=lambda stars: stars in [0, 1, 2, 3])
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
@@ -98,21 +96,9 @@ class HostSchema(AutoSchema):
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services',
-                  'hostnames', 'type', 'service_summaries', 'versions',
+                  'hostnames', 'type', 'versions',
                   'importance', 'severity_counts', 'command_id'
                   )
-
-    @staticmethod
-    def get_service_summaries(obj):
-        return [service.summary
-                for service in obj.services
-                if service.status == 'open']
-
-    @staticmethod
-    def get_service_version(obj):
-        return [service.version
-                for service in obj.services
-                if service.status == 'open']
 
 
 class ServiceNameFilter(Filter):

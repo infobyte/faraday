@@ -78,7 +78,6 @@ class HostSchema(AutoSchema):
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
     services = fields.Integer(attribute='open_service_count', dump_only=True)
-    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     hostnames = MutableField(
         PrimaryKeyRelatedField('name', many=True,
@@ -98,7 +97,7 @@ class HostSchema(AutoSchema):
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
+                  'name', 'os', 'owned', 'owner', 'services',
                   'hostnames', 'type', 'service_summaries', 'versions',
                   'importance', 'severity_counts', 'command_id'
                   )

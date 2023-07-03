@@ -20,7 +20,6 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
-from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
@@ -48,6 +47,12 @@ host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+def get_total_count(obj):
+    return obj.vulnerability_critical_generic_count + obj.vulnerability_high_generic_count \
+           + obj.vulnerability_medium_generic_count + obj.vulnerability_low_generic_count \
+           + obj.vulnerability_info_generic_count + obj.vulnerability_unclassified_generic_count
+
+
 class HostCountSchema(Schema):
     host_id = fields.Integer(dump_only=True, allow_none=False, attribute='id')
     critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_generic_count')
@@ -55,14 +60,9 @@ class HostCountSchema(Schema):
     med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_generic_count')
     low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_generic_count')
     info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_info_generic_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_generic_count')
-    total = fields.Method('get_total_count', dump_only=True)
-
-    @staticmethod
-    def get_total_count(obj):
-        return obj.vulnerability_critical_generic_count + obj.vulnerability_high_generic_count\
-               + obj.vulnerability_medium_generic_count + obj.vulnerability_low_generic_count\
-               + obj.vulnerability_info_generic_count + obj.vulnerability_unclassified_generic_count
+    unclassified = fields.Integer(dump_only=True, allow_none=False,
+                                  attribute='vulnerability_unclassified_generic_count')
+    total = fields.Function(get_total_count, dump_only=True)
 
 
 class HostSchema(AutoSchema):
@@ -92,12 +92,13 @@ class HostSchema(AutoSchema):
     importance = fields.Integer(default=0, validate=lambda stars: stars in [0, 1, 2, 3])
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
+    vulns = fields.Function(get_total_count, dump_only=True)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services',
+                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
                   'importance', 'severity_counts', 'command_id'
                   )
@@ -184,13 +185,7 @@ class HostsView(PaginatedMixin,
         # TODO: Is it necessary to get stats from this endpoint?
         stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
         if stats:
-            # TODO: Improve counts query performance
             query = Host.query_with_count(None, kwargs['workspace_name'])
-            options = [joinedload(relationship) for relationship in self.get_joinedloads]
-            options += [undefer(column) for column in self.get_undefer]
-            options += [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
-
-            query = query.options(*options)
             return self._envelope_list(self._dump(query, {}, many=True))
 
         kwargs['exclude'] = ['severity_counts']

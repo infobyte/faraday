@@ -48,6 +48,7 @@ from sqlalchemy.orm import (
     with_expression,
     relationship,
     undefer,
+    joinedload,
 )
 from sqlalchemy.schema import DDL
 from flask import (
@@ -1195,6 +1196,12 @@ class Host(Metadata):
             undefer(cls.vulnerability_low_generic_count),
             undefer(cls.vulnerability_info_generic_count),
             undefer(cls.vulnerability_unclassified_generic_count),
+            undefer(cls.credentials_count),
+            undefer(cls.open_service_count),
+            joinedload(cls.hostnames),
+            joinedload(cls.services),
+            joinedload(cls.update_user),
+            joinedload(getattr(cls, 'creator')).load_only('username'),
         )
 
     @property

@@ -96,7 +96,7 @@ class HostSchema(AutoSchema):
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services',
-                  'hostnames', 'type', 'versions',
+                  'hostnames', 'type',
                   'importance', 'severity_counts', 'command_id'
                   )
 

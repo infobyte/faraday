@@ -162,6 +162,7 @@ class HostsView(PaginatedMixin,
     filterset_class = HostFilterSet
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
+                   Host.vulnerability_critical_generic_count,
                    Host.vulnerability_high_generic_count,
                    Host.vulnerability_medium_generic_count,
                    Host.vulnerability_low_generic_count,

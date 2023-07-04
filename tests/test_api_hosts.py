@@ -640,7 +640,6 @@ class TestHostAPI:
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
         assert json_host['value']['vulns'] == 2
-        assert 'severity_counts' not in json_host['value']
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,

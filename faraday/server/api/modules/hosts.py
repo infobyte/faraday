@@ -162,29 +162,13 @@ class HostsView(PaginatedMixin,
     filterset_class = HostFilterSet
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
-                   Host.vulnerability_count]
+                   Host.vulnerability_high_generic_count,
+                   Host.vulnerability_medium_generic_count,
+                   Host.vulnerability_low_generic_count,
+                   Host.vulnerability_info_generic_count,
+                   Host.vulnerability_unclassified_generic_count,
+                   ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
-
-    def index(self, **kwargs):
-        """
-          ---
-          get:
-            summary: "Get a list of hosts."
-            tags: ["Host"]
-            responses:
-              200:
-                description: Ok
-                content:
-                  application/json:
-                    schema: HostSchema
-          tags: ["Host"]
-          responses:
-            200:
-              description: Ok
-        """
-        workspace = get_workspace(workspace_name=kwargs['workspace_name'])
-        query = Host.query_with_count(None, workspace)
-        return self._envelope_list(self._dump(query, {}, many=True))
 
     @route('/filter')
     def filter(self, workspace_name):

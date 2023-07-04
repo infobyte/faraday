@@ -763,13 +763,12 @@ class FilterWorkspacedMixin(ListMixin):
         workspace = get_workspace(workspace_name)
         filter_query = None
         if 'group_by' not in filters:
-            offset = None
+            offset = 0
             limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
-
+                limit = filters.pop('limit')
             try:
                 filter_query = self._generate_filter_query(
                     filters,
@@ -780,10 +779,8 @@ class FilterWorkspacedMixin(ListMixin):
                 flask.abort(400, e)
 
             count = filter_query.count()
-            if limit:
-                filter_query = filter_query.limit(limit)
-            if offset:
-                filter_query = filter_query.offset(offset)
+            filter_query = filter_query.limit(limit).offset(offset)
+
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:

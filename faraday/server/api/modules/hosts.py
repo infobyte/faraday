@@ -182,14 +182,9 @@ class HostsView(PaginatedMixin,
             200:
               description: Ok
         """
-        # TODO: Is it necessary to get stats from this endpoint?
-        stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
-        if stats:
-            query = Host.query_with_count(None, kwargs['workspace_name'])
-            return self._envelope_list(self._dump(query, {}, many=True))
-
-        kwargs['exclude'] = ['severity_counts']
-        return super().index(**kwargs)
+        workspace = get_workspace(workspace_name=kwargs['workspace_name'])
+        query = Host.query_with_count(None, workspace)
+        return self._envelope_list(self._dump(query, {}, many=True))
 
     @route('/filter')
     def filter(self, workspace_name):
@@ -333,6 +328,8 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
+        workspace = get_workspace(workspace_name)
+
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
             host_id_list = host_ids.split(',')
@@ -342,11 +339,10 @@ class HostsView(PaginatedMixin,
         res_dict = {'hosts': {}}
 
         host_count_schema = HostCountSchema()
-        host_count = Host.query_with_count(host_id_list, workspace_name)
+        host_count = Host.query_with_count(host_id_list, workspace)
 
         for host in host_count.all():
             res_dict["hosts"][host.id] = host_count_schema.dump(host)
-        # return counts.data
 
         return res_dict
 

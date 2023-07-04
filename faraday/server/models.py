@@ -1185,8 +1185,8 @@ class Host(Metadata):
     importance = Column(Integer, default=0)
 
     @classmethod
-    def query_with_count(cls, host_ids, workspace_name):
-        query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
+    def query_with_count(cls, host_ids, workspace):
+        query = cls.query.join(Workspace).filter(Workspace.id == workspace.id)
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
@@ -1202,7 +1202,7 @@ class Host(Metadata):
             joinedload(cls.services),
             joinedload(cls.update_user),
             joinedload(getattr(cls, 'creator')).load_only('username'),
-        )
+        ).limit(None).offset(0)
 
     @property
     def parent(self):

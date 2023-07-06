@@ -735,20 +735,21 @@ class FilterWorkspacedMixin(ListMixin):
                               filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
-
         if severity_count and 'group_by' not in filters:
-            filter_query = count_vulnerability_severities(filter_query, self.model_class,
-                                                          all_severities=True, host_vulns=True)
             filter_query = filter_query.options(
-                with_expression(
-                    getattr(self.model_class, 'vulnerability_total_count'),
-                    _make_vuln_count_property(None,
-                                              use_column_property=False,
-                                              get_hosts_vulns=True
-                                              )
-                )
+                undefer(self.model_class.vulnerability_critical_generic_count),
+                undefer(self.model_class.vulnerability_high_generic_count),
+                undefer(self.model_class.vulnerability_medium_generic_count),
+                undefer(self.model_class.vulnerability_low_generic_count),
+                undefer(self.model_class.vulnerability_info_generic_count),
+                undefer(self.model_class.vulnerability_unclassified_generic_count),
+                undefer(self.model_class.credentials_count),
+                undefer(self.model_class.open_service_count),
+                joinedload(self.model_class.hostnames),
+                joinedload(self.model_class.services),
+                joinedload(self.model_class.update_user),
+                joinedload(getattr(self.model_class, 'creator')).load_only('username'),
             )
-
         return filter_query
 
     def _filter(self, filters, workspace_name, severity_count=False):
@@ -762,13 +763,12 @@ class FilterWorkspacedMixin(ListMixin):
         workspace = get_workspace(workspace_name)
         filter_query = None
         if 'group_by' not in filters:
-            offset = None
+            offset = 0
             limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
-
+                limit = filters.pop('limit')
             try:
                 filter_query = self._generate_filter_query(
                     filters,
@@ -779,10 +779,8 @@ class FilterWorkspacedMixin(ListMixin):
                 flask.abort(400, e)
 
             count = filter_query.count()
-            if limit:
-                filter_query = filter_query.limit(limit)
-            if offset:
-                filter_query = filter_query.offset(offset)
+            filter_query = filter_query.limit(limit).offset(offset)
+
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:

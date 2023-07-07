@@ -32,6 +32,9 @@ let
 
     bleach = self.callPackage ./packages/bleach { };
 
+    faraday-agent-parameters-types =
+      self.callPackage ./packages/faraday-agent-parameters-types { };
+
     faraday-plugins = self.callPackage ./packages/faraday-plugins { };
 
     faradaysec = self.callPackage ./packages/faradaysec { };

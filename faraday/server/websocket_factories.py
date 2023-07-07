@@ -54,7 +54,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 pass
         return (protocol, headers)
 
-    def onMessage(self, payload, is_binary):
+    def onMessage(self, payload, is_binary):  # pylint:disable=arguments-renamed
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify
@@ -76,18 +76,14 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     workspace_id = signer.unsign(message['token'], max_age=60)
                 except itsdangerous.BadData as e:
                     self.sendClose()
-                    logger.warning('Invalid websocket token for workspace '
-                                   '{}'.format(message['workspace']))
+                    logger.warning(f'Invalid websocket token for workspace {message["workspace"]}')
                     logger.exception(e)
                 else:
                     with get_app().app_context():
                         workspace = Workspace.query.get(int(workspace_id))
                     if workspace.name != message['workspace']:
-                        logger.warning(
-                            'Trying to join workspace {} with token of '
-                            'workspace {}. Rejecting.'.format(
-                                message['workspace'], workspace.name
-                            ))
+                        logger.warning(f'Trying to join workspace {message["workspace"]} with token of '
+                                       f'workspace {workspace.name}. Rejecting.')
                         self.sendClose()
                     else:
                         self.factory.join_workspace(

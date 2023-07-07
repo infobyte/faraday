@@ -2,41 +2,25 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ anyascii
-, buildPythonPackage
-, fetchPypi
-, lib
-}:
+{ anyascii, buildPythonPackage, fetchPypi, lib }:
 
 buildPythonPackage rec {
-  pname =
-    "filedepot";
-  version =
-    "0.9.0";
+  pname = "filedepot";
+  version = "0.10.0";
 
-  src =
-    fetchPypi {
-      inherit
-        pname
-        version;
-      sha256 =
-        "10bkyqfza3a4qxs3b0ihq7jfs97kwhwgzy901lrwvfpvl4c4a5m0";
-    };
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "1j5f1lp0vzwsdk2c065vnkdfhj6jpn79h50q5s6g3282kjx2vdvp";
+  };
 
-  propagatedBuildInputs =
-    [
-      anyascii
-    ];
+  propagatedBuildInputs = [ anyascii ];
 
   # TODO FIXME
-  doCheck =
-    false;
+  doCheck = false;
 
-  meta =
-    with lib; {
-      description =
-        "Toolkit for storing files and attachments in web applications";
-      homepage =
-        "https://github.com/amol-/depot";
-    };
+  meta = with lib; {
+    description =
+      "Toolkit for storing files and attachments in web applications";
+    homepage = "https://github.com/amol-/depot";
+  };
 }

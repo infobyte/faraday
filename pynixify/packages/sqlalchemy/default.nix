@@ -5,19 +5,20 @@
 { buildPythonPackage, fetchPypi, lib }:
 
 buildPythonPackage rec {
-  pname = "simplekv";
-  version = "0.14.1";
+  pname = "sqlalchemy";
+  version = "1.3.24";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "1xnh5k7bhvi6almfsv3zj8dzxxiv66sn46fyr4hsh7klndna6lw9";
+    inherit version;
+    pname = "SQLAlchemy";
+    sha256 = "06bmxzssc66cblk1hamskyv5q3xf1nh1py3vi6dka4lkpxy7gfzb";
   };
 
   # TODO FIXME
   doCheck = false;
 
   meta = with lib; {
-    description = "A key-value storage for binary data, support many backends.";
-    homepage = "http://github.com/mbr/simplekv";
+    description = "Database Abstraction Library";
+    homepage = "http://www.sqlalchemy.org";
   };
 }

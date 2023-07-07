@@ -2,205 +2,74 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ overlays ?
-  [ ]
-, ...
-}@args:
+{ overlays ? [ ], ... }@args:
 let
-  pynixifyOverlay =
-    self: super: {
-      python2 =
-        super.python2.override {
-          inherit
-            packageOverrides;
-        };
-      python27 =
-        super.python27.override {
-          inherit
-            packageOverrides;
-        };
-      python3 =
-        super.python3.override {
-          inherit
-            packageOverrides;
-        };
-      python35 =
-        super.python35.override {
-          inherit
-            packageOverrides;
-        };
-      python36 =
-        super.python36.override {
-          inherit
-            packageOverrides;
-        };
-      python37 =
-        super.python37.override {
-          inherit
-            packageOverrides;
-        };
-      python38 =
-        super.python38.override {
-          inherit
-            packageOverrides;
-        };
-      python39 =
-        super.python39.override {
-          inherit
-            packageOverrides;
-        };
-      python310 =
-        super.python310.override {
-          inherit
-            packageOverrides;
-        };
-    };
+  pynixifyOverlay = self: super: {
+    python2 = super.python2.override { inherit packageOverrides; };
+    python27 = super.python27.override { inherit packageOverrides; };
+    python3 = super.python3.override { inherit packageOverrides; };
+    python35 = super.python35.override { inherit packageOverrides; };
+    python36 = super.python36.override { inherit packageOverrides; };
+    python37 = super.python37.override { inherit packageOverrides; };
+    python38 = super.python38.override { inherit packageOverrides; };
+    python39 = super.python39.override { inherit packageOverrides; };
+    python310 = super.python310.override { inherit packageOverrides; };
+  };
 
   nixpkgs =
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/98720fe237de55ca5779af5ee07407d0947b8deb.tar.gz";
-      sha256 =
-        "1zfc84xg7xa70v3gfqn1wgzq0rn8fwna9bmmyi9720vs0bzkdj86";
+        "https://github.com/infobyte/nixpkgs/archive/de43d14a2dee45e6ada58f4eca867804c3bca151.tar.gz";
+      sha256 = "0xgsldyr5y3k5mfgq592ynnm8jy4j9b4clmfma266q0fy1bpyzkp";
     };
 
-  packageOverrides =
-    self: super: {
-      anyascii =
-        self.callPackage
-        ./packages/anyascii
-        { };
+  packageOverrides = self: super: {
+    apispec-webframeworks =
+      self.callPackage ./packages/apispec-webframeworks { };
 
-      apispec-webframeworks =
-        self.callPackage
-        ./packages/apispec-webframeworks
-        { };
+    bidict = self.callPackage ./packages/bidict { };
 
-      bidict =
-        self.callPackage
-        ./packages/bidict
-        { };
+    bleach = self.callPackage ./packages/bleach { };
 
-      bleach =
-        self.callPackage
-        ./packages/bleach
-        { };
+    faraday-agent-parameters-types =
+      self.callPackage ./packages/faraday-agent-parameters-types { };
 
-      click =
-        self.callPackage
-        ./packages/click
-        { };
+    faraday-plugins = self.callPackage ./packages/faraday-plugins { };
 
-      cvss =
-        self.callPackage
-        ./packages/cvss
-        { };
+    faradaysec = self.callPackage ./packages/faradaysec { };
 
-      faraday-agent-parameters-types =
-        self.callPackage
-        ./packages/faraday-agent-parameters-types
-        { };
+    filedepot = self.callPackage ./packages/filedepot { };
 
-      faraday-plugins =
-        self.callPackage
-        ./packages/faraday-plugins
-        { };
+    filteralchemy-fork = self.callPackage ./packages/filteralchemy-fork { };
 
-      faradaysec =
-        self.callPackage
-        ./packages/faradaysec
-        { };
+    flask = self.callPackage ./packages/flask { };
 
-      filedepot =
-        self.callPackage
-        ./packages/filedepot
-        { };
+    flask-classful = self.callPackage ./packages/flask-classful { };
 
-      filteralchemy-fork =
-        self.callPackage
-        ./packages/filteralchemy-fork
-        { };
+    flask-kvsession-fork = self.callPackage ./packages/flask-kvsession-fork { };
 
-      flask-classful =
-        self.callPackage
-        ./packages/flask-classful
-        { };
+    flask-limiter = self.callPackage ./packages/flask-limiter { };
 
-      flask-kvsession-fork =
-        self.callPackage
-        ./packages/flask-kvsession-fork
-        { };
+    flask-login = self.callPackage ./packages/flask-login { };
 
-      flask-security-too =
-        self.callPackage
-        ./packages/flask-security-too
-        { };
+    flask-security-too = self.callPackage ./packages/flask-security-too { };
 
-      flask-socketio =
-        self.callPackage
-        ./packages/flask-socketio
-        { };
+    flask-sqlalchemy = self.callPackage ./packages/flask-sqlalchemy { };
 
-      flask-wtf =
-        self.callPackage
-        ./packages/flask-wtf
-        { };
+    flask-wtf = self.callPackage ./packages/flask-wtf { };
 
-      marshmallow =
-        self.callPackage
-        ./packages/marshmallow
-        { };
+    marshmallow-sqlalchemy =
+      self.callPackage ./packages/marshmallow-sqlalchemy { };
 
-      marshmallow-sqlalchemy =
-        self.callPackage
-        ./packages/marshmallow-sqlalchemy
-        { };
+    simplekv = self.callPackage ./packages/simplekv { };
 
-      pyjwt =
-        self.callPackage
-        ./packages/pyjwt
-        { };
+    sqlalchemy = self.callPackage ./packages/sqlalchemy { };
 
-      pyotp =
-        self.callPackage
-        ./packages/pyotp
-        { };
+    twisted = self.callPackage ./packages/twisted { };
 
-      python-engineio =
-        self.callPackage
-        ./packages/python-engineio
-        { };
+    werkzeug = self.callPackage ./packages/werkzeug { };
 
-      python-socketio =
-        self.callPackage
-        ./packages/python-socketio
-        { };
+  };
 
-      simplekv =
-        self.callPackage
-        ./packages/simplekv
-        { };
-
-      syslog-rfc5424-formatter =
-        self.callPackage
-        ./packages/syslog-rfc5424-formatter
-        { };
-
-      webargs =
-        self.callPackage
-        ./packages/webargs
-        { };
-
-    };
-
-in import
-nixpkgs
-(args
-  // {
-    overlays =
-      [
-        pynixifyOverlay
-      ]
-      ++ overlays;
-  })
+in import nixpkgs (args // { overlays = [ pynixifyOverlay ] ++ overlays; })

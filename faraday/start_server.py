@@ -52,9 +52,8 @@ def check_postgresql():
             if not db.session.query(Workspace).count():
                 logger.warning('No workspaces found')
         except sqlalchemy.exc.ArgumentError:
-            logger.error(
-                f'\n{Fore.RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{Fore.WHITE} \n'
-            )
+            logger.error(f'\n\b{Fore.RED}Please check your PostgreSQL connection string in the file '
+                         f'~/.faraday/config/server.ini on your home directory.{Fore.WHITE} \n')
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(

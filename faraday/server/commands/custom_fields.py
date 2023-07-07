@@ -77,9 +77,8 @@ def add_custom_field_wizard():
             invalid_field_order = True
             continue
         invalid_field_order = False
-    confirmation = click.prompt('New CustomField will be added to vulnerability -> Order {order} ({0},{1},{2}) <-'
-                                ', confirm to continue (yes/no)'
-                                .format(field_name, field_display_name, field_type, order=field_order))
+    confirmation = click.prompt(f'New CustomField will be added to vulnerability -> Order {field_order} ({field_name},'
+                                f' {field_display_name}, {field_type}) <- confirm to continue (yes/no)')
     if not confirmation:
         sys.exit(1)
 

@@ -2,56 +2,35 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ blinker
-, buildPythonPackage
-, email_validator
-, fetchPypi
-, flask
-, flask-wtf
-, flask_login
-, flask_principal
-, itsdangerous
-, lib
-, passlib
-}:
+{ blinker, buildPythonPackage, email-validator, fetchPypi, flask, flask-login
+, flask-wtf, flask_principal, itsdangerous, lib, passlib }:
 
 buildPythonPackage rec {
-  pname =
-    "flask-security-too";
-  version =
-    "4.1.6";
+  pname = "flask-security-too";
+  version = "4.1.6";
 
-  src =
-    fetchPypi {
-      inherit
-        version;
-      pname =
-        "Flask-Security-Too";
-      sha256 =
-        "1kn6xvhmpn5c3ns9cahdb6lvysfpwckna977jp4pnkrgvvjmx2an";
-    };
+  src = fetchPypi {
+    inherit version;
+    pname = "Flask-Security-Too";
+    sha256 = "1kn6xvhmpn5c3ns9cahdb6lvysfpwckna977jp4pnkrgvvjmx2an";
+  };
 
-  propagatedBuildInputs =
-    [
-      flask
-      flask_login
-      flask_principal
-      flask-wtf
-      email_validator
-      itsdangerous
-      passlib
-      blinker
-    ];
+  propagatedBuildInputs = [
+    flask
+    flask-login
+    flask_principal
+    flask-wtf
+    email-validator
+    itsdangerous
+    passlib
+    blinker
+  ];
 
   # TODO FIXME
-  doCheck =
-    false;
+  doCheck = false;
 
-  meta =
-    with lib; {
-      description =
-        "Simple security for Flask apps.";
-      homepage =
-        "https://github.com/Flask-Middleware/flask-security";
-    };
+  meta = with lib; {
+    description = "Simple security for Flask apps.";
+    homepage = "https://github.com/Flask-Middleware/flask-security";
+  };
 }

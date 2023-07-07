@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+4.5.0 [Jul 7th, 2023]:
+---
+ * [MOD] Upgrade nixpkgs version to 23.05. Also update version of packages in requirements. #7518
+ * [FIX] Add missing `scope` cvss3 field. #7493
+ * [FIX] Improve performance in `hosts` and `hosts/filter` views. #7501
 
 4.4.0 [May 29th, 2023]:
 ---

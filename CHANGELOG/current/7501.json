@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Improve performance in `hosts` and `hosts/filter` views. #7501"
-}

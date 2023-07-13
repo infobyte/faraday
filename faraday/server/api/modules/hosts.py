@@ -20,7 +20,6 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
-from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
@@ -48,15 +47,22 @@ host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+def get_total_count(obj):
+    return obj.vulnerability_critical_generic_count + obj.vulnerability_high_generic_count \
+           + obj.vulnerability_medium_generic_count + obj.vulnerability_low_generic_count \
+           + obj.vulnerability_info_generic_count + obj.vulnerability_unclassified_generic_count
+
+
 class HostCountSchema(Schema):
     host_id = fields.Integer(dump_only=True, allow_none=False, attribute='id')
-    critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
-    high = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
-    med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
-    low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
-    info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
-    total = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+    critical = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_generic_count')
+    high = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_generic_count')
+    med = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_generic_count')
+    low = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_generic_count')
+    info = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_info_generic_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False,
+                                  attribute='vulnerability_unclassified_generic_count')
+    total = fields.Function(get_total_count, dump_only=True)
 
 
 class HostSchema(AutoSchema):
@@ -72,7 +78,6 @@ class HostSchema(AutoSchema):
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
     services = fields.Integer(attribute='open_service_count', dump_only=True)
-    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     hostnames = MutableField(
         PrimaryKeyRelatedField('name', many=True,
@@ -87,6 +92,7 @@ class HostSchema(AutoSchema):
     importance = fields.Integer(default=0, validate=lambda stars: stars in [0, 1, 2, 3])
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
+    vulns = fields.Function(get_total_count, dump_only=True)
 
     class Meta:
         model = Host
@@ -156,39 +162,14 @@ class HostsView(PaginatedMixin,
     filterset_class = HostFilterSet
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
-                   Host.vulnerability_count]
+                   Host.vulnerability_critical_generic_count,
+                   Host.vulnerability_high_generic_count,
+                   Host.vulnerability_medium_generic_count,
+                   Host.vulnerability_low_generic_count,
+                   Host.vulnerability_info_generic_count,
+                   Host.vulnerability_unclassified_generic_count,
+                   ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
-
-    def index(self, **kwargs):
-        """
-          ---
-          get:
-            summary: "Get a list of hosts."
-            tags: ["Host"]
-            responses:
-              200:
-                description: Ok
-                content:
-                  application/json:
-                    schema: HostSchema
-          tags: ["Host"]
-          responses:
-            200:
-              description: Ok
-        """
-        stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
-        if stats:
-            # TODO: Improve counts query performance
-            query = Host.query_with_count(None, None, kwargs['workspace_name'])
-            options = [joinedload(relationship) for relationship in self.get_joinedloads]
-            options += [undefer(column) for column in self.get_undefer]
-            options += [joinedload(getattr(self.model_class, 'creator')).load_only('username')]
-
-            query = query.options(*options)
-            return self._envelope_list(self._dump(query, {}, many=True))
-
-        kwargs['exclude'] = ['severity_counts']
-        return super().index(**kwargs)
 
     @route('/filter')
     def filter(self, workspace_name):
@@ -332,6 +313,8 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
+        workspace = get_workspace(workspace_name)
+
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
             host_id_list = host_ids.split(',')
@@ -341,11 +324,10 @@ class HostsView(PaginatedMixin,
         res_dict = {'hosts': {}}
 
         host_count_schema = HostCountSchema()
-        host_count = Host.query_with_count(None, host_id_list, workspace_name)
+        host_count = Host.query_with_count(host_id_list, workspace)
 
         for host in host_count.all():
             res_dict["hosts"][host.id] = host_count_schema.dump(host)
-        # return counts.data
 
         return res_dict
 

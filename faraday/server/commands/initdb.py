@@ -113,13 +113,9 @@ class InitDB:
         except IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
-                print(
-                    "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
-                        yellow=Fore.YELLOW, white=Fore.WHITE))
+                print(f"{Fore.YELLOW}WARNING{Fore.WHITE}: Faraday administrator user already exists.")
             else:
-                print(
-                    "{yellow}WARNING{white}: Can't create administrator user.".format(
-                        yellow=Fore.YELLOW, white=Fore.WHITE))
+                print(f"{Fore.YELLOW}WARNING{Fore.WHITE}: Can't create administrator user.")
                 raise
 
     @staticmethod
@@ -413,14 +409,9 @@ class InitDB:
         """
         print(f'Saving database credentials file in {LOCAL_CONFIG_FILE}')
 
-        conn_string = 'postgresql+psycopg2://{username}:{password}@{server}/{database_name}'.format(
-            username=username,
-            password=password,
-            server=hostname,
-            database_name=database_name
-        )
+        conn_string = f'postgresql+psycopg2://{username}:{password}@{hostname}/{database_name}'
         config.set('database', 'connection_string', conn_string)
-        with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+        with open(LOCAL_CONFIG_FILE, 'w', encoding='utf-8') as configfile:
             config.write(configfile)
         return conn_string
 

@@ -27,7 +27,13 @@ from tests.test_api_workspaced_base import (
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView
-from tests.factories import HostFactory, EmptyCommandFactory, WorkspaceFactory, HostnameFactory
+from tests.factories import (
+    HostFactory,
+    EmptyCommandFactory,
+    WorkspaceFactory,
+    HostnameFactory,
+    VulnerabilityFactory,
+)
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -634,7 +640,6 @@ class TestHostAPI:
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
         assert json_host['value']['vulns'] == 2
-        assert 'severity_counts' not in json_host['value']
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,
@@ -760,16 +765,42 @@ class TestHostAPI:
             "versions": [],
             'importance': 0,
             'severity_counts': {
-                'critical': None,
-                'high': None,
+                'critical': 0,
+                'high': 0,
                 'host_id': host.id,
-                'info': None,
-                'med': None,
-                'low': None,
-                'total': None,
-                'unclassified': None
+                'info': 0,
+                'med': 0,
+                'low': 0,
+                'total': 0,
+                'unclassified': 0
             }
         }
+
+    def test_get_vuln_count(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        session.add(host)
+        session.commit()
+
+        severities = ["critical", "high", "medium", "low", "informational", "unclassified"]
+        for severity in severities:
+            vuln = VulnerabilityFactory.create(
+                    workspace=self.workspace,
+                    host=host,
+                    service=None,
+                    severity=severity)
+            session.add(vuln)
+
+        session.commit()
+
+        res = test_client.get(join(self.url(), 'countVulns'))
+        vuln_count = res.json['hosts'][str(host.id)]
+
+        assert vuln_count['critical'] == 1
+        assert vuln_count['high'] == 1
+        assert vuln_count['med'] == 1
+        assert vuln_count['low'] == 1
+        assert vuln_count['info'] == 1
+        assert vuln_count['unclassified'] == 1
 
     def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')

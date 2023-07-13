@@ -24,7 +24,7 @@ def paginate(query, page, page_size):
     Limit results from a query based on pagination parameters
     """
     if not (page >= 0 and page_size >= 0):
-        raise Exception("invalid values for pagination (page: %d, page_size: %d)" % (page, page_size))
+        raise ValueError(f"Invalid values for pagination (page: {page}, page_size: {page_size})")
     return query.limit(page_size).offset(page * page_size)
 
 
@@ -57,7 +57,7 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
     """
     # Raise an error in case an asked column to filter by is not mapped
     if any(map(lambda attr: attr not in field_to_col_map, field_filter)):
-        raise Exception('invalid field to filter')
+        raise ValueError('Invalid field to filter')
 
     fts_sql_filter = None
     dfs_sql_filter = None
@@ -188,10 +188,7 @@ def _group_concat_postgresql(element, compiler, **kw):
     else:
         separator = ','
 
-    res = 'array_to_string(array_agg({}), \'{}\')'.format(
-        compiler.process(element.clauses.clauses[0]),
-        separator,
-    )
+    res = f'array_to_string(array_agg({compiler.process(element.clauses.clauses[0])}), \'{separator}\')'
     return res
 
 
@@ -280,7 +277,7 @@ def get_conflict_object(session, obj, data, workspace=None):
             try:
                 value = data[unique_field]
             except KeyError:
-                value = obj.__getattribute__(unique_field)
+                value = getattr(obj, unique_field)
                 if not value and column.default:
                     value = column.default.arg
             if value:

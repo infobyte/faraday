@@ -2,17 +2,19 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ buildPythonPackage, fetchPypi, lib }:
+{ buildPythonPackage, click, fetchPypi, itsdangerous, jinja2, lib, werkzeug }:
 
 buildPythonPackage rec {
-  pname = "werkzeug";
-  version = "2.0.3";
+  pname = "flask";
+  version = "2.1.3";
 
   src = fetchPypi {
     inherit version;
-    pname = "Werkzeug";
-    sha256 = "0g1dh9is2l5axsn0skdswm5in5j1n0l9wz06nrj22lkw0pzzhqxq";
+    pname = "Flask";
+    sha256 = "1jxnsnx9d8qkm1z8vb10wrch5fbdicbbm460sv1pa1fz2x82x5qm";
   };
+
+  propagatedBuildInputs = [ werkzeug jinja2 itsdangerous click ];
 
   # TODO FIXME
   doCheck = false;

@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+4.5.1 [Jul 15th, 2023]:
+---
+ * [FIX] Fix pillow version to 9.4.0. #7531
+
 4.5.0 [Jul 7th, 2023]:
 ---
  * [MOD] Upgrade nixpkgs version to 23.05. Also update version of packages in requirements. #7518

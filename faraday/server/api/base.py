@@ -1501,7 +1501,7 @@ class BulkUpdateMixin(FilterObjects):
 
         # Try to get ids
         if flask.request.json and 'ids' in flask.request.json:
-            ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, flask.request.json['ids']))
 
         # Try filter if no ids
         elif flask.request.args.get('q', None) is not None:
@@ -1728,7 +1728,7 @@ class BulkDeleteMixin(FilterObjects):
         # TODO BULK_DELETE_SCHEMA
         # Try to get ids
         if flask.request.json and 'ids' in flask.request.json:
-            ids = list(filter(lambda x: type(x) == self.lookup_field_type, flask.request.json['ids']))
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, flask.request.json['ids']))
 
         # Try filter if no ids
         elif flask.request.args.get('q', None) is not None:

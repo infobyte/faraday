@@ -126,7 +126,7 @@ class ReportsManager(Thread):
                 tpl: Tuple[str, int, Path, int, int, bool, bool, list, list, list] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
 
-                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag,\
+                workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag, \
                 host_tag, service_tag = tpl
 
                 logger.info(f"Processing raw report {file_path}")

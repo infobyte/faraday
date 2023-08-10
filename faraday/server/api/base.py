@@ -32,7 +32,6 @@ from webargs.core import ValidationError
 
 # Local application imports
 from faraday.server.models import (
-    User,
     Workspace,
     Command,
     CommandObject,
@@ -2110,8 +2109,6 @@ class ContextMixin(ReadOnlyView):
         return self._apply_filter_context(query)
 
     def _apply_filter_context(self, query):
-        if User.ADMIN_ROLE not in flask_login.current_user.roles:
-            query = query.filter(self.model_class.workspace_id.in_(self._get_context_workspace_ids()))
         return query
 
     def _get_context_workspace_ids(self):
@@ -2128,10 +2125,6 @@ class ContextMixin(ReadOnlyView):
 
     def _get_context_workspace_query(self):
         workspace_query = Workspace.query
-        if User.ADMIN_ROLE not in flask_login.current_user.roles:
-            workspace_query = workspace_query\
-                .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
-                .filter(self._get_context_filter())
         return workspace_query
 
     def _bulk_delete_query(self, ids, **kwargs):

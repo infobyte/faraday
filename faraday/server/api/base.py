@@ -32,12 +32,14 @@ from webargs.core import ValidationError
 
 # Local application imports
 from faraday.server.models import (
+    User,
     Workspace,
     Command,
     CommandObject,
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
+    WorkspacePermission
 )
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
@@ -1027,7 +1029,7 @@ class FilterMixin(ListMixin):
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False) -> Tuple[list, int]:
+                severity_count=False, host_vulns=False, return_objects=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -1061,6 +1063,8 @@ class FilterMixin(ListMixin):
                 filter_query = filter_query.offset(offset)
             count = filter_query.count()
             filter_query = self._add_to_filter(filter_query)
+            if return_objects:
+                return filter_query.all(), filter_query.count()
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
@@ -1716,7 +1720,7 @@ class BulkDeleteMixin(FilterObjects):
     # These mixin should be merged with DeleteMixin after v2 is removed
 
     @route('', methods=['DELETE'])
-    def bulk_delete(self, **kwargs):
+    def bulk_delete(self, *args, **kwargs):
         """
           ---
           tags: [{tag_name}]
@@ -1733,7 +1737,7 @@ class BulkDeleteMixin(FilterObjects):
         # Try filter if no ids
         elif flask.request.args.get('q', None) is not None:
             filtered_objects = self._process_filter_data(flask.request.args.get('q', '{"filters": []}'))
-            ids = list(x.get("obj_id") for x in filtered_objects[0])
+            ids = list(x.get("id") for x in filtered_objects[0])
         else:
             flask.abort(400)
         return self._perform_bulk_delete(ids, **kwargs), 200
@@ -2097,3 +2101,42 @@ def get_user_permissions(user):
         permissions[entity][action] = ALLOWED
 
     return permissions
+
+
+class ContextMixin(ReadOnlyView):
+
+    def _get_base_query(self, *args, **kwargs):
+        query = super()._get_base_query(*args, **kwargs)
+        return self._apply_filter_context(query)
+
+    def _apply_filter_context(self, query):
+        if User.ADMIN_ROLE not in flask_login.current_user.roles:
+            query = query.filter(self.model_class.workspace_id.in_(self._get_context_workspace_ids()))
+        return query
+
+    def _get_context_workspace_ids(self):
+        query = db.session.query(Workspace.id)\
+            .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
+            .filter(self._get_context_filter())
+        return query.all()
+
+    @staticmethod
+    def _get_context_filter():
+        return (
+                (WorkspacePermission.user_id == flask_login.current_user.id) | (Workspace.public is True)
+        )
+
+    def _get_context_workspace_query(self):
+        workspace_query = Workspace.query
+        if User.ADMIN_ROLE not in flask_login.current_user.roles:
+            workspace_query = workspace_query\
+                .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
+                .filter(self._get_context_filter())
+        return workspace_query
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # Need to check that ids are in workspaces available for this user
+        return self._get_base_query(**kwargs).filter(self.model_class.id.in_(ids))
+
+    def _bulk_update_query(self, ids, **kwargs):
+        return self._get_base_query(**kwargs).filter(self.model_class.id.in_(ids))

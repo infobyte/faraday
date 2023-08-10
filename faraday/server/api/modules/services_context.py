@@ -1,0 +1,81 @@
+"""
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+See the file 'doc/LICENSE' for the license information
+"""
+
+# Related third party imports
+from flask import Blueprint, abort, make_response, jsonify
+from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
+
+# Local application imports
+from faraday.server.models import (
+    Service,
+    db
+)
+from faraday.server.api.base import (
+    FilterMixin,
+    ContextMixin,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    FilterSetMeta,
+    FilterAlchemyMixin
+)
+from faraday.server.utils.command import set_command_id
+from faraday.server.api.modules.services import ServiceSchema
+services_context_api = Blueprint('services_context_api', __name__)
+
+
+class ServiceContextSchema(ServiceSchema):
+
+    class Meta:
+        model = Service
+        fields = ('id', '_id', 'status', 'parent', 'type',
+                  'protocol', 'description', '_rev',
+                  'owned', 'owner', 'credentials', 'vulns',
+                  'name', 'version', '_id', 'port', 'ports',
+                  'metadata', 'summary', 'host_id', 'command_id', 'workspace.name')
+
+
+class ServiceContextFilterSet(FilterSet):
+    class Meta(FilterSetMeta):
+        model = Service
+        fields = ('id', 'host_id', 'protocol', 'name', 'port', 'workspace_id')
+        default_operator = operators.Equal
+        operators = (operators.Equal,)
+
+
+class ServiceContextView(FilterMixin, FilterAlchemyMixin, ContextMixin, BulkDeleteMixin, BulkUpdateMixin):
+
+    route_base = 'services'
+    model_class = Service
+    schema_class = ServiceSchema
+    count_extra_filters = [Service.status == 'open']
+    get_undefer = [Service.credentials_count, Service.vulnerability_count]
+    get_joinedloads = [Service.credentials, Service.update_user]
+    filterset_class = ServiceContextFilterSet
+
+    def _envelope_list(self, objects, pagination_metadata=None):
+        services = []
+        for service in objects:
+            services.append({
+                'id': service['_id'],
+                'key': service['_id'],
+                'value': service
+            })
+        return {
+            'services': services,
+        }
+
+    def _perform_create(self, data, **kwargs):
+        command_id = data.pop('command_id', None)
+        port_number = data.get("port", "1")
+        if not port_number.isdigit():
+            abort(make_response(jsonify(message="Invalid Port number"), 400))
+        obj = super()._perform_create(data, **kwargs)
+        if command_id:
+            set_command_id(db.session, obj, True, command_id)
+        return obj
+
+
+ServiceContextView.register(services_context_api)

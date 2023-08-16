@@ -1038,13 +1038,12 @@ class FilterMixin(ListMixin):
 
         filter_query = None
         if 'group_by' not in filters:
-            offset = None
+            offset = 0
             limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
-
+                limit = filters.pop('limit')
             try:
                 filter_query = self._generate_filter_query(
                     filters,
@@ -1056,11 +1055,8 @@ class FilterMixin(ListMixin):
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
-            if limit:
-                filter_query = filter_query.limit(limit)
-            if offset:
-                filter_query = filter_query.offset(offset)
             count = filter_query.count()
+            filter_query = filter_query.limit(limit).offset(offset)
             filter_query = self._add_to_filter(filter_query)
             if return_objects:
                 return filter_query.all(), filter_query.count()

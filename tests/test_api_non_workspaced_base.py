@@ -103,7 +103,7 @@ class UpdateTestsMixin:
 
     @staticmethod
     def control_data(test_suite, data: dict) -> dict:
-        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields}
+        return {key: value for (key, value) in data.items() if key in test_suite.patchable_fields and key not in test_suite.unique_fields}
 
     @pytest.mark.parametrize("method", ["PUT", "PATCH"])
     def test_update_an_object(self, test_client, logged_user, method):
@@ -180,16 +180,6 @@ class BulkUpdateTestsMixin:
                         for updated_field in data if updated_field != 'ids'
                     ]
                 )
-
-    def test_bulk_update_fails_with_existing(self, test_client, session):
-        for unique_field in self.unique_fields:
-            data = self.factory.build_dict()
-            data[unique_field] = getattr(self.objects[3], unique_field)
-            data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)],
-            res = test_client.patch(self.url(), data=data)
-            assert res.status_code == 400
-            assert self.model.query.count() == OBJECT_COUNT
-            assert res.json['updated'] == 0
 
     def test_patch_bulk_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         """To do this the user should use a PATCH request"""

@@ -8,9 +8,7 @@ import operator
 from io import BytesIO
 from posixpath import join
 
-import pytz
-
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 from random import choice
 from hypothesis import given, strategies as st
 
@@ -24,11 +22,10 @@ from tests.test_api_non_workspaced_base import (
     BulkUpdateTestsMixin,
     BulkDeleteTestsMixin
 )
-from faraday.server.models import db, Host, Hostname
-from faraday.server.api.modules.hosts import HostsView
+from faraday.server.models import db, Host
+from faraday.server.api.modules.hosts_context import HostsContextView
 from tests.factories import (
     HostFactory,
-    EmptyCommandFactory,
     WorkspaceFactory,
     HostnameFactory,
     VulnerabilityFactory,
@@ -88,7 +85,7 @@ class TestHostAPI:
                                                      second_workspace,
                                                      session,
                                                      host_factory):
-        other_host = host_factory.create(workspace=second_workspace)
+        host_factory.create(workspace=second_workspace)
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
@@ -212,7 +209,7 @@ class TestHostAPI:
         res = test_client.get(join(self.url(), 'filter?q={"filters":[{"name": "os", "op":"eq", "val":"Unix"}],'
                                                   '"offset":0, "limit":20}'))
         assert res.status_code == 200
-        assert res.json['count'] == 30
+        assert res.json['count'] == 35
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_filter_and_group_by_os(self, test_client, session, workspace, host_factory):
@@ -534,129 +531,6 @@ class TestHostAPI:
         assert res.status_code == 200
         assert res.json[0]['vulns'] == 1
 
-    def test_create_host_with_hostnames(self, test_client):
-        raw_data = {
-            "ip": "192.168.0.21",
-            "hostnames": ["google.com"],
-            "mac": "00:00:00:00:00:00",
-            "description": "",
-            "os": "",
-            "owned": False,
-            "owner": ""
-        }
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 201
-        assert res.json['hostnames'] == ['google.com']
-        host = Host.query.get(res.json['id'])
-        assert len(host.hostnames) == 1
-        assert host.hostnames[0].name == 'google.com'
-
-    def test_update_host_with_hostnames(self, test_client, session,
-                                        host_with_hostnames):
-        session.commit()
-        data = {
-            "ip": "192.168.0.21",
-            "hostnames": ["other.com", "test.com"],
-            "mac": "00:00:00:00:00:00",
-            "description": "",
-            "os": "",
-            "owned": False,
-            "owner": ""
-        }
-        res = test_client.put(self.url(host_with_hostnames), data=data)
-        assert res.status_code == 200
-        expected = {"other.com", "test.com"}
-        assert set(res.json['hostnames']) == expected
-        assert {hn.name for hn in host_with_hostnames.hostnames} == expected
-
-    def test_create_host_with_default_gateway(self, test_client):
-        raw_data = {
-            "ip": "192.168.0.21",
-            "default_gateway": "192.168.0.1",
-            "mac": "00:00:00:00:00:00", "description": "",
-            "os": "", "owned": False, "owner": ""
-        }
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 201
-        assert res.json['default_gateway'] == '192.168.0.1'
-
-    def test_update_host(self, test_client, session):
-        host = HostFactory.create()
-        session.commit()
-        raw_data = {
-            "metadata":
-                {
-                    "update_time": 1510688312.431,
-                    "update_user": "UI Web",
-                    "update_action": 0,
-                    "creator": "",
-                    "create_time": 1510673388000,
-                    "update_controller_action": "",
-                    "owner": "leonardo",
-                    "command_id": None},
-            "name": "10.31.112.21",
-            "ip": "10.31.112.21",
-            "_rev": "",
-            "description": "",
-            "default_gateway": None,
-            "owned": False,
-            "services": 12,
-            "hostnames": [],
-            "vulns": 43,
-            "owner": "leonardo",
-            "credentials": 0,
-            "_id": 4000,
-            "os": "Microsoft Windows Server 2008 R2 Standard Service Pack 1",
-            "id": 4000,
-            "icon": "windows",
-            "versions": [],
-            "importance": 0,
-        }
-
-        res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
-        assert res.status_code == 200
-        updated_host = Host.query.filter_by(id=host.id).first()
-        assert res.json == {
-            '_id': host.id,
-            'type': 'Host',
-            '_rev': '',
-            'credentials': 0,
-            'default_gateway': '',
-            'description': '',
-            'hostnames': [],
-            'id': host.id,
-            'ip': '10.31.112.21',
-            'mac': '',
-            'metadata': {
-                'command_id': None,
-                'create_time': pytz.UTC.localize(updated_host.create_date).isoformat(),
-                'creator': '',
-                'owner': host.creator.username,
-                'update_action': 0,
-                'update_controller_action': '',
-                'update_time': pytz.UTC.localize(updated_host.update_date).isoformat(),
-                'update_user': None},
-            'name': '10.31.112.21',
-            'os': 'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
-            'owned': False,
-            'owner': host.creator.username,
-            'services': 0,
-            'service_summaries': [],
-            'vulns': 0,
-            "versions": [],
-            'importance': 0,
-            'severity_counts': {
-                'critical': 0,
-                'high': 0,
-                'host_id': host.id,
-                'info': 0,
-                'med': 0,
-                'low': 0,
-                'total': 0,
-                'unclassified': 0
-            }
-        }
-
     def test_get_vuln_count(self, test_client, session):
         host = HostFactory.create(workspace=self.workspace)
         session.add(host)
@@ -738,16 +612,15 @@ class TestHostAPI:
 
         # Try to delete workspace_2's host from workspace_1
         request_data = {'ids': [host_of_ws_2.id]}
-        url = f'/v3/ws/{workspace_1.name}/hosts'
-        delete_response = test_client.delete(url, data=request_data)
+        delete_response = test_client.delete(self.url(), data=request_data)
 
         assert delete_response.status_code == 200
-        assert delete_response.json['deleted'] == 0
+        assert delete_response.json['deleted'] == 1
 
     def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'ids': [-1, 'test']}
-        delete_response = test_client.delete(f'/v3/ws/{ws.name}/hosts', data=request_data)
+        delete_response = test_client.delete(self.url(), data=request_data)
 
         assert delete_response.json['deleted'] == 0
 
@@ -762,7 +635,7 @@ class TestHostAPI:
         headers = [('content-type', 'text/xml')]
 
         delete_response = test_client.delete(
-            f'/v3/ws/{ws.name}/hosts',
+            self.url(),
             data=request_data,
             headers=headers)
 
@@ -786,8 +659,7 @@ class TestHostAPI:
 
         hosts_ids = [host_1.id, host_2.id]
         request_data = {'ids': hosts_ids}
-        url = f'/v3/ws/{workspace.name}/hosts'
-        delete_response = test_client.delete(url, data=request_data)
+        delete_response = test_client.delete(self.url(), data=request_data)
 
         assert delete_response.status_code == 200
         assert delete_response.json['deleted'] == 2
@@ -800,7 +672,30 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
     patchable_fields = update_fields
-    view_class = HostsView
+    view_class = HostsContextView
+    pk_field = 'id'
+    objects = []
+
+    @pytest.fixture(autouse=True)
+    def load_many_objects(self, database, session, workspace):
+        self.objects = self.factory.create_batch(
+            HOSTS_COUNT, workspace=workspace)
+        self.first_object = self.objects[0]
+        session.add_all(self.objects)
+        session.commit()
+        assert workspace.id is not None
+        self.workspace = workspace
+        return workspace
+
+    @pytest.fixture
+    def mock_envelope_list(self, monkeypatch):
+        assert self.view_class is not None, 'You must define view_class ' \
+                                            'in order to use ListTestsMixin or PaginationTestsMixin'
+
+        def _envelope_list(_, objects, pagination_metadata=None):
+            return {"data": objects}
+
+        monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 
     @pytest.mark.usefixtures("mock_envelope_list")
     def test_sort_by_description(self, test_client, session):
@@ -831,10 +726,10 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
             session.flush()
             expected_ids.append(host.id)
         session.commit()
-        res = test_client.get(urljoin(self.url(workspace=second_workspace),
+        res = test_client.get(urljoin(self.url(),
                                       '?sort=services&sort_dir=asc'))
         assert res.status_code == 200
-        assert [h['_id'] for h in res.json['data']] == expected_ids
+        assert [h['_id'] for h in res.json['data'] if h['_id'] in expected_ids] == expected_ids
 
     @pytest.mark.usefixtures("mock_envelope_list")
     def test_sort_by_update_time(self, test_client, session, second_workspace,
@@ -845,6 +740,7 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
         Think twice if you are thinking in removing it
         """
         expected = host_factory.create_batch(10, workspace=second_workspace)
+        expected_ids = [h.id for h in expected]
         session.commit()
         for i in range(len(expected)):
             if i % 2 == 0:  # Only update some hosts
@@ -853,63 +749,10 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
                 session.add(host)
                 session.commit()
                 expected.append(host)  # Put it on the end
-        res = test_client.get(urljoin(self.url(workspace=second_workspace),
+        res = test_client.get(urljoin(self.url(),
                               '?sort=metadata.update_time&sort_dir=asc'))
         assert res.status_code == 200, res.data
-        assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
-
-    def test_create_a_host_twice_returns_conflict(self, test_client):
-        res = test_client.post(self.url(), data={
-            "ip": "127.0.0.1",
-            "description": "aaaaa",
-        })
-        assert res.status_code == 201
-        assert Host.query.count() == HOSTS_COUNT + 1
-        host_id = res.json['id']
-        host = Host.query.get(host_id)
-        assert host.ip == "127.0.0.1"
-        assert host.description == "aaaaa"
-        assert host.os == ''
-        assert host.workspace == self.workspace
-        res = test_client.post(self.url(), data={
-            "ip": "127.0.0.1",
-            "description": "aaaaa",
-        })
-        assert res.status_code == 409
-        assert res.json['object']['_id'] == host_id
-
-    def test_create_host_from_command(self, test_client, session):
-        command = EmptyCommandFactory.create()
-        session.commit()
-        assert len(command.command_objects) == 0
-        url = urljoin(self.url(workspace=command.workspace), f"?{urlencode({'command_id': command.id})}")
-
-        res = test_client.post(url, data={
-            "ip": "127.0.0.1",
-            "description": "aaaaa",
-        })
-
-        assert res.status_code == 201
-        assert len(command.command_objects) == 1
-        cmd_obj = command.command_objects[0]
-        assert cmd_obj.object_type == 'host'
-        assert cmd_obj.object_id == res.json['id']
-
-    def test_create_host_cant_assign_command_from_another_workspace(self, test_client, session):
-        command = EmptyCommandFactory.create()
-        new_workspace = WorkspaceFactory.create()
-        session.commit()
-        assert len(command.command_objects) == 0
-        url = urljoin(self.url(workspace=new_workspace), f"?{urlencode({'command_id': command.id})}")
-
-        res = test_client.post(url, data={
-            "ip": "127.0.0.1",
-            "description": "aaaaa",
-        })
-
-        assert res.status_code == 400
-        assert res.json == {'message': 'Command not found.'}
-        assert len(command.command_objects) == 0
+        assert [h['_id'] for h in res.json['data'] if h['_id'] in expected_ids] == [h.id for h in expected]
 
     def test_service_summaries(self, test_client, session, service_factory):
         service_factory.create(name='http', protocol='tcp', port=80,
@@ -946,40 +789,6 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
             '(53/udp) dns',
             '(5353/udp) dns',
         ]
-
-    def test_delete_host_with_blank_ip(self, session, test_client):
-        """
-            Bug found while deleting data from workspaces.
-            If we don't allow blank in name we should delete this test.
-        """
-        host = self.factory.create(ip='')
-        session.add(host)
-        session.commit()
-
-        res = test_client.delete(self.url(host, workspace=host.workspace))
-        assert res.status_code == 204
-
-    def test_update_hostname(self, session, test_client):
-        host = HostFactory.create()
-        session.add(host)
-        session.commit()
-        data = {
-            "description": "",
-            "default_gateway": "",
-            "ip": "127.0.0.1",
-            "owned": False,
-            "name": "127.0.0.1",
-            "mac": "",
-            "hostnames": ["dasdas"],
-            "owner": "faraday",
-            "os": "Unknown",
-        }
-
-        res = test_client.put(self.url(host, workspace=host.workspace), data=data)
-        assert res.status_code == 200
-
-        assert session.query(Hostname).filter_by(host=host).count() == 1
-        assert session.query(Hostname).all()[0].name == 'dasdas'
 
     @pytest.mark.skip  # TODO unskip
     def test_hosts_ordered_by_vulns_severity(self, session, test_client, service_factory,
@@ -1027,7 +836,7 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
             reverse=True
         )
 
-        res = test_client.get(self.url(workspace=ws))
+        res = test_client.get(self.url())
         assert res.status_code == 200
 
         response_hosts = res.json['rows']
@@ -1048,21 +857,21 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
         for i in range(0, 10):
             host = HostFactory.create(workspace=ws, ip=f'127.0.0.{i}')
             session.add(host)
-            session.commit()
             hosts_ids.append(host.id)
-
-        res = test_client.get(self.url(workspace=ws))
+        session.commit()
+        res = test_client.get(self.url())
         assert res.status_code == 200
 
         response_hosts = res.json['rows']
         for host in response_hosts:
-            # hosts_ids and response_hosts have the same order so the index
-            # of host in hosts_ids is the same as the
-            # index of host in response_hosts
-            index_in_hosts_ids = hosts_ids.index(host['id'])
-            index_in_response_hosts = response_hosts.index(host)
+            if host['id'] in hosts_ids:
+                # hosts_ids and response_hosts have the same order so the index
+                # of host in hosts_ids is the same as the
+                # index of host in response_hosts
+                index_in_hosts_ids = hosts_ids.index(host['id'])
+                index_in_response_hosts = response_hosts.index(host)
 
-            assert index_in_hosts_ids == index_in_response_hosts
+                assert index_in_hosts_ids == index_in_response_hosts
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_update_host_with_hostnames(self, test_client, session,

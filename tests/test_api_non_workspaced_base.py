@@ -210,6 +210,19 @@ class BulkUpdateTestsMixin:
         res = test_client.patch(self.url(), data=request_data, headers=headers)
         assert res.status_code == 400
 
+    def test_bulk_update_fails_with_existing(self, test_client, session):
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            data[unique_field] = getattr(self.objects[3], unique_field)
+            data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)]
+            res = test_client.patch(self.url(), data=data)
+            assert res.status_code == 400
+            assert self.model.query.count() == OBJECT_COUNT
+            import pprint
+            print()
+            pprint.pprint(res.json)
+            assert res.json['updated'] == 0
+
 
 @pytest.mark.usefixtures('logged_user')
 class DeleteTestsMixin:

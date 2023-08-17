@@ -1555,7 +1555,7 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace)
+            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
             if conflict_obj is not None:
                 flask.abort(409, ValidationError(
                     {

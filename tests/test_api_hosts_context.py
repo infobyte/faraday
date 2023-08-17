@@ -902,6 +902,16 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
         assert res.json["updated"] == 1
         assert {hn.name for hn in host_with_hostnames.hostnames} == expected
 
+    def test_bulk_update_fails_with_existing(self, test_client, session):
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            data[unique_field] = getattr(self.objects[3], unique_field)
+            data["ids"] = [getattr(self.objects[i], self.view_class.lookup_field) for i in range(0, 2)]
+            res = test_client.patch(self.url(), data=data)
+            assert res.status_code == 409
+            assert self.model.query.count() == HOSTS_COUNT
+            assert res.json['updated'] == 0
+
 
 def host_json():
     return st.fixed_dictionaries(

@@ -910,7 +910,7 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
             res = test_client.patch(self.url(), data=data)
             assert res.status_code == 409
             assert self.model.query.count() == HOSTS_COUNT
-            assert res.json['updated'] == 0
+            assert res.json['message'] == 'Existing value'
 
 
 def host_json():

@@ -5,13 +5,12 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Related third party imports
-from flask import Blueprint, abort, make_response, jsonify
+from flask import Blueprint
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 
 # Local application imports
 from faraday.server.models import (
-    Service,
-    db
+    Service
 )
 from faraday.server.api.base import (
     FilterMixin,
@@ -21,7 +20,6 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterAlchemyMixin
 )
-from faraday.server.utils.command import set_command_id
 from faraday.server.api.modules.services import ServiceSchema
 services_context_api = Blueprint('services_context_api', __name__)
 
@@ -66,16 +64,6 @@ class ServiceContextView(FilterMixin, FilterAlchemyMixin, ContextMixin, BulkDele
         return {
             'services': services,
         }
-
-    def _perform_create(self, data, **kwargs):
-        command_id = data.pop('command_id', None)
-        port_number = data.get("port", "1")
-        if not port_number.isdigit():
-            abort(make_response(jsonify(message="Invalid Port number"), 400))
-        obj = super()._perform_create(data, **kwargs)
-        if command_id:
-            set_command_id(db.session, obj, True, command_id)
-        return obj
 
 
 ServiceContextView.register(services_context_api)

@@ -697,6 +697,21 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
 
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 
+    def test_tool_impacted_by_host(self, test_client, session):
+        from tests.factories import EmptyCommandFactory, CommandObjectFactory
+        command = EmptyCommandFactory.create(workspace=self.workspace)
+        CommandObjectFactory.create(
+            command=command,
+            object_type='host',
+            object_id=self.objects[0].id,
+            workspace=command.workspace
+        )
+        session.commit()
+        res = test_client.get(join(self.url(self.objects[0].id), 'tools_history'))
+        assert len(res.json['tools']) == 1
+        assert res.json['tools'][0]['command'] == command.tool
+        assert res.json['tools'][0]['user'] == command.user
+
     @pytest.mark.usefixtures("mock_envelope_list")
     def test_sort_by_description(self, test_client, session):
         for host in Host.query.all():

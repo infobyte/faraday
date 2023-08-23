@@ -22,6 +22,7 @@ from faraday.server.api.base import (
     PaginatedMixin,
     BulkDeleteMixin,
     BulkUpdateMixin,
+    FilterSetMeta,
     FilterAlchemyMixin,
     ContextMixin
 )
@@ -45,6 +46,12 @@ class HostContextSchema(HostSchema):
                   )
 
 
+class HostContextFilterSet(HostFilterSet):
+    class Meta(FilterSetMeta):
+        model = Host
+        fields = ('id', 'ip', 'name', 'os', 'service', 'port', 'workspace_id')
+
+
 class HostsContextView(ContextMixin,
         PaginatedMixin,
         FilterAlchemyMixin,
@@ -60,8 +67,8 @@ class HostsContextView(ContextMixin,
         desc(Host.vulnerability_info_generic_count), \
         desc(Host.vulnerability_unclassified_generic_count), Host.ip.asc()
 
-    schema_class = HostSchema
-    filterset_class = HostFilterSet
+    schema_class = HostContextSchema
+    filterset_class = HostContextSchema
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
                    Host.vulnerability_critical_generic_count,

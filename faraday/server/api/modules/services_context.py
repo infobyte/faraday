@@ -47,7 +47,7 @@ class ServiceContextView(FilterMixin, FilterAlchemyMixin, ContextMixin, BulkDele
 
     route_base = 'services'
     model_class = Service
-    schema_class = ServiceSchema
+    schema_class = ServiceContextSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
     get_joinedloads = [Service.credentials, Service.update_user]

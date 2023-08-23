@@ -68,7 +68,7 @@ class HostsContextView(ContextMixin,
         desc(Host.vulnerability_unclassified_generic_count), Host.ip.asc()
 
     schema_class = HostContextSchema
-    filterset_class = HostContextSchema
+    filterset_class = HostContextFilterSet
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
                    Host.vulnerability_critical_generic_count,

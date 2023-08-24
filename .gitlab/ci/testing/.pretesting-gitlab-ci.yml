@@ -54,10 +54,10 @@ bandit:
       - mkdir /results
       - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101"
     after_script:
-      - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+      - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
       - apt update
       - apt-get install software-properties-common -y
-      - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com focal main"
+      - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
       - apt update
       - apt install vault -y
       - setcap cap_ipc_lock= /usr/bin/vault

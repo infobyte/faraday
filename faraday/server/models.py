@@ -1917,7 +1917,7 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
 class ReferenceTemplateVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_template_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id', ondelete='CASCADE'), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference_template.id'), primary_key=True)
 
     reference = relationship(
@@ -1935,7 +1935,7 @@ class ReferenceTemplateVulnerabilityAssociation(db.Model):
 class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     __tablename__ = 'policy_violation_template_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id', ondelete='CASCADE'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolationTemplate",

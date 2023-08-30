@@ -2129,3 +2129,54 @@ class ContextMixin(ReadOnlyView):
 
     def _bulk_update_query(self, ids, **kwargs):
         return self._get_base_query(**kwargs).filter(self.model_class.id.in_(ids))
+
+    count_extra_filters = []
+
+    def count(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Group {class_model} by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            404:
+              description: group_by is not specified
+        """
+        res = {
+            'groups': [],
+            'total_count': 0
+        }
+        group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
+
+        # using format is not a great practice.
+        # the user input is group_by, however it's filtered by column name.
+        table_name = inspect(self.model_class).tables[0].name
+        group_by = f'{table_name}.{group_by}'
+
+        count = self._apply_filter_context(
+            self._filter_query(
+                db.session.query(self.model_class).
+                group_by(group_by).
+                filter(*self.count_extra_filters)
+            )
+        )
+        # order
+        order_by = group_by
+        if sort_dir == 'desc':
+            count = count.order_by(desc(order_by))
+        else:
+            count = count.order_by(asc(order_by))
+        for key, count in count.values(group_by, func.count(group_by)):
+            res['groups'].append(
+                {'count': count,
+                 'name': key,
+                 # To add compatibility with the web ui
+                 flask.request.args.get('group_by'): key,
+                 }
+            )
+            res['total_count'] += count
+        return res

@@ -99,6 +99,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.services_context import services_context_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.session import session_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.vulns import vulns_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns_context import vulns_context_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.vulnerability_template import \
         vulnerability_template_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.workspaces import workspace_api  # pylint:disable=import-outside-toplevel
@@ -135,6 +136,7 @@ def register_blueprints(app):
     app.register_blueprint(services_context_api)
     app.register_blueprint(session_api)
     app.register_blueprint(vulns_api)
+    app.register_blueprint(vulns_context_api)
     app.register_blueprint(vulnerability_template_api)
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)

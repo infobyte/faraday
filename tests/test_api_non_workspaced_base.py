@@ -56,6 +56,8 @@ class ListTestsMixin:
         assert res.status_code == 200
         if 'rows' in res.json:
             assert len(res.json['rows']) == OBJECT_COUNT
+        elif 'count' in res.json:
+            assert res.json['count'] == OBJECT_COUNT
         else:
             assert len(res.json) == OBJECT_COUNT
 

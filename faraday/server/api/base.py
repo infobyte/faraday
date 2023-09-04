@@ -2100,32 +2100,46 @@ def get_user_permissions(user):
 
 class ContextMixin(ReadOnlyView):
 
-    def _get_base_query(self, *args, **kwargs):
+    def _get_base_query(self, operation="read", *args, **kwargs):
         query = super()._get_base_query(*args, **kwargs)
-        return self._apply_filter_context(query)
+        return self._apply_filter_context(query, operation)
 
-    def _apply_filter_context(self, query):
+    def _apply_filter_context(self, query, operation="read"):
+        filters = True
+        if operation == "write":
+            filters = self._get_context_write_filter() if isinstance(filters, bool) else \
+                    filters & self._get_context_write_filter()
+        query = query.filter(
+            self.model_class.workspace_id.in_(
+                self._get_context_workspace_ids(filters)
+            )
+        )
         return query
 
-    def _get_context_workspace_ids(self):
-        query = db.session.query(Workspace.id)\
+    @staticmethod
+    def _get_context_workspace_ids(filter):
+        return db.session.query(Workspace.id)\
             .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
-            .filter(self._get_context_filter())
-        return query.all()
+            .filter(filter).all()
 
     @staticmethod
-    def _get_context_filter():
+    def _get_context_workspace_filter():
         return (
-                (WorkspacePermission.user_id == flask_login.current_user.id) | (Workspace.public is True)
+                (WorkspacePermission.user_id == flask_login.current_user.id) | (Workspace.public == True) # noqa: E712, E261
         )
 
-    def _get_context_workspace_query(self):
+    @staticmethod
+    def _get_context_write_filter():
+        return (
+                Workspace.readonly == False # noqa: E712, E261
+        )
+
+    def _get_context_workspace_query(self, operation="write"):
         workspace_query = Workspace.query
         return workspace_query
 
     def _bulk_delete_query(self, ids, **kwargs):
-        # Need to check that ids are in workspaces available for this user
-        return self._get_base_query(**kwargs).filter(self.model_class.id.in_(ids))
+        return self._get_base_query(operation="write", **kwargs).filter(self.model_class.id.in_(ids))
 
     def _bulk_update_query(self, ids, **kwargs):
-        return self._get_base_query(**kwargs).filter(self.model_class.id.in_(ids))
+        return self._get_base_query(operation="write", **kwargs).filter(self.model_class.id.in_(ids))

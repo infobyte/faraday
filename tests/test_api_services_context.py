@@ -11,7 +11,7 @@ from faraday.server.api.modules.services import ServiceView
 from tests import factories
 from tests.test_api_non_workspaced_base import ReadOnlyAPITests, BulkDeleteTestsMixin, BulkUpdateTestsMixin, OBJECT_COUNT
 from faraday.server.models import (
-    Service, Credential, Vulnerability
+    Service
 )
 from tests.factories import CredentialFactory, VulnerabilityFactory
 
@@ -84,10 +84,6 @@ class TestListServiceView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTest
         assert len(res.json['services']) == OBJECT_COUNT
 
     def test_bulk_delete_with_references(self, test_client, session, workspace):
-        previous_creds = Credential.query.count()
-        previous_vulns = Vulnerability.query.count()
-        previous_services = Service.query.count()
-
         service_1 = self.factory.create(workspace=workspace)
         service_2 = self.factory.create(workspace=workspace)
         service_3 = self.factory.create(workspace=workspace)

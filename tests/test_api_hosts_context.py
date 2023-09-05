@@ -36,6 +36,7 @@ SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
 
 
 @pytest.mark.usefixtures('database', 'logged_user')
+@pytest.mark.skip_sql_dialect('sqlite')
 class TestHostAPI:
 
     @pytest.fixture(autouse=True)
@@ -676,6 +677,7 @@ class TestHostAPI:
         assert delete_response.json['deleted'] == 2
 
 
+@pytest.mark.skip_sql_dialect('sqlite')
 class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Host
     factory = factories.HostFactory

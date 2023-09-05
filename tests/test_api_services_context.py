@@ -16,6 +16,7 @@ from faraday.server.models import (
 from tests.factories import CredentialFactory, VulnerabilityFactory
 
 
+@pytest.mark.skip_sql_dialect('sqlite')
 @pytest.mark.usefixtures('logged_user')
 class TestListServiceView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Service

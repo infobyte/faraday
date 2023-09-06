@@ -91,7 +91,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.post(url, data=raw_comment)
         assert res.status_code == 409
         assert 'object' in res.json
-        assert type(res.json) == dict
+        assert type(res.json) is dict
 
     def test_create_unique_comment_for_plugins_after_and_before(self, session, test_client):
         """
@@ -111,7 +111,7 @@ class TestCommentAPIGeneric(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.post(url, data=raw_comment)
         assert res.status_code == 409
         assert 'object' in res.json
-        assert type(res.json) == dict
+        assert type(res.json) is dict
 
     def test_default_order_field(self, session, test_client):
         workspace = factories.WorkspaceFactory.create()

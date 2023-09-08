@@ -3214,6 +3214,9 @@ class BaseNotification(Metadata):
     processed = Column(Boolean, default=False)
     verbose = Column(Boolean, default=False)
 
+    def __repr__(self):
+        return f"Notification ID:{self.id}, type:{self.data.get('type')}, subtype:{self.data.get('subtype')}"
+
 
 class UserNotification(Metadata):
     __tablename__ = "user_notification"
@@ -3316,8 +3319,22 @@ class UserNotificationSettings(Metadata):
     other_email = Column(Boolean, default=False)
     other_slack = Column(Boolean, default=False)
 
+    adv_high_crit_vuln_enabled = Column(Boolean, default=False)
+    adv_high_crit_vuln_app = Column(Boolean, default=False)
+    adv_high_crit_vuln_email = Column(Boolean, default=False)
+    adv_high_crit_vuln_slack = Column(Boolean, default=False)
     adv_high_crit_vuln = Column(Boolean, default=False)
+
+    adv_risk_score_threshold_enabled = Column(Boolean, default=False)
+    adv_risk_score_threshold_app = Column(Boolean, default=False)
+    adv_risk_score_threshold_email = Column(Boolean, default=False)
+    adv_risk_score_threshold_slack = Column(Boolean, default=False)
     adv_risk_score_threshold = Column(Integer, default=0)
+
+    adv_vuln_open_days_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_app = Column(Boolean, default=False)
+    adv_vuln_open_days_email = Column(Boolean, default=False)
+    adv_vuln_open_days_slack = Column(Boolean, default=False)
     adv_vuln_open_days = Column(Integer, default=0)
 
 

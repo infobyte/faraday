@@ -8,11 +8,11 @@
 
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.12.1";
+  version = "1.13.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1x3sf5wdipvn0zagws04nxrl08xxwismqyv0bg0k6zyxvj3hxqmc";
+    sha256 = "0db1zsmv3lldi41d0av34p130srlyf2njgi33b6a1b3qk79kwgqd";
   };
 
   propagatedBuildInputs = [

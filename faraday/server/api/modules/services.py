@@ -21,6 +21,7 @@ from faraday.server.models import (
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
+    PaginatedMixin,
     FilterSetMeta,
     FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
@@ -129,7 +130,7 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
+class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service

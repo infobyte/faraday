@@ -3338,6 +3338,13 @@ class UserNotificationSettings(Metadata):
     adv_vuln_open_days = Column(Integer, default=0)
 
 
+class EmailNotification(Metadata):
+    id = Column(Integer, primary_key=True)
+    user_email = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    processed = Column(Boolean, default=False)
+
+
 # Indexes to speed up queries
 Index("idx_vulnerability_severity_hostid_serviceid",
       VulnerabilityGeneric.__table__.c.severity,

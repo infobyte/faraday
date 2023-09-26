@@ -64,6 +64,8 @@ class ServiceContextView(PaginatedMixin, FilterMixin, FilterAlchemyMixin, Contex
             })
         return {
             'services': services,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(services))
         }
 
 

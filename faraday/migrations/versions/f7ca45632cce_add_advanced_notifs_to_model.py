@@ -1,7 +1,7 @@
 """Add advanced notifs to model
 
 Revision ID: f7ca45632cce
-Revises: 61ded0c8fbf6
+Revises: 901344f297fb
 Create Date: 2023-08-07 21:32:24.180236+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f7ca45632cce'
-down_revision = '73854f804a8d'
+down_revision = '901344f297fb'
 branch_labels = None
 depends_on = None
 

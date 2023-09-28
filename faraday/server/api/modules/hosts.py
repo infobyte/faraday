@@ -98,10 +98,9 @@ class HostSchema(AutoSchema):
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
+                  'name', 'os', 'owned', 'owner', 'services',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'importance', 'severity_counts', 'command_id'
-                  )
+                  'importance', 'command_id')
 
     @staticmethod
     def get_service_summaries(obj):
@@ -170,6 +169,30 @@ class HostsView(PaginatedMixin,
                    Host.vulnerability_unclassified_generic_count,
                    ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of hosts."
+            tags: ["Host"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: HostSchema
+          tags: ["Host"]
+          responses:
+            200:
+              description: Ok
+        """
+        show_stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
+
+        if not show_stats:
+            kwargs['exclude'] = ['vulns', 'severity_counts']
+
+        return super().index(**kwargs)
 
     @route('/filter')
     def filter(self, workspace_name):

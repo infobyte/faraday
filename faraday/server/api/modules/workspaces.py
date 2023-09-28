@@ -40,6 +40,7 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterMixin,
     BulkDeleteMixin,
+    PaginatedMixin
 )
 
 logger = logging.getLogger(__name__)
@@ -199,7 +200,7 @@ def request_histogram():
     return histogram_days, histogram_dict
 
 
-class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str

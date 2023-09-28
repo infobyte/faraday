@@ -305,6 +305,13 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
 
+    def _envelope_list(self, objects, pagination_metadata=None):
+        return {
+            'workspaces': objects,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(objects))
+        }
+
     def _add_to_filter(self, filter_query, **kwargs):
         filter_query = filter_query.options(
             with_expression(

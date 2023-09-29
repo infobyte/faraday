@@ -20,6 +20,7 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
@@ -98,9 +99,10 @@ class HostSchema(AutoSchema):
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services',
+                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'importance', 'command_id')
+                  'importance', 'severity_counts', 'command_id'
+                  )
 
     @staticmethod
     def get_service_summaries(obj):
@@ -170,6 +172,29 @@ class HostsView(PaginatedMixin,
                    ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        """
+        Overrides _get_eagerloaded_query of GenericView
+        """
+        options = []
+        try:
+            has_creator = 'owner' in self._get_schema_class().opts.fields
+        except AttributeError:
+            has_creator = False
+        show_stats = kwargs.pop('show_stats', True)
+        if has_creator:
+            # APIs for objects with metadata always return the creator's
+            # username. Do a joinedload to prevent doing one query per object
+            # (n+1) problem
+            options.append(joinedload(
+                getattr(self.model_class, 'creator')).load_only('username'))
+        query = self._get_base_query(*args, **kwargs)
+        options += [joinedload(relationship)
+                    for relationship in self.get_joinedloads]
+        if show_stats:
+            options += [undefer(column) for column in self.get_undefer]
+        return query.options(*options)
+
     def index(self, **kwargs):
         """
           ---
@@ -187,10 +212,10 @@ class HostsView(PaginatedMixin,
             200:
               description: Ok
         """
-        show_stats = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
+        kwargs['show_stats'] = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
 
-        if not show_stats:
-            kwargs['exclude'] = ['vulns', 'severity_counts']
+        if not kwargs['show_stats']:
+            kwargs['exclude'] = ['severity_counts', 'vulns', 'credentials', 'services']
 
         return super().index(**kwargs)
 

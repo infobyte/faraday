@@ -212,7 +212,7 @@ class HostsView(PaginatedMixin,
             200:
               description: Ok
         """
-        kwargs['show_stats'] = flask.request.args.get('stats', type=lambda v: v.lower() == 'true')
+        kwargs['show_stats'] = flask.request.args.get('stats', True)
 
         if not kwargs['show_stats']:
             kwargs['exclude'] = ['severity_counts', 'vulns', 'credentials', 'services']

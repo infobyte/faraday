@@ -155,6 +155,16 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     view_class = WorkspaceView
     patchable_fields = ['description']
 
+    @pytest.fixture(autouse=True)
+    def mock_envelope_list(self, monkeypatch):
+        assert self.view_class is not None, 'You must define view_class ' \
+                                            'in order to use ListTestsMixin or PaginationTestsMixin'
+
+        def _envelope_list(_, objects, pagination_metadata=None):
+            return objects
+
+        monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
+
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_fixed_stats_in_workspace(self, session, test_client, vulnerability_factory, workspace_factory):
         ws = workspace_factory.create(name='myws')

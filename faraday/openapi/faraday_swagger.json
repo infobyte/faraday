@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 4.5.0 API",
+        "title": "Faraday 4.6.0 API",
         "version": "v3"
     },
     "security": {
@@ -4176,41 +4176,48 @@
             "Command": {
                 "type": "object",
                 "properties": {
-                    "hostname": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    },
-                    "ip": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    },
-                    "tool": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                    "_id": {
+                        "type": "integer",
+                        "readOnly": true
                     },
                     "command": {
                         "type": "string",
                         "nullable": true,
                         "minLength": 1
                     },
-                    "_id": {
-                        "type": "integer",
-                        "readOnly": true
+                    "duration": {
+                        "nullable": true
                     },
-                    "metadata": {},
+                    "itime": {},
+                    "ip": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
+                    "hostname": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
                     "params": {
                         "type": "string",
                         "nullable": true
                     },
-                    "itime": {},
+                    "user": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
+                    "creator": {
+                        "readOnly": true
+                    },
                     "workspace": {
                         "readOnly": true
                     },
-                    "duration": {
-                        "nullable": true
+                    "tool": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
                     },
                     "import_source": {
                         "enum": [
@@ -4221,14 +4228,7 @@
                         "nullable": true,
                         "maxLength": 6
                     },
-                    "creator": {
-                        "readOnly": true
-                    },
-                    "user": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    }
+                    "metadata": {}
                 },
                 "required": [
                     "command",
@@ -4239,53 +4239,41 @@
             "ActivityFeed": {
                 "type": "object",
                 "properties": {
-                    "ip": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
-                    },
-                    "sum_created_vulnerability_high": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "hostname": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    },
-                    "tool": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
                     },
                     "command": {
                         "type": "string",
                         "nullable": true,
                         "minLength": 1
                     },
-                    "sum_created_vulnerabilities": {
-                        "readOnly": true,
+                    "ip": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
+                    "hostname": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
+                    "params": {
+                        "type": "string",
                         "nullable": true
+                    },
+                    "user": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
                     },
                     "workspace": {
                         "readOnly": true
                     },
-                    "itime": {},
-                    "sum_created_vulnerability_medium": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "sum_created_vulnerability_low": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "sum_created_vulnerability_unclassified": {
-                        "type": "integer",
-                        "readOnly": true
+                    "tool": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
                     },
                     "import_source": {
                         "enum": [
@@ -4296,15 +4284,16 @@
                         "nullable": true,
                         "maxLength": 6
                     },
-                    "user": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    },
-                    "creator": {
-                        "readOnly": true
+                    "itime": {},
+                    "sum_created_vulnerabilities": {
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "sum_created_hosts": {
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "sum_created_services": {
                         "readOnly": true,
                         "nullable": true
                     },
@@ -4312,16 +4301,27 @@
                         "type": "integer",
                         "readOnly": true
                     },
-                    "params": {
-                        "type": "string",
-                        "nullable": true
+                    "sum_created_vulnerability_high": {
+                        "type": "integer",
+                        "readOnly": true
                     },
-                    "sum_created_services": {
-                        "readOnly": true,
-                        "nullable": true
+                    "sum_created_vulnerability_medium": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "sum_created_vulnerability_low": {
+                        "type": "integer",
+                        "readOnly": true
                     },
                     "sum_created_vulnerability_info": {
                         "type": "integer",
+                        "readOnly": true
+                    },
+                    "sum_created_vulnerability_unclassified": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "creator": {
                         "readOnly": true
                     }
                 },
@@ -4334,22 +4334,6 @@
             "Credential": {
                 "type": "object",
                 "properties": {
-                    "parent": {},
-                    "host_ip": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "_rev": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "couchdbid": {
-                        "type": "string"
-                    },
-                    "service_name": {
-                        "type": "string",
-                        "readOnly": true
-                    },
                     "id": {
                         "type": "integer"
                     },
@@ -4357,19 +4341,11 @@
                         "type": "integer",
                         "readOnly": true
                     },
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "metadata": {},
-                    "owner": {
+                    "_rev": {
                         "type": "string",
                         "readOnly": true
                     },
-                    "target": {
-                        "type": "string",
-                        "readOnly": true
-                    },
+                    "parent": {},
                     "username": {
                         "type": "string",
                         "minLength": 1
@@ -4377,12 +4353,36 @@
                     "description": {
                         "type": "string"
                     },
-                    "parent_type": {},
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
                     "password": {
                         "type": "string"
                     },
+                    "owner": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "owned": {
                         "type": "boolean",
+                        "readOnly": true
+                    },
+                    "couchdbid": {
+                        "type": "string"
+                    },
+                    "parent_type": {},
+                    "metadata": {},
+                    "host_ip": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "service_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "target": {
+                        "type": "string",
                         "readOnly": true
                     }
                 },
@@ -4395,24 +4395,45 @@
             "Host": {
                 "type": "object",
                 "properties": {
-                    "ip": {
-                        "type": "string"
-                    },
-                    "versions": {
-                        "readOnly": true
+                    "id": {
+                        "type": "integer"
                     },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "vulns": {
+                    "_rev": {
+                        "type": "string",
                         "readOnly": true
+                    },
+                    "ip": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "mac": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "credentials": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "default_gateway": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {},
+                    "name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "os": {
+                        "type": "string"
                     },
                     "owned": {
                         "type": "boolean"
-                    },
-                    "severity_counts": {
-                        "readOnly": true
                     },
                     "owner": {
                         "readOnly": true
@@ -4421,49 +4442,28 @@
                         "type": "integer",
                         "readOnly": true
                     },
-                    "command_id": {
-                        "type": "integer",
-                        "writeOnly": true
+                    "vulns": {
+                        "readOnly": true
                     },
-                    "os": {
-                        "type": "string"
-                    },
+                    "hostnames": {},
                     "type": {
+                        "readOnly": true
+                    },
+                    "service_summaries": {
+                        "readOnly": true
+                    },
+                    "versions": {
                         "readOnly": true
                     },
                     "importance": {
                         "type": "integer"
                     },
-                    "hostnames": {},
-                    "metadata": {},
-                    "name": {
-                        "type": "string",
+                    "severity_counts": {
                         "readOnly": true
                     },
-                    "default_gateway": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "credentials": {
+                    "command_id": {
                         "type": "integer",
-                        "readOnly": true
-                    },
-                    "_rev": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "id": {
-                        "type": "integer"
-                    },
-                    "mac": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "service_summaries": {
-                        "readOnly": true
+                        "writeOnly": true
                     }
                 },
                 "required": [
@@ -4473,14 +4473,11 @@
             "HostCount": {
                 "type": "object",
                 "properties": {
-                    "total": {
-                        "readOnly": true
-                    },
-                    "critical": {
+                    "host_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "info": {
+                    "critical": {
                         "type": "integer",
                         "readOnly": true
                     },
@@ -4496,12 +4493,15 @@
                         "type": "integer",
                         "readOnly": true
                     },
-                    "host_id": {
+                    "info": {
                         "type": "integer",
                         "readOnly": true
                     },
                     "unclassified": {
                         "type": "integer",
+                        "readOnly": true
+                    },
+                    "total": {
                         "readOnly": true
                     }
                 }
@@ -4513,24 +4513,12 @@
             "Service": {
                 "type": "object",
                 "properties": {
-                    "version": {
-                        "type": "string",
-                        "nullable": true
+                    "id": {
+                        "type": "integer"
                     },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
-                    },
-                    "vulns": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "host_id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "owned": {
-                        "type": "boolean"
                     },
                     "status": {
                         "type": "string",
@@ -4541,53 +4529,65 @@
                             "filtered"
                         ]
                     },
-                    "owner": {
-                        "readOnly": true
-                    },
-                    "command_id": {
-                        "type": "integer",
-                        "writeOnly": true
-                    },
                     "parent": {
                         "type": "integer"
+                    },
+                    "type": {
+                        "readOnly": true
                     },
                     "protocol": {
                         "type": "string",
                         "nullable": true,
                         "minLength": 1
                     },
-                    "summary": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "type": {
-                        "readOnly": true
-                    },
-                    "metadata": {},
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "ports": {},
                     "description": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "_rev": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "owned": {
+                        "type": "boolean"
+                    },
+                    "owner": {
+                        "readOnly": true
                     },
                     "credentials": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "_rev": {
-                        "type": "string",
+                    "vulns": {
+                        "type": "integer",
                         "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "version": {
+                        "type": "string",
+                        "nullable": true
                     },
                     "port": {
                         "type": "integer",
                         "readOnly": true,
                         "minimum": 0
                     },
-                    "id": {
-                        "type": "integer"
+                    "ports": {},
+                    "metadata": {},
+                    "summary": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "host_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "command_id": {
+                        "type": "integer",
+                        "writeOnly": true
                     }
                 },
                 "required": [
@@ -4599,19 +4599,6 @@
             "License": {
                 "type": "object",
                 "properties": {
-                    "start": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "product": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
-                    },
-                    "lictype": {
-                        "type": "string",
-                        "nullable": true
-                    },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
@@ -4619,13 +4606,26 @@
                     "id": {
                         "type": "integer"
                     },
-                    "notes": {
+                    "product": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "minLength": 1
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
                     },
                     "end": {
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "lictype": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "required": [
@@ -4635,18 +4635,11 @@
             "Service1": {
                 "type": "object",
                 "properties": {
-                    "version": {
-                        "type": "string",
-                        "nullable": true
-                    },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    },
+                    "ports": {},
                     "status": {
                         "type": "string",
                         "default": "open",
@@ -4661,11 +4654,18 @@
                         "nullable": true,
                         "minLength": 1
                     },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "version": {
+                        "type": "string",
+                        "nullable": true
+                    },
                     "summary": {
                         "type": "string",
                         "readOnly": true
-                    },
-                    "ports": {}
+                    }
                 },
                 "required": [
                     "ports",
@@ -4686,50 +4686,10 @@
             "VulnerabilityWeb": {
                 "type": "object",
                 "properties": {
-                    "pname": {
-                        "type": "string"
-                    },
-                    "confirmed": {
-                        "type": "boolean"
-                    },
-                    "query": {
-                        "type": "string"
-                    },
-                    "_attachments": {},
                     "_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "cwe": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "response": {
-                        "type": "string"
-                    },
-                    "owned": {
-                        "type": "boolean",
-                        "readOnly": true
-                    },
-                    "data": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "cvss2": {},
-                    "tool": {
-                        "type": "string"
-                    },
-                    "service": {
-                        "readOnly": true,
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/Service1"
-                            }
-                        ]
-                    },
-                    "impact": {},
                     "status": {
                         "enum": [
                             "open",
@@ -4739,111 +4699,27 @@
                             "opened"
                         ]
                     },
-                    "owner": {
-                        "readOnly": true
-                    },
-                    "target": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "owasp": {
-                        "type": "array",
-                        "readOnly": true,
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "tags": {
-                        "readOnly": true
-                    },
-                    "refs": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Reference"
-                        }
-                    },
-                    "issuetracker": {
-                        "readOnly": true
-                    },
                     "parent_type": {},
-                    "desc": {
-                        "type": "string"
-                    },
                     "website": {
                         "type": "string"
                     },
-                    "resolution": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "command_id": {
-                        "type": "integer",
-                        "writeOnly": true
-                    },
-                    "parent": {},
-                    "severity": {
-                        "type": "string"
-                    },
-                    "type": {},
-                    "custom_fields": {},
-                    "hostnames": {
-                        "readOnly": true
-                    },
-                    "path": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
-                    },
-                    "policyviolations": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "method": {
-                        "type": "string"
-                    },
-                    "metadata": {},
-                    "risk": {
-                        "readOnly": true
-                    },
-                    "host_os": {
-                        "type": "string",
+                    "issuetracker": {
                         "readOnly": true
                     },
                     "description": {
                         "type": "string",
                         "readOnly": true
                     },
-                    "cvss3": {},
+                    "parent": {},
+                    "tags": {
+                        "readOnly": true
+                    },
+                    "severity": {
+                        "type": "string"
+                    },
                     "_rev": {
                         "type": "string",
                         "readOnly": true
-                    },
-                    "status_code": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "cve": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "external_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "date": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "params": {
-                        "type": "string"
                     },
                     "easeofresolution": {
                         "type": "string",
@@ -4856,12 +4732,136 @@
                         ],
                         "nullable": true
                     },
+                    "owned": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "hostnames": {
+                        "readOnly": true
+                    },
+                    "pname": {
+                        "type": "string"
+                    },
+                    "query": {
+                        "type": "string"
+                    },
+                    "owner": {
+                        "readOnly": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "data": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "response": {
+                        "type": "string"
+                    },
+                    "desc": {
+                        "type": "string"
+                    },
+                    "impact": {},
+                    "confirmed": {
+                        "type": "boolean"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
+                    },
+                    "service": {
+                        "readOnly": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Service1"
+                            }
+                        ]
+                    },
+                    "obj_id": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "type": {},
+                    "policyviolations": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "request": {
                         "type": "string"
                     },
-                    "reference_instances": {},
-                    "obj_id": {
+                    "_attachments": {},
+                    "params": {
+                        "type": "string"
+                    },
+                    "target": {
                         "type": "string",
+                        "readOnly": true
+                    },
+                    "host_os": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "resolution": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "metadata": {},
+                    "status_code": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "custom_fields": {},
+                    "external_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tool": {
+                        "type": "string"
+                    },
+                    "cve": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "cwe": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "owasp": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "cvss2": {},
+                    "cvss3": {},
+                    "refs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Reference"
+                        }
+                    },
+                    "reference_instances": {},
+                    "command_id": {
+                        "type": "integer",
+                        "writeOnly": true
+                    },
+                    "risk": {
                         "readOnly": true
                     }
                 },
@@ -4887,27 +4887,39 @@
             "VulnerabilityTemplate": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "create_at": {
+                    "_rev": {
                         "type": "string",
-                        "format": "date-time",
                         "readOnly": true
                     },
                     "cwe": {
                         "type": "string",
                         "readOnly": true
                     },
-                    "data": {
-                        "type": "string"
+                    "description": {
+                        "type": "string",
+                        "nullable": true
                     },
-                    "creator_id": {
-                        "type": "integer",
+                    "desc": {
+                        "type": "string",
                         "readOnly": true
                     },
-                    "impact": {},
+                    "exploitation": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
+                    },
+                    "references": {},
                     "refs": {
                         "type": "array",
                         "readOnly": true,
@@ -4915,49 +4927,11 @@
                             "type": "string"
                         }
                     },
-                    "exploitation": {
-                        "type": "string"
-                    },
-                    "desc": {
-                        "type": "string",
-                        "readOnly": true
-                    },
                     "resolution": {
                         "type": "string",
                         "nullable": true
                     },
-                    "policyviolations": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
-                    },
-                    "customfields": {},
-                    "description": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "creator": {
-                        "readOnly": true
-                    },
-                    "_rev": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "references": {},
-                    "external_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
+                    "impact": {},
                     "easeofresolution": {
                         "type": "string",
                         "enum": [
@@ -4968,7 +4942,33 @@
                             "infeasible"
                         ],
                         "nullable": true
-                    }
+                    },
+                    "policyviolations": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "data": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "creator": {
+                        "readOnly": true
+                    },
+                    "create_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "creator_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "customfields": {}
                 },
                 "required": [
                     "exploitation",
@@ -4978,23 +4978,23 @@
             "Histogram": {
                 "type": "object",
                 "properties": {
-                    "critical": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "confirmed": {
-                        "type": "integer",
+                    "date": {
+                        "type": "string",
                         "readOnly": true
                     },
                     "medium": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "date": {
-                        "type": "string",
+                    "high": {
+                        "type": "integer",
                         "readOnly": true
                     },
-                    "high": {
+                    "critical": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "confirmed": {
                         "type": "integer",
                         "readOnly": true
                     }
@@ -5003,24 +5003,6 @@
             "Workspace": {
                 "type": "object",
                 "properties": {
-                    "active": {
-                        "type": "boolean"
-                    },
-                    "histogram": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Histogram"
-                        }
-                    },
-                    "stats": {},
-                    "last_run_agent_date": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "importance": {
-                        "type": "integer"
-                    },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
@@ -5028,9 +5010,27 @@
                     "id": {
                         "type": "integer"
                     },
+                    "customer": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "duration": {},
                     "name": {
                         "type": "string"
                     },
+                    "public": {
+                        "type": "boolean"
+                    },
+                    "scope": {},
+                    "stats": {},
                     "create_date": {
                         "type": "string",
                         "format": "date-time",
@@ -5041,23 +5041,23 @@
                         "format": "date-time",
                         "readOnly": true
                     },
-                    "duration": {},
                     "readonly": {
                         "type": "boolean"
                     },
-                    "description": {
+                    "last_run_agent_date": {
                         "type": "string",
-                        "nullable": true
+                        "format": "date-time",
+                        "readOnly": true
                     },
-                    "public": {
-                        "type": "boolean"
+                    "histogram": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Histogram"
+                        }
                     },
-                    "customer": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
-                    },
-                    "scope": {}
+                    "importance": {
+                        "type": "integer"
+                    }
                 },
                 "required": [
                     "name"
@@ -5094,17 +5094,21 @@
             "CustomFieldsSchema": {
                 "type": "object",
                 "properties": {
-                    "field_display_name": {
-                        "type": "string"
-                    },
-                    "field_name": {
-                        "type": "string"
-                    },
                     "id": {
                         "type": "integer",
                         "readOnly": true
                     },
+                    "field_name": {
+                        "type": "string"
+                    },
                     "field_type": {
+                        "type": "string"
+                    },
+                    "field_metadata": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "field_display_name": {
                         "type": "string"
                     },
                     "field_order": {
@@ -5112,10 +5116,6 @@
                     },
                     "table_name": {
                         "type": "string"
-                    },
-                    "field_metadata": {
-                        "type": "string",
-                        "nullable": true
                     }
                 },
                 "required": [
@@ -5144,8 +5144,16 @@
             "Executor": {
                 "type": "object",
                 "properties": {
-                    "parameters_metadata": {
-                        "type": "object",
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "agent_id": {
+                        "type": "integer",
                         "readOnly": true
                     },
                     "last_run": {
@@ -5153,12 +5161,8 @@
                         "format": "date-time",
                         "readOnly": true
                     },
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "name": {
-                        "type": "string",
+                    "parameters_metadata": {
+                        "type": "object",
                         "readOnly": true
                     },
                     "schedules": {
@@ -5168,29 +5172,12 @@
                                 "$ref": "#/components/schemas/AgentsSchedule"
                             }
                         ]
-                    },
-                    "agent_id": {
-                        "type": "integer",
-                        "readOnly": true
                     }
                 }
             },
             "Agent": {
                 "type": "object",
                 "properties": {
-                    "active": {
-                        "type": "boolean",
-                        "nullable": true
-                    },
-                    "is_online": {
-                        "type": "boolean",
-                        "readOnly": true
-                    },
-                    "last_run": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "id": {
                         "type": "integer"
                     },
@@ -5203,6 +5190,10 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "active": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
                     "create_date": {
                         "type": "string",
                         "format": "date-time",
@@ -5213,6 +5204,13 @@
                         "format": "date-time",
                         "readOnly": true
                     },
+                    "creator": {
+                        "readOnly": true
+                    },
+                    "is_online": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
                     "executors": {
                         "readOnly": true,
                         "allOf": [
@@ -5221,7 +5219,9 @@
                             }
                         ]
                     },
-                    "creator": {
+                    "last_run": {
+                        "type": "string",
+                        "format": "date-time",
                         "readOnly": true
                     }
                 },
@@ -5235,10 +5235,10 @@
                     "token": {
                         "type": "string"
                     },
-                    "total_duration": {
+                    "expires_in": {
                         "type": "number"
                     },
-                    "expires_in": {
+                    "total_duration": {
                         "type": "number"
                     }
                 },
@@ -5248,44 +5248,120 @@
                     "total_duration"
                 ]
             },
-            "Vulnerability": {
+            "BulkCredential": {
                 "type": "object",
                 "properties": {
-                    "confirmed": {
-                        "type": "boolean"
+                    "username": {
+                        "type": "string",
+                        "nullable": true
                     },
-                    "_attachments": {},
+                    "password": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                }
+            },
+            "BulkService": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "cwe": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                    "status": {
+                        "type": "string",
+                        "default": "open",
+                        "enum": [
+                            "open",
+                            "closed",
+                            "filtered"
+                        ]
                     },
-                    "owned": {
-                        "type": "boolean",
+                    "type": {
                         "readOnly": true
                     },
-                    "data": {
+                    "protocol": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
+                    },
+                    "description": {
                         "type": "string",
                         "nullable": true
                     },
-                    "cvss2": {},
-                    "tool": {
-                        "type": "string"
+                    "_rev": {
+                        "type": "string",
+                        "readOnly": true
                     },
-                    "service": {
-                        "readOnly": true,
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/Service1"
-                            }
-                        ]
+                    "owned": {
+                        "type": "boolean"
                     },
-                    "impact": {},
+                    "owner": {
+                        "readOnly": true
+                    },
+                    "credentials": {
+                        "default": [],
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BulkCredential"
+                        }
+                    },
+                    "vulns": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "port": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "metadata": {},
+                    "summary": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "host_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "command_id": {
+                        "type": "integer",
+                        "writeOnly": true
+                    },
+                    "vulnerabilities": {
+                        "default": []
+                    }
+                },
+                "required": [
+                    "port",
+                    "protocol"
+                ]
+            },
+            "Vulnerability": {
+                "type": "object",
+                "properties": {
+                    "_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
                     "status": {
                         "enum": [
                             "open",
@@ -5295,93 +5371,21 @@
                             "opened"
                         ]
                     },
-                    "owner": {
-                        "readOnly": true
-                    },
-                    "target": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "owasp": {
-                        "type": "array",
-                        "readOnly": true,
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "tags": {
-                        "readOnly": true
-                    },
-                    "refs": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Reference"
-                        }
-                    },
                     "issuetracker": {
-                        "readOnly": true
-                    },
-                    "desc": {
-                        "type": "string"
-                    },
-                    "resolution": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "command_id": {
-                        "type": "integer",
-                        "writeOnly": true
-                    },
-                    "run_date": {},
-                    "severity": {
-                        "type": "string"
-                    },
-                    "type": {},
-                    "custom_fields": {},
-                    "hostnames": {
-                        "readOnly": true
-                    },
-                    "policyviolations": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
-                    },
-                    "metadata": {},
-                    "risk": {
-                        "readOnly": true
-                    },
-                    "host_os": {
-                        "type": "string",
                         "readOnly": true
                     },
                     "description": {
                         "type": "string",
                         "readOnly": true
                     },
-                    "cvss3": {},
-                    "_rev": {
-                        "type": "string",
+                    "tags": {
                         "readOnly": true
                     },
-                    "cve": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                    "severity": {
+                        "type": "string"
                     },
-                    "external_id": {
+                    "_rev": {
                         "type": "string",
-                        "nullable": true
-                    },
-                    "date": {
-                        "type": "string",
-                        "format": "date-time",
                         "readOnly": true
                     },
                     "easeofresolution": {
@@ -5395,11 +5399,114 @@
                         ],
                         "nullable": true
                     },
-                    "reference_instances": {},
+                    "owned": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "hostnames": {
+                        "readOnly": true
+                    },
+                    "owner": {
+                        "readOnly": true
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "data": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "desc": {
+                        "type": "string"
+                    },
+                    "impact": {},
+                    "confirmed": {
+                        "type": "boolean"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
+                    },
+                    "service": {
+                        "readOnly": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Service1"
+                            }
+                        ]
+                    },
                     "obj_id": {
                         "type": "string",
                         "readOnly": true
-                    }
+                    },
+                    "type": {},
+                    "policyviolations": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "_attachments": {},
+                    "target": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "host_os": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "resolution": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {},
+                    "custom_fields": {},
+                    "external_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tool": {
+                        "type": "string"
+                    },
+                    "cvss2": {},
+                    "cvss3": {},
+                    "cwe": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "cve": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "owasp": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "refs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Reference"
+                        }
+                    },
+                    "reference_instances": {},
+                    "command_id": {
+                        "type": "integer",
+                        "writeOnly": true
+                    },
+                    "risk": {
+                        "readOnly": true
+                    },
+                    "run_date": {}
                 },
                 "required": [
                     "name",
@@ -5407,86 +5514,27 @@
                     "type"
                 ]
             },
-            "BulkCredential": {
+            "HostBulk": {
                 "type": "object",
                 "properties": {
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "username": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "description": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "password": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                }
-            },
-            "BulkService": {
-                "type": "object",
-                "properties": {
-                    "version": {
-                        "type": "string",
-                        "nullable": true
+                    "id": {
+                        "type": "integer"
                     },
                     "_id": {
                         "type": "integer",
                         "readOnly": true
                     },
-                    "vulnerabilities": {
-                        "default": []
-                    },
-                    "vulns": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "host_id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "owned": {
-                        "type": "boolean"
-                    },
-                    "status": {
-                        "type": "string",
-                        "default": "open",
-                        "enum": [
-                            "open",
-                            "closed",
-                            "filtered"
-                        ]
-                    },
-                    "owner": {
-                        "readOnly": true
-                    },
-                    "command_id": {
-                        "type": "integer",
-                        "writeOnly": true
-                    },
-                    "protocol": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
-                    },
-                    "summary": {
+                    "_rev": {
                         "type": "string",
                         "readOnly": true
                     },
-                    "type": {
-                        "readOnly": true
-                    },
-                    "metadata": {},
-                    "name": {
-                        "type": "string",
-                        "nullable": true
+                    "ip": {
+                        "type": "string"
                     },
                     "description": {
+                        "type": "string"
+                    },
+                    "mac": {
                         "type": "string",
                         "nullable": true
                     },
@@ -5497,51 +5545,20 @@
                             "$ref": "#/components/schemas/BulkCredential"
                         }
                     },
-                    "_rev": {
+                    "default_gateway": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {},
+                    "name": {
                         "type": "string",
                         "readOnly": true
                     },
-                    "port": {
-                        "type": "integer",
-                        "minimum": 0
-                    },
-                    "id": {
-                        "type": "integer"
-                    }
-                },
-                "required": [
-                    "port",
-                    "protocol"
-                ]
-            },
-            "HostBulk": {
-                "type": "object",
-                "properties": {
-                    "ip": {
+                    "os": {
                         "type": "string"
-                    },
-                    "versions": {
-                        "readOnly": true
-                    },
-                    "_id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "vulnerabilities": {
-                        "default": [],
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Vulnerability"
-                        }
-                    },
-                    "vulns": {
-                        "readOnly": true
                     },
                     "owned": {
                         "type": "boolean"
-                    },
-                    "severity_counts": {
-                        "readOnly": true
                     },
                     "owner": {
                         "readOnly": true
@@ -5553,52 +5570,35 @@
                             "$ref": "#/components/schemas/BulkService"
                         }
                     },
-                    "command_id": {
-                        "type": "integer",
-                        "writeOnly": true
+                    "vulns": {
+                        "readOnly": true
                     },
-                    "os": {
-                        "type": "string"
-                    },
+                    "hostnames": {},
                     "type": {
+                        "readOnly": true
+                    },
+                    "service_summaries": {
+                        "readOnly": true
+                    },
+                    "versions": {
                         "readOnly": true
                     },
                     "importance": {
                         "type": "integer"
                     },
-                    "hostnames": {},
-                    "metadata": {},
-                    "name": {
-                        "type": "string",
+                    "severity_counts": {
                         "readOnly": true
                     },
-                    "default_gateway": {
-                        "type": "string",
-                        "nullable": true
+                    "command_id": {
+                        "type": "integer",
+                        "writeOnly": true
                     },
-                    "description": {
-                        "type": "string"
-                    },
-                    "credentials": {
+                    "vulnerabilities": {
                         "default": [],
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/BulkCredential"
+                            "$ref": "#/components/schemas/Vulnerability"
                         }
-                    },
-                    "_rev": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "id": {
-                        "type": "integer"
-                    },
-                    "mac": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "service_summaries": {
-                        "readOnly": true
                     }
                 },
                 "required": [
@@ -5609,37 +5609,43 @@
             "BulkCommand": {
                 "type": "object",
                 "properties": {
-                    "hostname": {
+                    "command": {
                         "type": "string",
                         "nullable": true,
-                        "maxLength": 250
+                        "minLength": 1
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "x-unit": "microseconds"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time"
                     },
                     "ip": {
                         "type": "string",
                         "nullable": true,
                         "maxLength": 250
                     },
-                    "tool": {
+                    "hostname": {
                         "type": "string",
                         "nullable": true,
-                        "minLength": 1
-                    },
-                    "start_date": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "command": {
-                        "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "maxLength": 250
                     },
                     "params": {
                         "type": "string",
                         "nullable": true
                     },
-                    "duration": {
-                        "type": "integer",
-                        "x-unit": "microseconds"
+                    "user": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 250
+                    },
+                    "creator": {},
+                    "tool": {
+                        "type": "string",
+                        "nullable": true,
+                        "minLength": 1
                     },
                     "import_source": {
                         "enum": [
@@ -5649,12 +5655,6 @@
                         ],
                         "nullable": true,
                         "maxLength": 6
-                    },
-                    "creator": {},
-                    "user": {
-                        "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
                     }
                 },
                 "required": [
@@ -5666,9 +5666,6 @@
             "BulkCreate": {
                 "type": "object",
                 "properties": {
-                    "execution_id": {
-                        "type": "integer"
-                    },
                     "hosts": {
                         "type": "array",
                         "items": {
@@ -5677,6 +5674,9 @@
                     },
                     "command": {
                         "$ref": "#/components/schemas/BulkCommand"
+                    },
+                    "execution_id": {
+                        "type": "integer"
                     }
                 },
                 "required": [
@@ -5695,11 +5695,11 @@
                         "type": "string",
                         "nullable": true
                     },
-                    "user_query": {
+                    "json_query": {
                         "type": "string",
                         "nullable": true
                     },
-                    "json_query": {
+                    "user_query": {
                         "type": "string",
                         "nullable": true
                     }

@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+4.6.0 [Sep 6th, 2023]:
+---
+ * [FIX] Delete Cascade from KB. #7569
+
 4.5.1 [Jul 15th, 2023]:
 ---
  * [FIX] Fix pillow version to 9.4.0. #7531

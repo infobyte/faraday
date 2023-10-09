@@ -98,6 +98,7 @@ OBJECT_TYPES = [
     'executive_report',
     'workspace',
     'task',
+    'report_logo',
     'report_template',
 ]
 
@@ -1917,7 +1918,7 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
 class ReferenceTemplateVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_template_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id', ondelete='CASCADE'), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference_template.id'), primary_key=True)
 
     reference = relationship(
@@ -1935,7 +1936,7 @@ class ReferenceTemplateVulnerabilityAssociation(db.Model):
 class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     __tablename__ = 'policy_violation_template_vulnerability_association'
 
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id', ondelete='CASCADE'), primary_key=True)
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolationTemplate",
@@ -2061,6 +2062,14 @@ association_workspace_and_users_table = Table(
 )
 
 
+executive_report_workspace_table = Table(
+    "executive_report_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("executive_report_id", Integer, ForeignKey("executive_report.id")),
+)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2101,6 +2110,13 @@ class Workspace(Metadata):
     vulnerability_unclassified_count = query_expression()
 
     importance = Column(Integer, default=0)
+
+    reports = relationship(
+        'ExecutiveReport',
+        secondary=executive_report_workspace_table,
+        back_populates='workspaces',
+        cascade='delete'
+    )
 
     allowed_users = relationship(
         'User',
@@ -2643,12 +2659,12 @@ class ExecutiveReport(Metadata):
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
+    workspaces = relationship(
         'Workspace',
-        backref=backref('reports', cascade="all, delete-orphan"),
-        foreign_keys=[workspace_id]
+        secondary=executive_report_workspace_table,
+        back_populates='reports'
     )
+
     tags = relationship(
         "Tag",
         secondary="tag_object",
@@ -3204,6 +3220,145 @@ class Analytics(Metadata):
     filters = Column(JSONType, nullable=False)
     data = Column(JSONType, nullable=False)
     show_data_table = Column(Boolean, default=False)
+
+
+class BaseNotification(Metadata):
+    __tablename__ = "base_notification"
+
+    id = Column(Integer, primary_key=True)
+    data = Column(JSONType, nullable=False)
+    processed = Column(Boolean, default=False)
+    verbose = Column(Boolean, default=False)
+
+    def __repr__(self):
+        return f"Notification ID:{self.id}, type:{self.data.get('type')}, subtype:{self.data.get('subtype')}"
+
+
+class UserNotification(Metadata):
+    __tablename__ = "user_notification"
+
+    id = Column(Integer, primary_key=True)
+    message = Column(Text, nullable=False)
+    extra_data = Column(JSONType, nullable=True)
+    type = Column(String, nullable=False)
+    subtype = Column(String, nullable=False)
+    read = Column(Boolean, default=False)
+    triggered_by = Column(JSONType)
+    user_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
+    user = relationship('User',
+                        backref=backref('user_notifications', cascade="all, delete-orphan"),
+                        foreign_keys=[user_id])
+    links_to = Column(JSONType, nullable=True)
+    event_date = Column(DateTime, default=datetime.utcnow(), nullable=False)
+
+    def mark_as_read(self):
+        self.read = True
+
+    def __repr__(self):
+        return f"{self.message}"
+
+
+class UserNotificationSettings(Metadata):
+    __tablename__ = 'user_notification_settings'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('faraday_user.id'))
+    user = relationship('User',
+                        backref=backref('notification_settings', uselist=False, cascade="all, delete-orphan"),
+                        foreign_keys=[user_id])
+
+    paused = Column(Boolean, default=False)
+    slack_id = Column(String, nullable=True, default=None)
+    no_self_notify = Column(Boolean, default=False)
+
+    agents_enabled = Column(Boolean, default=True)
+    agents_app = Column(Boolean, default=True)
+    agents_email = Column(Boolean, default=False)
+    agents_slack = Column(Boolean, default=False)
+
+    cli_enabled = Column(Boolean, default=True)
+    cli_app = Column(Boolean, default=True)
+    cli_email = Column(Boolean, default=False)
+    cli_slack = Column(Boolean, default=False)
+
+    comments_enabled = Column(Boolean, default=True)
+    comments_app = Column(Boolean, default=True)
+    comments_email = Column(Boolean, default=False)
+    comments_slack = Column(Boolean, default=False)
+
+    hosts_enabled = Column(Boolean, default=True)
+    hosts_app = Column(Boolean, default=True)
+    hosts_email = Column(Boolean, default=False)
+    hosts_slack = Column(Boolean, default=False)
+
+    users_enabled = Column(Boolean, default=True)
+    users_app = Column(Boolean, default=True)
+    users_email = Column(Boolean, default=False)
+    users_slack = Column(Boolean, default=False)
+
+    reports_enabled = Column(Boolean, default=True)
+    reports_app = Column(Boolean, default=True)
+    reports_email = Column(Boolean, default=False)
+    reports_slack = Column(Boolean, default=False)
+
+    vulnerabilities_enabled = Column(Boolean, default=True)
+    vulnerabilities_app = Column(Boolean, default=True)
+    vulnerabilities_email = Column(Boolean, default=False)
+    vulnerabilities_slack = Column(Boolean, default=False)
+
+    workspaces_enabled = Column(Boolean, default=True)
+    workspaces_app = Column(Boolean, default=True)
+    workspaces_email = Column(Boolean, default=False)
+    workspaces_slack = Column(Boolean, default=False)
+
+    pipelines_enabled = Column(Boolean, default=True)
+    pipelines_app = Column(Boolean, default=True)
+    pipelines_email = Column(Boolean, default=False)
+    pipelines_slack = Column(Boolean, default=False)
+
+    executive_reports_enabled = Column(Boolean, default=True)
+    executive_reports_app = Column(Boolean, default=True)
+    executive_reports_email = Column(Boolean, default=False)
+    executive_reports_slack = Column(Boolean, default=False)
+
+    planner_enabled = Column(Boolean, default=True)
+    planner_app = Column(Boolean, default=True)
+    planner_email = Column(Boolean, default=False)
+    planner_slack = Column(Boolean, default=False)
+
+    integrations_enabled = Column(Boolean, default=True)
+    integrations_app = Column(Boolean, default=True)
+    integrations_email = Column(Boolean, default=False)
+    integrations_slack = Column(Boolean, default=False)
+
+    other_enabled = Column(Boolean, default=True)
+    other_app = Column(Boolean, default=True)
+    other_email = Column(Boolean, default=False)
+    other_slack = Column(Boolean, default=False)
+
+    adv_high_crit_vuln_enabled = Column(Boolean, default=False)
+    adv_high_crit_vuln_app = Column(Boolean, default=False)
+    adv_high_crit_vuln_email = Column(Boolean, default=False)
+    adv_high_crit_vuln_slack = Column(Boolean, default=False)
+    adv_high_crit_vuln = Column(Boolean, default=False)
+
+    adv_risk_score_threshold_enabled = Column(Boolean, default=False)
+    adv_risk_score_threshold_app = Column(Boolean, default=False)
+    adv_risk_score_threshold_email = Column(Boolean, default=False)
+    adv_risk_score_threshold_slack = Column(Boolean, default=False)
+    adv_risk_score_threshold = Column(Integer, default=0)
+
+    adv_vuln_open_days_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_app = Column(Boolean, default=False)
+    adv_vuln_open_days_email = Column(Boolean, default=False)
+    adv_vuln_open_days_slack = Column(Boolean, default=False)
+    adv_vuln_open_days = Column(Integer, default=0)
+
+
+class EmailNotification(Metadata):
+    id = Column(Integer, primary_key=True)
+    user_email = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    processed = Column(Boolean, default=False)
 
 
 # Indexes to speed up queries

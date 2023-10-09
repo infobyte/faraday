@@ -21,6 +21,7 @@ from faraday.server.models import (
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
+    PaginatedMixin,
     FilterSetMeta,
     FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
@@ -129,7 +130,7 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
+class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service
@@ -149,6 +150,8 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspa
             })
         return {
             'services': services,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(services))
         }
 
     def _perform_create(self, data, **kwargs):

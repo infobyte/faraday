@@ -18,7 +18,8 @@ from faraday.server.api.base import (
     BulkDeleteMixin,
     BulkUpdateMixin,
     FilterSetMeta,
-    FilterAlchemyMixin
+    FilterAlchemyMixin,
+    PaginatedMixin
 )
 from faraday.server.api.modules.services import ServiceSchema
 services_context_api = Blueprint('services_context_api', __name__)
@@ -43,7 +44,7 @@ class ServiceContextFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceContextView(FilterMixin, FilterAlchemyMixin, ContextMixin, BulkDeleteMixin, BulkUpdateMixin):
+class ServiceContextView(PaginatedMixin, FilterMixin, FilterAlchemyMixin, ContextMixin, BulkDeleteMixin, BulkUpdateMixin):
 
     route_base = 'services'
     model_class = Service
@@ -63,6 +64,8 @@ class ServiceContextView(FilterMixin, FilterAlchemyMixin, ContextMixin, BulkDele
             })
         return {
             'services': services,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(services))
         }
 
 

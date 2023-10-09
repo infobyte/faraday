@@ -40,6 +40,7 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterMixin,
     BulkDeleteMixin,
+    PaginatedMixin
 )
 
 logger = logging.getLogger(__name__)
@@ -199,7 +200,7 @@ def request_histogram():
     return histogram_days, histogram_dict
 
 
-class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -303,6 +304,13 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
+
+    def _envelope_list(self, objects, pagination_metadata=None):
+        return {
+            'workspaces': objects,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(objects))
+        }
 
     def _add_to_filter(self, filter_query, **kwargs):
         filter_query = filter_query.options(

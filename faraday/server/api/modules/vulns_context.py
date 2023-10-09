@@ -227,7 +227,8 @@ class VulnerabilityContextView(ContextMixin,
 
     @property
     def model_class(self):
-        if request.method == 'POST':
+        #TODO hay que hacer foco en esto
+        if request.method == 'POST' and request.json:
             return self.model_class_dict[request.json['type']]
         # We use Generic to list all vulns from all types
         return self.model_class_dict['VulnerabilityGeneric']
@@ -325,7 +326,6 @@ class VulnerabilityContextView(ContextMixin,
           200:
             description: Ok
         """
-
         vuln_permission_check = self._apply_filter_context(
             db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
         ).first()

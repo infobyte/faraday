@@ -4,7 +4,7 @@
 
 
 update_github:
-    image: python:3
+    image: python:3.11
     stage: publish
     script:
       - !reference [.set-remote-github, script]
@@ -34,7 +34,7 @@ update_github:
 
 
 tag_on_github:
-    image: python:3
+    image: python:3.11
     stage: publish
     script:
       - !reference [.set-remote-github, script]
@@ -58,7 +58,7 @@ tag_on_github:
         artifacts: true
 
 upload_assets_to_github_tag:
-    image: python:3
+    image: python:3.11
     stage: publish
     script:
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)

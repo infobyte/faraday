@@ -3338,9 +3338,16 @@ class UserNotificationSettings(Metadata):
     adv_vuln_open_days = Column(Integer, default=0)
 
 
-class EmailNotification(Metadata):
+class EmailNotification(db.Model):
     id = Column(Integer, primary_key=True)
     user_email = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    processed = Column(Boolean, default=False)
+
+
+class SlackNotification(db.Model):
+    id = Column(Integer, primary_key=True)
+    slack_id = Column(String, nullable=False)
     message = Column(String, nullable=False)
     processed = Column(Boolean, default=False)
 

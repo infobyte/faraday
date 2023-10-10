@@ -20,6 +20,7 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
 from faraday.server.utils.database import get_or_create
@@ -170,6 +171,53 @@ class HostsView(PaginatedMixin,
                    Host.vulnerability_unclassified_generic_count,
                    ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        """
+        Overrides _get_eagerloaded_query of GenericView
+        """
+        options = []
+        try:
+            has_creator = 'owner' in self._get_schema_class().opts.fields
+        except AttributeError:
+            has_creator = False
+        show_stats = kwargs.pop('show_stats', True)
+        if has_creator:
+            # APIs for objects with metadata always return the creator's
+            # username. Do a joinedload to prevent doing one query per object
+            # (n+1) problem
+            options.append(joinedload(
+                getattr(self.model_class, 'creator')).load_only('username'))
+        query = self._get_base_query(*args, **kwargs)
+        options += [joinedload(relationship)
+                    for relationship in self.get_joinedloads]
+        if show_stats:
+            options += [undefer(column) for column in self.get_undefer]
+        return query.options(*options)
+
+    def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of hosts."
+            tags: ["Host"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: HostSchema
+          tags: ["Host"]
+          responses:
+            200:
+              description: Ok
+        """
+        kwargs['show_stats'] = flask.request.args.get('stats', '') != 'false'
+
+        if not kwargs['show_stats']:
+            kwargs['exclude'] = ['severity_counts', 'vulns', 'credentials', 'services']
+
+        return super().index(**kwargs)
 
     @route('/filter')
     def filter(self, workspace_name):

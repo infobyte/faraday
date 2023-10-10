@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 4.6.0 API",
+        "title": "Faraday 4.6.1 API",
         "version": "v3"
     },
     "security": {
@@ -983,10 +983,10 @@
                 }
             },
             "get": {
+                "summary": "Get a list of hosts.",
                 "tags": [
                     "Host"
                 ],
-                "summary": "Get a list of Host.",
                 "responses": {
                     "200": {
                         "description": "Ok",

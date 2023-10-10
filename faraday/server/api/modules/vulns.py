@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import io
 import logging
 import json
+import imghdr
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
@@ -696,6 +697,11 @@ class VulnerabilityView(PaginatedMixin,
         for old_attachment in old_attachments:
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
+            if 'image' in attachment['content_type']:
+                image_format = imghdr.what(None, h=b64decode(attachment['data']))
+                if image_format and image_format.lower() == "webp":
+                    logger.info("Evidence can not be webp format")
+                    flask.abort(400, "Evidence can not be webp format")
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
             get_or_create(
@@ -910,7 +916,12 @@ class VulnerabilityView(PaginatedMixin,
                 message = 'Evidence already exists in vuln'
                 return make_response(flask.jsonify(message=message, success=False, code=400), 400)
             else:
-                faraday_file = FaradayUploadedFile(request.files['file'].read())
+                partial = request.files['file'].read(32)
+                image_format = imghdr.what(None, h=partial)
+                if image_format and image_format.lower() == "webp":
+                    logger.info("Evidence can't be webp")
+                    flask.abort(400, "Evidence can't be webp")
+                faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
                 instance, created = get_or_create(
                     db.session,
                     File,

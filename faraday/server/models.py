@@ -98,6 +98,7 @@ OBJECT_TYPES = [
     'executive_report',
     'workspace',
     'task',
+    'report_logo',
     'report_template',
 ]
 

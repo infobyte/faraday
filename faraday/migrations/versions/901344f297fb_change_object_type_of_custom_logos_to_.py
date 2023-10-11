@@ -16,6 +16,8 @@ depends_on = None
 
 
 def upgrade():
+    with op.get_context().autocommit_block():
+        op.execute("ALTER TYPE object_types ADD VALUE IF NOT EXISTS 'report_logo'")
     op.execute("UPDATE file SET object_type = 'report_logo' WHERE object_type = 'executive_report' AND name = 'custom_logo'")
 
 

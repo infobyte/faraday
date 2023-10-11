@@ -84,6 +84,7 @@ logger = logging.getLogger(__name__)
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
+
 BlankColumn = partial(Column, nullable=False,
                       info={'allow_blank': True},
                       default='')

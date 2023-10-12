@@ -327,7 +327,8 @@ class VulnerabilityContextView(ContextMixin,
             description: Ok
         """
         vuln_permission_check = self._apply_filter_context(
-            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
+            operation="write"
         ).first()
 
         if not vuln_permission_check:

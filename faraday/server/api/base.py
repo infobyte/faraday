@@ -2102,7 +2102,9 @@ class ContextMixin(ReadOnlyView):
 
     count_extra_filters = []
 
-    def _get_base_query(self, operation="read", *args, **kwargs):
+    def _get_base_query(self, operation="", *args, **kwargs):
+        if not operation:
+            operation = "read" if flask.request.method in ['GET', 'HEAD', 'OPTIONS'] else "write"
         query = super()._get_base_query(*args, **kwargs)
         return self._apply_filter_context(query, operation)
 

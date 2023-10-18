@@ -227,7 +227,7 @@ class VulnerabilityContextView(ContextMixin,
 
     @property
     def model_class(self):
-        #TODO hay que hacer foco en esto
+        # TODO hay que hacer foco en esto
         if request.method == 'POST' and request.json:
             return self.model_class_dict[request.json['type']]
         # We use Generic to list all vulns from all types

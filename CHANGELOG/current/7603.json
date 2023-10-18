@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Filter .webp files in vulns attachment endpoint because CVE-2023-4863. #7603"
+}

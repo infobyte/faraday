@@ -1,7 +1,7 @@
 merge_conflict_check:
     tags:
         - faradaytests
-    image: python:3
+    image: python:3.11
     stage: pre_testing
     allow_failure: true
     script:
@@ -16,7 +16,7 @@ merge_conflict_check:
 sanity_check:
     tags:
         - faradaytests
-    image: python:3
+    image: python:3.11
     stage: pre_testing
     script:
         - bash scripts/sanity_check_commit.sh
@@ -29,7 +29,7 @@ sanity_check:
 migration_sanity_check:
     tags:
         - faradaytests
-    image: python:3
+    image: python:3.11
     stage: pre_testing
     script:
         - scripts/model_check.py
@@ -44,7 +44,7 @@ migration_sanity_check:
 bandit:
     tags:
         - faradaytests
-    image: python:3
+    image: python:3.11
     stage: pre_testing
     script:
       - pip3 install virtualenv
@@ -92,7 +92,7 @@ build_and_push_to_cachix:
       - when: on_success
 
 flake8:
-    image: python:3
+    image: python:3.11
     stage: pre_testing
     script:
       - pip install flake8
@@ -102,7 +102,7 @@ flake8:
         - when: on_success
 
 no-format-str:
-    image: python:3
+    image: python:3.11
     stage: pre_testing
     script:
       - pip install flynt==0.69

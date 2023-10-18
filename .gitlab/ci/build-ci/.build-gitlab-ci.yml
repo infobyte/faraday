@@ -145,9 +145,9 @@ generate_rpm_dev:
       - cd /; tar xf py3.tar; cd -
       - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
       - yum groups -y install "Development Tools"
-      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
-      - source /opt/rh/rh-ruby23/enable
-      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - yum -y install rh-python36 rh-ruby25 rh-ruby25-ruby-devel
+      - source /opt/rh/rh-ruby25/enable
+      - export X_SCLS="`scl enable rh-ruby25 'echo $X_SCLS'`"
       - source /opt/rh/rh-python36/enable
       - pip install virtualenv
       - pip install virtualenv-tools3
@@ -200,9 +200,9 @@ generate_rpm_staging:
       - cd /; tar xf py3.tar; cd -
       - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
       - yum groups -y install "Development Tools"
-      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
-      - source /opt/rh/rh-ruby23/enable
-      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - yum -y install rh-python36 rh-ruby25 rh-ruby25-ruby-devel
+      - source /opt/rh/rh-ruby25/enable
+      - export X_SCLS="`scl enable rh-ruby25 'echo $X_SCLS'`"
       - source /opt/rh/rh-python36/enable
       - pip install virtualenv
       - pip install virtualenv-tools3
@@ -252,9 +252,9 @@ generate_rpm_master:
       - cd /; tar xf py3.tar; cd -
       - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
       - yum groups -y install "Development Tools"
-      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
-      - source /opt/rh/rh-ruby23/enable
-      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - yum -y install rh-python36 rh-ruby25 rh-ruby25-ruby-devel
+      - source /opt/rh/rh-ruby25/enable
+      - export X_SCLS="`scl enable rh-ruby25 'echo $X_SCLS'`"
       - source /opt/rh/rh-python36/enable
       - pip install virtualenv
       - pip install virtualenv-tools3

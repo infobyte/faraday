@@ -540,7 +540,7 @@ class SeveritiesHistogram(db.Model):
     DEFAULT_DAYS_BEFORE = 20
 
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -562,7 +562,7 @@ class VulnerabilityHitCount(db.Model):
     __tablename__ = "vulnerability_hit_count"
 
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -985,7 +985,7 @@ class CommandObject(db.Model):
 
     # 1 workspace <--> N command_objects
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -1855,7 +1855,7 @@ class Reference(Metadata):
 
     # 1 workspace <--> N references
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -1891,7 +1891,7 @@ class ReferenceVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_vulnerability_association'
 
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
-    reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
+    reference_id = Column(Integer, ForeignKey('reference.id', ondelete="CASCADE"), primary_key=True)
 
     reference = relationship("Reference",
                              backref=backref("reference_associations", cascade="all, delete-orphan"),
@@ -2058,7 +2058,7 @@ class Credential(Metadata):
 association_workspace_and_users_table = Table(
     'workspace_permission_association',
     db.Model.metadata,
-    Column('workspace_id', Integer, ForeignKey('workspace.id')),
+    Column('workspace_id', Integer, ForeignKey('workspace.id', ondelete='CASCADE')),
     Column('user_id', Integer, ForeignKey('faraday_user.id'))
 )
 
@@ -2601,7 +2601,7 @@ class Comment(Metadata):
 
     # 1 workspace <--> N comments
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=True)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -2788,7 +2788,7 @@ class NotificationEvent(db.Model):
     notification_data = Column(JSONType, nullable=False)
     create_date = Column(DateTime, default=datetime.utcnow)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=True)
     workspace = relationship(
         'Workspace',
         backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
@@ -2802,7 +2802,7 @@ class NotificationEvent(db.Model):
 class NotificationBase(db.Model):
     __tablename__ = 'notification_base'
     id = Column(Integer, primary_key=True)
-    notification_event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
+    notification_event_id = Column(Integer, ForeignKey('notification_event.id', ondelete="CASCADE"), index=True, nullable=False)
     notification_event = relationship(
         'NotificationEvent',
         backref=backref('notifications', cascade="all, delete-orphan"),

@@ -37,6 +37,8 @@ def upgrade():
     op.execute('alter table notification_base add constraint notification_base_notification_event_id_fkey  FOREIGN KEY (notification_event_id) REFERENCES notification_event(id) on delete CASCADE;')
     op.execute('alter table notification_event drop constraint notification_event_workspace_id_fkey;')
     op.execute('alter table notification_event add constraint notification_event_workspace_id_fkey FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete CASCADE;')
+    op.execute('alter table comment drop constraint comment_workspace_id_fkey;')
+    op.execute('alter table comment add constraint comment_workspace_id_fkey  FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete CASCADE;')
 
 
 def downgrade():
@@ -61,3 +63,5 @@ def downgrade():
     op.execute('alter table notification_base add constraint notification_base_notification_event_id_fkey  FOREIGN KEY (notification_event_id) REFERENCES notification_event(id);')
     op.execute('alter table notification_event drop constraint notification_event_workspace_id_fkey;')
     op.execute('alter table notification_event add constraint notification_event_workspace_id_fkey FOREIGN KEY (workspace_id) REFERENCES workspace(id);')
+    op.execute('alter table comment drop constraint comment_workspace_id_fkey;')
+    op.execute('alter table comment add constraint comment_workspace_id_fkey  FOREIGN KEY (workspace_id) REFERENCES workspace(id);')

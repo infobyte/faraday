@@ -704,6 +704,7 @@ class VulnerabilityContextView(ContextMixin,
         if not flask.request.json or 'severities' not in flask.request.json:
             return super().bulk_delete(self, **kwargs)
         return self._perform_bulk_delete(flask.request.json['severities'], by='severity', **kwargs), 200
+    bulk_delete.__doc__ = BulkDeleteMixin.bulk_delete.__doc__
 
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE

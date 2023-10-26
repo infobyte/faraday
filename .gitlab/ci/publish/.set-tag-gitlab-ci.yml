@@ -1,5 +1,5 @@
 publish_pypi:
-    image: python:3
+    image: python:3.11
     stage: publish
     script:
       - !reference [ .get_from_tar_and_replace_www, script ]

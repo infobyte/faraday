@@ -1028,8 +1028,8 @@ class FilterMixin(ListMixin):
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False, return_objects=False) -> Tuple[list, int]:
-        marshmallow_params = {'many': True, 'context': {}}
+                severity_count=False, host_vulns=False, exclude=[], return_objects=False) -> Tuple[list, int]:
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
@@ -1056,7 +1056,10 @@ class FilterMixin(ListMixin):
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
             count = filter_query.count()
-            filter_query = filter_query.limit(limit).offset(offset)
+            if limit:
+                filter_query = filter_query.limit(limit)
+            if offset:
+                filter_query = filter_query.offset(offset)
             filter_query = self._add_to_filter(filter_query)
             if return_objects:
                 return filter_query.all(), filter_query.count()

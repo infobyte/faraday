@@ -972,6 +972,49 @@ class VulnerabilityTemplate(VulnerabilityABC):
     custom_fields = Column(JSONType)
     shipped = Column(Boolean, nullable=False, default=False)
 
+    # CVSS
+    _cvss2_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss2_vector_string(self):
+        return self._cvss2_vector_string
+
+    @cvss2_vector_string.setter
+    def cvss2_vector_string(self, vector_string):
+        self._cvss2_vector_string = vector_string
+        if not self._cvss2_vector_string:
+            self.init_cvss2_attrs()
+            return None
+        try:
+            cvss2 = cvss.CVSS2(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS2 vector string: {self._cvss2_vector_string}", e)
+
+    def init_cvss2_attrs(self):
+        self._cvss2_vector_string = None
+
+    _cvss3_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss3_vector_string(self):
+        return self._cvss3_vector_string
+
+    @cvss3_vector_string.setter
+    def cvss3_vector_string(self, vector_string):
+        self._cvss3_vector_string = vector_string
+        if not self._cvss3_vector_string:
+            self.init_cvss3_attrs()
+            return None
+        try:
+            cvss3 = cvss.CVSS3(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS3 vector string: {self._cvss3_vector_string}", e)
+
+    def init_cvss3_attrs(self):
+        self._cvss3_vector_string = None
+
+    # CVE
+
 
 class CommandObject(db.Model):
     __tablename__ = 'command_object'

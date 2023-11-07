@@ -1090,7 +1090,8 @@ class VulnerabilityView(PaginatedMixin,
             'request',
             'resolution',
             'response',
-            'policyviolations'
+            'policyviolations',
+            'date',
         )}
         if 'group_by' not in filters:
             offset = None

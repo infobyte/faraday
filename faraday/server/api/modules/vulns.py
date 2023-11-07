@@ -314,7 +314,7 @@ class VulnerabilitySchema(AutoSchema):
 
     @post_dump
     def remove_reference_instances(self, data, **kwargs):
-        refs = data.pop('reference_instances')
+        refs = data.pop('reference_instances', [])
         data['refs'] = []
         for ref in refs:
             data['refs'].append({"name": ref.name, "type": ref.type})
@@ -778,6 +778,9 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+            joinedload(VulnerabilityGeneric.policy_violation_instances),
+            joinedload(VulnerabilityGeneric.cve_instances),
+            joinedload(VulnerabilityGeneric.reference_instances),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -1067,7 +1070,17 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400, "Invalid filters")
 
         workspace = get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': (
+            '_attachments',
+            'description',
+            'desc',
+            'refs',
+            'reference_instances',
+            'request',
+            'resolution',
+            'response',
+            'policyviolations'
+        )}
         if 'group_by' not in filters:
             offset = None
             limit = None

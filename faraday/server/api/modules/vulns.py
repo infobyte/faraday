@@ -1049,13 +1049,24 @@ class VulnerabilityView(PaginatedMixin,
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
-            vulns = vulns.options(
-                joinedload(VulnerabilityGeneric.tags),
-                joinedload(Vulnerability.host),
-                joinedload(Vulnerability.service),
-                joinedload(VulnerabilityWeb.service),
-                joinedload(VulnerabilityGeneric.cwe),
-            )
+            options = [
+                joinedload('service'),
+                joinedload('cve_instances'),
+                # joinedload('reference_instances'),
+                # joinedload('policy_violation_instances'),
+                joinedload('owasp'),
+                joinedload('cwe'),
+                joinedload('host').joinedload('hostnames'),
+                joinedload('service').joinedload('host').joinedload('hostnames'),
+                undefer('target'),
+                undefer('target_host_os'),
+                undefer('creator_command_tool'),
+                undefer('creator_command_id'),
+            ]
+            vulns = vulns.options(selectin_polymorphic(
+                VulnerabilityGeneric,
+                [Vulnerability, VulnerabilityWeb]
+            ), *options)
         return vulns
 
     def _filter(self, filters, workspace_name):
@@ -1088,7 +1099,6 @@ class VulnerabilityView(PaginatedMixin,
                 offset = filters.pop('offset')
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
-
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
@@ -1098,7 +1108,8 @@ class VulnerabilityView(PaginatedMixin,
                     marshmallow_params)
             except AttributeError as e:
                 flask.abort(400, e)
-            total_vulns = vulns
+            # In vulns count we do not need order
+            total_vulns = vulns.order_by(None)
             if limit:
                 vulns = vulns.limit(limit)
             if offset:

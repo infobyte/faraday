@@ -933,6 +933,13 @@ def _build_associationproxy_creator_non_workspaced(model_class_name, preprocess_
     return creator
 
 
+cve_vulnerability_template_association = db.Table('cve_template_association',
+                                                  Column('vulnerability_template_id', Integer,
+                                                         db.ForeignKey('vulnerability_template.id', ondelete='CASCADE'), nullable=False),
+                                                  Column('cve_template_id', Integer, db.ForeignKey('cve_template.id'), nullable=False)
+                                                  )
+
+
 class VulnerabilityTemplate(VulnerabilityABC):
     __tablename__ = 'vulnerability_template'
 
@@ -1014,6 +1021,15 @@ class VulnerabilityTemplate(VulnerabilityABC):
         self._cvss3_vector_string = None
 
     # CVE
+
+    cve_instances = relationship("CVETemplate",
+                                 secondary=cve_vulnerability_template_association,
+                                 lazy="joined",
+                                 collection_class=set)
+    cve = association_proxy('cve_instances',
+                            'name',
+                            proxy_factory=CustomAssociationSet,
+                            creator=_build_associationproxy_creator_non_workspaced('CVETemplate', lambda x: x.upper()))
 
 
 class CommandObject(db.Model):
@@ -1271,6 +1287,32 @@ cve_vulnerability_association = db.Table('cve_association',
                                                 db.ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False),
                                          Column('cve_id', Integer, db.ForeignKey('cve.id'), nullable=False)
                                          )
+
+
+class CVETemplate(db.Model):
+    __tablename__ = 'cve_template'
+
+    CVE_PATTERN = r'CVE-\d{4}-\d{4,7}'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(24), unique=True)
+    year = Column(Integer, nullable=True)
+    identifier = Column(Integer, nullable=True)
+
+    templates = relationship(VulnerabilityTemplate, secondary=cve_vulnerability_template_association)
+
+    def __str__(self):
+        return f'{self.id}'
+
+    def __init__(self, name=None, **kwargs):
+        logger.debug(f'cve found {name}')
+        try:
+            name = name.upper()
+            _, year, identifier = name.split("-")
+            super().__init__(name=name, year=year, identifier=identifier, **kwargs)
+        except ValueError as e:
+            logger.error("Invalid cve format. Should be CVE-YEAR-ID.")
+            raise ValueError("Invalid cve format. Should be CVE-YEAR-NUMBERID.") from e
 
 
 class CVE(db.Model):

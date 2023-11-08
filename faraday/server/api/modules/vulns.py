@@ -781,7 +781,6 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-            joinedload(VulnerabilityGeneric.cve_instances),
 
             joinedload('reference_instances'),
             joinedload('cve_instances'),

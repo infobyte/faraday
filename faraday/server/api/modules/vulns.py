@@ -21,7 +21,7 @@ from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
 from marshmallow import Schema, fields, post_load, ValidationError, post_dump
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, or_, func
+from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
@@ -1035,33 +1035,26 @@ class VulnerabilityView(PaginatedMixin,
                        vulnerability_class,
                        filters)
         vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
-        if hostname_filters:
-            or_filters = []
-            for hostname_filter in hostname_filters:
-                or_filters.append(Hostname.name == hostname_filter['val'])
-
-            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
-            vulns = vulns_host.union(
-                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
-
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
             options = [
-                joinedload('service'),
                 joinedload('cve_instances'),
-                # joinedload('reference_instances'),
-                # joinedload('policy_violation_instances'),
                 joinedload('owasp'),
                 joinedload('cwe'),
-                joinedload('host').joinedload('hostnames'),
-                joinedload('service').joinedload('host').joinedload('hostnames'),
+                joinedload('tags'),
+                joinedload('host'),
+                joinedload('service'),
+                joinedload('creator'),
+                joinedload('update_user'),
                 undefer('target'),
                 undefer('target_host_os'),
+                undefer('target_host_ip'),
                 undefer('creator_command_tool'),
                 undefer('creator_command_id'),
+                noload('evidence')
             ]
             vulns = vulns.options(selectin_polymorphic(
                 VulnerabilityGeneric,

@@ -738,7 +738,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return super()._update_object(obj, data)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
         attachments = data.pop('_attachments', None if partial else {})
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
@@ -746,6 +746,9 @@ class VulnerabilityView(PaginatedMixin,
             self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
+
+    def put(self, object_id, workspace_name=None, **kwargs):
+        return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """Eager hostnames loading.
@@ -778,9 +781,11 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-            joinedload(VulnerabilityGeneric.policy_violation_instances),
             joinedload(VulnerabilityGeneric.cve_instances),
-            joinedload(VulnerabilityGeneric.reference_instances),
+
+            joinedload('reference_instances'),
+            joinedload('cve_instances'),
+            joinedload('policy_violation_instances'),
         ]
 
         if flask.request.args.get('get_evidence'):

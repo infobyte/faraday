@@ -1416,7 +1416,7 @@ class UpdateMixin:
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
         """Commit the SQLAlchemy session, check for updating conflicts"""
         try:
             db.session.add(obj)
@@ -1584,7 +1584,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
-    def put(self, object_id, workspace_name=None):
+    def put(self, object_id, workspace_name=None, **kwargs):
         """
         ---
           tags: ["{tag_name}"]
@@ -1617,7 +1617,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super().put(object_id, workspace_name=workspace_name)
+        return super().put(object_id, workspace_name=workspace_name, **kwargs)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         # # Make sure that if I created new objects, I had properly committed them

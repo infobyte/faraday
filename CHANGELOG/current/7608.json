@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Exclude unnecessary fields from VulnerabilitySchema in filter endpoint. #7608"
+}

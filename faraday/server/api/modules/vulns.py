@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import io
 import logging
 import json
+import imghdr
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
@@ -20,7 +21,7 @@ from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
 from marshmallow import Schema, fields, post_load, ValidationError, post_dump
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, or_, func
+from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
@@ -313,7 +314,7 @@ class VulnerabilitySchema(AutoSchema):
 
     @post_dump
     def remove_reference_instances(self, data, **kwargs):
-        refs = data.pop('reference_instances')
+        refs = data.pop('reference_instances', [])
         data['refs'] = []
         for ref in refs:
             data['refs'].append({"name": ref.name, "type": ref.type})
@@ -696,6 +697,11 @@ class VulnerabilityView(PaginatedMixin,
         for old_attachment in old_attachments:
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
+            if 'image' in attachment['content_type']:
+                image_format = imghdr.what(None, h=b64decode(attachment['data']))
+                if image_format and image_format.lower() == "webp":
+                    logger.info("Evidence can not be webp format")
+                    flask.abort(400, "Evidence can not be webp format")
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
             get_or_create(
@@ -732,7 +738,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return super()._update_object(obj, data)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
         attachments = data.pop('_attachments', None if partial else {})
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
@@ -740,6 +746,9 @@ class VulnerabilityView(PaginatedMixin,
             self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
+
+    def put(self, object_id, workspace_name=None, **kwargs):
+        return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """Eager hostnames loading.
@@ -772,6 +781,10 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+
+            joinedload('reference_instances'),
+            joinedload('cve_instances'),
+            joinedload('policy_violation_instances'),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -910,7 +923,12 @@ class VulnerabilityView(PaginatedMixin,
                 message = 'Evidence already exists in vuln'
                 return make_response(flask.jsonify(message=message, success=False, code=400), 400)
             else:
-                faraday_file = FaradayUploadedFile(request.files['file'].read())
+                partial = request.files['file'].read(32)
+                image_format = imghdr.what(None, h=partial)
+                if image_format and image_format.lower() == "webp":
+                    logger.info("Evidence can't be webp")
+                    flask.abort(400, "Evidence can't be webp")
+                faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
                 instance, created = get_or_create(
                     db.session,
                     File,
@@ -1021,27 +1039,31 @@ class VulnerabilityView(PaginatedMixin,
                        vulnerability_class,
                        filters)
         vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
-        if hostname_filters:
-            or_filters = []
-            for hostname_filter in hostname_filters:
-                or_filters.append(Hostname.name == hostname_filter['val'])
-
-            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
-            vulns = vulns_host.union(
-                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
-
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
-            vulns = vulns.options(
+            options = [
+                joinedload('cve_instances'),
+                joinedload('owasp'),
+                joinedload('cwe'),
                 joinedload(VulnerabilityGeneric.tags),
-                joinedload(Vulnerability.host),
-                joinedload(Vulnerability.service),
-                joinedload(VulnerabilityWeb.service),
-                joinedload(VulnerabilityGeneric.cwe),
-            )
+                joinedload('host'),
+                joinedload('service'),
+                joinedload('creator'),
+                joinedload('update_user'),
+                undefer('target'),
+                undefer('target_host_os'),
+                undefer('target_host_ip'),
+                undefer('creator_command_tool'),
+                undefer('creator_command_id'),
+                noload('evidence')
+            ]
+            vulns = vulns.options(selectin_polymorphic(
+                VulnerabilityGeneric,
+                [Vulnerability, VulnerabilityWeb]
+            ), *options)
         return vulns
 
     def _filter(self, filters, workspace_name):
@@ -1056,7 +1078,18 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400, "Invalid filters")
 
         workspace = get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': (
+            '_attachments',
+            'description',
+            'desc',
+            'refs',
+            'reference_instances',
+            'request',
+            'resolution',
+            'response',
+            'policyviolations',
+            'data',
+        )}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -1064,7 +1097,6 @@ class VulnerabilityView(PaginatedMixin,
                 offset = filters.pop('offset')
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
-
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
@@ -1074,7 +1106,8 @@ class VulnerabilityView(PaginatedMixin,
                     marshmallow_params)
             except AttributeError as e:
                 flask.abort(400, e)
-            total_vulns = vulns
+            # In vulns count we do not need order
+            total_vulns = vulns.order_by(None)
             if limit:
                 vulns = vulns.limit(limit)
             if offset:

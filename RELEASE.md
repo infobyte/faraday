@@ -1,6 +1,16 @@
 New features in the latest update
 =====================================
 
+4.6.2 [Nov 10th, 2023]:
+---
+ * [ADD] Exclude unnecessary fields from VulnerabilitySchema in filter endpoint. #7608
+
+4.6.1 [Oct 19th, 2023]:
+---
+ * [ADD] New `exclude_stats` query param in workspace endpoint. #7595
+ * [MOD] Optimize hosts API when stats aren't needed. #7596
+ * [FIX] Filter .webp files in vulns attachment endpoint because CVE-2023-4863. #7603
+
 4.6.0 [Sep 6th, 2023]:
 ---
  * [FIX] Delete Cascade from KB. #7569

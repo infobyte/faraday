@@ -1027,8 +1027,8 @@ class FilterMixin(ListMixin):
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False) -> Tuple[list, int]:
-        marshmallow_params = {'many': True, 'context': {}}
+                severity_count=False, host_vulns=False, exclude=[]) -> Tuple[list, int]:
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
@@ -1055,11 +1055,11 @@ class FilterMixin(ListMixin):
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
+            count = filter_query.count()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
-            count = filter_query.count()
             filter_query = self._add_to_filter(filter_query)
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
@@ -1416,7 +1416,7 @@ class UpdateMixin:
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
         """Commit the SQLAlchemy session, check for updating conflicts"""
         try:
             db.session.add(obj)
@@ -1584,7 +1584,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
-    def put(self, object_id, workspace_name=None):
+    def put(self, object_id, workspace_name=None, **kwargs):
         """
         ---
           tags: ["{tag_name}"]
@@ -1617,7 +1617,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super().put(object_id, workspace_name=workspace_name)
+        return super().put(object_id, workspace_name=workspace_name, **kwargs)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         # # Make sure that if I created new objects, I had properly committed them

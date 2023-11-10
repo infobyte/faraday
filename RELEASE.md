@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+4.6.2 [Nov 10th, 2023]:
+---
+ * [ADD] Exclude unnecessary fields from VulnerabilitySchema in filter endpoint. #7608
+
 4.6.1 [Oct 19th, 2023]:
 ---
  * [ADD] New `exclude_stats` query param in workspace endpoint. #7595

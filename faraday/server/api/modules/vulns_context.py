@@ -70,6 +70,7 @@ logger = logging.getLogger(__name__)
 
 class VulnerabilityContextSchema(VulnerabilitySchema):
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+
     class Meta:
         model = Vulnerability
         fields = (

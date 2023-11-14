@@ -464,13 +464,26 @@ class VulnerabilityContextView(ContextMixin,
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
-            vulns = vulns.options(
+            options = [
+                joinedload('cve_instances'),
+                joinedload('owasp'),
+                joinedload('cwe'),
                 joinedload(VulnerabilityGeneric.tags),
-                joinedload(Vulnerability.host),
-                joinedload(Vulnerability.service),
-                joinedload(VulnerabilityWeb.service),
-                joinedload(VulnerabilityGeneric.cwe),
-            )
+                joinedload('host'),
+                joinedload('service'),
+                joinedload('creator'),
+                joinedload('update_user'),
+                undefer('target'),
+                undefer('target_host_os'),
+                undefer('target_host_ip'),
+                undefer('creator_command_tool'),
+                undefer('creator_command_id'),
+                noload('evidence')
+            ]
+            vulns = vulns.options(selectin_polymorphic(
+                VulnerabilityGeneric,
+                [Vulnerability, VulnerabilityWeb]
+            ), *options)
         return vulns
 
     def _filter(self, filters):
@@ -484,7 +497,18 @@ class VulnerabilityContextView(ContextMixin,
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
-        marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': (
+            '_attachments',
+            'description',
+            'desc',
+            'refs',
+            'reference_instances',
+            'request',
+            'resolution',
+            'response',
+            'policyviolations',
+            'data',
+        )}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -501,7 +525,7 @@ class VulnerabilityContextView(ContextMixin,
                     marshmallow_params)
             except AttributeError as e:
                 flask.abort(400, e)
-            total_vulns = vulns
+            total_vulns = vulns.order_by(None)
             if limit:
                 vulns = vulns.limit(limit)
             if offset:

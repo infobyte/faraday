@@ -14,7 +14,7 @@ from flask import Blueprint
 from flask_classful import route
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload, undefer
-
+from marshmallow import fields
 # Local application imports
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class HostContextSchema(HostSchema):
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
 
     class Meta:
         model = Host
@@ -42,7 +43,7 @@ class HostContextSchema(HostSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'importance', 'severity_counts', 'command_id', 'workspace.name'
+                  'importance', 'severity_counts', 'command_id', 'workspace_name'
                   )
 
 

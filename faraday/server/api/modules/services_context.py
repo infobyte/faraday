@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 # Related third party imports
 from flask import Blueprint
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
-
+from marshmallow import fields
 # Local application imports
 from faraday.server.models import (
     Service
@@ -26,6 +26,7 @@ services_context_api = Blueprint('services_context_api', __name__)
 
 
 class ServiceContextSchema(ServiceSchema):
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
 
     class Meta:
         model = Service
@@ -33,7 +34,7 @@ class ServiceContextSchema(ServiceSchema):
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials', 'vulns',
                   'name', 'version', '_id', 'port', 'ports',
-                  'metadata', 'summary', 'host_id', 'command_id', 'workspace.name')
+                  'metadata', 'summary', 'host_id', 'command_id', 'workspace_name')
 
 
 class ServiceContextFilterSet(FilterSet):

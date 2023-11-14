@@ -16,7 +16,7 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import operators
-from marshmallow import ValidationError
+from marshmallow import ValidationError, fields
 from sqlalchemy import desc, or_, func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
@@ -56,10 +56,6 @@ from faraday.server.utils.database import (
 )
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
-
-vulns_context_api = Blueprint('vulns_context_api', __name__)
-logger = logging.getLogger(__name__)
-
 from faraday.server.api.modules.vulns import (
     EvidenceSchema,
     VulnerabilitySchema,
@@ -68,8 +64,12 @@ from faraday.server.api.modules.vulns import (
     VulnerabilityFilterSet
 )
 
+vulns_context_api = Blueprint('vulns_context_api', __name__)
+logger = logging.getLogger(__name__)
+
 
 class VulnerabilityContextSchema(VulnerabilitySchema):
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
     class Meta:
         model = Vulnerability
         fields = (
@@ -83,7 +83,7 @@ class VulnerabilityContextSchema(VulnerabilitySchema):
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
             'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
-            'risk', 'workspace.name'
+            'risk', 'workspace_name'
             )
 
 
@@ -103,7 +103,7 @@ class VulnerabilityWebContextSchema(VulnerabilityWebSchema, VulnerabilityContext
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
             'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
-            'risk', 'workspace.name'
+            'risk', 'workspace_name'
         )
 
 
@@ -162,8 +162,8 @@ class VulnerabilityContextView(ContextMixin,
         'VulnerabilityGeneric': VulnerabilityGeneric,  # For listing objects
     }
     schema_class_dict = {
-        'Vulnerability': VulnerabilitySchema,
-        'VulnerabilityWeb': VulnerabilityWebSchema
+        'Vulnerability': VulnerabilityContextSchema,
+        'VulnerabilityWeb': VulnerabilityWebContextSchema
     }
 
     def _get_schema_instance(self, route_kwargs, **kwargs):

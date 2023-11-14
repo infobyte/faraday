@@ -1398,7 +1398,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     cve_instances = relationship("CVE",
                                  secondary=cve_vulnerability_association,
-                                 lazy="joined",
                                  collection_class=set)
 
     cve = association_proxy('cve_instances',
@@ -1622,7 +1621,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     reference_instances = relationship(
         "Reference",
         secondary="reference_vulnerability_association",
-        lazy="joined",
         collection_class=set
     )
 
@@ -1634,7 +1632,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     policy_violation_instances = relationship(
         "PolicyViolation",
         secondary="policy_violation_vulnerability_association",
-        lazy="joined",
         collection_class=set
     )
 

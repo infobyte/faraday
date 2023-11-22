@@ -1080,7 +1080,6 @@ class VulnerabilityView(PaginatedMixin,
         workspace = get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'exclude': (
             '_attachments',
-            'description',
             'desc',
             'refs',
             'reference_instances',

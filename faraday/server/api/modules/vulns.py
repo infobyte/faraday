@@ -970,8 +970,12 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         filters = request.args.get('q', '{}')
-        filtered_vulns, count = self._filter(filters, workspace_name)
         export_csv = request.args.get('export_csv', '')
+        filtered_vulns, count = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc',
+            'reference_instances',
+        ) if export_csv.lower() == 'true' else None)
 
         class PageMeta:
             total = 0
@@ -1066,7 +1070,7 @@ class VulnerabilityView(PaginatedMixin,
             ), *options)
         return vulns
 
-    def _filter(self, filters, workspace_name):
+    def _filter(self, filters, workspace_name, exclude_list=None):
         hostname_filters = []
         vulns = None
         try:
@@ -1080,6 +1084,7 @@ class VulnerabilityView(PaginatedMixin,
         workspace = get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'exclude': (
             '_attachments',
+            'description',
             'desc',
             'refs',
             'reference_instances',
@@ -1088,7 +1093,7 @@ class VulnerabilityView(PaginatedMixin,
             'response',
             'policyviolations',
             'data',
-        )}
+        ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -1268,7 +1273,11 @@ class VulnerabilityView(PaginatedMixin,
                 "val": "true"
             })
             filters = json.dumps(filters)
-        vulns_query, _ = self._filter(filters, workspace_name)
+        vulns_query, _ = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc',
+            'reference_instances',
+        ))
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         logger.info(f"csv file with vulns from workspace {workspace_name} exported")
         return send_file(memory_file,

@@ -970,8 +970,11 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         filters = request.args.get('q', '{}')
-        filtered_vulns, count = self._filter(filters, workspace_name)
         export_csv = request.args.get('export_csv', '')
+        filtered_vulns, count = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc'
+        ) if export_csv.lower() == 'true' else None)
 
         class PageMeta:
             total = 0
@@ -1025,7 +1028,12 @@ class VulnerabilityView(PaginatedMixin,
         return res_filters, hostname_filters
 
     @staticmethod
-    def _generate_filter_query(vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
+    def _generate_filter_query(vulnerability_class,
+                               filters,
+                               hostname_filters,
+                               workspace,
+                               marshmallow_params,
+                               is_csv=False):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
                            host_os_filter.get('name') == 'host__os']
 
@@ -1060,13 +1068,19 @@ class VulnerabilityView(PaginatedMixin,
                 undefer('creator_command_id'),
                 noload('evidence')
             ]
+            if is_csv:
+                options = options + [
+                    joinedload('policy_violation_instances'),
+                    joinedload('reference_instances')
+                ]
+
             vulns = vulns.options(selectin_polymorphic(
                 VulnerabilityGeneric,
                 [Vulnerability, VulnerabilityWeb]
             ), *options)
         return vulns
 
-    def _filter(self, filters, workspace_name):
+    def _filter(self, filters, workspace_name, exclude_list=None):
         hostname_filters = []
         vulns = None
         try:
@@ -1089,7 +1103,7 @@ class VulnerabilityView(PaginatedMixin,
             'response',
             'policyviolations',
             'data',
-        )}
+        ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -1103,7 +1117,8 @@ class VulnerabilityView(PaginatedMixin,
                     filters,
                     hostname_filters,
                     workspace,
-                    marshmallow_params)
+                    marshmallow_params,
+                    bool(exclude_list))
             except AttributeError as e:
                 flask.abort(400, e)
             # In vulns count we do not need order
@@ -1269,7 +1284,10 @@ class VulnerabilityView(PaginatedMixin,
                 "val": "true"
             })
             filters = json.dumps(filters)
-        vulns_query, _ = self._filter(filters, workspace_name)
+        vulns_query, _ = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc'
+        ))
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         logger.info(f"csv file with vulns from workspace {workspace_name} exported")
         return send_file(memory_file,

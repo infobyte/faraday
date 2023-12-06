@@ -20,8 +20,8 @@ let
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/de43d14a2dee45e6ada58f4eca867804c3bca151.tar.gz";
-      sha256 = "0xgsldyr5y3k5mfgq592ynnm8jy4j9b4clmfma266q0fy1bpyzkp";
+        "https://github.com/infobyte/nixpkgs/archive/952075315847102402c2148ff1b2a1f373db65f5.tar.gz";
+      sha256 = "14ywbx7l9xfvpg0z4rb6izr723hp4n02108k326gxxhwvl7fgd33";
     };
 
   packageOverrides = self: super: {
@@ -45,6 +45,8 @@ let
 
     flask = self.callPackage ./packages/flask { };
 
+    flask-celery-helper = self.callPackage ./packages/flask-celery-helper { };
+
     flask-classful = self.callPackage ./packages/flask-classful { };
 
     flask-kvsession-fork = self.callPackage ./packages/flask-kvsession-fork { };
@@ -62,11 +64,11 @@ let
     marshmallow-sqlalchemy =
       self.callPackage ./packages/marshmallow-sqlalchemy { };
 
+    psycogreen = self.callPackage ./packages/psycogreen { };
+
     simplekv = self.callPackage ./packages/simplekv { };
 
     sqlalchemy = self.callPackage ./packages/sqlalchemy { };
-
-    twisted = self.callPackage ./packages/twisted { };
 
     werkzeug = self.callPackage ./packages/werkzeug { };
 

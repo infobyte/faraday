@@ -25,5 +25,3 @@ RUN mkdir -p /home/faraday/.faraday/storage
 
 ENV PYTHONUNBUFFERED 1
 ENV FARADAY_HOME /home/faraday
-
-ENTRYPOINT ["/entrypoint.sh"]

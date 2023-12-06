@@ -4,6 +4,7 @@ import string
 import random
 import json
 import time
+from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Type, Optional
 
@@ -23,6 +24,7 @@ from marshmallow import (
 from marshmallow.validate import Range
 
 # Local application imports
+from faraday.server.config import faraday_server
 from faraday.server.models import (
     db,
     Command,
@@ -46,7 +48,6 @@ from faraday.server.utils.database import (
 from faraday.server.api.base import (
     AutoSchema,
     GenericWorkspacedView,
-    parse_cve_references_and_policyviolations,
     get_workspace
 )
 from faraday.server.api.modules import (
@@ -56,6 +57,9 @@ from faraday.server.api.modules import (
 )
 from faraday.server.api.modules.websocket_auth import require_agent_token
 from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.tasks import process_report_task
+from faraday.server.utils.vulns import parse_cve_references_and_policyviolations
+
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 logger = logging.getLogger(__name__)
@@ -123,7 +127,6 @@ class BulkServiceSchema(services.ServiceSchema):
     port = fields.Integer(required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
-        # VulnerabilitySchema(many=True),  # I have no idea what this line does, but breaks with marshmallow 3
         many=True,
         missing=[],
     )
@@ -214,22 +217,21 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
     Is is passed the data parsed by the marshmallow schema (it
     transform from raw post data to a JSON)
     """
-    obj = model_class(**data)
-    obj.workspace = ws
-    # assert not db.session.new
+    nested = db.session.begin_nested()
     try:
+        obj = model_class(**data)
+        obj.workspace = ws
         db.session.add(obj)
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
         if not is_unique_constraint_violation(ex):
             raise
-        db.session.rollback()
+        nested.rollback()
         conflict_obj = get_conflict_object(db.session, obj, data, ws)
         if conflict_obj:
             return False, conflict_obj
         else:
             raise
-    # self._set_command_id(obj, True)  # TODO check this
     return True, obj
 
 
@@ -240,9 +242,8 @@ def bulk_create(ws: Workspace,
                 set_end_date: bool = True):
 
     logger.info("Init bulk create process")
-    start_time = time.time()
 
-    if not data_already_deserialized:
+    if data_already_deserialized is False:
         schema = BulkCreateSchema()
         data = schema.load(data)
 
@@ -251,37 +252,19 @@ def bulk_create(ws: Workspace,
 
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
 
-    total_created_assets = db.session.query(Host).count()
     hosts_to_create = len(data['hosts'])
-    created_hosts = 0
-    created_vulns = 0
-    created_services = 0
     if hosts_to_create > 0:
         logger.debug(f"Needs to create {hosts_to_create} hosts...")
+
+        if faraday_server.celery_enabled:
+            return process_report_task.delay(ws.id, command_dict, data['hosts'])
+
+        # just in case celery is not configured
         for host in data['hosts']:
-
-            _vulns = len(host['vulnerabilities']) if 'vulnerabilities' in host else 0
-            _services = len(host['services']) if 'services' in host else 0
-
-            if 'services' in host:
-                for service in host['services']:
-                    _vulns += len(service['vulnerabilities'])
-
-            host_created = _create_host(ws, host, command_dict)
-            if host_created:
-                created_hosts += 1
-                total_created_assets += 1
-                created_vulns += _vulns
-                created_services += _services
-
-        total_secs = time.time() - start_time
-        # creator, user, tool, sum_created_vulnerabilities, sum_created_vulnerability_web, workspace, agent_execution
-        logger.info(f"Finish bulk create process. Total time: {total_secs:.2f} seconds, "
-                    f"{created_hosts} of {hosts_to_create} hosts created, "
-                    f"{created_vulns} vulnerabilities created, "
-                    f"{created_services} services created.")
+            _create_host(ws, host, command_dict)
     else:
         logger.info("No hosts to create")
+
     if 'command' in data and set_end_date:
         command.end_date = datetime.utcnow() if command.end_date is None else command.end_date
         db.session.commit()
@@ -293,12 +276,24 @@ def _update_command(command: Command, command_data: dict):
     return command
 
 
+def get_created_tuple(obj: object) -> tuple:
+    return deepcopy(obj.__class__.__name__), deepcopy(obj.id), deepcopy(obj.workspace.id)
+
+
 def _create_host(ws, host_data, command: dict):
+    logger.debug("Trying to create host...")
+    start_time = time.time()
+    created_host_data = []
     hostnames = host_data.pop('hostnames', [])
-    _services = host_data.pop('services')
-    credentials = host_data.pop('credentials')
-    _vulns = host_data.pop('vulnerabilities')
+    _services = host_data.pop('services', [])
+    credentials = host_data.pop('credentials', [])
+    _vulns = host_data.pop('vulnerabilities', [])
     created, host = get_or_create(ws, Host, host_data)
+
+    # store data for workflows
+    if created:
+        created_host_data.append(get_created_tuple(host))
+
     for name in set(hostnames).difference(set(map(lambda x: x.name, host.hostnames))):
         db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()
@@ -310,20 +305,26 @@ def _create_host(ws, host_data, command: dict):
     if total_services > 0:
         logger.debug(f"Needs to create {total_services} services...")
         for service_data in _services:
-            _create_service(ws, host, service_data, command)
+            # store data for workflows
+            for created_service_vuln in _create_service(ws, host, service_data, command):
+                created_host_data.append(get_created_tuple(created_service_vuln))
 
     total_vulns = len(_vulns)
     if total_vulns > 0:
         logger.debug(f"Needs to create {total_vulns} vulns...")
         for vuln_data in _vulns:
-            _create_hostvuln(ws, host, vuln_data, command)
+            created, host_vuln = _create_hostvuln(ws, host, vuln_data, command)
+            # store data for workflows
+            if created:
+                created_host_data.append(get_created_tuple(host_vuln))
 
     total_credentials = len(credentials)
     if total_credentials > 0:
         logger.debug(f"Needs to create {total_credentials} credentials...")
         for cred_data in credentials:
             _create_credential(ws, cred_data, command, host=host)
-    return created
+    logger.debug(f"Create host took {time.time() - start_time}")
+    return created_host_data
 
 
 def _create_command_object_for(ws, created, obj, command: dict):
@@ -359,9 +360,10 @@ def _update_service(service: Service, service_data: dict) -> Service:
 
 
 def _create_service(ws, host, service_data, command: dict):
+    created_vulns = []
     service_data = service_data.copy()
-    _vulns = service_data.pop('vulnerabilities')
-    creds = service_data.pop('credentials')
+    _vulns = service_data.pop('vulnerabilities', [])
+    creds = service_data.pop('credentials', [])
     service_data['host'] = host
     created, service = get_or_create(ws, Service, service_data)
 
@@ -376,13 +378,17 @@ def _create_service(ws, host, service_data, command: dict):
     if total_service_vulns > 0:
         logger.debug(f"Needs to create {total_service_vulns} service vulns...")
         for vuln_data in _vulns:
-            _create_servicevuln(ws, service, vuln_data, command)
+            created, vuln = _create_servicevuln(ws, service, vuln_data, command)
+            if created:
+                created_vulns.append(vuln)
 
     total_service_creds = len(creds)
     if total_service_creds > 0:
         logger.debug(f"Needs to create {total_service_creds} service credentials...")
         for cred_data in creds:
             _create_credential(ws, cred_data, command, service=service)
+
+    return created_vulns
 
 
 def _create_vuln(ws, vuln_data, command: dict, **kwargs):
@@ -421,18 +427,16 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
         try:
             run_timestamp = float(run_date_string)
             run_date = datetime.utcfromtimestamp(run_timestamp)
-            if run_date < datetime.utcnow() + timedelta(hours=24):
-                logger.debug("Valid run date")
-            else:
+            if not run_date < datetime.utcnow() + timedelta(hours=24):
                 run_date = None
                 logger.debug("Run date (%s) is greater than allowed", run_date)
         except ValueError:
             logger.error("Error converting [%s] to a valid date", run_date_string)
+            raise
     else:
         run_date = None
     created, vuln = get_or_create(ws, model_class, vuln_data)
     if created and run_date:
-        logger.debug("Apply run date to vuln")
         vuln.create_date = run_date
         db.session.commit()
     elif not created:
@@ -448,7 +452,6 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
 
         _vuln = parse_cve_references_and_policyviolations(_vuln, _references, _policyviolations, _cve_list)
         vuln.cwe = create_cwe(cwe_list)
-        # TODO attachments
         db.session.add(_vuln)
         db.session.commit()
 
@@ -458,13 +461,15 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
         vuln.status = "re-opened"
         update_vuln(policyviolations, references, vuln, cve_list, cwe_list)
 
+    return created, vuln
+
 
 def _create_hostvuln(ws, host, vuln_data, command: dict):
-    _create_vuln(ws, vuln_data, command, host=host)
+    return _create_vuln(ws, vuln_data, command, host=host)
 
 
 def _create_servicevuln(ws, service, vuln_data, command: dict):
-    _create_vuln(ws, vuln_data, command, service=service)
+    return _create_vuln(ws, vuln_data, command, service=service)
 
 
 def _create_credential(ws, cred_data, command: dict, **kwargs):
@@ -504,8 +509,6 @@ class BulkCreateView(GenericWorkspacedView):
             404:
                description: Workspace not found
         """
-        from faraday.server.threads.reports_processor import REPORTS_QUEUE  # pylint: disable=import-outside-toplevel
-
         agent = None
 
         if flask_login.current_user.is_anonymous:
@@ -594,23 +597,38 @@ class BulkCreateView(GenericWorkspacedView):
                 json.dump(json_data, output)
             logger.info("Create tmp json file for bulk_create: %s", file_path)
             user_id = flask_login.current_user.id if not flask_login.current_user.is_anonymous else None
-            REPORTS_QUEUE.put(
-                (
-                    workspace.name,
-                    command.id,
-                    file_path,
-                    None,
-                    user_id,
-                    False,
-                    False,
-                    None,
-                    None,
-                    None
+            if faraday_server.celery_enabled:
+                from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
+                process_report(workspace.name,
+                               command.id,
+                               file_path,
+                               None,
+                               user_id,
+                               False,
+                               False,
+                               None,
+                               None,
+                               None)
+                logger.info(f"Faraday objects sent to celery in bulk for workspace {workspace}")
+            else:
+                from faraday.server.utils.reports_processor import REPORTS_QUEUE  # pylint: disable=import-outside-toplevel
+                REPORTS_QUEUE.put(
+                    (
+                        workspace.name,
+                        command.id,
+                        file_path,
+                        None,
+                        user_id,
+                        False,
+                        False,
+                        None,
+                        None,
+                        None
+                    )
                 )
-            )
+                logger.info(f"Faraday objects enqueued in bulk for workspace {workspace}")
         else:
             _update_command(command, data['command'])
-        logger.info(f"Faraday objects created in bulk for workspace {workspace}")
         return flask.jsonify(
             {
                 "message": "Created",

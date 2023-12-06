@@ -3,9 +3,10 @@ import json
 import pytest
 import yaml
 from apispec import APISpec
-from faraday.server.web import get_app
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
+from flask import current_app
+
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 from faraday.server.commands.app_urls import openapi_format
 
@@ -28,12 +29,14 @@ class TestDocs:
 
     def test_yaml_docs_with_no_doc(self):
 
-        exc = {'/login', '/logout', '/change', '/reset', '/reset/{token}', '/verify'}
+        exc = {'/login', '/logout', '/change', '/reset', '/reset/{token}', '/verify', '/'}
         failing = []
 
-        with get_app().test_request_context():
-            for endpoint in get_app().view_functions:
-                spec.path(view=get_app().view_functions[endpoint], app=get_app())
+        with current_app.test_request_context():
+            for endpoint in current_app.view_functions:
+                if endpoint in ('static', 'index'):
+                    continue
+                spec.path(view=current_app.view_functions[endpoint], app=current_app)
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
@@ -56,9 +59,11 @@ class TestDocs:
 
         failing = []
 
-        with get_app().test_request_context():
-            for endpoint in get_app().view_functions:
-                spec.path(view=get_app().view_functions[endpoint], app=get_app())
+        with current_app.test_request_context():
+            for endpoint in current_app.view_functions:
+                if endpoint in ('static', 'index'):
+                    continue
+                spec.path(view=current_app.view_functions[endpoint], app=current_app)
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
@@ -83,9 +88,9 @@ class TestDocs:
 
         tags = set()
 
-        with get_app().test_request_context():
-            for endpoint in get_app().view_functions:
-                spec.path(view=get_app().view_functions[endpoint], app=get_app())
+        with current_app.test_request_context():
+            for endpoint in current_app.view_functions:
+                spec.path(view=current_app.view_functions[endpoint], app=current_app)
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 

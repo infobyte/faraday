@@ -3,6 +3,9 @@ generate_deb_dev:
     stage: build
     before_script:
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
+        - cd ..
         - mv py3.tar /
         - cd /; tar xf py3.tar; cd -
 
@@ -26,7 +29,7 @@ generate_deb_dev:
         - gem install --no-document fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     needs:
       - job: generate_build_file_dev
@@ -50,6 +53,9 @@ generate_deb_staging:
     stage: build
     before_script:
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
+        - cd ..
         - mv py3.tar /
         - cd /; tar xf py3.tar; cd -
 
@@ -73,7 +79,7 @@ generate_deb_staging:
         - gem install --no-document fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     needs:
       - job: generate_build_file_staging
@@ -94,6 +100,9 @@ generate_deb_master:
     stage: build
     before_script:
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
+        - cd ..
         - mv py3.tar /
         - cd /; tar xf py3.tar; cd -
 
@@ -117,7 +126,7 @@ generate_deb_master:
         - gem install --no-document fpm-1.11.0.gem
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     needs:
       - job: generate_build_file_master
@@ -141,6 +150,9 @@ generate_rpm_dev:
       - yum -y upgrade
       - yum -y install which git epel-release centos-release-scl
       - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - cd faraday-linux-installers-builder
+      - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
+      - cd ..
       - mv py3.tar /
       - cd /; tar xf py3.tar; cd -
       - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
@@ -170,7 +182,7 @@ generate_rpm_dev:
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
     needs:
       - job: generate_build_file_dev
@@ -196,6 +208,9 @@ generate_rpm_staging:
       - yum -y upgrade
       - yum -y install which git epel-release centos-release-scl
       - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - cd faraday-linux-installers-builder
+      - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
+      - cd ..
       - mv py3.tar /
       - cd /; tar xf py3.tar; cd -
       - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
@@ -225,7 +240,7 @@ generate_rpm_staging:
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
     needs:
       - job: generate_build_file_staging
@@ -248,6 +263,9 @@ generate_rpm_master:
       - yum -y upgrade
       - yum -y install which git epel-release centos-release-scl
       - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - cd faraday-linux-installers-builder
+      - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
+      - cd ..
       - mv py3.tar /
       - cd /; tar xf py3.tar; cd -
       - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
@@ -277,7 +295,7 @@ generate_rpm_master:
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
     needs:
       - job: generate_build_file_master

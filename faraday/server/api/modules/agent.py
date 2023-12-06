@@ -3,12 +3,10 @@ Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
-# Standard library imports
+import http
 import logging
 from datetime import datetime
 
-# Related third party imports
 import pyotp
 import flask
 from flask import Blueprint, abort, request, jsonify
@@ -18,11 +16,11 @@ from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
 from faraday_agent_parameters_types.utils import type_validate, get_manifests
 
-# Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView, get_workspace
 )
+from faraday.server.extensions import socketio
 from faraday.server.models import (
     Agent,
     Executor,
@@ -30,7 +28,6 @@ from faraday.server.models import (
 )
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
-from faraday.server.events import changes_queue
 from faraday.server.utils.agents import get_command_and_agent_execution
 
 agent_api = Blueprint('agent_api', __name__)
@@ -182,6 +179,8 @@ class AgentView(ReadWriteView):
             "service_tag": data.get('service_tag', None),
             "host_tag": data.get('host_tag', None)
         }
+        if agent.is_offline:
+            abort(http.HTTPStatus.GONE, "Agent is offline")
         return self._run_agent(agent, executor_data, workspaces, plugins_args, user.username, user.id)
 
     @staticmethod
@@ -225,7 +224,7 @@ class AgentView(ReadWriteView):
                 db.session.add(agent_execution)
             db.session.commit()
 
-            changes_queue.put({
+            message = {
                 'execution_ids': [agent_execution.id for agent_execution in agent_executions],
                 'agent_id': agent.id,
                 'workspaces': [workspace.name for workspace in workspaces],
@@ -233,8 +232,15 @@ class AgentView(ReadWriteView):
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args'),
                 "plugin_args": plugins_args
-            })
-            logger.info(f"Agent {agent.name} executed with executer {executor.name}")
+            }
+            if agent.is_online:
+                socketio.emit("run", message, to=agent.sid, namespace='/dispatcher')
+                logger.info(f"Agent {agent.name} executed with executor {executor.name}")
+            else:
+                # TODO: set command's end_date
+                error = "Agent %s with id %s is offline.", agent.name, agent.id
+                logger.warning(error)
+                abort(http.HTTPStatus.GONE, error)
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an executor with that agent id")

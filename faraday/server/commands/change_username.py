@@ -8,14 +8,14 @@ import sys
 
 # Related third party imports
 import click
+from flask import current_app
 
 # Local application imports
 from faraday.server.models import User, db
-from faraday.server.web import get_app
 
 
 def change_username(current_username, new_username):
-    with get_app().app_context():
+    with current_app.app_context():
         user = User.query.filter_by(username=current_username).first()
         if not user:
             print(f"\nERROR: User {current_username} was not found in Faraday's Database.")

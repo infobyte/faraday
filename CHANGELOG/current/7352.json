@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] **Breaking change** We now use Celery as the main way to import reports. In addition we have removed twisted and replaced raw websockets with socket.io. #7352"
+}

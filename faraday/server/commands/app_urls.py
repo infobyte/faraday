@@ -6,11 +6,12 @@ See the file 'doc/LICENSE' for the license information
 """
 from pathlib import Path
 
+from flask import current_app
+
 import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
-from faraday.server.web import get_app
 from faraday import __version__ as f_version
 import json
 from urllib.parse import urljoin
@@ -57,9 +58,12 @@ def openapi_format(server, modify_default=False, return_tags=False):
 
     tags = set()
 
-    with get_app().test_request_context():
-        for endpoint in get_app().view_functions.values():
-            spec.path(view=endpoint, app=get_app())
+    with current_app.test_request_context():
+        for name, endpoint in current_app.view_functions.items():
+            # TODO: check why this endpoint is breaking spec.path
+            if name in ('static', 'index'):
+                continue
+            spec.path(view=endpoint, app=current_app)
 
         # Set up global tags
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.SafeLoader)
@@ -86,4 +90,4 @@ def openapi_format(server, modify_default=False, return_tags=False):
 
 
 def show_all_urls():
-    print(get_app().url_map)
+    print(current_app.url_map)

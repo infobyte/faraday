@@ -48,8 +48,11 @@ if [ $CREATE_ADMIN -eq 1 ]; then
     echo "Admin user created with username: faraday password: $FARADAY_PASSWORD"
 fi
 
+echo "Update swagger..."
+faraday-manage openapi-swagger --server https://$FQDN
+
 echo "$(date) Running migrations ..."
 faraday-manage migrate
 
-echo "$(date) Starting application..."
-faraday-server
+echo "$(date) Starting Faraday server with workers..."
+faraday-server --with-workers --bind 0.0.0.0

@@ -1,6 +1,12 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from gevent import monkey
+monkey.patch_all()
+
+from psycogreen.gevent import patch_psycopg
+patch_psycopg()
+
 import os
 import sys
 import socket
@@ -12,14 +18,18 @@ from alembic.runtime.migration import MigrationContext
 
 from colorama import init, Fore
 import sqlalchemy
-import faraday.server.config
-import faraday.server.utils.logger
-import faraday.server.web
-from faraday.server.models import db, Workspace
-from faraday.server.utils import daemonize
-from faraday.server.web import get_app
 from alembic.script import ScriptDirectory
 from alembic.config import Config
+
+import faraday.server.config
+from faraday.server.app import get_app
+from faraday.server.extensions import socketio
+from faraday.server.models import db, Workspace
+from faraday.server.utils import daemonize
+from faraday.server.config import faraday_server as server_config
+from faraday.server.utils.ping import stop_ping_event
+from faraday.server.utils.reports_processor import stop_reports_event
+import sh
 
 logger = logging.getLogger(__name__)
 
@@ -41,23 +51,64 @@ def is_server_running(port):
 
 
 def run_server(args):
-    web_server = faraday.server.web.WebServer()
     daemonize.create_pid_file(args.port)
-    web_server.run()
+    app = get_app()
+    try:
+        if args.with_workers or args.with_workers_gevent:
+            if not server_config.celery_enabled:
+                print("In order to run faraday workers you must set `celery_enabled=True` in your server.ini")
+                sys.exit()
+        if args.with_workers:
+            options = {}
+            if args.workers_queue:
+                options['queue'] = args.workers_queue
+
+            if args.workers_concurrency:
+                options['concurrency'] = args.workers_concurrency
+
+            if args.workers_loglevel:
+                options['loglevel'] = args.workers_loglevel
+
+            sh.faraday_worker(**options, _bg=True, _out=sys.stdout)
+
+        elif args.with_workers_gevent:
+            options = {}
+            if args.workers_concurrency:
+                options['concurrency'] = args.workers_concurrency
+
+            sh.faraday_worker_gevent(**options, _bg=True, _out=sys.stdout)
+
+        socketio.run(app=app,
+                     port=server_config.port,
+                     host=server_config.bind_address,
+                     debug=False)
+    except KeyboardInterrupt:
+        stop_ping_event.set()
+        stop_reports_event.set()
+        print("Faraday server stopped")
 
 
 def check_postgresql():
-    with get_app().app_context():
+    app = get_app()
+    with app.app_context():
         try:
             if not db.session.query(Workspace).count():
                 logger.warning('No workspaces found')
         except sqlalchemy.exc.ArgumentError:
-            logger.error(f'\n\b{Fore.RED}Please check your PostgreSQL connection string in the file '
-                         f'~/.faraday/config/server.ini on your home directory.{Fore.WHITE} \n')
+            logger.error(
+                f'\n{Fore.RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini'
+                f' on your home directory.{Fore.WHITE} \n'
+            )
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
+                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n'
+                    '{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n'
+                    '{WHITE}For first time installations execute{WHITE}: \n\n'
+                    ' {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN,
+                                                                YELLOW=Fore.YELLOW,
+                                                                WHITE=Fore.WHITE,
+                                                                RED=Fore.RED))
             sys.exit(1)
         except sqlalchemy.exc.ProgrammingError:
             logger.error(
@@ -70,8 +121,10 @@ def check_alembic_version():
     config.set_main_option("script_location", "migrations")
     script = ScriptDirectory.from_config(config)
 
+    app = get_app()
+
     head_revision = script.get_current_head()
-    with get_app().app_context():
+    with app.app_context():
         try:
             conn = db.session.connection()
         except ImportError:
@@ -86,8 +139,7 @@ def check_alembic_version():
 
         current_revision = context.get_current_revision()
         if head_revision != current_revision:
-            version_path = faraday.server.config.FARADAY_BASE / 'migrations'\
-                           / 'versions'
+            version_path = faraday.server.config.FARADAY_BASE / 'migrations' / 'versions'
             if list(version_path.glob(f'{current_revision}_*.py')):
                 print('--' * 20)
                 print('Missing migrations, please execute: \n\n')
@@ -113,21 +165,25 @@ def check_if_db_up():
 
 
 def main():
+    print("Initializing faraday server")
     os.chdir(faraday.server.config.FARADAY_BASE)
-    # check_if_db_up()
-    check_alembic_version()
-    # TODO RETURN TO prev CWD
-    check_postgresql()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--port', type=int, help='Overides server.ini port configuration')
-    parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
-    f_version = faraday.__version__
-    parser.add_argument('-v', '--version', action='version', version=f'Faraday v{f_version}')
+    parser.add_argument('-v', '--version', action='version', version=f'Faraday v{faraday.__version__}')
+    parser.add_argument('--with-workers', action='store_true', help='Starts a celery workers')
+    parser.add_argument('--with-workers-gevent', action='store_true', help='Run workers in gevent mode')
+    parser.add_argument('--workers-queue', help='Celery queue')
+    parser.add_argument('--workers-concurrency', help='Celery concurrency')
+    parser.add_argument('--workers-loglevel', help='Celery loglevel')
     args = parser.parse_args()
+    check_alembic_version()
+    # TODO RETURN TO prev CWD
+    check_postgresql()
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
     args.port = faraday.server.config.faraday_server.port = args.port or \
@@ -145,9 +201,6 @@ def main():
         sys.exit(1)
     if not args.no_setup:
         setup_environment(not args.nodeps)
-    if args.websocket_port:
-        faraday.server.config.faraday_server.websocket_port = args.websocket_port
-
     run_server(args)
 
 

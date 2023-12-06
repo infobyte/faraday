@@ -68,3 +68,4 @@ stages:
 
 services:
     - postgres:latest
+    - redis:latest

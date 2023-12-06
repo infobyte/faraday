@@ -20,8 +20,8 @@ from faraday.server.models import (
 
 from faraday.server.api.modules import bulk_create as bc
 from tests.factories import CustomFieldsSchemaFactory
-from faraday.server.web import get_app
-from faraday.server.threads.reports_processor import REPORTS_QUEUE
+from faraday.server.app import get_app
+from faraday.server.utils.reports_processor import REPORTS_QUEUE
 
 host_data = {
     "ip": "127.0.0.1",
@@ -194,7 +194,7 @@ def test_create_host_vuln(session, host):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert {f'{v.name}-{v.type}' for v in vuln.reference_instances} == {f"{v['name']}-{v['type']}" for v in vuln_data['refs']}
+    assert {f'{v.name}-{v.type}' for v in vuln.refs} == {f"{v['name']}-{v['type']}" for v in vuln_data['refs']}
     assert set(vuln.cve) == set(vuln_data['cve'])
     assert len(vuln.cve) == len(set(vuln_data['cve']))
     assert len(vuln.cwe) == len(vuln_data['cwe'])
@@ -218,7 +218,7 @@ def test_create_service_vuln(session, service):
     assert vuln.impact_accountability
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
-    assert {f'{v.name}-{v.type}' for v in vuln.reference_instances} == {f"{v['name']}-{v['type']}" for v in vuln_data['refs']}
+    assert {f'{v.name}-{v.type}' for v in vuln.refs} == {f"{v['name']}-{v['type']}" for v in vuln_data['refs']}
     assert set(vuln.cve) == set(vuln_data['cve'])
     assert len(vuln.cve) == len(set(vuln_data['cve']))
     assert {cwe.name for cwe in vuln.cwe} == {cwe.upper() for cwe in vuln_data['cwe']}

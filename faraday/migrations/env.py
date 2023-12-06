@@ -1,11 +1,11 @@
 import logging
-import faraday.server.config
-from faraday.server.web import get_app
-from faraday.server.models import db
-
-from alembic import context
 from logging.config import fileConfig
 
+from alembic import context
+
+from faraday.server.app import create_app
+import faraday.server.config
+from faraday.server.models import db
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -31,6 +31,9 @@ alembic_logger.addHandler(fh)
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+app = create_app()
 
 
 def include_object(object, type_, name, reflected, compare_to):
@@ -67,7 +70,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    with get_app().app_context():
+    with app.app_context():
         connectable = db.engine
 
         with connectable.connect() as connection:

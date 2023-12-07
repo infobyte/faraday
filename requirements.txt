@@ -52,4 +52,4 @@ psycogreen>=1.0.2
 Flask-Celery-Helper>=1.1.0
 redis>=4.3.4
 gevent-websocket>=0.10.1
-sh>=2.0.2
+sh

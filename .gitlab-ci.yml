@@ -57,7 +57,7 @@ include:
 stages:
     - pre_testing
     - test
-    - post_testing
+    # - post_testing
     - pre_build
     - build
     - build_testing

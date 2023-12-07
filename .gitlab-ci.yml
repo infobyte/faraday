@@ -38,7 +38,7 @@ include:
   - local: .gitlab/ci/testing/.nix-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.hypothesis-nix-gitlab-ci.yml
-  - local: .gitlab/ci/testing/.posttesting-gitlab-ci.yml
+  # - local: .gitlab/ci/testing/.posttesting-gitlab-ci.yml
 
   - local: .gitlab/ci/build-ci/.prebuild-gitlab-ci.yml
   - local: .gitlab/ci/build-ci/.build-gitlab-ci.yml

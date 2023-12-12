@@ -3,7 +3,7 @@ from logging.config import fileConfig
 
 from alembic import context
 
-from faraday.server.app import create_app
+from faraday.server.app import get_app
 import faraday.server.config
 from faraday.server.models import db
 # this is the Alembic Config object, which provides
@@ -33,7 +33,7 @@ alembic_logger.addHandler(fh)
 # ... etc.
 
 
-app = create_app()
+app = get_app()
 
 
 def include_object(object, type_, name, reflected, compare_to):

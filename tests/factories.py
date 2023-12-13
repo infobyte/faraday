@@ -53,7 +53,8 @@ from faraday.server.models import (
     Condition,
     Role,
     Workflow,
-    Pipeline
+    Pipeline,
+    VulnerabilityReference,
 )
 
 
@@ -164,7 +165,7 @@ class FuzzyIncrementalInteger(BaseFuzzyAttribute):
 
 
 class HostFactory(WorkspaceObjectFactory):
-    id = FuzzyIncrementalInteger(1, 65535)
+    # id = FuzzyIncrementalInteger(1, 65535)
     ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
@@ -197,6 +198,14 @@ class ReferenceFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = Reference
+        sqlalchemy_session = db.session
+
+
+class VulnerabilityReferenceFactory(FaradayFactory):
+    name = FuzzyText()
+
+    class Meta:
+        model = VulnerabilityReference
         sqlalchemy_session = db.session
 
 

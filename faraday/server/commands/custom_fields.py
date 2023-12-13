@@ -8,20 +8,20 @@ import sys
 
 # Related third party imports
 import click
+from flask import current_app
 
 # Local application imports
 from faraday.server.models import CustomFieldsSchema, db
 from faraday.server.utils.database import get_or_create
-from faraday.server.web import get_app
 
 
 def add_custom_field_main():
-    with get_app().app_context():
+    with current_app.app_context():
         add_custom_field_wizard()
 
 
 def delete_custom_field_main():
-    with get_app().app_context():
+    with current_app.app_context():
         delete_custom_field_wizard()
 
 

@@ -3,20 +3,21 @@
 # deleted, and you will lose the changes you made to it.
 
 { alembic, apispec, apispec-webframeworks, autobahn, bcrypt, bidict, bleach
-, buildPythonPackage, click, colorama, cryptography, cvss, dateutil, distro
-, email-validator, factory_boy, faraday-agent-parameters-types, faraday-plugins
-, fetchPypi, filedepot, filteralchemy-fork, flask, flask-classful
-, flask-kvsession-fork, flask-limiter, flask-login, flask-security-too
-, flask-socketio, flask-sqlalchemy, flask-wtf, flask_mail, hypothesis, lib
-, marshmallow, marshmallow-sqlalchemy, nplusone, pgcli, pillow, psycopg2, pyasn1
+, buildPythonPackage, celery, click, colorama, cryptography, cvss, dateutil
+, distro, email-validator, factory_boy, faraday-agent-parameters-types
+, faraday-plugins, fetchPypi, filedepot, filteralchemy-fork, flask
+, flask-celery-helper, flask-classful, flask-kvsession-fork, flask-limiter
+, flask-login, flask-security-too, flask-socketio, flask-sqlalchemy, flask-wtf
+, flask_mail, gevent, gevent-websocket, hypothesis, lib, marshmallow
+, marshmallow-sqlalchemy, nplusone, pgcli, pillow, psycogreen, psycopg2, pyasn1
 , pyjwt, pylint, pyopenssl, pyotp, pytest, pytest-cov, pytest-factoryboy
-, pytest-runner, pyyaml, requests, responses, service-identity, simplekv, sphinx
-, sqlalchemy, syslog-rfc5424-formatter, tqdm, twine, twisted, webargs, werkzeug
-, wtforms }:
+, pytest-runner, pyyaml, redis, requests, responses, service-identity, sh
+, simplekv, sphinx, sqlalchemy, syslog-rfc5424-formatter, tqdm, twine, webargs
+, werkzeug, wtforms }:
 
 buildPythonPackage rec {
   pname = "faradaysec";
-  version = "4.6.2";
+  version = "5.0.0";
 
   src = lib.cleanSource ../../..;
 
@@ -50,7 +51,6 @@ buildPythonPackage rec {
     service-identity
     sqlalchemy
     tqdm
-    twisted
     webargs
     marshmallow-sqlalchemy
     filteralchemy-fork
@@ -71,6 +71,13 @@ buildPythonPackage rec {
     flask_mail
     faraday-agent-parameters-types
     cvss
+    celery
+    gevent
+    psycogreen
+    flask-celery-helper
+    redis
+    gevent-websocket
+    sh
   ];
   nativeBuildInputs = [
     factory_boy

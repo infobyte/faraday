@@ -44,6 +44,7 @@ pylint:
         - export LANG=C.UTF-8
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
+        - mkdir -p faraday/frontend/www && touch faraday/frontend/www/index.html
         - mkdir run_from
         - nix-shell --command "cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB"
     artifacts:
@@ -59,43 +60,6 @@ pylint:
         - !reference [.ignore-on-tag, rules]
         - !reference [.pipeline-control-test, rules]
         - when: on_success
-
-.sqlite_test_nix_base:
-    tags:
-        - faradaytests
-    stage: test
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
-    script:
-        - nix-env -if pynixify/nixpkgs.nix -A vault
-        - !reference [ .get_secrets, script ]
-        - nix-env -if pynixify/nixpkgs.nix -A cachix
-        - mkdir -p ~/.config/cachix
-        - export USER=$(whoami)
-        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
-        - cachix use faradaysec
-        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
-        - export LC_ALL=C.UTF-8
-        - export LANG=C.UTF-8
-        - mkdir -p ~/.faraday/config
-        - cp tests/data/server.ini ~/.faraday/config
-        - mkdir run_from
-        - nix-shell --command "cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings"
-    artifacts:
-        when: on_failure
-        paths:
-            - dist/*
-    needs:
-      - job: build_and_push_to_cachix
-        artifacts: false
-    rules:
-        - !reference [.ignore-on-build, rules]
-        - !reference [.ignore-on-tag, rules]
-        - !reference [.pipeline-control-test, rules]
-        - when: on_success
-
-sqlite_test_nix:
-    extends: .sqlite_test_nix_base
-    image: nixos/nix:2.16.0
 
 postgresql_test_nix:
     extends: .postgresql_test_nix_base

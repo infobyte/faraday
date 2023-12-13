@@ -33,6 +33,7 @@ REPORTS_VIEWS_DIR = FARADAY_BASE / 'views' / 'reports'
 LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config' / 'server.ini'
 LOCAL_REPORTS_FOLDER = CONST_FARADAY_HOME_PATH / 'uploaded_reports'
 LOCAL_OPENAPI_FILE = CONST_FARADAY_HOME_PATH / 'openapi' / 'faraday_swagger.json'
+CELERY_LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'celery.log'
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 
@@ -137,6 +138,9 @@ class FaradayServerConfigObject(ConfigSection):
         self.agent_token_expiration = 60  # Default as 1 min
         self.debug = False
         self.delete_report_after_process = True
+        self.celery_enabled = True
+        self.celery_broker_url = "127.0.0.1"
+        self.celery_backend_url = "127.0.0.1"
 
 
 class StorageConfigObject(ConfigSection):

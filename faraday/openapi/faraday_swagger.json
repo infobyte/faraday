@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 4.6.2 API",
+        "title": "Faraday 5.0.0 API",
         "version": "v3"
     },
     "security": {
@@ -13,11 +13,12 @@
         }
     ],
     "paths": {
-        "/logout": {},
-        "/login": {},
-        "/verify": {},
-        "/change": {},
-        "/v3/ws/{workspace_name}/commands/activity_feed": {
+        "/_api/logout": {},
+        "/_api/login": {},
+        "/_api/verify": {},
+        "/_api/change": {},
+        "/": {},
+        "/_api/v3/ws/{workspace_name}/commands/activity_feed": {
             "get": {
                 "tags": [
                     "Command"
@@ -37,7 +38,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/commands/count": {
+        "/_api/v3/ws/{workspace_name}/commands/count": {
             "get": {
                 "tags": [
                     "Command"
@@ -60,7 +61,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/commands/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/commands/{object_id}": {
             "delete": {
                 "tags": [
                     "Command"
@@ -239,7 +240,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/commands": {
+        "/_api/v3/ws/{workspace_name}/commands": {
             "get": {
                 "tags": [
                     "Command"
@@ -307,7 +308,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/commands/last": {
+        "/_api/v3/ws/{workspace_name}/commands/last": {
             "get": {
                 "tags": [
                     "Command"
@@ -320,7 +321,7 @@
                 }
             }
         },
-        "/v3/global_commands/{object_id}": {
+        "/_api/v3/global_commands/{object_id}": {
             "get": {
                 "tags": [
                     "Command"
@@ -350,7 +351,7 @@
                 }
             }
         },
-        "/v3/global_commands": {
+        "/_api/v3/global_commands": {
             "get": {
                 "tags": [
                     "Command"
@@ -370,7 +371,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/activities/count": {
+        "/_api/v3/ws/{workspace_name}/activities/count": {
             "get": {
                 "tags": [
                     "Command"
@@ -393,7 +394,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/activities/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/activities/{object_id}": {
             "delete": {
                 "tags": [
                     "Command"
@@ -572,7 +573,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/activities": {
+        "/_api/v3/ws/{workspace_name}/activities": {
             "get": {
                 "tags": [
                     "Command"
@@ -640,7 +641,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/credential": {
+        "/_api/v3/ws/{workspace_name}/credential": {
             "delete": {
                 "tags": [
                     "Credential"
@@ -730,7 +731,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/credential/count": {
+        "/_api/v3/ws/{workspace_name}/credential/count": {
             "get": {
                 "tags": [
                     "Credential"
@@ -753,7 +754,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/credential/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/credential/{object_id}": {
             "delete": {
                 "tags": [
                     "Credential"
@@ -932,7 +933,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/bulk_create": {
+        "/_api/v3/ws/{workspace_name}/hosts/bulk_create": {
             "post": {
                 "tags": [
                     "Bulk",
@@ -959,7 +960,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts": {
+        "/_api/v3/ws/{workspace_name}/hosts": {
             "delete": {
                 "tags": [
                     "Host"
@@ -1049,7 +1050,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/count": {
+        "/_api/v3/ws/{workspace_name}/hosts/count": {
             "get": {
                 "tags": [
                     "Host"
@@ -1072,7 +1073,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/count_multi_workspace": {
+        "/_api/v3/ws/{workspace_name}/hosts/count_multi_workspace": {
             "get": {
                 "tags": [
                     "Host"
@@ -1095,7 +1096,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/countVulns": {
+        "/_api/v3/ws/{workspace_name}/hosts/countVulns": {
             "get": {
                 "tags": [
                     "Host"
@@ -1115,7 +1116,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/hosts/{object_id}": {
             "delete": {
                 "tags": [
                     "Host"
@@ -1294,7 +1295,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/filter": {
+        "/_api/v3/ws/{workspace_name}/hosts/filter": {
             "get": {
                 "tags": [
                     "Filter",
@@ -1325,7 +1326,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/{host_id}/services": {
+        "/_api/v3/ws/{workspace_name}/hosts/{host_id}/services": {
             "get": {
                 "tags": [
                     "Host",
@@ -1346,7 +1347,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/hosts/{host_id}/tools_history": {
+        "/_api/v3/ws/{workspace_name}/hosts/{host_id}/tools_history": {
             "get": {
                 "tags": [
                     "Host",
@@ -1367,7 +1368,7 @@
                 }
             }
         },
-        "/v3/info": {
+        "/_api/v3/info": {
             "get": {
                 "tags": [
                     "Informational"
@@ -1380,7 +1381,7 @@
                 }
             }
         },
-        "/config": {
+        "/_api/config": {
             "get": {
                 "tags": [
                     "Informational"
@@ -1393,7 +1394,7 @@
                 }
             }
         },
-        "/v3/licenses/{object_id}": {
+        "/_api/v3/licenses/{object_id}": {
             "delete": {
                 "tags": [
                     "License"
@@ -1540,7 +1541,7 @@
                 }
             }
         },
-        "/v3/licenses": {
+        "/_api/v3/licenses": {
             "get": {
                 "tags": [
                     "License"
@@ -1598,7 +1599,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/services": {
+        "/_api/v3/ws/{workspace_name}/services": {
             "delete": {
                 "tags": [
                     "Service"
@@ -1688,7 +1689,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/services/count": {
+        "/_api/v3/ws/{workspace_name}/services/count": {
             "get": {
                 "tags": [
                     "Service"
@@ -1711,7 +1712,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/services/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/services/{object_id}": {
             "delete": {
                 "tags": [
                     "Service"
@@ -1890,7 +1891,7 @@
                 }
             }
         },
-        "/session": {
+        "/_api/session": {
             "get": {
                 "tags": [
                     "Informational"
@@ -1903,7 +1904,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns": {
+        "/_api/v3/ws/{workspace_name}/vulns": {
             "delete": {
                 "tags": [
                     "VulnerabilityGeneric"
@@ -1993,7 +1994,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/count": {
+        "/_api/v3/ws/{workspace_name}/vulns/count": {
             "get": {
                 "tags": [
                     "Vulnerability"
@@ -2016,7 +2017,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/count_multi_workspace": {
+        "/_api/v3/ws/{workspace_name}/vulns/count_multi_workspace": {
             "get": {
                 "tags": [
                     "VulnerabilityGeneric"
@@ -2039,7 +2040,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/vulns/{object_id}": {
             "delete": {
                 "tags": [
                     "VulnerabilityGeneric"
@@ -2162,7 +2163,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment/{attachment_filename}": {
+        "/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment/{attachment_filename}": {
             "delete": {
                 "tags": [
                     "Vulnerability",
@@ -2188,7 +2189,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/export_csv": {
+        "/_api/v3/ws/{workspace_name}/vulns/export_csv": {
             "get": {
                 "tags": [
                     "Vulnerability",
@@ -2202,7 +2203,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/filter": {
+        "/_api/v3/ws/{workspace_name}/vulns/filter": {
             "get": {
                 "tags": [
                     "Filter",
@@ -2233,7 +2234,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment": {
+        "/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment": {
             "get": {
                 "tags": [
                     "Vulnerability",
@@ -2272,7 +2273,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/vulns/top_users": {
+        "/_api/v3/ws/{workspace_name}/vulns/top_users": {
             "get": {
                 "tags": [
                     "Vulnerability"
@@ -2286,7 +2287,7 @@
                 }
             }
         },
-        "/v3/vulnerability_template/bulk_create": {
+        "/_api/v3/vulnerability_template/bulk_create": {
             "post": {
                 "tags": [
                     "Bulk",
@@ -2313,7 +2314,7 @@
                 }
             }
         },
-        "/v3/vulnerability_template": {
+        "/_api/v3/vulnerability_template": {
             "delete": {
                 "tags": [
                     "VulnerabilityTemplate"
@@ -2393,7 +2394,7 @@
                 }
             }
         },
-        "/v3/vulnerability_template/{object_id}": {
+        "/_api/v3/vulnerability_template/{object_id}": {
             "delete": {
                 "tags": [
                     "VulnerabilityTemplate"
@@ -2540,7 +2541,7 @@
                 }
             }
         },
-        "/v3/vulnerability_template/filter": {
+        "/_api/v3/vulnerability_template/filter": {
             "get": {
                 "tags": [
                     "Filter",
@@ -2571,7 +2572,20 @@
                 }
             }
         },
-        "/v3/ws": {
+        "/_api/v3/ws/{workspace_id}/activate/": {
+            "put": {
+                "tags": [
+                    "Workspace"
+                ],
+                "description": "Activate a workspace",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/ws": {
             "delete": {
                 "tags": [
                     "Workspace"
@@ -2640,7 +2654,33 @@
                 }
             }
         },
-        "/v3/ws/{object_id}": {
+        "/_api/v3/ws/{workspace_id}/change_readonly/": {
+            "put": {
+                "tags": [
+                    "Workspace"
+                ],
+                "description": "Change readonly workspace's status",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/ws/{workspace_id}/deactivate/": {
+            "put": {
+                "tags": [
+                    "Workspace"
+                ],
+                "description": "Deactivate a workspace",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/ws/{object_id}": {
             "delete": {
                 "tags": [
                     "Workspace"
@@ -2787,7 +2827,7 @@
                 }
             }
         },
-        "/v3/ws/filter": {
+        "/_api/v3/ws/filter": {
             "get": {
                 "tags": [
                     "Filter"
@@ -2817,7 +2857,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/comment": {
+        "/_api/v3/ws/{workspace_name}/comment": {
             "delete": {
                 "tags": [
                     "Comment"
@@ -2896,7 +2936,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/comment/count": {
+        "/_api/v3/ws/{workspace_name}/comment/count": {
             "get": {
                 "tags": [
                     "Comment"
@@ -2919,7 +2959,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/comment/{object_id}": {
+        "/_api/v3/ws/{workspace_name}/comment/{object_id}": {
             "delete": {
                 "tags": [
                     "Comment"
@@ -3098,7 +3138,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/comment_unique": {
+        "/_api/v3/ws/{workspace_name}/comment_unique": {
             "post": {
                 "tags": [
                     "Comment"
@@ -3148,7 +3188,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/upload_report": {
+        "/_api/v3/ws/{workspace_name}/upload_report": {
             "post": {
                 "tags": [
                     "Workspace",
@@ -3168,7 +3208,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/websocket_token": {
+        "/_api/v3/ws/{workspace_name}/websocket_token": {
             "get": {
                 "tags": [
                     "Token"
@@ -3180,7 +3220,7 @@
                 }
             }
         },
-        "/v3/agent_websocket_token": {
+        "/_api/v3/agent_websocket_token": {
             "post": {
                 "tags": [
                     "Token",
@@ -3194,7 +3234,7 @@
                 }
             }
         },
-        "/v3/vulners/exploits/{cveid}": {
+        "/_api/v3/vulners/exploits/{cveid}": {
             "get": {
                 "tags": [
                     "Vulnerability"
@@ -3207,7 +3247,7 @@
                 }
             }
         },
-        "/v3/custom_fields_schema": {
+        "/_api/v3/custom_fields_schema": {
             "delete": {
                 "tags": [
                     "CustomFieldsSchema"
@@ -3276,7 +3316,7 @@
                 }
             }
         },
-        "/v3/custom_fields_schema/{object_id}": {
+        "/_api/v3/custom_fields_schema/{object_id}": {
             "delete": {
                 "tags": [
                     "CustomFieldsSchema"
@@ -3423,7 +3463,7 @@
                 }
             }
         },
-        "/v3/agents/active_agents": {
+        "/_api/v3/agents/active_agents": {
             "get": {
                 "tags": [
                     "Agent"
@@ -3443,7 +3483,7 @@
                 }
             }
         },
-        "/v3/agents/{object_id}": {
+        "/_api/v3/agents/{object_id}": {
             "delete": {
                 "tags": [
                     "Agent"
@@ -3590,7 +3630,7 @@
                 }
             }
         },
-        "/v3/agents": {
+        "/_api/v3/agents": {
             "get": {
                 "tags": [
                     "Agent"
@@ -3610,7 +3650,7 @@
                 }
             }
         },
-        "/v3/agents/get_manifests": {
+        "/_api/v3/agents/get_manifests": {
             "get": {
                 "tags": [
                     "Agent"
@@ -3630,7 +3670,7 @@
                 }
             }
         },
-        "/v3/agents/{agent_id}/run": {
+        "/_api/v3/agents/{agent_id}/run": {
             "post": {
                 "tags": [
                     "Agent"
@@ -3653,7 +3693,7 @@
                 }
             }
         },
-        "/v3/agent_token": {
+        "/_api/v3/agent_token": {
             "get": {
                 "summary": "Get the current TOTP token to register new agents.",
                 "tags": [
@@ -3673,7 +3713,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/bulk_create": {
+        "/_api/v3/ws/{workspace_name}/bulk_create": {
             "post": {
                 "tags": [
                     "Bulk"
@@ -3712,7 +3752,7 @@
                 }
             }
         },
-        "/v3/token": {
+        "/_api/v3/token": {
             "get": {
                 "tags": [
                     "Token"
@@ -3725,7 +3765,7 @@
                 }
             }
         },
-        "/v3/searchfilter": {
+        "/_api/v3/searchfilter": {
             "delete": {
                 "tags": [
                     "SearchFilter"
@@ -3805,7 +3845,7 @@
                 }
             }
         },
-        "/v3/searchfilter/{object_id}": {
+        "/_api/v3/searchfilter/{object_id}": {
             "delete": {
                 "tags": [
                     "SearchFilter"
@@ -3952,7 +3992,7 @@
                 }
             }
         },
-        "/v3/preferences": {
+        "/_api/v3/preferences": {
             "get": {
                 "tags": [
                     "User"
@@ -3978,7 +4018,7 @@
                 }
             }
         },
-        "/v3/ws/{workspace_name}/export_data": {
+        "/_api/v3/ws/{workspace_name}/export_data": {
             "get": {
                 "tags": [
                     "File",
@@ -3992,7 +4032,7 @@
                 }
             }
         },
-        "/v3/settings/reports": {
+        "/_api/v3/settings/reports": {
             "get": {
                 "tags": [
                     "settings"
@@ -4046,7 +4086,7 @@
                 }
             }
         },
-        "/v3/settings/dashboard": {
+        "/_api/v3/settings/dashboard": {
             "get": {
                 "tags": [
                     "settings"
@@ -4100,7 +4140,7 @@
                 }
             }
         },
-        "/v3/swagger": {
+        "/_api/v3/swagger": {
             "get": {
                 "summary": "Get the swagger documentation.",
                 "tags": [
@@ -4800,7 +4840,6 @@
                             "$ref": "#/components/schemas/Reference"
                         }
                     },
-                    "reference_instances": {},
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
@@ -5442,7 +5481,6 @@
                             "$ref": "#/components/schemas/Reference"
                         }
                     },
-                    "reference_instances": {},
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true

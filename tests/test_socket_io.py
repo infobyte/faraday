@@ -1,76 +1,105 @@
-import pytest
-from faraday.server.models import Agent, Executor
-from faraday.server.websocket_factories import WorkspaceServerFactory, \
-    update_executors, BroadcastServerProtocol
-
+from faraday.server.models import Executor, Agent
+from faraday.server.extensions import socketio
+from faraday.server.websockets.dispatcher import update_executors
 from tests.factories import AgentFactory, ExecutorFactory
 
 
-class TransportMock:
-    def write(self, data: bytearray):
-        pass
-
-
-@pytest.fixture
-def proto():
-    factory = WorkspaceServerFactory('ws://127.0.0.1')
-    proto = factory.buildProtocol(('127.0.0.1', 0))
-    proto.maskServerFrames = False
-    proto.logFrames = False
-    proto.send_queue = []
-    proto.state = BroadcastServerProtocol.STATE_CLOSING
-    proto.transport = TransportMock()
-
-    return proto
-
-
-class TestWebsocketBroadcastServerProtocol:
-
-    def _join_agent(self, test_client, session):
+class TestSockets:
+    def join_agent(self, test_client, session):
         agent = AgentFactory.create(token='pepito')
         session.add(agent)
         session.commit()
 
         headers = {"Authorization": f"Agent {agent.token}"}
         token = test_client.post('/v3/agent_websocket_token', headers=headers).json['token']
-        return token
+        return token  # TODO: return agent too.
 
-    def test_join_agent_message_with_invalid_token_fails(self, session, proto, test_client):
-        message = '{"action": "JOIN_AGENT", "token": "pepito" }'
-        assert not proto.onMessage(message, False)
+    def test_connect_namespace(self, app, session):
+        client = socketio.test_client(app, namespace='/dispatcher')
+        assert client.is_connected('/dispatcher') is True
 
-    def test_join_agent_message_without_token_fails(self, session, proto, test_client):
-        message = '{"action": "JOIN_AGENT"}'
-        assert not proto.onMessage(message, False)
+    def test_join_agent(self, app, test_client, session, workspace):
+        token = self.join_agent(test_client, session)
+        assert token is not None
 
-    def test_join_agent_message_with_valid_token(self, session, proto, workspace, test_client):
-        token = self._join_agent(test_client, session)
-        message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
-        assert proto.onMessage(message, False)
+        client = socketio.test_client(app, namespace='/dispatcher')
+        assert client.is_connected('/dispatcher') is True
 
-    def test_leave_agent_happy_path(self, session, proto, workspace, test_client):
-        token = self._join_agent(test_client, session)
-        message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
-        assert proto.onMessage(message, False)
+        message = {
+            "action": "JOIN_AGENT",
+            "workspace": workspace.name,
+            "token": token,
+            "executors": []
+        }
+        client.emit("join_agent", message, namespace='/dispatcher')
+        received = client.get_received(namespace='/dispatcher')
+        assert received[-1]['args'] == 'Agent joined correctly to dispatcher namespace'
 
-        message = '{"action": "LEAVE_AGENT" }'
-        assert proto.onMessage(message, False)
+    def test_join_agent_message_with_invalid_token_fails(self, app, session):
+        client = socketio.test_client(app, namespace='/dispatcher')
+        assert client.is_connected('/dispatcher') is True
 
-    def test_agent_status(self, session, proto, workspace, test_client):
-        token = self._join_agent(test_client, session)
+        message = {"action": "JOIN_AGENT", "token": "pepito"}
+        client.emit("join_agent", message, namespace='/dispatcher')
+        received = client.get_received(namespace='/dispatcher')
+        assert received[-1]['args'][0]['reason'] == 'Invalid join agent message'
+
+    def test_join_agent_message_without_token_fails(self, app, session):
+        client = socketio.test_client(app, namespace='/dispatcher')
+        assert client.is_connected('/dispatcher') is True
+
+        message = {"action": "JOIN_AGENT"}
+        client.emit("join_agent", message, namespace='/dispatcher')
+        received = client.get_received(namespace='/dispatcher')
+        assert received[-1]['args'][0]['reason'] == 'Invalid join agent message'
+
+    def test_leave_agent_happy_path(self, app, session, workspace, test_client):
+        token = self.join_agent(test_client, session)
+        assert token is not None
+
+        client = socketio.test_client(app, namespace='/dispatcher')
+        assert client.is_connected('/dispatcher') is True
+
+        message = {
+            "action": "JOIN_AGENT",
+            "workspace": workspace.name,
+            "token": token,
+            "executors": []
+        }
+        client.emit("join_agent", message, namespace='/dispatcher')
+
+        received = client.get_received(namespace='/dispatcher')
+        assert received[-1]['args'] == 'Agent joined correctly to dispatcher namespace'
+
+        client.emit("leave_agent", namespace='/dispatcher')
+        assert client.is_connected() is False
+
+    def test_agent_status(self, app, session, workspace, test_client):
+        token = self.join_agent(test_client, session)
+        assert token is not None
         agent = Agent.query.one()
         assert not agent.is_online
-        message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
-        assert proto.onMessage(message, False)
+
+        client = socketio.test_client(app, namespace='/dispatcher')
+        assert client.is_connected('/dispatcher') is True
+
+        message = {
+            "action": "JOIN_AGENT",
+            "workspace": workspace.name,
+            "token": token,
+            "executors": []
+        }
+        client.emit("join_agent", message, namespace='/dispatcher')
+        agent = Agent.query.one()
         assert agent.is_online
 
-        message = '{"action": "LEAVE_AGENT"}'
-        assert proto.onMessage(message, False)
+        client.emit("leave_agent", namespace='/dispatcher')
+        assert client.is_connected() is False
+        agent = Agent.query.one()
         assert not agent.is_online
 
 
 class TestCheckExecutors:
-
     def test_new_executors_not_in_database(self, session):
         agent = AgentFactory.create()
         executors = [

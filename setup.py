@@ -223,6 +223,9 @@ setup(
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
             'faraday-manage=faraday.manage:cli',
+            'faraday-worker=faraday.server.celery_worker:main',
+            'faraday-worker-gevent=faraday.server.celery_worker_gevent:main',
+            'faraday-start-all=faraday.start_all:main'
         ],
     },
 

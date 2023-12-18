@@ -2,9 +2,9 @@ import pytest
 from flask_security.utils import hash_password
 import jwt
 import time
+from flask import current_app
 
 from faraday.server.models import User
-from faraday.server.web import get_app
 from tests import factories
 
 
@@ -67,7 +67,7 @@ class TestLogin:
         """
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        secret_key = get_app().config['SECRET_KEY']
+        secret_key = current_app.config['SECRET_KEY']
         alice = factories.UserFactory.create(
                 active=True,
                 username='alice',
@@ -83,7 +83,7 @@ class TestLogin:
         iat = int(time.time())
         exp = iat + 43200
         jwt_data = {'user_id': 'invalid_token', 'iat': iat, 'exp': exp}
-        token = jwt.encode(jwt_data, get_app().config['SECRET_KEY'], algorithm="HS512")
+        token = jwt.encode(jwt_data, current_app.config['SECRET_KEY'], algorithm="HS512")
 
         headers = {'Authorization': f'Token {token}'}
 

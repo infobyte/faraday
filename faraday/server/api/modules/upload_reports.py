@@ -24,15 +24,16 @@ from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
-from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 
 # Local application imports
 from faraday.server.api.base import GenericWorkspacedView
-from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH, faraday_server
 from faraday.server.models import Workspace, Command, db
-from faraday.server.threads.reports_processor import REPORTS_QUEUE
+from faraday.server.utils.reports_processor import REPORTS_QUEUE
 from faraday.server.utils.web import gzipped
 from faraday.settings.reports import ReportsSettings
+from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
+from faraday.server.tasks import pre_process_report_task
 
 upload_api = Blueprint('upload_reports', __name__)
 logger = logging.getLogger(__name__)
@@ -106,36 +107,26 @@ class UploadReportView(GenericWorkspacedView):
                     jsonify(message="Upload reports not configured: Run faraday client and start Faraday server again"),
                     500))
             else:
-                logger.info(f"Get plugin for file: {file_path}")
-                plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder)
-                report_analyzer = ReportAnalyzer(plugins_manager)
-                plugin = report_analyzer.get_plugin(file_path)
-                if not plugin:
-                    logger.info("Could not get plugin for file")
-                    abort(make_response(jsonify(message="Invalid report file"), 400))
-                else:
-                    logger.info(
-                        f"Plugin for file: {file_path} Plugin: {plugin.id}"
-                    )
-                    workspace_instance = Workspace.query.filter_by(
-                        name=workspace_name).one()
-                    command = Command()
-                    command.workspace = workspace_instance
-                    command.start_date = datetime.utcnow()
-                    command.import_source = 'report'
-                    # The data will be updated in the bulk_create function
-                    command.tool = "In progress"
-                    command.command = "In progress"
+                workspace_instance = Workspace.query.filter_by(
+                    name=workspace_name).one()
+                command = Command()
+                command.workspace = workspace_instance
+                command.start_date = datetime.utcnow()
+                command.import_source = 'report'
+                # The data will be updated in the bulk_create function
+                command.tool = "In progress"
+                command.command = "In progress"
 
-                    db.session.add(command)
-                    db.session.commit()
+                db.session.add(command)
+                db.session.commit()
 
-                    REPORTS_QUEUE.put(
-                        (
+                if faraday_server.celery_enabled:
+                    try:
+                        pre_process_report_task.delay(
                             workspace_instance.name,
                             command.id,
-                            file_path,
-                            plugin.id,
+                            file_path.as_posix(),
+                            None,
                             flask_login.current_user.id,
                             ignore_info,
                             resolve_hostname,
@@ -143,11 +134,39 @@ class UploadReportView(GenericWorkspacedView):
                             None,
                             None
                         )
-                    )
-                    return make_response(
-                        jsonify(message="ok", command_id=command.id),
-                        200
-                    )
+                    except Exception as e:
+                        logger.exception("An error occurred while process report was running %s", exc_info=e)
+                        abort(make_response(jsonify(message="An error occurred while process report was running"), 500))
+                else:
+                    logger.info(f"Get plugin for file: {file_path}")
+                    plugins_manager = PluginsManager(ReportsSettings.settings.custom_plugins_folder)
+                    report_analyzer = ReportAnalyzer(plugins_manager)
+                    plugin = report_analyzer.get_plugin(file_path)
+                    if not plugin:
+                        logger.info("Could not get plugin for file")
+                        abort(make_response(jsonify(message="Invalid report file"), 400))
+                    else:
+                        logger.info(
+                            f"Plugin for file: {file_path} Plugin: {plugin.id}"
+                        )
+                        REPORTS_QUEUE.put(
+                            (
+                                workspace_instance.name,
+                                command.id,
+                                file_path,
+                                plugin.id,
+                                flask_login.current_user.id,
+                                ignore_info,
+                                resolve_hostname,
+                                None,
+                                None,
+                                None
+                            )
+                        )
+                return make_response(
+                    jsonify(message="ok", command_id=command.id),
+                    200
+                )
         else:
             abort(make_response(jsonify(message="Missing report file"), 400))
 

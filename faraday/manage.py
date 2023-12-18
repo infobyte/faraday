@@ -11,6 +11,35 @@ import sys
 import platform
 import logging
 
+import click
+import requests
+import alembic.command
+from flask_security.utils import hash_password
+from pgcli.main import PGCli
+from urllib.parse import urlparse
+from alembic.config import Config
+from sqlalchemy.exc import ProgrammingError, OperationalError
+
+import faraday.server.config
+from faraday.server.app import get_app
+from faraday.server.config import FARADAY_BASE
+from faraday.server.commands.initdb import InitDB
+from faraday.server.commands.faraday_schema_display import DatabaseSchema
+from faraday.server.commands.app_urls import show_all_urls
+from faraday.server.commands.app_urls import openapi_format
+from faraday.server.commands import change_password as change_pass
+from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
+from faraday.server.commands import change_username
+from faraday.server.commands import nginx_config
+from faraday.server.commands import import_vulnerability_template
+from faraday.server.commands import manage_settings
+from faraday.server.models import db, User, LOCAL_TYPE
+from faraday_plugins.plugins.manager import PluginsManager
+from faraday.server.commands.move_references import _move_references
+
+
+CONTEXT_SETTINGS = {'help_option_names': ['-h', '--help']}
+
 os.environ['FARADAY_MANAGE_RUNNING'] = "1"
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
@@ -29,35 +58,7 @@ if platform.system() == "Linux":
     except KeyError:
         pass
 
-import click
-import requests
-import alembic.command
-from pgcli.main import PGCli
-from urllib.parse import urlparse
-from alembic.config import Config
-from sqlalchemy.exc import ProgrammingError, OperationalError
-
-import faraday.server.config
-from faraday.server.config import FARADAY_BASE
-from faraday.server.commands.initdb import InitDB
-from faraday.server.commands.faraday_schema_display import DatabaseSchema
-from faraday.server.commands.app_urls import show_all_urls
-from faraday.server.commands.app_urls import openapi_format
-from faraday.server.commands import change_password as change_pass
-from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
-from faraday.server.commands import change_username
-from faraday.server.commands import nginx_config
-from faraday.server.commands import import_vulnerability_template
-from faraday.server.commands import manage_settings
-from faraday.server.models import db, User, LOCAL_TYPE
-from faraday.server.web import get_app
-from faraday_plugins.plugins.manager import PluginsManager
-from flask_security.utils import hash_password
-
-CONTEXT_SETTINGS = {'help_option_names': ['-h', '--help']}
-
-
-# logger = logging.getLogger(__name__)
+app = get_app(register_extensions_flag=False)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -71,21 +72,24 @@ def check_faraday_server(url):
 
 @click.command(help="Show all URLs in Faraday Server API")
 def show_urls():
-    show_all_urls()
+    with app.app_context():
+        show_all_urls()
 
 
 @click.command(help="Creates Faraday Swagger config file")
 @click.option('--server', prompt=True, default="http://localhost:5985")
 @click.option('--modify_default', default=False)
 def openapi_swagger(server, modify_default):
-    openapi_format(server=server, modify_default=modify_default)
+    with app.app_context():
+        openapi_format(server=server, modify_default=modify_default)
 
 
 @click.command(help="Import Vulnerability templates")
 @click.option('--language', required=False, default='en')
 @click.option('--list-languages', is_flag=True)
 def import_vulnerability_templates(language, list_languages):
-    import_vulnerability_template.run(language, list_languages)
+    with app.app_context():
+        import_vulnerability_template.run(language, list_languages)
 
 
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
@@ -100,7 +104,7 @@ def import_vulnerability_templates(language, list_languages):
           'use the one provided')
 )
 def initdb(choose_password, password):
-    with get_app().app_context():
+    with app.app_context():
         InitDB().run(choose_password=choose_password, faraday_user_password=password)
 
 
@@ -125,14 +129,15 @@ def sql_shell():
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
 def change_password(username, password):
     try:
-        change_pass.changes_password(username, password)
+        with app.app_context():
+            change_pass.changes_password(username, password)
     except ProgrammingError:
         print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
         sys.exit(1)
 
 
 def validate_user_unique_field(ctx, param, value):
-    with get_app().app_context():
+    with app.app_context():
         try:
             if User.query.filter_by(**{param.name: value}).count():
                 raise click.ClickException("User already exists")
@@ -168,14 +173,14 @@ def list_plugins():
 @click.option('--password', prompt=True, hide_input=True,
               confirmation_prompt=True)
 def create_superuser(username, email, password):
-    with get_app().app_context():
+    with app.app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
             print(
                 "Can't create more users. The community edition only allows one user. "
                 "Please contact support for further information.")
             sys.exit(1)
 
-        get_app().user_datastore.create_user(username=username,
+        app.user_datastore.create_user(username=username,
                                        email=email,
                                        password=hash_password(password),
                                        roles=['admin'],
@@ -189,7 +194,7 @@ def create_superuser(username, email, password):
 @click.command(help="Create database tables. Requires a functional "
                     "PostgreSQL database configured in the server.ini")
 def create_tables():
-    with get_app().app_context():
+    with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
         if not conn_string:
@@ -220,35 +225,38 @@ def create_tables():
     required=False,
 )
 def migrate(downgrade, revision):
-    try:
-        revision = revision or ("-1" if downgrade else "head")
-        config = Config(FARADAY_BASE / "alembic.ini")
-        os.chdir(FARADAY_BASE)
-        if downgrade:
-            alembic.command.downgrade(config, revision)
-        else:
-            alembic.command.upgrade(config, revision)
-        # TODO Return to prev dir
-    except OperationalError as e:
-        logger = logging.getLogger(__name__)
-        logger.error("Migration Error: %s", e)
-        logger.exception(e)
-        print('Please verify your configuration on server.ini or the hba configuration!')
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("Migration Error: %s", e)
-        print('Migration failed!', e)
-        sys.exit(1)
+    with app.app_context():
+        try:
+            revision = revision or ("-1" if downgrade else "head")
+            config = Config(FARADAY_BASE / "alembic.ini")
+            os.chdir(FARADAY_BASE)
+            if downgrade:
+                alembic.command.downgrade(config, revision)
+            else:
+                alembic.command.upgrade(config, revision)
+            # TODO Return to prev dir
+        except OperationalError as e:
+            logger = logging.getLogger(__name__)
+            logger.error("Migration Error: %s", e)
+            logger.exception(e)
+            print('Please verify your configuration on server.ini or the hba configuration!')
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("Migration Error: %s", e)
+            print('Migration failed!', e)
+            sys.exit(1)
 
 
 @click.command(help='Custom field wizard')
 def add_custom_field():
-    add_custom_field_main()
+    with app.app_context():
+        add_custom_field_main()
 
 
 @click.command(help='Custom field delete wizard')
 def delete_custom_field():
-    delete_custom_field_main()
+    with app.app_context():
+        delete_custom_field_main()
 
 
 @click.command(help="Change username")
@@ -259,7 +267,8 @@ def rename_user(current_username, new_username):
         print("\nERROR: Usernames must be different.")
         sys.exit(1)
     else:
-        change_username.change_username(current_username, new_username)
+        with app.app_context():
+            change_username.change_username(current_username, new_username)
 
 
 @click.command(help="Generate nginx config")
@@ -282,7 +291,17 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
               help="Settings config in json")
 @click.argument('name', required=False)
 def settings(action, data, name):
-    manage_settings.manage(action.lower(), data, name)
+    with app.app_context():
+        manage_settings.manage(action.lower(), data, name)
+
+
+@click.command(help="Move references from deprecated model to new one")
+@click.option('-a', '--all-workspaces', type=bool, help="Move references of all workspaces", default=False)
+@click.option('-w', '--workspace-name', help="Specify workspace name")
+def move_references(all_workspaces, workspace_name):
+    app = get_app(register_extensions_flag=False)
+    with app.app_context():
+        _move_references(all_workspaces=all_workspaces, workspace_name=workspace_name)
 
 
 cli.add_command(show_urls)
@@ -301,6 +320,8 @@ cli.add_command(openapi_swagger)
 cli.add_command(generate_nginx_config)
 cli.add_command(import_vulnerability_templates)
 cli.add_command(settings)
+cli.add_command(move_references)
+
 
 if __name__ == '__main__':
     cli()

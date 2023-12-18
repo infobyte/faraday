@@ -21,6 +21,7 @@ services:
     image: index.docker.io/faradaysec/faraday
     restart: always
     container_name: faraday_app
+    entrypoint: "/entrypoint.sh"
     volumes:
      - "$HOME/.faraday:/home/faraday/.faraday:rw"
     environment:

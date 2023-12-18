@@ -532,6 +532,9 @@ class VulnerabilityABC(Metadata):
 
 class SeveritiesHistogram(db.Model):
     __tablename__ = "severities_histogram"
+    __table_args__ = (
+        UniqueConstraint('date', 'workspace_id', name='uix_severities_histogram_table_date_workspace_id'),
+    )
 
     SEVERITIES_ALLOWED = [VulnerabilityABC.SEVERITY_MEDIUM,
                           VulnerabilityABC.SEVERITY_HIGH,
@@ -1443,13 +1446,19 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     cve_instances = relationship("CVE",
                                  secondary=cve_vulnerability_association,
-                                 lazy="joined",
                                  collection_class=set)
 
     cve = association_proxy('cve_instances',
                             'name',
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
+
+    refs = relationship(
+        'VulnerabilityReference',
+        lazy="joined",
+        cascade="all, delete-orphan",
+        backref=backref("vulnerabilities")
+    )
 
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
@@ -1667,7 +1676,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     reference_instances = relationship(
         "Reference",
         secondary="reference_vulnerability_association",
-        lazy="joined",
         collection_class=set
     )
 
@@ -1679,7 +1687,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     policy_violation_instances = relationship(
         "PolicyViolation",
         secondary="policy_violation_vulnerability_association",
-        lazy="joined",
         collection_class=set
     )
 
@@ -1914,6 +1921,27 @@ class Reference(Metadata):
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
         super().__init__(name=name, workspace_id=workspace_id, **kwargs)
+
+    def __str__(self):
+        return f'{self.name}'
+
+    @property
+    def parent(self):
+        # TODO: fix this property
+        return
+
+
+# TODO: Add unique constraint in name and type
+class VulnerabilityReference(Metadata):
+    __tablename__ = 'vulnerability_reference'
+    __table_args__ = (
+        UniqueConstraint('name', 'type', 'vulnerability_id', name='uix_vulnerability_reference_table_vuln_id_name_type'),
+    )
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text)
+    type = Column(Enum(*REFERENCE_TYPES, name='reference_types'), default='other')
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), nullable=False)
 
     def __str__(self):
         return f'{self.name}'
@@ -3135,6 +3163,7 @@ class Agent(Metadata):
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)
+    sid = Column(Text)  # socketio sid
 
     @property
     def parent(self):
@@ -3142,8 +3171,11 @@ class Agent(Metadata):
 
     @property
     def is_online(self):
-        from faraday.server.websocket_factories import connected_agents  # pylint:disable=import-outside-toplevel
-        return self.id in connected_agents
+        return self.sid is not None
+
+    @property
+    def is_offline(self):
+        return self.sid is None
 
     @property
     def status(self):

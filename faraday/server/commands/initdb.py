@@ -292,7 +292,7 @@ class InitDB:
                 print(f"{Fore.YELLOW}WARNING{Fore.WHITE}: Can't create administrator user.")
                 raise
         if not already_created:
-            print(f"Admin user created with \n\n{Fore.RED}username: {Fore.WHITE}faraday \n "
+            print(f"Admin user created with \n\n{Fore.RED}username: {Fore.WHITE}faraday \n"
                   f"{Fore.RED}password:{Fore.WHITE} {user_password} \n")
 
     @staticmethod

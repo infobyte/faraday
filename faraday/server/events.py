@@ -7,11 +7,10 @@ See the file 'doc/LICENSE' for the license information
 import inspect
 import logging
 import sys
-from datetime import date
 from queue import Queue
 
 # Related third party imports
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import get_history
@@ -109,25 +108,28 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
 
 
 def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0, critical=0, confirmed=0):
+    logger.debug("Creating/Updating histogram ...")
     if workspace_id is None:
         logger.error("Workspace with None value. Histogram could not be updated")
         return
-    ws_id = SeveritiesHistogram.query.with_entities('id').filter(
-        SeveritiesHistogram.date == date.today(),
-        SeveritiesHistogram.workspace_id == workspace_id).first()
-    if ws_id is None:
-        connection.execute(
-            f"INSERT "  # nosec
-            f"INTO severities_histogram (workspace_id, medium, high, critical, date, confirmed) "
-            f"VALUES ({workspace_id}, {medium}, {high}, {critical}, '{date.today()}', {confirmed})")
-    else:
-        connection.execute(
-            f"UPDATE severities_histogram "  # nosec
-            f"SET medium = medium + {medium}, "
-            f"high = high + {high}, "
-            f"critical = critical + {critical}, "
-            f"confirmed = confirmed + {confirmed} "
-            f"WHERE id = {ws_id[0]}")
+    histogram = {
+        'workspace_id': workspace_id,
+        'critical': critical,
+        'high': high,
+        'medium': medium,
+        'confirmed': confirmed
+    }
+    stmt = postgresql.insert(SeveritiesHistogram).values(histogram)
+    on_update_stmt = stmt.on_conflict_do_update(
+        index_elements=[text('date'), text('workspace_id')],
+        set_={
+            "critical": text("severities_histogram.critical") + stmt.excluded.critical,
+            "high": text("severities_histogram.high") + stmt.excluded.high,
+            "medium": text("severities_histogram.medium") + stmt.excluded.medium,
+            "confirmed": text("severities_histogram.confirmed") + stmt.excluded.confirmed
+        }
+    )
+    connection.execute(on_update_stmt)
 
 
 def _decrease_severities_histogram(instance_severity, medium=0, high=0, critical=0):

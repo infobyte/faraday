@@ -21,6 +21,9 @@ from faraday.server.app import create_app
 from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
 from tests import factories
 
+
+pytest_plugins = ("celery.contrib.pytest", )
+
 TEST_DATA_PATH = Path(__file__).parent / 'data'
 
 TEMPORATY_SQLITE = NamedTemporaryFile()
@@ -111,6 +114,56 @@ def app(request):
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
         '--ignore-nplusone')
     return app
+
+
+@pytest.fixture(scope='session')
+def app2(request):
+    app = create_app(db_connection_string=request.config.getoption(
+        '--connection-string'), testing=True)
+    app.test_client_class = CustomClient
+
+    # Establish an application context before running the tests.
+    ctx = app.app_context()
+    ctx.push()
+
+    def teardown():
+        TEMPORATY_SQLITE.close()
+        ctx.pop()
+
+    request.addfinalizer(teardown)
+    app.config['NPLUSONE_RAISE'] = not request.config.getoption(
+        '--ignore-nplusone')
+    return app
+
+# @pytest.fixture(scope='session')
+# def celery_config():
+#     return {
+#         'broker_url': 'redis://localhost:6379',
+#         'result_backend': 'redis://localhost:6379',
+#         # 'worker_log_color': False,
+#         # 'accept_content': {'json'},
+#         # 'enable_utc': True,
+#         # 'timezone': 'UTC',
+#         # 'broker_heartbeat': 0,
+#     }
+
+# @pytest.fixture(scope="session")
+# def celery_worker_parameters():
+#     return {
+#         "task_always_eager": True,
+#         "task_store_eager_result": True,
+#         "task_ignore_result": False,
+#         "without_heartbeat": False,
+#     }
+
+
+@pytest.fixture(scope='session')
+def celery_app(app):
+    # from faraday.server.celery_worker import celery
+    from faraday.server.app import celery
+    # for use celery_worker fixture
+    from celery.contrib.testing import tasks  # NOQA
+    return celery
 
 
 @pytest.fixture(scope='session')

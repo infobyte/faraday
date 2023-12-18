@@ -3,7 +3,7 @@ factory-boy>=2.10.0
 pylint
 pytest>=6
 pytest-cov
-pytest-factoryboy>=2.0.1
+pytest-factoryboy>=2.0.1,<2.5.0
 responses>=0.9.0
 hypothesis>=4.18.3
 Sphinx>=1.7.6

@@ -45,6 +45,8 @@ let
 
     flask = self.callPackage ./packages/flask { };
 
+    flask-celery-helper = self.callPackage ./packages/flask-celery-helper { };
+
     flask-classful = self.callPackage ./packages/flask-classful { };
 
     flask-kvsession-fork = self.callPackage ./packages/flask-kvsession-fork { };
@@ -62,11 +64,11 @@ let
     marshmallow-sqlalchemy =
       self.callPackage ./packages/marshmallow-sqlalchemy { };
 
+    psycogreen = self.callPackage ./packages/psycogreen { };
+
     simplekv = self.callPackage ./packages/simplekv { };
 
     sqlalchemy = self.callPackage ./packages/sqlalchemy { };
-
-    twisted = self.callPackage ./packages/twisted { };
 
     werkzeug = self.callPackage ./packages/werkzeug { };
 

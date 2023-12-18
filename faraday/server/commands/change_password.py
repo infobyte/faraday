@@ -5,14 +5,14 @@ See the file 'doc/LICENSE' for the license information
 """
 # Related third party imports
 from flask_security.utils import hash_password
+from flask import current_app
 
 # Local application imports
 from faraday.server.models import User, db
-from faraday.server.web import get_app
 
 
 def changes_password(username, password):
-    with get_app().app_context():
+    with current_app.app_context():
         user = User.query.filter_by(username=username).first()
         if user:
             user.password = hash_password(password)

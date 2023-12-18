@@ -11,6 +11,8 @@ from copy import deepcopy
 from functools import lru_cache
 from typing import Dict, Optional
 
+from flask import current_app
+
 # Local application imports
 from faraday.server.models import (
     db,
@@ -43,8 +45,7 @@ class Settings:
             LOADED_SETTINGS[self.settings_key] = self
 
     def load_configuration(self) -> Dict:
-        from faraday.server.web import get_app   # pylint: disable=import-outside-toplevel
-        with get_app().app_context():
+        with current_app.app_context():
             query = db.session.query(Configuration).filter(Configuration.key == self.settings_key).first()
             settings_config = self.get_default_config()
             if query:
@@ -53,7 +54,7 @@ class Settings:
         return settings_config
 
     def delete_configuration(self):
-        from faraday.server.web import get_app   # pylint: disable=import-outside-toplevel
+        from faraday.server.app import get_app   # pylint: disable=import-outside-toplevel
         with get_app().app_context():
             db.session.query(Configuration).filter(Configuration.key == self.settings_key).delete()
             db.session.commit()

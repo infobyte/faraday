@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+5.0.0 [Dec 13th, 2023]:
+---
+ * [ADD] **Breaking change** We now use Celery as the main way to import reports. In addition, we have removed twisted and replaced raw websockets with socket.io. #7352
+ * [ADD] Added option to faraday-server to run workers. #7623
+
 4.6.2 [Nov 10th, 2023]:
 ---
  * [ADD] Exclude unnecessary fields from VulnerabilitySchema in filter endpoint. #7608

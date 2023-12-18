@@ -12,7 +12,7 @@ in { useLastCommit ? true }: rec {
     } // lib.optionalAttrs useLastCommit {
       src = builtins.fetchGit {
         url = ./.;
-        rev = "HEAD";
+        ref = "HEAD";
       };
     });
 }

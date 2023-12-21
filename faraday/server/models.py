@@ -2313,7 +2313,7 @@ class WorkspacePermission(db.Model):
     __tablename__ = "workspace_permission_association"
     __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), nullable=False)
     workspace = relationship('Workspace')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)

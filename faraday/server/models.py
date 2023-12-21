@@ -1998,7 +1998,7 @@ class PolicyViolation(Metadata):
 
     workspace_id = Column(
         Integer,
-        ForeignKey('workspace.id'),
+        ForeignKey('workspace.id', ondelete='CASCADE'),
         index=True,
         nullable=False
     )
@@ -2875,7 +2875,7 @@ class WebHookNotification(NotificationBase):
 class WebsocketNotification(NotificationBase):
     __tablename__ = 'websocket_notification'
 
-    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('notification_base.id', ondelete='CASCADE'), primary_key=True)
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True)
     user_notified = relationship(
         'User',

@@ -41,6 +41,8 @@ def upgrade():
     op.execute('alter table comment add constraint comment_workspace_id_fkey  FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete CASCADE;')
 
 
+# workspace_permission_association,  policy_violation,   websocket_notification
+
 def downgrade():
     # perform downgrade of the previews actions
     op.execute('alter table workspace_permission_association drop constraint workspace_permission_association_workspace_id_fkey;')

@@ -116,7 +116,7 @@ class FlaskRestlessFilterSchema(Schema):
             column = getattr(model, column_name)
         else:
             try:
-                column = getattr(self._model_class(), column_name)
+                column = getattr(self._model_class(), column_name.split('->')[0])
             except AttributeError as e:
                 raise ValidationError('Field does not exists') from e
 
@@ -159,8 +159,6 @@ class FlaskRestlessFilterSchema(Schema):
             # like must be used with string
             if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):
                 raise ValidationError('Can\'t perform ilike/like against numbers')
-            if isinstance(column.type, JSONType):
-                raise ValidationError('Can\'t perform ilike/like against JSON Type column')
             if isinstance(field, fields.Boolean):
                 raise ValidationError('Can\'t perform ilike/like against boolean type column')
 

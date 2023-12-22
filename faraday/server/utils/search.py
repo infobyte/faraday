@@ -25,7 +25,7 @@ from sqlalchemy import (
     func,
     nullsfirst,
     nullslast,
-    inspect as sqlalchemy_inspect,
+    inspect as sqlalchemy_inspect, text,
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -33,6 +33,7 @@ from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
 # Local application imports
+from faraday.server.fields import JSONType
 from faraday.server.models import User, CVE, Role
 
 logger = logging.getLogger(__name__)
@@ -448,7 +449,11 @@ class QueryBuilder:
         # because `inspect.getargspec` is deprecated.
         numargs = len(inspect.getargspec(opfunc).args)
         # raises AttributeError if `fieldname` or `relation` does not exist
-        field = getattr(model, relation or fieldname)
+        field = getattr(model, relation or fieldname.split('->')[0])
+        if '->' in fieldname:
+            key = 'jojo'
+            field = field.op('->>')('jojo')
+            return opfunc(text("vulnerability.custom_fields ->> 'jojo'"), argument)
         # each of these will raise a TypeError if the wrong number of arguments
         # is supplied to `opfunc`.
         if numargs == 1:
@@ -505,12 +510,12 @@ class QueryBuilder:
         create_filt = QueryBuilder._create_filter
 
         def create_filters(filt):
-            if not isinstance(filt,
-                              JunctionFilter) and '__' in filt.fieldname:
+            if not isinstance(filt, JunctionFilter) and '__' in filt.fieldname:
                 return create_filt(model, filt)
             else:
-                if not getattr(filt, 'fieldname', False) or \
-                        filt.fieldname.split('__')[0] in valid_model_fields:
+                if (not getattr(filt, 'fieldname', False)
+                        or filt.fieldname.split('__')[0] in valid_model_fields
+                        or filt.fieldname.split('->')[0] in valid_model_fields):
                     try:
                         return create_filt(model, filt)
                     except AttributeError as e:

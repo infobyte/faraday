@@ -25,18 +25,6 @@ from faraday.server.api.modules.services import ServiceSchema
 services_context_api = Blueprint('services_context_api', __name__)
 
 
-class ServiceContextSchema(ServiceSchema):
-    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
-
-    class Meta:
-        model = Service
-        fields = ('id', '_id', 'status', 'parent', 'type',
-                  'protocol', 'description', '_rev',
-                  'owned', 'owner', 'credentials', 'vulns',
-                  'name', 'version', '_id', 'port', 'ports',
-                  'metadata', 'summary', 'host_id', 'command_id', 'workspace_name')
-
-
 class ServiceContextFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Service
@@ -49,7 +37,7 @@ class ServiceContextView(PaginatedMixin, FilterMixin, FilterAlchemyMixin, Contex
 
     route_base = 'services'
     model_class = Service
-    schema_class = ServiceContextSchema
+    schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
     get_joinedloads = [Service.credentials, Service.update_user]

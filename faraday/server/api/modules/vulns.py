@@ -271,6 +271,7 @@ class VulnerabilitySchema(AutoSchema):
     external_id = fields.String(allow_none=True)
     command_id = fields.Int(required=False, load_only=True)
     risk = SelfNestedField(RiskSchema(), dump_only=True)
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
 
     class Meta:
         model = Vulnerability
@@ -285,7 +286,7 @@ class VulnerabilitySchema(AutoSchema):
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
             'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
-            'risk'
+            'risk', 'workspace_name'
             )
 
     @staticmethod
@@ -463,7 +464,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
             'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
-            'risk'
+            'risk', 'workspace_name'
         )
 
 

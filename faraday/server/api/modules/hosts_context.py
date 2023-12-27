@@ -34,19 +34,6 @@ host_context_api = Blueprint('host_context_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-class HostContextSchema(HostSchema):
-    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
-
-    class Meta:
-        model = Host
-        fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
-                  'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type', 'service_summaries', 'versions',
-                  'importance', 'severity_counts', 'command_id', 'workspace_name'
-                  )
-
-
 class HostContextFilterSet(HostFilterSet):
     class Meta(FilterSetMeta):
         model = Host
@@ -68,7 +55,7 @@ class HostsContextView(ContextMixin,
         desc(Host.vulnerability_info_generic_count), \
         desc(Host.vulnerability_unclassified_generic_count), Host.ip.asc()
 
-    schema_class = HostContextSchema
+    schema_class = HostSchema
     filterset_class = HostContextFilterSet
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,

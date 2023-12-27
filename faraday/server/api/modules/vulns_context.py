@@ -67,47 +67,6 @@ from faraday.server.api.modules.vulns import (
 vulns_context_api = Blueprint('vulns_context_api', __name__)
 logger = logging.getLogger(__name__)
 
-
-class VulnerabilityContextSchema(VulnerabilitySchema):
-    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
-
-    class Meta:
-        model = Vulnerability
-        fields = (
-            '_id', 'status',
-            'issuetracker', 'description', 'parent', 'parent_type',
-            'tags', 'severity', '_rev', 'easeofresolution', 'owned',
-            'hostnames', 'owner',
-            'date', 'data',
-            'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations', '_attachments',
-            'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool',
-            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
-            'risk', 'workspace_name'
-            )
-
-
-class VulnerabilityWebContextSchema(VulnerabilityWebSchema, VulnerabilityContextSchema):
-
-    class Meta:
-        model = VulnerabilityWeb
-        fields = (
-            '_id', 'status', 'parent_type',
-            'website', 'issuetracker', 'description', 'parent',
-            'tags', 'severity', '_rev', 'easeofresolution', 'owned',
-            'hostnames', 'pname', 'query', 'owner',
-            'path', 'date', 'data', 'response',
-            'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations',
-            'request', '_attachments', 'params',
-            'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
-            'risk', 'workspace_name'
-        )
-
-
 # Use this override for filterset fields that filter by en exact match by
 # default, and not by a similar one (like operator)
 _strict_filtering = {'default_operator': operators.Equal}
@@ -163,8 +122,8 @@ class VulnerabilityContextView(ContextMixin,
         'VulnerabilityGeneric': VulnerabilityGeneric,  # For listing objects
     }
     schema_class_dict = {
-        'Vulnerability': VulnerabilityContextSchema,
-        'VulnerabilityWeb': VulnerabilityWebContextSchema
+        'Vulnerability': VulnerabilitySchema,
+        'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
     def _get_schema_instance(self, route_kwargs, **kwargs):

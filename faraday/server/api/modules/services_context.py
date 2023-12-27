@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 # Related third party imports
 from flask import Blueprint
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
-from marshmallow import fields
 # Local application imports
 from faraday.server.models import (
     Service

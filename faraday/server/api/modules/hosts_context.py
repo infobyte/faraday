@@ -14,7 +14,6 @@ from flask import Blueprint
 from flask_classful import route
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload, undefer
-from marshmallow import fields
 # Local application imports
 from faraday.server.utils.search import search
 from faraday.server.api.base import (

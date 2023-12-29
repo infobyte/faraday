@@ -155,7 +155,6 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     view_class = WorkspaceView
     patchable_fields = ['description']
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_fixed_stats_in_workspace(self, session, test_client, vulnerability_factory, workspace_factory):
         ws = workspace_factory.create(name='myws')
         session.add(ws)
@@ -187,16 +186,15 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.get(urljoin(self.url(ws), 'filter?q={"filters":[{"name": "name", "op":"eq", "val": "myws"}]}'))
 
         assert res.status_code == 200
-        assert res.json[0]['stats']['opened_vulns'] == 14
-        assert res.json[0]['stats']['closed_vulns'] == 11
-        assert res.json[0]['stats']['info_vulns'] == 8
-        assert res.json[0]['stats']['low_vulns'] == 5
-        assert res.json[0]['stats']['medium_vulns'] == 1
-        assert res.json[0]['stats']['high_vulns'] == 5
-        assert res.json[0]['stats']['critical_vulns'] == 6
-        assert res.json[0]['stats']['confirmed_vulns'] == 8
+        assert res.json['rows'][0]['stats']['closed_vulns'] == 11
+        assert res.json['rows'][0]['stats']['opened_vulns'] == 14
+        assert res.json['rows'][0]['stats']['info_vulns'] == 8
+        assert res.json['rows'][0]['stats']['low_vulns'] == 5
+        assert res.json['rows'][0]['stats']['medium_vulns'] == 1
+        assert res.json['rows'][0]['stats']['high_vulns'] == 5
+        assert res.json['rows'][0]['stats']['critical_vulns'] == 6
+        assert res.json['rows'][0]['stats']['confirmed_vulns'] == 8
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name(self, test_client):
         res = test_client.get(
             join(
@@ -205,10 +203,9 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
             )
         )
         assert res.status_code == 200
-        assert len(res.json) == 1
-        assert res.json[0]['name'] == self.first_object.name
+        assert res.json['count'] == 1
+        assert res.json['rows'][0]['name'] == self.first_object.name
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_by_name_zero_results_found(self, test_client):
         res = test_client.get(
             join(
@@ -217,7 +214,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
             )
         )
         assert res.status_code == 200
-        assert len(res.json) == 0
+        assert res.json['count'] == 0
 
     def test_filter_restless_by_description(self, test_client):
         self.first_object.description = "this is a new description"
@@ -229,8 +226,8 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
             )
         )
         assert res.status_code == 200
-        assert len(res.json) == 1
-        assert res.json[0]['description'] == self.first_object.description
+        assert res.json['count'] == 1
+        assert res.json['rows'][0]['description'] == self.first_object.description
 
     def test_filter_restless_with_vulns_stats(self, test_client, vulnerability_factory,
                                               vulnerability_web_factory, session):
@@ -265,20 +262,20 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
             )
         )
         assert res.status_code == 200
-        assert len(res.json) == 1
+        assert res.json['count'] == 1
 
-        assert res.json[0]['stats']['std_vulns'] == 11
-        assert res.json[0]['stats']['web_vulns'] == 8
-        assert res.json[0]['stats']['code_vulns'] == 0
+        assert res.json['rows'][0]['stats']['std_vulns'] == 11
+        assert res.json['rows'][0]['stats']['web_vulns'] == 8
+        assert res.json['rows'][0]['stats']['code_vulns'] == 0
 
-        assert res.json[0]['description'] == self.first_object.description
-        assert res.json[0]['stats']['total_vulns'] == 19
-        assert res.json[0]['stats']['info_vulns'] == 8
-        assert res.json[0]['stats']['critical_vulns'] == 3
-        assert res.json[0]['stats']['low_vulns'] == 2
-        assert res.json[0]['stats']['high_vulns'] == 2
-        assert res.json[0]['stats']['medium_vulns'] == 2
-        assert res.json[0]['stats']['unclassified_vulns'] == 2
+        assert res.json['rows'][0]['description'] == self.first_object.description
+        assert res.json['rows'][0]['stats']['total_vulns'] == 19
+        assert res.json['rows'][0]['stats']['info_vulns'] == 8
+        assert res.json['rows'][0]['stats']['critical_vulns'] == 3
+        assert res.json['rows'][0]['stats']['low_vulns'] == 2
+        assert res.json['rows'][0]['stats']['high_vulns'] == 2
+        assert res.json['rows'][0]['stats']['medium_vulns'] == 2
+        assert res.json['rows'][0]['stats']['unclassified_vulns'] == 2
 
     def test_host_count(self, host_factory, test_client, session):
         host_factory.create(workspace=self.first_object)
@@ -414,10 +411,6 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.get(urljoin(self.url(self.first_object), params))
         assert res.status_code == 200
 
-        # Static fields
-        # assert res.json['stats']['hosts'] == query['result']['hosts']
-        # assert res.json['stats']['services'] == query['result']['services']
-
         # vulnerability types
         assert res.json['stats']['code_vulns'] == query['result']['code_vulns']
         assert res.json['stats']['web_vulns'] == query['result']['web_vulns']
@@ -440,7 +433,6 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert res.json['stats']['total_vulns'] == query['result']['total_vulns']
 
     @pytest.mark.skip_sql_dialect('sqlite')
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_histogram(self,
                         vulnerability_factory,
                         vulnerability_web_factory,
@@ -467,7 +459,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         session.commit()
         res = test_client.get('/v3/ws?histogram=true')
         assert res.status_code == 200
-        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        firs_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 20
         ws_histogram = firs_ws[0]
         for ws_date in ws_histogram:
@@ -482,7 +474,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
                 assert ws_date['critical'] == 0
                 assert ws_date['confirmed'] == 0
 
-        second_ws = [ws['histogram'] for ws in res.json if ws['name'] == second_workspace.name]
+        second_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == second_workspace.name]
         assert len(second_ws[0]) == 20
         ws_histogram = second_ws[0]
         for ws_date in ws_histogram:
@@ -499,27 +491,27 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
 
         res = test_client.get('/v3/ws?histogram=True&histogram_days=a')
         assert res.status_code == 200
-        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        firs_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 20
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
         assert res.status_code == 200
-        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        firs_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 20
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=[asdf, "adsf"]')
         assert res.status_code == 200
-        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        firs_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 20
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=5')
         assert res.status_code == 200
-        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        firs_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 5
 
         res = test_client.get('/v3/ws?histogram=true&histogram_days=365')
         assert res.status_code == 200
-        firs_ws = [ws['histogram'] for ws in res.json if ws['name'] == self.first_object.name]
+        firs_ws = [ws['histogram'] for ws in res.json['rows'] if ws['name'] == self.first_object.name]
         assert len(firs_ws[0]) == 365
 
         res = test_client.get('/v3/ws?histogram=asdf&histogram_days=365')

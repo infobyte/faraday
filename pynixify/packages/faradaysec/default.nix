@@ -17,7 +17,7 @@
 
 buildPythonPackage rec {
   pname = "faradaysec";
-  version = "5.0.0";
+  version = "5.0.1";
 
   src = lib.cleanSource ../../..;
 

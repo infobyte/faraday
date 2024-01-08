@@ -268,14 +268,10 @@ def bulk_create(ws: Workspace,
 
     logger.info("Init bulk create process")
 
-    start_time_before_process = time.time()
-
     if data_already_deserialized is False:
         schema = BulkCreateSchema()
         data = schema.load(data)
 
-    # if 'command' in data:
-    #     command = _update_command(command, data['command'])
     _update_command(command.id, data['command'])
 
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
@@ -586,7 +582,6 @@ def _create_service(ws, host, service_data, command: dict):
     if not created:
         service = _update_service(service, service_data)
 
-    # if command is not None:
     _create_command_object_for(ws, created, service, command)
 
     start_time_vulns = time.time()

@@ -1241,6 +1241,7 @@ class TestBulkCreateAPI:
         cmd = new_empty_command(workspace)
         host_data_copy = host_data.copy()
         host_data_copy['vulnerabilities'] = []
+        host_data_copy['services'] = []
 
         vulnerability = vuln_data.copy()
         vulnerability['severity'] = "medium"
@@ -1260,7 +1261,20 @@ class TestBulkCreateAPI:
         vulnerability3['desc'] = "test3"
         host_data_copy['vulnerabilities'].append(vulnerability3)
 
+        vulnerability4 = vuln_web_data.copy()
+        vulnerability4['severity'] = "critical"
+        vulnerability4['name'] = "test"
+        vulnerability4['desc'] = "test4"
+        service_data_copy = service_data.copy()
+        service_data_copy['vulnerabilities'] = []
+        service_data_copy['vulnerabilities'].append(vulnerability4)
+        host_data_copy['services'].append(service_data_copy)
+
         hosts = {"hosts": [host_data_copy], "command": command_data}
         report = send_report_data(workspace.name, cmd.id, hosts, logged_user.id, True)
-        created = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.name == vulnerability['name']).all()
+        created = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.name == vulnerability['name'],
+                                                    VulnerabilityGeneric.type == 'vulnerability_web').all()
+        assert len(created) == 1
+        created = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.name == vulnerability['name'],
+                                                    VulnerabilityGeneric.type == 'vulnerability').all()
         assert len(created) == 3

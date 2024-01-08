@@ -346,9 +346,7 @@ def _create_host(ws, host_data, command: dict):
     if total_services > 0:
         logger.debug(f"Needs to create {total_services} services...")
         for service_data in _services:
-            # store data for workflows
-            for created_service_vuln in _create_service(ws, host, service_data, command):
-                created_host_data.append(get_created_tuple(created_service_vuln))
+            _create_service(ws, host, service_data, command)
 
     start_time_vulns = time.time()
     total_vulns = len(_vulns)
@@ -410,7 +408,6 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "custom_fields": stmt.excluded.custom_fields
         },
         where=(Vulnerability.status == 'closed')
-    # ).returning(text('id'), text('_tmp_id'), text('status'), text('severity'))
     ).returning(text('id'), text('_tmp_id'))
     result = db.session.execute(on_update_stmt)
     db.session.commit()

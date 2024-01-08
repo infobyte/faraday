@@ -23,6 +23,7 @@ from faraday.server.models import (
     CWE,
 )
 from faraday.server.api.modules import bulk_create as bc
+from faraday.server.utils.reports_processor import send_report_data
 from tests.factories import CustomFieldsSchemaFactory
 from faraday.server.utils.agents import get_command_and_agent_execution
 
@@ -1234,3 +1235,32 @@ class TestBulkCreateAPI:
         host_data_copy['vulnerabilities'] = [vuln_web_data_copy]
         res = test_client.post(url, data=dict(hosts=[host_data_copy], command=command_data.copy()))
         assert res.status_code == 400
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_send_report(self, session, workspace, test_client, logged_user):
+        cmd = new_empty_command(workspace)
+        host_data_copy = host_data.copy()
+        host_data_copy['vulnerabilities'] = []
+
+        vulnerability = vuln_data.copy()
+        vulnerability['severity'] = "medium"
+        vulnerability['name'] = "test"
+        vulnerability['desc'] = "test"
+        host_data_copy['vulnerabilities'].append(vulnerability)
+
+        vulnerability2 = vuln_data.copy()
+        vulnerability2['severity'] = "high"
+        vulnerability2['name'] = "test"
+        vulnerability2['desc'] = "test2"
+        host_data_copy['vulnerabilities'].append(vulnerability2)
+
+        vulnerability3 = vuln_data.copy()
+        vulnerability3['severity'] = "critical"
+        vulnerability3['name'] = "test"
+        vulnerability3['desc'] = "test3"
+        host_data_copy['vulnerabilities'].append(vulnerability3)
+
+        hosts = {"hosts": [host_data_copy], "command": command_data}
+        report = send_report_data(workspace.name, cmd.id, hosts, logged_user.id, True)
+        created = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.name == vulnerability['name']).all()
+        assert len(created) == 3

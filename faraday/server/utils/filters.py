@@ -18,7 +18,6 @@ from marshmallow import Schema, fields, ValidationError, types, validate, post_l
 from marshmallow_sqlalchemy.convert import ModelConverter
 
 # Local application imports
-from faraday.server.fields import JSONType
 from faraday.server.models import (
     VulnerabilityWeb,
     Host,
@@ -168,7 +167,8 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
 
             if not isinstance(field, (fields.Date, fields.DateTime, fields.Number)):
-                raise ValidationError('Using comparison operator against a field that does not supports it')
+                if '->' not in column_name:
+                    raise ValidationError('Using comparison operator against a field that does not supports it')
 
         # if the field is boolean, the value must be valid otherwise postgresql will raise an error
         if isinstance(field, fields.Boolean) and not isinstance(filter_['val'], bool):

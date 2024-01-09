@@ -152,14 +152,54 @@ OPERATORS = {
     'like': lambda f, a: f.like(a),
     'in': lambda f, a: f.in_(a),
     'not_in': lambda f, a: ~f.in_(a),
-    # json # MODIFICAR
-    'json_==': lambda f: f,
-    'json_eq': lambda f: f,
     # Operators which accept three arguments.
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
     'not_any': lambda f, a, fn: ~f.any(_sub_operator(f, a, fn)),
+    # Custom operator for json fields
+    'json': lambda f: f,
 }
+
+
+def get_json_operator(operator):
+    operator_mapping = {
+        '==': ('=', 'compare'),
+        'eq': ('=', 'compare'),
+        'equals': ('=', 'compare'),
+        'equal_to': ('=', 'compare'),
+        '!=': ('<>', 'compare'),
+        'ne': ('<>', 'compare'),
+        'neq': ('<>', 'compare'),
+        'not_equal_to': ('<>', 'compare'),
+        'does_not_equal': ('<>', 'compare'),
+        '<': ('<', 'compare'),
+        'lt': ('<', 'compare'),
+        '<=': ('<=', 'compare'),
+        'le': ('<=', 'compare'),
+        'lte': ('<=', 'compare'),
+        'leq': ('<=', 'compare'),
+        '>': ('>', 'compare'),
+        'gt': ('>', 'compare'),
+        '>=': ('>=', 'compare'),
+        'ge': ('>=', 'compare'),
+        'gte': ('>=', 'compare'),
+        'geq': ('>=', 'compare'),
+        'is_null': ('IS NULL', 'exists'),
+        'is_not_null': ('IS NOT NULL', 'exists'),
+        'like': ('LIKE', 'search'),
+        'ilike': ('ILIKE', 'search')
+    }
+
+    return operator_mapping.get(operator, None)
+
+
+def get_json_query(table, field, op, op_type):
+    if op_type == 'compare' or op_type == 'search':
+        return f"{table}.{field} ->> :key {op} :value"
+    elif op_type == 'exists':
+        return f"{table}.{field} ->> :key {op}"
+    else:
+        raise TypeError('Invalid operator type')
 
 
 class OrderBy:
@@ -445,39 +485,46 @@ class QueryBuilder:
           `relation` exists on `model`
 
         """
-        # raises KeyError if operator not in OPERATORS
-        opfunc = OPERATORS[operator]
-        # In Python 3.0 or later, this should be `inspect.getfullargspec`
-        # because `inspect.getargspec` is deprecated.
-        numargs = len(inspect.getargspec(opfunc).args)
-        # raises AttributeError if `fieldname` or `relation` does not exist
-        field = getattr(model, relation or fieldname.split('->')[0])
         if '->' in fieldname:
-            opfunc = OPERATORS['json_==']  # MODIFICAR
-            field, key = fieldname.split('->')
-            table = model.__tablename__
-            table_field = f"{table}.{field} ->> :key = :value"
-            return opfunc(text(f"{table_field}").bindparams(
-                key=key,
-                value=argument)
-            )
-        # each of these will raise a TypeError if the wrong number of arguments
-        # is supplied to `opfunc`.
-        if numargs == 1:
-            return opfunc(field)
-        if argument is None:
-            msg = ('To compare a value to NULL, use the is_null/is_not_null '
-                   'operators.')
-            raise TypeError(msg)
-        if numargs == 2:
-            map_attr = {
-                'creator': 'username',
-            }
-            if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
-                field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
+            field = getattr(model, fieldname.split('->')[0])
+            if field:
+                table = model.__tablename__
+                op, op_type = get_json_operator(operator)
+                field, key = fieldname.split('->')
+                query = get_json_query(table, field, op, op_type)
 
-            return opfunc(field, argument)
-        return opfunc(field, argument, fieldname)
+                if op_type == 'search':
+                    argument = f'%{argument}%'
+
+                return OPERATORS['json'](text(f"{query}").bindparams(
+                    key=key,
+                    value=argument)
+                )
+        else:
+            # raises KeyError if operator not in OPERATORS
+            opfunc = OPERATORS[operator]
+            # In Python 3.0 or later, this should be `inspect.getfullargspec`
+            # because `inspect.getargspec` is deprecated.
+            numargs = len(inspect.getargspec(opfunc).args)
+            # raises AttributeError if `fieldname` or `relation` does not exist
+            field = getattr(model, relation or fieldname)
+            # each of these will raise a TypeError if the wrong number of arguments
+            # is supplied to `opfunc`.
+            if numargs == 1:
+                return opfunc(field)
+            if argument is None:
+                msg = ('To compare a value to NULL, use the is_null/is_not_null '
+                       'operators.')
+                raise TypeError(msg)
+            if numargs == 2:
+                map_attr = {
+                    'creator': 'username',
+                }
+                if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
+                    field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
+
+                return opfunc(field, argument)
+            return opfunc(field, argument, fieldname)
 
     @staticmethod
     def _create_filter(model, filt):

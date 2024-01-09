@@ -33,7 +33,6 @@ from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
 # Local application imports
-from faraday.server.fields import JSONType
 from faraday.server.models import User, CVE, Role
 
 logger = logging.getLogger(__name__)
@@ -153,6 +152,9 @@ OPERATORS = {
     'like': lambda f, a: f.like(a),
     'in': lambda f, a: f.in_(a),
     'not_in': lambda f, a: ~f.in_(a),
+    # json # MODIFICAR
+    'json_==': lambda f: f,
+    'json_eq': lambda f: f,
     # Operators which accept three arguments.
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
@@ -451,9 +453,14 @@ class QueryBuilder:
         # raises AttributeError if `fieldname` or `relation` does not exist
         field = getattr(model, relation or fieldname.split('->')[0])
         if '->' in fieldname:
-            key = 'jojo'
-            field = field.op('->>')('jojo')
-            return opfunc(text("vulnerability.custom_fields ->> 'jojo'"), argument)
+            opfunc = OPERATORS['json_==']  # MODIFICAR
+            field, key = fieldname.split('->')
+            table = model.__tablename__
+            table_field = f"{table}.{field} ->> :key = :value"
+            return opfunc(text(f"{table_field}").bindparams(
+                key=key,
+                value=argument)
+            )
         # each of these will raise a TypeError if the wrong number of arguments
         # is supplied to `opfunc`.
         if numargs == 1:

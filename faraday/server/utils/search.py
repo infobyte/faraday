@@ -184,17 +184,17 @@ def get_json_operator(operator):
         'ge': ('>=', 'compare'),
         'gte': ('>=', 'compare'),
         'geq': ('>=', 'compare'),
+        'like': ('LIKE', 'compare'),
+        'ilike': ('ILIKE', 'compare'),
         'is_null': ('IS NULL', 'exists'),
         'is_not_null': ('IS NOT NULL', 'exists'),
-        'like': ('LIKE', 'search'),
-        'ilike': ('ILIKE', 'search')
     }
 
     return operator_mapping.get(operator, None)
 
 
 def get_json_query(table, field, op, op_type):
-    if op_type == 'compare' or op_type == 'search':
+    if op_type == 'compare':
         return f"{table}.{field} ->> :key {op} :value"
     elif op_type == 'exists':
         return f"{table}.{field} ->> :key {op}"
@@ -492,9 +492,6 @@ class QueryBuilder:
                 op, op_type = get_json_operator(operator)
                 field, key = fieldname.split('->')
                 query = get_json_query(table, field, op, op_type)
-
-                if op_type == 'search':
-                    argument = f'%{argument}%'
 
                 return OPERATORS['json'](text(f"{query}").bindparams(
                     key=key,

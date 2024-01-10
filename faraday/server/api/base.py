@@ -11,6 +11,7 @@ import json
 from json import JSONDecodeError
 from typing import Tuple, List, Dict
 from collections import defaultdict
+import time
 
 # Related third party imports
 import flask
@@ -1509,16 +1510,26 @@ class BulkUpdateMixin(FilterObjects):
     def _pre_bulk_update(self, data, **kwargs):
         return {}
 
-    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
         pass
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         try:
             post_bulk_update_data = self._pre_bulk_update(data, workspace_name=workspace_name, **kwargs)
             if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
-                queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
-                updated = queryset.update(data, synchronize_session='fetch')
-                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name)
+                returns = None
+                _time = time.time()
+                if 'returning' in kwargs:
+                    returns = db.session.execute(sqlalchemy.update(self.model_class)
+                                                 .where(self.model_class.id.in_(ids))
+                                                 .values(data).returning(*kwargs['returning']))
+                    returns = returns.fetchall()
+                    updated = len(returns)
+                else:
+                    queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
+                    updated = queryset.update(data, synchronize_session='fetch')
+                logger.debug(f"Updated {updated} {self.model_class.__name__} in {time.time() - _time} seconds")
+                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name, data=data, returning=returns)
             else:
                 updated = 0
             db.session.commit()

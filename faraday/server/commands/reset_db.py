@@ -11,7 +11,7 @@ import click
 import faraday.server.config
 from faraday.server.commands.initdb import InitDB
 from faraday.server.models import db
-from faraday.server.web import get_app
+from faraday.server.app import get_app
 
 
 def reset_db_all():

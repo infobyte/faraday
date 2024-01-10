@@ -1,6 +1,25 @@
 New features in the latest update
 =====================================
 
+5.0.1 [Jan 2nd, 2024]:
+---
+ * [MOD] Code refactor.
+
+5.0.0 [Dec 13th, 2023]:
+---
+ * [ADD] **Breaking change** We now use Celery as the main way to import reports. In addition, we have removed twisted and replaced raw websockets with socket.io. #7352
+ * [ADD] Added option to faraday-server to run workers. #7623
+
+4.6.2 [Nov 10th, 2023]:
+---
+ * [ADD] Exclude unnecessary fields from VulnerabilitySchema in filter endpoint. #7608
+
+4.6.1 [Oct 19th, 2023]:
+---
+ * [ADD] New `exclude_stats` query param in workspace endpoint. #7595
+ * [MOD] Optimize hosts API when stats aren't needed. #7596
+ * [FIX] Filter .webp files in vulns attachment endpoint because CVE-2023-4863. #7603
+
 4.6.0 [Sep 6th, 2023]:
 ---
  * [FIX] Delete Cascade from KB. #7569

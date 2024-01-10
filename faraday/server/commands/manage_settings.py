@@ -9,11 +9,11 @@ import sys
 
 # Related third party imports
 import click
+from flask import current_app
 
 # Local application imports
 from faraday.server.models import Configuration, db
 from faraday.server.utils.database import get_or_create
-from faraday.server.web import get_app
 from faraday.settings import get_settings, get_all_settings, load_settings
 from faraday.settings.exceptions import InvalidConfigurationError
 
@@ -74,7 +74,7 @@ def manage(action, json_data, name):
                                             f"\n----------------------"
                                             f"\n{settings_message}\n", default=True)
                 if confirm:
-                    with get_app().app_context():
+                    with current_app.app_context():
                         saved_config, created = get_or_create(db.session, Configuration, key=settings.settings_key)
                         if created:
                             saved_config.value = settings.update_configuration(new_settings)

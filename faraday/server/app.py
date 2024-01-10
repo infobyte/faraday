@@ -7,15 +7,17 @@ See the file 'doc/LICENSE' for the license information
 import datetime
 import logging
 import os
+
 import string
+import sys
 from configparser import (
     ConfigParser,
     NoSectionError,
     NoOptionError,
     DuplicateSectionError,
 )
+from pathlib import Path
 from random import SystemRandom
-from faraday.server.api.modules.swagger import swagger_api
 
 
 # Related third party imports
@@ -43,6 +45,7 @@ from flask_security.utils import (
 from flask_sqlalchemy import get_debug_queries
 from simplekv.decorator import PrefixDecorator
 from simplekv.fs import FilesystemStore
+from sqlalchemy.pool import QueuePool
 
 # Local application imports
 import faraday.server.config
@@ -57,15 +60,24 @@ from faraday.server.models import (
     User,
     Role,
 )
+from faraday.server.utils.ping import ping_home_background_task
+
+from faraday.server.utils.reports_processor import reports_manager_background_task
+from faraday.server.api.modules.swagger import swagger_api
 from faraday.server.utils.invalid_chars import remove_null_characters
 from faraday.server.utils.logger import LOGGING_HANDLERS
+from faraday.server.websockets.dispatcher import remove_sid
 from faraday.settings import load_settings
+from faraday.server.extensions import celery
+
 
 # Don't move this import from here
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
+
+FARADAY_APP = None
 
 
 def setup_storage_path():
@@ -87,6 +99,7 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
+    from faraday.server.ui import ui  # pylint: disable=import-outside-toplevel
     from faraday.server.api.modules.info import info_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.commandsrun import commandsrun_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.global_commands import globalcommands_api  # pylint:disable=import-outside-toplevel
@@ -115,42 +128,43 @@ def register_blueprints(app):
     from faraday.server.api.modules.search_filter import searchfilter_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
+    # from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_reports import \
         reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
 
-    app.register_blueprint(commandsrun_api)
-    app.register_blueprint(globalcommands_api)
-    app.register_blueprint(activityfeed_api)
-    app.register_blueprint(credentials_api)
-    app.register_blueprint(host_api)
-    app.register_blueprint(info_api)
-    app.register_blueprint(license_api)
-    app.register_blueprint(services_api)
-    app.register_blueprint(session_api)
-    app.register_blueprint(vulns_api)
-    app.register_blueprint(vulnerability_template_api)
-    app.register_blueprint(workspace_api)
-    app.register_blueprint(handlers_api)
-    app.register_blueprint(comment_api)
-    app.register_blueprint(upload_api)
-    app.register_blueprint(websocket_auth_api)
-    app.register_blueprint(websockets)
+    app.register_blueprint(ui)
+    app.register_blueprint(commandsrun_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(globalcommands_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(activityfeed_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(credentials_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(host_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(info_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(license_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(services_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(session_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(vulns_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(vulnerability_template_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(workspace_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(handlers_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(comment_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(upload_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(websocket_auth_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    # app.register_blueprint(websockets, url_prefix=app.config['APPLICATION_PREFIX'])
 
-    app.register_blueprint(exploits_api)
-    app.register_blueprint(custom_fields_schema_api)
-    app.register_blueprint(agent_api)
-    app.register_blueprint(agent_auth_token_api)
-    app.register_blueprint(bulk_create_api)
-    app.register_blueprint(token_api)
-    app.register_blueprint(searchfilter_api)
-    app.register_blueprint(preferences_api)
-    app.register_blueprint(export_data_api)
-    app.register_blueprint(reports_settings_api)
-    app.register_blueprint(dashboard_settings_api)
-    app.register_blueprint(swagger_api)
+    app.register_blueprint(exploits_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(custom_fields_schema_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(agent_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(agent_auth_token_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(bulk_create_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(token_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(searchfilter_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(preferences_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(export_data_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(reports_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(dashboard_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(swagger_api, url_prefix=app.config['APPLICATION_PREFIX'])
 
 
 def check_testing_configuration(testing, app):
@@ -225,7 +239,8 @@ def register_handlers(app):
 
         if flask_login.current_user.is_anonymous and not getattr(view, 'is_public', False) \
                 and flask.request.method != 'OPTIONS':
-            flask.abort(401)
+            if flask.request.endpoint not in ('ui.index', 'index', 'static'):
+                flask.abort(401)
 
     @app.before_request
     def load_g_custom_fields():  # pylint:disable=unused-variable
@@ -315,7 +330,13 @@ def uia_username_mapper(identity):
     return bleach.clean(identity, strip=True)
 
 
-def create_app(db_connection_string=None, testing=None):
+def get_prefixed_url(app, url):
+    if app.config['APPLICATION_PREFIX']:
+        return f"{app.config['APPLICATION_PREFIX']}{url}"
+    return url
+
+
+def create_app(db_connection_string=None, testing=None, register_extensions_flag=True):
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',
@@ -333,7 +354,24 @@ def create_app(db_connection_string=None, testing=None):
                     return
             return super().add_url_rule(rule, endpoint, view_func, **options)
 
-    app = CustomFlask(__name__, static_folder=None)
+    ui_dir = Path(__file__).parent / 'www'
+    app = CustomFlask(__name__, static_folder=ui_dir.as_posix(), static_url_path='/')
+
+    @app.errorhandler(404)
+    @app.route('/', defaults={'text': ''})
+    @app.route('/<path:text>')
+    def index(ex):
+        """
+        Handles 404 errors of paths.
+        :param ex: Exception to return.
+        :return: The exception if the path starts with the prefixes, or the default static file.
+        """
+        prefixes = ('/_api', '/v3', '/socket.io')
+        if request.path.startswith(prefixes):
+            return ex
+        return app.send_static_file('index.html')
+
+    app.config['APPLICATION_PREFIX'] = '/_api' if not testing else ''
 
     try:
         secret_key = faraday.server.config.faraday_server.secret_key
@@ -359,8 +397,12 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_PASSWORD_SINGLE_HASH': True,
         'WTF_CSRF_ENABLED': False,
         'SECURITY_USER_IDENTITY_ATTRIBUTES': [{'username': {'mapper': uia_username_mapper}}],
-        'SECURITY_POST_LOGIN_VIEW': '/_api/session',
-        'SECURITY_POST_CHANGE_VIEW': '/_api/change',
+        'SECURITY_URL_PREFIX': app.config['APPLICATION_PREFIX'],
+        'SECURITY_POST_LOGIN_VIEW': get_prefixed_url(app, '/session'),
+        'SECURITY_POST_CHANGE_VIEW': get_prefixed_url(app, '/change'),
+        # 'SECURITY_URL_PREFIX': '/_api',
+        # 'SECURITY_POST_LOGIN_VIEW': '/_api/session',
+        # 'SECURITY_POST_CHANGE_VIEW': '/_api/change',
         'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
         'SECURITY_POST_RESET_VIEW': '/',
         'SECURITY_SEND_PASSWORD_RESET_EMAIL': True,
@@ -393,6 +435,9 @@ def create_app(db_connection_string=None, testing=None):
             hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
+        'IMPORTS': ('faraday.server.tasks', ),
+        'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
+        'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
@@ -417,6 +462,13 @@ def create_app(db_connection_string=None, testing=None):
                 'depot.storage_path': storage_path
             })
     app.config['SQLALCHEMY_ECHO'] = 'FARADAY_LOG_QUERY' in os.environ
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'poolclass': QueuePool,
+        'pool_size': 20,
+        'max_overflow': 20,
+        'pool_timeout': 60,
+    }
     check_testing_configuration(testing, app)
 
     try:
@@ -468,14 +520,51 @@ def create_app(db_connection_string=None, testing=None):
     register_handlers(app)
     app.view_functions['agent_api.AgentView:post'].is_public = True
 
-    register_extensions(app)
+    # Remove agents that where registered
+    if testing is False:
+        with app.app_context():
+            remove_sid()
+
+    if register_extensions_flag and not register_extensions(app):
+        return
+
     load_settings()
 
     return app
 
 
+def get_app(db_connection_string=None, testing=None, register_extensions_flag=True):
+    global FARADAY_APP  # pylint: disable=W0603
+    if not FARADAY_APP:
+        FARADAY_APP = create_app(db_connection_string=db_connection_string,
+                                 testing=testing,
+                                 register_extensions_flag=register_extensions_flag)
+    return FARADAY_APP
+
+
 def register_extensions(app):
+    from faraday.server.websockets.dispatcher import DispatcherNamespace  # pylint: disable=import-outside-toplevel
     socketio.init_app(app)
+    socketio.on_namespace(DispatcherNamespace("/dispatcher"))
+
+    if faraday.server.config.faraday_server.celery_enabled:
+        logger.info("Celery is enabled ...")
+        logger.info("Checking celery configuration ...")
+        if not faraday.server.config.faraday_server.celery_broker_url:
+            logger.error("No broker configuration found. Please add `celery_broker_url` to your server.ini...")
+            sys.exit()
+        if not faraday.server.config.faraday_server.celery_backend_url:
+            logger.error("No backend configuration found. Please add `celery_backend_url` to your server.ini...")
+            sys.exit()
+        celery.init_app(app)
+    else:
+        # TODO: link to documentation with howto enable celery
+        logger.info("Celery not enabled ...")
+        logger.info("Starting reports processor background task ...")
+        socketio.start_background_task(reports_manager_background_task)
+    socketio.start_background_task(ping_home_background_task)
+
+    return True
 
 
 def minify_json_output(app):

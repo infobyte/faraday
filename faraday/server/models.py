@@ -84,6 +84,7 @@ logger = logging.getLogger(__name__)
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
+
 BlankColumn = partial(Column, nullable=False,
                       info={'allow_blank': True},
                       default='')
@@ -98,6 +99,7 @@ OBJECT_TYPES = [
     'executive_report',
     'workspace',
     'task',
+    'report_logo',
     'report_template',
 ]
 
@@ -530,6 +532,9 @@ class VulnerabilityABC(Metadata):
 
 class SeveritiesHistogram(db.Model):
     __tablename__ = "severities_histogram"
+    __table_args__ = (
+        UniqueConstraint('date', 'workspace_id', name='uix_severities_histogram_table_date_workspace_id'),
+    )
 
     SEVERITIES_ALLOWED = [VulnerabilityABC.SEVERITY_MEDIUM,
                           VulnerabilityABC.SEVERITY_HIGH,
@@ -1396,13 +1401,19 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     cve_instances = relationship("CVE",
                                  secondary=cve_vulnerability_association,
-                                 lazy="joined",
                                  collection_class=set)
 
     cve = association_proxy('cve_instances',
                             'name',
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
+
+    refs = relationship(
+        'VulnerabilityReference',
+        lazy="joined",
+        cascade="all, delete-orphan",
+        backref=backref("vulnerabilities")
+    )
 
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
@@ -1620,7 +1631,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     reference_instances = relationship(
         "Reference",
         secondary="reference_vulnerability_association",
-        lazy="joined",
         collection_class=set
     )
 
@@ -1632,7 +1642,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     policy_violation_instances = relationship(
         "PolicyViolation",
         secondary="policy_violation_vulnerability_association",
-        lazy="joined",
         collection_class=set
     )
 
@@ -1867,6 +1876,27 @@ class Reference(Metadata):
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
         super().__init__(name=name, workspace_id=workspace_id, **kwargs)
+
+    def __str__(self):
+        return f'{self.name}'
+
+    @property
+    def parent(self):
+        # TODO: fix this property
+        return
+
+
+# TODO: Add unique constraint in name and type
+class VulnerabilityReference(Metadata):
+    __tablename__ = 'vulnerability_reference'
+    __table_args__ = (
+        UniqueConstraint('name', 'type', 'vulnerability_id', name='uix_vulnerability_reference_table_vuln_id_name_type'),
+    )
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text)
+    type = Column(Enum(*REFERENCE_TYPES, name='reference_types'), default='other')
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), nullable=False)
 
     def __str__(self):
         return f'{self.name}'
@@ -3088,6 +3118,7 @@ class Agent(Metadata):
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)
+    sid = Column(Text)  # socketio sid
 
     @property
     def parent(self):
@@ -3095,8 +3126,11 @@ class Agent(Metadata):
 
     @property
     def is_online(self):
-        from faraday.server.websocket_factories import connected_agents  # pylint:disable=import-outside-toplevel
-        return self.id in connected_agents
+        return self.sid is not None
+
+    @property
+    def is_offline(self):
+        return self.sid is None
 
     @property
     def status(self):
@@ -3182,6 +3216,7 @@ class AnalyticsConfig:
     TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
     MONTHLY_EVOLUTION_BY_STATUS = 'monthly_evolution_by_status'
     MONTHLY_EVOLUTION_BY_SEVERITY = 'monthly_evolution_by_severity'
+    VULNERABILITIES_BY_RISK_SCORE = 'vulnerabilities_by_risk_score'
 
     TYPES = [
         VULNS_PER_HOST,
@@ -3191,6 +3226,7 @@ class AnalyticsConfig:
         TOP_TEN_MOST_REPEATED_VULNS,
         MONTHLY_EVOLUTION_BY_STATUS,
         MONTHLY_EVOLUTION_BY_SEVERITY,
+        VULNERABILITIES_BY_RISK_SCORE
     ]
 
 
@@ -3213,9 +3249,6 @@ class BaseNotification(Metadata):
     data = Column(JSONType, nullable=False)
     processed = Column(Boolean, default=False)
     verbose = Column(Boolean, default=False)
-
-    def __repr__(self):
-        return f"Notification ID:{self.id}, type:{self.data.get('type')}, subtype:{self.data.get('subtype')}"
 
 
 class UserNotification(Metadata):
@@ -3319,37 +3352,9 @@ class UserNotificationSettings(Metadata):
     other_email = Column(Boolean, default=False)
     other_slack = Column(Boolean, default=False)
 
-    adv_high_crit_vuln_enabled = Column(Boolean, default=False)
-    adv_high_crit_vuln_app = Column(Boolean, default=False)
-    adv_high_crit_vuln_email = Column(Boolean, default=False)
-    adv_high_crit_vuln_slack = Column(Boolean, default=False)
     adv_high_crit_vuln = Column(Boolean, default=False)
-
-    adv_risk_score_threshold_enabled = Column(Boolean, default=False)
-    adv_risk_score_threshold_app = Column(Boolean, default=False)
-    adv_risk_score_threshold_email = Column(Boolean, default=False)
-    adv_risk_score_threshold_slack = Column(Boolean, default=False)
     adv_risk_score_threshold = Column(Integer, default=0)
-
-    adv_vuln_open_days_enabled = Column(Boolean, default=False)
-    adv_vuln_open_days_app = Column(Boolean, default=False)
-    adv_vuln_open_days_email = Column(Boolean, default=False)
-    adv_vuln_open_days_slack = Column(Boolean, default=False)
     adv_vuln_open_days = Column(Integer, default=0)
-
-
-class EmailNotification(db.Model):
-    id = Column(Integer, primary_key=True)
-    user_email = Column(String, nullable=False)
-    message = Column(String, nullable=False)
-    processed = Column(Boolean, default=False)
-
-
-class SlackNotification(db.Model):
-    id = Column(Integer, primary_key=True)
-    slack_id = Column(String, nullable=False)
-    message = Column(String, nullable=False)
-    processed = Column(Boolean, default=False)
 
 
 # Indexes to speed up queries

@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import io
 import logging
 import json
+import imghdr
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
@@ -18,9 +19,9 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError, post_dump
+from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, or_, func
+from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
 from sqlalchemy.orm.exc import NoResultFound
@@ -42,7 +43,6 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_references_and_policyviolations,
     get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
@@ -74,6 +74,7 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
+from faraday.server.utils.vulns import parse_cve_references_and_policyviolations
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -228,9 +229,9 @@ class VulnerabilitySchema(AutoSchema):
     impact = SelfNestedField(ImpactSchema())
     desc = fields.String(attribute='description')
     description = fields.String(dump_only=True)
-    policyviolations = fields.List(fields.String,
-                                   attribute='policy_violations')
-    refs = fields.List(fields.Nested(ReferenceSchema, data_key='reference_instances'))
+    policyviolations = fields.List(fields.String, attribute='policy_violations')
+    refs = fields.List(fields.Nested(ReferenceSchema), attribute='refs')
+    issuetracker = fields.Method(serialize='get_issuetracker_json', deserialize='load_issuetracker', dump_only=True)
     cve = fields.List(fields.String(), attribute='cve')
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
@@ -283,7 +284,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
+            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'command_id',
             'risk'
             )
 
@@ -310,14 +311,6 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_parent(obj):
         return obj.service_id or obj.host_id
-
-    @post_dump
-    def remove_reference_instances(self, data, **kwargs):
-        refs = data.pop('reference_instances')
-        data['refs'] = []
-        for ref in refs:
-            data['refs'].append({"name": ref.name, "type": ref.type})
-        return data
 
     @staticmethod
     def get_parent_type(obj):
@@ -461,7 +454,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
+            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'command_id',
             'risk'
         )
 
@@ -696,6 +689,11 @@ class VulnerabilityView(PaginatedMixin,
         for old_attachment in old_attachments:
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
+            if 'image' in attachment['content_type']:
+                image_format = imghdr.what(None, h=b64decode(attachment['data']))
+                if image_format and image_format.lower() == "webp":
+                    logger.info("Evidence can not be webp format")
+                    flask.abort(400, "Evidence can not be webp format")
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
             get_or_create(
@@ -720,7 +718,7 @@ class VulnerabilityView(PaginatedMixin,
         reference_list = data.pop('refs', None)
         if reference_list is not None:
             # We need to instantiate reference objects before updating
-            obj.reference_instances = create_reference(reference_list, obj.workspace_id)
+            obj.refs = create_reference(reference_list, vulnerability_id=obj.id)
 
         # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
         # vector string into fields and calculates the scores
@@ -732,7 +730,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return super()._update_object(obj, data)
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
         attachments = data.pop('_attachments', None if partial else {})
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
@@ -740,6 +738,9 @@ class VulnerabilityView(PaginatedMixin,
             self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
+
+    def put(self, object_id, workspace_name=None, **kwargs):
+        return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """Eager hostnames loading.
@@ -772,6 +773,10 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+
+            joinedload('refs'),
+            joinedload('cve_instances'),
+            joinedload('policy_violation_instances'),
         ]
 
         if flask.request.args.get('get_evidence'):
@@ -910,7 +915,12 @@ class VulnerabilityView(PaginatedMixin,
                 message = 'Evidence already exists in vuln'
                 return make_response(flask.jsonify(message=message, success=False, code=400), 400)
             else:
-                faraday_file = FaradayUploadedFile(request.files['file'].read())
+                partial = request.files['file'].read(32)
+                image_format = imghdr.what(None, h=partial)
+                if image_format and image_format.lower() == "webp":
+                    logger.info("Evidence can't be webp")
+                    flask.abort(400, "Evidence can't be webp")
+                faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
                 instance, created = get_or_create(
                     db.session,
                     File,
@@ -952,8 +962,11 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         filters = request.args.get('q', '{}')
-        filtered_vulns, count = self._filter(filters, workspace_name)
         export_csv = request.args.get('export_csv', '')
+        filtered_vulns, count = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc'
+        ) if export_csv.lower() == 'true' else None)
 
         class PageMeta:
             total = 0
@@ -1007,7 +1020,12 @@ class VulnerabilityView(PaginatedMixin,
         return res_filters, hostname_filters
 
     @staticmethod
-    def _generate_filter_query(vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
+    def _generate_filter_query(vulnerability_class,
+                               filters,
+                               hostname_filters,
+                               workspace,
+                               marshmallow_params,
+                               is_csv=False):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
                            host_os_filter.get('name') == 'host__os']
 
@@ -1021,30 +1039,40 @@ class VulnerabilityView(PaginatedMixin,
                        vulnerability_class,
                        filters)
         vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
-        if hostname_filters:
-            or_filters = []
-            for hostname_filter in hostname_filters:
-                or_filters.append(Hostname.name == hostname_filter['val'])
-
-            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
-            vulns = vulns_host.union(
-                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
-
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
 
         if 'group_by' not in filters:
-            vulns = vulns.options(
+            options = [
+                joinedload('cve_instances'),
+                joinedload('owasp'),
+                joinedload('cwe'),
                 joinedload(VulnerabilityGeneric.tags),
-                joinedload(Vulnerability.host),
-                joinedload(Vulnerability.service),
-                joinedload(VulnerabilityWeb.service),
-                joinedload(VulnerabilityGeneric.cwe),
-            )
+                joinedload('host'),
+                joinedload('service'),
+                joinedload('creator'),
+                joinedload('update_user'),
+                undefer('target'),
+                undefer('target_host_os'),
+                undefer('target_host_ip'),
+                undefer('creator_command_tool'),
+                undefer('creator_command_id'),
+                noload('evidence')
+            ]
+            if is_csv:
+                options = options + [
+                    joinedload('policy_violation_instances'),
+                    joinedload('refs')
+                ]
+
+            vulns = vulns.options(selectin_polymorphic(
+                VulnerabilityGeneric,
+                [Vulnerability, VulnerabilityWeb]
+            ), *options)
         return vulns
 
-    def _filter(self, filters, workspace_name):
+    def _filter(self, filters, workspace_name, exclude_list=None):
         hostname_filters = []
         vulns = None
         try:
@@ -1056,7 +1084,17 @@ class VulnerabilityView(PaginatedMixin,
             flask.abort(400, "Invalid filters")
 
         workspace = get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}, 'exclude': ('_attachments', )}
+        marshmallow_params = {'many': True, 'context': {}, 'exclude': (
+            '_attachments',
+            'description',
+            'desc',
+            'refs',
+            'request',
+            'resolution',
+            'response',
+            'policyviolations',
+            'data',
+        ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -1064,17 +1102,18 @@ class VulnerabilityView(PaginatedMixin,
                 offset = filters.pop('offset')
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
-
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
                     filters,
                     hostname_filters,
                     workspace,
-                    marshmallow_params)
+                    marshmallow_params,
+                    bool(exclude_list))
             except AttributeError as e:
                 flask.abort(400, e)
-            total_vulns = vulns
+            # In vulns count we do not need order
+            total_vulns = vulns.order_by(None)
             if limit:
                 vulns = vulns.limit(limit)
             if offset:
@@ -1236,7 +1275,10 @@ class VulnerabilityView(PaginatedMixin,
                 "val": "true"
             })
             filters = json.dumps(filters)
-        vulns_query, _ = self._filter(filters, workspace_name)
+        vulns_query, _ = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc'
+        ))
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         logger.info(f"csv file with vulns from workspace {workspace_name} exported")
         return send_file(memory_file,
@@ -1325,11 +1367,9 @@ class VulnerabilityView(PaginatedMixin,
         cwe_list = data.pop('cwe', None)
         if cwe_list is not None:
             custom_behaviour_fields['cwe'] = create_cwe(cwe_list)
-
-        reference_list = data.pop('refs', None)
-        if reference_list is not None:
-            workspace = get_workspace(workspace_name=kwargs.get('workspace_name', None))
-            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, workspace.id)
+        refs = data.pop('refs', None)
+        if refs is not None:
+            custom_behaviour_fields['refs'] = refs
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
@@ -1352,6 +1392,8 @@ class VulnerabilityView(PaginatedMixin,
                                                **kwargs)
             for obj in queryset.all():
                 for (key, value) in extracted_data.items():
+                    if key == 'refs':
+                        value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
 

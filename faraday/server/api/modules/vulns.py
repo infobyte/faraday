@@ -758,6 +758,17 @@ class VulnerabilityView(PaginatedMixin,
         db.session.commit()
         return obj
 
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+
+        returning_rows = [
+            VulnerabilityGeneric.id,
+            VulnerabilityGeneric.name,
+            VulnerabilityGeneric.severity,
+            VulnerabilityGeneric.risk,
+        ]
+        kwargs['returning'] = returning_rows
+        return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
+
     def put(self, object_id, workspace_name=None, **kwargs):
         return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
 

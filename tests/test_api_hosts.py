@@ -730,6 +730,7 @@ class TestHostAPI:
             "icon": "windows",
             "versions": [],
             "importance": 0,
+            "workspace_name": host.workspace
         }
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)

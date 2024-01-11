@@ -39,12 +39,12 @@ class HostContextFilterSet(HostFilterSet):
         fields = ('id', 'ip', 'name', 'os', 'service', 'port', 'workspace_id')
 
 
-class HostsContextView(ContextMixin,
-        PaginatedMixin,
-        FilterAlchemyMixin,
-        FilterMixin,
-        BulkDeleteMixin,
-        BulkUpdateMixin):
+class HostsContextView(PaginatedMixin,
+                       FilterAlchemyMixin,
+                       ContextMixin,
+                       FilterMixin,
+                       BulkDeleteMixin,
+                       BulkUpdateMixin):
     route_base = 'hosts'
     model_class = Host
     order_field = desc(Host.vulnerability_critical_generic_count), \
@@ -66,6 +66,29 @@ class HostsContextView(ContextMixin,
                    Host.vulnerability_unclassified_generic_count,
                    ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        """
+        Overrides _get_eagerloaded_query of GenericView
+        """
+        options = []
+        try:
+            has_creator = 'owner' in self._get_schema_class().opts.fields
+        except AttributeError:
+            has_creator = False
+        show_stats = kwargs.pop('show_stats', True)
+        if has_creator:
+            # APIs for objects with metadata always return the creator's
+            # username. Do a joinedload to prevent doing one query per object
+            # (n+1) problem
+            options.append(joinedload(
+                getattr(self.model_class, 'creator')).load_only('username'))
+        query = self._get_base_query(*args, **kwargs)
+        options += [joinedload(relationship)
+                    for relationship in self.get_joinedloads]
+        if show_stats:
+            options += [undefer(column) for column in self.get_undefer]
+        return query.options(*options)
 
     @route('/filter')
     def filter(self):

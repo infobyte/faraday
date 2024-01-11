@@ -642,6 +642,16 @@ class VulnerabilityView(PaginatedMixin,
 
         return schema
 
+    def _perform_delete(self, obj, **kwargs):
+        # Update hosts stats -1
+        if obj.severity == 'critical':
+            if obj.host:
+                obj.host.vulnerability_critical_generic_count -= 1
+            elif obj.service:
+                obj.service.host.vulnerability_critical_generic_count -= 1
+        db.session.commit()
+        return super()._perform_delete(self, obj, **kwargs)
+
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs), request)
         obj = None
@@ -661,6 +671,12 @@ class VulnerabilityView(PaginatedMixin,
             # TypeError is raised when trying to instantiate an sqlalchemy model
             # with invalid attributes, for example VulnerabilityWeb with host_id
             flask.abort(400)
+
+        # Update hosts stats +1
+        if obj.host:
+            obj.host.vulnerability_critical_generic_count += 1
+        elif obj.service:
+            obj.service.host.vulnerability_critical_generic_count += 1
 
         obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
         obj.cwe = create_cwe(cwe_list)
@@ -736,6 +752,9 @@ class VulnerabilityView(PaginatedMixin,
         db.session.flush()
         if attachments is not None:
             self._process_attachments(obj, attachments)
+
+        # update Hosts stats +/- 1
+
         db.session.commit()
         return obj
 
@@ -1317,6 +1336,19 @@ class VulnerabilityView(PaginatedMixin,
             users.append(user)
         response = {'users': users}
         return flask.jsonify(response)
+
+    def _perform_bulk_delete(self, ids, **kwargs):
+        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
+        db.session.commit()
+        response = {'deleted': deleted}
+        # update Host from ws with result of query
+        return flask.jsonify(response)
+
+    @route('', methods=['DELETE'])
+    def bulk_update(self, workspace_name, **kwargs):
+        response = super().bulk_update(self, workspace_name, **kwargs)
+        # update Host from ws with result of query
+        return response
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):

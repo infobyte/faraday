@@ -1180,7 +1180,8 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
-    vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
+    # vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
+    vulnerability_critical_generic_count = Column(Integer, server_default=text("0"))
     vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
     vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
     vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')

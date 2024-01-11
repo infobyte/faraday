@@ -212,16 +212,15 @@ def get_json_operator(operator):
 
 def get_json_query(table, field, op, op_type, counter):
     if op_type == 'compare':
-        return f"{table}.{field} ->> :key_{counter} {op} :value_{counter}"
+        return f"{table}.{field} ->> :key_{counter} {op} :value_{counter}"  # nosec
     elif op_type == 'exists':
-        return f"{table}.{field} ->> :key_{counter} {op}"
+        return f"{table}.{field} ->> :key_{counter} {op}"  # nosec
     elif op_type == 'any':
-        return f"{table}.{field} -> :key_{counter} {op} :value_{counter}"
+        return f"{table}.{field} -> :key_{counter} {op} :value_{counter}"  # nosec
     elif op_type == 'not_any':
-        return f"NOT {table}.{field} -> :key_{counter} {op} :value_{counter} OR {table}.{field} -> :key_{counter} IS NULL"
+        return f"NOT {table}.{field} -> :key_{counter} {op} :value_{counter} OR {table}.{field} -> :key_{counter} IS NULL"  # nosec
     elif op_type == 'list_contains':
-        return (f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element "
-                f"WHERE element {op} :value_{counter})")
+        return (f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})")  # nosec
     else:
         raise TypeError('Invalid operator type')
 

@@ -3216,6 +3216,7 @@ class AnalyticsConfig:
     TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
     MONTHLY_EVOLUTION_BY_STATUS = 'monthly_evolution_by_status'
     MONTHLY_EVOLUTION_BY_SEVERITY = 'monthly_evolution_by_severity'
+    VULNERABILITIES_BY_RISK_SCORE = 'vulnerabilities_by_risk_score'
 
     TYPES = [
         VULNS_PER_HOST,
@@ -3225,6 +3226,7 @@ class AnalyticsConfig:
         TOP_TEN_MOST_REPEATED_VULNS,
         MONTHLY_EVOLUTION_BY_STATUS,
         MONTHLY_EVOLUTION_BY_SEVERITY,
+        VULNERABILITIES_BY_RISK_SCORE
     ]
 
 

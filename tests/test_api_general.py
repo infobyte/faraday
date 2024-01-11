@@ -1,5 +1,6 @@
 import re
-from faraday.server.web import get_app
+
+from flask import current_app
 
 placeholders = {
     r".*(<int:.*>).*": "1"
@@ -16,7 +17,7 @@ def replace_placeholders(rule: str):
 
 
 def test_options(test_client):
-    for rule in get_app().url_map.iter_rules():
+    for rule in current_app.url_map.iter_rules():
         if 'OPTIONS' in rule.methods:
             res = test_client.options(replace_placeholders(rule.rule))
             assert res.status_code == 200, rule.rule
@@ -24,23 +25,23 @@ def test_options(test_client):
 
 def test_v3_endpoints():
     rules = list(
-        filter(lambda rule: rule.rule.startswith("/v3") and rule.rule.endswith("/"), get_app().url_map.iter_rules())
+        filter(lambda rule: rule.rule.startswith("/v3") and rule.rule.endswith("/"), current_app.url_map.iter_rules())
     )
     assert len(rules) == 0, [rule.rule for rule in rules]
 
 
 def test_v2_endpoints_removed_in_v3():
     exceptions = set()
-    actaul_rules_v2 = list(filter(lambda rule: rule.rule.startswith("/v2"), get_app().url_map.iter_rules()))
+    actaul_rules_v2 = list(filter(lambda rule: rule.rule.startswith("/v2"), current_app.url_map.iter_rules()))
     assert len(actaul_rules_v2) == 0, actaul_rules_v2
     rules_v2 = set(
         map(
             lambda rule: rule.rule.replace("v2", "v3").rstrip("/"),
-            filter(lambda rule: rule.rule.startswith("/v2"), get_app().url_map.iter_rules())
+            filter(lambda rule: rule.rule.startswith("/v2"), current_app.url_map.iter_rules())
         )
     )
     rules = set(
-        map(lambda rule: rule.rule, filter(lambda rule: rule.rule.startswith("/v3"), get_app().url_map.iter_rules()))
+        map(lambda rule: rule.rule, filter(lambda rule: rule.rule.startswith("/v3"), current_app.url_map.iter_rules()))
     )
     exceptions_present_v2 = rules_v2.intersection(exceptions)
     assert len(exceptions_present_v2) == 0, sorted(exceptions_present_v2)

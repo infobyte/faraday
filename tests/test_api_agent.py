@@ -177,7 +177,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         update_data = {
             "id": 1,
             "name": "Agent test",
-            "is_online": True,
+            "sid": "super_sid",
         }
         res = test_client.put(self.url(agent.id), data=update_data)
         assert res.status_code == 200, (res.json, update_data)
@@ -234,6 +234,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
 
     def test_run_agent_invalid_executor_argument(self, session, test_client):
         agent = AgentFactory.create()
+        agent.sid = "this_is_a_sid"
         executor = ExecutorFactory.create(agent=agent)
         workspace = WorkspaceFactory.create()
 
@@ -293,6 +294,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
 
     def test_invalid_executor(self, test_client, session, csrf_token):
         agent = AgentFactory.create()
+        agent.sid = "this_is_a_sid"
         workspace = WorkspaceFactory.create()
         session.add(agent)
         session.commit()
@@ -314,6 +316,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
 
     def test_happy_path_valid_json(self, test_client, session, csrf_token):
         agent = AgentFactory.create()
+        agent.sid = "this_is_a_sid"
         executor = ExecutorFactory.create(agent=agent)
         executor2 = ExecutorFactory.create(agent=agent)
         workspace = WorkspaceFactory.create()
@@ -350,6 +353,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
 
     def test_invalid_parameter_type(self, test_client, session, csrf_token):
         agent = AgentFactory.create()
+        agent.sid = "this_is_a_sid"
         executor = ExecutorFactory.create(agent=agent)
         workspace = WorkspaceFactory.create()
 

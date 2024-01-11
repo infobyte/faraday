@@ -532,6 +532,9 @@ class VulnerabilityABC(Metadata):
 
 class SeveritiesHistogram(db.Model):
     __tablename__ = "severities_histogram"
+    __table_args__ = (
+        UniqueConstraint('date', 'workspace_id', name='uix_severities_histogram_table_date_workspace_id'),
+    )
 
     SEVERITIES_ALLOWED = [VulnerabilityABC.SEVERITY_MEDIUM,
                           VulnerabilityABC.SEVERITY_HIGH,
@@ -1405,6 +1408,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
                             proxy_factory=CustomAssociationSet,
                             creator=_build_associationproxy_creator_non_workspaced('CVE', lambda c: c.upper()))
 
+    refs = relationship(
+        'VulnerabilityReference',
+        lazy="joined",
+        cascade="all, delete-orphan",
+        backref=backref("vulnerabilities")
+    )
+
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
     cvss2_exploitability_score = Column(Float)
@@ -1866,6 +1876,27 @@ class Reference(Metadata):
 
     def __init__(self, name=None, workspace_id=None, **kwargs):
         super().__init__(name=name, workspace_id=workspace_id, **kwargs)
+
+    def __str__(self):
+        return f'{self.name}'
+
+    @property
+    def parent(self):
+        # TODO: fix this property
+        return
+
+
+# TODO: Add unique constraint in name and type
+class VulnerabilityReference(Metadata):
+    __tablename__ = 'vulnerability_reference'
+    __table_args__ = (
+        UniqueConstraint('name', 'type', 'vulnerability_id', name='uix_vulnerability_reference_table_vuln_id_name_type'),
+    )
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text)
+    type = Column(Enum(*REFERENCE_TYPES, name='reference_types'), default='other')
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), nullable=False)
 
     def __str__(self):
         return f'{self.name}'
@@ -3102,6 +3133,7 @@ class Agent(Metadata):
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)
+    sid = Column(Text)  # socketio sid
 
     @property
     def parent(self):
@@ -3109,8 +3141,11 @@ class Agent(Metadata):
 
     @property
     def is_online(self):
-        from faraday.server.websocket_factories import connected_agents  # pylint:disable=import-outside-toplevel
-        return self.id in connected_agents
+        return self.sid is not None
+
+    @property
+    def is_offline(self):
+        return self.sid is None
 
     @property
     def status(self):
@@ -3196,6 +3231,7 @@ class AnalyticsConfig:
     TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
     MONTHLY_EVOLUTION_BY_STATUS = 'monthly_evolution_by_status'
     MONTHLY_EVOLUTION_BY_SEVERITY = 'monthly_evolution_by_severity'
+    VULNERABILITIES_BY_RISK_SCORE = 'vulnerabilities_by_risk_score'
 
     TYPES = [
         VULNS_PER_HOST,
@@ -3205,6 +3241,7 @@ class AnalyticsConfig:
         TOP_TEN_MOST_REPEATED_VULNS,
         MONTHLY_EVOLUTION_BY_STATUS,
         MONTHLY_EVOLUTION_BY_SEVERITY,
+        VULNERABILITIES_BY_RISK_SCORE
     ]
 
 

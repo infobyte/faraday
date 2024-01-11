@@ -19,7 +19,7 @@ from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError, post_dump
+from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
@@ -43,7 +43,6 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     get_filtered_data,
-    parse_cve_references_and_policyviolations,
     get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
@@ -75,6 +74,7 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
+from faraday.server.utils.vulns import parse_cve_references_and_policyviolations
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -229,9 +229,9 @@ class VulnerabilitySchema(AutoSchema):
     impact = SelfNestedField(ImpactSchema())
     desc = fields.String(attribute='description')
     description = fields.String(dump_only=True)
-    policyviolations = fields.List(fields.String,
-                                   attribute='policy_violations')
-    refs = fields.List(fields.Nested(ReferenceSchema, data_key='reference_instances'))
+    policyviolations = fields.List(fields.String, attribute='policy_violations')
+    refs = fields.List(fields.Nested(ReferenceSchema), attribute='refs')
+    issuetracker = fields.Method(serialize='get_issuetracker_json', deserialize='load_issuetracker', dump_only=True)
     cve = fields.List(fields.String(), attribute='cve')
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
@@ -285,7 +285,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'reference_instances', 'command_id',
+            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'command_id',
             'risk', 'workspace_name'
             )
 
@@ -312,14 +312,6 @@ class VulnerabilitySchema(AutoSchema):
     @staticmethod
     def get_parent(obj):
         return obj.service_id or obj.host_id
-
-    @post_dump
-    def remove_reference_instances(self, data, **kwargs):
-        refs = data.pop('reference_instances', [])
-        data['refs'] = []
-        for ref in refs:
-            data['refs'].append({"name": ref.name, "type": ref.type})
-        return data
 
     @staticmethod
     def get_parent_type(obj):
@@ -463,7 +455,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'reference_instances', 'command_id',
+            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'command_id',
             'risk', 'workspace_name'
         )
 
@@ -727,7 +719,7 @@ class VulnerabilityView(PaginatedMixin,
         reference_list = data.pop('refs', None)
         if reference_list is not None:
             # We need to instantiate reference objects before updating
-            obj.reference_instances = create_reference(reference_list, obj.workspace_id)
+            obj.refs = create_reference(reference_list, vulnerability_id=obj.id)
 
         # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
         # vector string into fields and calculates the scores
@@ -783,7 +775,7 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
 
-            joinedload('reference_instances'),
+            joinedload('refs'),
             joinedload('cve_instances'),
             joinedload('policy_violation_instances'),
         ]
@@ -971,8 +963,11 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         filters = request.args.get('q', '{}')
-        filtered_vulns, count = self._filter(filters, workspace_name)
         export_csv = request.args.get('export_csv', '')
+        filtered_vulns, count = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc'
+        ) if export_csv.lower() == 'true' else None)
 
         class PageMeta:
             total = 0
@@ -1026,7 +1021,12 @@ class VulnerabilityView(PaginatedMixin,
         return res_filters, hostname_filters
 
     @staticmethod
-    def _generate_filter_query(vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
+    def _generate_filter_query(vulnerability_class,
+                               filters,
+                               hostname_filters,
+                               workspace,
+                               marshmallow_params,
+                               is_csv=False):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
                            host_os_filter.get('name') == 'host__os']
 
@@ -1061,13 +1061,19 @@ class VulnerabilityView(PaginatedMixin,
                 undefer('creator_command_id'),
                 noload('evidence')
             ]
+            if is_csv:
+                options = options + [
+                    joinedload('policy_violation_instances'),
+                    joinedload('refs')
+                ]
+
             vulns = vulns.options(selectin_polymorphic(
                 VulnerabilityGeneric,
                 [Vulnerability, VulnerabilityWeb]
             ), *options)
         return vulns
 
-    def _filter(self, filters, workspace_name):
+    def _filter(self, filters, workspace_name, exclude_list=None):
         hostname_filters = []
         vulns = None
         try:
@@ -1084,13 +1090,12 @@ class VulnerabilityView(PaginatedMixin,
             'description',
             'desc',
             'refs',
-            'reference_instances',
             'request',
             'resolution',
             'response',
             'policyviolations',
             'data',
-        )}
+        ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -1104,7 +1109,8 @@ class VulnerabilityView(PaginatedMixin,
                     filters,
                     hostname_filters,
                     workspace,
-                    marshmallow_params)
+                    marshmallow_params,
+                    bool(exclude_list))
             except AttributeError as e:
                 flask.abort(400, e)
             # In vulns count we do not need order
@@ -1270,7 +1276,10 @@ class VulnerabilityView(PaginatedMixin,
                 "val": "true"
             })
             filters = json.dumps(filters)
-        vulns_query, _ = self._filter(filters, workspace_name)
+        vulns_query, _ = self._filter(filters, workspace_name, exclude_list=(
+            '_attachments',
+            'desc'
+        ))
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         logger.info(f"csv file with vulns from workspace {workspace_name} exported")
         return send_file(memory_file,
@@ -1359,11 +1368,9 @@ class VulnerabilityView(PaginatedMixin,
         cwe_list = data.pop('cwe', None)
         if cwe_list is not None:
             custom_behaviour_fields['cwe'] = create_cwe(cwe_list)
-
-        reference_list = data.pop('refs', None)
-        if reference_list is not None:
-            workspace = get_workspace(workspace_name=kwargs.get('workspace_name', None))
-            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, workspace.id)
+        refs = data.pop('refs', None)
+        if refs is not None:
+            custom_behaviour_fields['refs'] = refs
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])
@@ -1386,6 +1393,8 @@ class VulnerabilityView(PaginatedMixin,
                                                **kwargs)
             for obj in queryset.all():
                 for (key, value) in extracted_data.items():
+                    if key == 'refs':
+                        value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
 

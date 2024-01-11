@@ -33,9 +33,25 @@ from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
 # Local application imports
-from faraday.server.models import User, CVE, Role
+from faraday.server.models import User, CVE, Role, CustomFieldsSchema
 
 logger = logging.getLogger(__name__)
+
+bind_counter = 0
+
+
+def get_bind_counter():
+    return bind_counter
+
+
+def increment_bind_counter():
+    global bind_counter
+    bind_counter += 1
+
+
+def reset_bind_counter():
+    global bind_counter
+    bind_counter = 0
 
 
 def session_query(session, model):
@@ -97,8 +113,7 @@ def _sub_operator(model, argument, fieldname):
         relation = None
         if '__' in fieldname:
             fieldname, relation = fieldname.split('__')
-        return QueryBuilder._create_operation(submodel, fieldname, operator,
-                                              argument, relation)
+        return QueryBuilder._create_operation(submodel, fieldname, operator, argument, relation)
     # Support legacy has/any with implicit eq operator
     return getattr(submodel, fieldname) == argument
 
@@ -186,6 +201,8 @@ def get_json_operator(operator):
         'geq': ('>=', 'compare'),
         'like': ('LIKE', 'compare'),
         'ilike': ('ILIKE', 'compare'),
+        'any': ('@>', 'any'),
+        'not_any': ('@>', 'not_any'),
         'is_null': ('IS NULL', 'exists'),
         'is_not_null': ('IS NOT NULL', 'exists'),
     }
@@ -193,11 +210,18 @@ def get_json_operator(operator):
     return operator_mapping.get(operator, None)
 
 
-def get_json_query(table, field, op, op_type):
+def get_json_query(table, field, op, op_type, counter):
     if op_type == 'compare':
-        return f"{table}.{field} ->> :key {op} :value"
+        return f"{table}.{field} ->> :key_{counter} {op} :value_{counter}"
     elif op_type == 'exists':
-        return f"{table}.{field} ->> :key {op}"
+        return f"{table}.{field} ->> :key_{counter} {op}"
+    elif op_type == 'any':
+        return f"{table}.{field} -> :key_{counter} {op} :value_{counter}"
+    elif op_type == 'not_any':
+        return f"NOT {table}.{field} -> :key_{counter} {op} :value_{counter} OR {table}.{field} -> :key_{counter} IS NULL"
+    elif op_type == 'list_contains':
+        return (f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element "
+                f"WHERE element {op} :value_{counter})")
     else:
         raise TypeError('Invalid operator type')
 
@@ -441,7 +465,6 @@ class QueryBuilder:
     a given model.
 
     """
-
     @staticmethod
     def _create_operation(model, fieldname, operator, argument, relation=None):
         """Translates an operation described as a string to a valid SQLAlchemy
@@ -491,12 +514,26 @@ class QueryBuilder:
                 table = model.__tablename__
                 op, op_type = get_json_operator(operator)
                 field, key = fieldname.split('->')
-                query = get_json_query(table, field, op, op_type)
 
-                return OPERATORS['json'](text(f"{query}").bindparams(
-                    key=key,
-                    value=argument)
-                )
+                if op in ['like', 'ilike']:
+                    custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key)
+                    if custom_field.field_type == 'list':
+                        op_type = 'list_contains'
+
+                if op_type in ['any', 'not_any']:
+                    if not argument.isnumeric():
+                        argument = f"\"{argument}\""
+
+                increment_bind_counter()
+
+                bindparams = {
+                    f'key_{get_bind_counter()}': key,
+                    f'value_{get_bind_counter()}': argument,
+                }
+
+                query = get_json_query(table, field, op, op_type, get_bind_counter())
+
+                return OPERATORS['json'](text(f"{query}").bindparams(**bindparams))
         else:
             # raises KeyError if operator not in OPERATORS
             opfunc = OPERATORS[operator]
@@ -783,4 +820,5 @@ def search(session, model, search_params, _ignore_order_by=False):
     if is_single:
         # may raise NoResultFound or MultipleResultsFound
         return query.one()
+    reset_bind_counter()
     return query

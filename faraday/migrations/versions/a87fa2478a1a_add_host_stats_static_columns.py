@@ -1,7 +1,7 @@
 """Add host stats static columns
 
 Revision ID: a87fa2478a1a
-Revises: d0a6105fdef1
+Revises: f7ca45632cce
 Create Date: 2024-01-09 18:01:50.211125+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'a87fa2478a1a'
-down_revision = 'd0a6105fdef1'
+down_revision = 'f7ca45632cce'
 branch_labels = None
 depends_on = None
 

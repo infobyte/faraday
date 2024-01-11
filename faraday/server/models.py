@@ -2289,7 +2289,7 @@ class Scope(Metadata):
 
     workspace_id = Column(
         Integer,
-        ForeignKey('workspace.id'),
+        ForeignKey('workspace.id', ondelete='CASCADE'),
         index=True,
         nullable=False
     )

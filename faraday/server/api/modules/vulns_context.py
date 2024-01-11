@@ -462,7 +462,6 @@ class VulnerabilityContextView(ContextMixin,
             'description',
             'desc',
             'refs',
-            'reference_instances',
             'request',
             'resolution',
             'response',
@@ -724,10 +723,9 @@ class VulnerabilityContextView(ContextMixin,
         if cwe_list is not None:
             custom_behaviour_fields['cwe'] = create_cwe(cwe_list)
 
-        reference_list = data.pop('refs', None)
-        if reference_list is not None:
-            workspace_ids = self._get_context_workspace_ids()
-            custom_behaviour_fields['reference_instances'] = create_reference(reference_list, workspace_ids)
+        refs = data.pop('refs', None)
+        if refs is not None:
+            custom_behaviour_fields['refs'] = refs
 
         # TODO For now, we don't want to accept multiples attachments; moreover, attachments have its own endpoint
         data.pop('_attachments', [])

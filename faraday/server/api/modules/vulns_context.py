@@ -24,7 +24,6 @@ from depot.manager import DepotManager
 
 # Local application imports
 from faraday.server.utils.cwe import create_cwe
-from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
     FilterAlchemyMixin,
@@ -342,8 +341,11 @@ class VulnerabilityContextView(ContextMixin,
             description: Ok
         """
         filters = request.args.get('q', '{}')
-        filtered_vulns, count = self._filter(filters)
         export_csv = request.args.get('export_csv', '')
+        filtered_vulns, count = self._filter(filters, exclude_list=(
+            '_attachments',
+            'desc'
+        ) if export_csv.lower() == 'true' else None)
 
         class PageMeta:
             total = 0
@@ -396,7 +398,7 @@ class VulnerabilityContextView(ContextMixin,
 
         return res_filters, hostname_filters
 
-    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, marshmallow_params):
+    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, marshmallow_params, is_csv=False):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
                            host_os_filter.get('name') == 'host__os']
 
@@ -440,13 +442,19 @@ class VulnerabilityContextView(ContextMixin,
                 undefer('creator_command_id'),
                 noload('evidence')
             ]
+            if is_csv:
+                options = options + [
+                    joinedload('policy_violation_instances'),
+                    joinedload('refs')
+                ]
+
             vulns = vulns.options(selectin_polymorphic(
                 VulnerabilityGeneric,
                 [Vulnerability, VulnerabilityWeb]
             ), *options)
         return vulns
 
-    def _filter(self, filters):
+    def _filter(self, filters, exclude_list=None):
         hostname_filters = []
         vulns = None
         try:
@@ -467,7 +475,7 @@ class VulnerabilityContextView(ContextMixin,
             'response',
             'policyviolations',
             'data',
-        )}
+        )if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -481,7 +489,8 @@ class VulnerabilityContextView(ContextMixin,
                     VulnerabilityGeneric,
                     filters,
                     hostname_filters,
-                    marshmallow_params)
+                    marshmallow_params,
+                    bool(exclude_list))
             except AttributeError as e:
                 flask.abort(400, e)
             total_vulns = vulns.order_by(None)

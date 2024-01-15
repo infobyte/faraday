@@ -33,7 +33,17 @@ from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
 # Local application imports
-from faraday.server.models import User, CVE, Role, CustomFieldsSchema
+from faraday.server.models import (
+    User,
+    CVE,
+    Role,
+    CustomFieldsSchema,
+    VulnerabilityGeneric,
+    Vulnerability,
+    VulnerabilityWeb,
+)
+
+VULNERABILITY_MODELS = (Vulnerability, VulnerabilityWeb, VulnerabilityGeneric)
 
 logger = logging.getLogger(__name__)
 
@@ -510,7 +520,7 @@ class QueryBuilder:
         if '->' in fieldname:
             field = getattr(model, fieldname.split('->')[0])
             if field:
-                table = model.__tablename__
+                table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
                 op, op_type = get_json_operator(operator)
                 field, key = fieldname.split('->')
 

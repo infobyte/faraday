@@ -1,12 +1,25 @@
 import time
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from celery import group, chord
 from celery.utils.log import get_task_logger
+from sqlalchemy import (
+    func,
+    or_,
+    and_,
+)
 
 from faraday.server.extensions import celery
-from faraday.server.models import db, Workspace, Command
+from faraday.server.models import (
+    db,
+    Workspace,
+    Command,
+    Service,
+    Host,
+    VulnerabilityGeneric,
+    VulnerabilityWeb, Vulnerability,
+)
 
 logger = get_task_logger(__name__)
 
@@ -111,3 +124,64 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
         host_tag,
         service_tag
     )
+
+
+@celery.task()
+def update_host_stats(hosts: List, services: List) -> None:
+    all_hosts = set(hosts)
+    services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
+    for host_id in services_host_id:
+        all_hosts.add(host_id[0])
+    print(all_hosts)
+    for host in all_hosts:
+        # stat calc
+        calc_vulnerability_stats.delay(host)
+
+
+@celery.task()
+def calc_vulnerability_stats(host_id: int) -> None:
+    print(host_id)
+    severity_model_names = {
+        'critical': 'vulnerability_critical_generic_count',
+        'high': 'vulnerability_high_generic_count',
+        'medium': 'vulnerability_medium_generic_count',
+        'informational': 'vulnerability_info_generic_count',
+        'low': 'vulnerability_low_generic_count',
+    }
+    severities = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity).join(Service,
+                                Service.id.in_([Vulnerability.service_id,
+                                                VulnerabilityWeb.service_id]), isouter=True)\
+        .join(Host, or_(Host.id == VulnerabilityGeneric.host_id, Host.id == Service.host_id))\
+        .filter(or_(
+        VulnerabilityGeneric.host_id == host_id,
+        and_(VulnerabilityGeneric.service_id == Service.id, Service.host_id == host_id)
+    )).group_by(VulnerabilityGeneric.severity)
+
+    from sqlalchemy.dialects import postgresql
+    print(severities.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+    c = severities.all()
+    severities_dict = {
+        'vulnerability_critical_generic_count': 0,
+        'vulnerability_high_generic_count': 0,
+        'vulnerability_medium_generic_count': 0,
+        'vulnerability_low_generic_count': 0,
+        'vulnerability_info_generic_count': 0,
+        'vulnerability_unclassified_generic_count': 0,
+    }
+    for severity in c:
+        print(severity)
+        if severity[1] == 'critical':
+            severities_dict['vulnerability_critical_generic_count'] = severity[0]
+        if severity[1] == 'high':
+            severities_dict['vulnerability_high_generic_count'] = severity[0]
+        if severity[1] == 'medium':
+            severities_dict['vulnerability_medium_generic_count'] = severity[0]
+        if severity[1] == 'low':
+            severities_dict['vulnerability_low_generic_count'] = severity[0]
+        if severity[1] == 'informational':
+            severities_dict['vulnerability_info_generic_count'] = severity[0]
+        if severity[1] == 'unclassified':
+            severities_dict['vulnerability_unclassified_generic_count'] = severity[0]
+    print(severities_dict)
+    db.session.query(Host).filter(Host.id == host_id).update(severities_dict)
+    db.session.commit()

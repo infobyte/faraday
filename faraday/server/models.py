@@ -1181,12 +1181,17 @@ class Host(Metadata):
     )
 
     # vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
+    # vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
+    # vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
+    # vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
+    # vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
+    # vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
     vulnerability_critical_generic_count = Column(Integer, server_default=text("0"))
-    vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
-    vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
-    vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
-    vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
-    vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
+    vulnerability_high_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_medium_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_low_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_info_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_unclassified_generic_count = Column(Integer, server_default=text("0"))
 
     importance = Column(Integer, default=0)
 
@@ -1718,6 +1723,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
         backref=backref("vulnerabilities", cascade="all, delete-orphan"),
         foreign_keys=[host_id],
     )
+
+    @declared_attr
+    def service_id(self):
+        return Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'), index=True)
 
     target_host_os = column_property(
         case([

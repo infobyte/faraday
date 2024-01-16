@@ -148,7 +148,7 @@ def update_host_stats(hosts: List, services: List) -> None:
 
 @celery.task()
 def calc_vulnerability_stats(host_id: int) -> None:
-    print(host_id)
+    logger.debug(f"Calculating vulns stats for host {host_id}")
     severity_model_names = {
         'critical': 'vulnerability_critical_generic_count',
         'high': 'vulnerability_high_generic_count',
@@ -156,18 +156,6 @@ def calc_vulnerability_stats(host_id: int) -> None:
         'informational': 'vulnerability_info_generic_count',
         'low': 'vulnerability_low_generic_count',
     }
-    severities = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity).join(Service,
-                                Service.id.in_([Vulnerability.service_id,
-                                                VulnerabilityWeb.service_id]), isouter=True)\
-        .join(Host, or_(Host.id == VulnerabilityGeneric.host_id, Host.id == Service.host_id))\
-        .filter(or_(
-        VulnerabilityGeneric.host_id == host_id,
-        and_(VulnerabilityGeneric.service_id == Service.id, Service.host_id == host_id)
-    )).group_by(VulnerabilityGeneric.severity)
-
-    from sqlalchemy.dialects import postgresql
-    print(severities.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
-    c = severities.all()
     severities_dict = {
         'vulnerability_critical_generic_count': 0,
         'vulnerability_high_generic_count': 0,
@@ -176,20 +164,21 @@ def calc_vulnerability_stats(host_id: int) -> None:
         'vulnerability_info_generic_count': 0,
         'vulnerability_unclassified_generic_count': 0,
     }
-    for severity in c:
-        print(severity)
-        if severity[1] == 'critical':
-            severities_dict['vulnerability_critical_generic_count'] = severity[0]
-        if severity[1] == 'high':
-            severities_dict['vulnerability_high_generic_count'] = severity[0]
-        if severity[1] == 'medium':
-            severities_dict['vulnerability_medium_generic_count'] = severity[0]
-        if severity[1] == 'low':
-            severities_dict['vulnerability_low_generic_count'] = severity[0]
-        if severity[1] == 'informational':
-            severities_dict['vulnerability_info_generic_count'] = severity[0]
-        if severity[1] == 'unclassified':
-            severities_dict['vulnerability_unclassified_generic_count'] = severity[0]
-    print(severities_dict)
+    severities = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity)\
+        .join(Service, Service.id.in_([Vulnerability.service_id, VulnerabilityWeb.service_id]), isouter=True)\
+        .join(Host, or_(Host.id == VulnerabilityGeneric.host_id, Host.id == Service.host_id))\
+        .filter(or_(VulnerabilityGeneric.host_id == host_id,
+                    and_(VulnerabilityGeneric.service_id == Service.id,
+                         Service.host_id == host_id
+                         )
+                    )
+                )\
+        .group_by(VulnerabilityGeneric.severity).all()
+
+    for severity in severities:
+        severities_dict[severity_model_names[severity[1]]] = severity[0]
+
+    logger.debug(f"Host vulns stats {severities_dict}")
+
     db.session.query(Host).filter(Host.id == host_id).update(severities_dict)
     db.session.commit()

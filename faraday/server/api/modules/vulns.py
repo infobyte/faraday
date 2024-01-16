@@ -696,7 +696,7 @@ class VulnerabilityView(PaginatedMixin,
             host_to_update_stat = obj.service.host_id
 
         if host_to_update_stat:
-            from faraday.server.tasks import update_host_stats
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             if faraday_server.celery_enabled:
                 update_host_stats.delay([host_to_update_stat], [])
             else:
@@ -785,7 +785,7 @@ class VulnerabilityView(PaginatedMixin,
         db.session.commit()
 
         if hosts or services:
-            from faraday.server.tasks import update_host_stats
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             if faraday_server.celery_enabled:
                 update_host_stats.delay(hosts, services)
             else:
@@ -1411,6 +1411,7 @@ class VulnerabilityView(PaginatedMixin,
             for severity in values:
                 if severity not in VulnerabilityABC.SEVERITIES:
                     flask.abort(http.client.BAD_REQUEST, "Severity type not valid")
+
             host_ids = host_ids.filter(
                             VulnerabilityGeneric.severity.in_(values)
                         ).all()
@@ -1422,7 +1423,7 @@ class VulnerabilityView(PaginatedMixin,
         response = super()._perform_bulk_delete(values, **kwargs)
         deleted = response.json.get('deleted', 0)
         if deleted > 0:
-            from faraday.server.tasks import update_host_stats
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             host_id_list = [data[0] for data in host_ids if data[0]]
             service_id_list = [data[1] for data in host_ids if data[1]]
             if faraday_server.celery_enabled:
@@ -1503,7 +1504,7 @@ class VulnerabilityView(PaginatedMixin,
 
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats
-            from faraday.server.tasks import update_host_stats
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             print(kwargs['returning'])
             host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
             service_id_list = [data[5] for data in kwargs['returning'] if data[5]]

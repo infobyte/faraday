@@ -1735,8 +1735,8 @@ class BulkDeleteMixin(FilterObjects):
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
-    def _perform_bulk_delete(self, ids, **kwargs):
-        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
+    def _perform_bulk_delete(self, values, **kwargs):
+        deleted = self._bulk_delete_query(values, **kwargs).delete(synchronize_session='fetch')
         db.session.commit()
         response = {'deleted': deleted}
         return flask.jsonify(response)

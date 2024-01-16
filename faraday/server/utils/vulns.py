@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
-    # add_references(vuln, references)
     vuln.refs = create_reference(references, vuln.id)
     add_policy_violations(vuln, policyviolations)
 
@@ -63,30 +62,26 @@ def get_or_create_reference(reference_name: str, reference_type: str, workspace_
     if not reference_name or not workspace_id:
         logger.error("Reference or workspace not provided.")
         return None
-    reference_obj = Reference.query.filter(Reference.name == reference_name,
-                                           Reference.type == reference_type,
-                                           Reference.workspace_id == workspace_id).first()
-    if not reference_obj:
-        try:
-            reference_obj = Reference(name=reference_name, type=reference_type, workspace_id=workspace_id)
-            db.session.add(reference_obj)
-            db.session.commit()
-        except IntegrityError as ex:
-            if not is_unique_constraint_violation(ex):
-                logger.exception("Could not create reference %s with type %s fow ws %s", reference_name,
-                                 reference_type,
-                                 workspace_id,
-                                 exc_info=ex)
-                return None
-            logger.debug("Reference violated unique constraint. Rollback in progress")
-            db.session.rollback()
-            reference_obj = Reference.query.filter(Reference.name == reference_name,
-                                                   Reference.type == reference_type,
-                                                   Reference.workspace_id == workspace_id).first()
-            if not reference_obj:
-                logger.error("Could not get reference")
-                return None
-            logger.debug("Reference object finally obtained")
+    try:
+        reference_obj = Reference(name=reference_name, type=reference_type, workspace_id=workspace_id)
+        db.session.add(reference_obj)
+        db.session.commit()
+    except IntegrityError as ex:
+        if not is_unique_constraint_violation(ex):
+            logger.exception("Could not create reference %s with type %s fow ws %s", reference_name,
+                             reference_type,
+                             workspace_id,
+                             exc_info=ex)
+            return None
+        logger.debug("Reference violated unique constraint. Rollback in progress")
+        db.session.rollback()
+        reference_obj = Reference.query.filter(Reference.name == reference_name,
+                                               Reference.type == reference_type,
+                                               Reference.workspace_id == workspace_id).first()
+        if not reference_obj:
+            logger.error("Could not get reference")
+            return None
+        logger.debug("Reference object finally obtained")
     return reference_obj
 
 
@@ -113,6 +108,53 @@ def add_cves(obj, cves):
         obj.cve_instances.add(cve)
 
 
+def create_cve_obj(cve_name):
+    cve = CVE.query.filter(CVE.name == cve_name).first()
+    if not cve:
+        try:
+            cve = CVE(name=cve_name)
+            db.session.add(cve)
+            db.session.commit()
+        except IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                logger.error("Could not create cve %s", cve_name)
+                logger.exception(ex)
+                return None
+            logger.debug("CVE violated unique constraint. Rollback in progress")
+            db.session.rollback()
+            cve = CVE.query.filter_by(name=cve_name).first()
+            if not cve:
+                logger.error("Could not get cve")
+                return None
+            logger.debug("CVE object finally obtained")
+    return cve
+
+
+def create_cves_append(cves):
+    cve_obj_list = []
+    for cve_name in cves:
+        cve = CVE.query.filter(CVE.name == cve_name).first()
+        if not cve:
+            try:
+                cve = CVE(name=cve_name)
+                db.session.add(cve)
+                db.session.commit()
+            except IntegrityError as ex:
+                if not is_unique_constraint_violation(ex):
+                    logger.error("Could not create cve %s", cve_name)
+                    logger.exception(ex)
+                    continue
+                logger.debug("CVE violated unique constraint. Rollback in progress")
+                db.session.rollback()
+                cve = CVE.query.filter_by(name=cve_name).first()
+                if not cve:
+                    logger.error("Could not get cve")
+                    continue
+                logger.debug("CVE object finally obtained")
+        cve_obj_list.append(cve)
+    return cve_obj_list
+
+
 def add_references(obj, references):
     for reference_dict in references:
         reference_name = reference_dict.get('name')
@@ -137,7 +179,7 @@ def add_references(obj, references):
                 if not reference:
                     logger.error("Could not get reference")
                     continue
-                logger.debug("Reference object finally obtained")
+                logger.debug(f"Reference {reference.name} object finally obtained")
         obj.reference_instances.add(reference)
 
 
@@ -164,6 +206,33 @@ def add_policy_violations(obj, policy_violations):
                     continue
                 logger.debug("PolicyViolation object finally obtained")
         obj.policy_violation_instances.add(policy_violation)
+
+
+def create_policy_violation_obj(policy_violation_name, ws_id):
+    policy_violation = PolicyViolation.query.filter(PolicyViolation.name == policy_violation_name,
+                                                    PolicyViolation.workspace_id == ws_id).first()
+    if not policy_violation:
+        try:
+            # nested = db.session.begin_nested()
+            policy_violation = PolicyViolation(name=policy_violation_name,
+                                               workspace_id=ws_id)
+            db.session.add(policy_violation)
+            db.session.commit()
+        except IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                logger.error("Could not create policy_violation %s", policy_violation_name)
+                logger.exception(ex)
+                return None
+            logger.debug("PolicyViolation violated unique constraint. Rollback in progress")
+            db.session.rollback()
+            # nested.rollback()
+            policy_violation = PolicyViolation.query.filter_by(name=policy_violation_name,
+                                                               workspace_id=ws_id).first()
+            if not policy_violation:
+                logger.error("Could not get policy_violation")
+                return None
+            logger.debug("PolicyViolation object finally obtained")
+    return policy_violation
 
 
 def update_one_host_severity_stat(vulnerability):

@@ -155,6 +155,7 @@ def calc_vulnerability_stats(host_id: int) -> None:
         'medium': 'vulnerability_medium_generic_count',
         'informational': 'vulnerability_info_generic_count',
         'low': 'vulnerability_low_generic_count',
+        'unclassified': 'vulnerability_unclassified_generic_count',
     }
     severities_dict = {
         'vulnerability_critical_generic_count': 0,

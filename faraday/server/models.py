@@ -1353,6 +1353,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
+    _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
@@ -1380,7 +1381,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
                                          backref=backref('duplicates_main', remote_side=[id])
                                          )
-
     vulnerability_template_id = Column(
         Integer,
         ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
@@ -1410,7 +1410,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     refs = relationship(
         'VulnerabilityReference',
-        lazy="joined",
         cascade="all, delete-orphan",
         backref=backref("vulnerabilities")
     )
@@ -1741,9 +1740,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def target(self):
         return self.target_host_ip
 
-    @hybrid_property
-    def duplicate_parent(self):
-        return self.vulnerability_duplicate_id
+    @property
+    def has_duplicate(self):
+        return self.vulnerability_duplicate_id is None
 
     @property
     def hostnames(self):
@@ -1886,7 +1885,6 @@ class Reference(Metadata):
         return
 
 
-# TODO: Add unique constraint in name and type
 class VulnerabilityReference(Metadata):
     __tablename__ = 'vulnerability_reference'
     __table_args__ = (
@@ -1912,7 +1910,7 @@ class OWASP(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text, unique=True)
 
-    vulnerabilities = relationship('Vulnerability', secondary=owasp_vulnerability_association)
+    vulnerabilities = relationship('VulnerabilityWeb', secondary=owasp_vulnerability_association)
 
 
 class ReferenceVulnerabilityAssociation(db.Model):

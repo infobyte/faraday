@@ -321,14 +321,16 @@ def get_created_tuple(obj: object) -> tuple:
 def _create_host(ws, host_data, command: dict):
     logger.debug("Trying to create host...")
     start_time = time.time()
-    created_host_data = []
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services', [])
     credentials = host_data.pop('credentials', [])
     _vulns = host_data.pop('vulnerabilities', [])
 
+    created_updated_count = {'created': 0, 'updated': 0, 'host_id': None}
+
     try:
         created, host = get_or_create(ws, Host, host_data)
+        created_updated_count['host_id'] = host.id
     except Exception as e:
         logger.exception("Could not create host %s", host_data['ip'], exc_info=e)
 
@@ -342,7 +344,9 @@ def _create_host(ws, host_data, command: dict):
     if total_services > 0:
         logger.debug(f"Needs to create {total_services} services...")
         for service_data in _services:
-            _create_service(ws, host, service_data, command)
+            _result = _create_service(ws, host, service_data, command)
+            created_updated_count['created'] += _result['created']
+            created_updated_count['updated'] += _result['updated']
 
     start_time_vulns = time.time()
     total_vulns = len(_vulns)
@@ -369,9 +373,14 @@ def _create_host(ws, host_data, command: dict):
             logger.debug(updated_vuln_data)
             host_vulns_created.append(updated_vuln_data)
 
-        insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
+        _result = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
+        created_updated_count['created'] += _result['created']
+        created_updated_count['updated'] += _result['updated']
 
-    logger.debug(f"Host vulnerabilities creation took {time.time() - start_time_vulns}")
+    logger.debug(f"Host vulnerabilities creation took {time.time() - start_time_vulns}."
+                 f" Created: {created_updated_count['created']}."
+                 f" Updated: {created_updated_count['updated']}"
+                 )
 
     total_credentials = len(credentials)
     if total_credentials > 0:
@@ -380,7 +389,7 @@ def _create_host(ws, host_data, command: dict):
             _create_credential(ws, cred_data, command, host=host)
     logger.debug(f"Create host took {time.time() - start_time}")
 
-    return created_host_data
+    return created_updated_count
 
 
 def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None):
@@ -407,11 +416,12 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     ).returning(text('id'), text('_tmp_id'))
     result = db.session.execute(on_update_stmt)
     db.session.commit()
-    manage_relationships(
+    total_result = manage_relationships(
         processed_data,
         result,
         workspace_id=workspace_id
     )
+    return total_result
 
 
 def set_histogram(histogram, vuln_data):
@@ -450,6 +460,8 @@ def manage_relationships(processed_data, result, workspace_id=None):
     owasp_object_created = []
     cwe_object_created = []
     policy_object_created = []
+    created = 0
+    updated = 0
 
     if not workspace_id:
         logger.error('Workspace id not provided')
@@ -473,8 +485,10 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     reference['vulnerability_id'] = v_id
                     references_created.append(reference)
             logger.debug("Data vulnerability On conflic %s", data['vuln_data'])
+            updated += 1
             set_histogram(histogram, data['vuln_data'])
         else:
+            created += 1
             v_id = r[0]
             data = processed_data.get(v_id, None)
             set_histogram(histogram, data['vuln_data'])
@@ -526,6 +540,8 @@ def manage_relationships(processed_data, result, workspace_id=None):
     _create_or_update_histogram(histogram)
     db.session.commit()
 
+    return {'created': created, 'updated': updated}
+
 
 def _create_command_object_for(ws, created, obj, command: dict):
     assert command is not None
@@ -572,11 +588,12 @@ def _update_service(service: Service, service_data: dict) -> Service:
 
 
 def _create_service(ws, host, service_data, command: dict):
-    created_vulns = []
     service_data = service_data.copy()
     _vulns = service_data.pop('vulnerabilities', [])
     creds = service_data.pop('credentials', [])
     service_data['host'] = host
+    created_updated_count = {'created': 0, 'updated': 0}
+
     created, service = get_or_create(ws, Service, service_data)
 
     if not created:
@@ -609,7 +626,7 @@ def _create_service(ws, host, service_data, command: dict):
             logger.debug(updated_vuln_data)
             host_vulns_created.append(updated_vuln_data)
 
-        insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
+        created_updated_count = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
 
     logger.debug(f"Service vulnerabilities creation took {time.time() - start_time_vulns}")
 
@@ -619,7 +636,7 @@ def _create_service(ws, host, service_data, command: dict):
         for cred_data in creds:
             _create_credential(ws, cred_data, command, service=service)
 
-    return created_vulns
+    return created_updated_count
 
 
 def validate_vuln_type(vulnerability):

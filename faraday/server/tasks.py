@@ -10,6 +10,7 @@ from sqlalchemy import (
     and_,
 )
 
+from faraday.server.config import faraday_server
 from faraday.server.extensions import celery
 from faraday.server.models import (
     db,
@@ -37,6 +38,10 @@ def on_success_process_report_task(results, command_id=None):
     logger.error("File for command id %s successfully imported", command_id)
     db.session.commit()
 
+    for result in results:
+        if result['created']:
+            calc_vulnerability_stats.delay(result['host_id'])
+
 
 @celery.task()
 def on_chord_error(request, exc, *args, **kwargs):
@@ -63,7 +68,7 @@ def process_report_task(workspace_id: int, command: dict, hosts):
 @celery.task(ignore_result=False, acks_late=True)
 def create_host_task(workspace_id, command: dict, host):
     from faraday.server.api.modules.bulk_create import _create_host  # pylint: disable=import-outside-toplevel
-    created_objects = []
+    created_objects = {}
     db.engine.dispose()
     start_time = time.time()
     workspace = Workspace.query.filter_by(id=workspace_id).first()
@@ -135,7 +140,10 @@ def update_host_stats(hosts: List, services: List) -> None:
     print(all_hosts)
     for host in all_hosts:
         # stat calc
-        calc_vulnerability_stats.delay(host)
+        if faraday_server.celery_enabled:
+            calc_vulnerability_stats.delay(host)
+        else:
+            calc_vulnerability_stats(host)
 
 
 @celery.task()

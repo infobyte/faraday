@@ -67,6 +67,7 @@ from faraday.server.utils.database import (
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.command import set_command_id
+from faraday.server.config import faraday_server
 from faraday.server.schemas import (
     MutableField,
     SeverityField,
@@ -688,12 +689,18 @@ class VulnerabilityView(PaginatedMixin,
         db.session.commit()
 
         # Update hosts stats
+        host_to_update_stat = None
         if obj.host_id:
-            from faraday.server.tasks import update_host_stats
-            update_host_stats.delay([obj.host_id], [])
+            host_to_update_stat = obj.host_id
         elif obj.service_id:
+            host_to_update_stat = obj.service.host_id
+
+        if host_to_update_stat:
             from faraday.server.tasks import update_host_stats
-            update_host_stats.delay([obj.service.host_id], [])
+            if faraday_server.celery_enabled:
+                update_host_stats.delay([host_to_update_stat], [])
+            else:
+                update_host_stats([host_to_update_stat], [])
 
         return obj
 
@@ -779,7 +786,10 @@ class VulnerabilityView(PaginatedMixin,
 
         if hosts or services:
             from faraday.server.tasks import update_host_stats
-            update_host_stats.delay(hosts, services)
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(hosts, services)
+            else:
+                update_host_stats(hosts, services)
         return obj
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
@@ -1415,7 +1425,10 @@ class VulnerabilityView(PaginatedMixin,
             from faraday.server.tasks import update_host_stats
             host_id_list = [data[0] for data in host_ids if data[0]]
             service_id_list = [data[1] for data in host_ids if data[1]]
-            update_host_stats.delay(host_id_list, service_id_list)
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
         return response
 
     def _bulk_update_query(self, ids, **kwargs):
@@ -1494,7 +1507,10 @@ class VulnerabilityView(PaginatedMixin,
             print(kwargs['returning'])
             host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
             service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
-            update_host_stats.delay(host_id_list, service_id_list)
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
 
 
 VulnerabilityView.register(vulns_api)

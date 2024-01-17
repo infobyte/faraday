@@ -25,6 +25,7 @@ from faraday.server.models import (
     VulnerabilityTemplate,
     Workspace,
     User,
+    CustomFieldsSchema,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -93,6 +94,12 @@ class FlaskRestlessFilterSchema(Schema):
             PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
+        date_custom_field = False
+        if '->' in filter_['name']:
+            key = filter_['name'].split('->')[1]
+            custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+            date_custom_field = custom_field.field_type == 'date'
+
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
             raise ValidationError('Value can\'t contain null chars')
         if isinstance(filter_['val'], str):
@@ -147,7 +154,7 @@ class FlaskRestlessFilterSchema(Schema):
             return [filter_]
 
         # Dates
-        if isinstance(field, (fields.Date, fields.DateTime)):
+        if isinstance(field, (fields.Date, fields.DateTime)) or date_custom_field:
             try:
                 datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
                 return generate_datetime_filter(filter_)

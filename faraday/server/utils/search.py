@@ -523,7 +523,7 @@ class QueryBuilder:
                 try:
                     op, op_type = get_json_operator(operator)
                 except TypeError as e:
-                    raise TypeError(f'Invalid filters') from e
+                    raise TypeError('Invalid filters') from e
                 field, key = fieldname.split('->')
 
                 if op in ['like', 'ilike']:

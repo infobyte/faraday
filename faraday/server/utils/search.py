@@ -518,8 +518,7 @@ class QueryBuilder:
 
         """
         if '->' in fieldname:
-            field = getattr(model, fieldname.split('->')[0])
-            if field:
+            if getattr(model, fieldname.split('->')[0]):
                 table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
                 op, op_type = get_json_operator(operator)
                 field, key = fieldname.split('->')

@@ -520,7 +520,10 @@ class QueryBuilder:
         if '->' in fieldname:
             if getattr(model, fieldname.split('->')[0]):
                 table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
-                op, op_type = get_json_operator(operator)
+                try:
+                    op, op_type = get_json_operator(operator)
+                except TypeError:
+                    raise TypeError(f'Invalid operator: "{operator}" for json fields')
                 field, key = fieldname.split('->')
 
                 if op in ['like', 'ilike']:

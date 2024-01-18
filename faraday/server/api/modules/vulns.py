@@ -1110,6 +1110,8 @@ class VulnerabilityView(PaginatedMixin,
                     workspace,
                     marshmallow_params,
                     bool(exclude_list))
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
             # In vulns count we do not need order
@@ -1122,13 +1124,18 @@ class VulnerabilityView(PaginatedMixin,
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
             return vulns, total_vulns.count()
         else:
-            vulns = self._generate_filter_query(
-                VulnerabilityGeneric,
-                filters,
-                hostname_filters,
-                workspace,
-                marshmallow_params,
-            )
+            try:
+                vulns = self._generate_filter_query(
+                    VulnerabilityGeneric,
+                    filters,
+                    hostname_filters,
+                    workspace,
+                    marshmallow_params,
+                )
+            except TypeError as e:
+                flask.abort(400, e)
+            except AttributeError as e:
+                flask.abort(400, e)
             vulns_data, rows_count = get_filtered_data(filters, vulns)
 
             return vulns_data, rows_count

@@ -522,8 +522,8 @@ class QueryBuilder:
                 table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
                 try:
                     op, op_type = get_json_operator(operator)
-                except TypeError:
-                    raise TypeError(f'Invalid operator: "{operator}" for json fields')
+                except TypeError as e:
+                    raise TypeError(f'Invalid operator: "{operator}" for json fields') from e
                 field, key = fieldname.split('->')
 
                 if op in ['like', 'ilike']:

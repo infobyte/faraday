@@ -232,7 +232,7 @@ def get_json_query(table, field, op, op_type, counter):
     elif op_type == 'list_contains':
         return (f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})")  # nosec
     else:
-        raise TypeError('Invalid operator type')
+        raise TypeError('Invalid filters')
 
 
 class OrderBy:
@@ -523,7 +523,7 @@ class QueryBuilder:
                 try:
                     op, op_type = get_json_operator(operator)
                 except TypeError as e:
-                    raise TypeError(f'Invalid operator: "{operator}" for json fields') from e
+                    raise TypeError(f'Invalid filters') from e
                 field, key = fieldname.split('->')
 
                 if op in ['like', 'ilike']:

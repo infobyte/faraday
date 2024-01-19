@@ -94,12 +94,12 @@ class FlaskRestlessFilterSchema(Schema):
             PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
-        date_custom_field = False
         if '->' in filter_['name']:
             key = filter_['name'].split('->')[1]
             try:
                 custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
-                date_custom_field = custom_field.field_type == 'date'
+                if custom_field.field_type == 'date':
+                    return [filter_]
             except AttributeError:
                 raise AttributeError("Invalid filters")
 
@@ -157,7 +157,7 @@ class FlaskRestlessFilterSchema(Schema):
             return [filter_]
 
         # Dates
-        if isinstance(field, (fields.Date, fields.DateTime)) or date_custom_field:
+        if isinstance(field, (fields.Date, fields.DateTime)):
             try:
                 datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
                 return generate_datetime_filter(filter_)

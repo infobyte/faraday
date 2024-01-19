@@ -17,6 +17,7 @@
 # Standard library imports
 import inspect
 import logging
+from datetime import date
 
 # Related third party imports
 from sqlalchemy import (
@@ -230,7 +231,9 @@ def get_json_query(table, field, op, op_type, counter):
     elif op_type == 'not_any':
         return f"NOT {table}.{field} -> :key_{counter} {op} :value_{counter} OR {table}.{field} -> :key_{counter} IS NULL"  # nosec
     elif op_type == 'list_contains':
-        return (f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})")  # nosec
+        return f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})"  # nosec
+    elif op_type == 'date':
+        return f"({table}.{field} ->> :key_{counter})::DATE {op} :value_{counter}"  # nosec
     else:
         raise TypeError('Invalid filters')
 
@@ -520,20 +523,26 @@ class QueryBuilder:
         if '->' in fieldname:
             if getattr(model, fieldname.split('->')[0]):
                 table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
+
+                field, key = fieldname.split('->')
+                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+
                 try:
                     op, op_type = get_json_operator(operator)
                 except TypeError as e:
                     raise TypeError('Invalid filters') from e
-                field, key = fieldname.split('->')
 
                 if op in ['like', 'ilike']:
-                    custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key)
                     if custom_field.field_type == 'list':
                         op_type = 'list_contains'
 
                 if op_type in ['any', 'not_any']:
                     if not argument.isnumeric():
                         argument = f"\"{argument}\""
+
+                if custom_field.field_type == 'date':
+                    argument = date.fromisoformat(argument)
+                    op_type = 'date'
 
                 increment_bind_counter()
 

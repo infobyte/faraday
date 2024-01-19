@@ -97,7 +97,10 @@ class FlaskRestlessFilterSchema(Schema):
         date_custom_field = False
         if '->' in filter_['name']:
             key = filter_['name'].split('->')[1]
-            custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+            try:
+                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+            except AttributeError:
+                raise AttributeError("Invalid filters")
             date_custom_field = custom_field.field_type == 'date'
 
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:

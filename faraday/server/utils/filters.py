@@ -100,8 +100,8 @@ class FlaskRestlessFilterSchema(Schema):
                 custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
                 if custom_field.field_type == 'date':
                     return [filter_]
-            except AttributeError:
-                raise AttributeError("Invalid filters")
+            except AttributeError as e:
+                raise AttributeError("Invalid filters") from e
 
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
             raise ValidationError('Value can\'t contain null chars')

@@ -45,7 +45,7 @@ def upgrade():
     op.execute('alter table executive_report drop constraint executive_report_workspace_id_fkey;')
     op.execute('alter table executive_report add constraint executive_report_workspace_id_fkey FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete CASCADE;')
     op.execute('alter table pipeline drop constraint pipeline_workspace_id_fkey;')
-    op.execute('alter table pipeline add constraint pipeline_workspace_id_fkey FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete CASCADE;')
+    op.execute('alter table pipeline add constraint pipeline_workspace_id_fkey FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete SET NULL;')
     op.execute('alter table agents_schedule_workspace_table drop constraint agents_schedule_workspace_table_workspace_id_fkey;')
     op.execute('alter table agents_schedule_workspace_table add constraint agents_schedule_workspace_table_workspace_id_fkey FOREIGN KEY (workspace_id) REFERENCES workspace(id) on delete CASCADE;')
 

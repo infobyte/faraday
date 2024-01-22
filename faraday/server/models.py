@@ -2944,8 +2944,8 @@ class Pipeline(Metadata):
         back_populates="pipelines"
     )
     # N to 1
-    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=True)
-    workspace = relationship('Workspace', backref=backref('pipelines', cascade="all, delete-orphan"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="SET NULL"), index=True, nullable=True)
+    workspace = relationship('Workspace', backref=backref('pipelines'))
 
     enabled = Column(Boolean, nullable=False, default=False)
     running = Column(Boolean, nullable=False, default=False)

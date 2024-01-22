@@ -17,6 +17,7 @@
 # Standard library imports
 import inspect
 import logging
+from datetime import date
 
 # Related third party imports
 from sqlalchemy import (
@@ -25,7 +26,7 @@ from sqlalchemy import (
     func,
     nullsfirst,
     nullslast,
-    inspect as sqlalchemy_inspect,
+    inspect as sqlalchemy_inspect, text,
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -33,9 +34,35 @@ from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
 # Local application imports
-from faraday.server.models import User, CVE, Role
+from faraday.server.models import (
+    User,
+    CVE,
+    Role,
+    CustomFieldsSchema,
+    VulnerabilityGeneric,
+    Vulnerability,
+    VulnerabilityWeb,
+)
+
+VULNERABILITY_MODELS = (Vulnerability, VulnerabilityWeb, VulnerabilityGeneric)
 
 logger = logging.getLogger(__name__)
+
+bind_counter = 0
+
+
+def get_bind_counter():
+    return bind_counter
+
+
+def increment_bind_counter():
+    global bind_counter
+    bind_counter += 1
+
+
+def reset_bind_counter():
+    global bind_counter
+    bind_counter = 0
 
 
 def session_query(session, model):
@@ -97,8 +124,7 @@ def _sub_operator(model, argument, fieldname):
         relation = None
         if '__' in fieldname:
             fieldname, relation = fieldname.split('__')
-        return QueryBuilder._create_operation(submodel, fieldname, operator,
-                                              argument, relation)
+        return QueryBuilder._create_operation(submodel, fieldname, operator, argument, relation)
     # Support legacy has/any with implicit eq operator
     return getattr(submodel, fieldname) == argument
 
@@ -156,7 +182,60 @@ OPERATORS = {
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
     'not_any': lambda f, a, fn: ~f.any(_sub_operator(f, a, fn)),
+    # Custom operator for json fields
+    'json': lambda f: f,
 }
+
+
+def get_json_operator(operator):
+    operator_mapping = {
+        '==': ('=', 'compare'),
+        'eq': ('=', 'compare'),
+        'equals': ('=', 'compare'),
+        'equal_to': ('=', 'compare'),
+        '!=': ('<>', 'compare'),
+        'ne': ('<>', 'compare'),
+        'neq': ('<>', 'compare'),
+        'not_equal_to': ('<>', 'compare'),
+        'does_not_equal': ('<>', 'compare'),
+        '<': ('<', 'compare'),
+        'lt': ('<', 'compare'),
+        '<=': ('<=', 'compare'),
+        'le': ('<=', 'compare'),
+        'lte': ('<=', 'compare'),
+        'leq': ('<=', 'compare'),
+        '>': ('>', 'compare'),
+        'gt': ('>', 'compare'),
+        '>=': ('>=', 'compare'),
+        'ge': ('>=', 'compare'),
+        'gte': ('>=', 'compare'),
+        'geq': ('>=', 'compare'),
+        'like': ('LIKE', 'compare'),
+        'ilike': ('ILIKE', 'compare'),
+        'any': ('@>', 'any'),
+        'not_any': ('@>', 'not_any'),
+        'is_null': ('IS NULL', 'exists'),
+        'is_not_null': ('IS NOT NULL', 'exists'),
+    }
+
+    return operator_mapping.get(operator, None)
+
+
+def get_json_query(table, field, op, op_type, counter):
+    if op_type == 'compare':
+        return f"{table}.{field} ->> :key_{counter} {op} :value_{counter}"  # nosec
+    elif op_type == 'exists':
+        return f"{table}.{field} ->> :key_{counter} {op}"  # nosec
+    elif op_type == 'any':
+        return f"{table}.{field} -> :key_{counter} {op} :value_{counter}"  # nosec
+    elif op_type == 'not_any':
+        return f"NOT {table}.{field} -> :key_{counter} {op} :value_{counter} OR {table}.{field} -> :key_{counter} IS NULL"  # nosec
+    elif op_type == 'list_contains':
+        return f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})"  # nosec
+    elif op_type == 'date':
+        return f"({table}.{field} ->> :key_{counter})::DATE {op} :value_{counter}"  # nosec
+    else:
+        raise TypeError('Invalid filters')
 
 
 class OrderBy:
@@ -398,7 +477,6 @@ class QueryBuilder:
     a given model.
 
     """
-
     @staticmethod
     def _create_operation(model, fieldname, operator, argument, relation=None):
         """Translates an operation described as a string to a valid SQLAlchemy
@@ -442,30 +520,65 @@ class QueryBuilder:
           `relation` exists on `model`
 
         """
-        # raises KeyError if operator not in OPERATORS
-        opfunc = OPERATORS[operator]
-        # In Python 3.0 or later, this should be `inspect.getfullargspec`
-        # because `inspect.getargspec` is deprecated.
-        numargs = len(inspect.getargspec(opfunc).args)
-        # raises AttributeError if `fieldname` or `relation` does not exist
-        field = getattr(model, relation or fieldname)
-        # each of these will raise a TypeError if the wrong number of arguments
-        # is supplied to `opfunc`.
-        if numargs == 1:
-            return opfunc(field)
-        if argument is None:
-            msg = ('To compare a value to NULL, use the is_null/is_not_null '
-                   'operators.')
-            raise TypeError(msg)
-        if numargs == 2:
-            map_attr = {
-                'creator': 'username',
-            }
-            if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
-                field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
+        if '->' in fieldname:
+            if getattr(model, fieldname.split('->')[0]):
+                table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
 
-            return opfunc(field, argument)
-        return opfunc(field, argument, fieldname)
+                field, key = fieldname.split('->')
+                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+
+                try:
+                    op, op_type = get_json_operator(operator)
+                except TypeError as e:
+                    raise TypeError('Invalid filters') from e
+
+                if op in ['like', 'ilike']:
+                    if custom_field.field_type == 'list':
+                        op_type = 'list_contains'
+
+                if op_type in ['any', 'not_any']:
+                    if not argument.isnumeric():
+                        argument = f"\"{argument}\""
+
+                if custom_field.field_type == 'date':
+                    argument = date.fromisoformat(argument)
+                    op_type = 'date'
+
+                increment_bind_counter()
+
+                bindparams = {
+                    f'key_{get_bind_counter()}': key,
+                    f'value_{get_bind_counter()}': argument,
+                }
+
+                query = get_json_query(table, field, op, op_type, get_bind_counter())
+
+                return OPERATORS['json'](text(f"{query}").bindparams(**bindparams))
+        else:
+            # raises KeyError if operator not in OPERATORS
+            opfunc = OPERATORS[operator]
+            # In Python 3.0 or later, this should be `inspect.getfullargspec`
+            # because `inspect.getargspec` is deprecated.
+            numargs = len(inspect.getargspec(opfunc).args)
+            # raises AttributeError if `fieldname` or `relation` does not exist
+            field = getattr(model, relation or fieldname)
+            # each of these will raise a TypeError if the wrong number of arguments
+            # is supplied to `opfunc`.
+            if numargs == 1:
+                return opfunc(field)
+            if argument is None:
+                msg = ('To compare a value to NULL, use the is_null/is_not_null '
+                       'operators.')
+                raise TypeError(msg)
+            if numargs == 2:
+                map_attr = {
+                    'creator': 'username',
+                }
+                if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
+                    field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
+
+                return opfunc(field, argument)
+            return opfunc(field, argument, fieldname)
 
     @staticmethod
     def _create_filter(model, filt):
@@ -505,12 +618,12 @@ class QueryBuilder:
         create_filt = QueryBuilder._create_filter
 
         def create_filters(filt):
-            if not isinstance(filt,
-                              JunctionFilter) and '__' in filt.fieldname:
+            if not isinstance(filt, JunctionFilter) and '__' in filt.fieldname:
                 return create_filt(model, filt)
             else:
-                if not getattr(filt, 'fieldname', False) or \
-                        filt.fieldname.split('__')[0] in valid_model_fields:
+                if (not getattr(filt, 'fieldname', False)
+                        or filt.fieldname.split('__')[0] in valid_model_fields
+                        or filt.fieldname.split('->')[0] in valid_model_fields):
                     try:
                         return create_filt(model, filt)
                     except AttributeError as e:
@@ -727,4 +840,5 @@ def search(session, model, search_params, _ignore_order_by=False):
     if is_single:
         # may raise NoResultFound or MultipleResultsFound
         return query.one()
+    reset_bind_counter()
     return query

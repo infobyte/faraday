@@ -282,7 +282,8 @@ disable=blacklisted-name,
         comparison-with-callable,
         unused-variable,
         method-cache-max-size-none,
-        consider-using-with
+        consider-using-with,
+        global-statement
 
 
 

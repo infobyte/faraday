@@ -2673,7 +2673,7 @@ class ExecutiveReport(Metadata):
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         backref=backref('reports', cascade="all, delete-orphan"),
@@ -2944,7 +2944,7 @@ class Pipeline(Metadata):
         back_populates="pipelines"
     )
     # N to 1
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=True)
     workspace = relationship('Workspace', backref=backref('pipelines', cascade="all, delete-orphan"))
 
     enabled = Column(Boolean, nullable=False, default=False)
@@ -3070,7 +3070,7 @@ class Executor(Metadata):
 agents_schedule_workspace_table = Table(
     "agents_schedule_workspace_table",
     db.Model.metadata,
-    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("workspace_id", Integer, ForeignKey("workspace.id", ondelete="CASCADE")),
     Column("agents_schedule_id", Integer, ForeignKey("agent_schedule.id")),
 )
 

@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.0.1 [Jan 2nd, 2024]:
+---
+ * [MOD] Code refactor.
+
 5.0.0 [Dec 13th, 2023]:
 ---
  * [ADD] **Breaking change** We now use Celery as the main way to import reports. In addition, we have removed twisted and replaced raw websockets with socket.io. #7352

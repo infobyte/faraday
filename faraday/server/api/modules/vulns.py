@@ -1079,7 +1079,7 @@ class VulnerabilityView(PaginatedMixin,
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
             if filters:
                 filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
-        except (ValidationError, JSONDecodeError) as ex:
+        except (ValidationError, JSONDecodeError, AttributeError) as ex:
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
@@ -1110,6 +1110,8 @@ class VulnerabilityView(PaginatedMixin,
                     workspace,
                     marshmallow_params,
                     bool(exclude_list))
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
             # In vulns count we do not need order
@@ -1122,13 +1124,18 @@ class VulnerabilityView(PaginatedMixin,
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
             return vulns, total_vulns.count()
         else:
-            vulns = self._generate_filter_query(
-                VulnerabilityGeneric,
-                filters,
-                hostname_filters,
-                workspace,
-                marshmallow_params,
-            )
+            try:
+                vulns = self._generate_filter_query(
+                    VulnerabilityGeneric,
+                    filters,
+                    hostname_filters,
+                    workspace,
+                    marshmallow_params,
+                )
+            except TypeError as e:
+                flask.abort(400, e)
+            except AttributeError as e:
+                flask.abort(400, e)
             vulns_data, rows_count = get_filtered_data(filters, vulns)
 
             return vulns_data, rows_count

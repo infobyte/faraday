@@ -757,6 +757,8 @@ class FilterWorkspacedMixin(ListMixin):
                     workspace,
                     severity_count=severity_count
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
 
@@ -771,6 +773,8 @@ class FilterWorkspacedMixin(ListMixin):
                     filters,
                     workspace,
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
             data, rows_count = get_filtered_data(filters, filter_query)
@@ -898,6 +902,8 @@ class FilterObjects:
                     host_vulns=host_vulns,
                     workspace=workspace
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
 
@@ -912,10 +918,15 @@ class FilterObjects:
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
-            filter_query = self._generate_filter_query_standalone(
-                filters,
-                workspace=workspace
-            )
+            try:
+                filter_query = self._generate_filter_query_standalone(
+                    filters,
+                    workspace=workspace
+                )
+            except TypeError as e:
+                flask.abort(400, e)
+            except AttributeError as e:
+                flask.abort(400, e)
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 
@@ -1032,6 +1043,8 @@ class FilterMixin(ListMixin):
                     severity_count=severity_count,
                     host_vulns=host_vulns
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
 
@@ -1046,9 +1059,15 @@ class FilterMixin(ListMixin):
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
-            filter_query = self._generate_filter_query(
-                filters,
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                )
+            except TypeError as e:
+                flask.abort(400, e)
+            except AttributeError as e:
+                flask.abort(400, e)
+
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 

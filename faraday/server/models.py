@@ -1201,12 +1201,12 @@ class Host(Metadata):
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            undefer(cls.vulnerability_critical_generic_count),
-            undefer(cls.vulnerability_high_generic_count),
-            undefer(cls.vulnerability_medium_generic_count),
-            undefer(cls.vulnerability_low_generic_count),
-            undefer(cls.vulnerability_info_generic_count),
-            undefer(cls.vulnerability_unclassified_generic_count),
+            # undefer(cls.vulnerability_critical_generic_count),
+            # undefer(cls.vulnerability_high_generic_count),
+            # undefer(cls.vulnerability_medium_generic_count),
+            # undefer(cls.vulnerability_low_generic_count),
+            # undefer(cls.vulnerability_info_generic_count),
+            # undefer(cls.vulnerability_unclassified_generic_count),
             undefer(cls.credentials_count),
             undefer(cls.open_service_count),
             joinedload(cls.hostnames),

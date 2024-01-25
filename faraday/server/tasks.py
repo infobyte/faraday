@@ -19,7 +19,8 @@ from faraday.server.models import (
     Service,
     Host,
     VulnerabilityGeneric,
-    VulnerabilityWeb, Vulnerability,
+    VulnerabilityWeb,
+    Vulnerability,
 )
 
 logger = get_task_logger(__name__)

@@ -335,7 +335,7 @@ def test_create_existing_host(session, workspace, host):
     host_data_copy = host_data.copy()
     host_data_copy['ip'] = host.ip
     created = bc._create_host(workspace, host_data_copy, command_dict)
-    assert created == {'created': 0, 'host_id': 11, 'updated': 0}
+    assert created == {'created': 0, 'host_id': host.id, 'updated': 0}
     assert count(Host, workspace) == 1
 
 

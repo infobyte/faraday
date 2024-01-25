@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import random
+
 import pytest
 from functools import partial
 from posixpath import join as urljoin
@@ -188,6 +189,7 @@ class TestHostAPI(ReadOnlyAPITests):
             [host.id for host in hosts],
             []
         )
+
         url = urljoin(
             self.url(workspace=workspace1),
             querystring.format(",".join(map(lambda x: str(x.id), hosts_to_query)))

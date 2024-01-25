@@ -17,7 +17,8 @@ depends_on = None
 
 def upgrade():
     # add entry "vulnerabilities_by_risk_score" to enum "analytics_types"
-    op.execute("ALTER TYPE analytics_types ADD VALUE IF NOT EXISTS 'vulnerabilities_by_risk_score'")
+    with op.get_context().autocommit_block():
+        op.execute("ALTER TYPE analytics_types ADD VALUE IF NOT EXISTS 'vulnerabilities_by_risk_score'")
 
 
 def downgrade():

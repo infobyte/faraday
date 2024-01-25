@@ -645,14 +645,24 @@ class VulnerabilityView(PaginatedMixin,
         return schema
 
     def _perform_delete(self, obj, **kwargs):
-        # Update hosts stats -1
-        if obj.severity == 'critical':
-            if obj.host:
-                obj.host.vulnerability_critical_generic_count -= 1
-            elif obj.service:
-                obj.service.host.vulnerability_critical_generic_count -= 1
+        # Update hosts stats
+        host_to_update_stat = None
+        if obj.host_id:
+            host_to_update_stat = obj.host_id
+        elif obj.service_id:
+            host_to_update_stat = obj.service.host_id
+
+        db.session.delete(obj)
         db.session.commit()
-        return super()._perform_delete(obj, **kwargs)
+        logger.info(f"{obj} deleted")
+
+        if host_to_update_stat:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            if faraday_server.celery_enabled:
+                update_host_stats.delay([host_to_update_stat], [])
+            else:
+                update_host_stats([host_to_update_stat], [])
+        db.session.commit()
 
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs), request)
@@ -736,20 +746,6 @@ class VulnerabilityView(PaginatedMixin,
     def _update_object(self, obj, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
-
-        # if 'severity' in data and obj.severity != data['severity'] or 'parent' in data:
-        #     hosts = []
-        #     services = []
-        #     if 'parent' in data:
-        #         parent_type = data.get('parent_type', None)
-        #         parent_id = data.get('parent_id', None)
-        #         if parent_type == 'Host':
-        #             hosts.append(parent_id)
-        #         elif parent_type == 'Service':
-        #             services.append(parent_id)
-        #         update_host_stats.delay(hosts, services)
-        #     else:
-        #         update_one_host_severity_stat(obj, obj.severity, data['severity'])
 
         cwe_list = data.pop('cwe', None)
         if cwe_list:
@@ -1390,12 +1386,6 @@ class VulnerabilityView(PaginatedMixin,
             users.append(user)
         response = {'users': users}
         return flask.jsonify(response)
-
-    # @route('', methods=['DELETE'])
-    # def bulk_update(self, workspace_name, **kwargs):
-    #     response = super().bulk_update(self, workspace_name, **kwargs)
-    #     # update Host from ws with result of query
-    #     return response
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):

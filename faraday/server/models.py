@@ -3363,37 +3363,9 @@ class UserNotificationSettings(Metadata):
     other_email = Column(Boolean, default=False)
     other_slack = Column(Boolean, default=False)
 
-    adv_high_crit_vuln_enabled = Column(Boolean, default=False)
-    adv_high_crit_vuln_app = Column(Boolean, default=False)
-    adv_high_crit_vuln_email = Column(Boolean, default=False)
-    adv_high_crit_vuln_slack = Column(Boolean, default=False)
     adv_high_crit_vuln = Column(Boolean, default=False)
-
-    adv_risk_score_threshold_enabled = Column(Boolean, default=False)
-    adv_risk_score_threshold_app = Column(Boolean, default=False)
-    adv_risk_score_threshold_email = Column(Boolean, default=False)
-    adv_risk_score_threshold_slack = Column(Boolean, default=False)
     adv_risk_score_threshold = Column(Integer, default=0)
-
-    adv_vuln_open_days_enabled = Column(Boolean, default=False)
-    adv_vuln_open_days_app = Column(Boolean, default=False)
-    adv_vuln_open_days_email = Column(Boolean, default=False)
-    adv_vuln_open_days_slack = Column(Boolean, default=False)
     adv_vuln_open_days = Column(Integer, default=0)
-
-
-class EmailNotification(db.Model):
-    id = Column(Integer, primary_key=True)
-    user_email = Column(String, nullable=False)
-    message = Column(String, nullable=False)
-    processed = Column(Boolean, default=False)
-
-
-class SlackNotification(db.Model):
-    id = Column(Integer, primary_key=True)
-    slack_id = Column(String, nullable=False)
-    message = Column(String, nullable=False)
-    processed = Column(Boolean, default=False)
 
 
 # Indexes to speed up queries

@@ -18,11 +18,11 @@ depends_on = None
 
 def upgrade():
     op.add_column('vulnerability_template',
-                  sa.Column('cve', sa.Text(), default='', server_default=''))
+                  sa.Column('cve', sa.Text(), default='', server_default='', nullable=True))
     op.add_column('vulnerability_template',
-                  sa.Column('_cvss2_vector_string', sa.Text(), default='', server_default=''))
+                  sa.Column('_cvss2_vector_string', sa.Text(), default='', server_default='', nullable=True))
     op.add_column('vulnerability_template',
-                  sa.Column('_cvss3_vector_string', sa.Text(), default='', server_default=''))
+                  sa.Column('_cvss3_vector_string', sa.Text(), default='', server_default='', nullable=True))
 
 
 def downgrade():

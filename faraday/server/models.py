@@ -183,7 +183,7 @@ def _last_run_agent_date():
     return query
 
 
-def _make_generic_count_property(parent_table, children_table, where=None):
+def _make_generic_count_property(parent_table, children_table, where=None, use_column_property=True):
     """Make a deferred by default column property that counts the
     amount of children of some parent object"""
     children_id_field = f'{children_table}.id'
@@ -194,7 +194,9 @@ def _make_generic_count_property(parent_table, children_table, where=None):
              where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
-    return column_property(query, deferred=True)
+    if use_column_property:
+        return column_property(query, deferred=True)
+    return query
 
 
 def _make_command_created_related_object():
@@ -2108,9 +2110,9 @@ class Workspace(Metadata):
 
     # Stats
     # By vuln type
-    vulnerability_web_count = query_expression()
-    vulnerability_code_count = query_expression()
-    vulnerability_standard_count = query_expression()
+    vulnerability_web_count = query_expression(literal(0))
+    vulnerability_code_count = query_expression(literal(0))
+    vulnerability_standard_count = query_expression(literal(0))
     # By vuln status
     vulnerability_open_count = query_expression(literal(0))
     vulnerability_re_opened_count = query_expression(literal(0))
@@ -2119,14 +2121,14 @@ class Workspace(Metadata):
     # By other
     vulnerability_confirmed_count = query_expression(literal(0))
     last_run_agent_date = query_expression()
-    vulnerability_total_count = query_expression()
+    vulnerability_total_count = query_expression(literal(0))
 
-    vulnerability_high_count = query_expression()
-    vulnerability_critical_count = query_expression()
-    vulnerability_medium_count = query_expression()
-    vulnerability_low_count = query_expression()
-    vulnerability_informational_count = query_expression()
-    vulnerability_unclassified_count = query_expression()
+    vulnerability_high_count = query_expression(literal(0))
+    vulnerability_critical_count = query_expression(literal(0))
+    vulnerability_medium_count = query_expression(literal(0))
+    vulnerability_low_count = query_expression(literal(0))
+    vulnerability_informational_count = query_expression(literal(0))
+    vulnerability_unclassified_count = query_expression(literal(0))
 
     importance = Column(Integer, default=0)
 

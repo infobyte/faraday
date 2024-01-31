@@ -37,6 +37,7 @@ from faraday.server.models import (
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
+    _make_generic_count_property,
 )
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
@@ -970,10 +971,44 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
+    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False, only_total_vulns=False,
+                                   list_view=False):
+
         filter_query = search(db.session,
                               self.model_class,
                               filters)
+        # TODO: Refactor all stats
+        if only_total_vulns:
+            filter_query = filter_query.options(
+                with_expression(
+                    Workspace.vulnerability_total_count,
+                    _make_vuln_count_property(type_=None,
+                                              use_column_property=False)
+                ),
+                joinedload(Workspace.scope),
+                joinedload(Workspace.allowed_users),
+            )
+            return filter_query
+
+        if list_view:
+            filter_query = filter_query.options(
+                with_expression(
+                    Workspace.vulnerability_total_count,
+                    _make_vuln_count_property(type_=None,
+                                              use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.host_count,
+                    _make_generic_count_property('workspace', 'host', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.total_service_count,
+                    _make_generic_count_property('workspace', 'service', use_column_property=False)
+                ),
+                joinedload(Workspace.scope),
+                joinedload(Workspace.allowed_users),
+            )
+            return filter_query
 
         if severity_count and 'group_by' not in filters:
             # TODO: Refactor all stats
@@ -1014,13 +1049,27 @@ class FilterMixin(ListMixin):
                     Workspace.vulnerability_total_count,
                     _make_vuln_count_property(type_=None,
                                               use_column_property=False)
-                )
+                ),
+                with_expression(
+                     Workspace.credential_count,
+                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.host_count,
+                    _make_generic_count_property('workspace', 'host', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.total_service_count,
+                    _make_generic_count_property('workspace', 'service', use_column_property=False)
+                ),
+                joinedload(Workspace.scope),
+                joinedload(Workspace.allowed_users),
             )
 
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False, exclude=[]) -> Tuple[list, int]:
+                severity_count=False, host_vulns=False, exclude=[], only_total_vulns=False, list_view=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -1041,7 +1090,9 @@ class FilterMixin(ListMixin):
                 filter_query = self._generate_filter_query(
                     filters,
                     severity_count=severity_count,
-                    host_vulns=host_vulns
+                    host_vulns=host_vulns,
+                    only_total_vulns=only_total_vulns,
+                    list_view=list_view
                 )
             except TypeError as e:
                 flask.abort(400, e)
@@ -1050,7 +1101,7 @@ class FilterMixin(ListMixin):
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
-            count = filter_query.count()
+            count = filter_query.order_by(None).count()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
@@ -1705,6 +1756,7 @@ class DeleteMixin:
         """
         obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj, **kwargs)
+        # TODO: Check _post_delete def differences with corp
         return None, 204
 
     def _perform_delete(self, obj, workspace_name=None):
@@ -1737,6 +1789,7 @@ class BulkDeleteMixin(FilterObjects):
             ids = list(x.get("obj_id") for x in filtered_objects[0])
         else:
             flask.abort(400)
+        # TODO: Check _post_bulk_delete with corp
         return self._perform_bulk_delete(ids, **kwargs), 200
 
     def _bulk_delete_query(self, ids, **kwargs):
@@ -1849,6 +1902,7 @@ class CountWorkspacedMixin:
             filter(Workspace.name == workspace_name,
                    *self.count_extra_filters)
         )
+
         # order
         order_by = group_by
         if sort_dir == 'desc':

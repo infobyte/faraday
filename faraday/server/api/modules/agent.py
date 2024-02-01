@@ -177,7 +177,8 @@ class AgentView(ReadWriteView):
             "resolve_hostname": data.get('resolve_hostname', True),
             "vuln_tag": data.get('vuln_tag', None),
             "service_tag": data.get('service_tag', None),
-            "host_tag": data.get('host_tag', None)
+            # this field should be named host_tag but in agents is named as hostname_tag
+            "hostname_tag": data.get('host_tag', None)
         }
         if agent.is_offline:
             abort(http.HTTPStatus.GONE, "Agent is offline")

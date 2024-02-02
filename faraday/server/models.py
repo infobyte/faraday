@@ -183,7 +183,7 @@ def _last_run_agent_date():
     return query
 
 
-def _make_generic_count_property(parent_table, children_table, where=None):
+def _make_generic_count_property(parent_table, children_table, where=None, use_column_property=True):
     """Make a deferred by default column property that counts the
     amount of children of some parent object"""
     children_id_field = f'{children_table}.id'
@@ -194,7 +194,9 @@ def _make_generic_count_property(parent_table, children_table, where=None):
              where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
-    return column_property(query, deferred=True)
+    if use_column_property:
+        return column_property(query, deferred=True)
+    return query
 
 
 def _make_command_created_related_object():
@@ -974,6 +976,51 @@ class VulnerabilityTemplate(VulnerabilityABC):
     )
     custom_fields = Column(JSONType)
     shipped = Column(Boolean, nullable=False, default=False)
+
+    # CVSS
+    _cvss2_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss2_vector_string(self):
+        return self._cvss2_vector_string
+
+    @cvss2_vector_string.setter
+    def cvss2_vector_string(self, vector_string):
+        self._cvss2_vector_string = vector_string
+        if not self._cvss2_vector_string:
+            self.init_cvss2_attrs()
+            return None
+        try:
+            cvss2 = cvss.CVSS2(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS2 vector string: {self._cvss2_vector_string}", e)
+
+    def init_cvss2_attrs(self):
+        self._cvss2_vector_string = None
+
+    _cvss3_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss3_vector_string(self):
+        return self._cvss3_vector_string
+
+    @cvss3_vector_string.setter
+    def cvss3_vector_string(self, vector_string):
+        self._cvss3_vector_string = vector_string
+        if not self._cvss3_vector_string:
+            self.init_cvss3_attrs()
+            return None
+        try:
+            cvss3 = cvss.CVSS3(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS3 vector string: {self._cvss3_vector_string}", e)
+
+    def init_cvss3_attrs(self):
+        self._cvss3_vector_string = None
+
+    # CVE
+
+    cve = Column(Text, nullable=True, default="")
 
 
 class CommandObject(db.Model):
@@ -2118,9 +2165,9 @@ class Workspace(Metadata):
 
     # Stats
     # By vuln type
-    vulnerability_web_count = query_expression()
-    vulnerability_code_count = query_expression()
-    vulnerability_standard_count = query_expression()
+    vulnerability_web_count = query_expression(literal(0))
+    vulnerability_code_count = query_expression(literal(0))
+    vulnerability_standard_count = query_expression(literal(0))
     # By vuln status
     vulnerability_open_count = query_expression(literal(0))
     vulnerability_re_opened_count = query_expression(literal(0))
@@ -2129,14 +2176,14 @@ class Workspace(Metadata):
     # By other
     vulnerability_confirmed_count = query_expression(literal(0))
     last_run_agent_date = query_expression()
-    vulnerability_total_count = query_expression()
+    vulnerability_total_count = query_expression(literal(0))
 
-    vulnerability_high_count = query_expression()
-    vulnerability_critical_count = query_expression()
-    vulnerability_medium_count = query_expression()
-    vulnerability_low_count = query_expression()
-    vulnerability_informational_count = query_expression()
-    vulnerability_unclassified_count = query_expression()
+    vulnerability_high_count = query_expression(literal(0))
+    vulnerability_critical_count = query_expression(literal(0))
+    vulnerability_medium_count = query_expression(literal(0))
+    vulnerability_low_count = query_expression(literal(0))
+    vulnerability_informational_count = query_expression(literal(0))
+    vulnerability_unclassified_count = query_expression(literal(0))
 
     importance = Column(Integer, default=0)
 

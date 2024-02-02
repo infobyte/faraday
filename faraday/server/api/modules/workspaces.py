@@ -16,7 +16,7 @@ import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from sqlalchemy.orm import with_expression
+from sqlalchemy.orm import with_expression, joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
@@ -28,6 +28,7 @@ from faraday.server.models import (
     _make_vuln_count_property,
     count_vulnerability_severities,
     _last_run_agent_date,
+    _make_generic_count_property,
 )
 from faraday.server.schemas import (
     JSTimestampField,
@@ -313,6 +314,13 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
 
+    def _envelope_list(self, objects, pagination_metadata=None):
+        return {
+            'rows': objects,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(objects))
+        }
+
     def _add_to_filter(self, filter_query, **kwargs):
         filter_query = filter_query.options(
             with_expression(
@@ -427,7 +435,22 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                                                confirmed=confirmed,
                                                all_severities=True,
                                                only_opened=only_opened)
-
+        query = query.options(
+            with_expression(
+                Workspace.credential_count,
+                _make_generic_count_property('workspace', 'credential', use_column_property=False)
+            ),
+            with_expression(
+                Workspace.host_count,
+                _make_generic_count_property('workspace', 'host', use_column_property=False)
+            ),
+            with_expression(
+                Workspace.total_service_count,
+                _make_generic_count_property('workspace', 'service', use_column_property=False)
+            ),
+            joinedload(Workspace.scope),
+            joinedload(Workspace.allowed_users)
+        )
         try:
             obj = query.one()
         except NoResultFound:

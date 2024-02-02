@@ -1,7 +1,7 @@
 """add fields to KB
 
 Revision ID: 257f6d0ad43f
-Revises: 901344f297fb
+Revises: b87b1de2f348
 Create Date: 2023-11-10 21:47:36.973846+00:00
 
 """

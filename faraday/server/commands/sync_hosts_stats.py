@@ -9,8 +9,9 @@ def _sync_hosts_stats():
         print(f"Found {len(hosts_id)} hosts ...")
         print("This may take a while ...")
         from faraday.server.tasks import update_host_stats  # pylint: disable=import-outside-toplevel
+        _hosts_id = [host_id[0] for host_id in hosts_id]
         if faraday_server.celery_enabled:
             print("Processing updates in background ...")
-            update_host_stats.delay(hosts_id, [])
+            update_host_stats.delay(_hosts_id, [])
         else:
-            update_host_stats(hosts_id, [])
+            update_host_stats(_hosts_id, [])

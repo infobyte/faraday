@@ -138,7 +138,6 @@ def update_host_stats(hosts: List, services: List) -> None:
     services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
     for host_id in services_host_id:
         all_hosts.add(host_id[0])
-    print(all_hosts)
     for host in all_hosts:
         # stat calc
         if faraday_server.celery_enabled:

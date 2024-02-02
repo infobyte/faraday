@@ -1,7 +1,7 @@
 """add delete workspace missing cascades
 
 Revision ID: b87b1de2f348
-Revises: 51e533d41312
+Revises: d0a6105fdef1
 Create Date: 2023-10-18 19:30:09.640602+00:00
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'b87b1de2f348'
-down_revision = '51e533d41312'
+down_revision = 'd0a6105fdef1'
 branch_labels = None
 depends_on = None
 

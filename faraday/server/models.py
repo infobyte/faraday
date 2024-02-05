@@ -1227,12 +1227,6 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
-    # vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
-    # vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
-    # vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
-    # vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
-    # vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
-    # vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
     vulnerability_critical_generic_count = Column(Integer, server_default=text("0"))
     vulnerability_high_generic_count = Column(Integer, server_default=text("0"))
     vulnerability_medium_generic_count = Column(Integer, server_default=text("0"))
@@ -1248,12 +1242,6 @@ class Host(Metadata):
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            # undefer(cls.vulnerability_critical_generic_count),
-            # undefer(cls.vulnerability_high_generic_count),
-            # undefer(cls.vulnerability_medium_generic_count),
-            # undefer(cls.vulnerability_low_generic_count),
-            # undefer(cls.vulnerability_info_generic_count),
-            # undefer(cls.vulnerability_unclassified_generic_count),
             undefer(cls.credentials_count),
             undefer(cls.open_service_count),
             joinedload(cls.hostnames),

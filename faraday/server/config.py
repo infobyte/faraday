@@ -13,9 +13,18 @@ from logging import DEBUG, INFO
 from pathlib import Path
 
 
-CONST_FARADAY_HOME_PATH = Path(
-    os.getenv('FARADAY_HOME', Path('~/').expanduser())  # pylint:disable=invalid-envvar-default
-) / '.faraday'
+DEFAULT_INSTALLER_FARADAY_HOME_PATH = Path('/home/faraday')
+
+_faraday_home = os.getenv('FARADAY_HOME', None)
+if _faraday_home:
+    _faraday_home = Path(_faraday_home)
+else:
+    if DEFAULT_INSTALLER_FARADAY_HOME_PATH.exists():
+        _faraday_home = DEFAULT_INSTALLER_FARADAY_HOME_PATH
+    else:
+        _faraday_home = Path('~/').expanduser()
+
+CONST_FARADAY_HOME_PATH = _faraday_home / '.faraday'
 
 LOGGING_LEVEL = INFO
 

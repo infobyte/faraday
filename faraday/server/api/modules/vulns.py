@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Standard library imports
+import http.client
 import io
 import logging
 import json
@@ -13,7 +14,6 @@ from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
 
-# Related third party imports
 import flask
 from flask import request, send_file
 from flask import Blueprint, make_response
@@ -58,7 +58,8 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User
+    User,
+    VulnerabilityABC,
 )
 from faraday.server.utils.database import (
     get_or_create,
@@ -66,6 +67,7 @@ from faraday.server.utils.database import (
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.command import set_command_id
+from faraday.server.config import faraday_server
 from faraday.server.schemas import (
     MutableField,
     SeverityField,
@@ -74,7 +76,7 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
-from faraday.server.utils.vulns import parse_cve_references_and_policyviolations
+from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -642,6 +644,26 @@ class VulnerabilityView(PaginatedMixin,
 
         return schema
 
+    def _perform_delete(self, obj, **kwargs):
+        # Update hosts stats
+        host_to_update_stat = None
+        if obj.host_id:
+            host_to_update_stat = obj.host_id
+        elif obj.service_id:
+            host_to_update_stat = obj.service.host_id
+
+        db.session.delete(obj)
+        db.session.commit()
+        logger.info(f"{obj} deleted")
+
+        if host_to_update_stat:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            if faraday_server.celery_enabled:
+                update_host_stats.delay([host_to_update_stat], [])
+            else:
+                update_host_stats([host_to_update_stat], [])
+        db.session.commit()
+
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs), request)
         obj = None
@@ -675,6 +697,21 @@ class VulnerabilityView(PaginatedMixin,
             else:
                 obj.tool = "Web UI"
         db.session.commit()
+
+        # Update hosts stats
+        host_to_update_stat = None
+        if obj.host_id:
+            host_to_update_stat = obj.host_id
+        elif obj.service_id:
+            host_to_update_stat = obj.service.host_id
+
+        if host_to_update_stat:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            if faraday_server.celery_enabled:
+                update_host_stats.delay([host_to_update_stat], [])
+            else:
+                update_host_stats([host_to_update_stat], [])
+
         return obj
 
     @staticmethod
@@ -732,12 +769,37 @@ class VulnerabilityView(PaginatedMixin,
 
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
         attachments = data.pop('_attachments', None if partial else {})
+
+        # get hosts and services to update vuln stats
+        hosts, services = update_one_host_severity_stat(obj)
+
         obj = super()._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
         if attachments is not None:
             self._process_attachments(obj, attachments)
+
         db.session.commit()
+
+        if hosts or services:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(hosts, services)
+            else:
+                update_host_stats(hosts, services)
         return obj
+
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+
+        returning_rows = [
+            VulnerabilityGeneric.id,
+            VulnerabilityGeneric.name,
+            VulnerabilityGeneric.severity,
+            VulnerabilityGeneric.risk,
+            VulnerabilityGeneric.host_id,
+            Vulnerability.service_id,
+        ]
+        kwargs['returning'] = returning_rows
+        return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
 
     def put(self, object_id, workspace_name=None, **kwargs):
         return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
@@ -1334,6 +1396,39 @@ class VulnerabilityView(PaginatedMixin,
                                          workspace_name=workspace_name, **kwargs), 200
     bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
 
+    def _perform_bulk_delete(self, values, **kwargs):
+        # Get host and service ids in order to update host stats
+        host_ids = db.session.query(
+            VulnerabilityGeneric.host_id,
+            VulnerabilityGeneric.service_id
+        )
+
+        by_severity = kwargs.get('by', None)
+        if by_severity == 'severity':
+            for severity in values:
+                if severity not in VulnerabilityABC.SEVERITIES:
+                    flask.abort(http.client.BAD_REQUEST, "Severity type not valid")
+
+            host_ids = host_ids.filter(
+                            VulnerabilityGeneric.severity.in_(values)
+                        ).all()
+        else:
+            host_ids = host_ids.filter(
+                            VulnerabilityGeneric.id.in_(values)
+                        ).all()
+
+        response = super()._perform_bulk_delete(values, **kwargs)
+        deleted = response.json.get('deleted', 0)
+        if deleted > 0:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            host_id_list = [data[0] for data in host_ids if data[0]]
+            service_id_list = [data[1] for data in host_ids if data[1]]
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
+        return response
+
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         query = self.model_class.query.filter(self.model_class.id.in_(ids))
@@ -1403,6 +1498,17 @@ class VulnerabilityView(PaginatedMixin,
                         value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
+
+        if 'returning' in kwargs and kwargs['returning']:
+            # update host stats
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            print(kwargs['returning'])
+            host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
+            service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
 
 
 VulnerabilityView.register(vulns_api)

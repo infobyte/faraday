@@ -17,6 +17,7 @@ from hypothesis import given, strategies as st
 
 import pytest
 
+from faraday.server.tasks import calc_vulnerability_stats
 from tests import factories
 from tests.test_api_workspaced_base import (
     API_PREFIX,
@@ -495,6 +496,9 @@ class TestHostAPI:
 
         session.commit()
 
+        calc_vulnerability_stats(host.id)
+        calc_vulnerability_stats(host2.id)
+
         res = test_client.get(
             join(
                 self.url(),
@@ -611,6 +615,9 @@ class TestHostAPI:
 
         session.commit()
 
+        calc_vulnerability_stats(host.id)
+        calc_vulnerability_stats(service.host.id)
+
         res = test_client.get(f'{self.url()}?stats=true')
         assert res.status_code == 200
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
@@ -632,8 +639,10 @@ class TestHostAPI:
         service = service_factory.create(host=host, workspace=workspace)
         vulnerability_factory.create(service=service, host=None, workspace=workspace, severity="low")
         vulnerability_factory.create(service=None, host=host, workspace=workspace, severity="critical")
-
         session.commit()
+
+        calc_vulnerability_stats(host.id)
+        calc_vulnerability_stats(service.id)
 
         res = test_client.get(self.url())
         assert res.status_code == 200
@@ -791,6 +800,8 @@ class TestHostAPI:
             session.add(vuln)
 
         session.commit()
+
+        calc_vulnerability_stats(host.id)
 
         res = test_client.get(join(self.url(), 'countVulns'))
         vuln_count = res.json['hosts'][str(host.id)]

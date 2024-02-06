@@ -1,7 +1,7 @@
 """add delete workspace missing cascades
 
 Revision ID: b87b1de2f348
-Revises: 901344f297fb
+Revises: d0a6105fdef1
 Create Date: 2023-10-18 19:30:09.640602+00:00
 
 """

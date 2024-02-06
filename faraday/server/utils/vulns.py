@@ -2,6 +2,7 @@ import re
 import logging
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.inspection import inspect
 
 from faraday.server.models import (
     CVE,
@@ -232,3 +233,36 @@ def create_policy_violation_obj(policy_violation_name, ws_id):
                 return None
             logger.debug("PolicyViolation object finally obtained")
     return policy_violation
+
+
+def update_one_host_severity_stat(vulnerability):
+    if not vulnerability:
+        return None
+    state = inspect(vulnerability)
+    hosts = []
+    services = []
+    if state.attrs.host_id.history.added or state.attrs.service_id.history.added:
+        if state.attrs.host_id.history.added:
+            print(state.attrs.host_id.history.added)
+            print(state.attrs.host_id.history.deleted)
+            if state.attrs.host_id.history.added[0] is not None:
+                hosts.append(state.attrs.host_id.history.added[0])
+            if state.attrs.host_id.history.deleted[0] is not None:
+                hosts.append(state.attrs.host_id.history.deleted[0])
+        if state.attrs.service_id.history.added:
+            print(state.attrs.service_id.history.added)
+            print(state.attrs.service_id.history.deleted)
+            if state.attrs.service_id.history.added[0] is not None:
+                services.append(state.attrs.service_id.history.added[0])
+            if state.attrs.service_id.history.deleted[0] is not None:
+                services.append(state.attrs.service_id.history.deleted[0])
+    elif state.attrs.severity.history.added:
+        print(state.attrs.severity.history.added)
+        print(state.attrs.severity.history.deleted)
+        if vulnerability.host_id:
+            hosts.append(vulnerability.host_id)
+        elif vulnerability.service_id:
+            hosts.append(vulnerability.service.host_id)
+        else:
+            logger.warning("Nor service nor host found in vulnerability ", vulnerability)
+    return hosts, services

@@ -1,7 +1,7 @@
 """Add advanced notifs to model
 
 Revision ID: f7ca45632cce
-Revises: 61ded0c8fbf6
+Revises: 51e533d41312
 Create Date: 2023-08-07 21:32:24.180236+00:00
 
 """

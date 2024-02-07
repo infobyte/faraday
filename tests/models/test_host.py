@@ -5,12 +5,14 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import random
+
 import pytest
 from functools import partial
 from posixpath import join as urljoin
 
 from faraday.server.models import Hostname, Host
 from faraday.server.api.modules.hosts import HostsView
+from faraday.server.tasks import update_host_stats
 
 from tests.test_api_workspaced_base import (
     ReadOnlyAPITests)
@@ -144,8 +146,7 @@ class TestHostAPI(ReadOnlyAPITests):
 
     # This test the api endpoint for some of the host in the ws, with existing other host with vulns in the same and
     # other ws
-    @pytest.mark.parametrize('querystring', ['countVulns?hosts={}',
-                                             ])
+    @pytest.mark.parametrize('querystring', ['countVulns?hosts={}'])
     def test_vuln_count(self,
                         vulnerability_factory,
                         host_factory,
@@ -183,6 +184,11 @@ class TestHostAPI(ReadOnlyAPITests):
 
         session.add_all(vulns)
         session.commit()
+
+        update_host_stats(
+            [host.id for host in hosts],
+            []
+        )
 
         url = urljoin(
             self.url(workspace=workspace1),
@@ -235,6 +241,11 @@ class TestHostAPI(ReadOnlyAPITests):
 
         session.add_all(vulns)
         session.commit()
+
+        update_host_stats(
+            [host.id for host in hosts],
+            []
+        )
 
         url = urljoin(self.url(workspace=workspace1), querystring.format(",".join(map(lambda x: str(x.id), hosts))))
         res = test_client.get(url)

@@ -25,6 +25,17 @@ from faraday.server.models import (
 logger = logging.getLogger(__name__)
 
 
+def validate_date_string(date):
+    """
+    Validate date string for custom_fields where field_type is date, intended: YYYY-MM-DD
+    """
+    try:
+        datetime.datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValidationError:
+        return False
+
+
 class JSTimestampField(fields.Integer):
     """A field to serialize datetime objects into javascript
     compatible timestamps (like time.time()) * 1000"""
@@ -96,6 +107,12 @@ class FaradayCustomField(fields.Field):
                     serialized[key] = raw_data
                 elif field_schema.field_type == 'choice':
                     serialized[key] = str(raw_data)
+                elif field_schema.field_type == 'date':
+                    raw_data = str(raw_data).replace('/', '-')
+                    if validate_date_string(raw_data):
+                        serialized[key] = raw_data
+                    else:
+                        raise ValidationError("The value is not a valid date")
                 else:
                     raise ValidationError("Custom Field datatype not supported yet")
 

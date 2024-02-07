@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Now we use postgres bulk insert for imports. #7641"
+}

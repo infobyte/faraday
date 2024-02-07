@@ -18,7 +18,6 @@ from marshmallow import Schema, fields, ValidationError, types, validate, post_l
 from marshmallow_sqlalchemy.convert import ModelConverter
 
 # Local application imports
-from faraday.server.fields import JSONType
 from faraday.server.models import (
     VulnerabilityWeb,
     Host,
@@ -26,6 +25,7 @@ from faraday.server.models import (
     VulnerabilityTemplate,
     Workspace,
     User,
+    CustomFieldsSchema,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -94,6 +94,15 @@ class FlaskRestlessFilterSchema(Schema):
             PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
+        if '->' in filter_['name']:
+            key = filter_['name'].split('->')[1]
+            try:
+                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+                if custom_field.field_type == 'date':
+                    return [filter_]
+            except AttributeError as e:
+                raise AttributeError("Invalid filters") from e
+
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
             raise ValidationError('Value can\'t contain null chars')
         if isinstance(filter_['val'], str):
@@ -116,7 +125,7 @@ class FlaskRestlessFilterSchema(Schema):
             column = getattr(model, column_name)
         else:
             try:
-                column = getattr(self._model_class(), column_name)
+                column = getattr(self._model_class(), column_name.split('->')[0])
             except AttributeError as e:
                 raise ValidationError('Field does not exists') from e
 
@@ -159,8 +168,6 @@ class FlaskRestlessFilterSchema(Schema):
             # like must be used with string
             if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):
                 raise ValidationError('Can\'t perform ilike/like against numbers')
-            if isinstance(column.type, JSONType):
-                raise ValidationError('Can\'t perform ilike/like against JSON Type column')
             if isinstance(field, fields.Boolean):
                 raise ValidationError('Can\'t perform ilike/like against boolean type column')
 
@@ -170,7 +177,8 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
 
             if not isinstance(field, (fields.Date, fields.DateTime, fields.Number)):
-                raise ValidationError('Using comparison operator against a field that does not supports it')
+                if '->' not in column_name:
+                    raise ValidationError('Using comparison operator against a field that does not supports it')
 
         # if the field is boolean, the value must be valid otherwise postgresql will raise an error
         if isinstance(field, fields.Boolean) and not isinstance(filter_['val'], bool):

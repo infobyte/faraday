@@ -183,7 +183,7 @@ def _last_run_agent_date():
     return query
 
 
-def _make_generic_count_property(parent_table, children_table, where=None):
+def _make_generic_count_property(parent_table, children_table, where=None, use_column_property=True):
     """Make a deferred by default column property that counts the
     amount of children of some parent object"""
     children_id_field = f'{children_table}.id'
@@ -194,7 +194,9 @@ def _make_generic_count_property(parent_table, children_table, where=None):
              where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
-    return column_property(query, deferred=True)
+    if use_column_property:
+        return column_property(query, deferred=True)
+    return query
 
 
 def _make_command_created_related_object():
@@ -543,7 +545,7 @@ class SeveritiesHistogram(db.Model):
     DEFAULT_DAYS_BEFORE = 20
 
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -565,7 +567,7 @@ class VulnerabilityHitCount(db.Model):
     __tablename__ = "vulnerability_hit_count"
 
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -975,6 +977,51 @@ class VulnerabilityTemplate(VulnerabilityABC):
     custom_fields = Column(JSONType)
     shipped = Column(Boolean, nullable=False, default=False)
 
+    # CVSS
+    _cvss2_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss2_vector_string(self):
+        return self._cvss2_vector_string
+
+    @cvss2_vector_string.setter
+    def cvss2_vector_string(self, vector_string):
+        self._cvss2_vector_string = vector_string
+        if not self._cvss2_vector_string:
+            self.init_cvss2_attrs()
+            return None
+        try:
+            cvss2 = cvss.CVSS2(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS2 vector string: {self._cvss2_vector_string}", e)
+
+    def init_cvss2_attrs(self):
+        self._cvss2_vector_string = None
+
+    _cvss3_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss3_vector_string(self):
+        return self._cvss3_vector_string
+
+    @cvss3_vector_string.setter
+    def cvss3_vector_string(self, vector_string):
+        self._cvss3_vector_string = vector_string
+        if not self._cvss3_vector_string:
+            self.init_cvss3_attrs()
+            return None
+        try:
+            cvss3 = cvss.CVSS3(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS3 vector string: {self._cvss3_vector_string}", e)
+
+    def init_cvss3_attrs(self):
+        self._cvss3_vector_string = None
+
+    # CVE
+
+    cve = Column(Text, nullable=True, default="")
+
 
 class CommandObject(db.Model):
     __tablename__ = 'command_object'
@@ -988,7 +1035,7 @@ class CommandObject(db.Model):
 
     # 1 workspace <--> N command_objects
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -1180,12 +1227,12 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
-    vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
-    vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
-    vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
-    vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
-    vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
-    vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
+    vulnerability_critical_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_high_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_medium_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_low_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_info_generic_count = Column(Integer, server_default=text("0"))
+    vulnerability_unclassified_generic_count = Column(Integer, server_default=text("0"))
 
     importance = Column(Integer, default=0)
 
@@ -1195,12 +1242,6 @@ class Host(Metadata):
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            undefer(cls.vulnerability_critical_generic_count),
-            undefer(cls.vulnerability_high_generic_count),
-            undefer(cls.vulnerability_medium_generic_count),
-            undefer(cls.vulnerability_low_generic_count),
-            undefer(cls.vulnerability_info_generic_count),
-            undefer(cls.vulnerability_unclassified_generic_count),
             undefer(cls.credentials_count),
             undefer(cls.open_service_count),
             joinedload(cls.hostnames),
@@ -1353,6 +1394,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
+    _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
@@ -1380,7 +1422,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
                                          backref=backref('duplicates_main', remote_side=[id])
                                          )
-
     vulnerability_template_id = Column(
         Integer,
         ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
@@ -1410,7 +1451,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     refs = relationship(
         'VulnerabilityReference',
-        lazy="joined",
         cascade="all, delete-orphan",
         backref=backref("vulnerabilities")
     )
@@ -1718,6 +1758,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
         foreign_keys=[host_id],
     )
 
+    @declared_attr
+    def service_id(self):
+        return Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'), index=True)
+
     target_host_os = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'), _host_os_query.as_scalar()),
@@ -1741,9 +1785,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def target(self):
         return self.target_host_ip
 
-    @hybrid_property
-    def duplicate_parent(self):
-        return self.vulnerability_duplicate_id
+    @property
+    def has_duplicate(self):
+        return self.vulnerability_duplicate_id is None
 
     @property
     def hostnames(self):
@@ -1862,7 +1906,7 @@ class Reference(Metadata):
 
     # 1 workspace <--> N references
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -1886,7 +1930,6 @@ class Reference(Metadata):
         return
 
 
-# TODO: Add unique constraint in name and type
 class VulnerabilityReference(Metadata):
     __tablename__ = 'vulnerability_reference'
     __table_args__ = (
@@ -1912,14 +1955,14 @@ class OWASP(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text, unique=True)
 
-    vulnerabilities = relationship('Vulnerability', secondary=owasp_vulnerability_association)
+    vulnerabilities = relationship('VulnerabilityWeb', secondary=owasp_vulnerability_association)
 
 
 class ReferenceVulnerabilityAssociation(db.Model):
     __tablename__ = 'reference_vulnerability_association'
 
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
-    reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
+    reference_id = Column(Integer, ForeignKey('reference.id', ondelete="CASCADE"), primary_key=True)
 
     reference = relationship("Reference",
                              backref=backref("reference_associations", cascade="all, delete-orphan"),
@@ -1933,7 +1976,7 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     __tablename__ = 'policy_violation_vulnerability_association'
 
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete="CASCADE"), primary_key=True)
-    policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+    policy_violation_id = Column(Integer, ForeignKey('policy_violation.id', ondelete="CASCADE"), primary_key=True)
 
     policy_violation = relationship("PolicyViolation",
                                     backref=backref("policy_violation_associations", cascade="all, delete-orphan"),
@@ -1998,7 +2041,7 @@ class PolicyViolation(Metadata):
 
     workspace_id = Column(
         Integer,
-        ForeignKey('workspace.id'),
+        ForeignKey('workspace.id', ondelete='CASCADE'),
         index=True,
         nullable=False
     )
@@ -2086,7 +2129,7 @@ class Credential(Metadata):
 association_workspace_and_users_table = Table(
     'workspace_permission_association',
     db.Model.metadata,
-    Column('workspace_id', Integer, ForeignKey('workspace.id')),
+    Column('workspace_id', Integer, ForeignKey('workspace.id', ondelete='CASCADE')),
     Column('user_id', Integer, ForeignKey('faraday_user.id'))
 )
 
@@ -2110,9 +2153,9 @@ class Workspace(Metadata):
 
     # Stats
     # By vuln type
-    vulnerability_web_count = query_expression()
-    vulnerability_code_count = query_expression()
-    vulnerability_standard_count = query_expression()
+    vulnerability_web_count = query_expression(literal(0))
+    vulnerability_code_count = query_expression(literal(0))
+    vulnerability_standard_count = query_expression(literal(0))
     # By vuln status
     vulnerability_open_count = query_expression(literal(0))
     vulnerability_re_opened_count = query_expression(literal(0))
@@ -2121,14 +2164,14 @@ class Workspace(Metadata):
     # By other
     vulnerability_confirmed_count = query_expression(literal(0))
     last_run_agent_date = query_expression()
-    vulnerability_total_count = query_expression()
+    vulnerability_total_count = query_expression(literal(0))
 
-    vulnerability_high_count = query_expression()
-    vulnerability_critical_count = query_expression()
-    vulnerability_medium_count = query_expression()
-    vulnerability_low_count = query_expression()
-    vulnerability_informational_count = query_expression()
-    vulnerability_unclassified_count = query_expression()
+    vulnerability_high_count = query_expression(literal(0))
+    vulnerability_critical_count = query_expression(literal(0))
+    vulnerability_medium_count = query_expression(literal(0))
+    vulnerability_low_count = query_expression(literal(0))
+    vulnerability_informational_count = query_expression(literal(0))
+    vulnerability_unclassified_count = query_expression(literal(0))
 
     importance = Column(Integer, default=0)
 
@@ -2289,7 +2332,7 @@ class Scope(Metadata):
 
     workspace_id = Column(
         Integer,
-        ForeignKey('workspace.id'),
+        ForeignKey('workspace.id', ondelete='CASCADE'),
         index=True,
         nullable=False
     )
@@ -2313,7 +2356,7 @@ class WorkspacePermission(db.Model):
     __tablename__ = "workspace_permission_association"
     __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), nullable=False)
     workspace = relationship('Workspace')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
@@ -2629,7 +2672,7 @@ class Comment(Metadata):
 
     # 1 workspace <--> N comments
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=True)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
@@ -2673,7 +2716,7 @@ class ExecutiveReport(Metadata):
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         backref=backref('reports', cascade="all, delete-orphan"),
@@ -2816,7 +2859,7 @@ class NotificationEvent(db.Model):
     notification_data = Column(JSONType, nullable=False)
     create_date = Column(DateTime, default=datetime.utcnow)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=True)
     workspace = relationship(
         'Workspace',
         backref=backref('notification_event_workspace', cascade="all, delete-orphan"),
@@ -2830,7 +2873,7 @@ class NotificationEvent(db.Model):
 class NotificationBase(db.Model):
     __tablename__ = 'notification_base'
     id = Column(Integer, primary_key=True)
-    notification_event_id = Column(Integer, ForeignKey('notification_event.id'), index=True, nullable=False)
+    notification_event_id = Column(Integer, ForeignKey('notification_event.id', ondelete="CASCADE"), index=True, nullable=False)
     notification_event = relationship(
         'NotificationEvent',
         backref=backref('notifications', cascade="all, delete-orphan"),
@@ -2875,7 +2918,7 @@ class WebHookNotification(NotificationBase):
 class WebsocketNotification(NotificationBase):
     __tablename__ = 'websocket_notification'
 
-    id = Column(Integer, ForeignKey('notification_base.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('notification_base.id', ondelete='CASCADE'), primary_key=True)
     user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True)
     user_notified = relationship(
         'User',
@@ -2944,8 +2987,8 @@ class Pipeline(Metadata):
         back_populates="pipelines"
     )
     # N to 1
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=True)
-    workspace = relationship('Workspace', backref=backref('pipelines', cascade="all, delete-orphan"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="SET NULL"), index=True, nullable=True)
+    workspace = relationship('Workspace', backref=backref('pipelines'))
 
     enabled = Column(Boolean, nullable=False, default=False)
     running = Column(Boolean, nullable=False, default=False)
@@ -3070,7 +3113,7 @@ class Executor(Metadata):
 agents_schedule_workspace_table = Table(
     "agents_schedule_workspace_table",
     db.Model.metadata,
-    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("workspace_id", Integer, ForeignKey("workspace.id", ondelete="CASCADE")),
     Column("agents_schedule_id", Integer, ForeignKey("agent_schedule.id")),
 )
 
@@ -3216,6 +3259,7 @@ class AnalyticsConfig:
     TOP_TEN_MOST_REPEATED_VULNS = 'top_ten_most_repeated_vulns'
     MONTHLY_EVOLUTION_BY_STATUS = 'monthly_evolution_by_status'
     MONTHLY_EVOLUTION_BY_SEVERITY = 'monthly_evolution_by_severity'
+    VULNERABILITIES_BY_RISK_SCORE = 'vulnerabilities_by_risk_score'
 
     TYPES = [
         VULNS_PER_HOST,
@@ -3225,6 +3269,7 @@ class AnalyticsConfig:
         TOP_TEN_MOST_REPEATED_VULNS,
         MONTHLY_EVOLUTION_BY_STATUS,
         MONTHLY_EVOLUTION_BY_SEVERITY,
+        VULNERABILITIES_BY_RISK_SCORE
     ]
 
 
@@ -3247,6 +3292,9 @@ class BaseNotification(Metadata):
     data = Column(JSONType, nullable=False)
     processed = Column(Boolean, default=False)
     verbose = Column(Boolean, default=False)
+
+    def __repr__(self):
+        return f"Notification ID:{self.id}, type:{self.data.get('type')}, subtype:{self.data.get('subtype')}"
 
 
 class UserNotification(Metadata):
@@ -3350,9 +3398,37 @@ class UserNotificationSettings(Metadata):
     other_email = Column(Boolean, default=False)
     other_slack = Column(Boolean, default=False)
 
+    adv_high_crit_vuln_enabled = Column(Boolean, default=False)
+    adv_high_crit_vuln_app = Column(Boolean, default=False)
+    adv_high_crit_vuln_email = Column(Boolean, default=False)
+    adv_high_crit_vuln_slack = Column(Boolean, default=False)
     adv_high_crit_vuln = Column(Boolean, default=False)
+
+    adv_risk_score_threshold_enabled = Column(Boolean, default=False)
+    adv_risk_score_threshold_app = Column(Boolean, default=False)
+    adv_risk_score_threshold_email = Column(Boolean, default=False)
+    adv_risk_score_threshold_slack = Column(Boolean, default=False)
     adv_risk_score_threshold = Column(Integer, default=0)
+
+    adv_vuln_open_days_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_app = Column(Boolean, default=False)
+    adv_vuln_open_days_email = Column(Boolean, default=False)
+    adv_vuln_open_days_slack = Column(Boolean, default=False)
     adv_vuln_open_days = Column(Integer, default=0)
+
+
+class EmailNotification(db.Model):
+    id = Column(Integer, primary_key=True)
+    user_email = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    processed = Column(Boolean, default=False)
+
+
+class SlackNotification(db.Model):
+    id = Column(Integer, primary_key=True)
+    slack_id = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    processed = Column(Boolean, default=False)
 
 
 # Indexes to speed up queries

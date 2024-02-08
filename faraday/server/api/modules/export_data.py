@@ -174,9 +174,9 @@ def _build_vuln_element(vuln, vuln_tag):
     vuln_info = SubElement(vuln_tag, 'info')
     vuln_info.text = vuln.description
     vuln_refs_tag = SubElement(vuln_tag, 'refs')
-    for ref in vuln.references:
+    for ref in vuln.refs:
         vuln_ref = SubElement(vuln_refs_tag, 'ref')
-        vuln_ref.text = ref
+        vuln_ref.text = ref.name
 
 
 def _build_vuln_web_element(vuln, vuln_tag):

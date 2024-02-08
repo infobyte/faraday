@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Renamed host_tag field agent payload in order to properly tag hosts. #7656"
-}

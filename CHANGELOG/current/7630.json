@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[ADD] Add workspace pagination. Also add more query params to avoid getting stats when are not necessary and fix several nplusone on `filter` endpoint. #7630"
-}

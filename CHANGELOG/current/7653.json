@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[MOD] We changed the order in which we set the path constant of `faraday_home` in order to fix a bug with faraday_manage when is installed by deb/rpm. #7653"
-}

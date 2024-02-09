@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.1.1 [Feb 9th, 2024]:
+---
+ * [FIX] Improve of host view performance.
+
 5.1.0 [Feb 8th, 2024]:
 ---
  * [ADD] Performance improved in `assets` views making several vulnerabilities stats statics in asset's model. #7634

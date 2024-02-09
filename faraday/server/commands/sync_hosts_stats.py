@@ -23,5 +23,4 @@ def _sync_hosts_stats(async_mode=False):
         else:
             print(F"[{Fore.GREEN}*{Fore.RESET}] Updating synchronously")
             for host_id in tqdm(_hosts_id, colour="blue"):
-                # print(f"Updating host with id {host_id}")
                 calc_vulnerability_stats(host_id)

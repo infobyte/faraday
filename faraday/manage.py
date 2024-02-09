@@ -306,10 +306,11 @@ def move_references(all_workspaces, workspace_name):
 
 
 @click.command(help="Synchronize vulnerability severity stats in asset")
-def sync_hosts_stats():
+@click.option('-a', '--async-mode', type=bool, help="Update stats asynchronously", default=False)
+def sync_hosts_stats(async_mode):
     app = create_app()
     with app.app_context():
-        _sync_hosts_stats()
+        _sync_hosts_stats(async_mode)
 
 
 cli.add_command(show_urls)

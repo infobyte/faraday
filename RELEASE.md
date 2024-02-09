@@ -3,7 +3,7 @@ New features in the latest update
 
 5.1.1 [Feb 9th, 2024]:
 ---
-* [FIX] Improve of host view performance.
+ * [FIX] Improve of host view performance.
 
 5.1.0 [Feb 8th, 2024]:
 ---

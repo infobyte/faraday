@@ -1,7 +1,7 @@
 """make reports multiworkspaces
 
 Revision ID: 34468fcfd92e
-Revises: 901344f297fb
+Revises: f7ca45632cce
 Create Date: 2023-09-25 18:19:45.271406+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '34468fcfd92e'
-down_revision = 'd0a6105fdef1'
+down_revision = 'f7ca45632cce'
 branch_labels = None
 depends_on = None
 

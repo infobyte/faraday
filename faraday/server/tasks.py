@@ -1,12 +1,27 @@
 import time
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from celery import group, chord
 from celery.utils.log import get_task_logger
+from sqlalchemy import (
+    func,
+    or_,
+    and_,
+)
 
+from faraday.server.config import faraday_server
 from faraday.server.extensions import celery
-from faraday.server.models import db, Workspace, Command
+from faraday.server.models import (
+    db,
+    Workspace,
+    Command,
+    Service,
+    Host,
+    VulnerabilityGeneric,
+    VulnerabilityWeb,
+    Vulnerability,
+)
 
 logger = get_task_logger(__name__)
 
@@ -23,6 +38,10 @@ def on_success_process_report_task(results, command_id=None):
     command.end_date = command_end_date
     logger.error("File for command id %s successfully imported", command_id)
     db.session.commit()
+
+    for result in results:
+        if result['created']:
+            calc_vulnerability_stats.delay(result['host_id'])
 
 
 @celery.task()
@@ -50,7 +69,7 @@ def process_report_task(workspace_id: int, command: dict, hosts):
 @celery.task(ignore_result=False, acks_late=True)
 def create_host_task(workspace_id, command: dict, host):
     from faraday.server.api.modules.bulk_create import _create_host  # pylint: disable=import-outside-toplevel
-    created_objects = []
+    created_objects = {}
     db.engine.dispose()
     start_time = time.time()
     workspace = Workspace.query.filter_by(id=workspace_id).first()
@@ -111,3 +130,56 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
         host_tag,
         service_tag
     )
+
+
+@celery.task()
+def update_host_stats(hosts: List, services: List) -> None:
+    all_hosts = set(hosts)
+    services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
+    for host_id in services_host_id:
+        all_hosts.add(host_id[0])
+    for host in all_hosts:
+        # stat calc
+        if faraday_server.celery_enabled:
+            calc_vulnerability_stats.delay(host)
+        else:
+            calc_vulnerability_stats(host)
+
+
+@celery.task()
+def calc_vulnerability_stats(host_id: int) -> None:
+    logger.debug(f"Calculating vulns stats for host {host_id}")
+    severity_model_names = {
+        'critical': 'vulnerability_critical_generic_count',
+        'high': 'vulnerability_high_generic_count',
+        'medium': 'vulnerability_medium_generic_count',
+        'informational': 'vulnerability_info_generic_count',
+        'low': 'vulnerability_low_generic_count',
+        'unclassified': 'vulnerability_unclassified_generic_count',
+    }
+    severities_dict = {
+        'vulnerability_critical_generic_count': 0,
+        'vulnerability_high_generic_count': 0,
+        'vulnerability_medium_generic_count': 0,
+        'vulnerability_low_generic_count': 0,
+        'vulnerability_info_generic_count': 0,
+        'vulnerability_unclassified_generic_count': 0,
+    }
+    severities = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity)\
+        .join(Service, Service.id.in_([Vulnerability.service_id, VulnerabilityWeb.service_id]), isouter=True)\
+        .join(Host, or_(Host.id == VulnerabilityGeneric.host_id, Host.id == Service.host_id))\
+        .filter(or_(VulnerabilityGeneric.host_id == host_id,
+                    and_(VulnerabilityGeneric.service_id == Service.id,
+                         Service.host_id == host_id
+                         )
+                    )
+                )\
+        .group_by(VulnerabilityGeneric.severity).all()
+
+    for severity in severities:
+        severities_dict[severity_model_names[severity[1]]] = severity[0]
+
+    logger.debug(f"Host vulns stats {severities_dict}")
+
+    db.session.query(Host).filter(Host.id == host_id).update(severities_dict)
+    db.session.commit()

@@ -21,7 +21,8 @@ from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
 import faraday.server.config
-from faraday.server.app import get_app
+from faraday.server.app import get_app, create_app
+from faraday.server.commands.sync_hosts_stats import _sync_hosts_stats
 from faraday.server.config import FARADAY_BASE
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
@@ -304,6 +305,14 @@ def move_references(all_workspaces, workspace_name):
         _move_references(all_workspaces=all_workspaces, workspace_name=workspace_name)
 
 
+@click.command(help="Synchronize vulnerability severity stats in asset")
+@click.option('-a', '--async-mode', type=bool, help="Update stats asynchronously", default=False)
+def sync_hosts_stats(async_mode):
+    app = create_app()
+    with app.app_context():
+        _sync_hosts_stats(async_mode)
+
+
 cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(database_schema)
@@ -321,6 +330,7 @@ cli.add_command(generate_nginx_config)
 cli.add_command(import_vulnerability_templates)
 cli.add_command(settings)
 cli.add_command(move_references)
+cli.add_command(sync_hosts_stats)
 
 
 if __name__ == '__main__':

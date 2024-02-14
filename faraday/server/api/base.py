@@ -11,6 +11,7 @@ import json
 from json import JSONDecodeError
 from typing import Tuple, List, Dict
 from collections import defaultdict
+import time
 
 # Related third party imports
 import flask
@@ -34,10 +35,11 @@ from faraday.server.models import (
     Workspace,
     Command,
     CommandObject,
+    WorkspacePermission,
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
-    WorkspacePermission
+    _make_generic_count_property,
 )
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
@@ -758,6 +760,8 @@ class FilterWorkspacedMixin(ListMixin):
                     workspace,
                     severity_count=severity_count
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
 
@@ -772,6 +776,8 @@ class FilterWorkspacedMixin(ListMixin):
                     filters,
                     workspace,
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
             data, rows_count = get_filtered_data(filters, filter_query)
@@ -899,6 +905,8 @@ class FilterObjects:
                     host_vulns=host_vulns,
                     workspace=workspace
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
 
@@ -913,10 +921,15 @@ class FilterObjects:
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
-            filter_query = self._generate_filter_query_standalone(
-                filters,
-                workspace=workspace
-            )
+            try:
+                filter_query = self._generate_filter_query_standalone(
+                    filters,
+                    workspace=workspace
+                )
+            except TypeError as e:
+                flask.abort(400, e)
+            except AttributeError as e:
+                flask.abort(400, e)
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 
@@ -960,10 +973,44 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
+    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False, only_total_vulns=False,
+                                   list_view=False):
+
         filter_query = search(db.session,
                               self.model_class,
                               filters)
+        # TODO: Refactor all stats
+        if only_total_vulns:
+            filter_query = filter_query.options(
+                with_expression(
+                    Workspace.vulnerability_total_count,
+                    _make_vuln_count_property(type_=None,
+                                              use_column_property=False)
+                ),
+                joinedload(Workspace.scope),
+                joinedload(Workspace.allowed_users),
+            )
+            return filter_query
+
+        if list_view:
+            filter_query = filter_query.options(
+                with_expression(
+                    Workspace.vulnerability_total_count,
+                    _make_vuln_count_property(type_=None,
+                                              use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.host_count,
+                    _make_generic_count_property('workspace', 'host', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.total_service_count,
+                    _make_generic_count_property('workspace', 'service', use_column_property=False)
+                ),
+                joinedload(Workspace.scope),
+                joinedload(Workspace.allowed_users),
+            )
+            return filter_query
 
         if severity_count and 'group_by' not in filters:
             # TODO: Refactor all stats
@@ -1004,13 +1051,28 @@ class FilterMixin(ListMixin):
                     Workspace.vulnerability_total_count,
                     _make_vuln_count_property(type_=None,
                                               use_column_property=False)
-                )
+                ),
+                with_expression(
+                     Workspace.credential_count,
+                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.host_count,
+                    _make_generic_count_property('workspace', 'host', use_column_property=False)
+                ),
+                with_expression(
+                    Workspace.total_service_count,
+                    _make_generic_count_property('workspace', 'service', use_column_property=False)
+                ),
+                joinedload(Workspace.scope),
+                joinedload(Workspace.allowed_users),
             )
 
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False, exclude=[], return_objects=False) -> Tuple[list, int]:
+                severity_count=False, host_vulns=False, exclude=[], only_total_vulns=False,
+                list_view=False, return_objects=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -1030,14 +1092,18 @@ class FilterMixin(ListMixin):
                 filter_query = self._generate_filter_query(
                     filters,
                     severity_count=severity_count,
-                    host_vulns=host_vulns
+                    host_vulns=host_vulns,
+                    only_total_vulns=only_total_vulns,
+                    list_view=list_view
                 )
+            except TypeError as e:
+                flask.abort(400, e)
             except AttributeError as e:
                 flask.abort(400, e)
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
-            count = filter_query.count()
+            count = filter_query.order_by(None).count()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
@@ -1048,9 +1114,15 @@ class FilterMixin(ListMixin):
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
-            filter_query = self._generate_filter_query(
-                filters,
-            )
+            try:
+                filter_query = self._generate_filter_query(
+                    filters,
+                )
+            except TypeError as e:
+                flask.abort(400, e)
+            except AttributeError as e:
+                flask.abort(400, e)
+
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 
@@ -1511,16 +1583,26 @@ class BulkUpdateMixin(FilterObjects):
     def _pre_bulk_update(self, data, **kwargs):
         return {}
 
-    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
         pass
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         try:
             post_bulk_update_data = self._pre_bulk_update(data, workspace_name=workspace_name, **kwargs)
             if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
-                queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
-                updated = queryset.update(data, synchronize_session='fetch')
-                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name)
+                returns = None
+                _time = time.time()
+                if 'returning' in kwargs:
+                    returns = db.session.execute(sqlalchemy.update(self.model_class)
+                                                 .where(self.model_class.id.in_(ids))
+                                                 .values(data).returning(*kwargs['returning']))
+                    returns = returns.fetchall()
+                    updated = len(returns)
+                else:
+                    queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
+                    updated = queryset.update(data, synchronize_session='fetch')
+                logger.debug(f"Updated {updated} {self.model_class.__name__} in {time.time() - _time} seconds")
+                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name, data=data, returning=returns)
             else:
                 updated = 0
             db.session.commit()
@@ -1688,6 +1770,7 @@ class DeleteMixin:
         """
         obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj, **kwargs)
+        # TODO: Check _post_delete def differences with corp
         return None, 204
 
     def _perform_delete(self, obj, workspace_name=None):
@@ -1720,14 +1803,15 @@ class BulkDeleteMixin(FilterObjects):
             ids = list(x.get("id") for x in filtered_objects[0])
         else:
             flask.abort(400)
+        # TODO: Check _post_bulk_delete with corp
         return self._perform_bulk_delete(ids, **kwargs), 200
 
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.id.in_(ids))
 
-    def _perform_bulk_delete(self, ids, **kwargs):
-        deleted = self._bulk_delete_query(ids, **kwargs).delete(synchronize_session='fetch')
+    def _perform_bulk_delete(self, values, **kwargs):
+        deleted = self._bulk_delete_query(values, **kwargs).delete(synchronize_session='fetch')
         db.session.commit()
         response = {'deleted': deleted}
         return flask.jsonify(response)
@@ -1832,6 +1916,7 @@ class CountWorkspacedMixin:
             filter(Workspace.name == workspace_name,
                    *self.count_extra_filters)
         )
+
         # order
         order_by = group_by
         if sort_dir == 'desc':

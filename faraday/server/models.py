@@ -2134,6 +2134,13 @@ association_workspace_and_users_table = Table(
 )
 
 
+def _return_last_30_days() -> list:
+    today = date.today()
+    last_30_days = [today - timedelta(days=i) for i in range(30)]
+    last_30_days = [day.isoformat() for day in last_30_days]
+    return last_30_days
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2145,6 +2152,8 @@ class Workspace(Metadata):
     name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
+    risk_history_total = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
+    risk_history_avg = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')

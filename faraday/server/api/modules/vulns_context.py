@@ -412,14 +412,6 @@ class VulnerabilityContextView(ContextMixin,
                        vulnerability_class,
                        filters)
         vulns = self._apply_filter_context(vulns)
-        if hostname_filters:
-            or_filters = []
-            for hostname_filter in hostname_filters:
-                or_filters.append(Hostname.name == hostname_filter['val'])
-
-            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
-            vulns = vulns_host.union(
-                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
 
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
@@ -430,7 +422,6 @@ class VulnerabilityContextView(ContextMixin,
                 joinedload('cve_instances'),
                 joinedload('owasp'),
                 joinedload('cwe'),
-                joinedload(VulnerabilityGeneric.tags),
                 joinedload('host'),
                 joinedload('service'),
                 joinedload('creator'),

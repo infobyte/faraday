@@ -739,7 +739,7 @@ class TestHostAPI:
             "icon": "windows",
             "versions": [],
             "importance": 0,
-            "workspace_name": host.workspace
+            "workspace_name": host.workspace.name
         }
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
@@ -783,7 +783,8 @@ class TestHostAPI:
                 'low': 0,
                 'total': 0,
                 'unclassified': 0
-            }
+            },
+            'workspace_name': host.workspace.name
         }
 
     def test_get_vuln_count(self, test_client, session):

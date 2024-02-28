@@ -17,7 +17,7 @@ from flask import Blueprint, make_response
 from flask_classful import route
 from filteralchemy import operators
 from marshmallow import ValidationError
-from sqlalchemy import desc, or_, func
+from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
 from depot.manager import DepotManager
@@ -43,7 +43,6 @@ from faraday.server.models import (
     File,
     Host,
     Service,
-    Hostname,
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,

@@ -24,6 +24,7 @@ from tests.test_api_non_workspaced_base import (
 )
 from faraday.server.models import db, Host
 from faraday.server.api.modules.hosts_context import HostsContextView
+from faraday.server.tasks import calc_vulnerability_stats
 from tests.factories import (
     HostFactory,
     WorkspaceFactory,
@@ -162,7 +163,7 @@ class TestHostAPI:
         # The hosts that should be shown
         hosts = host_factory.create_batch(10, workspace=workspace, os='Unix')
 
-        # Search should be case sensitive so this shouln't be shown
+        # Search should be case-sensitive so this shouldn't be shown
         host_factory.create_batch(1, workspace=workspace, os='UNIX')
 
         # This shouldn't be shown, they are from other workspace
@@ -179,12 +180,10 @@ class TestHostAPI:
                                          second_workspace, host_factory):
         # The hosts that should be shown
         hosts = host_factory.create_batch(10, workspace=workspace, os='Unix')
+        hosts_2 = host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
-        # Search should be case sensitive so this shouln't be shown
+        # Search should be case-sensitive so this shouldn't be shown
         host_factory.create_batch(1, workspace=workspace, os='UNIX')
-
-        # This should be shown, they are from other workspace
-        hosts += host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
         res = test_client.get(join(self.url(), 'filter?q={'
@@ -198,7 +197,7 @@ class TestHostAPI:
                                                '}'))
 
         assert res.status_code == 200
-        self.compare_results(hosts, res)
+        self.compare_results(hosts + hosts_2, res)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_count(self, test_client, session, workspace,
@@ -380,6 +379,9 @@ class TestHostAPI:
 
         session.commit()
 
+        calc_vulnerability_stats(host.id)
+        calc_vulnerability_stats(host2.id)
+
         res = test_client.get(
             join(
                 self.url(),
@@ -500,7 +502,10 @@ class TestHostAPI:
 
         session.commit()
 
-        res = test_client.get(f'{self.url()}?stats=true')
+        calc_vulnerability_stats(host.id)
+        calc_vulnerability_stats(service.host.id)
+
+        res = test_client.get(self.url())
         assert res.status_code == 200
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
@@ -511,25 +516,6 @@ class TestHostAPI:
         assert json_host['value']['severity_counts']['unclassified'] == 0
         assert json_host['value']['severity_counts']['med'] == 0
         assert json_host['value']['severity_counts']['high'] == 0
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_host_without_open_vuln_count_verification(self, test_client, session,
-                                                    workspace, host_factory,
-                                                    vulnerability_factory,
-                                                    service_factory):
-
-        host = host_factory.create(workspace=workspace)
-        service = service_factory.create(host=host, workspace=workspace)
-        vulnerability_factory.create(service=service, host=None, workspace=workspace, severity="low")
-        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity="critical")
-
-        session.commit()
-
-        res = test_client.get(self.url())
-        assert res.status_code == 200
-        json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
-        # the host has one vuln associated. another one via service.
-        assert json_host['value']['vulns'] == 2
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,
@@ -558,6 +544,8 @@ class TestHostAPI:
             session.add(vuln)
 
         session.commit()
+
+        calc_vulnerability_stats(host.id)
 
         res = test_client.get(join(self.url(), 'countVulns'))
         vuln_count = res.json['hosts'][str(host.id)]
@@ -729,7 +717,7 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_sort_by_description(self, test_client, session):
         for host in Host.query.all():
-            # I don't want to test case sensitive sorting
+            # I don't want to test case-sensitive sorting
             host.description = host.description.lower()
         session.commit()
         expected_ids = [host.id for host in
@@ -767,11 +755,10 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
                                  host_factory):
         """
         This test doesn't test only the hosts view, but all the ones that
-        expose a object with metadata.
+        expose an object with metadata.
         Think twice if you are thinking in removing it
         """
-        expected = host_factory.create_batch(10, workspace=second_workspace)
-        expected_ids = [h.id for h in expected]
+        expected = Host.query.all()
         session.commit()
         for i in range(len(expected)):
             if i % 2 == 0:  # Only update some hosts
@@ -781,9 +768,9 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
                 session.commit()
                 expected.append(host)  # Put it on the end
         res = test_client.get(urljoin(self.url(),
-                              '?sort=metadata.update_time&sort_dir=asc'))
+                               '?sort=metadata.update_time&sort_dir=asc'))
         assert res.status_code == 200, res.data
-        assert [h['_id'] for h in res.json['data'] if h['_id'] in expected_ids] == [h.id for h in expected]
+        assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
 
     def test_service_summaries(self, test_client, session, service_factory):
         service_factory.create(name='http', protocol='tcp', port=80,
@@ -821,7 +808,7 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
             '(5353/udp) dns',
         ]
 
-    @pytest.mark.skip  # TODO unskip
+    @pytest.mark.skip  # TODO un-skip
     def test_hosts_ordered_by_vulns_severity(self, session, test_client, service_factory,
                                              vulnerability_factory, vulnerability_web_factory):
         ws = WorkspaceFactory.create()

@@ -973,8 +973,9 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False, only_total_vulns=False,
-                                   list_view=False):
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
 
         filter_query = search(db.session,
                               self.model_class,

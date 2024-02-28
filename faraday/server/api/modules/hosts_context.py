@@ -257,7 +257,9 @@ class HostsContextView(PaginatedMixin,
             for obj in self._bulk_update_query(ids, **kwargs).all():
                 obj.set_hostnames(extracted_data["hostnames"])
 
-    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
         filter_query = search(db.session,
                               self.model_class,
                               filters)

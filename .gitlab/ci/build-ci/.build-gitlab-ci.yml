@@ -27,6 +27,7 @@ generate_deb_dev:
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
+        - gem install --no-document rexml
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
@@ -77,6 +78,7 @@ generate_deb_staging:
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
+        - gem install --no-document rexml
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
@@ -124,6 +126,7 @@ generate_deb_master:
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
+        - gem install --no-document rexml
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
@@ -181,6 +184,7 @@ generate_rpm_dev:
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
+        - gem install --no-document rexml
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm

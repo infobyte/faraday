@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] The server was not updating the agents status on restart. #7677"
-}

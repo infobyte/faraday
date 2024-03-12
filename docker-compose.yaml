@@ -35,7 +35,6 @@ services:
      - redis
     ports:
      - "5985:5985"
-     - "9000:9000"
 volumes:
   db:
     driver: local

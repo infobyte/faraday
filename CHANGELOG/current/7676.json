@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fix hosts stats when bulk delete is applied to vulns. #7676"
+}

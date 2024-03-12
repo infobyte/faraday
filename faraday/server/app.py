@@ -521,7 +521,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     app.view_functions['agent_api.AgentView:post'].is_public = True
 
     # Remove agents that where registered
-    if testing is False:
+    if not testing:
         with app.app_context():
             remove_sid()
 

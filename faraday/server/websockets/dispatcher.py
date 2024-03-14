@@ -8,6 +8,7 @@ import logging
 
 # Related third party imports
 import itsdangerous
+import sqlalchemy
 from flask import current_app, request
 
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
@@ -48,7 +49,11 @@ def update_executors(agent, executors):
 
 
 def remove_sid():
-    agents = Agent.query.filter(Agent.sid!=None).all()  # noqa E711
+    try:
+        agents = Agent.query.filter(Agent.sid!=None).all()  # noqa E711
+    except sqlalchemy.exc.OperationalError as error:
+        logger.warning("Could not update agents table. %s", error)
+        return
     logger.debug(f"Found {len(agents)} agents connected")
     for agent in agents:
         agent.sid = None

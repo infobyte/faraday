@@ -57,7 +57,9 @@ def openapi_format(server, modify_default=False, return_tags=False):
                        'Use this API to interact or integrate with Faraday'
                        ' server. This page documents the REST API, with HTTP'
                        ' response codes and example requests and responses.'},
-        'security': {"basicAuth": []}
+        'security': [
+            {"basicAuth": []}
+        ]
     }
 
     if not server.startswith('http'):

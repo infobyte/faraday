@@ -89,6 +89,11 @@ For more information about the installation, check out our [Installation Wiki](h
 
 In your browser now you can go to http://localhost:5985 and login with "faraday" as username, and the password given by the installation process
 
+To acquire the password from the logs you may use the following command in the terminal
+```shell
+$ docker compose logs  | grep "password"
+```
+
 ## Getting Started
 
 ---

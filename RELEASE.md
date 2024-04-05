@@ -1,10 +1,9 @@
 New features in the latest update
 =====================================
 
-5.2.1 [Apr 5th, 2024]:
+5.2.2 [Apr 5th, 2024]:
 ---
  * [MOD] When manually creating vulnerabilities, services are now listed along with their respective ports and assigned names. #2205
-
 
 5.2.1 [Mar 20th, 2024]:
 ---

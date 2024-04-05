@@ -6,11 +6,11 @@
 
 buildPythonPackage rec {
   pname = "filedepot";
-  version = "0.11.0";
+  version = "0.10.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "15f1mmm3psv60z7r03933kfs16fn5gwx396vvfs8zw43fdjcmm16";
+    sha256 = "1j5f1lp0vzwsdk2c065vnkdfhj6jpn79h50q5s6g3282kjx2vdvp";
   };
 
   propagatedBuildInputs = [ anyascii ];

@@ -124,6 +124,31 @@ class HostsContextView(PaginatedMixin,
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
+        filter_query = search(db.session,
+                              self.model_class,
+                              filters)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = filter_query.options(
+                undefer(self.model_class.vulnerability_critical_generic_count),
+                undefer(self.model_class.vulnerability_high_generic_count),
+                undefer(self.model_class.vulnerability_medium_generic_count),
+                undefer(self.model_class.vulnerability_low_generic_count),
+                undefer(self.model_class.vulnerability_info_generic_count),
+                undefer(self.model_class.vulnerability_unclassified_generic_count),
+                undefer(self.model_class.credentials_count),
+                undefer(self.model_class.open_service_count),
+                joinedload(self.model_class.hostnames),
+                joinedload(self.model_class.services),
+                joinedload(self.model_class.update_user),
+                joinedload(getattr(self.model_class, 'creator')).load_only('username'),
+            )
+        filter_query = self._apply_filter_context(filter_query)
+        return filter_query
+
     @route('/<host_id>/services')
     def service_list(self, host_id):
         """
@@ -256,31 +281,6 @@ class HostsContextView(PaginatedMixin,
         if "hostnames" in extracted_data:
             for obj in self._bulk_update_query(ids, **kwargs).all():
                 obj.set_hostnames(extracted_data["hostnames"])
-
-    def _generate_filter_query(
-            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
-    ):
-        filter_query = search(db.session,
-                              self.model_class,
-                              filters)
-
-        if severity_count and 'group_by' not in filters:
-            filter_query = filter_query.options(
-                undefer(self.model_class.vulnerability_critical_generic_count),
-                undefer(self.model_class.vulnerability_high_generic_count),
-                undefer(self.model_class.vulnerability_medium_generic_count),
-                undefer(self.model_class.vulnerability_low_generic_count),
-                undefer(self.model_class.vulnerability_info_generic_count),
-                undefer(self.model_class.vulnerability_unclassified_generic_count),
-                undefer(self.model_class.credentials_count),
-                undefer(self.model_class.open_service_count),
-                joinedload(self.model_class.hostnames),
-                joinedload(self.model_class.services),
-                joinedload(self.model_class.update_user),
-                joinedload(getattr(self.model_class, 'creator')).load_only('username'),
-            )
-        filter_query = self._apply_filter_context(filter_query)
-        return filter_query
 
 
 HostsContextView.register(host_context_api)

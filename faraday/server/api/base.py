@@ -17,7 +17,7 @@ import time
 import flask
 import flask_login
 import sqlalchemy
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func, desc, asc, and_
 from sqlalchemy.orm import joinedload, undefer, with_expression
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
@@ -2180,9 +2180,9 @@ class ContextMixin(ReadOnlyView):
         return self._apply_filter_context(query, operation)
 
     def _apply_filter_context(self, query, operation="read"):
-        filters = None
+        filters = and_()
         if operation == "write":
-            filters = self._get_context_write_filter()
+            filters = filters & self._get_context_write_filter()
         query = query.filter(
             self.model_class.workspace_id.in_(
                 self._get_context_workspace_ids(filters)

@@ -1910,7 +1910,7 @@ class CountWorkspacedMixin:
         table_name = inspect(self.model_class).tables[0].name
         group_by = f'{table_name}.{group_by}'
 
-        count = self._filter_query(
+        query_count = self._filter_query(
             db.session.query(self.model_class).
             join(Workspace).
             group_by(group_by).
@@ -1921,18 +1921,18 @@ class CountWorkspacedMixin:
         # order
         order_by = group_by
         if sort_dir == 'desc':
-            count = count.order_by(desc(order_by))
+            query_count = query_count.order_by(desc(order_by))
         else:
-            count = count.order_by(asc(order_by))
-        for key, count in count.values(group_by, func.count(group_by)):
+            query_count = query_count.order_by(asc(order_by))
+        for key, query_count in query_count.values(group_by, func.count(group_by)):
             res['groups'].append(
-                {'count': count,
+                {'count': query_count,
                  'name': key,
                  # To add compatibility with the web ui
                  flask.request.args.get('group_by'): key,
                  }
             )
-            res['total_count'] += count
+            res['total_count'] += query_count
         return res
 
 
@@ -2244,7 +2244,7 @@ class ContextMixin(ReadOnlyView):
         table_name = inspect(self.model_class).tables[0].name
         group_by = f'{table_name}.{group_by}'
 
-        count = self._apply_filter_context(
+        query_count = self._apply_filter_context(
             self._filter_query(
                 db.session.query(self.model_class).
                 group_by(group_by).
@@ -2254,16 +2254,16 @@ class ContextMixin(ReadOnlyView):
         # order
         order_by = group_by
         if sort_dir == 'desc':
-            count = count.order_by(desc(order_by))
+            query_count = query_count.order_by(desc(order_by))
         else:
-            count = count.order_by(asc(order_by))
-        for key, count in count.values(group_by, func.count(group_by)):
+            query_count = query_count.order_by(asc(order_by))
+        for key, query_count in query_count.values(group_by, func.count(group_by)):
             res['groups'].append(
-                {'count': count,
+                {'count': query_count,
                  'name': key,
                  # To add compatibility with the web ui
                  flask.request.args.get('group_by'): key,
                  }
             )
-            res['total_count'] += count
+            res['total_count'] += query_count
         return res

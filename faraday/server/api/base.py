@@ -2180,10 +2180,9 @@ class ContextMixin(ReadOnlyView):
         return self._apply_filter_context(query, operation)
 
     def _apply_filter_context(self, query, operation="read"):
-        filters = True
+        filters = None
         if operation == "write":
-            filters = self._get_context_write_filter() if isinstance(filters, bool) else \
-                    filters & self._get_context_write_filter()
+            filters = self._get_context_write_filter()
         query = query.filter(
             self.model_class.workspace_id.in_(
                 self._get_context_workspace_ids(filters)

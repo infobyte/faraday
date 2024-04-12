@@ -3075,6 +3075,7 @@ class Action(Metadata):
     field = Column(String, nullable=True)
     value = Column(String, nullable=True)
     custom_field = Column(Boolean, default=False)
+    target = Column(String, nullable=True, default='')
 
     # N to 1
     workflow_id = Column(Integer, ForeignKey('workflow.id'), index=True, nullable=True)

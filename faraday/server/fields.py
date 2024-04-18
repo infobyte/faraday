@@ -73,7 +73,7 @@ class FaradayUploadedFile(UploadedFile):
         content.seek(0)
 
         thumbnail = uploaded_image.copy()
-        thumbnail.thumbnail(self.thumbnail_size, Image.ANTIALIAS)
+        thumbnail.thumbnail(self.thumbnail_size, Image.LANCZOS)
         thumbnail = thumbnail.convert('RGBA')
         thumbnail.format = self.thumbnail_format
 
@@ -81,8 +81,7 @@ class FaradayUploadedFile(UploadedFile):
         thumbnail.save(output, self.thumbnail_format)
         output.seek(0)
 
-        thumb_path, thumb_id = self.store_content(output,
-                                                  f'thumb.{self.thumbnail_format.lower()}')
+        thumb_path, thumb_id = self.store_content(output, f'thumb.{self.thumbnail_format.lower()}')
         self['thumb_id'] = thumb_id
         self['thumb_path'] = thumb_path
 

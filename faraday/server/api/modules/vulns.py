@@ -1396,39 +1396,6 @@ class VulnerabilityView(PaginatedMixin,
                                          workspace_name=workspace_name, **kwargs), 200
     bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
 
-    def _perform_bulk_delete(self, values, **kwargs):
-        # Get host and service ids in order to update host stats
-        host_ids = db.session.query(
-            VulnerabilityGeneric.host_id,
-            VulnerabilityGeneric.service_id
-        )
-
-        by_severity = kwargs.get('by', None)
-        if by_severity == 'severity':
-            for severity in values:
-                if severity not in VulnerabilityABC.SEVERITIES:
-                    flask.abort(http.client.BAD_REQUEST, "Severity type not valid")
-
-            host_ids = host_ids.filter(
-                            VulnerabilityGeneric.severity.in_(values)
-                        ).all()
-        else:
-            host_ids = host_ids.filter(
-                            VulnerabilityGeneric.id.in_(values)
-                        ).all()
-
-        response = super()._perform_bulk_delete(values, **kwargs)
-        deleted = response.json.get('deleted', 0)
-        if deleted > 0:
-            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
-            host_id_list = [data[0] for data in host_ids if data[0]]
-            service_id_list = [data[1] for data in host_ids if data[1]]
-            if faraday_server.celery_enabled:
-                update_host_stats.delay(host_id_list, service_id_list)
-            else:
-                update_host_stats(host_id_list, service_id_list)
-        return response
-
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         query = self.model_class.query.filter(self.model_class.id.in_(ids))
@@ -1509,6 +1476,39 @@ class VulnerabilityView(PaginatedMixin,
                 update_host_stats.delay(host_id_list, service_id_list)
             else:
                 update_host_stats(host_id_list, service_id_list)
+
+    def _perform_bulk_delete(self, values, **kwargs):
+        # Get host and service ids in order to update host stats
+        host_ids = db.session.query(
+            VulnerabilityGeneric.host_id,
+            VulnerabilityGeneric.service_id
+        )
+
+        by_severity = kwargs.get('by', None)
+        if by_severity == 'severity':
+            for severity in values:
+                if severity not in VulnerabilityABC.SEVERITIES:
+                    flask.abort(http.client.BAD_REQUEST, "Severity type not valid")
+
+            host_ids = host_ids.filter(
+                            VulnerabilityGeneric.severity.in_(values)
+                        ).all()
+        else:
+            host_ids = host_ids.filter(
+                            VulnerabilityGeneric.id.in_(values)
+                        ).all()
+
+        response = super()._perform_bulk_delete(values, **kwargs)
+        deleted = response.json.get('deleted', 0)
+        if deleted > 0:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            host_id_list = [data[0] for data in host_ids if data[0]]
+            service_id_list = [data[1] for data in host_ids if data[1]]
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
+        return response
 
 
 VulnerabilityView.register(vulns_api)

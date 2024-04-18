@@ -48,7 +48,11 @@ def update_executors(agent, executors):
 
 
 def remove_sid():
-    agents = Agent.query.filter(Agent.sid!=None).all()  # noqa E711
+    try:
+        agents = Agent.query.filter(Agent.sid!=None).all()  # noqa E711
+    except Exception as error:
+        logger.warning("Could not update agents table. %s", error)
+        return
     logger.debug(f"Found {len(agents)} agents connected")
     for agent in agents:
         agent.sid = None

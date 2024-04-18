@@ -1,6 +1,16 @@
 New features in the latest update
 =====================================
 
+5.2.1 [Mar 20th, 2024]:
+---
+ * [FIX] Ignore remove_sid when database does not exist. #7690
+
+5.2.0 [Mar 12th, 2024]:
+---
+ * [FIX] Fix hosts stats when bulk delete is applied to vulns. #7676
+ * [FIX] Fix agents status from database. We were not updating the agents status on faraday-server restarts. #7677
+ * [MOD] Remove websockets port from docker-compose. #7679
+
 5.1.1 [Feb 9th, 2024]:
 ---
  * [FIX] Improve of host view performance.

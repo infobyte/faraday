@@ -1,7 +1,7 @@
 """add risk history
 
 Revision ID: 97e308761de2
-Revises: f7ca45632cce
+Revises: 11560f56f480
 Create Date: 2023-10-23 18:56:22.503518+00:00
 
 """
@@ -12,7 +12,7 @@ import json
 
 # revision identifiers, used by Alembic.
 revision = '97e308761de2'
-down_revision = 'f7ca45632cce'
+down_revision = '11560f56f480'
 branch_labels = None
 depends_on = None
 

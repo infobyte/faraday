@@ -2383,6 +2383,27 @@ class Role(db.Model, RoleMixin):
     weight = db.Column(db.Integer(), nullable=False)
 
 
+class UserToken(Metadata):
+    __tablename__ = 'user_token'
+    API_SCOPE = 'api'
+    GITLAB_SCOPE = 'gitlab'
+    JIRA_SCOPE = 'jira'
+    SCOPES = [API_SCOPE, GITLAB_SCOPE, JIRA_SCOPE]
+
+    id = Column(Integer(), primary_key=True)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete='CASCADE'), index=True, nullable=False)
+    user = relationship('User',
+                        backref=backref('user_tokens', cascade="all, delete-orphan", passive_deletes=True),
+                        foreign_keys=[user_id])
+
+    token = Column(String(), nullable=False, unique=True)
+    alias = Column(String(), nullable=True)
+    expires_in = Column(DateTime(), nullable=True)
+    scope = Column(Enum(*SCOPES, name='token_scopes'), nullable=False, default="api")
+    revoked = Column(Boolean(), default=False, nullable=False)
+
+
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'
     ADMIN_ROLE = 'admin'

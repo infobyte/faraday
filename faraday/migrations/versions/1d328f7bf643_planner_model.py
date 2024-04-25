@@ -1,7 +1,7 @@
 """Planner model
 
 Revision ID: 1d328f7bf643
-Revises: 5cf9660bba80
+Revises: 06c48492f587
 Create Date: 2022-01-27 11:52:57.282622+00:00
 
 """

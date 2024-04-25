@@ -1,7 +1,7 @@
 """user token
 
 Revision ID: 520d082e500b
-Revises: 11560f56f480
+Revises: 9f826327658a
 Create Date: 2024-04-25 17:58:32.826785+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '520d082e500b'
-down_revision = '11560f56f480'
+down_revision = '9f826327658a'
 branch_labels = None
 depends_on = None
 
@@ -39,5 +39,6 @@ def upgrade():
 
 
 def downgrade():
+    op.execute("DROP TYPE token_scopes")
     op.drop_index(op.f('ix_user_token_user_id'), table_name='user_token')
     op.drop_table('user_token')

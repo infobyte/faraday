@@ -24,7 +24,7 @@ def upgrade():
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('token', sa.String(), nullable=False),
     sa.Column('alias', sa.String(), nullable=True),
-    sa.Column('expires_in', sa.DateTime(), nullable=True),
+    sa.Column('expires_at', sa.DateTime(), nullable=True),
     sa.Column('scope', sa.Enum('api', 'gitlab', 'jira', name='token_scopes'), nullable=False),
     sa.Column('revoked', sa.Boolean(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),
@@ -39,6 +39,6 @@ def upgrade():
 
 
 def downgrade():
-    op.execute("DROP TYPE token_scopes")
     op.drop_index(op.f('ix_user_token_user_id'), table_name='user_token')
     op.drop_table('user_token')
+    op.execute("DROP TYPE token_scopes")

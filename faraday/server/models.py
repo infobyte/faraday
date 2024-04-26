@@ -2400,7 +2400,7 @@ class UserToken(Metadata):
 
     token = Column(String(), nullable=False, unique=True)
     alias = Column(String(), nullable=True)
-    expires_in = Column(DateTime(), nullable=True)
+    expires_at = Column(DateTime(), nullable=True)
     scope = Column(Enum(*SCOPES, name='token_scopes'), nullable=False, default="api")
     revoked = Column(Boolean(), default=False, nullable=False)
 

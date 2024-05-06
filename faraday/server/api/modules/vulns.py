@@ -138,7 +138,7 @@ class CVESchema(AutoSchema):
 
 
 class CVSS2Schema(AutoSchema):
-    vector_string = fields.String(attribute="cvss2_vector_string")
+    vector_string = fields.String(attribute="cvss2_vector_string", required=False, allow_none=True)
     base_score = fields.Float(attribute="cvss2_base_score", required=False, dump_only=True)
     exploitability_score = fields.Float(attribute="cvss2_exploitability_score", required=False, dump_only=True)
     impact_score = fields.Float(attribute="cvss2_impact_score", required=False, dump_only=True)
@@ -164,7 +164,7 @@ class CVSS2Schema(AutoSchema):
 
 
 class CVSS3Schema(AutoSchema):
-    vector_string = fields.String(attribute="cvss3_vector_string")
+    vector_string = fields.String(attribute="cvss3_vector_string", required=False, allow_none=True)
     base_score = fields.Float(attribute="cvss3_base_score", required=False, dump_only=True)
     exploitability_score = fields.Float(attribute="cvss3_exploitability_score", required=False, dump_only=True)
     impact_score = fields.Float(attribute="cvss3_impact_score", required=False, dump_only=True)

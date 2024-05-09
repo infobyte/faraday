@@ -5,6 +5,8 @@ smoke_test_deb:
     needs:
       - job: generate_deb_dev
         artifacts: true
+    extends:
+      - .get-secrets
     script:
         - apt-get update -y
         - apt install -y sudo curl

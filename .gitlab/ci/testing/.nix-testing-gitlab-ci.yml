@@ -1,11 +1,12 @@
 pylint:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     image: nixos/nix:2.16.0
     stage: test  # This should be after build_and_push_to_cachix to improve performance
     script:
         - nix-env -if pynixify/nixpkgs.nix -A vault
-        - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
@@ -29,11 +30,12 @@ pylint:
 .postgresql_test_nix_base:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - nix-env -if pynixify/nixpkgs.nix -A vault
-        - !reference [ .get_secrets, script ]
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)

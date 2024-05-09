@@ -81,10 +81,11 @@ build_nix_python3_dev:
   stage: pre_build
   tags:
     - digitalocean-dev
+  extends:
+    - .get-secrets
   script:
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
-    - !reference [ .get_secrets, script ]
     - mkdir -p ~/.config/cachix
     - export USER=$(whoami)
     - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
@@ -118,10 +119,11 @@ build_nix_python3_staging:
   stage: pre_build
   tags:
     - digitalocean-dev
+  extends:
+    - .get-secrets
   script:
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
-    - !reference [ .get_secrets, script ]
     - mkdir -p ~/.config/cachix
     - export USER=$(whoami)
     - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
@@ -152,10 +154,11 @@ build_nix_python3_master:
   stage: pre_build
   tags:
     - digitalocean-dev
+  extends:
+    - .get-secrets
   script:
     - nix-env -if pynixify/nixpkgs.nix -A cachix gnugrep
     - nix-env -if pynixify/nixpkgs.nix -A vault
-    - !reference [ .get_secrets, script ]
     - mkdir -p ~/.config/cachix
     - export USER=$(whoami)
     - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall

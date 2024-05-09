@@ -11,14 +11,14 @@ generate_build_file_dev:
     stage: pre_build
     script:
         - "/bin/mkdir faraday_copy"
-        - !reference [.get_from_tar_and_replace_www, script]
+        - !reference [ .get_from_tar_and_replace_www, script ]
         - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
     rules:
-        - !reference [.be-uploaded, rules]
+        - !reference [ .be-uploaded, rules ]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
-        - !reference [.ignore-on-staging, rules]
-        - !reference [.ignore-on-master, rules]
+        - !reference [ .ignore-on-staging, rules ]
+        - !reference [ .ignore-on-master, rules ]
         - when: never
     artifacts:
         name: 'faraday'
@@ -36,11 +36,11 @@ generate_build_file_staging:
     stage: pre_build
     script:
         - "/bin/mkdir faraday_copy"
-        - !reference [.get_from_tar_and_replace_www, script]
+        - !reference [ .get_from_tar_and_replace_www, script ]
         - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
     rules:
-        - !reference [.on-staging, rules]
+        - !reference [ .on-staging, rules ]
         - when: never
     artifacts:
         name: 'faraday'
@@ -58,11 +58,11 @@ generate_build_file_master:
     stage: pre_build
     script:
         - "/bin/mkdir faraday_copy"
-        - !reference [.get_from_tar_and_replace_www, script]
+        - !reference [ .get_from_tar_and_replace_www, script ]
         - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
     rules:
-        - !reference [.on-master, rules]
+        - !reference [ .on-master, rules ]
         - !reference [ .on-community-tag, rules ]
         - when: never
     artifacts:
@@ -103,10 +103,10 @@ build_nix_python3_dev:
       - py3.tar
     expire_in: 15 days # in the future we don't need to expire this.
   rules:
-    - !reference [.be-uploaded, rules]
+    - !reference [ .be-uploaded, rules ]
     # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
-    - !reference [.ignore-on-staging, rules]
-    - !reference [.ignore-on-master, rules]
+    - !reference [ .ignore-on-staging, rules ]
+    - !reference [ .ignore-on-master, rules ]
     - when: never
   needs:
     - project: faradaysec/faraday-react
@@ -141,7 +141,7 @@ build_nix_python3_staging:
       - py3.tar
     expire_in: 15 days # in the future we don't need to expire this.
   rules:
-    - !reference [.on-staging, rules]
+    - !reference [ .on-staging, rules ]
     - when: never
   needs:
     - project: faradaysec/faraday-react

@@ -25,8 +25,8 @@ smoke_test_deb:
         - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
         - jobs
     rules:
-        - !reference [.be-uploaded, rules]
+        - !reference [ .be-uploaded, rules ]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
-        - !reference [.ignore-on-staging, rules]
-        - !reference [.ignore-on-master, rules]
+        - !reference [ .ignore-on-staging, rules ]
+        - !reference [ .ignore-on-master, rules ]
         - when: never

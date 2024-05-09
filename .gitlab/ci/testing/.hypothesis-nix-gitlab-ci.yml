@@ -23,5 +23,5 @@ test_hypothesis:
     rules:
       - if: $HYPO_TEST
         when: on_success
-      - !reference [.pipeline-control-test, rules]
+      - !reference [ .pipeline-control-test, rules ]
       - when: never

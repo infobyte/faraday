@@ -322,9 +322,10 @@ generate_docker_tar_gz_dev:
     stage: build
     tags:
       - shell
+    extends:
+      - .get-secrets
     script:
         - !reference [ .get_from_tar_and_replace_www, script ]
-        - !reference [ .get_secrets, script ]
         - docker build . -t faraday-community
         - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
         - docker rmi -f faraday-community
@@ -347,9 +348,10 @@ generate_docker_tar_gz_staging:
     stage: build
     tags:
       - shell
+    extends:
+      - .get-secrets
     script:
         - !reference [ .get_from_tar_and_replace_www, script ]
-        - !reference [ .get_secrets, script ]
         - docker build . -t faraday-community
         - docker save faraday-community:latest | gzip > faraday-server-docker.tar.gz
         - docker rmi -f faraday-community
@@ -369,9 +371,10 @@ generate_docker_tar_gz_master:
     stage: build
     tags:
       - shell
+    extends:
+      - .get-secrets
     script:
         - !reference [ .get_from_tar_and_replace_www, script ]
-        - !reference [ .get_secrets, script ]
         - docker build . -t $CI_REGISTRY_IMAGE
         - docker save $CI_REGISTRY_IMAGE:latest | gzip > faraday-server-docker.tar.gz
         - docker rmi -f $CI_REGISTRY_IMAGE

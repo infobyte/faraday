@@ -1,20 +1,17 @@
 variables:
-    TZ: "America/New_York"
-    # Configure postgres service (https://hub.docker.com/_/postgres/)
-    POSTGRES_DB: custom_db
-    POSTGRES_USER: custom_user
-    POSTGRES_PASSWORD: custom_pass
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-    APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
-    DEBIAN_FRONTEND: noninteractive
-    IMAGE_TAG: 'egrep -o "[0-9]\.([0-9]|[0-9][0-9])(\.[0-9])?" faraday/__init__.py'
-    VAULT_ROLE: 'faraday-readonly'
-    VAULT_ADDR: 'https://tluav-lb.faradaysec.com'
+  TZ: "America/New_York"
+  # Configure postgres service (https://hub.docker.com/_/postgres/)
+  POSTGRES_DB: custom_db
+  POSTGRES_USER: custom_user
+  POSTGRES_PASSWORD: custom_pass
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
+  DEBIAN_FRONTEND: noninteractive
+  IMAGE_TAG: 'egrep -o "[0-9]\.([0-9]|[0-9][0-9])(\.[0-9])?" faraday/__init__.py'
+  VAULT_SERVER_URL: https://tluav-lb.faradaysec.com
+  VAULT_AUTH_ROLE: faraday-env-readonly
+  VAULT_AUTH_PATH: jwt
 
-    ## ENV_VARS LIST
-    # FULL_TEST = Test all jobs
-    # BUILD_TEST = Test default and build jobs
-    # DAILY_TEST = Run every night at 03 am
 workflow:
   rules:
     - if: $CI_MERGE_REQUEST_ID
@@ -30,7 +27,7 @@ before_script:
     - mkdir -pv $APT_CACHE_DIR
 
 include:
-  - local: .gitlab/ci/fetch-secrets.yaml
+  - local: .gitlab/ci/get-secrets.yml
   - local: .gitlab/ci/.rules-conditions.yml
 
 

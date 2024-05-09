@@ -44,6 +44,8 @@ migration_sanity_check:
 bandit:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     image: python:3.11
     stage: pre_testing
     script:
@@ -61,7 +63,6 @@ bandit:
       - apt update
       - apt install vault -y
       - setcap cap_ipc_lock= /usr/bin/vault
-      - !reference [ .get_secrets, script ]
       - pip3 install faraday-cli
       - cat /results/output.xml
       - if [[ $(grep -c testcase /results/output.xml) -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
@@ -72,6 +73,8 @@ bandit:
 build_and_push_to_cachix:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     image: nixos/nix:2.16.0
     stage: pre_testing
     variables:
@@ -81,7 +84,6 @@ build_and_push_to_cachix:
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk
-        - !reference [ .get_secrets, script ]
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall

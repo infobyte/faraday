@@ -31,7 +31,7 @@ pylint:
     tags:
         - faradaytests
     extends:
-        - .get-secrets
+      - .get-secrets
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:

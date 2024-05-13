@@ -23,7 +23,14 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer, noload
+from sqlalchemy.orm import (
+    aliased,
+    joinedload,
+    selectin_polymorphic,
+    undefer,
+    noload,
+    selectinload,
+)
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
@@ -131,7 +138,7 @@ class CVESchema(AutoSchema):
 
 
 class CVSS2Schema(AutoSchema):
-    vector_string = fields.String(attribute="cvss2_vector_string")
+    vector_string = fields.String(attribute="cvss2_vector_string", required=False, allow_none=True)
     base_score = fields.Float(attribute="cvss2_base_score", required=False, dump_only=True)
     exploitability_score = fields.Float(attribute="cvss2_exploitability_score", required=False, dump_only=True)
     impact_score = fields.Float(attribute="cvss2_impact_score", required=False, dump_only=True)
@@ -157,7 +164,7 @@ class CVSS2Schema(AutoSchema):
 
 
 class CVSS3Schema(AutoSchema):
-    vector_string = fields.String(attribute="cvss3_vector_string")
+    vector_string = fields.String(attribute="cvss3_vector_string", required=False, allow_none=True)
     base_score = fields.Float(attribute="cvss3_base_score", required=False, dump_only=True)
     exploitability_score = fields.Float(attribute="cvss3_exploitability_score", required=False, dump_only=True)
     impact_score = fields.Float(attribute="cvss3_impact_score", required=False, dump_only=True)
@@ -1126,7 +1133,7 @@ class VulnerabilityView(PaginatedMixin,
             if is_csv:
                 options = options + [
                     joinedload('policy_violation_instances'),
-                    joinedload('refs')
+                    selectinload('refs')
                 ]
 
             vulns = vulns.options(selectin_polymorphic(

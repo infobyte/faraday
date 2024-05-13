@@ -7,7 +7,7 @@ update_github:
     image: python:3.11
     stage: publish
     script:
-      - !reference [.set-remote-github, script]
+      - !reference [ .set-remote-github, script ]
       - !reference [ .get_from_tar_and_replace_www, script ]
       - git config user.email "devops@faradaysec.com"
       - git config user.name "Devops"
@@ -37,7 +37,7 @@ tag_on_github:
     image: python:3.11
     stage: publish
     script:
-      - !reference [.set-remote-github, script]
+      - !reference [ .set-remote-github, script ]
       - !reference [ .get_from_tar_and_replace_www, script ]
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - git config user.email "devops@faradaysec.com"

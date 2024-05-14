@@ -1,6 +1,8 @@
 smoke_test_deb:
     allow_failure: false
     stage: build_testing  # TODO improve
+    tags:
+        - shell
     image: ubuntu:18.04
     needs:
       - job: generate_deb_dev

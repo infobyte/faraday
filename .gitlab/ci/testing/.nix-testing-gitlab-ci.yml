@@ -21,17 +21,17 @@ pylint:
             - pylint.svg
             - pylint3.svg
     rules:
-        - !reference [.ignore-on-build, rules]
-        - !reference [.ignore-on-tag, rules]
-        - !reference [.ignore-on-master, rules]
-        - !reference [.pipeline-control-test, rules]
+        - !reference [ .ignore-on-build, rules ]
+        - !reference [ .ignore-on-tag, rules ]
+        - !reference [ .ignore-on-master, rules ]
+        - !reference [ .pipeline-control-test, rules ]
         - when: on_success
 
 .postgresql_test_nix_base:
     tags:
         - faradaytests
     extends:
-        - .get-secrets
+      - .get-secrets
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
@@ -58,9 +58,9 @@ pylint:
         artifacts: false
   # Speed up tests
     rules:
-        - !reference [.ignore-on-build, rules]
-        - !reference [.ignore-on-tag, rules]
-        - !reference [.pipeline-control-test, rules]
+        - !reference [ .ignore-on-build, rules ]
+        - !reference [ .ignore-on-tag, rules ]
+        - !reference [ .pipeline-control-test, rules ]
         - when: on_success
 
 postgresql_test_nix:

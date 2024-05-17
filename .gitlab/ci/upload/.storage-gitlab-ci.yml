@@ -31,17 +31,17 @@ google_storage_deb_rpm_dev_dev:
   script:
     - apt-get update && apt-get install -y software-properties-common curl
     - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-    - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     - apt update && apt install jq vault -y --fix-missing
     - setcap cap_ipc_lock= /usr/bin/vault
-    - echo $GCLOUD_STORAGE_KEY_FILE > auth_file.json
+    - cat $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
     - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}*.*"
   rules:
-    - !reference [.be-uploaded, rules]
+    - !reference [ .be-uploaded, rules ]
     # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
-    - !reference [.ignore-on-staging, rules]
-    - !reference [.ignore-on-master, rules]
+    - !reference [ .ignore-on-staging, rules ]
+    - !reference [ .ignore-on-master, rules ]
     - when: never
   needs:
     - job: generate_deb_dev
@@ -62,14 +62,14 @@ google_storage_deb_rpm_dev_staging:
   script:
     - apt-get update && apt-get install -y software-properties-common curl
     - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-    - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     - apt update && apt install jq vault -y --fix-missing
     - setcap cap_ipc_lock= /usr/bin/vault
     - echo $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
     - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}*.*"
   rules:
-    - !reference [.on-staging, rules]
+    - !reference [ .on-staging, rules ]
     - when: never
   needs:
     - job: generate_deb_staging
@@ -90,14 +90,14 @@ google_storage_deb_rpm_dev_master:
   script:
     - apt-get update && apt-get install -y software-properties-common curl
     - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-    - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     - apt update && apt install jq vault -y --fix-missing
     - setcap cap_ipc_lock= /usr/bin/vault
     - echo $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
     - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}*.*"
   rules:
-    - !reference [.on-master, rules]
+    - !reference [ .on-master, rules ]
     - when: never
   needs:
     - job: generate_deb_master

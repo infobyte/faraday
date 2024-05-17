@@ -43,10 +43,10 @@ generate_deb_dev:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     rules:
-        - !reference [.be-uploaded, rules]
+        - !reference [ .be-uploaded, rules ]
         # What is not '/staging' is '/dev', '/master' or a development branch , and all are manual
-        - !reference [.ignore-on-staging, rules]
-        - !reference [.ignore-on-master, rules]
+        - !reference [ .ignore-on-staging, rules ]
+        - !reference [ .ignore-on-master, rules ]
         - when: never
 
 generate_deb_staging:
@@ -94,7 +94,7 @@ generate_deb_staging:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     rules:
-        - !reference [.on-staging, rules]
+        - !reference [ .on-staging, rules ]
         - when: never
 
 generate_deb_master:

@@ -62,7 +62,6 @@ class ConfigView(GenericView):
         """
         doc = {
             'ver': f_version,
-            'websocket_port': faraday_server.websocket_port,
             'show_vulns_by_price': DashboardSettings.settings.show_vulns_by_price,
             'smtp_enabled': False
         }

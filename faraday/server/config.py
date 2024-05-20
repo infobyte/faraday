@@ -140,7 +140,6 @@ class FaradayServerConfigObject(ConfigSection):
         self.bind_address = "127.0.0.1"
         self.port = 5985
         self.secret_key = None
-        self.websocket_port = 5985
         self.session_timeout = 12
         self.api_token_expiration = 86400  # Default as 24 hs
         self.agent_registration_secret = None

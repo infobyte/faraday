@@ -1,4 +1,4 @@
 {
     "level": "community",
-    "md": "[MOD] Modified websocket_port number for default server.ini configuration files. #7729"
+    "md": "[DEL] Delete unnecessary websocket_port number for default server.ini configuration files. #7729"
 }

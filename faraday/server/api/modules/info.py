@@ -12,7 +12,6 @@ from marshmallow import Schema
 # Local application imports
 from faraday import __version__ as f_version
 from faraday.server.api.base import GenericView
-from faraday.server.config import faraday_server
 from faraday.settings.dashboard import DashboardSettings
 
 info_api = Blueprint('info_api', __name__)

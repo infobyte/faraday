@@ -1121,7 +1121,8 @@ class Command(Metadata):
         # all the files the tools export and faraday imports it from the reports directory,
         # gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
-        'agent'
+        'agent',
+        'cloud_agent'
     ]
 
     __tablename__ = 'command'
@@ -2134,6 +2135,14 @@ association_workspace_and_users_table = Table(
 )
 
 
+executive_report_workspace_table = Table(
+    "executive_report_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("executive_report_id", Integer, ForeignKey("executive_report.id")),
+)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2174,6 +2183,13 @@ class Workspace(Metadata):
     vulnerability_unclassified_count = query_expression(literal(0))
 
     importance = Column(Integer, default=0)
+
+    reports = relationship(
+        'ExecutiveReport',
+        secondary=executive_report_workspace_table,
+        back_populates='workspaces',
+        cascade='delete'
+    )
 
     allowed_users = relationship(
         'User',
@@ -2716,11 +2732,10 @@ class ExecutiveReport(Metadata):
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
-    workspace = relationship(
+    workspaces = relationship(
         'Workspace',
-        backref=backref('reports', cascade="all, delete-orphan"),
-        foreign_keys=[workspace_id]
+        secondary=executive_report_workspace_table,
+        back_populates='reports'
     )
     tags = relationship(
         "Tag",
@@ -3075,6 +3090,7 @@ class Action(Metadata):
     field = Column(String, nullable=True)
     value = Column(String, nullable=True)
     custom_field = Column(Boolean, default=False)
+    target = Column(String, nullable=True, default='')
 
     # N to 1
     workflow_id = Column(Integer, ForeignKey('workflow.id'), index=True, nullable=True)
@@ -3234,6 +3250,65 @@ class AgentExecution(Metadata):
             return f"{self.executor.agent.name} finished"
         elif self.running:
             return f"{self.executor.agent.name} running"
+
+
+class CloudAgent(Metadata):
+    __tablename__ = "cloud_agent"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    slug = Column(String, nullable=False, unique=True)
+    access_token = Column(Text, unique=True)
+    params = Column(JSONType)
+
+    @property
+    def last_run(self):
+        execs = db.session.query(CloudAgentExecution).filter_by(cloud_agent_id=self.id)
+        if execs:
+            _last_run = None
+            for exe in execs:
+                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
+                    _last_run = exe.last_run
+            return _last_run
+        return None
+
+    @property
+    def parent(self):
+        return
+
+
+class CloudAgentExecution(Metadata):
+    __tablename__ = 'cloud_agent_execution'
+    id = Column(Integer, primary_key=True)
+    running = Column(Boolean, nullable=True)
+    successful = Column(Boolean, nullable=True)
+    message = Column(String, nullable=True)
+
+    cloud_agent_id = Column(Integer, ForeignKey('cloud_agent.id', ondelete='CASCADE'), index=True, nullable=False)
+    cloud_agent = relationship(
+        'CloudAgent',
+        backref=backref('cloud_agent_executions', cascade="all, delete-orphan"),
+    )
+
+    # 1 workspace <--> N cloud_agent_executions
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('cloud_agent_executions', cascade="all, delete-orphan")
+    )
+    parameters_data = Column(JSONType, nullable=False)
+    command_id = Column(Integer, ForeignKey('command.id', ondelete='SET NULL'), index=True)
+    command = relationship(
+        'Command',
+        foreign_keys=[command_id],
+        backref=backref('cloud_agent_execution_id', cascade="all, delete-orphan")
+    )
+    last_run = Column(DateTime)
+
+    @property
+    def parent(self):
+        return
 
 
 class SearchFilter(Metadata):

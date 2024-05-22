@@ -9,8 +9,8 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 scripts/merge-conflict-detector.py
     rules:
-        - !reference [.dev-staging-master, rules]
-        - !reference [.ignore-on-tag, rules]
+        - !reference [ .dev-staging-master, rules ]
+        - !reference [ .ignore-on-tag, rules ]
         - when: never
 
 sanity_check:
@@ -22,8 +22,8 @@ sanity_check:
         - bash scripts/sanity_check_commit.sh
         - scripts/sanity_check_file.py --mode=ls
     rules:
-        - !reference [.dev-staging-master, rules]
-        - !reference [.ignore-on-tag, rules]
+        - !reference [ .dev-staging-master, rules ]
+        - !reference [ .ignore-on-tag, rules ]
         - when: never
 
 migration_sanity_check:
@@ -37,13 +37,15 @@ migration_sanity_check:
         - cd faraday
         - $(alembic branches)
     rules:
-        - !reference [.dev-staging-master, rules]
-        - !reference [.ignore-on-tag, rules]
+        - !reference [ .dev-staging-master, rules ]
+        - !reference [ .ignore-on-tag, rules ]
         - when: never
 
 bandit:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     image: python:3.11
     stage: pre_testing
     script:
@@ -57,21 +59,22 @@ bandit:
       - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
       - apt update
       - apt-get install software-properties-common -y
-      - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+      - echo "deb [ signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg ] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
       - apt update
       - apt install vault -y
       - setcap cap_ipc_lock= /usr/bin/vault
-      - !reference [ .get_secrets, script ]
       - pip3 install faraday-cli
       - cat /results/output.xml
       - if [[ $(grep -c testcase /results/output.xml) -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
     rules:
-        - !reference [.ignore-on-tag, rules]
+        - !reference [ .ignore-on-tag, rules ]
         - when: on_success
 
 build_and_push_to_cachix:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     image: nixos/nix:2.16.0
     stage: pre_testing
     variables:
@@ -81,12 +84,11 @@ build_and_push_to_cachix:
         - nix-env -if pynixify/nixpkgs.nix -A vault
         - nix-env -if pynixify/nixpkgs.nix -A cachix
         - nix-env -if pynixify/nixpkgs.nix -A gawk
-        - !reference [ .get_secrets, script ]
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - cachix use faradaysec
-        - nix-build | cachix push faradaysec
+        - nix-store -qR --include-outputs $(nix-store -qd $(nix-build)) | grep -v '\.drv$'  | cachix push faradaysec
         - ./scripts/check-closure-size ./result
     rules:
       - when: on_success
@@ -98,7 +100,7 @@ flake8:
       - pip install flake8
       - flake8 .
     rules:
-        - !reference [.ignore-on-tag, rules]
+        - !reference [ .ignore-on-tag, rules ]
         - when: on_success
 
 no-format-str:
@@ -108,6 +110,6 @@ no-format-str:
       - pip install flynt==0.69
       - flynt -df faraday tests
     rules:
-        - !reference [.ignore-on-tag, rules]
-        - !reference [.ignore-on-master, rules]
+        - !reference [ .ignore-on-tag, rules ]
+        - !reference [ .ignore-on-master, rules ]
         - when: on_success

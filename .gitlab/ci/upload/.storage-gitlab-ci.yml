@@ -34,7 +34,7 @@ google_storage_deb_rpm_dev_dev:
     - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     - apt update && apt install jq vault -y --fix-missing
     - setcap cap_ipc_lock= /usr/bin/vault
-    - echo $GCLOUD_STORAGE_KEY_FILE > auth_file.json
+    - cat $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
     - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}*.*"
   rules:

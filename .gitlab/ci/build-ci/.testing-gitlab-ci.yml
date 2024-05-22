@@ -1,6 +1,8 @@
 smoke_test_deb:
     allow_failure: false
     stage: build_testing  # TODO improve
+    tags:
+        - digitalocean-dev
     image: ubuntu:18.04
     needs:
       - job: generate_deb_dev
@@ -21,7 +23,7 @@ smoke_test_deb:
         - faraday-manage create-tables
         - /opt/faraday/bin/faraday-server &
         - sleep 5
-        - curl -v http://localhost:5985/_api/v2/info
+        - curl -v http://localhost:5985/_api/v3/info
         - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
         - jobs
     rules:

@@ -106,10 +106,13 @@ def register_blueprints(app):
     from faraday.server.api.modules.activity_feed import activityfeed_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.credentials import credentials_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.hosts import host_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_context import host_context_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.licenses import license_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.services import services_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services_context import services_context_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.session import session_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.vulns import vulns_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns_context import vulns_context_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.vulnerability_template import \
         vulnerability_template_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.workspaces import workspace_api  # pylint:disable=import-outside-toplevel
@@ -128,7 +131,6 @@ def register_blueprints(app):
     from faraday.server.api.modules.search_filter import searchfilter_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
-    # from faraday.server.websockets import websockets  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_reports import \
         reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
@@ -140,19 +142,20 @@ def register_blueprints(app):
     app.register_blueprint(activityfeed_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(credentials_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(host_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(host_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(info_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(license_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(services_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(services_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(session_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(vulns_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(vulns_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(vulnerability_template_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(workspace_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(handlers_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(comment_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(upload_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(websocket_auth_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    # app.register_blueprint(websockets, url_prefix=app.config['APPLICATION_PREFIX'])
-
     app.register_blueprint(exploits_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(custom_fields_schema_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(agent_api, url_prefix=app.config['APPLICATION_PREFIX'])

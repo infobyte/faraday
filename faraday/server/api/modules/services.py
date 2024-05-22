@@ -21,6 +21,7 @@ from faraday.server.models import (
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
+    PaginatedMixin,
     FilterSetMeta,
     FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
@@ -54,6 +55,7 @@ class ServiceSchema(AutoSchema):
     status = fields.String(missing='open', validate=OneOf(Service.STATUSES),
                            allow_none=False)
     parent = fields.Integer(attribute='host_id')  # parent is not required for updates
+    parent_name = fields.String(attribute='host.ip', dump_only=True)
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
@@ -61,6 +63,7 @@ class ServiceSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Service', dump_only=True)
     summary = fields.String(dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
 
     @staticmethod
     def load_ports(value):
@@ -118,7 +121,8 @@ class ServiceSchema(AutoSchema):
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials', 'vulns',
                   'name', 'version', '_id', 'port', 'ports',
-                  'metadata', 'summary', 'host_id', 'command_id')
+                  'metadata', 'summary', 'host_id', 'command_id',
+                  'workspace_name', 'parent_name')
 
 
 class ServiceFilterSet(FilterSet):
@@ -129,7 +133,7 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
+class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service
@@ -149,6 +153,8 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspa
             })
         return {
             'services': services,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(services))
         }
 
     def _perform_create(self, data, **kwargs):

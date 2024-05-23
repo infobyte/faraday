@@ -1,15 +1,17 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.2.0 API",
+        "title": "Faraday 5.3.0 API",
         "version": "v3"
     },
-    "security": {
-        "basicAuth": []
-    },
+    "security": [
+        {
+            "basicAuth": []
+        }
+    ],
     "servers": [
         {
-            "url": "http://localhost:5985/_api"
+            "url": "http://localhost:5985"
         }
     ],
     "paths": {
@@ -36,7 +38,17 @@
                         }
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/commands/count": {
             "get": {
@@ -59,7 +71,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/commands/{object_id}": {
             "delete": {
@@ -91,6 +113,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Command"
@@ -259,6 +299,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "post": {
                 "tags": [
                     "Command"
@@ -319,7 +369,17 @@
                         "description": "Last executed command or an empty json"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/global_commands/{object_id}": {
             "get": {
@@ -349,7 +409,17 @@
                         }
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/global_commands": {
             "get": {
@@ -392,7 +462,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/activities/{object_id}": {
             "delete": {
@@ -424,6 +504,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Command"
@@ -592,6 +690,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "post": {
                 "tags": [
                     "Command"
@@ -653,6 +761,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "patch": {
                 "tags": [
                     "Credential"
@@ -752,7 +870,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/credential/{object_id}": {
             "delete": {
@@ -784,6 +912,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Credential"
@@ -958,7 +1104,17 @@
                         "description": "Forbidden"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/hosts": {
             "delete": {
@@ -972,6 +1128,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "patch": {
                 "tags": [
                     "Host"
@@ -1071,7 +1237,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/hosts/count_multi_workspace": {
             "get": {
@@ -1094,7 +1270,17 @@
                         "description": "No workspace passed or group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/hosts/countVulns": {
             "get": {
@@ -1114,7 +1300,17 @@
                         }
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/hosts/{object_id}": {
             "delete": {
@@ -1146,6 +1342,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Host"
@@ -1324,7 +1538,17 @@
                         "description": "Invalid q was sent to the server"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/hosts/{host_id}/services": {
             "get": {
@@ -1345,7 +1569,25 @@
                         }
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "host_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/hosts/{host_id}/tools_history": {
             "get": {
@@ -1366,7 +1608,243 @@
                         }
                     }
                 }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "host_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/hosts": {
+            "delete": {
+                "tags": [
+                    "Host"
+                ],
+                "summary": "Delete a group of Host by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Host"
+                ],
+                "summary": "Update a group of Host by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Host"
+                ],
+                "summary": "Get a list of Host.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Host"
+                                }
+                            }
+                        }
+                    }
+                }
             }
+        },
+        "/_api/v3/hosts/count": {
+            "get": {
+                "tags": [
+                    "Host"
+                ],
+                "summary": "Group Host by the field set in the group_by GET parameter.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Host"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "group_by is not specified"
+                    }
+                }
+            }
+        },
+        "/_api/v3/hosts/countVulns": {
+            "get": {
+                "tags": [
+                    "Host"
+                ],
+                "summary": "Counts Vulnerabilities per host",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HostCount"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/hosts/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "Host"
+                ],
+                "description": "Filters, sorts and groups hosts using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
+        "/_api/v3/hosts/{object_id}": {
+            "get": {
+                "tags": [
+                    "Host"
+                ],
+                "summary": "Retrieves Host",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Host"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/hosts/{host_id}/services": {
+            "get": {
+                "tags": [
+                    "Host",
+                    "Service"
+                ],
+                "summary": "Get the services of a host",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Service"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "host_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/hosts/{host_id}/tools_history": {
+            "get": {
+                "tags": [
+                    "Host",
+                    "Command"
+                ],
+                "summary": "Get the command impacted by a host",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Command"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "host_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/info": {
             "get": {
@@ -1416,6 +1894,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "License"
@@ -1611,6 +2099,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "patch": {
                 "tags": [
                     "Service"
@@ -1710,7 +2208,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/services/{object_id}": {
             "delete": {
@@ -1742,6 +2250,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Service"
@@ -1891,6 +2417,142 @@
                 }
             }
         },
+        "/_api/v3/services": {
+            "delete": {
+                "tags": [
+                    "Service"
+                ],
+                "summary": "Delete a group of Service by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Service"
+                ],
+                "summary": "Update a group of Service by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Service"
+                ],
+                "summary": "Get a list of Service.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Service"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/services/count": {
+            "get": {
+                "tags": [
+                    "Service"
+                ],
+                "summary": "Group Service by the field set in the group_by GET parameter.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Service"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "group_by is not specified"
+                    }
+                }
+            }
+        },
+        "/_api/v3/services/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "Service"
+                ],
+                "description": "Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
+        "/_api/v3/services/{object_id}": {
+            "get": {
+                "tags": [
+                    "Service"
+                ],
+                "summary": "Retrieves Service",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Service"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
         "/_api/session": {
             "get": {
                 "tags": [
@@ -1916,6 +2578,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "patch": {
                 "tags": [
                     "VulnerabilityGeneric"
@@ -2015,7 +2687,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/vulns/count_multi_workspace": {
             "get": {
@@ -2038,7 +2720,17 @@
                         "description": "No workspace passed or group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/vulns/{object_id}": {
             "delete": {
@@ -2070,6 +2762,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "VulnerabilityGeneric"
@@ -2176,6 +2886,32 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "vuln_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "attachment_filename",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Vulnerability",
@@ -2201,7 +2937,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/vulns/filter": {
             "get": {
@@ -2232,7 +2978,17 @@
                         "description": "Invalid q was sent to the server"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment": {
             "get": {
@@ -2260,6 +3016,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "vuln_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ],
             "post": {
                 "tags": [
                     "Vulnerability",
@@ -2274,6 +3048,296 @@
             }
         },
         "/_api/v3/ws/{workspace_name}/vulns/top_users": {
+            "get": {
+                "tags": [
+                    "Vulnerability"
+                ],
+                "params": "limit",
+                "description": "Gets a list of top users having account its uploaded vulns",
+                "responses": {
+                    "200": {
+                        "description": "List of top users"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/vulns": {
+            "delete": {
+                "tags": [
+                    "VulnerabilityGeneric"
+                ],
+                "summary": "Delete a group of VulnerabilityGeneric by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "VulnerabilityGeneric"
+                ],
+                "summary": "Update a group of VulnerabilityGeneric by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "VulnerabilityGeneric"
+                ],
+                "summary": "Get a list of VulnerabilityGeneric.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VulnerabilityWeb"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/count": {
+            "get": {
+                "tags": [
+                    "Vulnerability"
+                ],
+                "summary": "Group vulnerabilities by the field set in the group_by GET parameter.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VulnerabilityWeb"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "group_by is not specified"
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/count_multi_workspace": {
+            "get": {
+                "tags": [
+                    "VulnerabilityGeneric"
+                ],
+                "summary": "Count VulnerabilityGeneric by multiples workspaces",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VulnerabilityWeb"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No workspace passed or group_by is not specified"
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/{vuln_id}/attachment/{attachment_filename}": {
+            "delete": {
+                "tags": [
+                    "Vulnerability",
+                    "File"
+                ],
+                "description": "Remove a vuln attachment",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vuln_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "attachment_filename",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Vulnerability",
+                    "File"
+                ],
+                "description": "Get a vuln attachment",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/export_csv": {
+            "get": {
+                "tags": [
+                    "Vulnerability",
+                    "File"
+                ],
+                "description": "Get a CSV file with all vulns from a workspace",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "Vulnerability"
+                ],
+                "description": "Filters, sorts and groups vulnerabilities using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/{object_id}": {
+            "get": {
+                "tags": [
+                    "VulnerabilityGeneric"
+                ],
+                "summary": "Retrieves VulnerabilityGeneric",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VulnerabilityWeb"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/vulns/{vuln_id}/attachment": {
+            "get": {
+                "tags": [
+                    "Vulnerability",
+                    "File"
+                ],
+                "description": "Gets an attachment for a vulnerability",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Evidence"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Workspace disabled or no permission"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vuln_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Vulnerability",
+                    "File"
+                ],
+                "description": "Creates a new attachment in the vuln",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/_api/v3/vulns/top_users": {
             "get": {
                 "tags": [
                     "Vulnerability"
@@ -2416,6 +3480,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "VulnerabilityTemplate"
@@ -2583,7 +3657,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws": {
             "delete": {
@@ -2665,7 +3749,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_id}/deactivate/": {
             "put": {
@@ -2678,7 +3772,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{object_id}": {
             "delete": {
@@ -2702,6 +3806,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Workspace"
@@ -2869,6 +3983,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Comment"
@@ -2957,7 +4081,17 @@
                         "description": "group_by is not specified"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/comment/{object_id}": {
             "delete": {
@@ -2989,6 +4123,24 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Comment"
@@ -3186,7 +4338,17 @@
                         }
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/upload_report": {
             "post": {
@@ -3206,7 +4368,17 @@
                         "description": "Forbidden"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/websocket_token": {
             "get": {
@@ -3218,7 +4390,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/agent_websocket_token": {
             "post": {
@@ -3245,7 +4427,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "cveid",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/custom_fields_schema": {
             "delete": {
@@ -3338,6 +4530,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "CustomFieldsSchema"
@@ -3505,6 +4707,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "Agent"
@@ -3691,7 +4903,17 @@
                         }
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "agent_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/agent_token": {
             "get": {
@@ -3750,7 +4972,17 @@
                         "description": "Workspace not found"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/token": {
             "get": {
@@ -3867,6 +5099,16 @@
                     }
                 }
             },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
             "get": {
                 "tags": [
                     "SearchFilter"
@@ -4030,7 +5272,17 @@
                         "description": "Ok"
                     }
                 }
-            }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/settings/reports": {
             "get": {
@@ -4207,10 +5459,11 @@
                         "enum": [
                             "report",
                             "shell",
-                            "agent"
+                            "agent",
+                            "cloud_agent"
                         ],
                         "nullable": true,
-                        "maxLength": 6
+                        "maxLength": 11
                     },
                     "metadata": {}
                 },
@@ -4263,10 +5516,11 @@
                         "enum": [
                             "report",
                             "shell",
-                            "agent"
+                            "agent",
+                            "cloud_agent"
                         ],
                         "nullable": true,
-                        "maxLength": 6
+                        "maxLength": 11
                     },
                     "itime": {},
                     "sum_created_vulnerabilities": {
@@ -4448,6 +5702,10 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
+                    },
+                    "workspace_name": {
+                        "type": "string",
+                        "readOnly": true
                     }
                 },
                 "required": [
@@ -4572,6 +5830,14 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
+                    },
+                    "workspace_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "parent_name": {
+                        "type": "string",
+                        "readOnly": true
                     }
                 },
                 "required": [
@@ -4845,6 +6111,10 @@
                         "writeOnly": true
                     },
                     "risk": {
+                        "readOnly": true
+                    },
+                    "workspace_name": {
+                        "type": "string",
                         "readOnly": true
                     }
                 },
@@ -5339,6 +6609,14 @@
                         "type": "integer",
                         "writeOnly": true
                     },
+                    "workspace_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "parent_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "vulnerabilities": {
                         "default": []
                     }
@@ -5498,6 +6776,10 @@
                     "risk": {
                         "readOnly": true
                     },
+                    "workspace_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "run_date": {}
                 },
                 "required": [
@@ -5585,6 +6867,10 @@
                         "type": "integer",
                         "writeOnly": true
                     },
+                    "workspace_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "vulnerabilities": {
                         "default": [],
                         "type": "array",
@@ -5643,10 +6929,11 @@
                         "enum": [
                             "report",
                             "shell",
-                            "agent"
+                            "agent",
+                            "cloud_agent"
                         ],
                         "nullable": true,
-                        "maxLength": 6
+                        "maxLength": 11
                     }
                 },
                 "required": [

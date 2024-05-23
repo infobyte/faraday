@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Revised the references fetching strategy to enhance memory usage during CSV export. #7712"
-}

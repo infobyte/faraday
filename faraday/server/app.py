@@ -435,7 +435,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
             # 'sha512_crypt',
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(
-            hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
+            minutes=int(faraday.server.config.faraday_server.session_timeout or 12)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
         'IMPORTS': ('faraday.server.tasks', ),

@@ -2137,6 +2137,14 @@ association_workspace_and_users_table = Table(
 )
 
 
+executive_report_workspace_table = Table(
+    "executive_report_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("executive_report_id", Integer, ForeignKey("executive_report.id")),
+)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2177,6 +2185,13 @@ class Workspace(Metadata):
     vulnerability_unclassified_count = query_expression(literal(0))
 
     importance = Column(Integer, default=0)
+
+    reports = relationship(
+        'ExecutiveReport',
+        secondary=executive_report_workspace_table,
+        back_populates='workspaces',
+        cascade='delete'
+    )
 
     allowed_users = relationship(
         'User',
@@ -2719,11 +2734,10 @@ class ExecutiveReport(Metadata):
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
-    workspace = relationship(
+    workspaces = relationship(
         'Workspace',
-        backref=backref('reports', cascade="all, delete-orphan"),
-        foreign_keys=[workspace_id]
+        secondary=executive_report_workspace_table,
+        back_populates='reports'
     )
     tags = relationship(
         "Tag",

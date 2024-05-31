@@ -17,7 +17,7 @@ import time
 import flask
 import flask_login
 import sqlalchemy
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func, desc, asc, and_
 from sqlalchemy.orm import joinedload, undefer, with_expression
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
@@ -35,6 +35,7 @@ from faraday.server.models import (
     Workspace,
     Command,
     CommandObject,
+    WorkspacePermission,
     db,
     count_vulnerability_severities,
     _make_vuln_count_property,
@@ -972,8 +973,9 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False, only_total_vulns=False,
-                                   list_view=False):
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
 
         filter_query = search(db.session,
                               self.model_class,
@@ -1070,7 +1072,8 @@ class FilterMixin(ListMixin):
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False, exclude=[], only_total_vulns=False, list_view=False) -> Tuple[list, int]:
+                severity_count=False, host_vulns=False, exclude=[], only_total_vulns=False,
+                list_view=False, return_objects=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -1080,13 +1083,12 @@ class FilterMixin(ListMixin):
 
         filter_query = None
         if 'group_by' not in filters:
-            offset = None
+            offset = 0
             limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
-
+                limit = filters.pop('limit')
             try:
                 filter_query = self._generate_filter_query(
                     filters,
@@ -1108,6 +1110,8 @@ class FilterMixin(ListMixin):
             if offset:
                 filter_query = filter_query.offset(offset)
             filter_query = self._add_to_filter(filter_query)
+            if return_objects:
+                return filter_query.all(), filter_query.count()
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json.loads(objs), count
         else:
@@ -1619,7 +1623,7 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace)
+            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
             if conflict_obj is not None:
                 flask.abort(409, ValidationError(
                     {
@@ -1780,7 +1784,7 @@ class BulkDeleteMixin(FilterObjects):
     # These mixin should be merged with DeleteMixin after v2 is removed
 
     @route('', methods=['DELETE'])
-    def bulk_delete(self, **kwargs):
+    def bulk_delete(self, *args, **kwargs):
         """
           ---
           tags: [{tag_name}]
@@ -1797,7 +1801,7 @@ class BulkDeleteMixin(FilterObjects):
         # Try filter if no ids
         elif flask.request.args.get('q', None) is not None:
             filtered_objects = self._process_filter_data(flask.request.args.get('q', '{"filters": []}'))
-            ids = list(x.get("obj_id") for x in filtered_objects[0])
+            ids = list(x.get("id") for x in filtered_objects[0])
         else:
             flask.abort(400)
         # TODO: Check _post_bulk_delete with corp
@@ -1906,7 +1910,7 @@ class CountWorkspacedMixin:
         table_name = inspect(self.model_class).tables[0].name
         group_by = f'{table_name}.{group_by}'
 
-        count = self._filter_query(
+        query_count = self._filter_query(
             db.session.query(self.model_class).
             join(Workspace).
             group_by(group_by).
@@ -1917,18 +1921,18 @@ class CountWorkspacedMixin:
         # order
         order_by = group_by
         if sort_dir == 'desc':
-            count = count.order_by(desc(order_by))
+            query_count = query_count.order_by(desc(order_by))
         else:
-            count = count.order_by(asc(order_by))
-        for key, count in count.values(group_by, func.count(group_by)):
+            query_count = query_count.order_by(asc(order_by))
+        for key, query_count in query_count.values(group_by, func.count(group_by)):
             res['groups'].append(
-                {'count': count,
+                {'count': query_count,
                  'name': key,
                  # To add compatibility with the web ui
                  flask.request.args.get('group_by'): key,
                  }
             )
-            res['total_count'] += count
+            res['total_count'] += query_count
         return res
 
 
@@ -2163,3 +2167,102 @@ def get_user_permissions(user):
         permissions[entity][action] = ALLOWED
 
     return permissions
+
+
+class ContextMixin(ReadOnlyView):
+
+    count_extra_filters = []
+
+    def _get_base_query(self, operation="", *args, **kwargs):
+        if not operation:
+            operation = "read" if flask.request.method in ['GET', 'HEAD', 'OPTIONS'] else "write"
+        query = super()._get_base_query(*args, **kwargs)
+        return self._apply_filter_context(query, operation)
+
+    def _apply_filter_context(self, query, operation="read"):
+        filters = and_()
+        if operation == "write":
+            filters = filters & self._get_context_write_filter()
+        query = query.filter(
+            self.model_class.workspace_id.in_(
+                self._get_context_workspace_ids(filters)
+            )
+        )
+        return query
+
+    @staticmethod
+    def _get_context_workspace_ids(filter):
+        return db.session.query(Workspace.id)\
+            .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
+            .filter(filter).all()
+
+    @staticmethod
+    def _get_context_workspace_filter():
+        return (
+                (WorkspacePermission.user_id == flask_login.current_user.id) | (Workspace.public == True) # noqa: E712, E261
+        )
+
+    @staticmethod
+    def _get_context_write_filter():
+        return (
+                Workspace.readonly == False # noqa: E712, E261
+        )
+
+    def _get_context_workspace_query(self, operation="write"):
+        workspace_query = Workspace.query
+        return workspace_query
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        return self._get_base_query(operation="write", **kwargs).filter(self.model_class.id.in_(ids))
+
+    def _bulk_update_query(self, ids, **kwargs):
+        return self._get_base_query(operation="write", **kwargs).filter(self.model_class.id.in_(ids))
+
+    def count(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Group {class_model} by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            404:
+              description: group_by is not specified
+        """
+        res = {
+            'groups': [],
+            'total_count': 0
+        }
+        group_by, sort_dir = get_group_by_and_sort_dir(self.model_class)
+
+        # using format is not a great practice.
+        # the user input is group_by, however it's filtered by column name.
+        table_name = inspect(self.model_class).tables[0].name
+        group_by = f'{table_name}.{group_by}'
+
+        query_count = self._apply_filter_context(
+            self._filter_query(
+                db.session.query(self.model_class).
+                group_by(group_by).
+                filter(*self.count_extra_filters)
+            )
+        )
+        # order
+        order_by = group_by
+        if sort_dir == 'desc':
+            query_count = query_count.order_by(desc(order_by))
+        else:
+            query_count = query_count.order_by(asc(order_by))
+        for key, query_count in query_count.values(group_by, func.count(group_by)):
+            res['groups'].append(
+                {'count': query_count,
+                 'name': key,
+                 # To add compatibility with the web ui
+                 flask.request.args.get('group_by'): key,
+                 }
+            )
+            res['total_count'] += query_count
+        return res

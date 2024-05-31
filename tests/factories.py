@@ -233,7 +233,8 @@ class ServiceFactory(WorkspaceObjectFactory):
     @classmethod
     def build_dict(cls, **kwargs):
         ret = super().build_dict(**kwargs)
-        ret['host'].workspace = kwargs['workspace']
+        if 'workspace' in kwargs:
+            ret['host'].workspace = kwargs['workspace']
         ret['parent'] = ret['host'].id
         ret['ports'] = [ret['port']]
         ret.pop('host')

@@ -94,6 +94,7 @@ class HostSchema(AutoSchema):
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
     vulns = fields.Function(get_total_count, dump_only=True)
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
 
     class Meta:
         model = Host
@@ -101,7 +102,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'importance', 'severity_counts', 'command_id'
+                  'importance', 'severity_counts', 'command_id', 'workspace_name'
                   )
 
     @staticmethod

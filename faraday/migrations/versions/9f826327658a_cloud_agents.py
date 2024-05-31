@@ -60,7 +60,8 @@ def upgrade():
     op.create_index(op.f('ix_cloud_agent_execution_cloud_agent_id'), 'cloud_agent_execution', ['cloud_agent_id'], unique=False)
     op.create_index(op.f('ix_cloud_agent_execution_command_id'), 'cloud_agent_execution', ['command_id'], unique=False)
     op.create_index(op.f('ix_cloud_agent_execution_workspace_id'), 'cloud_agent_execution', ['workspace_id'], unique=False)
-    op.execute("ALTER TYPE import_source_enum ADD VALUE IF NOT EXISTS 'cloud_agent'")
+    with op.get_context().autocommit_block():
+        op.execute("ALTER TYPE import_source_enum ADD VALUE IF NOT EXISTS 'cloud_agent'")
 
 
 def downgrade():

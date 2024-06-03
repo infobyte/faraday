@@ -52,7 +52,9 @@ def _ingest(all_workspaces=False,
                 es.info()
                 click.secho(f"Connected successfully to {ingest_settings.host}:{ingest_settings.port}", fg="green")
             except Exception as e:
-                raise
+                click.secho(f"Could not connect to elasticsearch {ingest_settings.host}:{ingest_settings.port}\n{e}.",
+                            fg="red")
+                return
     except Exception as e:
         click.secho(f"Could not connect to elasticsearch {ingest_settings.host}:{ingest_settings.port}\n{e}.", fg="red")
         return
@@ -62,7 +64,7 @@ def _ingest(all_workspaces=False,
     elif workspace_name:
         workspaces = Workspace.query.filter(Workspace.name == workspace_name).all()
     else:
-        from faraday.manage import ingest
+        from faraday.manage import ingest  # pylint: disable=import-outside-toplevel
         with click.Context(ingest) as ctx:
             click.secho("Options required", fg="red")
             click.secho(ingest.get_help(ctx))

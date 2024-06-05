@@ -251,7 +251,7 @@ def get_unique_fields(session, instance):
             yield unique_constraint['column_names']
 
 
-def get_conflict_object(session, obj, data, workspace=None):
+def get_conflict_object(session, obj, data, workspace=None, ids=None):
     unique_fields_gen = get_unique_fields(session, obj)
     for unique_fields in unique_fields_gen:
         relations_fields = list(filter(
@@ -285,8 +285,12 @@ def get_conflict_object(session, obj, data, workspace=None):
 
         if 'workspace_id' in relations_fields:
             relations_fields.remove('workspace_id')
-            filter_data.append(table.columns['workspace_id'] == workspace.id)
-
+            if workspace:
+                filter_data.append(table.columns['workspace_id'] == workspace.id)
+            else:
+                # if not workspace but there is a relationship it must be from context view
+                workspaces_ids = session.query(klass.workspace_id).filter(klass.id.in_(ids)).subquery()
+                filter_data.append(table.columns['workspace_id'].in_(workspaces_ids))
         for relations_field in relations_fields:
             if relations_field not in data and relations_field.strip('_id') in data:
                 related_object = data[relations_field.strip('_id')]

@@ -12,7 +12,6 @@ class ImportTests(unittest.TestCase):
         self.bind_address = faraday_server.bind_address
         self.port = faraday_server.port
         self.secret_key = faraday_server.secret_key
-        self.websocket_port = faraday_server.websocket_port
 
     def test_storage(self):
         from faraday.server.config import storage

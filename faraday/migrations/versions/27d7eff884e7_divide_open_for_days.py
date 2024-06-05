@@ -1,7 +1,7 @@
 """divide open for days
 
 Revision ID: 27d7eff884e7
-Revises: 9f826327658a
+Revises: 34468fcfd92e
 Create Date: 2024-04-29 16:35:30.590225+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '27d7eff884e7'
-down_revision = '9f826327658a'
+down_revision = '34468fcfd92e'
 branch_labels = None
 depends_on = None
 

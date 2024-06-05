@@ -149,6 +149,9 @@ class FaradayServerConfigObject(ConfigSection):
         self.celery_enabled = True
         self.celery_broker_url = "127.0.0.1"
         self.celery_backend_url = "127.0.0.1"
+        self.socketio_ping_interval = 60
+        self.socketio_ping_timeout = 220
+        self.socketio_logger = False
 
 
 class StorageConfigObject(ConfigSection):

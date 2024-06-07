@@ -52,7 +52,7 @@ def is_server_running(port):
 
 def run_server(args):
     daemonize.create_pid_file(args.port)
-    app = get_app()
+    app = get_app(remove_sids=True)
     try:
         if args.with_workers or args.with_workers_gevent:
             if not server_config.celery_enabled:

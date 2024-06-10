@@ -4,7 +4,6 @@ generate_deb_dev:
     before_script:
         - apt-get update -y
         - apt-get install -y software-properties-common
-        #- apt-get update -y
         - apt-add-repository -y ppa:rael-gc/rvm
         - apt-get update -y
         - apt-get install -y rvm
@@ -35,7 +34,6 @@ generate_deb_dev:
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
-        #- gem install --no-document ffi -v 1.17.0
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
@@ -65,7 +63,6 @@ generate_deb_staging:
     before_script:
         - apt-get update -y
         - apt-get install -y software-properties-common
-        - apt-get update -y
         - apt-add-repository -y ppa:rael-gc/rvm
         - apt-get update -y
         - apt-get install -y rvm
@@ -96,7 +93,6 @@ generate_deb_staging:
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
-        - gem install --no-document ffi -v 1.17.0
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
@@ -123,7 +119,6 @@ generate_deb_master:
     before_script:
         - apt-get update -y
         - apt-get install -y software-properties-common
-        - apt-get update -y
         - apt-add-repository -y ppa:rael-gc/rvm
         - apt-get update -y
         - apt-get install -y rvm
@@ -154,7 +149,6 @@ generate_deb_master:
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
-        - gem install --no-document ffi -v 1.17.0
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../

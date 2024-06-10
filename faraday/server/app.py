@@ -538,6 +538,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
 
 
 def get_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
+    logger.debug("Calling get_app")
     global FARADAY_APP  # pylint: disable=W0603
     if FARADAY_APP and remove_sids:
         with FARADAY_APP.app_context():

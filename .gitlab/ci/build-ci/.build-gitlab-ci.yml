@@ -2,6 +2,15 @@ generate_deb_dev:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
+        - apt-get update -y
+        - apt-get install -y software-properties-common
+        - apt-get update -y
+        - apt-add-repository -y ppa:rael-gc/rvm
+        - apt-get update -y
+        - apt-get install -y rvm
+        - source /usr/share/rvm/scripts/rvm
+        - rvm install 3.0.0
+        - rvm use 3.0.0
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
         - cd faraday-linux-installers-builder
         - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
@@ -26,6 +35,7 @@ generate_deb_dev:
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
+        - gem install --no-document ffi -v 1.17.0
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
@@ -53,6 +63,15 @@ generate_deb_staging:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
+        - apt-get update -y
+        - apt-get install -y software-properties-common
+        - apt-get update -y
+        - apt-add-repository -y ppa:rael-gc/rvm
+        - apt-get update -y
+        - apt-get install -y rvm
+        - source /usr/share/rvm/scripts/rvm
+        - rvm install 3.0.0
+        - rvm use 3.0.0
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
         - cd faraday-linux-installers-builder
         - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
@@ -77,6 +96,7 @@ generate_deb_staging:
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
+        - gem install --no-document ffi -v 1.17.0
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
@@ -101,6 +121,15 @@ generate_deb_master:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
+        - apt-get update -y
+        - apt-get install -y software-properties-common
+        - apt-get update -y
+        - apt-add-repository -y ppa:rael-gc/rvm
+        - apt-get update -y
+        - apt-get install -y rvm
+        - source /usr/share/rvm/scripts/rvm
+        - rvm install 3.0.0
+        - rvm use 3.0.0
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
         - cd faraday-linux-installers-builder
         - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
@@ -125,6 +154,7 @@ generate_deb_master:
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
+        - gem install --no-document ffi -v 1.17.0
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../

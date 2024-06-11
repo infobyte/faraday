@@ -1,7 +1,7 @@
 """user token
 
 Revision ID: 520d082e500b
-Revises: 9f826327658a
+Revises: 27d7eff884e7
 Create Date: 2024-04-25 17:58:32.826785+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '520d082e500b'
-down_revision = '9f826327658a'
+down_revision = '27d7eff884e7'
 branch_labels = None
 depends_on = None
 

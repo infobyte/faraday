@@ -1,7 +1,7 @@
 """Host risk
 
 Revision ID: 44e7fc2b6223
-Revises: 9f826327658a
+Revises: 27d7eff884e7
 Create Date: 2024-01-03 14:05:02.910346+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '44e7fc2b6223'
-down_revision = '9f826327658a'
+down_revision = '27d7eff884e7'
 branch_labels = None
 depends_on = None
 

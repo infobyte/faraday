@@ -1,6 +1,19 @@
 New features in the latest update
 =====================================
 
+5.3.0 [May 23rd, 2024]:
+---
+ * [ADD] Add vulnerability endpoint that retrieves all the objects that the users has access to. #7521
+ * [ADD] Add services and host endpoints that retrieves all the information that the users has access to. #7503
+ * [MOD] Modify version of libraries accordingly to dependabot findings. #7691
+ * [MOD] Modified parameters for interactive swagger. #7610
+ * [FIX] Revised the references fetching strategy to enhance memory usage during CSV export. #7712
+ * [FIX] Fixed creation of vulnerability from template. #7711
+
+5.2.2 [Apr 5th, 2024]:
+---
+ * [MOD] When manually creating vulnerabilities, services are now listed along with their respective ports and assigned names. #2205
+
 5.2.1 [Mar 20th, 2024]:
 ---
  * [FIX] Ignore remove_sid when database does not exist. #7690

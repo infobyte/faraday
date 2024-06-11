@@ -12,7 +12,6 @@ from marshmallow import Schema
 # Local application imports
 from faraday import __version__ as f_version
 from faraday.server.api.base import GenericView
-from faraday.server.config import faraday_server
 from faraday.settings.dashboard import DashboardSettings
 
 info_api = Blueprint('info_api', __name__)
@@ -62,7 +61,6 @@ class ConfigView(GenericView):
         """
         doc = {
             'ver': f_version,
-            'websocket_port': faraday_server.websocket_port,
             'show_vulns_by_price': DashboardSettings.settings.show_vulns_by_price,
             'smtp_enabled': False
         }

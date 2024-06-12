@@ -1456,6 +1456,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
         backref=backref("vulnerabilities")
     )
 
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(VulnerabilityGeneric.id == CommandObject.object_id, CommandObject.object_type == "vulnerability")',
+        collection_class=set,
+    )
+
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
     cvss2_exploitability_score = Column(Float)

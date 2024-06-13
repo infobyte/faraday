@@ -2135,6 +2135,14 @@ association_workspace_and_users_table = Table(
 )
 
 
+executive_report_workspace_table = Table(
+    "executive_report_workspace_table",
+    db.Model.metadata,
+    Column("workspace_id", Integer, ForeignKey("workspace.id")),
+    Column("executive_report_id", Integer, ForeignKey("executive_report.id")),
+)
+
+
 def _return_last_30_days() -> list:
     today = date.today()
     last_30_days = [today - timedelta(days=i) for i in range(30)]
@@ -2184,6 +2192,13 @@ class Workspace(Metadata):
     vulnerability_unclassified_count = query_expression(literal(0))
 
     importance = Column(Integer, default=0)
+
+    reports = relationship(
+        'ExecutiveReport',
+        secondary=executive_report_workspace_table,
+        back_populates='workspaces',
+        cascade='delete'
+    )
 
     allowed_users = relationship(
         'User',
@@ -2726,11 +2741,10 @@ class ExecutiveReport(Metadata):
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete="CASCADE"), index=True, nullable=False)
-    workspace = relationship(
+    workspaces = relationship(
         'Workspace',
-        backref=backref('reports', cascade="all, delete-orphan"),
-        foreign_keys=[workspace_id]
+        secondary=executive_report_workspace_table,
+        back_populates='reports'
     )
     tags = relationship(
         "Tag",
@@ -3480,11 +3494,29 @@ class UserNotificationSettings(Metadata):
     adv_risk_score_threshold_slack = Column(Boolean, default=False)
     adv_risk_score_threshold = Column(Integer, default=0)
 
-    adv_vuln_open_days_enabled = Column(Boolean, default=False)
-    adv_vuln_open_days_app = Column(Boolean, default=False)
-    adv_vuln_open_days_email = Column(Boolean, default=False)
-    adv_vuln_open_days_slack = Column(Boolean, default=False)
-    adv_vuln_open_days = Column(Integer, default=0)
+    adv_vuln_open_days_critical_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_critical_app = Column(Boolean, default=False)
+    adv_vuln_open_days_critical_email = Column(Boolean, default=False)
+    adv_vuln_open_days_critical_slack = Column(Boolean, default=False)
+    adv_vuln_open_days_critical = Column(Integer, default=0)
+
+    adv_vuln_open_days_high_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_high_app = Column(Boolean, default=False)
+    adv_vuln_open_days_high_email = Column(Boolean, default=False)
+    adv_vuln_open_days_high_slack = Column(Boolean, default=False)
+    adv_vuln_open_days_high = Column(Integer, default=0)
+
+    adv_vuln_open_days_medium_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_medium_app = Column(Boolean, default=False)
+    adv_vuln_open_days_medium_email = Column(Boolean, default=False)
+    adv_vuln_open_days_medium_slack = Column(Boolean, default=False)
+    adv_vuln_open_days_medium = Column(Integer, default=0)
+
+    adv_vuln_open_days_low_enabled = Column(Boolean, default=False)
+    adv_vuln_open_days_low_app = Column(Boolean, default=False)
+    adv_vuln_open_days_low_email = Column(Boolean, default=False)
+    adv_vuln_open_days_low_slack = Column(Boolean, default=False)
+    adv_vuln_open_days_low = Column(Integer, default=0)
 
 
 class EmailNotification(db.Model):

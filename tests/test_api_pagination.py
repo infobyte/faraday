@@ -49,6 +49,7 @@ class PaginationTestsMixin:
 
     @pytest.mark.parametrize("page_number", [None, 1, 2])
     @pytest.mark.usefixtures('pagination_test_logic')
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.pagination
     def test_returns_all_with_no_per_page(self, test_client, session,
                                           page_number):
@@ -61,6 +62,7 @@ class PaginationTestsMixin:
     @pytest.mark.skip("TODO: Fix for sqlite and postgres")
     @with_0_and_n_objects()
     @pytest.mark.usefixtures('pagination_test_logic')
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.pagination
     def test_does_not_allow_negative_per_page(self, session, test_client,
                                               object_count):
@@ -80,6 +82,7 @@ class PaginationTestsMixin:
         assert res.json == {'data': []}
 
     @pytest.mark.usefixtures('pagination_test_logic')
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.pagination
     def test_pages_have_different_elements(self, session, test_client):
         """Test correct page size, correct IDs and that there are

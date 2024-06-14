@@ -37,6 +37,7 @@ init()
 
 app = get_app(remove_sids=True)
 
+
 def setup_environment(check_deps=False):
     # Configuration files generation
     faraday.server.config.copy_default_config_to_local()

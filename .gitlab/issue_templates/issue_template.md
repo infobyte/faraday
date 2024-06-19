@@ -17,7 +17,7 @@ En caso de ser un bug, agregar los pasos necesarios para reproducirlo.
 
 **Capturas de pantalla o Adjuntos que sean necesarios para reproducir el problema:**
 
-<imagen1>, <scan_file.json>, <etc>
+`imagen1.png`, `scan_file.json`, `etc`
 
 **Features afectadas:**
 

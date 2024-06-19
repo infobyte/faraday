@@ -84,6 +84,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
 )
 from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat
+from faraday.server.debouncer import debounce_workspace_update
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -664,8 +665,12 @@ class VulnerabilityView(PaginatedMixin,
         db.session.commit()
         logger.info(f"{obj} deleted")
 
+        if kwargs['workspace_name']:
+            debounce_workspace_update(kwargs['workspace_name'])
+
         if host_to_update_stat:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+
             if faraday_server.celery_enabled:
                 update_host_stats.delay([host_to_update_stat], [])
             else:
@@ -712,6 +717,9 @@ class VulnerabilityView(PaginatedMixin,
             host_to_update_stat = obj.host_id
         elif obj.service_id:
             host_to_update_stat = obj.service.host_id
+
+        if kwargs['workspace_name']:
+            debounce_workspace_update(kwargs['workspace_name'])
 
         if host_to_update_stat:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
@@ -788,6 +796,9 @@ class VulnerabilityView(PaginatedMixin,
 
         db.session.commit()
 
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
+
         if hosts or services:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             if faraday_server.celery_enabled:
@@ -796,8 +807,7 @@ class VulnerabilityView(PaginatedMixin,
                 update_host_stats(hosts, services)
         return obj
 
-    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
-
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):        
         returning_rows = [
             VulnerabilityGeneric.id,
             VulnerabilityGeneric.name,
@@ -807,9 +817,13 @@ class VulnerabilityView(PaginatedMixin,
             Vulnerability.service_id,
         ]
         kwargs['returning'] = returning_rows
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
         return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
 
     def put(self, object_id, workspace_name=None, **kwargs):
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
         return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
@@ -1001,6 +1015,7 @@ class VulnerabilityView(PaginatedMixin,
                     content=faraday_file
                 )
                 db.session.commit()
+                debounce_workspace_update(workspace_name)
                 message = 'Evidence upload was successful'
                 logger.info(message)
                 return flask.jsonify({'message': message})
@@ -1316,6 +1331,7 @@ class VulnerabilityView(PaginatedMixin,
                 depot = DepotManager.get()
                 depot.delete(file_obj.content.get('file_id'))
                 message = 'Attachment was successfully deleted'
+                debounce_workspace_update(workspace_name)
                 logger.info(message)
                 return flask.jsonify({'message': message})
             else:
@@ -1510,6 +1526,7 @@ class VulnerabilityView(PaginatedMixin,
         deleted = response.json.get('deleted', 0)
         if deleted > 0:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            debounce_workspace_update(kwargs['workspace_name'])
             host_id_list = [data[0] for data in host_ids if data[0]]
             service_id_list = [data[1] for data in host_ids if data[1]]
             if faraday_server.celery_enabled:

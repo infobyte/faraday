@@ -175,13 +175,13 @@ class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, B
         if kwargs['workspace_name']:
             debounce_workspace_update(kwargs['workspace_name'])
         return obj
-    
+
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         obj = super()._perform_update(object_id, obj, data, workspace_name=workspace_name, partial=partial)
         if workspace_name:
             debounce_workspace_update(workspace_name)
         return obj
-    
+
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         obj = super()._perform_bulk_update(ids, data, workspace_name=None, **kwargs)
         if workspace_name:

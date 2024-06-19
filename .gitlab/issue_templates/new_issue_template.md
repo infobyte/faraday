@@ -16,6 +16,7 @@ En caso de ser un bug, agregar los pasos necesarios para reproducirlo.
 - [ ] Se debe validar que "tal otra".
 
 **Capturas de pantalla o Adjuntos que sean necesarios para reproducir el problema:**
+
 <imagen1>, <scan_file.json>, <etc>
 
 **Features afectadas:**

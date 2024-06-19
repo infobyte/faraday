@@ -81,6 +81,7 @@ audit_logger = logging.getLogger('audit')
 FARADAY_APP = None
 DEBOUNCER = None
 
+
 def setup_storage_path():
     default_path = CONST_FARADAY_HOME_PATH / 'storage'
     if not default_path.exists():
@@ -545,11 +546,13 @@ def get_app(db_connection_string=None, testing=None, register_extensions_flag=Tr
                                  register_extensions_flag=register_extensions_flag)
     return FARADAY_APP
 
+
 def get_debouncer():
     global DEBOUNCER
     if DEBOUNCER:
         return DEBOUNCER
     return Debouncer(wait=10)
+
 
 def register_extensions(app):
     from faraday.server.websockets.dispatcher import DispatcherNamespace  # pylint: disable=import-outside-toplevel

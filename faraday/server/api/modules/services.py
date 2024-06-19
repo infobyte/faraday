@@ -185,4 +185,5 @@ class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, B
         if workspace_name:
             debounce_workspace_update(workspace_name)
 
+
 ServiceView.register(services_api)

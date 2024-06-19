@@ -2,6 +2,7 @@ from threading import Timer
 from datetime import datetime
 from faraday.server.models import db, Workspace
 
+
 def update_workspace_update_date(workspace_dates_dict):
     from faraday.server.app import get_app
     app = get_app()
@@ -12,6 +13,7 @@ def update_workspace_update_date(workspace_dates_dict):
                 synchronize_session=False
             )
         db.session.commit()
+
 
 def update_workspace_update_date_with_name(workspace_dates_dict):
     from faraday.server.app import get_app
@@ -24,6 +26,7 @@ def update_workspace_update_date_with_name(workspace_dates_dict):
                 )
         db.session.commit()
 
+
 def debounce_workspace_update(workspace_name, debouncer=None):
     from faraday.server.app import get_debouncer
     if not debouncer: 
@@ -31,6 +34,7 @@ def debounce_workspace_update(workspace_name, debouncer=None):
     debouncer.debounce(update_workspace_update_date_with_name,
                        {'workspace_name': workspace_name, 'update_date': datetime.utcnow()})
     return debouncer
+
 
 class Debouncer:
 
@@ -46,11 +50,13 @@ class Debouncer:
 
     """
 
+
     def __init__(self, wait=10):
         self.wait = wait
         self.timer = None
         self.actions = set() # Dic structure: {'action':function, 'parameters': {'param1':1, 'param2':b}}
         self.update_dates = {"workspaces": {}}
+
 
     def debounce(self, action, parameters):
 
@@ -71,6 +77,7 @@ class Debouncer:
             # Create a new Timer that will call _debounced_callback after the wait period
         self.timer = Timer(self.wait, self._debounced_actions)
         self.timer.start()  # Start the new timer
+
 
     def _debounced_actions(self):
         for item in self.actions:

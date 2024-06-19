@@ -84,7 +84,6 @@ from faraday.server.utils.vulns import (
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.config import faraday_server
 from faraday.server.tasks import process_report_task
-from faraday.server.debouncer import debounce_workspace_update
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 logger = logging.getLogger(__name__)

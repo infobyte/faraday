@@ -85,3 +85,4 @@ class Debouncer:
             else:
                 parameters = dict(item['parameters'])
                 action(**parameters)
+                

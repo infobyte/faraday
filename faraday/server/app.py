@@ -549,9 +549,9 @@ def get_app(db_connection_string=None, testing=None, register_extensions_flag=Tr
 
 def get_debouncer():
     global DEBOUNCER
-    if DEBOUNCER:
-        return DEBOUNCER
-    return Debouncer(wait=10)
+    if not DEBOUNCER:
+        debouncer = Debouncer(wait=10)
+    return debouncer
 
 
 def register_extensions(app):

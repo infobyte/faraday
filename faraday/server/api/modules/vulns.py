@@ -807,7 +807,7 @@ class VulnerabilityView(PaginatedMixin,
                 update_host_stats(hosts, services)
         return obj
 
-    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):        
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         returning_rows = [
             VulnerabilityGeneric.id,
             VulnerabilityGeneric.name,

@@ -4,7 +4,7 @@ from faraday.server.models import db, Workspace
 
 
 def update_workspace_update_date(workspace_dates_dict):
-    from faraday.server.app import get_app
+    from faraday.server.app import get_app  # pylint:disable=import-outside-toplevel
     app = get_app()
     with app.app_context():
         for workspace_id, update_date in workspace_dates_dict.items():
@@ -16,7 +16,7 @@ def update_workspace_update_date(workspace_dates_dict):
 
 
 def update_workspace_update_date_with_name(workspace_dates_dict):
-    from faraday.server.app import get_app
+    from faraday.server.app import get_app  # pylint:disable=import-outside-toplevel
     app = get_app()
     with app.app_context():
         for workspace_name, update_date in workspace_dates_dict.items():
@@ -28,7 +28,7 @@ def update_workspace_update_date_with_name(workspace_dates_dict):
 
 
 def debounce_workspace_update(workspace_name, debouncer=None):
-    from faraday.server.app import get_debouncer
+    from faraday.server.app import get_debouncer  # pylint:disable=import-outside-toplevel
     if not debouncer:
         debouncer = get_debouncer()
     debouncer.debounce(update_workspace_update_date_with_name,

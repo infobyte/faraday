@@ -182,11 +182,9 @@ class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, B
             debounce_workspace_update(workspace_name)
         return obj
 
-    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
-        obj = super()._perform_bulk_update(ids, data, workspace_name=None, **kwargs)
+    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
         if workspace_name:
             debounce_workspace_update(workspace_name)
-        return obj
 
 
 ServiceView.register(services_api)

@@ -1,7 +1,6 @@
-from faraday.server.debouncer import debounce_workspace_update
-from faraday.server.app import get_debouncer
+from faraday.server.debouncer import debounce_workspace_update, Debouncer
 
-debouncer = get_debouncer()
+debouncer = Debouncer(wait=5)
 
 
 def test_debouncer_queue():
@@ -10,7 +9,6 @@ def test_debouncer_queue():
         print(f"executing debounced function with params {param1} and {param2}")
 
     for param1, param2 in zip([1,1,1,1,1,2,2,2,2,2], [2,2,2,2,2,1,1,1,1,1]):
-        print(f"param1: {param1}, param2: {param2}")
         debouncer.debounce(_function_to_debounce, {'param1':param1, 'param2':param2})
 
     assert len(debouncer.actions) == 2

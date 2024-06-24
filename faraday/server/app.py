@@ -49,6 +49,7 @@ from sqlalchemy.pool import QueuePool
 
 # Local application imports
 import faraday.server.config
+from faraday.server.config import faraday_server
 import faraday.server.events
 from faraday.server.config import (
     CONST_FARADAY_HOME_PATH,
@@ -550,7 +551,9 @@ def get_app(db_connection_string=None, testing=None, register_extensions_flag=Tr
 
 def register_extensions(app):
     from faraday.server.websockets.dispatcher import DispatcherNamespace  # pylint: disable=import-outside-toplevel
-    socketio.init_app(app)
+    socketio.init_app(app, ping_interval=faraday_server.socketio_ping_interval,
+                      ping_timeout=faraday_server.socketio_ping_timeout,
+                      logger=faraday_server.socketio_logger)
     socketio.on_namespace(DispatcherNamespace("/dispatcher"))
 
     if faraday.server.config.faraday_server.celery_enabled:

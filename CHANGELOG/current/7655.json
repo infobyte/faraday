@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[ADD] adds command to bulk update. #7655"
+  "md": "[ADD] added a command object to bulk create for better filtering. #7655"
 }

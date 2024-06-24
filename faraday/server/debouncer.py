@@ -19,20 +19,23 @@ def update_workspace_update_date_with_name(workspace_dates_dict):
     from faraday.server.app import get_app  # pylint:disable=import-outside-toplevel
     app = get_app()
     with app.app_context():
-        for workspace_name, update_date in workspace_dates_dict.items():
+        sorted_workspaces = sorted(workspace_dates_dict.items(), key=lambda item: item[1])  # Preserve execution order
+        for workspace_name, update_date in sorted_workspaces:
             db.session.query(Workspace).filter(Workspace.name == workspace_name).update(
                 {Workspace.update_date: update_date},
                 synchronize_session=False
                 )
-        db.session.commit()
+            db.session.commit()
 
 
-def debounce_workspace_update(workspace_name, debouncer=None):
+def debounce_workspace_update(workspace_name, debouncer=None, update_date=None):
     from faraday.server.app import get_debouncer  # pylint:disable=import-outside-toplevel
     if not debouncer:
         debouncer = get_debouncer()
+    if not update_date:
+        update_date = datetime.utcnow()
     debouncer.debounce(update_workspace_update_date_with_name,
-                       {'workspace_name': workspace_name, 'update_date': datetime.utcnow()})
+                       {'workspace_name': workspace_name, 'update_date': update_date})
     return debouncer
 
 
@@ -67,7 +70,6 @@ class Debouncer:
         if action == update_workspace_update_date_with_name:
             self.update_dates['workspaces'][parameters['workspace_name']] = parameters['update_date']
             self.actions.add(tuple({'action': action}.items()))
-            print(self.actions)
         else:
             self.actions.add(tuple({'action': action, 'parameters': tuple(parameters.items())}.items()))
         if self.timer:

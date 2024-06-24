@@ -306,10 +306,12 @@ def move_references(all_workspaces, workspace_name):
         _move_references(all_workspaces=all_workspaces, workspace_name=workspace_name)
 
 
-@click.command(help="Import vulnerabilities into Elasticsearch.")
+@click.command(help="Import vulnerabilities from one or all workspaces into Elasticsearch. ")
 @click.option('--all-workspaces/--no-all-workspaces', default=False,
-              help="Import vulnerabilities from all workspaces. Default is False.")
-@click.option('-w', '--workspace-name', help="Import vulnerabilities from the specified workspace name.")
+              help="Imports vulnerabilities from all workspaces. This option takes precedence over '--workspace-name'. "
+                   "By default, it is set to not import from all workspaces.")
+@click.option('-w', '--workspace-name', help="Imports vulnerabilities from the specified workspace name. "
+                                             "This option has no effect if '--all-workspaces' is already specified.")
 @click.option('-f', '--from-id', help="Specify the starting vulnerability id for import.")
 @click.option('-t', '--to-id', help="Specify the ending vulnerability id for import.")
 @click.option('-r', '--rename-workspace-as', help="Rename workspace in Elasticsearch with the specified new name.")

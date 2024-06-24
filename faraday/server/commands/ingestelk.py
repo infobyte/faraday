@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+import validators
 
 from elasticsearch import Elasticsearch, helpers, __version__
 import click
@@ -10,6 +11,18 @@ from faraday.server.models import Workspace, VulnerabilityGeneric
 from faraday.settings import get_settings
 
 CONFIG_SETTINGS_DOCS = "https://docs.faradaysec.com/Faraday-Manage-Settings-v4/"
+
+
+def _test_connection(elastic_instance, ingest_settings):
+    click.secho("Trying to connect to elasticsearch ...", fg="green")
+    try:
+        elastic_instance.info()
+        click.secho(f"Connected successfully to {ingest_settings.host}:{ingest_settings.port}", fg="green")
+        return True
+    except Exception as e:
+        click.secho(f"Could not connect to elasticsearch {ingest_settings.host}:{ingest_settings.port}\n{e}.",
+                    fg="red")
+        return False
 
 
 def _ingest(all_workspaces=False,
@@ -36,6 +49,11 @@ def _ingest(all_workspaces=False,
         }
         # Auth method arg changes from version 8
         if __version__[0] < 8:
+            if not validators.url(ingest_settings.host):
+                click.secho("Failed to connect to Elasticsearch. "
+                            "For Python Elasticsearch versions earlier than 8, "
+                            "ensure that the host parameter is a valid URL.", fg="red")
+                return False
             elk_args.update({
                 "http_auth": (ingest_settings.username, ingest_settings.password)
             })
@@ -47,17 +65,13 @@ def _ingest(all_workspaces=False,
             f"{ingest_settings.host}:{ingest_settings.port}",
             **elk_args
         )
-        if test_connection:
-            try:
-                es.info()
-                click.secho(f"Connected successfully to {ingest_settings.host}:{ingest_settings.port}", fg="green")
-            except Exception as e:
-                click.secho(f"Could not connect to elasticsearch {ingest_settings.host}:{ingest_settings.port}\n{e}.",
-                            fg="red")
-                return
     except Exception as e:
         click.secho(f"Could not connect to elasticsearch {ingest_settings.host}:{ingest_settings.port}\n{e}.", fg="red")
         return
+
+    if test_connection:
+        _test_connection(es, ingest_settings)
+        exit()
 
     if all_workspaces:
         workspaces = Workspace.query.all()
@@ -66,8 +80,8 @@ def _ingest(all_workspaces=False,
     else:
         from faraday.manage import ingest  # pylint: disable=import-outside-toplevel
         with click.Context(ingest) as ctx:
-            click.secho("Options required", fg="red")
-            click.secho(ingest.get_help(ctx))
+            click.secho("Use --workspace-name to specify the workspace from which to import vulnerabilities. "
+                        "Alternatively, use --all-workspaces to import vulnerabilities from all workspaces.", fg="red")
         return
 
     for ws in workspaces:

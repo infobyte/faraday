@@ -3,8 +3,11 @@ Faraday Penetration Test IDE
 Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+import validators
+
 # Related third party imports
 from marshmallow import fields
+from elasticsearch import __version__
 
 # Local application imports
 from faraday.server.api.base import AutoSchema
@@ -39,6 +42,9 @@ class ELKSettings(Settings):
             for field in ('username', 'password', 'host', 'port'):
                 if not validated_config[field]:
                     raise InvalidConfigurationError(f"{field} is required if elk is enabled")
+            if __version__[0] < 8 and not validators.url(validated_config['host']):
+                raise InvalidConfigurationError("For Python Elasticsearch versions earlier than 8, "
+                                                "ensure that the host parameter is a valid URL.")
 
     def get_default_config(self):
         return {

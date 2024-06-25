@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from datetime import date, datetime
+from datetime import date
 import time
 from urllib.parse import urljoin
 
@@ -688,25 +688,24 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         raw_data_1 = {'name': 'test_update_1'}
         raw_data_2 = {'name': 'test_update_2'}
         raw_data_3 = {'name': 'test_update_3'}
-        res =  test_client.post(self.url(), data=raw_data_1)
+        res = test_client.post(self.url(), data=raw_data_1)
         assert res.status_code == 201
-        res =  test_client.post(self.url(), data=raw_data_2)
+        res = test_client.post(self.url(), data=raw_data_2)
         assert res.status_code == 201
-        res =  test_client.post(self.url(), data=raw_data_3)
+        res = test_client.post(self.url(), data=raw_data_3)
         assert res.status_code == 201
 
         debouncer = Debouncer(wait=5)
-        for i in range(1,50):
+        for i in range(1, 50):
             debounce_workspace_update(raw_data_1['name'], debouncer)
             debounce_workspace_update(raw_data_2['name'], debouncer)
             debounce_workspace_update(raw_data_3['name'], debouncer)
-            debounce_workspace_update(raw_data_1['name'], debouncer)  
-        
+            debounce_workspace_update(raw_data_1['name'], debouncer)
+
         assert len(debouncer.actions) == 1
         time.sleep(11)
         test_update2 = session.query(Workspace).filter(Workspace.name == raw_data_2['name']).first()
         test_update3 = session.query(Workspace).filter(Workspace.name == raw_data_3['name']).first()
         test_update1 = session.query(Workspace).filter(Workspace.name == raw_data_1['name']).first()
-
 
         assert test_update2.update_date < test_update3.update_date < test_update1.update_date

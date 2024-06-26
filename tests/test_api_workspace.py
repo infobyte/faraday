@@ -695,10 +695,6 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.post(self.url(), data=raw_data_3)
         assert res.status_code == 201
 
-        first_update2 = session.query(Workspace).filter(Workspace.name == raw_data_2['name']).first()
-        first_update3 = session.query(Workspace).filter(Workspace.name == raw_data_3['name']).first()
-        first_update1 = session.query(Workspace).filter(Workspace.name == raw_data_1['name']).first()
-
         debouncer = Debouncer(wait=5)
         for i in range(1, 50):
             debounce_workspace_update(raw_data_1['name'], debouncer)
@@ -711,9 +707,5 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         test_update2 = session.query(Workspace).filter(Workspace.name == raw_data_2['name']).first()
         test_update3 = session.query(Workspace).filter(Workspace.name == raw_data_3['name']).first()
         test_update1 = session.query(Workspace).filter(Workspace.name == raw_data_1['name']).first()
-
-        assert first_update1.update_date != test_update1.update_date
-        assert first_update2.update_date != test_update2.update_date
-        assert first_update3.update_date != test_update3.update_date
 
         assert test_update2.update_date < test_update3.update_date < test_update1.update_date

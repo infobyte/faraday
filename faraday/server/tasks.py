@@ -22,6 +22,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Vulnerability,
 )
+from faraday.server.threads.workflows import _process_entry
 
 logger = get_task_logger(__name__)
 
@@ -64,6 +65,14 @@ def process_report_task(workspace_id: int, command: dict, hosts):
     ret = chord(group_of_tasks)(callback)
 
     return ret
+
+
+@celery.task()
+def workflow_task(obj_type, obj_id, workspace_id, fields=None, run_all=False, pipeline_id=None, update_hosts=False):
+    hosts_to_update = _process_entry(obj_type, obj_id, workspace_id, fields=fields, run_all=run_all, pipeline_id=pipeline_id)
+    if hosts_to_update:
+        logger.debug("Updating hosts stats from workflow task...")
+        update_host_stats.delay(hosts_to_update, [])
 
 
 @celery.task(ignore_result=False, acks_late=True)

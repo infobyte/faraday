@@ -1237,6 +1237,8 @@ class Host(Metadata):
 
     importance = Column(Integer, default=0)
 
+    risk = Column(Integer, default=0)
+
     @classmethod
     def query_with_count(cls, host_ids, workspace):
         query = cls.query.join(Workspace).filter(Workspace.id == workspace.id)

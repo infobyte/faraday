@@ -22,7 +22,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Vulnerability,
 )
-from faraday.server.threads.workflows import _process_entry
+from faraday.server.utils.workflows import _process_entry
 
 logger = get_task_logger(__name__)
 

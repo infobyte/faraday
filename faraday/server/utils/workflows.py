@@ -1,18 +1,13 @@
-"""
-Faraday Penetration Test IDE
-Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
-See the file 'doc/LICENSE' for the license information
-"""
-# Standard library imports
 import logging
-import threading
 from datetime import datetime
 from queue import Empty, Queue
 
 # Related third party imports
 from marshmallow import Schema, fields
 from sqlalchemy import inspect
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from gevent.event import Event
 
 # Local application imports
 from faraday.server.api.modules.comments import CommentSchema
@@ -22,6 +17,7 @@ from faraday.server.api.modules.workflow import (
     fields_lookup,
     rules_attributes,
 )
+from faraday.server.extensions import socketio
 from faraday.server.models import (
     db,
     Host,
@@ -35,6 +31,7 @@ from faraday.server.models import (
     Comment,
     CustomFieldsSchema,
 )
+from faraday.server.utils.reference import create_reference
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +104,14 @@ def _process_field_data(obj, field):
 
     field = field.split('/')
 
+    # special case for vulns web that have host field
+    if "web" in obj.__class__.__name__.lower() and field[0] == "host":
+        field = ["service"] + field
+
+    # special case for service_id
+    if field[0] == "service_id":
+        return obj, "service_id"
+
     for route in field:
         obj_data_in_field = getattr(obj, route, None)
         if obj_data_in_field is None:
@@ -121,10 +126,8 @@ def _process_field_data(obj, field):
 
 def _check_leaf(obj, condition):
 
-    obj, field = _process_field_data(obj, condition.field)
-    model_data = getattr(obj, field, None)
-    if model_data is None:
-        raise ValueError(f"Field \"{field}\" not found in object {obj}")
+    target_obj, field = _process_field_data(obj, condition.field)
+    model_data = getattr(target_obj, field, None)
 
     operator = OPERATORS.get(condition.operator, None)
     if operator is None:
@@ -133,7 +136,7 @@ def _check_leaf(obj, condition):
     class_name = obj.__class__.__name__.lower()
     class_name = "vulnerability" if "web" in class_name else class_name
 
-    data_type = [x.get("type") for x in rules_attributes[class_name] if x.get("name") == field][0]
+    data_type = [x.get("type") for x in rules_attributes[class_name] if x.get("name") == condition.field][0]
     data = condition.data
 
     if data_type == "string":
@@ -151,6 +154,18 @@ def _check_leaf(obj, condition):
     elif data_type == "cwe":
         model_data = [x.name for x in model_data]
         data = str(data)
+    elif data_type == "null_or_not":
+        model_data = None if model_data == [] else model_data
+        return operator(model_data)
+    elif data_type == "vuln_type":
+        vuln_type = "Vulnerability"
+        if model_data is not None:
+            vuln_type = "Web Vulnerability"
+        return operator(vuln_type, data)
+
+    # Fix specific fields
+    if field == "hostnames":
+        model_data = [x.name for x in model_data]
 
     return operator(model_data, data)
 
@@ -256,7 +271,7 @@ def _modify_custom_field(cf_name, obj, value, append):
 
 def _create_reference(value, obj):
 
-    obj.references.add(value)
+    create_reference([{"name": value, "type": "other"}], obj.id)
 
 
 def _create_policy_violation(value, obj):
@@ -265,6 +280,22 @@ def _create_policy_violation(value, obj):
 
 
 def _execute_action(obj, action, workflow):
+    # This will help to realize if severity was modified or if the vulnerability was deleted for later host stats update
+    # Maybe, in the future it will be helpful to return something more useful to know if any field was modified.
+    host_id = None
+    model_to_modify = workflow.model
+
+    # Check if action.target is set
+    # Add more targets here if needed
+    if action.target == 'asset':
+        if obj.host_id:
+            host_id = obj.host_id
+        else:
+            host_id = obj.service.host_id
+        if host_id is None:
+            raise ValueError(f"Object {obj} has no host_id")
+        obj = db.session.query(Host).filter(Host.id == host_id).first()
+        model_to_modify = "host"
 
     # Check if custom field
     if action.custom_field is True:
@@ -272,10 +303,10 @@ def _execute_action(obj, action, workflow):
     else:
         if action.command in ("UPDATE", "APPEND"):
 
-            field_type = fields_lookup[workflow.model].get(action.field).get("type")
-            can_replace = fields_lookup[workflow.model].get(action.field).get("replace")
-            can_append = fields_lookup[workflow.model].get(action.field).get("append")
-            valid_values = fields_lookup[workflow.model].get(action.field).get("valid", None)
+            field_type = fields_lookup[model_to_modify].get(action.field).get("type")
+            can_replace = fields_lookup[model_to_modify].get(action.field).get("replace")
+            can_append = fields_lookup[model_to_modify].get(action.field).get("append")
+            valid_values = fields_lookup[model_to_modify].get(action.field).get("valid", None)
 
             if (can_append is False and action.command == "APPEND")\
                     or (can_replace is False and action.command == "UPDATE"):
@@ -288,6 +319,12 @@ def _execute_action(obj, action, workflow):
 
             if field_type == "string":
                 if can_append is False or (can_replace is True and action.command == "UPDATE"):
+                    if action.field == 'severity':
+                        if obj.severity != action.value:
+                            if obj.host_id:
+                                host_id = obj.host_id
+                            else:
+                                host_id = obj.service.host_id
                     setattr(obj, action.field, action.value)
                 elif can_append is True and action.command == "APPEND":
                     current_data = getattr(obj, action.field)
@@ -311,12 +348,19 @@ def _execute_action(obj, action, workflow):
                 _create_reference(action.value, obj)
             elif field_type == "policy_violations":
                 _create_policy_violation(action.value, obj)
+
             db.session.add(obj)
             db.session.commit()
 
         if action.command == "DELETE":
+            if model_to_modify == 'vulnerability':
+                if obj.host_id:
+                    host_id = obj.host_id
+                else:
+                    host_id = obj.service.host_id
             db.session.delete(obj)
             db.session.commit()
+    return host_id
 
 
 def _run_workflow(workflow, obj):
@@ -326,6 +370,7 @@ def _run_workflow(workflow, obj):
     conditions_passed = _check_condition(obj, workflow.root_condition)
     if conditions_passed:
         logger.debug(f"Conditions passed for Workflow id: {workflow.id}, executing {len(workflow.actions)} actions")
+        host_to_update = []
 
         obj_repr = repr(obj)
         message = f"\nJob \"{workflow.name}\" Executed Changes:"
@@ -333,7 +378,7 @@ def _run_workflow(workflow, obj):
         if workflow.actions is not None:
             for action in workflow.actions:
                 try:
-                    _execute_action(obj, action, workflow)
+                    host_to_update = _execute_action(obj, action, workflow)
                     actions_results.append(True)
                     if action.command == "UPDATE":
                         message += f'\nUpdated field "{action.field}" to "{action.value}"'
@@ -342,6 +387,11 @@ def _run_workflow(workflow, obj):
                     elif action.command == "DELETE":
                         message += f'\nDeleted object {obj_repr}'
                         break
+                except IntegrityError as e:
+                    db.session.rollback()
+                    logger.error(f"Action ID: {action.id} Failed to execute. - {e}")
+                    actions_results.append(False)
+                    message += f"\nTask Execution Failed, Task id {action.id}, Error: {e}"
                 except Exception as e:
                     logger.error(f"Action ID: {action.id} Failed to execute. - {e}")
                     actions_results.append(False)
@@ -351,11 +401,11 @@ def _run_workflow(workflow, obj):
         # if not inspect(obj).deleted and not inspect(obj).detached:
         #     _create_log_comment(message, obj, workflow.model)
         message += "\n"
-        return True, message
+        return True, message, host_to_update
     else:
         logger.debug(f"Conditions failed for Workflow id: {workflow.id}, skipping")
         _create_workflow_execution(workflow, repr(obj), "Conditions failed, did not execute actions")
-        return False, ""
+        return False, "", None
 
 
 def _create_workflow_execution(workflow, obj_repr, message, error=None):
@@ -383,19 +433,18 @@ def _get_workflows(*filter_params):
 
 def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
     if False in (obj, obj_type, ws):
-        return False, []
+        return False, [], None
     if isinstance(obj, valid_classes):
-
         if pipeline_given is None:
             # Get pipeline
             if not ws.pipelines:
                 logger.debug(f"Workspace {ws.name} has no pipelines")
-                return False, []
+                return False, [], None
             else:
                 pipeline = next((x for x in ws.pipelines if x.enabled is True), None)
                 if pipeline is None:
                     logger.warning("All pipelines disabled")
-                    return False, []
+                    return False, [], None
         else:
             pipeline = pipeline_given
 
@@ -407,7 +456,7 @@ def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
                         f" to run with current object {repr(obj)}, IDs: {[x.id for x in workflows]}")
         else:
             logger.debug(f"No workflows found to run with object: {repr(obj)}")
-            return True, []
+            return True, [], None
         workflows_results = []
         pipeline_wf_order = pipeline.jobs_order
         if pipeline_wf_order == "":
@@ -420,6 +469,7 @@ def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
         logger.debug(f"Executing in order: {workflows_ids}")
         comment_log = ""
 
+        hosts_to_update = []
         for workflow_id in workflows_ids:
 
             if inspect(obj).deleted or inspect(obj).detached:
@@ -446,7 +496,9 @@ def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
                     continue
 
             try:
-                result, log = _run_workflow(workflow, obj)
+                result, log, host_to_update = _run_workflow(workflow, obj)
+                if host_to_update:
+                    hosts_to_update.append(host_to_update)
                 workflows_results.append(result)
                 comment_log += log
             except Exception as e:
@@ -461,10 +513,10 @@ def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
         if not inspect(obj).deleted and not inspect(obj).detached and comment_log:
             _create_log_comment(comment_log, obj, obj_type)
 
-        return True, workflows_results
+        return True, workflows_results, hosts_to_update
     else:
         logger.debug("Workflows not supported for this type of object")
-        return False, []
+        return False, [], None
 
 
 def _change_pipeline_running_status(id, status):
@@ -477,8 +529,10 @@ def _change_pipeline_running_status(id, status):
 
 
 def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=None):
+    update_host_stats = []
     if obj and obj_id and ws_id:
-        return _check_workflows(*_get_obj_and_workspace(obj, obj_id, ws_id, fields, pipeline_id))
+        _, _, host_ids = _check_workflows(*_get_obj_and_workspace(obj, obj_id, ws_id, fields, pipeline_id))
+        return host_ids
     elif run_all is True:
         logger.info(f"Running all objects with pipeline id {pipeline_id}")
 
@@ -488,7 +542,7 @@ def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=N
             for obj_key, obj_model in obj_table.items():
                 ids = db.session.query(obj_model.id).filter(obj_model.workspace_id == ws_id).all()
                 for _id in ids:
-                    _process_entry(
+                    update_host_list = _process_entry(
                         obj_key,
                         _id[0],
                         ws_id,
@@ -496,6 +550,8 @@ def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=N
                         False,
                         pipeline_id if pipeline_id is not None else None
                        )
+                    if update_host_list:
+                        update_host_stats += update_host_list
         except Exception as e:
             logger.error(f"Error while running pipeline\n{e}")
             _change_pipeline_running_status(pipeline_id, False)
@@ -504,32 +560,24 @@ def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=N
         ws_name = db.session.query(Workspace.name).filter(Workspace.id == ws_id).first()[0]
 
         _change_pipeline_running_status(pipeline_id, False)
-        return True
+
+    logger.debug(f"Hosts to update stats {update_host_stats}")
+    return update_host_stats
 
 
-class WorkflowWorker(threading.Thread):
+workflow_stop_event = Event()
 
-    def __init__(self, app, workflow_queue, *args, **kwargs):
-        threading.Thread.__init__(self, name="WorkflowWorkerThread", daemon=True, *args, **kwargs)
-        self.app = app
-        self.workflow_queue = workflow_queue
-        self.stop_thread = False
-        self.__event = threading.Event()
 
-    def stop(self):
-        logger.info("Workflow Worker Thread [Stopping...]")
-        self.__event.set()
-
-    def run(self):
-        logger.info("Workflow Worker Thread [Start]")
-        while not self.__event.is_set():
-            try:
-                entry_data = self.workflow_queue.get(False, timeout=0.1)
-                if entry_data:
-                    with self.app.app_context():
-                        _process_entry(*entry_data)
-            except Empty:
-                self.__event.wait(INTERVAL)
-            except Exception as ex:
-                logger.exception(ex)
-        logger.info("Workflow Worker Thread [Stop]")
+def workflow_background_task(app):
+    while not workflow_stop_event.is_set():
+        try:
+            entry_data = WORKFLOW_QUEUE.get(False, timeout=0.1)
+            if entry_data:
+                with app.app_context():
+                    _process_entry(*entry_data)
+        except Empty:
+            socketio.sleep(INTERVAL)
+        except Exception as ex:
+            logger.exception(ex)
+    else:
+        logger.info("Reports processor stopped")

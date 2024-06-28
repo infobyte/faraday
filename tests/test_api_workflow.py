@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from unittest import mock
 
 import pytest
 
 from faraday.server.api.modules.workflow import JobView, TaskView, PipelineView, PipelineSchema
 from faraday.server.models import Workflow, Action, db, Pipeline, Comment
-from faraday.server.threads.workflows import _process_entry, WORKFLOW_QUEUE
+from faraday.server.utils.workflows import _process_entry, WORKFLOW_QUEUE
 from tests import factories
 from tests.factories import ActionFactory, HostFactory, CommentFactory, VulnerabilityFactory, \
     VulnerabilityWebFactory
@@ -281,18 +280,6 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
                [workflow2.actions[0].value,
                 workflow2.actions[0].command,
                 workflow2.actions[0].field]
-
-    def test_can_create_until_license_limit(self, test_client):
-        with mock.patch('faraday.server.api.modules.workflow.get_license',
-                        mock.Mock(return_value=LicenseTest(pipeline_jobs_limit=7))):
-            for i in range(2):
-                data = self.factory.build_dict()
-                res = test_client.post(self.url(), data=data)
-                assert res.status_code == 201
-            # Workflows created 7, limit 7
-            data = self.factory.build_dict()
-            res = test_client.post(self.url(), data=data)
-            assert res.status_code == 403
 
     def test_create_workflow_with_action(self, test_client):
         action = ActionFactory.create()

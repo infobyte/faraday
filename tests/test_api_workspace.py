@@ -15,7 +15,7 @@ from faraday.server.models import Workspace, Scope, SeveritiesHistogram
 from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
-from faraday.server.debouncer import Debouncer, debounce_workspace_update
+from faraday.server.debouncer import debounce_workspace_update
 
 vulnerabilities = [
     {
@@ -713,4 +713,3 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
-

@@ -340,7 +340,7 @@ def get_prefixed_url(app, url):
     return url
 
 
-def create_app(db_connection_string=None, testing=None, register_extensions_flag=True):
+def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',
@@ -525,7 +525,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     app.view_functions['agent_api.AgentView:post'].is_public = True
 
     # Remove agents that where registered
-    if not testing:
+    if not testing and remove_sids:
         with app.app_context():
             remove_sid()
 
@@ -537,12 +537,14 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     return app
 
 
-def get_app(db_connection_string=None, testing=None, register_extensions_flag=True):
+def get_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
+    logger.debug("Calling get_app")
     global FARADAY_APP  # pylint: disable=W0603
     if not FARADAY_APP:
         FARADAY_APP = create_app(db_connection_string=db_connection_string,
                                  testing=testing,
-                                 register_extensions_flag=register_extensions_flag)
+                                 register_extensions_flag=register_extensions_flag,
+                                 remove_sids=remove_sids)
     return FARADAY_APP
 
 

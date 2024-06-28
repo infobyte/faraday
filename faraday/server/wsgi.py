@@ -1,3 +1,3 @@
-from faraday.server.app import create_app
+from faraday.server.app import get_app
 
-app = create_app()
+app = get_app()

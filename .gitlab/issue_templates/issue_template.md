@@ -1,66 +1,58 @@
----
-name: Bug report
-about: Create a report an issue
+**Descripción:**
 
----
+Breve descripción del issue y sus implicaciones.
 
-Please search the [Wiki](https://github.com/infobyte/faraday/wiki) for a solution before posting a ticket. Use the <strong>“New Support Request”</strong> button to the right of the screen to submit a ticket for technical support.
+En caso de ser un bug, agregar los pasos necesarios para reproducirlo.
 
-## Issue Type
- - Bug Re port
- - Feature Idea
- - Documentation Report
+**Lista de TODOs:**
 
+- [ ] Agregar "tal cosa".
+- [ ] Modificar "tal otra".
+- [ ] Eliminar "esto otro".
 
-## Faraday version
+**Validaciones:**
 
-Paste the output of the *./faraday.py --version* command
+- [ ] Se debe validar que "tal cosa".
+- [ ] Se debe validar que "tal otra".
 
-## Component Name
+**Capturas de pantalla o Adjuntos que sean necesarios para reproducir el problema:**
 
-If you know where the problem lays indicate it:
-WebGui/GTKGui/Plugin/Console/Continuous Scanning/Etc.
+`imagen1.png`, `scan_file.json`, `etc`
 
-## Steps to reproduce
+**Features afectadas:**
 
-Provide detailed steps on how the issue happened so we can try to reproduce it. If the issue is random, please provide as much information as possible.
+Al crear el issue, analizar a conciencia si el feature que pensamos que es el que se va a cambiar es el único o hay otros features relacionados que se puedan ver afectados.
 
-## Expected results
+- [ ] Workspaces
+- [ ] Filter
+- [ ] Assets
+- [ ] Services
+- [ ] Vulnerabilities
+- [ ] Upload Vulnerabilities Report
+- [ ] Vulnerability Manual Creation
+- [ ] Knowledge Base
+- [ ] Analytics
+- [ ] Planner
+- [ ] Executive Reports
+- [ ] Custom Templates
+- [ ] Agents
+- [ ] Cloud Agents
+- [ ] Scheduler
+- [ ] Pipelines
+- [ ] Users
+- [ ] Notifications
+- [ ] Custom Fields
+- [ ] Preferences
+- [ ] Otro: Cuál?
 
-What did you expect to happen when following the steps above?
+**Checklist para pasar a stage Test:**
 
-### Debugging tracebacks (current results)
+- [ ] Se han agregado o actualizado los test unitarios. Idealmente correr los tests con coverage, para determinar si todos los cambios fueron testeados.
+- [ ] La documentación ha sido revisada y actualizada.
+- [ ] El código fue hecho siguiendo las convenciones generales del proyecto.
+- [ ] Los cambios han sido testeados localmente.
+- [ ] Se pasó el texto del changelog por una herramienta de ayuda con inteligencia artificial para comprobar su legibilidad.
 
-Try to reproduce the bug with the server and/or gtk client in debug mode and check the logs for the ERROR string.
-Add here any errors you find while running in debug mode or, if possible, Faraday’s log files (located at *$HOME/.faraday/logs/*).
+**Descripción de cómo se debe probar el issue y/o API requests:**
 
-If you need help on how to execute in debug mode [click here for more information](https://github.com/infobyte/faraday/wiki/troubleshooting).
-
-Please attach the result of:
-
-pip freeze > requirements_freeze.txt
-
-### Screenshots
-
-If you don't find anything on the logs, please provide screenshots of the error.
-
-## Environment information
-
-### Configuration files
-
-Mention any settings you have changed/added/removed.
-
-### Reports/Extra data
-
-If you are having issues with plugins, please attach relevant files if possible.
-(strip your reports of all sensitive information beforehand).
-
-### OS
-
-Provide information on your operating system. Example:
-
-$ cat /etc/lsb-release
-DISTRIB_ID=Ubuntu
-DISTRIB_RELEASE=16.10
-DISTRIB_CODENAME=yakkety
-DISTRIB_DESCRIPTION="Ubuntu 16.10"
+Lista o colección de requests de Postman/Bruno/etc que sean nuevas o hayan sido creadas a partir de este issue

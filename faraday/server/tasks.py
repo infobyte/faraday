@@ -22,7 +22,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Vulnerability,
 )
-from faraday.server.utils.workflows import _process_entry
+from faraday.server.utils.workflows import _process_entry, valid_object_types
 
 logger = get_task_logger(__name__)
 
@@ -39,6 +39,17 @@ def on_success_process_report_task(results, command_id=None):
     command.end_date = command_end_date
     logger.error("File for command id %s successfully imported", command_id)
     db.session.commit()
+
+    # Apply Workflow
+    pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
+    if pipeline:
+        for command_object in command.command_objects:
+            if command_object.object_type in valid_object_types:
+                workflow_task.delay(command_object.object_type,
+                                    command_object.object_id,
+                                    command_object.workspace.id,
+                                    update_hosts=False)
+    logger.debug("No pipelines found in ws %s", command.workspace.name)
 
     for result in results:
         if result['created']:

@@ -1,7 +1,8 @@
+import sys
 import uuid
 from datetime import datetime
-import validators
 
+import validators
 from elasticsearch import Elasticsearch, helpers, __version__
 import click
 from sqlalchemy.orm import joinedload
@@ -71,7 +72,7 @@ def _ingest(all_workspaces=False,
 
     if test_connection:
         _test_connection(es, ingest_settings)
-        exit()
+        sys.exit()
 
     if all_workspaces:
         workspaces = Workspace.query.all()

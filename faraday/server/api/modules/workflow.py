@@ -31,7 +31,6 @@ workflow_api = Blueprint('workflow_api', __name__)
 logger = logging.getLogger(__name__)
 
 vuln_lookup = {
-        "comments": {"type": "comment", "replace": False, "append": True},
         "confirmed": {"type": "bool", "replace": True, "append": False},
         "data": {"type": "string", "replace": True, "append": False},
         "description": {"type": "string", "replace": True, "append": False},
@@ -161,7 +160,6 @@ rules_attributes = {
         {"name": "confirmed", "display_name": "Confirmed", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
         {"name": "description", "display_name": "Description", "type": "string", "operators": string_operators},
         {"name": "data", "display_name": "Data", "type": "string", "operators": string_operators},
-        {"name": "tags", "display_name": "Tags", "type": "string", "operators": in_not_in},
         {"name": "cwe", "display_name": "CWE", "type": "cwe", "operators": in_not_in},
         {"name": "cve", "display_name": "CVE", "type": "string", "operators": in_not_in},
         {"name": "resolution", "display_name": "Resolution", "type": "string", "operators": string_operators},
@@ -176,13 +174,11 @@ rules_attributes = {
         {"name": "impact_integrity", "display_name": "Impact Integrity", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
         {"name": "tool", "display_name": "Tool", "operators": string_operators, "type": "string"},
         {"name": "external_id", "display_name": "External ID", "operators": string_operators, "type": "string"},
-        {"name": "risk", "display_name": "Risk", "operators": numeric_operators, "type": "int"},
         {"name": "cvss2_base_score", "display_name": "CVSS2 Base Score", "operators": numeric_operators, "type": "float"},
         {"name": "cvss3_base_score", "display_name": "CVSS3 Base Score", "operators": numeric_operators, "type": "float"},
         {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in},
         {"name": "path", "display_name": "Path", "type": "string", "operators": string_operators},
         {"name": "service/name", "display_name": "Service Name", "type": "string", "operators": string_operators},
-        {"name": "issuetracker", "display_name": "Issue Tracker", "type": "string", "operators": in_not_in},
         {"name": "host/ip", "display_name": "Asset IP", "type": "string", "operators": string_operators},
         {"name": "evidence", "display_name": "Evidence", "type": "null_or_not", "operators": null_not_null},
         {"name": "host/os", "display_name": "Asset OS", "type": "string", "operators": string_operators},

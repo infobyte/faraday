@@ -5,10 +5,10 @@ import pytest
 import sqlalchemy
 
 from faraday.server.api.modules.workflow import JobView, TaskView, PipelineView, PipelineSchema, fields_lookup
-from faraday.server.models import Workflow, Action, db, Pipeline, Comment
+from faraday.server.models import Workflow, Action, db, Pipeline
 from faraday.server.utils.workflows import _process_entry, WORKFLOW_QUEUE
 from tests import factories
-from tests.factories import ActionFactory, HostFactory, CommentFactory, VulnerabilityFactory, \
+from tests.factories import ActionFactory, HostFactory, VulnerabilityFactory, \
     VulnerabilityWebFactory
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 
@@ -108,16 +108,6 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
         assert obj.description == "ActionExecuted"
         assert obj.host.ip == "1.1.1.1"
-
-    def test_pipeline_executed_and_create_comment_log(self, test_client):
-        ws, action, workflow, pipeline = create_pipeline(test_client, "host")
-        obj = HostFactory.create(description="testing", workspace=ws)
-        db.session.add(obj)
-        db.session.commit()
-        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
-        assert obj.description == "ActionExecuted"
-        comments = db.session.query(Comment).filter(Comment.object_id == obj.id, Comment.object_type == "host").all()
-        assert comments
 
     @pytest.mark.skip(reason="doesn't work on CI, fails on Postgres")
     def test_pipeline_job_order_execute_and_change(self, test_client):
@@ -377,29 +367,6 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         assert host.description != "ActionExecuted"
         assert host.description == "testing"
 
-    def test_object_not_supported(self, test_client):
-        action = ActionFactory.create()
-        db.session.commit()
-        workflow_data = self.factory.build_dict(
-            tasks_ids=[action.id],
-            model="host",
-            rules_json=[
-                {
-                    "type": "leaf",
-                    "field": "description",
-                    "operator": "==",
-                    "data": "testing"
-                }
-            ]
-        )
-        res = test_client.post(self.url(), data=workflow_data)
-        assert res.status_code == 201
-        comment = CommentFactory.create()
-        db.session.add(comment)
-        db.session.commit()
-        # TODO: Validate success output
-        _process_entry(comment.__class__.__name__, [comment.id], comment.workspace.id)
-
     def test_object_does_not_exist(self, test_client):
         action = ActionFactory.create()
         db.session.commit()
@@ -480,21 +447,6 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         assert not vuln.policy_violations
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.policy_violations == {"Newpol", "Newpol2"}
-
-    def test_action_execute_comment(self, test_client):
-        action = ActionFactory.create(field="comments", value="New Comment", command="APPEND")
-        db.session.commit()
-        ws, action, workflow, pipeline = create_pipeline(test_client, actions=[action], model="vulnerability")
-        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
-        db.session.add(vuln)
-        db.session.commit()
-        comments = db.session.query(Comment)\
-            .filter(Comment.object_id == vuln.id, Comment.object_type == "vulnerability").all()
-        assert not comments
-        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
-        comments = db.session.query(Comment) \
-            .filter(Comment.object_id == vuln.id, Comment.object_type == "vulnerability").all()
-        assert len(comments) == 2
 
     @pytest.mark.parametrize(
         "cf_type", [
@@ -592,7 +544,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         if valid_values:
             value = random.choice(valid_values)
         else:
-            if field_type in ("string", "comment", "policy_violations", "references", "tag"):
+            if field_type in ("string", "policy_violations", "references"):
                 value = "testing_new"
             elif field_type == "int":
                 value = 123
@@ -607,7 +559,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
 
-        if field_type in ("policy_violations", "tag"):
+        if field_type in ("policy_violations"):
             assert getattr(obj, field_name) == {value}
         else:
             assert getattr(obj, field_name) == value
@@ -628,7 +580,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         if valid_values:
             value = random.choice(valid_values)
         else:
-            if field_type in ("string", "comment", "policy_violations", "references", "tag"):
+            if field_type in ("string", "policy_violations", "references"):
                 value = "testing_new"
             elif field_type == "int":
                 value = 123
@@ -643,12 +595,8 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
 
-        if field_type in ("policy_violations", "tag"):
+        if field_type in ("policy_violations"):
             assert getattr(obj, field_name) == {value}
-        elif field_type == "comment":
-            comments = db.session.query(Comment) \
-                .filter(Comment.object_id == obj.id, Comment.object_type == "vulnerability").all()
-            assert len(comments) == 2
         elif field_type == "references":
             assert [x.name for x in obj.refs] == [value]
         else:
@@ -670,7 +618,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         if valid_values:
             value = random.choice(valid_values)
         else:
-            if field_type in ("string", "hostnames", "tag"):
+            if field_type in ("string", "hostnames"):
                 value = "testing_new"
             elif field_type == "bool":
                 value = True
@@ -683,9 +631,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
 
-        if field_type in ("tag"):
-            assert getattr(obj, field_name) == {value}
-        elif field_type == "hostnames":
+        if field_type == "hostnames":
             hostname_names = [x.name for x in obj.hostnames]
             assert hostname_names == [value]
         else:
@@ -707,7 +653,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         if valid_values:
             value = random.choice(valid_values)
         else:
-            if field_type in ("string", "hostnames", "tag"):
+            if field_type in ("string", "hostnames"):
                 value = "testing_new"
             elif field_type == "bool":
                 value = True
@@ -720,9 +666,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
 
-        if field_type in ("tag"):
-            assert getattr(obj, field_name) == {value}
-        elif field_type == "hostnames":
+        if field_type == "hostnames":
             hostname_names = [x.name for x in obj.hostnames]
             assert value in hostname_names
         else:

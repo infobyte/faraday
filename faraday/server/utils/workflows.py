@@ -27,8 +27,6 @@ from faraday.server.models import (
     Workflow,
     Workspace,
     Pipeline,
-    TagObject,
-    Comment,
     CustomFieldsSchema,
 )
 from faraday.server.utils.reference import create_reference
@@ -262,17 +260,6 @@ def _check_condition(obj, condition):
         raise ValueError(f"Invalid type: \"{condition.type}\"")
 
 
-def _create_tag(tags, obj):
-    tags = [x.strip() for x in tags.split(",")]
-    for tag in tags:
-        obj.tags.add(tag)
-    db.session.add(obj)
-
-
-def _create_log_comments(text, objs, model):
-    _send_bulk_comments([obj.id for obj in objs], model, text)
-
-
 @lru_cache(maxsize=128)
 def _get_custom_field_type(cf_name):
     cf = db.session.query(CustomFieldsSchema).filter(CustomFieldsSchema.field_name == cf_name).first()
@@ -369,19 +356,6 @@ def _update_or_append(obj, action, model_to_modify, field_type, can_replace, can
                 "field": action.field,
                 "value": value
             }
-    elif field_type == "tag":
-        if can_append is False or (can_replace is True and action.command == "UPDATE"):
-            # Delete tags in object if set to replace
-            db.session.query(TagObject).filter(TagObject.object_id == obj.id).delete()
-        _create_tag(action.value, obj)
-        should_commit = True
-    elif field_type == "comment":
-        action_to_perform_dict = {
-            "model": model_to_modify,
-            "field_type": field_type,
-            "field": action.field,
-            "value": action.value
-        }
     elif field_type == "references":
         _create_reference(action.value, obj)
         should_commit = True
@@ -468,32 +442,9 @@ def _calculate_or_execute_action(objs, action, workflow):
         if host_id is not None:
             host_ids.append(host_id)
     if should_commit:
-        # TAGS, REFERENCES, POLICY VIOLATIONS AND CF ARE COMMITED HERE
+        # REFERENCES, POLICY VIOLATIONS AND CF ARE COMMITED HERE
         db.session.commit()
     return all_actions, host_ids
-
-
-def _send_bulk_comments(ids, model_name, text):
-    model = obj_table[model_name]
-    ws_id = db.session.query(model.workspace_id).filter(model.id.in_(ids)).first()[0]
-
-    model_name = "vulnerability" if "web" in model_name else model_name
-
-    # Bulk create comments for all obj_ids
-    smtp = sqlalchemy.insert(Comment).values(
-        [
-            {
-                "comment_type": "system",
-                "object_id": obj_id,
-                "object_type": model_name,
-                "text": text,
-                "workspace_id": ws_id
-            }
-            for obj_id in ids
-        ]
-    )
-    db.session.execute(smtp)
-    db.session.commit()
 
 
 def _perform_bulk_actions(actions: dict):
@@ -505,9 +456,6 @@ def _perform_bulk_actions(actions: dict):
             smtp = sqlalchemy.delete(model).where(model.id.in_(obj_ids))
             db.session.execute(smtp)
             db.session.commit()
-
-        elif action.get("field_type") == "comment":
-            _send_bulk_comments(obj_ids, action.get("model"), action.get("value"))
 
         else:
             # Create bulk update query
@@ -594,7 +542,6 @@ def _check_workflows(objs, obj_type, ws, fields=None, pipeline=None):
         workflows_ids = [int(x) for x in workflows_ids if int(x) in [x.id for x in workflows]]
 
         logger.debug(f"Executing in order: {workflows_ids}")
-        comment_log = ""
 
         hosts_to_update = []
         for workflow_id in workflows_ids:
@@ -629,25 +576,12 @@ def _check_workflows(objs, obj_type, ws, fields=None, pipeline=None):
                 if host_to_update:
                     hosts_to_update += host_to_update
                 workflows_results.append(result)
-                comment_log += log
             except Exception as e:
                 workflows_results.append(False)
                 logger.error(f"Error while running workflow id [{workflow.id}] - Error: {e}")
                 break
         logger.debug(f"Jobs that met conditions and executed actions / Jobs checked total ="
                      f" {workflows_results.count(True)}/{len(workflows)}")
-
-        objects_not_deleted = []
-        for obj in objs:
-            try:
-                print(obj.id)
-                objects_not_deleted.append(obj)
-            except sqlalchemy.orm.exc.ObjectDeletedError:
-                logger.debug(f"Object {obj} was deleted by previous workflow")
-                continue
-
-        if objects_not_deleted:
-            _create_log_comments(comment_log, objects_not_deleted, obj_type)
 
         return True, workflows_results, hosts_to_update
     else:

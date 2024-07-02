@@ -625,9 +625,6 @@ def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=
             logger.error(f"Error while running pipeline\n{e}")
             _change_pipeline_running_status(pipeline_id, False)
 
-        pipeline_name = db.session.query(Pipeline.name).filter(Pipeline.id == pipeline_id).first()[0]
-        ws_name = db.session.query(Workspace.name).filter(Workspace.id == ws_id).first()[0]
-
         _change_pipeline_running_status(pipeline_id, False)
 
         logger.debug(f"Hosts to update stats {update_host_stats}")

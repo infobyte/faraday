@@ -1,18 +1,19 @@
 import logging
 from datetime import datetime
+from functools import lru_cache
 from queue import Empty, Queue
 
+import sqlalchemy
 # Related third party imports
 from marshmallow import Schema, fields
 from sqlalchemy import inspect
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from gevent.event import Event
 
 # Local application imports
-from faraday.server.api.modules.comments import CommentSchema
 from faraday.server.api.modules.workflow import (
-    WorkflowExecutionSchema,
     OPERATORS,
     fields_lookup,
     rules_attributes,
@@ -24,7 +25,6 @@ from faraday.server.models import (
     Service,
     VulnerabilityGeneric,
     Workflow,
-    WorkflowExecution,
     Workspace,
     Pipeline,
     TagObject,
@@ -49,14 +49,55 @@ obj_table = {
     # "service": Service
 }
 
+run_all_obj_table = {
+    "vulnerability": VulnerabilityGeneric,
+    "host": Host,
+}
+
 
 class BooleanSchema(Schema):
     value = fields.Boolean(default=False)
 
 
-def _get_obj_and_workspace(obj_type, obj_id, ws_id, fields=None, pipeline_id=None):
-    logger.debug(f"Get object  {obj_type}-{obj_id} from ws {ws_id}")
-    return_if_fail = False, False, False, False
+def _get_workspace(ws_id):
+    workspace = (db.session.query(Workspace)
+                 .options(joinedload(Workspace.pipelines)
+                          .subqueryload(Pipeline.jobs)
+                          .joinedload(Workflow.conditions, Workflow.actions))
+                 .filter(Workspace.id == ws_id).first())
+    if workspace is None:
+        logger.error(f"Workspace {ws_id} not found")
+        return None
+    return workspace
+
+
+def _get_pipeline(pipeline_id: int = None, workspace: Workspace = None, ws_id: int = None) -> Pipeline:
+    if pipeline_id is None:
+        # Get pipeline
+        if not workspace.pipelines:
+            logger.debug(f"Workspace {workspace.name} has no pipelines")
+            return None
+        else:
+            pipeline = next((x for x in workspace.pipelines if x.enabled is True), None)
+            if pipeline is None:
+                logger.warning("All pipelines disabled")
+                return None
+            return pipeline
+    else:
+        pipeline = (db.session.query(Pipeline)
+                    .options(subqueryload(Pipeline.jobs)
+                             .joinedload(Workflow.conditions, Workflow.actions))
+                    .filter(Workspace.id == ws_id, Pipeline.id == pipeline_id).first()) \
+                    if pipeline_id is not None else None
+        if pipeline is None:
+            logger.warning(f"Pipeline {pipeline_id} not found")
+            return None
+        return pipeline
+
+
+def _get_obj_and_workspace(obj_type, obj_ids, ws_id, fields=None, pipeline_id=None):
+    logger.debug(f"Get objects  {obj_type}-{obj_ids} from ws {ws_id}")
+    return_if_fail = False, False, False, False, False
     obj_type = obj_type.lower()
 
     obj_type = "vulnerability_web" if obj_type == "vulnerabilityweb" else obj_type
@@ -65,9 +106,13 @@ def _get_obj_and_workspace(obj_type, obj_id, ws_id, fields=None, pipeline_id=Non
         logger.info("Workflows not supported for this type of object")
         return return_if_fail
 
-    workspace = db.session.query(Workspace).filter(Workspace.id == ws_id).first()
-    pipeline = db.session.query(Pipeline).filter(Workspace.id == ws_id, Pipeline.id == pipeline_id).first()\
-        if pipeline_id is not None else None
+    workspace = _get_workspace(ws_id)
+    if workspace is None:
+        return return_if_fail
+
+    pipeline = _get_pipeline(pipeline_id, workspace, ws_id)
+    if pipeline is None:
+        return return_if_fail
 
     if obj_type not in obj_table:
         logger.error(f"Invalid object type: {obj_type}")
@@ -75,29 +120,57 @@ def _get_obj_and_workspace(obj_type, obj_id, ws_id, fields=None, pipeline_id=Non
 
     query = db.session.query(obj_table[obj_type])
 
+    # CHECK FOR JOINED LOADS
+
+    vuln_joined_loads = []
+    host_joined_loads = []
+
+    if pipeline is not None:
+        for job in pipeline.jobs:
+
+            if job.model == "host":
+                for act in job.actions:
+                    if act.field == "hostnames" and act.command == "APPEND":
+                        host_joined_loads.append(joinedload(Host.hostnames))
+
+            if job.model == "vulnerability":
+                for act in job.actions:
+                    if act.target == "asset":
+                        if act.field == "hostnames":
+                            vuln_joined_loads.append(joinedload(VulnerabilityGeneric.host).subqueryload(Host.hostnames))
+                        else:
+                            vuln_joined_loads.append(joinedload(VulnerabilityGeneric.host))
+
+    vuln_joined_loads = set(vuln_joined_loads)
+    host_joined_loads = set(host_joined_loads)
+
     filters = []
     if obj_type in ("vulnerability", "vulnerability_web"):
         filters.append(VulnerabilityGeneric.workspace == workspace)
-        filters.append(VulnerabilityGeneric.id == obj_id)
+        filters.append(VulnerabilityGeneric.id.in_(obj_ids))
+        if vuln_joined_loads:
+            query = query.options(*vuln_joined_loads)
     elif obj_type == "host":
         filters.append(Host.workspace == workspace)
-        filters.append(Host.id == obj_id)
+        filters.append(Host.id.in_(obj_ids))
+        if host_joined_loads:
+            query = query.options(*host_joined_loads)
     elif obj_type == "service":
         filters.append(Service.workspace == workspace)
-        filters.append(Service.id == obj_id)
+        filters.append(Service.id.in_(obj_ids))
 
     try:
-        obj = query.filter(*filters).one()
+        objs = query.filter(*filters).all()
     except NoResultFound:
-        logger.warning(f"Object not found in db - {obj_type}/{obj_id} on {workspace}")
-        logger.debug(f"obj_type: {obj_type} - id: {obj_id} - workspace: {workspace}")
+        logger.warning(f"Object not found in db - {obj_type}/{obj_ids} on {workspace}")
+        logger.debug(f"obj_type: {obj_type} - id: {obj_ids} - workspace: {workspace}")
         return return_if_fail
     except MultipleResultsFound:
         logger.error("More than one result found")
-        logger.debug(f"obj_type: {obj_type} - id: {obj_id} - workspace: {workspace}")
+        logger.debug(f"obj_type: {obj_type} - id: {obj_ids} - workspace: {workspace}")
         return return_if_fail
 
-    return obj, obj_type, workspace, fields, pipeline
+    return objs, obj_type, workspace, fields, pipeline
 
 
 def _process_field_data(obj, field):
@@ -193,53 +266,24 @@ def _create_tag(tags, obj):
     tags = [x.strip() for x in tags.split(",")]
     for tag in tags:
         obj.tags.add(tag)
+    db.session.add(obj)
 
 
-def _create_comment(value, obj):
-    comment_data = CommentSchema().load(
-        {
-            "object_id": obj.id,
-            "object_type": "vulnerability",
-            "text": value,
-        }
-    )
-    comment = Comment(
-        comment_type="system",
-        object_id=comment_data.get("object_id"),
-        object_type=comment_data.get("object_type"),
-        text=comment_data.get("text"),
-        workspace_id=obj.workspace_id
-    )
-    db.session.add(comment)
-    db.session.commit()
+def _create_log_comments(text, objs, model):
+    _send_bulk_comments([obj.id for obj in objs], model, text)
 
 
-def _create_log_comment(text, obj, model):
-    model = "vulnerability" if "web" in model else model
-    comment_data = CommentSchema().load(
-        {
-            "object_id": obj.id,
-            "object_type": model,
-            "text": text,
-        }
-    )
-    comment = Comment(
-        comment_type="system",
-        object_id=comment_data.get("object_id"),
-        object_type=comment_data.get("object_type"),
-        text=comment_data.get("text"),
-        workspace_id=obj.workspace_id
-    )
-    db.session.add(comment)
-    db.session.commit()
+@lru_cache(maxsize=128)
+def _get_custom_field_type(cf_name):
+    cf = db.session.query(CustomFieldsSchema).filter(CustomFieldsSchema.field_name == cf_name).first()
+    if cf is None:
+        raise ValueError(f"Custom field \"{cf_name}\" not found in DB")
+    return cf.field_type
 
 
 def _modify_custom_field(cf_name, obj, value, append):
 
-    cf = db.session.query(CustomFieldsSchema).filter(CustomFieldsSchema.field_name == cf_name).first()
-    if cf is None:
-        raise ValueError(f"Custom field \"{cf_name}\" not found in DB")
-    cf_type = cf.field_type
+    cf_type = _get_custom_field_type(cf_name)
 
     if obj.custom_fields is None:
         obj.custom_fields = {}
@@ -266,196 +310,279 @@ def _modify_custom_field(cf_name, obj, value, append):
         obj.custom_fields[cf_name] = value
 
     db.session.add(obj)
-    db.session.commit()
 
 
 def _create_reference(value, obj):
 
     create_reference([{"name": value, "type": "other"}], obj.id)
+    db.session.add(obj)
 
 
 def _create_policy_violation(value, obj):
 
     obj.policy_violations.add(value)
+    db.session.add(obj)
 
 
-def _execute_action(obj, action, workflow):
+def _update_or_append(obj, action, model_to_modify, field_type, can_replace, can_append):
+
+    should_commit = False
+    action_to_perform_dict = None
+
+    if field_type == "string":
+        if can_append is False or (can_replace is True and action.command == "UPDATE"):
+            if action.field == 'severity':
+                if obj.severity != action.value:
+                    if obj.host_id:
+                        host_id = obj.host_id
+                    else:
+                        host_id = obj.service.host_id
+            action_to_perform_dict = {
+                "model": model_to_modify,
+                "field_type": field_type,
+                "field": action.field,
+                "value": action.value
+            }
+        elif can_append is True and action.command == "APPEND":
+            current_data = getattr(obj, action.field)
+            new_data = current_data + f"\n{action.value}"
+            action_to_perform_dict = {
+                "model": model_to_modify,
+                "field_type": field_type,
+                "field": action.field,
+                "value": new_data
+            }
+    elif field_type == "int":
+        if can_append is False or (can_replace is True and action.command == "UPDATE"):
+            action_to_perform_dict = {
+                "model": model_to_modify,
+                "field_type": field_type,
+                "field": action.field,
+                "value": action.value
+            }
+    elif field_type == "bool":
+        if can_append is False or (can_replace is True and action.command == "UPDATE"):
+            value = BooleanSchema().load({"value": action.value}).get("value")
+            action_to_perform_dict = {
+                "model": model_to_modify,
+                "field_type": field_type,
+                "field": action.field,
+                "value": value
+            }
+    elif field_type == "tag":
+        if can_append is False or (can_replace is True and action.command == "UPDATE"):
+            # Delete tags in object if set to replace
+            db.session.query(TagObject).filter(TagObject.object_id == obj.id).delete()
+        _create_tag(action.value, obj)
+        should_commit = True
+    elif field_type == "comment":
+        action_to_perform_dict = {
+            "model": model_to_modify,
+            "field_type": field_type,
+            "field": action.field,
+            "value": action.value
+        }
+    elif field_type == "references":
+        _create_reference(action.value, obj)
+        should_commit = True
+    elif field_type == "policy_violations":
+        _create_policy_violation(action.value, obj)
+        should_commit = True
+    elif field_type == "hostnames":
+        current_hostnames = []
+        if action.command == "APPEND":
+            current_hostnames = [x.name for x in obj.hostnames]
+        obj.set_hostnames(current_hostnames + [action.value])
+        should_commit = True
+
+    return action_to_perform_dict, should_commit
+
+
+def _calculate_or_execute_action(objs, action, workflow):
     # This will help to realize if severity was modified or if the vulnerability was deleted for later host stats update
     # Maybe, in the future it will be helpful to return something more useful to know if any field was modified.
-    host_id = None
     model_to_modify = workflow.model
 
-    # Check if action.target is set
-    # Add more targets here if needed
-    if action.target == 'asset':
-        if obj.host_id:
-            host_id = obj.host_id
+    all_actions = {}
+    host_ids = []
+    should_commit = False
+
+    for obj in objs:
+        obj_id = obj.id
+        host_id = None
+
+        # Check if action.target is set
+        # Add more targets here if needed
+        if action.target == 'asset':
+            if obj.host_id:
+                obj_id = host_id = obj.host_id
+            else:
+                obj_id = host_id = obj.service.host_id
+            if obj_id is None:
+                raise ValueError(f"Object {obj} has no host_id")
+            obj = db.session.query(Host).filter(Host.id == obj_id).first()
+            model_to_modify = "host"
+
+        action_to_perform_dict = None
+
+        # Check if custom field
+        if action.custom_field is True:
+            _modify_custom_field(action.field, obj, action.value, action.command == "APPEND")
+            should_commit = True
         else:
-            host_id = obj.service.host_id
-        if host_id is None:
-            raise ValueError(f"Object {obj} has no host_id")
-        obj = db.session.query(Host).filter(Host.id == host_id).first()
-        model_to_modify = "host"
+            if action.command in ("UPDATE", "APPEND"):
 
-    # Check if custom field
-    if action.custom_field is True:
-        _modify_custom_field(action.field, obj, action.value, action.command == "APPEND")
-    else:
-        if action.command in ("UPDATE", "APPEND"):
+                field_type = fields_lookup[model_to_modify].get(action.field).get("type")
+                can_replace = fields_lookup[model_to_modify].get(action.field).get("replace")
+                can_append = fields_lookup[model_to_modify].get(action.field).get("append")
+                valid_values = fields_lookup[model_to_modify].get(action.field).get("valid", None)
 
-            field_type = fields_lookup[model_to_modify].get(action.field).get("type")
-            can_replace = fields_lookup[model_to_modify].get(action.field).get("replace")
-            can_append = fields_lookup[model_to_modify].get(action.field).get("append")
-            valid_values = fields_lookup[model_to_modify].get(action.field).get("valid", None)
+                if (can_append is False and action.command == "APPEND")\
+                        or (can_replace is False and action.command == "UPDATE"):
+                    raise ValueError(f"Command {action.command} not valid for field {action.field}")
 
-            if (can_append is False and action.command == "APPEND")\
-                    or (can_replace is False and action.command == "UPDATE"):
-                raise ValueError(f"Command {action.command} not valid for field {action.field}")
+                if valid_values is not None:
+                    if action.value not in valid_values:
+                        raise ValueError(f"Value {action.value} not in valid values for field {action.field}\n"
+                                         f"Valid Values: {valid_values}")
 
-            if valid_values is not None:
-                if action.value not in valid_values:
-                    raise ValueError(f"Value {action.value} not in valid values for field {action.field}\n"
-                                     f"Valid Values: {valid_values}")
+                action_to_perform_dict, should_commit = _update_or_append(obj, action, model_to_modify, field_type,
+                                                                          can_replace, can_append)
 
-            if field_type == "string":
-                if can_append is False or (can_replace is True and action.command == "UPDATE"):
-                    if action.field == 'severity':
-                        if obj.severity != action.value:
-                            if obj.host_id:
-                                host_id = obj.host_id
-                            else:
-                                host_id = obj.service.host_id
-                    setattr(obj, action.field, action.value)
-                elif can_append is True and action.command == "APPEND":
-                    current_data = getattr(obj, action.field)
-                    new_data = current_data + f"\n{action.value}"
-                    setattr(obj, action.field, new_data)
-            elif field_type == "int":
-                if can_append is False or (can_replace is True and action.command == "UPDATE"):
-                    setattr(obj, action.field, int(action.value))
-            elif field_type == "bool":
-                if can_append is False or (can_replace is True and action.command == "UPDATE"):
-                    value = BooleanSchema().load({"value": action.value}).get("value")
-                    setattr(obj, action.field, value)
-            elif field_type == "tag":
-                if can_append is False or (can_replace is True and action.command == "UPDATE"):
-                    # Delete tags in object if set to replace
-                    db.session.query(TagObject).filter(TagObject.object_id == obj.id).delete()
-                _create_tag(action.value, obj)
-            elif field_type == "comment":
-                _create_comment(action.value, obj)
-            elif field_type == "references":
-                _create_reference(action.value, obj)
-            elif field_type == "policy_violations":
-                _create_policy_violation(action.value, obj)
+            if action.command == "DELETE":
+                if model_to_modify == 'vulnerability':
+                    if obj.host_id:
+                        host_id = obj.host_id
+                    else:
+                        host_id = obj.service.host_id
 
-            db.session.add(obj)
+                action_to_perform_dict = {
+                    "model": model_to_modify,
+                    "field_type": "DELETE",
+                    "field": "DELETE",
+                    "value": "DELETE"
+                }
+
+        if action_to_perform_dict is not None:
+            all_actions.setdefault(frozenset(action_to_perform_dict.items()), []).append(obj_id)
+        if host_id is not None:
+            host_ids.append(host_id)
+    if should_commit:
+        # TAGS, REFERENCES, POLICY VIOLATIONS AND CF ARE COMMITED HERE
+        db.session.commit()
+    return all_actions, host_ids
+
+
+def _send_bulk_comments(ids, model_name, text):
+    model = obj_table[model_name]
+    ws_id = db.session.query(model.workspace_id).filter(model.id.in_(ids)).first()[0]
+
+    model_name = "vulnerability" if "web" in model_name else model_name
+
+    # Bulk create comments for all obj_ids
+    smtp = sqlalchemy.insert(Comment).values(
+        [
+            {
+                "comment_type": "system",
+                "object_id": obj_id,
+                "object_type": model_name,
+                "text": text,
+                "workspace_id": ws_id
+            }
+            for obj_id in ids
+        ]
+    )
+    db.session.execute(smtp)
+    db.session.commit()
+
+
+def _perform_bulk_actions(actions: dict):
+    for action, obj_ids in actions.items():
+        action = dict(action)
+
+        if action.get("field_type") == "DELETE":
+            model = obj_table[action.get("model")]
+            smtp = sqlalchemy.delete(model).where(model.id.in_(obj_ids))
+            db.session.execute(smtp)
             db.session.commit()
 
-        if action.command == "DELETE":
-            if model_to_modify == 'vulnerability':
-                if obj.host_id:
-                    host_id = obj.host_id
-                else:
-                    host_id = obj.service.host_id
-            db.session.delete(obj)
+        elif action.get("field_type") == "comment":
+            _send_bulk_comments(obj_ids, action.get("model"), action.get("value"))
+
+        else:
+            # Create bulk update query
+            model = obj_table[action.get("model")]
+            field = action.get("field")
+            value = action.get("value")
+            smtp = sqlalchemy.update(model).where(model.id.in_(obj_ids)).values({field: value})
+            db.session.execute(smtp)
             db.session.commit()
-    return host_id
 
 
-def _run_workflow(workflow, obj):
+def _run_workflow(workflow, objs):
     if workflow.root_condition is None:
         raise ValueError("No root condition, Invalid condition tree")
     logger.debug(f"Running conditions of Workflow id: {workflow.id}, Root condition id: {workflow.root_condition}")
-    conditions_passed = _check_condition(obj, workflow.root_condition)
-    if conditions_passed:
+    objs = [obj for obj in objs if _check_condition(obj, workflow.root_condition)]
+    if objs:
         logger.debug(f"Conditions passed for Workflow id: {workflow.id}, executing {len(workflow.actions)} actions")
-        host_to_update = []
+        logger.debug(f"Objects that met conditions: {objs}")
+        hosts_to_update = []
+        actions_to_perform = {}
 
-        obj_repr = repr(obj)
+        obj_reprs = [repr(obj) for obj in objs]
         message = f"\nJob \"{workflow.name}\" Executed Changes:"
         actions_results = []
         if workflow.actions is not None:
             for action in workflow.actions:
-                try:
-                    host_to_update = _execute_action(obj, action, workflow)
-                    actions_results.append(True)
-                    if action.command == "UPDATE":
-                        message += f'\nUpdated field "{action.field}" to "{action.value}"'
-                    elif action.command == "APPEND":
-                        message += f'\nAppended field {action.field}, with "{action.value}"'
-                    elif action.command == "DELETE":
-                        message += f'\nDeleted object {obj_repr}'
-                        break
-                except IntegrityError as e:
-                    db.session.rollback()
-                    logger.error(f"Action ID: {action.id} Failed to execute. - {e}")
-                    actions_results.append(False)
-                    message += f"\nTask Execution Failed, Task id {action.id}, Error: {e}"
-                except Exception as e:
-                    logger.error(f"Action ID: {action.id} Failed to execute. - {e}")
-                    actions_results.append(False)
-                    message += f"\nTask Execution Failed, Task id {action.id}, Error: {e}"
+                _actions_to_perform, hosts_to_update = _calculate_or_execute_action(objs, action, workflow)
+                actions_results.append(True)
+                # merge actions_to_perform with actions
+                for act, obj_ids in _actions_to_perform.items():
+                    actions_to_perform.setdefault(act, []).extend(obj_ids)
+
+                if action.command == "UPDATE":
+                    message += f'\nUpdated field "{action.field}" to "{action.value}"'
+                elif action.command == "APPEND":
+                    message += f'\nAppended field {action.field}, with "{action.value}"'
+                elif action.command == "DELETE":
+                    message += f'\nDeleted objects {obj_reprs}'
+
+        # Perform actions
+        try:
+            if actions_to_perform:
+                _perform_bulk_actions(actions_to_perform)
+        except IntegrityError as e:
+            db.session.rollback()
+            logger.error(f"Failed to execute. - {e}")
+            actions_results.append(False)
+            message += f"\nTask Execution Failed, Error: {e}"
+        except Exception as e:
+            logger.error(f"Failed to execute. - {e}")
+            actions_results.append(False)
+            message += f"\nTask Execution Failed, Error: {e}"
+
         logger.debug(f"Tasks that ran without errors / total = {actions_results.count(True)}/{len(workflow.actions)}")
-        _create_workflow_execution(workflow, obj_repr, message)
-        # if not inspect(obj).deleted and not inspect(obj).detached:
-        #     _create_log_comment(message, obj, workflow.model)
         message += "\n"
-        return True, message, host_to_update
+        return True, message, hosts_to_update
     else:
         logger.debug(f"Conditions failed for Workflow id: {workflow.id}, skipping")
-        _create_workflow_execution(workflow, repr(obj), "Conditions failed, did not execute actions")
         return False, "", None
 
 
-def _create_workflow_execution(workflow, obj_repr, message, error=None):
-    result = WorkflowExecutionSchema().load(
-        {
-            "successful": error is None,
-            "message": f"{workflow} ran on object {obj_repr}, {message}\nerrors: {error}",
-            "object_and_id": obj_repr
-        }
-    )
-    new_execution = WorkflowExecution(
-        successful=result.get("successful"),
-        message=result.get("message"),
-        workflow=workflow,
-        object_and_id=result.get("object_and_id")
-    )
-    db.session.add(new_execution)
-    db.session.commit()
-    return new_execution
-
-
-def _get_workflows(*filter_params):
-    return db.session.query(Workflow).filter(*filter_params).all()
-
-
-def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
-    if False in (obj, obj_type, ws):
+def _check_workflows(objs, obj_type, ws, fields=None, pipeline=None):
+    if False in (objs, obj_type, ws):
         return False, [], None
-    if isinstance(obj, valid_classes):
-        if pipeline_given is None:
-            # Get pipeline
-            if not ws.pipelines:
-                logger.debug(f"Workspace {ws.name} has no pipelines")
-                return False, [], None
-            else:
-                pipeline = next((x for x in ws.pipelines if x.enabled is True), None)
-                if pipeline is None:
-                    logger.warning("All pipelines disabled")
-                    return False, [], None
-        else:
-            pipeline = pipeline_given
+    if all(isinstance(obj, valid_classes) for obj in objs):
 
         workflows = pipeline.jobs
         if any(workflows):
             workflows_count = len(workflows)
 
             logger.info(f"Running pipeline {pipeline} with {workflows_count} job{'s' if workflows_count > 1 else ''}"
-                        f" to run with current object {repr(obj)}, IDs: {[x.id for x in workflows]}")
+                        f" to run with current object {repr(objs)}, IDs: {[x.id for x in workflows]}")
         else:
-            logger.debug(f"No workflows found to run with object: {repr(obj)}")
+            logger.debug(f"No workflows found to run with object: {repr(objs)}")
             return True, [], None
         workflows_results = []
         pipeline_wf_order = pipeline.jobs_order
@@ -472,8 +599,10 @@ def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
         hosts_to_update = []
         for workflow_id in workflows_ids:
 
-            if inspect(obj).deleted or inspect(obj).detached:
-                logger.debug("Object deleted by previous workflow, Skipping the rest of the workflows")
+            # check each item in objs if its deleted or detached and remove from the list
+            objs = [obj for obj in objs if not inspect(obj).deleted and not inspect(obj).detached]
+            if not objs:
+                logger.debug("Objects deleted by previous workflow, Skipping the rest of the workflows")
                 break
 
             workflow = next((x for x in workflows if x.id == workflow_id), None)
@@ -496,22 +625,29 @@ def _check_workflows(obj, obj_type, ws, fields=None, pipeline_given=None):
                     continue
 
             try:
-                result, log, host_to_update = _run_workflow(workflow, obj)
+                result, log, host_to_update = _run_workflow(workflow, objs)
                 if host_to_update:
-                    hosts_to_update.append(host_to_update)
+                    hosts_to_update += host_to_update
                 workflows_results.append(result)
                 comment_log += log
             except Exception as e:
                 workflows_results.append(False)
                 logger.error(f"Error while running workflow id [{workflow.id}] - Error: {e}")
-                message = "\nError while running workflow, Skipping the rest of the pipeline"
-                _create_workflow_execution(workflow, repr(obj), message, e)
                 break
         logger.debug(f"Jobs that met conditions and executed actions / Jobs checked total ="
                      f" {workflows_results.count(True)}/{len(workflows)}")
 
-        if not inspect(obj).deleted and not inspect(obj).detached and comment_log:
-            _create_log_comment(comment_log, obj, obj_type)
+        objects_not_deleted = []
+        for obj in objs:
+            try:
+                print(obj.id)
+                objects_not_deleted.append(obj)
+            except sqlalchemy.orm.exc.ObjectDeletedError:
+                logger.debug(f"Object {obj} was deleted by previous workflow")
+                continue
+
+        if objects_not_deleted:
+            _create_log_comments(comment_log, objects_not_deleted, obj_type)
 
         return True, workflows_results, hosts_to_update
     else:
@@ -528,10 +664,10 @@ def _change_pipeline_running_status(id, status):
     db.session.commit()
 
 
-def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=None):
+def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=None):
     update_host_stats = []
-    if obj and obj_id and ws_id:
-        _, _, host_ids = _check_workflows(*_get_obj_and_workspace(obj, obj_id, ws_id, fields, pipeline_id))
+    if obj and obj_ids and ws_id:
+        _, _, host_ids = _check_workflows(*_get_obj_and_workspace(obj, obj_ids, ws_id, fields, pipeline_id))
         return host_ids
     elif run_all is True:
         logger.info(f"Running all objects with pipeline id {pipeline_id}")
@@ -539,19 +675,18 @@ def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=N
         _change_pipeline_running_status(pipeline_id, True)
 
         try:
-            for obj_key, obj_model in obj_table.items():
+            for obj_key, obj_model in run_all_obj_table.items():
                 ids = db.session.query(obj_model.id).filter(obj_model.workspace_id == ws_id).all()
-                for _id in ids:
-                    update_host_list = _process_entry(
-                        obj_key,
-                        _id[0],
-                        ws_id,
-                        None,
-                        False,
-                        pipeline_id if pipeline_id is not None else None
-                       )
-                    if update_host_list:
-                        update_host_stats += update_host_list
+                update_host_list = _process_entry(
+                    obj_key,
+                    ids,
+                    ws_id,
+                    None,
+                    False,
+                    pipeline_id if pipeline_id is not None else None
+                   )
+                if update_host_list:
+                    update_host_stats += update_host_list
         except Exception as e:
             logger.error(f"Error while running pipeline\n{e}")
             _change_pipeline_running_status(pipeline_id, False)
@@ -561,8 +696,9 @@ def _process_entry(obj, obj_id, ws_id, fields=None, run_all=False, pipeline_id=N
 
         _change_pipeline_running_status(pipeline_id, False)
 
-    logger.debug(f"Hosts to update stats {update_host_stats}")
-    return update_host_stats
+        logger.debug(f"Hosts to update stats {update_host_stats}")
+        return update_host_stats
+    return []
 
 
 workflow_stop_event = Event()

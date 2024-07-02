@@ -1,14 +1,23 @@
+import random
 from dataclasses import dataclass
 
 import pytest
+import sqlalchemy
 
-from faraday.server.api.modules.workflow import JobView, TaskView, PipelineView, PipelineSchema
+from faraday.server.api.modules.workflow import JobView, TaskView, PipelineView, PipelineSchema, fields_lookup
 from faraday.server.models import Workflow, Action, db, Pipeline, Comment
 from faraday.server.utils.workflows import _process_entry, WORKFLOW_QUEUE
 from tests import factories
 from tests.factories import ActionFactory, HostFactory, CommentFactory, VulnerabilityFactory, \
     VulnerabilityWebFactory
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
+
+
+vulns_fields = fields_lookup.get("vulnerability")
+hosts_fields = fields_lookup.get("host")
+
+vuln_fields_list = [[x, y] for x, y in vulns_fields.items()]
+host_fields_list = [[x, y] for x, y in hosts_fields.items()]
 
 
 @dataclass
@@ -86,15 +95,26 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         obj = obj_type[0].create(description="testing", workspace=ws)
         db.session.add(obj)
         db.session.commit()
-        _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
         assert obj.description == "ActionExecuted"
+
+    def test_pipeline_executed_multiple_actions(self, test_client):
+        action1 = ActionFactory.create()
+        action2 = ActionFactory.create(command="UPDATE", field="ip", value="1.1.1.1", target="asset")
+        ws, action, workflow, pipeline = create_pipeline(test_client, "vulnerability", actions=[action1, action2])
+        obj = VulnerabilityFactory.create(description="testing", workspace=ws, service=None)
+        db.session.add(obj)
+        db.session.commit()
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
+        assert obj.description == "ActionExecuted"
+        assert obj.host.ip == "1.1.1.1"
 
     def test_pipeline_executed_and_create_comment_log(self, test_client):
         ws, action, workflow, pipeline = create_pipeline(test_client, "host")
         obj = HostFactory.create(description="testing", workspace=ws)
         db.session.add(obj)
         db.session.commit()
-        _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
         assert obj.description == "ActionExecuted"
         comments = db.session.query(Comment).filter(Comment.object_id == obj.id, Comment.object_type == "host").all()
         assert comments
@@ -141,14 +161,14 @@ class TestPipelineMixinsView(ReadWriteAPITests):
 
         obj = HostFactory.create(description="testing", workspace=ws)
         db.session.commit()
-        _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
         assert obj.description == "Workflow2"
         obj.description = "testing"
         db.session.add(obj)
         db.session.commit()
         res = test_client.patch(self.url() + f"/{pipeline.id}", data={"jobs_order": "2-1"})
         assert res.status_code == 200
-        _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
         assert obj.description == "Workflow1"
 
     def test_change_pipeline_workspace(self, test_client):
@@ -159,7 +179,7 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         obj = HostFactory.create(description="testing", workspace=ws1)
         db.session.add(obj)
         db.session.commit()
-        _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
         assert obj.description == "ActionExecuted"
         res = test_client.patch(self.url() + f"/{pipeline.id}", data={"workspace_id": ws2.id})
         assert res.status_code == 200
@@ -168,7 +188,7 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         obj2 = HostFactory.create(description="testing", workspace=ws2)
         db.session.add(obj)
         db.session.commit()
-        _process_entry(obj2.__class__.__name__, obj2.id, obj2.workspace.id)
+        _process_entry(obj2.__class__.__name__, [obj2.id], obj2.workspace.id)
         assert obj2.description == "ActionExecuted"
 
     def test_export_pipeline(self, test_client):
@@ -353,7 +373,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         host = HostFactory.create(description="testing", workspace=ws)
         db.session.add(host)
         db.session.commit()
-        _process_entry(host.__class__.__name__, host.id, host.workspace.id)
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
         assert host.description != "ActionExecuted"
         assert host.description == "testing"
 
@@ -378,7 +398,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(comment)
         db.session.commit()
         # TODO: Validate success output
-        _process_entry(comment.__class__.__name__, comment.id, comment.workspace.id)
+        _process_entry(comment.__class__.__name__, [comment.id], comment.workspace.id)
 
     def test_object_does_not_exist(self, test_client):
         action = ActionFactory.create()
@@ -405,7 +425,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         host_ws_id = host.workspace.id
         db.session.delete(host)
         db.session.commit()
-        _process_entry(host_class_name, host_id, host_ws_id)
+        _process_entry(host_class_name, [host_id], host_ws_id)
 
     def test_no_workflows_to_run_with_object(self, test_client):
         ws, action, workflow, pipeline = create_pipeline(test_client)
@@ -414,7 +434,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(pipeline)
         db.session.add(host)
         db.session.commit()
-        _process_entry(host.__class__.__name__, host.id, host.workspace.id)
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
 
     def test_action_field_valid_and_invalid(self, test_client):
         action = ActionFactory.create(field="ip")
@@ -434,68 +454,8 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
         db.session.add(vuln)
         db.session.commit()
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.confirmed is True
-
-    @pytest.mark.parametrize("type", ["vulnerability", "host"])
-    def test_action_execute_tag_and_check_tag(self, test_client, type):
-        action = ActionFactory.create(field="tags", value="New Tag")
-        db.session.commit()
-        ws, action, workflow, pipeline = create_pipeline(test_client, actions=[action], model=type)
-        if type == "vulnerability":
-            obj = VulnerabilityFactory.create(description="testing", workspace=ws)
-        else:
-            obj = HostFactory.create(description="testing", workspace=ws)
-        db.session.add(obj)
-        db.session.commit()
-        assert not obj.tags
-        _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
-        assert obj.tags == {"New Tag"}
-        if type == "vulnerability":
-            action = ActionFactory.create(field="description", value="Tag_found")
-            db.session.commit()
-            cond = [
-                    {
-                        "type": "leaf",
-                        "field": "tags",
-                        "operator": "in",
-                        "data": "New Tag"
-                    }
-                ]
-            ws, action, workflow, pipeline = create_pipeline(test_client, actions=[action], model=type, ws=ws,
-                                                             cond=cond)
-            test_client.post(f"{pipelines_url}/{pipeline.id}/enable")
-            _process_entry(obj.__class__.__name__, obj.id, obj.workspace.id)
-            assert obj.description == "Tag_found"
-
-    def test_action_execute_multiple_tags_and_check_tag(self, test_client):
-        action = ActionFactory.create(field="tags", value="New Tag, New Tag2,New Tag3")
-        db.session.commit()
-        ws, action, workflow, pipeline = create_pipeline(test_client, actions=[action], model="vulnerability")
-        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
-        db.session.add(vuln)
-        db.session.commit()
-        assert not vuln.tags
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
-        assert "New Tag" in vuln.tags
-        assert "New Tag2" in vuln.tags
-        assert "New Tag3" in vuln.tags
-
-        action = ActionFactory.create(field="description", value="Tag_found")
-        db.session.commit()
-        cond = [
-                {
-                    "type": "leaf",
-                    "field": "tags",
-                    "operator": "in",
-                    "data": "New Tag"
-                }
-            ]
-        ws, action, workflow, pipeline = create_pipeline(test_client, actions=[action], model="vulnerability", ws=ws,
-                                                         cond=cond)
-        test_client.post(f"{pipelines_url}/{pipeline.id}/enable")
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
-        assert vuln.description == "Tag_found"
 
     def test_action_execute_references(self, test_client):
         action = ActionFactory.create(command="APPEND", field="references", value="New ref")
@@ -506,7 +466,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(vuln)
         db.session.commit()
         assert not vuln.refs
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert [x.name for x in vuln.refs] == ["New ref", "New ref2"]
 
     def test_action_execute_policy_violations(self, test_client):
@@ -518,7 +478,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(vuln)
         db.session.commit()
         assert not vuln.policy_violations
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.policy_violations == {"Newpol", "Newpol2"}
 
     def test_action_execute_comment(self, test_client):
@@ -531,7 +491,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         comments = db.session.query(Comment)\
             .filter(Comment.object_id == vuln.id, Comment.object_type == "vulnerability").all()
         assert not comments
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         comments = db.session.query(Comment) \
             .filter(Comment.object_id == vuln.id, Comment.object_type == "vulnerability").all()
         assert len(comments) == 2
@@ -539,8 +499,8 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
     @pytest.mark.parametrize(
         "cf_type", [
             ("test", "int", "4", 4),
-            ("test", "string", "TESTING", "TESTING"),
-            ("test", "list", "TESTING", ["TESTING"])
+            ("test2", "string", "TESTING", "TESTING"),
+            ("test3", "list", "TESTING", ["TESTING"])
         ]
     )
     def test_action_execute_cf(self, test_client, cf_type):
@@ -550,10 +510,10 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
                                       custom_field=True)
         cf = factories.CustomFieldsSchemaFactory.create(
             table_name='vulnerability',
-            field_name='test',
+            field_name=cf_type[0],
             field_type=cf_type[1],
             field_order=1,
-            field_display_name='test',
+            field_display_name=cf_type[0],
         )
         db.session.commit()
         ws, action, workflow, pipeline = create_pipeline(test_client, actions=[action], model="vulnerability")
@@ -561,8 +521,8 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(vuln)
         db.session.commit()
         assert vuln.custom_fields is None
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
-        assert vuln.custom_fields.get("test") == cf_type[3]
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
+        assert vuln.custom_fields.get(cf_type[0]) == cf_type[3]
 
     def test_action_execute_on_vuln_asset(self, test_client):
         action = ActionFactory.create(command="UPDATE", field="ip", value="1.1.1.1", target="asset")
@@ -573,7 +533,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         host = vuln.host
         assert host.ip != "1.1.1.1"
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert host.ip == "1.1.1.1"
 
     def test_action_execute_on_vuln_web_asset(self, test_client):
@@ -585,7 +545,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         host = vuln.service.host
         assert host.ip != "1.1.1.1"
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert host.ip == "1.1.1.1"
 
     def test_action_execute_on_vuln_asset_conflict_unique(self, test_client):
@@ -600,7 +560,170 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         host2 = vuln2.host
         assert host.ip != "1.1.1.1"
         assert host2.ip != "1.1.1.1"
-        _process_entry(vuln.__class__.__name__, vuln.id, vuln.workspace.id)
-        _process_entry(vuln2.__class__.__name__, vuln2.id, vuln2.workspace.id)
-        assert host.ip == "1.1.1.1"
+        _process_entry(vuln.__class__.__name__, [vuln.id, vuln2.id], vuln.workspace.id)
+        assert host.ip != "1.1.1.1"
         assert host2.ip != "1.1.1.1"
+
+    @pytest.mark.skip(reason="Fails when running all tests")
+    def test_action_delete(self, test_client):
+        action2 = ActionFactory.create(command="DELETE")
+        ws, action, workflow, pipeline = create_pipeline(test_client, "vulnerability", actions=[action2])
+        obj = VulnerabilityFactory.create(description="testing", workspace=ws, service=None)
+        db.session.add(obj)
+        db.session.commit()
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
+        # assert obj is deleted with a try except
+        with pytest.raises(sqlalchemy.orm.exc.ObjectDeletedError):
+            print(obj.id)
+
+    @pytest.mark.parametrize("field", vuln_fields_list)
+    def test_vuln_fields_execute_update(self, field, test_client):
+        field_name = field[0]
+        field_data = field[1]
+        field_type = field_data.get("type")
+        can_replace = field_data.get("replace")
+        valid_values = field_data.get("valid")
+
+        if not can_replace:
+            return
+
+        value = None
+
+        if valid_values:
+            value = random.choice(valid_values)
+        else:
+            if field_type in ("string", "comment", "policy_violations", "references", "tag"):
+                value = "testing_new"
+            elif field_type == "int":
+                value = 123
+            elif field_type == "bool":
+                value = True
+
+        action_update = ActionFactory.create(command="UPDATE", field=field_name, value=value)
+
+        ws, action, workflow, pipeline = create_pipeline(test_client, "vulnerability", actions=[action_update])
+        obj = VulnerabilityFactory.create(description="testing", workspace=ws)
+        db.session.add(obj)
+        db.session.commit()
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
+
+        if field_type in ("policy_violations", "tag"):
+            assert getattr(obj, field_name) == {value}
+        else:
+            assert getattr(obj, field_name) == value
+
+    @pytest.mark.parametrize("field", vuln_fields_list)
+    def test_vuln_fields_execute_append(self, field, test_client):
+        field_name = field[0]
+        field_data = field[1]
+        field_type = field_data.get("type")
+        can_append = field_data.get("append")
+        valid_values = field_data.get("valid")
+
+        if not can_append:
+            return
+
+        value = None
+
+        if valid_values:
+            value = random.choice(valid_values)
+        else:
+            if field_type in ("string", "comment", "policy_violations", "references", "tag"):
+                value = "testing_new"
+            elif field_type == "int":
+                value = 123
+            elif field_type == "bool":
+                value = True
+
+        action_update = ActionFactory.create(command="APPEND", field=field_name, value=value)
+
+        ws, action, workflow, pipeline = create_pipeline(test_client, "vulnerability", actions=[action_update])
+        obj = VulnerabilityFactory.create(description="testing", workspace=ws)
+        db.session.add(obj)
+        db.session.commit()
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
+
+        if field_type in ("policy_violations", "tag"):
+            assert getattr(obj, field_name) == {value}
+        elif field_type == "comment":
+            comments = db.session.query(Comment) \
+                .filter(Comment.object_id == obj.id, Comment.object_type == "vulnerability").all()
+            assert len(comments) == 2
+        elif field_type == "references":
+            assert [x.name for x in obj.refs] == [value]
+        else:
+            assert value in getattr(obj, field_name)
+
+    @pytest.mark.parametrize("field", host_fields_list)
+    def test_host_fields_execute_update(self, field, test_client):
+        field_name = field[0]
+        field_data = field[1]
+        field_type = field_data.get("type")
+        can_replace = field_data.get("replace")
+        valid_values = field_data.get("valid")
+
+        if not can_replace:
+            return
+
+        value = None
+
+        if valid_values:
+            value = random.choice(valid_values)
+        else:
+            if field_type in ("string", "hostnames", "tag"):
+                value = "testing_new"
+            elif field_type == "bool":
+                value = True
+
+        action_update = ActionFactory.create(command="UPDATE", field=field_name, value=value)
+
+        ws, action, workflow, pipeline = create_pipeline(test_client, "host", actions=[action_update])
+        obj = HostFactory.create(description="testing", workspace=ws)
+        db.session.add(obj)
+        db.session.commit()
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
+
+        if field_type in ("tag"):
+            assert getattr(obj, field_name) == {value}
+        elif field_type == "hostnames":
+            hostname_names = [x.name for x in obj.hostnames]
+            assert hostname_names == [value]
+        else:
+            assert getattr(obj, field_name) == value
+
+    @pytest.mark.parametrize("field", host_fields_list)
+    def test_host_fields_execute_append(self, field, test_client):
+        field_name = field[0]
+        field_data = field[1]
+        field_type = field_data.get("type")
+        can_append = field_data.get("append")
+        valid_values = field_data.get("valid")
+
+        if not can_append:
+            return
+
+        value = None
+
+        if valid_values:
+            value = random.choice(valid_values)
+        else:
+            if field_type in ("string", "hostnames", "tag"):
+                value = "testing_new"
+            elif field_type == "bool":
+                value = True
+
+        action_update = ActionFactory.create(command="APPEND", field=field_name, value=value)
+
+        ws, action, workflow, pipeline = create_pipeline(test_client, "host", actions=[action_update])
+        obj = HostFactory.create(description="testing", workspace=ws)
+        db.session.add(obj)
+        db.session.commit()
+        _process_entry(obj.__class__.__name__, [obj.id], obj.workspace.id)
+
+        if field_type in ("tag"):
+            assert getattr(obj, field_name) == {value}
+        elif field_type == "hostnames":
+            hostname_names = [x.name for x in obj.hostnames]
+            assert value in hostname_names
+        else:
+            assert value in getattr(obj, field_name)

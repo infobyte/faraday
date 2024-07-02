@@ -70,17 +70,15 @@ vuln_lookup = {
                        're-opened',
                        'risk-accepted'
                    ]},
-        "tags": {"type": "tag", "replace": True, "append": True},
     }
 
 fields_lookup = {
     "host": {
         "description": {"type": "string", "replace": True, "append": False},
-        "hostnames": {"type": "string", "replace": True, "append": True},
+        "hostnames": {"type": "hostnames", "replace": True, "append": True},
         "ip": {"type": "string", "replace": True, "append": False},
         "os": {"type": "string", "replace": True, "append": False},
         "owned": {"type": "bool", "replace": True, "append": False},
-        "tags": {"type": "tag", "replace": True, "append": True},
     },
     "vulnerability": vuln_lookup,
     "vulnerability_web": vuln_lookup

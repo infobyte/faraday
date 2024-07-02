@@ -22,7 +22,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Vulnerability,
 )
-from faraday.server.utils.workflows import _process_entry, valid_object_types
+from faraday.server.utils.workflows import _process_entry
 
 logger = get_task_logger(__name__)
 
@@ -43,12 +43,22 @@ def on_success_process_report_task(results, command_id=None):
     # Apply Workflow
     pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
     if pipeline:
-        for command_object in command.command_objects:
-            if command_object.object_type in valid_object_types:
-                workflow_task.delay(command_object.object_type,
-                                    command_object.object_id,
-                                    command_object.workspace.id,
-                                    update_hosts=False)
+        vuln_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability"]
+        vuln_web_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability_web"]
+        host_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "host"]
+
+        # Process vulns
+        if vuln_object_ids:
+            workflow_task.delay("vulnerability", vuln_object_ids, command.workspace.id, update_hosts=False)
+
+        # Process vulns web
+        if vuln_web_object_ids:
+            workflow_task.delay("vulnerability_web", vuln_web_object_ids, command.workspace.id, update_hosts=False)
+
+        # Process hosts
+        if host_object_ids:
+            workflow_task.delay("host", host_object_ids, command.workspace.id, update_hosts=False)
+
     logger.debug("No pipelines found in ws %s", command.workspace.name)
 
     for result in results:
@@ -79,8 +89,8 @@ def process_report_task(workspace_id: int, command: dict, hosts):
 
 
 @celery.task()
-def workflow_task(obj_type, obj_id, workspace_id, fields=None, run_all=False, pipeline_id=None, update_hosts=False):
-    hosts_to_update = _process_entry(obj_type, obj_id, workspace_id, fields=fields, run_all=run_all, pipeline_id=pipeline_id)
+def workflow_task(obj_type: str, obj_ids: list, workspace_id: int, fields=None, run_all=False, pipeline_id=None, update_hosts=False):
+    hosts_to_update = _process_entry(obj_type, obj_ids, workspace_id, fields=fields, run_all=run_all, pipeline_id=pipeline_id)
     if hosts_to_update:
         logger.debug("Updating hosts stats from workflow task...")
         update_host_stats.delay(hosts_to_update, [])

@@ -20,19 +20,31 @@ class TestServerConfig:
             'username': 'elk',
             'password': 'elk',
             'enabled': True,
-            "host": "localhost",
+            "host": "http://localhost",  # elasticsearch < 8
             "port": 9200,
             "ignore_ssl": True
         }
         response = test_client.patch("/v3/settings/elk", json=new_config)
         assert response.status_code == 200
 
+    def test_update_server_elk_config_fail(self, test_client):
+        new_config = {
+            'username': 'elk',
+            'password': 'elk',
+            'enabled': True,
+            "host": "ht://localhost.1234",  # elasticsearch < 8
+            "port": 9200,
+            "ignore_ssl": True
+        }
+        response = test_client.patch("/v3/settings/elk", json=new_config)
+        assert response.status_code == 400
+
     def test_update_server_elk_enable_disable(self, test_client):
         new_config = {
             'username': 'elk',
             'password': 'elk',
             'enabled': True,
-            "host": "localhost",
+            "host": "http://localhost",
             "port": 9200,
             "ignore_ssl": True
         }
@@ -43,7 +55,7 @@ class TestServerConfig:
             'username': 'elk',
             'password': 'elk',
             'enabled': False,
-            "host": "localhost",
+            "host": "http://localhost",
             "port": 9200,
             "ignore_ssl": True
         }
@@ -56,7 +68,7 @@ class TestServerConfig:
             'username': 'elk',
             'password': 'elk',
             'enabled': True,
-            "host": "localhost",
+            "host": "http://localhost",
             "port": 9200,
             "ignore_ssl": True
         }
@@ -67,7 +79,7 @@ class TestServerConfig:
             'username': 'elk3',
             'password': 'elk4',
             'enabled': False,
-            "host": "localhost2",
+            "host": "http://localhost2",
             "port": 9201,
             "ignore_ssl": False
         }

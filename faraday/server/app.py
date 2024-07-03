@@ -124,6 +124,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.get_exploits import exploits_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.custom_fields import \
         custom_fields_schema_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agents_schedule import agents_schedule_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agent_auth_token import \
         agent_auth_token_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agent import agent_api  # pylint:disable=import-outside-toplevel
@@ -166,6 +167,7 @@ def register_blueprints(app):
     app.register_blueprint(searchfilter_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(preferences_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(export_data_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(agents_schedule_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(reports_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(dashboard_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(swagger_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -340,7 +342,7 @@ def get_prefixed_url(app, url):
     return url
 
 
-def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
+def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, start_scheduler=False, remove_sids=False):
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',
@@ -442,6 +444,13 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         'IMPORTS': ('faraday.server.tasks', ),
         'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
         'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
+        'CELERYBEAT_SCHEDULE': {
+            'scheduler': {
+                'task': 'faraday.server.tasks.agent_scheduler_task',
+                'schedule': 60.0,  # crontab(minute="*/1"),
+                'args': ()
+            },
+        },
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
@@ -534,16 +543,21 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
 
     load_settings()
 
+    if not testing and start_scheduler:
+        from faraday.server.threads.crontab import CronTab  # pylint: disable=import-outside-toplevel
+        agents_crontab = CronTab(app=app)
+        agents_crontab.start()
     return app
 
 
-def get_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
+def get_app(db_connection_string=None, testing=None, register_extensions_flag=True, start_scheduler=False, remove_sids=False):
     logger.debug("Calling get_app")
     global FARADAY_APP  # pylint: disable=W0603
     if not FARADAY_APP:
         FARADAY_APP = create_app(db_connection_string=db_connection_string,
                                  testing=testing,
                                  register_extensions_flag=register_extensions_flag,
+                                 start_scheduler=start_scheduler,
                                  remove_sids=remove_sids)
     return FARADAY_APP
 

@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 init()
 
-app = get_app(remove_sids=True)
+app = get_app(remove_sids=True, start_scheduler=True)
 
 
 def setup_environment(check_deps=False):

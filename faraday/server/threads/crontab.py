@@ -15,7 +15,6 @@ from croniter import croniter
 import dateutil
 
 # Local application imports
-from faraday.server.commands.schedule_commands import SCHEDULE_COMMANDS
 from faraday.server.extensions import socketio
 from faraday.server.models import AgentsSchedule, db
 from faraday.server.utils.agents import get_command_and_agent_execution
@@ -65,12 +64,6 @@ class CronTab(FaradayCronTab):
     def __init__(self, app=None, *args, **kwargs):
         super().__init__(name="CrontabThread", daemon=True, app=app, *args, **kwargs)
         self.refresh_schedule()
-
-        for scheduled_command in SCHEDULE_COMMANDS:
-            self.jobs[scheduled_command.id] = ExternalCommandCronItem(scheduled_command, app=self.app)
-            self.fixed_jobs.append(scheduled_command.id)
-            logger.info(f'Loaded schedule {scheduled_command.id} for command {scheduled_command.cmd.name}'
-                        f' [{scheduled_command.crontab}]')
 
     def refresh_schedule(self):
         with self.app.app_context():
@@ -211,16 +204,3 @@ class AgentsCronItem(CronItem):
             socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             return self.schedule_id
-
-
-# TODO: Should rename this class?
-class ExternalCommandCronItem(CronItem):
-
-    def __init__(self, schedule, app=None):
-        super().__init__(schedule, app=app)
-        self.cmd = schedule.cmd
-
-    def run(self):
-        with self.app.app_context():
-            self.cmd.fnc()
-        return self.schedule_id

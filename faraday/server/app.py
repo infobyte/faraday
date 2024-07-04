@@ -444,13 +444,6 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         'IMPORTS': ('faraday.server.tasks', ),
         'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
         'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
-        'CELERYBEAT_SCHEDULE': {
-            'scheduler': {
-                'task': 'faraday.server.tasks.agent_scheduler_task',
-                'schedule': 60.0,  # crontab(minute="*/1"),
-                'args': ()
-            },
-        },
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

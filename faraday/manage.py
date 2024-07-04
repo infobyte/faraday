@@ -21,8 +21,9 @@ from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
 import faraday.server.config
-from faraday.server.app import get_app, create_app
+from faraday.server.app import get_app
 from faraday.server.commands.sync_hosts_stats import _sync_hosts_stats
+from faraday.server.commands.ingestelk import _ingest
 from faraday.server.config import FARADAY_BASE
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
@@ -305,10 +306,46 @@ def move_references(all_workspaces, workspace_name):
         _move_references(all_workspaces=all_workspaces, workspace_name=workspace_name)
 
 
+@click.command(help="Import vulnerabilities from one or all workspaces into Elasticsearch. ")
+@click.option('--all-workspaces/--no-all-workspaces', default=False,
+              help="Imports vulnerabilities from all workspaces. This option takes precedence over '--workspace-name'. "
+                   "By default, it is set to not import from all workspaces.")
+@click.option('-w', '--workspace-name', help="Imports vulnerabilities from the specified workspace name. "
+                                             "This option has no effect if '--all-workspaces' is already specified.")
+@click.option('-f', '--from-id', help="Specify the starting vulnerability id for import.")
+@click.option('-t', '--to-id', help="Specify the ending vulnerability id for import.")
+@click.option('-r', '--rename-workspace-as', help="Rename workspace in Elasticsearch with the specified new name.")
+@click.option('-x', '--add-extra-vulnerability-tags', help="Additional tags to add to vulnerabilities.")
+@click.option('-i', '--elk-index-name', default='faraday', help="Name of the Elasticsearch index. Default is 'faraday'.")
+@click.option('-d', '--from-update-date', help="Import vulnerabilities from the specified update date.")
+@click.option('-c', '--test-connection', is_flag=True, default=False,
+              help="Just test connection with elastic and exit.")
+def ingest(all_workspaces,
+           workspace_name,
+           from_id,
+           to_id,
+           rename_workspace_as,
+           add_extra_vulnerability_tags,
+           elk_index_name,
+           from_update_date,
+           test_connection):
+    with get_app().app_context():
+        _ingest(all_workspaces=all_workspaces,
+                workspace_name=workspace_name,
+                from_id=from_id,
+                to_id=to_id,
+                rename_as=rename_workspace_as,
+                extra_vuln_tags=add_extra_vulnerability_tags,
+                index_name=elk_index_name,
+                from_update=from_update_date,
+                test_connection=test_connection
+                )
+
+
 @click.command(help="Synchronize vulnerability severity stats in asset")
 @click.option('-a', '--async-mode', type=bool, help="Update stats asynchronously", default=False)
 def sync_hosts_stats(async_mode):
-    app = create_app()
+    app = get_app()
     with app.app_context():
         _sync_hosts_stats(async_mode)
 
@@ -331,6 +368,7 @@ cli.add_command(import_vulnerability_templates)
 cli.add_command(settings)
 cli.add_command(move_references)
 cli.add_command(sync_hosts_stats)
+cli.add_command(ingest)
 
 
 if __name__ == '__main__':

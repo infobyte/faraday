@@ -4,16 +4,17 @@
 
 { alembic, apispec, apispec-webframeworks, autobahn, bcrypt, bidict, bleach
 , buildPythonPackage, celery, click, colorama, cryptography, cvss, dateutil
-, distro, email-validator, factory_boy, faraday-agent-parameters-types
-, faraday-plugins, fetchPypi, filedepot, filteralchemy-fork, flask
-, flask-celery-helper, flask-classful, flask-kvsession-fork, flask-limiter
-, flask-login, flask-security-too, flask-socketio, flask-sqlalchemy, flask-wtf
-, flask_mail, gevent, gevent-websocket, hypothesis, lib, marshmallow
-, marshmallow-sqlalchemy, nplusone, pgcli, pillow, psycogreen, psycopg2, pyasn1
-, pyjwt, pylint, pyopenssl, pyotp, pytest, pytest-cov, pytest-factoryboy
-, pytest-runner, pyyaml, redis, requests, responses, service-identity, sh
-, simplekv, sphinx, sqlalchemy, syslog-rfc5424-formatter, tqdm, twine, webargs
-, werkzeug, wtforms }:
+, distro, elasticsearch, email-validator, factory_boy
+, faraday-agent-parameters-types, faraday-plugins, fetchPypi, filedepot
+, filteralchemy-fork, flask, flask-celery-helper, flask-classful
+, flask-kvsession-fork, flask-limiter, flask-login, flask-security-too
+, flask-socketio, flask-sqlalchemy, flask-wtf, flask_mail, gevent
+, gevent-websocket, hypothesis, lib, marshmallow, marshmallow-sqlalchemy
+, nplusone, pgcli, pillow, psycogreen, psycopg2, pyasn1, pyjwt, pylint
+, pyopenssl, pyotp, pytest, pytest-cov, pytest-factoryboy, pytest-runner, pyyaml
+, redis, requests, responses, service-identity, sh, simplekv, sphinx, sqlalchemy
+, syslog-rfc5424-formatter, tqdm, twine, validators, webargs, werkzeug, wtforms
+}:
 
 buildPythonPackage rec {
   pname = "faradaysec";
@@ -34,6 +35,7 @@ buildPythonPackage rec {
     flask-sqlalchemy
     flask-classful
     email-validator
+    validators
     flask-wtf
     wtforms
     flask-login
@@ -78,6 +80,7 @@ buildPythonPackage rec {
     redis
     gevent-websocket
     sh
+    elasticsearch
   ];
   nativeBuildInputs = [
     factory_boy

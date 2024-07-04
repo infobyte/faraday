@@ -3,10 +3,10 @@ import argparse
 import os
 
 import faraday.server.config
-from faraday.server.app import celery, create_app  # noqa
+from faraday.server.app import celery, get_app  # noqa
 from faraday.server.config import CELERY_LOG_FILE
 
-application = create_app()
+application = get_app()
 
 
 def main():

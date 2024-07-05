@@ -196,6 +196,8 @@ rules_attributes = {
 
 order_regex = re.compile(r"^$|^\d+(-\d+)*$")
 
+WORKFLOW_LIMIT = 2
+
 
 class PipelineSchema(AutoSchema):
     id = fields.Integer(dump_only=True)
@@ -387,7 +389,12 @@ class JobView(ReadWriteView):
 
     def _perform_create(self, data, **kwargs):
 
-        # TODO ADD LIMITATIONS?
+        workflows_in_use = db.session.query(Workflow).count()
+        workflow_limit = WORKFLOW_LIMIT
+        if workflows_in_use >= workflow_limit:
+            message = "Workflow limit reached. Can't create new Workflows"
+            logger.error(message)
+            return flask.abort(403, message)
 
         actions_ids = data.pop('actions_ids', [])
 

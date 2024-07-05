@@ -1,5 +1,6 @@
 import random
 from dataclasses import dataclass
+from unittest import mock
 
 import pytest
 import sqlalchemy
@@ -290,6 +291,17 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
                [workflow2.actions[0].value,
                 workflow2.actions[0].command,
                 workflow2.actions[0].field]
+
+    def test_can_create_until_limit(self, test_client):
+        with mock.patch('faraday.server.api.modules.workflow.WORKFLOW_LIMIT', 7):
+            for i in range(2):
+                data = self.factory.build_dict()
+                res = test_client.post(self.url(), data=data)
+                assert res.status_code == 201
+            # Workflows created 7, limit 7
+            data = self.factory.build_dict()
+            res = test_client.post(self.url(), data=data)
+            assert res.status_code == 403
 
     def test_create_workflow_with_action(self, test_client):
         action = ActionFactory.create()

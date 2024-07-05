@@ -4,7 +4,6 @@ Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from dataclasses import dataclass
 from unittest import mock
 
 import pytest
@@ -36,11 +35,10 @@ def test_both_schedule_and_manual_agents(session):
     assert getattr(agents_execution[0], 'command') != getattr(agents_execution[1], 'command')
 
 
-@dataclass
-class LicenseTest:
-    agent_scheduler_limit: int = 99
+SCHEDULES_LIMIT = 999
 
 
+@mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
 class TestAgentScheduleView(ReadWriteAPITests):
     model = AgentsSchedule
     factory = AgentScheduleFactory

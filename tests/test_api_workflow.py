@@ -1,5 +1,4 @@
 import random
-from dataclasses import dataclass
 from unittest import mock
 
 import pytest
@@ -21,9 +20,7 @@ vuln_fields_list = [[x, y] for x, y in vulns_fields.items()]
 host_fields_list = [[x, y] for x, y in hosts_fields.items()]
 
 
-@dataclass
-class LicenseTest:
-    pipeline_jobs_limit: int = 99
+WORKFLOW_LIMIT = 999
 
 
 jobs_url = "/v3/jobs"
@@ -70,6 +67,7 @@ def patch_jobs_in_pipeline(test_client, pipeline, jobs):
     assert res.status_code == 200
 
 
+@mock.patch('faraday.server.api.modules.workflow.WORKFLOW_LIMIT', WORKFLOW_LIMIT)
 class TestPipelineMixinsView(ReadWriteAPITests):
     model = Pipeline
     factory = factories.PipelineFactory
@@ -258,6 +256,7 @@ class TestActionMixinsView(ReadWriteAPITests):
     patchable_fields = ["name", "description", "command", "field", "value", "target"]
 
 
+@mock.patch('faraday.server.api.modules.workflow.WORKFLOW_LIMIT', WORKFLOW_LIMIT)
 class TestWorkflowMixinsView(ReadWriteAPITests):
     model = Workflow
     factory = factories.WorkflowFactory

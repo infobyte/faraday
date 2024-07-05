@@ -54,6 +54,8 @@ from faraday.server.models import (
 agents_schedule_api = Blueprint('agents_schedule_api', __name__)
 logger = logging.getLogger(__name__)
 
+SCHEDULES_LIMIT = 2
+
 
 def check_timezone(tz: str):
     if not dateutil.tz.gettz(tz):
@@ -192,7 +194,13 @@ class AgentsScheduleView(
         }
 
     def _perform_create(self, data):
-        # TODO ADD LIMIT?
+        schedules_in_use = db.session.query(AgentsSchedule).count()
+        schedules_limit = SCHEDULES_LIMIT
+        if schedules_in_use >= schedules_limit:
+            message = "Agent schedules limit reached. Can't create new Schedules"
+            logger.error(message)
+            return flask.abort(403, message)
+
         created = super()._perform_create(data)
         schedule_message = f"Schedule created [Workspaces: {data['workspaces']} - description: {data['description']} " \
                            f"- executor: {data['executor']} - crontab: {data['crontab']}]"

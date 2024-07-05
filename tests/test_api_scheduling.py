@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 """
 from dataclasses import dataclass
+from unittest import mock
 
 import pytest
 
@@ -109,6 +110,27 @@ class TestAgentScheduleView(ReadWriteAPITests):
         agent_schedule['crontab'] = '30-42/2,20-30 18-20/92 11-21/39 2-12/8 3-4/1,4'
         res = test_client.post(self.url(), data=agent_schedule)
         assert res.status_code == 201
+
+    def test_create_until_limit(self, test_client, session):
+        with mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', 7):
+            for i in range(2):
+                workspaces = [WorkspaceFactory.create()]
+                agent = AgentFactory.create()
+                executor = ExecutorFactory.create(agent=agent)
+                session.commit()
+                agent_schedule = AgentScheduleFactory.build_dict(workspace=workspaces,
+                                                                 executor=executor)
+                res = test_client.post(self.url(), data=agent_schedule)
+                assert res.status_code == 201
+            # Agent schedules 7 - limit 7
+            workspaces = [WorkspaceFactory.create()]
+            agent = AgentFactory.create()
+            executor = ExecutorFactory.create(agent=agent)
+            session.commit()
+            agent_schedule = AgentScheduleFactory.build_dict(workspace=workspaces,
+                                                             executor=executor)
+            res = test_client.post(self.url(), data=agent_schedule)
+            assert res.status_code == 403
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         super().test_patch_update_an_object_does_not_fail_with_partial_data(test_client, logged_user)

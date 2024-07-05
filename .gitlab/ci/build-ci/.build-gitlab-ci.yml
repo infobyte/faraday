@@ -172,7 +172,7 @@ generate_deb_master:
 
 generate_rpm_dev:
     stage: build
-    image: registry.gitlab.com/faradaysec/faraday/docker-rpm-builder
+    image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
 #      - yum -y upgrade
 #      - yum -y install which git epel-release centos-release-scl

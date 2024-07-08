@@ -137,6 +137,8 @@ def register_blueprints(app):
         reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_elk import \
+        elk_settings_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(ui)
     app.register_blueprint(commandsrun_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -170,6 +172,7 @@ def register_blueprints(app):
     app.register_blueprint(agents_schedule_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(reports_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(dashboard_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(elk_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(swagger_api, url_prefix=app.config['APPLICATION_PREFIX'])
 
 

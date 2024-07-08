@@ -717,6 +717,8 @@ class VulnerabilityContextView(ContextMixin,
             custom_behaviour_fields['cvss2_vector_string'] = data.pop('cvss2_vector_string')
         if 'cvss3_vector_string' in data:
             custom_behaviour_fields['cvss3_vector_string'] = data.pop('cvss3_vector_string')
+        if 'cvss4_vector_string' in data:
+            custom_behaviour_fields['cvss_4_vector_string'] = data.pop('cvss4_vector_string')
 
         cwe_list = data.pop('cwe', None)
         if cwe_list is not None:

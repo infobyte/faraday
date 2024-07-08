@@ -1,0 +1,4 @@
+{
+    "level": "community",
+    "md": "[FIX] Improved SID logic to prevent inconsistencies when the server resets. Also fixed a bug where SIDs were removed using faraday-manage. #7744"
+}

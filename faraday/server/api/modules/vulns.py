@@ -196,6 +196,7 @@ class CVSS3Schema(AutoSchema):
     modified_availability_impact = fields.String(attribute="cvss3_modified_availability_impact", dump_only=True, required=False)
     scope = fields.String(attribute="cvss3_scope", dump_only=True, required=False)
 
+
 class CVSS4Schema(AutoSchema):
     vector_string = fields.String(attribute="cvss4_vector_string", required=False, allow_none=True)
     base_score = fields.Float(attribute="cvss4_base_score", required=False, dump_only=True)
@@ -232,6 +233,7 @@ class CVSS4Schema(AutoSchema):
     integrity_requirement = fields.String(attribute="cvss4_integrity_requirement", dump_only=True, required=False)
     availability_requirement = fields.String(attribute="cvss4_availability_requirement", dump_only=True, required=False)
     exploit_maturity = fields.String(attribute="cvss4_exploit_maturity", dump_only=True, required=False)
+
 
 class RiskSchema(AutoSchema):
     score = fields.Int(attribute='risk', dump_only=True)

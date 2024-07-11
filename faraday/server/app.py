@@ -70,7 +70,7 @@ from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.websockets.dispatcher import remove_sid
 from faraday.settings import load_settings
 from faraday.server.extensions import celery
-
+from faraday.server.debouncer import Debouncer
 
 # Don't move this import from here
 from nplusone.ext.flask_sqlalchemy import NPlusOne
@@ -79,6 +79,7 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
 FARADAY_APP = None
+DEBOUNCER = None
 
 
 def setup_storage_path():
@@ -549,6 +550,13 @@ def get_app(db_connection_string=None, testing=None, register_extensions_flag=Tr
                                  register_extensions_flag=register_extensions_flag,
                                  remove_sids=remove_sids)
     return FARADAY_APP
+
+
+def get_debouncer():
+    global DEBOUNCER  # pylint: disable=W0603
+    if not DEBOUNCER:
+        DEBOUNCER = Debouncer(wait=10)
+    return DEBOUNCER
 
 
 def register_extensions(app):

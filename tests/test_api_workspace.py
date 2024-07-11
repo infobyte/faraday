@@ -15,7 +15,7 @@ from faraday.server.models import Workspace, Scope, SeveritiesHistogram
 from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
-
+from faraday.server.debouncer import debounce_workspace_update
 
 vulnerabilities = [
     {
@@ -154,6 +154,36 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     lookup_field = 'name'
     view_class = WorkspaceView
     patchable_fields = ['description']
+
+    def test_workspace_update_date(self, session, workspace_factory):
+        from faraday.server.app import get_debouncer
+
+        raw_data_1 = {'name': 'test_update_1'}
+        raw_data_2 = {'name': 'test_update_2'}
+        raw_data_3 = {'name': 'test_update_3'}
+
+        ws1 = workspace_factory.create(public=False, name='test_update_1')
+        session.commit()
+        ws2 = workspace_factory.create(public=False, name='test_update_2')
+        session.commit()
+        ws3 = workspace_factory.create(public=False, name='test_update_3')
+        session.commit()
+
+        debouncer = get_debouncer()
+
+        for i in range(1, 50):
+            debounce_workspace_update(raw_data_1['name'], debouncer)
+            debounce_workspace_update(raw_data_2['name'], debouncer)
+            debounce_workspace_update(raw_data_3['name'], debouncer)
+            debounce_workspace_update(raw_data_1['name'], debouncer)
+
+        assert len(debouncer.actions) == 1
+        time.sleep(15)
+        test_update2 = session.query(Workspace).filter(Workspace.name == raw_data_2['name']).first()
+        test_update3 = session.query(Workspace).filter(Workspace.name == raw_data_3['name']).first()
+        test_update1 = session.query(Workspace).filter(Workspace.name == raw_data_1['name']).first()
+
+        assert test_update2.update_date < test_update3.update_date < test_update1.update_date
 
     def test_filter_restless_fixed_stats_in_workspace(self, session, test_client, vulnerability_factory, workspace_factory):
         ws = workspace_factory.create(name='myws')

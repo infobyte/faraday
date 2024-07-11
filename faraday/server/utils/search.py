@@ -223,7 +223,7 @@ def get_json_operator(operator):
 
 def get_json_query(table, field, op, op_type, counter):
     if op_type == 'compare':
-        return f"{table}.{field} ->> :key_{counter} {op} :value_{counter}"  # nosec
+        return f"({table}.{field} ->> :key_{counter})::int {op} :value_{counter}"  # nosec
     elif op_type == 'exists':
         return f"{table}.{field} ->> :key_{counter} {op}"  # nosec
     elif op_type == 'any':

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[MOD] Changed session_timeout in config to float to allow for fractions of hours #7737"
+}

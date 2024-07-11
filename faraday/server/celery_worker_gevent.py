@@ -12,9 +12,9 @@ gevent.monkey.patch_all() # noqa
 import psycogreen.gevent
 psycogreen.gevent.patch_psycopg() # noqa
 
-from faraday.server.app import celery, create_app  # noqa
+from faraday.server.app import celery, get_app  # noqa
 
-application = create_app()
+application = get_app()
 
 
 def main(options=None):

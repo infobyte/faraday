@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fix filtering numerical Custom Attributes with some operators. #7759"
+}

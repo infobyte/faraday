@@ -2425,10 +2425,11 @@ class UserToken(Metadata):
                         foreign_keys=[user_id])
 
     token = Column(String(), nullable=False, unique=True)
-    alias = Column(String(), nullable=True)
+    alias = Column(String(), nullable=False)
     expires_at = Column(DateTime(), nullable=True)
     scope = Column(Enum(*SCOPES, name='token_scopes'), nullable=False, default="api")
     revoked = Column(Boolean(), default=False, nullable=False)
+    hide = Column(Boolean(), default=False, nullable=False)
 
 
 class User(db.Model, UserMixin):

@@ -1,17 +1,17 @@
 """user token
 
-Revision ID: 520d082e500b
-Revises: 27d7eff884e7
-Create Date: 2024-04-25 17:58:32.826785+00:00
+Revision ID: 50188e14aa02
+Revises: 97e308761de2
+Create Date: 2024-07-12 14:13:29.602746+00:00
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '520d082e500b'
-down_revision = '27d7eff884e7'
+revision = '50188e14aa02'
+down_revision = '97e308761de2'
 branch_labels = None
 depends_on = None
 
@@ -23,10 +23,11 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('token', sa.String(), nullable=False),
-    sa.Column('alias', sa.String(), nullable=True),
+    sa.Column('alias', sa.String(), nullable=False),
     sa.Column('expires_at', sa.DateTime(), nullable=True),
     sa.Column('scope', sa.Enum('api', 'gitlab', 'jira', name='token_scopes'), nullable=False),
     sa.Column('revoked', sa.Boolean(), nullable=False),
+    sa.Column('hide', sa.Boolean(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),
     sa.Column('update_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['creator_id'], ['faraday_user.id'], ondelete='SET NULL'),

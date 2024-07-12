@@ -172,24 +172,14 @@ generate_deb_master:
 
 generate_rpm_dev:
     stage: build
-    image: centos:7
+    image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
-      - yum -y upgrade
-      - yum -y install which git epel-release centos-release-scl
       - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
       - cd faraday-linux-installers-builder
       - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
       - cd ..
       - mv py3.tar /
       - cd /; tar xf py3.tar; cd -
-      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
-      - yum groups -y install "Development Tools"
-      - yum -y install rh-python36 rh-ruby30 rh-ruby30-ruby-devel
-      - source /opt/rh/rh-ruby30/enable
-      - export X_SCLS="`scl enable rh-ruby30 'echo $X_SCLS'`"
-      - source /opt/rh/rh-python36/enable
-      - pip install virtualenv
-      - pip install virtualenv-tools3
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
@@ -231,24 +221,14 @@ generate_rpm_dev:
 
 generate_rpm_staging:
     stage: build
-    image: centos:7
+    image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
-      - yum -y upgrade
-      - yum -y install which git epel-release centos-release-scl
       - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
       - cd faraday-linux-installers-builder
       - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
       - cd ..
       - mv py3.tar /
       - cd /; tar xf py3.tar; cd -
-      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
-      - yum groups -y install "Development Tools"
-      - yum -y install rh-python36 rh-ruby30 rh-ruby30-ruby-devel
-      - source /opt/rh/rh-ruby30/enable
-      - export X_SCLS="`scl enable rh-ruby30 'echo $X_SCLS'`"
-      - source /opt/rh/rh-python36/enable
-      - pip install virtualenv
-      - pip install virtualenv-tools3
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
@@ -287,24 +267,14 @@ generate_rpm_staging:
 
 generate_rpm_master:
     stage: build
-    image: centos:7
+    image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
-      - yum -y upgrade
-      - yum -y install which git epel-release centos-release-scl
       - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
       - cd faraday-linux-installers-builder
       - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
       - cd ..
       - mv py3.tar /
       - cd /; tar xf py3.tar; cd -
-      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
-      - yum groups -y install "Development Tools"
-      - yum -y install rh-python36 rh-ruby30 rh-ruby30-ruby-devel
-      - source /opt/rh/rh-ruby30/enable
-      - export X_SCLS="`scl enable rh-ruby30 'echo $X_SCLS'`"
-      - source /opt/rh/rh-python36/enable
-      - pip install virtualenv
-      - pip install virtualenv-tools3
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.

@@ -70,7 +70,7 @@ from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.websockets.dispatcher import remove_sid
 from faraday.settings import load_settings
 from faraday.server.extensions import celery
-
+from faraday.server.debouncer import Debouncer
 
 # Don't move this import from here
 from nplusone.ext.flask_sqlalchemy import NPlusOne
@@ -79,6 +79,7 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
 FARADAY_APP = None
+DEBOUNCER = None
 
 
 def setup_storage_path():
@@ -136,6 +137,8 @@ def register_blueprints(app):
         reports_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_dashboard import \
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.settings_elk import \
+        elk_settings_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(ui)
     app.register_blueprint(commandsrun_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -168,6 +171,7 @@ def register_blueprints(app):
     app.register_blueprint(export_data_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(reports_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(dashboard_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(elk_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(swagger_api, url_prefix=app.config['APPLICATION_PREFIX'])
 
 
@@ -340,7 +344,7 @@ def get_prefixed_url(app, url):
     return url
 
 
-def create_app(db_connection_string=None, testing=None, register_extensions_flag=True):
+def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',
@@ -525,7 +529,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     app.view_functions['agent_api.AgentView:post'].is_public = True
 
     # Remove agents that where registered
-    if not testing:
+    if not testing and remove_sids:
         with app.app_context():
             remove_sid()
 
@@ -537,13 +541,22 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     return app
 
 
-def get_app(db_connection_string=None, testing=None, register_extensions_flag=True):
+def get_app(db_connection_string=None, testing=None, register_extensions_flag=True, remove_sids=False):
+    logger.debug("Calling get_app")
     global FARADAY_APP  # pylint: disable=W0603
     if not FARADAY_APP:
         FARADAY_APP = create_app(db_connection_string=db_connection_string,
                                  testing=testing,
-                                 register_extensions_flag=register_extensions_flag)
+                                 register_extensions_flag=register_extensions_flag,
+                                 remove_sids=remove_sids)
     return FARADAY_APP
+
+
+def get_debouncer():
+    global DEBOUNCER  # pylint: disable=W0603
+    if not DEBOUNCER:
+        DEBOUNCER = Debouncer(wait=10)
+    return DEBOUNCER
 
 
 def register_extensions(app):

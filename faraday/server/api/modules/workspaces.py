@@ -16,7 +16,7 @@ import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from sqlalchemy.orm import with_expression, joinedload
+from sqlalchemy.orm import with_expression
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
@@ -449,8 +449,6 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
                 Workspace.total_service_count,
                 _make_generic_count_property('workspace', 'service', use_column_property=False)
             ),
-            joinedload(Workspace.scope),
-            joinedload(Workspace.allowed_users)
         )
         try:
             obj = query.one()

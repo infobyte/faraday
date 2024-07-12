@@ -44,6 +44,8 @@ from faraday.server.schemas import (
     SelfNestedField,
 )
 from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
+from faraday.server.debouncer import debounce_workspace_update
+
 host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
@@ -317,6 +319,7 @@ class HostsView(PaginatedMixin,
                     logger.debug("Host Created (%s)", host_dict)
                     hosts_created_count += 1
             logger.info("Hosts created in bulk")
+            debounce_workspace_update(workspace_name)
             return make_response(jsonify(hosts_created=hosts_created_count,
                                          hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
@@ -425,6 +428,8 @@ class HostsView(PaginatedMixin,
         if command_id:
             set_command_id(db.session, host, True, command_id)
         db.session.commit()
+        if kwargs['workspace_name']:
+            debounce_workspace_update(kwargs['workspace_name'])
         return host
 
     def _update_object(self, obj, data, **kwargs):
@@ -490,6 +495,8 @@ class HostsView(PaginatedMixin,
                   schema: {schema_class}
         """
         kwargs['exclude'] = ['severity_counts']
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
         return super().patch(object_id, workspace_name=workspace_name, **kwargs)
 
     def _envelope_list(self, objects, pagination_metadata=None):
@@ -509,6 +516,8 @@ class HostsView(PaginatedMixin,
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
         return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
 
@@ -525,6 +534,8 @@ class HostsView(PaginatedMixin,
         if "hostnames" in extracted_data:
             for obj in self._bulk_update_query(ids, **kwargs).all():
                 obj.set_hostnames(extracted_data["hostnames"])
+        if kwargs['workspace_name']:
+            debounce_workspace_update(kwargs['workspace_name'])
 
 
 HostsView.register(host_api)

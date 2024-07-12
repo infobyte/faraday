@@ -100,6 +100,8 @@ class ConfigSection:
                     setattr(self, att, False)
             elif isinstance(self.__dict__[att], int):
                 setattr(self, att, int(value))
+            elif isinstance(self.__dict__[att], float):
+                setattr(self, att, float(value))
 
             else:
                 setattr(self, att, value)
@@ -140,7 +142,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.bind_address = "127.0.0.1"
         self.port = 5985
         self.secret_key = None
-        self.session_timeout = 12
+        self.session_timeout = 12.0
         self.api_token_expiration = 86400  # Default as 24 hs
         self.agent_registration_secret = None
         self.agent_token_expiration = 60  # Default as 1 min

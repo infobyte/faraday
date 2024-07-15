@@ -67,7 +67,7 @@ class ServiceContextView(PaginatedMixin, FilterMixin, FilterAlchemyMixin, Contex
                               filters)
 
         filter_query = (self._apply_filter_context(filter_query).
-                        filter(Service.workspace.has(active=True)))  # only hosts from active workspaces
+                        filter(Service.workspace.has(active=True)))  # only services from active workspaces
         return filter_query
 
 

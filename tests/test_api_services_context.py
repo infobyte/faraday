@@ -84,6 +84,21 @@ class TestListServiceView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTest
         assert res.status_code == 200
         assert len(res.json['services']) == OBJECT_COUNT
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_list_retrieves_items_from_active_workspaces(self, test_client, logged_user, session, second_workspace,
+                                                         service_factory):
+        service_factory.create(workspace=second_workspace)
+        session.commit()
+        res = test_client.get(f"{self.url()}/filter")
+        assert res.status_code == 200
+        assert len(res.json['services']) == OBJECT_COUNT + 1
+
+        second_workspace.active = False
+        session.commit()
+        res = test_client.get(f"{self.url()}/filter")
+        assert res.status_code == 200
+        assert len(res.json['services']) == OBJECT_COUNT
+
     def test_bulk_delete_with_references(self, test_client, session, workspace):
         service_1 = self.factory.create(workspace=workspace)
         service_2 = self.factory.create(workspace=workspace)

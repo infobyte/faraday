@@ -412,6 +412,8 @@ class VulnerabilityContextView(ContextMixin,
                        filters)
         vulns = self._apply_filter_context(vulns)
 
+        vulns = vulns.filter(vulnerability_class.workspace.has(active=True))
+
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)

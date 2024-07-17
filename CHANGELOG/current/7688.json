@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "[ADD] Implemented workspace update functionality for changes to vulnerabilities, assets, and services. Introduced debouncer logic to prevent redundant updates to the database.#7688"
-}

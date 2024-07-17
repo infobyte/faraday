@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "[ADD] Added ping timeout, ping interval and logger parameters on faraday server config. #7740"
-}

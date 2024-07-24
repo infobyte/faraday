@@ -36,7 +36,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql import select, text, table, expression
+from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
@@ -2439,10 +2439,11 @@ class UserToken(Metadata):
     def expired(cls):
         return case(
             [
-                (cls.expires_at != None, cls.expires_at < datetime.utcnow())
+                (cls.expires_at != None, cls.expires_at < datetime.utcnow())  # noqa E711
             ],
             else_=False
         )
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'

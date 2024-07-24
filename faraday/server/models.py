@@ -36,7 +36,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql import select, text, table
+from sqlalchemy.sql import select, text, table, expression
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
@@ -2431,6 +2431,18 @@ class UserToken(Metadata):
     revoked = Column(Boolean(), default=False, nullable=False)
     hide = Column(Boolean(), default=False, nullable=False)
 
+    @hybrid_property
+    def expired(self):
+        return self.expires_at is not None and self.expires_at < datetime.utcnow()
+
+    @expired.expression
+    def expired(cls):
+        return case(
+            [
+                (cls.expires_at != None, cls.expires_at < datetime.utcnow())
+            ],
+            else_=False
+        )
 
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'

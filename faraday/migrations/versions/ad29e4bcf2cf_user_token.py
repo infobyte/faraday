@@ -1,15 +1,16 @@
 """user token
 
-Revision ID: 50188e14aa02
+Revision ID: ad29e4bcf2cf
 Revises: 97e308761de2
-Create Date: 2024-07-12 14:13:29.602746+00:00
+Create Date: 2024-07-23 20:15:17.676850+00:00
 
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '50188e14aa02'
+revision = 'ad29e4bcf2cf'
 down_revision = '97e308761de2'
 branch_labels = None
 depends_on = None

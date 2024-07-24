@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.4.1 [Jul 24th, 2024]:
+---
+ * [FIX] Improved bulk update logic in the general context view. #7766
+
 5.4.0 [Jun 17th, 2024]:
 ---
  * [ADD] Implemented Elasticsearch vulnerability ingest from Faraday for comprehensive statistical analysis. #7723

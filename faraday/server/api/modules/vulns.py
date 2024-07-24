@@ -1493,7 +1493,6 @@ class VulnerabilityView(PaginatedMixin,
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
-            print(kwargs['returning'])
             host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
             service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
             if faraday_server.celery_enabled:

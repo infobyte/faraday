@@ -4,5 +4,5 @@ Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-__version__ = '5.3.0'
+__version__ = '5.4.0'
 __license_version__ = __version__

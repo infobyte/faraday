@@ -19,7 +19,7 @@ test_hypothesis:
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir run_from
-        - nix-shell --command "pytest tests -v --cov=faraday/server/api --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis"
+        - nix-shell --command "pytest tests -x -v --cov=faraday/server/api --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis"
     rules:
       - if: $HYPO_TEST
         when: on_success

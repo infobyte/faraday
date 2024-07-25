@@ -3,7 +3,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
+import http
 # Standard library imports
 import io
 import logging
@@ -22,8 +22,11 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
 from depot.manager import DepotManager
 
+from faraday.server.config import faraday_server
+from faraday.server.debouncer import debounce_workspace_update
 # Local application imports
 from faraday.server.utils.cwe import create_cwe
+from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
     FilterAlchemyMixin,
@@ -47,7 +50,9 @@ from faraday.server.models import (
     VulnerabilityWeb,
     CustomFieldsSchema,
     VulnerabilityGeneric,
-    User
+    User,
+    Workspace,
+    VulnerabilityABC,
 )
 from faraday.server.utils.database import (
     get_or_create,
@@ -128,6 +133,18 @@ class VulnerabilityContextView(ContextMixin,
         schema = super()._get_schema_instance(route_kwargs, **kwargs)
 
         return schema
+
+    def _perform_bulk_update(self, ids, data, **kwargs):
+        returning_rows = [
+            VulnerabilityGeneric.id,
+            VulnerabilityGeneric.name,
+            VulnerabilityGeneric.severity,
+            VulnerabilityGeneric.risk,
+            VulnerabilityGeneric.host_id,
+            Vulnerability.service_id,
+        ]
+        kwargs['returning'] = returning_rows
+        return super()._perform_bulk_update(ids, data, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """Eager hostnames loading.
@@ -742,12 +759,67 @@ class VulnerabilityContextView(ContextMixin,
         return custom_behaviour_fields
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        workspaces = Workspace.query.join(VulnerabilityGeneric).filter(VulnerabilityGeneric.id.in_(ids)).distinct(Workspace.id).all()
         if extracted_data:
             queryset = self._bulk_update_query(ids, **kwargs)
             for obj in queryset.all():
                 for (key, value) in extracted_data.items():
+                    if key == 'refs':
+                        value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
+
+        if 'returning' in kwargs and kwargs['returning']:
+            # update host stats
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
+            service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
+
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+
+    def _perform_bulk_delete(self, values, **kwargs):
+        # Get host and service ids in order to update host stats
+        host_ids = db.session.query(
+            VulnerabilityGeneric.host_id,
+            VulnerabilityGeneric.service_id
+        )
+
+        if kwargs.get("by", "id") != "severity":
+            workspaces = self._get_context_workspace_query(operation='write').join(VulnerabilityGeneric).filter(VulnerabilityGeneric.id.in_(values)).distinct(Workspace.id).all()
+        else:
+            workspaces = self._get_context_workspace_query(operation='write').join(VulnerabilityGeneric).filter(VulnerabilityGeneric.severity.in_(values)).distinct(Workspace.id).all()
+        by_severity = kwargs.get('by', None)
+        if by_severity == 'severity':
+            for severity in values:
+                if severity not in VulnerabilityABC.SEVERITIES:
+                    flask.abort(http.client.BAD_REQUEST, "Severity type not valid")
+
+            host_ids = host_ids.filter(
+                VulnerabilityGeneric.severity.in_(values)
+            ).all()
+        else:
+            host_ids = host_ids.filter(
+                VulnerabilityGeneric.id.in_(values)
+            ).all()
+
+        response = super()._perform_bulk_delete(values, **kwargs)
+        deleted = response.json.get('deleted', 0)
+        if deleted > 0:
+            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+            for workspace in workspaces:
+                debounce_workspace_update(workspace.name)
+            host_id_list = [data[0] for data in host_ids if data[0]]
+            service_id_list = [data[1] for data in host_ids if data[1]]
+            if faraday_server.celery_enabled:
+                update_host_stats.delay(host_id_list, service_id_list)
+            else:
+                update_host_stats(host_id_list, service_id_list)
+        return response
 
 
 VulnerabilityContextView.register(vulns_context_api)

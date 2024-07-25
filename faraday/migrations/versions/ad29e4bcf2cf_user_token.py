@@ -24,7 +24,7 @@ def upgrade():
     sa.Column('token', sa.String(), nullable=False),
     sa.Column('alias', sa.String(), nullable=False),
     sa.Column('expires_at', sa.DateTime(), nullable=True),
-    sa.Column('scope', sa.Enum('api', 'gitlab', 'jira', name='token_scopes'), nullable=False),
+    sa.Column('scope', sa.Enum('gitlab', name='token_scopes'), nullable=False),
     sa.Column('revoked', sa.Boolean(), nullable=False),
     sa.Column('hide', sa.Boolean(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),

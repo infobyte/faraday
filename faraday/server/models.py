@@ -2412,10 +2412,8 @@ class Role(db.Model, RoleMixin):
 
 class UserToken(Metadata):
     __tablename__ = 'user_token'
-    API_SCOPE = 'api'
     GITLAB_SCOPE = 'gitlab'
-    JIRA_SCOPE = 'jira'
-    SCOPES = [API_SCOPE, GITLAB_SCOPE, JIRA_SCOPE]
+    SCOPES = [GITLAB_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 
@@ -2427,7 +2425,7 @@ class UserToken(Metadata):
     token = Column(String(), nullable=False, unique=True)
     alias = Column(String(), nullable=False)
     expires_at = Column(DateTime(), nullable=True)
-    scope = Column(Enum(*SCOPES, name='token_scopes'), nullable=False, default="api")
+    scope = Column(Enum(*SCOPES, name='token_scopes'), nullable=False, default="gitlab")
     revoked = Column(Boolean(), default=False, nullable=False)
     hide = Column(Boolean(), default=False, nullable=False)
 

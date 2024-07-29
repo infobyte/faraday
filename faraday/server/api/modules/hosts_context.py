@@ -294,4 +294,5 @@ class HostsContextView(PaginatedMixin,
             debounce_workspace_update(workspace.name)
         return response
 
+
 HostsContextView.register(host_context_api)

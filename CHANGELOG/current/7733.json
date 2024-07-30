@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[MOD] Modified pytest launch parameters to fail job at first error. #7733"
+}

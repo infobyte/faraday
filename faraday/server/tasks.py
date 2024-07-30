@@ -22,6 +22,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Vulnerability,
 )
+from faraday.server.debouncer import debounce_workspace_update
 
 logger = get_task_logger(__name__)
 
@@ -34,6 +35,10 @@ def on_success_process_report_task(results, command_id=None):
     if not command:
         logger.error("File imported but command id %s was not found", command_id)
         return
+    else:
+        workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
+        if workspace.name:
+            debounce_workspace_update(workspace.name)
     logger.debug(f"Fetching command took {time.time() - start_time}")
     command.end_date = command_end_date
     logger.error("File for command id %s successfully imported", command_id)

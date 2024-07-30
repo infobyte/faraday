@@ -243,22 +243,16 @@ def update_one_host_severity_stat(vulnerability):
     services = []
     if state.attrs.host_id.history.added or state.attrs.service_id.history.added:
         if state.attrs.host_id.history.added:
-            print(state.attrs.host_id.history.added)
-            print(state.attrs.host_id.history.deleted)
             if state.attrs.host_id.history.added[0] is not None:
                 hosts.append(state.attrs.host_id.history.added[0])
             if state.attrs.host_id.history.deleted[0] is not None:
                 hosts.append(state.attrs.host_id.history.deleted[0])
         if state.attrs.service_id.history.added:
-            print(state.attrs.service_id.history.added)
-            print(state.attrs.service_id.history.deleted)
             if state.attrs.service_id.history.added[0] is not None:
                 services.append(state.attrs.service_id.history.added[0])
             if state.attrs.service_id.history.deleted[0] is not None:
                 services.append(state.attrs.service_id.history.deleted[0])
     elif state.attrs.severity.history.added:
-        print(state.attrs.severity.history.added)
-        print(state.attrs.severity.history.deleted)
         if vulnerability.host_id:
             hosts.append(vulnerability.host_id)
         elif vulnerability.service_id:

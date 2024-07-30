@@ -9,7 +9,8 @@ from flask import Blueprint
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 # Local application imports
 from faraday.server.models import (
-    Service
+    Service,
+    db,
 )
 from faraday.server.api.base import (
     FilterMixin,
@@ -21,6 +22,8 @@ from faraday.server.api.base import (
     PaginatedMixin
 )
 from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.utils.search import search
+
 services_context_api = Blueprint('services_context_api', __name__)
 
 
@@ -55,6 +58,17 @@ class ServiceContextView(PaginatedMixin, FilterMixin, FilterAlchemyMixin, Contex
             'count': (pagination_metadata.total
                       if pagination_metadata is not None else len(services))
         }
+
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
+        filter_query = search(db.session,
+                              self.model_class,
+                              filters)
+
+        filter_query = (self._apply_filter_context(filter_query).
+                        filter(Service.workspace.has(active=True)))  # only services from active workspaces
+        return filter_query
 
 
 ServiceContextView.register(services_context_api)

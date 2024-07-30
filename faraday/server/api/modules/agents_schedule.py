@@ -3,8 +3,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
 # Standard library imports
+import http
 import logging
 import json
 import datetime
@@ -14,6 +14,7 @@ import flask
 from flask import (
     Blueprint,
     current_app,
+    abort,
 )
 import flask_login
 from flask_classful import route
@@ -225,12 +226,12 @@ class AgentsScheduleView(
             message = f"Schedule with ID {self.schedule_id} not found!, skipping agent execution"
             logger.warning(message)
             flask.abort(400, message)
-        if agents_schedule.executor.agent.status != 'online' or not agents_schedule.executor.agent.active:
-            message = f'Agent is not online or paused. Agent status: {agents_schedule.executor.agent.status}, ' \
-                      f'active flag: {agents_schedule.executor.agent.active}'
-            logger.warning(message)
-            flask.abort(400, message)
-
+        if agents_schedule.executor.agent.is_offline:
+            message = 'Agent is offline'
+            abort(http.HTTPStatus.GONE, message)
+        if not agents_schedule.executor.agent.active:
+            message = f'Agent is paused. active flag: {agents_schedule.executor.agent.active}'
+            abort(http.HTTPStatus.GONE, message)
         agents_schedule.last_run = datetime.datetime.now()
         db.session.add(agents_schedule)
         workspaces = agents_schedule.workspaces

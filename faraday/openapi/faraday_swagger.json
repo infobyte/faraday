@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.3.0 API",
+        "title": "Faraday 5.4.1 API",
         "version": "v3"
     },
     "security": [
@@ -5339,6 +5339,60 @@
             }
         },
         "/_api/v3/settings/dashboard": {
+            "get": {
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Retrieves settings of {route_base}",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "schema_class": null
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin user required"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Creates/Updates settings of {route_base}",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema_class": null
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "schema_class": null
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin user required"
+                    }
+                }
+            }
+        },
+        "/_api/v3/settings/elk": {
             "get": {
                 "tags": [
                     "settings"

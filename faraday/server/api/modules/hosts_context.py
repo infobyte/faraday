@@ -146,7 +146,8 @@ class HostsContextView(PaginatedMixin,
                 joinedload(self.model_class.update_user),
                 joinedload(getattr(self.model_class, 'creator')).load_only('username'),
             )
-        filter_query = self._apply_filter_context(filter_query)
+        filter_query = (self._apply_filter_context(filter_query).
+                        filter(Host.workspace.has(active=True)))  # only hosts from active workspaces
         return filter_query
 
     @route('/<host_id>/services')

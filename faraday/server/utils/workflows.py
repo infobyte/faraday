@@ -17,6 +17,7 @@ from faraday.server.api.modules.workflow import (
     OPERATORS,
     fields_lookup,
     rules_attributes,
+    service_datatypes,
 )
 from faraday.server.extensions import socketio
 from faraday.server.models import (
@@ -183,22 +184,35 @@ def _process_field_data(obj, field):
     if field[0] == "service_id":
         return obj, "service_id"
 
+    # special case for host services
+    if obj.__class__.__name__.lower() == "host" and field[0] == "service":
+        field = ["services"] + field[1:]
+
     for route in field:
+
+        # break if previous iteration was a list
+        if isinstance(obj, list):
+            field = route
+            break
+
         obj_data_in_field = getattr(obj, route, None)
         if obj_data_in_field is None:
             raise ValueError(f"Field \"{route}\" not found in object {obj}")
         if isinstance(obj_data_in_field, db.Model):
             obj = obj_data_in_field
+        elif isinstance(obj_data_in_field, list):
+            obj = obj_data_in_field
         else:
             field = route
             break
+
+    if not isinstance(obj, list):
+        obj = [obj]
     return obj, field
 
 
-def _check_leaf(obj, condition):
-
-    target_obj, field = _process_field_data(obj, condition.field)
-    model_data = getattr(target_obj, field, None)
+def _perform_leaf_check(obj, condition, field):
+    model_data = getattr(obj, field, None)
 
     operator = OPERATORS.get(condition.operator, None)
     if operator is None:
@@ -207,7 +221,10 @@ def _check_leaf(obj, condition):
     class_name = obj.__class__.__name__.lower()
     class_name = "vulnerability" if "web" in class_name else class_name
 
-    data_type = [x.get("type") for x in rules_attributes[class_name] if x.get("name") == condition.field][0]
+    if class_name != "service":
+        data_type = [x.get("type") for x in rules_attributes[class_name] if x.get("name") == condition.field][0]
+    else:
+        data_type = service_datatypes.get(condition.field, None)
     data = condition.data
 
     if data_type == "string":
@@ -239,6 +256,14 @@ def _check_leaf(obj, condition):
         model_data = [x.name for x in model_data]
 
     return operator(model_data, data)
+
+
+def _check_leaf(obj, condition):
+    target_objs, field = _process_field_data(obj, condition.field)
+    results = []
+    for target_obj in target_objs:
+        results.append(_perform_leaf_check(target_obj, condition, field))
+    return any(results)
 
 
 def _check_condition(obj, condition):

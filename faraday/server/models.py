@@ -1195,13 +1195,6 @@ class Host(Metadata):
         cascade="all, delete-orphan"
     )
 
-    @property
-    def service(self):
-        if self.services:
-            return self.services[0]
-        else:
-            return None
-
     # 1 workspace <--> N hosts
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)

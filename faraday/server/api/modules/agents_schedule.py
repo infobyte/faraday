@@ -13,7 +13,6 @@ import datetime
 import flask
 from flask import (
     Blueprint,
-    current_app,
     abort,
 )
 import flask_login
@@ -27,7 +26,6 @@ from marshmallow import (
 )
 from sqlalchemy.orm.exc import NoResultFound
 import dateutil
-from flask_socketio import SocketIO
 
 # Local application imports
 from faraday.server.api.base import (
@@ -39,7 +37,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules.agent import AgentSchema, ExecutorSchema
 from faraday.server.api.modules.workspaces import WorkspaceSchema
-from faraday.server.config import faraday_server
+from faraday.server.extensions import socketio
 from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
@@ -270,12 +268,7 @@ class AgentsScheduleView(
             "args": agents_schedule.parameters,
             "plugin_args": plugin_args
         }
-        if hasattr(current_app, 'socketio'):
-            current_app.socketio.emit("run", message, to=agents_schedule.executor.agent.sid, namespace='/dispatcher')
-        else:
-            socketio = SocketIO(message_queue=f'redis://{faraday_server.celery_broker_url}:6379/0')
-            socketio.emit("run", message, to=agents_schedule.executor.agent.sid, namespace='/dispatcher')
-
+        socketio.emit("run", message, to=agents_schedule.executor.agent.sid, namespace='/dispatcher')
         logger.info(f"Agent {agents_schedule.executor.agent.name} "
                     f"executed with executor {agents_schedule.executor.name}")
 

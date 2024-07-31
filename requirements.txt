@@ -55,3 +55,4 @@ redis>=4.3.4
 gevent-websocket>=0.10.1
 sh
 elasticsearch>=7.16.3
+croniter>=0.3.30

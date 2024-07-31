@@ -14,8 +14,10 @@ from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
+import dateutil
 import cvss
 import jwt
+from croniter import croniter
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -3181,7 +3183,11 @@ class AgentsSchedule(Metadata):
 
     @property
     def next_run(self):
-        raise NotImplementedError()
+        return croniter(
+            self.crontab,
+            datetime.now(tz=dateutil.tz.gettz(self.timezone)),
+            ret_type=datetime
+        ).get_next(datetime)
 
     @property
     def parent(self):

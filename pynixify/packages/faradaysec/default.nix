@@ -3,8 +3,8 @@
 # deleted, and you will lose the changes you made to it.
 
 { alembic, apispec, apispec-webframeworks, autobahn, bcrypt, bidict, bleach
-, buildPythonPackage, celery, click, colorama, cryptography, cvss, dateutil
-, distro, elasticsearch, email-validator, factory_boy
+, buildPythonPackage, celery, click, colorama, croniter, cryptography, cvss
+, dateutil, distro, elasticsearch, email-validator, factory_boy
 , faraday-agent-parameters-types, faraday-plugins, fetchPypi, filedepot
 , filteralchemy-fork, flask, flask-celery-helper, flask-classful
 , flask-kvsession-fork, flask-limiter, flask-login, flask-security-too
@@ -81,6 +81,7 @@ buildPythonPackage rec {
     gevent-websocket
     sh
     elasticsearch
+    croniter
   ];
   nativeBuildInputs = [
     factory_boy

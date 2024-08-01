@@ -1,6 +1,12 @@
 New features in the latest update
 =====================================
 
+5.5.0 [Aug 1st, 2024]:
+---
+ * [ADD] Added Scheduler feature to community. #7752
+ * [MOD] Modified pytest launch parameters to fail job at first error. #7733
+ * [ADD] Adder Pipelines feature in community. #7751
+
 5.4.1 [Jul 24th, 2024]:
 ---
  * [FIX] Improved bulk update logic in the general context view. #7766

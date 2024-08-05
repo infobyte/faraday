@@ -11,6 +11,7 @@ from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from faraday.server.models import (
     Service,
     db,
+    Workspace
 )
 from faraday.server.api.base import (
     FilterMixin,
@@ -23,6 +24,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.utils.search import search
+from faraday.server.debouncer import debounce_workspace_update
 
 services_context_api = Blueprint('services_context_api', __name__)
 
@@ -69,6 +71,13 @@ class ServiceContextView(PaginatedMixin, FilterMixin, FilterAlchemyMixin, Contex
         filter_query = (self._apply_filter_context(filter_query).
                         filter(Service.workspace.has(active=True)))  # only services from active workspaces
         return filter_query
+
+    def _perform_bulk_delete(self, values, **kwargs):
+        workspaces = Workspace.query.join(Service).filter(Service.id.in_(values)).distinct(Workspace.name).all()
+        response = super()._perform_bulk_delete(values, **kwargs)
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+        return response
 
 
 ServiceContextView.register(services_context_api)

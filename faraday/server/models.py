@@ -2422,7 +2422,8 @@ class Role(db.Model, RoleMixin):
 class UserToken(Metadata):
     __tablename__ = 'user_token'
     GITLAB_SCOPE = 'gitlab'
-    SCOPES = [GITLAB_SCOPE]
+    SERVICE_DESK_SCOPE = 'service_desk'
+    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 

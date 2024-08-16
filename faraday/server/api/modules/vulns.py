@@ -21,7 +21,7 @@ from flask_classful import route
 from filteralchemy import Filter, FilterSet, operators
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, func, update
+from sqlalchemy import desc, func
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import (
     aliased,
@@ -83,7 +83,7 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
-from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat
+from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat, bulk_update_custom_attributes
 from faraday.server.debouncer import debounce_workspace_update
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -821,44 +821,8 @@ class VulnerabilityView(PaginatedMixin,
             debounce_workspace_update(workspace_name)
 
         if (len(data) > 0 and len(ids) > 0) and 'custom_fields' in data.keys():
-            return self._bulk_update_custom_attributes(ids, data)
+            return bulk_update_custom_attributes(ids, data)
         return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
-
-    def _bulk_update_custom_attributes(self, vuln_ids: list, data: dict):
-        """
-        Updates or adds specified custom attribute for a list of vulnerabilities without
-        overwriting existing custom attributes.
-
-        :param vuln_ids: List of vulnerability IDs to update.
-        :param data: Dictionary of custom field to update/add.
-        :return: Flask Response object
-        """
-
-        try:
-            for key, value in data["custom_fields"].items():
-                # Prepare the path and value for jsonb_set
-                key_path = f'{{{key}}}'  # e.g., '{string}'
-                value_json = json.dumps(value)
-                # Perform the bulk update
-                stmt = (
-                    update(Vulnerability)
-                    .where(Vulnerability.id.in_(vuln_ids))
-                    .values(
-                        custom_fields=func.jsonb_set(
-                            func.coalesce(Vulnerability.custom_fields, '{}'),  # Handle NULLs
-                            key_path,
-                            value_json,
-                            True  # Create missing
-                        )
-                    )
-                )
-                db.session.execute(stmt)
-            db.session.commit()
-            return flask.jsonify({"updated": len(vuln_ids)})
-
-        except Exception as e:
-            db.session.rollback()
-            return flask.jsonify({"error": str(e)})
 
     def put(self, object_id, workspace_name=None, **kwargs):
         if workspace_name:

@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.3.0 API",
+        "title": "Faraday 5.5.0 API",
         "version": "v3"
     },
     "security": [
@@ -5284,6 +5284,1257 @@
                 }
             ]
         },
+        "/_api/v3/agents_schedule/{object_id}": {
+            "delete": {
+                "tags": [
+                    "AgentsSchedule"
+                ],
+                "summary": "Deletes AgentsSchedule",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The resource was deleted successfully"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
+            "get": {
+                "tags": [
+                    "AgentsSchedule"
+                ],
+                "summary": "Retrieves AgentsSchedule",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "AgentsSchedule"
+                ],
+                "summary": "Updates AgentsSchedule",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgentsScheduleSchema"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "AgentsSchedule"
+                ],
+                "summary": "Updates AgentsSchedule",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgentsScheduleSchema"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/agents_schedule": {
+            "get": {
+                "tags": [
+                    "AgentsSchedule"
+                ],
+                "summary": "Get a list of AgentsSchedule.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "AgentsSchedule"
+                ],
+                "summary": "Creates AgentsSchedule",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgentsScheduleSchema"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentsScheduleSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/agents_schedule/{schedule_id}/run": {
+            "post": {
+                "tags": [
+                    "Agent Schedule"
+                ],
+                "description": "Runs an agent schedule",
+                "responses": {
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "201": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "schedule_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/{job_id}/clone": {
+            "post": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Clone job",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "job_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/{object_id}": {
+            "delete": {
+                "tags": [
+                    "Workflow"
+                ],
+                "summary": "Deletes Workflow",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The resource was deleted successfully"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Workflow"
+                ],
+                "summary": "Retrieves Workflow",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Workflow"
+                ],
+                "summary": "Updates Workflow",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Job"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Workflow"
+                ],
+                "summary": "Updates Workflow",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Job"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/jobs/{job_id}/enabled": {
+            "get": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get the enabled status of a job",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "job_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/{job_id}/export_job": {
+            "get": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Export job as json",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "job_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/{job_id}/tasks": {
+            "get": {
+                "tags": [
+                    "Job",
+                    "Action"
+                ],
+                "summary": "Get the actions associated to a job",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "job_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/rules/attributes": {
+            "get": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get the Attributes for rules",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/jobs/{job_id}/conditions": {
+            "get": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get the conditions of a job",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Condition"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "job_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/{job_id}/executions": {
+            "get": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get the executions of a job",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkflowExecution"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "job_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/jobs/import_job": {
+            "post": {
+                "get": {
+                    "tags": [
+                        "Job"
+                    ],
+                    "summary": "Import job from json",
+                    "responses": {
+                        "201": {
+                            "description": "Ok"
+                        }
+                    }
+                },
+                "tags": [
+                    "Job"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Import job from json",
+                "responses": {
+                    "201": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/jobs": {
+            "get": {
+                "tags": [
+                    "Workflow"
+                ],
+                "summary": "Get a list of Workflow.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Workflow"
+                ],
+                "summary": "Creates Workflow",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Job"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/tasks/{object_id}": {
+            "delete": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Deletes Action",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The resource was deleted successfully"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Retrieves Action",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Updates Action",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Taskwf"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Updates Action",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Taskwf"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/tasks/fields": {
+            "get": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Get the valid fields for tasks",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
+        "/_api/v3/tasks/{task_id}/jobs": {
+            "get": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Get the jobs associated to a task",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Job"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "task_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/tasks": {
+            "get": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Get a list of Action.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Action"
+                ],
+                "summary": "Creates Action",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Taskwf"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Taskwf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/pipelines/{object_id}": {
+            "delete": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Deletes Pipeline",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The resource was deleted successfully"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Retrieves Pipeline",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Updates Pipeline",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pipeline1"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Updates Pipeline",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pipeline1"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/pipelines/{pipeline_id}/disable": {
+            "post": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Disable Pipeline",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "pipeline_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/pipelines/{pipeline_id}/enable": {
+            "post": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Enable Pipeline and Disable all others in same Workspace",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "pipeline_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/pipelines/{pipeline_id}/export": {
+            "get": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Export pipeline as json",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "pipeline_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/pipelines/{pipeline_id}/clone": {
+            "post": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Clone pipeline",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "pipeline_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/pipelines": {
+            "get": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Get a list of Pipeline.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Creates Pipeline",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pipeline1"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pipeline1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/pipelines/{pipeline_id}/run": {
+            "post": {
+                "tags": [
+                    "Pipeline"
+                ],
+                "summary": "Run pipeline with historical data",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "pipeline_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
         "/_api/v3/settings/reports": {
             "get": {
                 "tags": [
@@ -5339,6 +6590,60 @@
             }
         },
         "/_api/v3/settings/dashboard": {
+            "get": {
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Retrieves settings of {route_base}",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "schema_class": null
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin user required"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Creates/Updates settings of {route_base}",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema_class": null
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "schema_class": null
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin user required"
+                    }
+                }
+            }
+        },
+        "/_api/v3/settings/elk": {
             "get": {
                 "tags": [
                     "settings"
@@ -6988,6 +8293,418 @@
                     "name",
                     "user_query"
                 ]
+            },
+            "Condition": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "and",
+                            "or",
+                            "xor",
+                            "leaf"
+                        ]
+                    },
+                    "parent_id": {
+                        "type": "integer"
+                    },
+                    "children": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Condition"
+                        }
+                    },
+                    "field": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "operator": {
+                        "type": "string",
+                        "enum": [
+                            "is_null",
+                            "is_not_null",
+                            "==",
+                            "!=",
+                            ">",
+                            "<",
+                            ">=",
+                            "<=",
+                            "in",
+                            "not_in"
+                        ],
+                        "nullable": true
+                    },
+                    "data": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "job_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "is_root": {
+                        "type": "boolean"
+                    },
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "type"
+                ]
+            },
+            "Taskwf": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": "string",
+                        "enum": [
+                            "UPDATE",
+                            "DELETE",
+                            "ALERT",
+                            "APPEND"
+                        ]
+                    },
+                    "field": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "value": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "custom_field": {
+                        "type": "boolean"
+                    },
+                    "job_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "target": {
+                        "type": "string",
+                        "enum": [
+                            "asset",
+                            ""
+                        ],
+                        "nullable": true
+                    },
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "command"
+                ]
+            },
+            "Pipeline": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "jobs_order": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "jobs_ids": {
+                        "type": "array",
+                        "writeOnly": true,
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "running": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                }
+            },
+            "Job": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string",
+                        "enum": [
+                            "vulnerability",
+                            "vulnerability_web",
+                            "host",
+                            "service"
+                        ]
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "rules": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/Condition"
+                        }
+                    },
+                    "rules_json": {
+                        "type": "array",
+                        "writeOnly": true,
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "tasks": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/Taskwf"
+                        }
+                    },
+                    "pipelines": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/Pipeline"
+                        }
+                    },
+                    "tasks_ids": {
+                        "type": "array",
+                        "writeOnly": true,
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "metadata": {},
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "model",
+                    "rules_json",
+                    "tasks_ids"
+                ]
+            },
+            "WorkflowExecution": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "successful": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "object_and_id": {
+                        "type": "string"
+                    },
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "message",
+                    "object_and_id",
+                    "successful"
+                ]
+            },
+            "Job1": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string",
+                        "enum": [
+                            "vulnerability",
+                            "vulnerability_web",
+                            "host",
+                            "service"
+                        ]
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "rules": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/Condition"
+                        }
+                    },
+                    "rules_json": {
+                        "type": "array",
+                        "writeOnly": true,
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "tasks": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/Taskwf"
+                        }
+                    },
+                    "tasks_ids": {
+                        "type": "array",
+                        "writeOnly": true,
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "metadata": {},
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "model",
+                    "rules_json",
+                    "tasks_ids"
+                ]
+            },
+            "Pipeline1": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "jobs_order": {
+                        "type": "string"
+                    },
+                    "jobs": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/Job1"
+                        }
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "jobs_ids": {
+                        "type": "array",
+                        "writeOnly": true,
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "running": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                }
             }
         },
         "responses": {
@@ -7004,7 +8721,16 @@
     },
     "tags": [
         {
+            "name": "Action"
+        },
+        {
             "name": "Agent"
+        },
+        {
+            "name": "Agent Schedule"
+        },
+        {
+            "name": "AgentsSchedule"
         },
         {
             "name": "Bulk"
@@ -7034,7 +8760,13 @@
             "name": "Informational"
         },
         {
+            "name": "Job"
+        },
+        {
             "name": "License"
+        },
+        {
+            "name": "Pipeline"
         },
         {
             "name": "SearchFilter"
@@ -7059,6 +8791,9 @@
         },
         {
             "name": "VulnerabilityTemplate"
+        },
+        {
+            "name": "Workflow"
         },
         {
             "name": "Workspace"

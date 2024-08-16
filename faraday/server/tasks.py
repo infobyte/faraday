@@ -22,6 +22,8 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Vulnerability,
 )
+from faraday.server.utils.workflows import _process_entry
+from faraday.server.debouncer import debounce_workspace_update
 
 logger = get_task_logger(__name__)
 
@@ -34,10 +36,35 @@ def on_success_process_report_task(results, command_id=None):
     if not command:
         logger.error("File imported but command id %s was not found", command_id)
         return
+    else:
+        workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
+        if workspace.name:
+            debounce_workspace_update(workspace.name)
     logger.debug(f"Fetching command took {time.time() - start_time}")
     command.end_date = command_end_date
     logger.error("File for command id %s successfully imported", command_id)
     db.session.commit()
+
+    # Apply Workflow
+    pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
+    if pipeline:
+        vuln_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability"]
+        vuln_web_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability_web"]
+        host_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "host"]
+
+        # Process vulns
+        if vuln_object_ids:
+            workflow_task.delay("vulnerability", vuln_object_ids, command.workspace.id, update_hosts=False)
+
+        # Process vulns web
+        if vuln_web_object_ids:
+            workflow_task.delay("vulnerability_web", vuln_web_object_ids, command.workspace.id, update_hosts=False)
+
+        # Process hosts
+        if host_object_ids:
+            workflow_task.delay("host", host_object_ids, command.workspace.id, update_hosts=False)
+
+    logger.debug("No pipelines found in ws %s", command.workspace.name)
 
     for result in results:
         if result['created']:
@@ -64,6 +91,14 @@ def process_report_task(workspace_id: int, command: dict, hosts):
     ret = chord(group_of_tasks)(callback)
 
     return ret
+
+
+@celery.task()
+def workflow_task(obj_type: str, obj_ids: list, workspace_id: int, fields=None, run_all=False, pipeline_id=None, update_hosts=False):
+    hosts_to_update = _process_entry(obj_type, obj_ids, workspace_id, fields=fields, run_all=run_all, pipeline_id=pipeline_id)
+    if hosts_to_update:
+        logger.debug("Updating hosts stats from workflow task...")
+        update_host_stats.delay(hosts_to_update, [])
 
 
 @celery.task(ignore_result=False, acks_late=True)

@@ -46,6 +46,7 @@ from faraday.server.models import (
     Comment,
     CustomFieldsSchema,
     Agent,
+    AgentsSchedule,
     AgentExecution,
     SearchFilter,
     Executor,
@@ -584,6 +585,33 @@ class ExecutorFactory(FaradayFactory):
     class Meta:
         model = Executor
         sqlalchemy_session = db.session
+
+
+class AgentScheduleFactory(FaradayFactory):
+    description = FuzzyText()
+    crontab = "5 * * * *"
+    timezone = 'UTC'
+    executor = factory.SubFactory(ExecutorFactory)
+    workspaces = factory.List([factory.SubFactory(WorkspaceFactory)])
+    creator = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = AgentsSchedule
+        sqlalchemy_session = db.session
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super().build_dict(**kwargs)
+        executor = ret.pop('executor')
+        workspaces = ret.pop('workspaces')
+        db.session.add(executor.agent)
+        db.session.add(executor)
+        for workspace in workspaces:
+            db.session.add(workspace)
+        db.session.commit()
+        ret['workspaces_names'] = [workspace.name for workspace in workspaces]
+        ret['executor_id'] = executor.id
+        return ret
 
 
 class AgentExecutionFactory(WorkspaceObjectFactory):

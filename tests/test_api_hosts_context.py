@@ -94,6 +94,24 @@ class TestHostAPI:
         assert res.status_code == 200
         assert len(res.json['rows']) == HOSTS_COUNT + 1
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_list_retrieves_all_items_from_only_active_workspace(self, test_client,
+                                                     second_workspace,
+                                                     session,
+                                                     host_factory):
+        host_factory.create(workspace=second_workspace)
+        session.commit()
+        res = test_client.get(f"{self.url()}/filter")
+        assert res.status_code == 200
+        assert len(res.json['rows']) == HOSTS_COUNT + 1
+
+        second_workspace.active = False
+        session.commit()
+
+        res = test_client.get(f"{self.url()}/filter")
+        assert res.status_code == 200
+        assert len(res.json['rows']) == HOSTS_COUNT
+
     def test_retrieve_one_host(self, test_client, database):
         host = self.workspace.hosts[0]
         assert host.id is not None

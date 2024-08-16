@@ -27,7 +27,8 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules.services import ServiceSchema
 
-from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
+from faraday.server.models import Host, Workspace, Service, db, Hostname, CommandObject, Command
+from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.api.modules.hosts import HostSchema, HostCountSchema, HostFilterSet
 host_context_api = Blueprint('host_context_api', __name__)
 logger = logging.getLogger(__name__)
@@ -146,7 +147,8 @@ class HostsContextView(PaginatedMixin,
                 joinedload(self.model_class.update_user),
                 joinedload(getattr(self.model_class, 'creator')).load_only('username'),
             )
-        filter_query = self._apply_filter_context(filter_query)
+        filter_query = (self._apply_filter_context(filter_query).
+                        filter(Host.workspace.has(active=True)))  # only hosts from active workspaces
         return filter_query
 
     @route('/<host_id>/services')
@@ -281,6 +283,16 @@ class HostsContextView(PaginatedMixin,
         if "hostnames" in extracted_data:
             for obj in self._bulk_update_query(ids, **kwargs).all():
                 obj.set_hostnames(extracted_data["hostnames"])
+        workspaces = Workspace.query.join(Host).filter(Host.id.in_(ids)).distinct(Workspace.name).all()
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+
+    def _perform_bulk_delete(self, values, **kwargs):
+        workspaces = Workspace.query.join(Host).filter(Host.id.in_(values)).distinct(Workspace.name).all()
+        response = super()._perform_bulk_delete(values, **kwargs)
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+        return response
 
 
 HostsContextView.register(host_context_api)

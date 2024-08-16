@@ -244,3 +244,8 @@ class TestFilters:
         ]}
         with pytest.raises(ValidationError):
             FilterSchema().load(filters)
+
+    def test_target_filter_should_not_cast_val_to_int(self):
+        filters = {'filters': [{'name': 'target', 'op': '==', 'val': '1'}]}
+        res = FilterSchema().load(filters)
+        assert isinstance(res["filters"][0]['val'], str)

@@ -95,6 +95,7 @@ class FlaskRestlessFilterSchema(Schema):
             PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
+
         if '->' in filter_['name']:
             key = filter_['name'].split('->')[1]
             try:
@@ -106,7 +107,7 @@ class FlaskRestlessFilterSchema(Schema):
 
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
             raise ValidationError('Value can\'t contain null chars')
-        if isinstance(filter_['val'], str):
+        if isinstance(filter_['val'], str) and filter_['name'] != 'target':
             if filter_['val'].isnumeric():
                 filter_['val'] = int(filter_['val'])
             else:

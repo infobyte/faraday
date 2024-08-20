@@ -26,3 +26,5 @@ def load_settings():
     dashboard_init()
     from faraday.settings.reports import init_setting as reports_init  # pylint: disable=import-outside-toplevel
     reports_init()
+    from faraday.settings.elk import init_setting as elk_init  # pylint: disable=import-outside-toplevel
+    elk_init()

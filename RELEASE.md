@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+5.6.0 [Aug 23rd, 2024]:
+---
+ * [FIX] Resolved an issue when filtering assets by numeric values. #7769
+ * [ADD] Added workspace update logic on general view. Fixed bug where workspaces updated without making any change on them. #7769
+
 5.5.0 [Aug 1st, 2024]:
 ---
  * [ADD] Added Scheduler feature to community. #7752

@@ -3,14 +3,10 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-import json
-from json import JSONDecodeError
 
-import flask
 # Related third party imports
-from flask import Blueprint, abort, make_response, jsonify, request
+from flask import Blueprint, abort, make_response, jsonify
 from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
-from flask_classful import route
 from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
@@ -30,7 +26,8 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin, get_workspace, get_filtered_data
+    BulkUpdateWorkspacedMixin,
+    FilterWorkspacedMixin,
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -39,8 +36,6 @@ from faraday.server.schemas import (
     SelfNestedField,
 )
 from faraday.server.utils.command import set_command_id
-from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.utils.search import search
 
 services_api = Blueprint('services_api', __name__)
 
@@ -144,7 +139,8 @@ class ServiceView(PaginatedMixin,
                   FilterAlchemyMixin,
                   ReadWriteWorkspacedView,
                   BulkDeleteWorkspacedMixin,
-                  BulkUpdateWorkspacedMixin):
+                  BulkUpdateWorkspacedMixin,
+                  FilterWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service
@@ -195,163 +191,6 @@ class ServiceView(PaginatedMixin,
     def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
         if workspace_name:
             debounce_workspace_update(workspace_name)
-
-    def _hostname_filters(self, filters):
-        res_filters = []
-        hostname_filters = []
-        for search_filter in filters:
-            if 'or' not in search_filter and 'and' not in search_filter:
-                fieldname = search_filter.get('name')
-                operator = search_filter.get('op')
-                argument = search_filter.get('val')
-                otherfield = search_filter.get('field')
-                field_filter = {
-                    "name": fieldname,
-                    "op": operator,
-                    "val": argument,
-
-                }
-                if otherfield:
-                    field_filter.update({"field": otherfield})
-                if fieldname == 'hostnames':
-                    hostname_filters.append(field_filter)
-                else:
-                    res_filters.append(field_filter)
-            elif 'or' in search_filter:
-                or_filters, deep_hostname_filters = self._hostname_filters(search_filter['or'])
-                if or_filters:
-                    res_filters.append({"or": or_filters})
-                hostname_filters += deep_hostname_filters
-            elif 'and' in search_filter:
-                and_filters, deep_hostname_filters = self._hostname_filters(search_filter['and'])
-                if and_filters:
-                    res_filters.append({"and": and_filters})
-                hostname_filters += deep_hostname_filters
-
-        return res_filters, hostname_filters
-
-    @staticmethod
-    def _generate_filter_query(model,
-                               filters,
-                               hostname_filters,
-                               workspace,
-                               marshmallow_params,
-                               is_csv=False):
-        hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
-                           host_os_filter.get('name') == 'host__os']
-
-        if hosts_os_filter:
-            # remove host__os filters from filters due to a bug
-            hosts_os_filter = hosts_os_filter[0]
-            filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if
-                                  host_os_filter.get('name') != 'host__os']
-
-        services = search(db.session,
-                          model,
-                          filters)
-        services = services.filter(Service.workspace == workspace)
-        if hosts_os_filter:
-            os_value = hosts_os_filter['val']
-            services = services.join(Host).filter(Host.os == os_value)
-
-        if 'group_by' not in filters:
-            options = []
-            if is_csv:
-                options = options + []
-
-            services = services.options(*options)
-        return services
-
-    def _filter(self, filters, workspace_name, exclude_list=None):
-        hostname_filters = []
-        services = None
-        try:
-            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
-            if filters:
-                filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
-        except (ValidationError, JSONDecodeError, AttributeError) as ex:
-            flask.abort(400, "Invalid filters")
-
-        workspace = get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}}
-        if 'group_by' not in filters:
-            offset = None
-            limit = None
-            if 'offset' in filters:
-                offset = filters.pop('offset')
-            if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
-            try:
-                services = self._generate_filter_query(
-                    Service,
-                    filters,
-                    hostname_filters,
-                    workspace,
-                    marshmallow_params,
-                    bool(exclude_list))
-            except TypeError as e:
-                flask.abort(400, e)
-            except AttributeError as e:
-                flask.abort(400, e)
-            # In services count we do not need order
-            total_services = services.order_by(None)
-            if limit:
-                services = services.limit(limit)
-            if offset:
-                services = services.offset(offset)
-
-            services = self.schema_class(**marshmallow_params).dump(services)
-            return services, total_services.count()
-        else:
-            try:
-                services = self._generate_filter_query(
-                    Service,
-                    filters,
-                    hostname_filters,
-                    workspace,
-                    marshmallow_params,
-                )
-            except TypeError as e:
-                flask.abort(400, e)
-            except AttributeError as e:
-                flask.abort(400, e)
-            services_data, rows_count = get_filtered_data(filters, services)
-
-            return services_data, rows_count
-
-    @route('/filter')
-    def filter(self, workspace_name):
-        """
-        ---
-        get:
-          tags: ["Filter", "Service"]
-          description: Filters, sorts and groups services using a json with parameters. These parameters must be part of the model.
-          parameters:
-          - in: query
-            name: q
-            description: Recursive json with filters that supports operators. The json could also contain sort and group.
-          responses:
-            200:
-              description: Returns filtered, sorted and grouped results
-              content:
-                application/json:
-                  schema: FlaskRestlessSchema
-            400:
-              description: Invalid q was sent to the server
-        tags: ["Filter", "Service"]
-        responses:
-          200:
-            description: Ok
-        """
-        filters = request.args.get('q', '{}')
-        filtered_services, count = self._filter(filters, workspace_name)
-
-        class PageMeta:
-            total = 0
-
-        pagination_metadata = PageMeta()
-        pagination_metadata.total = count
-        return self._envelope_list(filtered_services, pagination_metadata)
 
 
 ServiceView.register(services_api)

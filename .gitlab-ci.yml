@@ -11,7 +11,7 @@ variables:
   VAULT_SERVER_URL: https://tluav-lb.faradaysec.com
   VAULT_AUTH_ROLE: faraday-env-readonly
   VAULT_AUTH_PATH: jwt
-  FOLDER: staging
+  FOLDER: master
 
 workflow:
   rules:

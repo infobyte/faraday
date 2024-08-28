@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.6.1 [Aug 28th, 2024]:
+---
+ * [FIX] Resolved an issue with filtering by Custom Attributes. #7800
+
 5.6.0 [Aug 23rd, 2024]:
 ---
  * [FIX] Resolved an issue when filtering assets by numeric values. #7769

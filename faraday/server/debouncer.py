@@ -16,11 +16,12 @@ def update_workspace_update_date(workspace_dates_dict):
 
 
 def update_workspace_update_date_with_name(workspace_dates_dict):
-    from faraday.server.app import get_app  # pylint:disable=import-outside-toplevel
+    from faraday.server.app import get_app, logger  # pylint:disable=import-outside-toplevel
     app = get_app()
     with app.app_context():
         sorted_workspaces = sorted(workspace_dates_dict.items(), key=lambda item: item[1])  # Preserve execution order
         for workspace_name, update_date in sorted_workspaces:
+            logger.debug(f"Updating workspace: {workspace_name}")
             db.session.query(Workspace).filter(Workspace.name == workspace_name).update(
                 {Workspace.update_date: update_date},
                 synchronize_session=False
@@ -87,3 +88,5 @@ class Debouncer:
             else:
                 parameters = dict(item['parameters'])
                 action(**parameters)
+        self.actions = set()
+        self.update_dates = {"workspaces": {}}

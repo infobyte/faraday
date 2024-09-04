@@ -1,6 +1,21 @@
 New features in the latest update
 =====================================
 
+5.6.1 [Aug 28th, 2024]:
+---
+ * [FIX] Resolved an issue with filtering by Custom Attributes. #7800
+
+5.6.0 [Aug 23rd, 2024]:
+---
+ * [FIX] Resolved an issue when filtering assets by numeric values. #7769
+ * [ADD] Added workspace update logic on general view. Fixed bug where workspaces updated without making any change on them. #7769
+
+5.5.0 [Aug 1st, 2024]:
+---
+ * [ADD] Added Scheduler feature to community. #7752
+ * [MOD] Modified pytest launch parameters to fail job at first error. #7733
+ * [ADD] Adder Pipelines feature in community. #7751
+
 5.4.1 [Jul 24th, 2024]:
 ---
  * [FIX] Improved bulk update logic in the general context view. #7766

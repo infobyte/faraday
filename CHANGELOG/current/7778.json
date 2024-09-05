@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed service based jobs not working for assets #7778"
+}

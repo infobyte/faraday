@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed crash on unsupported image format upload. #7710"
+}

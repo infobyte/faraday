@@ -194,6 +194,13 @@ rules_attributes = {
     ]
 }
 
+service_datatypes = {
+    "service/name": "string",
+    "service/port": "int",
+    "service/status": "string",
+    "service/version": "string",
+}
+
 order_regex = re.compile(r"^$|^\d+(-\d+)*$")
 
 WORKFLOW_LIMIT = 2

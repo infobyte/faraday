@@ -475,6 +475,44 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.confirmed is True
 
+    def test_condition_any_in_cve(self, test_client):
+        cond = [
+                {
+                    "type": "leaf",
+                    "field": "cve",
+                    "operator": "any_in",
+                    "data": "CVE-2004-1234, CVE-2024-6001"
+                }
+            ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability", cond=cond)
+
+        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
+        vuln.cve = ["cve-2004-1234"]
+        db.session.add(vuln)
+        db.session.commit()
+
+        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_condition_any_in_hostnames(self, test_client):
+        cond = [
+                {
+                    "type": "leaf",
+                    "field": "hostnames",
+                    "operator": "any_in",
+                    "data": "google.com, asd2"
+                }
+            ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="host", cond=cond)
+
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["google.com"])
+        db.session.add(host)
+        db.session.commit()
+
+        _process_entry(host.__class__.__name__, [host.id], ws.id)
+        assert host.description == "ActionExecuted"
+
     def test_action_execute_references(self, test_client):
         action = ActionFactory.create(command="APPEND", field="references", value="New ref")
         action2 = ActionFactory.create(command="APPEND", field="references", value="New ref2")

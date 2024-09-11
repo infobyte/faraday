@@ -418,6 +418,23 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
         assert host.description != "ActionExecuted"
 
+    def test_conditions_on_host_hostnames(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "hostnames",
+                "operator": "in",
+                "data": "test"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["test", "test2"])
+        db.session.add(host)
+        db.session.commit()
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description == "ActionExecuted"
+
     def test_object_does_not_exist(self, test_client):
         action = ActionFactory.create()
         db.session.commit()

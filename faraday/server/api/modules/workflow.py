@@ -217,8 +217,10 @@ def _get_rules_attributes():
                      .filter(CustomFieldsSchema.table_name == "vulnerability").all())
 
     for field in custom_fields:
-        if field.field_type in ["str", "choice", "markdown", "date"]:
+        if field.field_type in ["str", "choice", "markdown"]:
             c_type = "string"
+        elif field.field_type == "date":
+            c_type = "datetime"
         else:
             c_type = field.field_type
 

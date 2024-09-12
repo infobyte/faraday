@@ -241,7 +241,12 @@ def _perform_leaf_check(obj, condition, field):
     class_name = "vulnerability" if "web" in class_name else class_name
 
     if class_name != "service":
+
         data_type = [x.get("type") for x in _get_rules_attributes()[class_name] if x.get("name") == condition.field][0]
+
+        # If custom field and data type is datetime change to string
+        if field.startswith("custom_fields") and data_type == "datetime":
+            data_type = "string"
     else:
         data_type = service_datatypes.get(condition.field, None)
     data = condition.data

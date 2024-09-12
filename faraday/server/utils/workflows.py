@@ -182,11 +182,14 @@ def _process_field_data(obj, field):
 
     # special case for service_id
     if field[0] == "service_id":
-        return obj, "service_id"
+        return [obj], "service_id"
 
     # special case for host services
     if obj.__class__.__name__.lower() == "host" and field[0] == "service":
         field = ["services"] + field[1:]
+
+    if field[0] == "hostnames":
+        return [obj], "hostnames"
 
     for route in field:
 
@@ -205,6 +208,9 @@ def _process_field_data(obj, field):
         else:
             field = route
             break
+
+    if isinstance(field, list):
+        field = field[-1]
 
     if not isinstance(obj, list):
         obj = [obj]

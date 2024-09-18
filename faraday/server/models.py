@@ -2488,6 +2488,8 @@ class User(db.Model, UserMixin):
         back_populates="allowed_users",
     )
 
+    session_id = Column(String(64), unique=True)
+
     def __repr__(self):
         return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"
 

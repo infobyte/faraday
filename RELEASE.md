@@ -1,6 +1,14 @@
 New features in the latest update
 =====================================
 
+5.7.0 [Sep 20th, 2024]:
+---
+ * [ADD] Added bulk update feature for custom attributes. #7716
+ * [FIX] Allow services to be searchable. #7514
+ * [FIX] Fixed crash on unsupported image format upload. #7710
+ * [FIX] Fixed service based jobs not working for assets #7778
+ * [FIX] Fixed hostnames not working on pipelines conditions. #7807
+
 5.6.1 [Aug 28th, 2024]:
 ---
  * [FIX] Resolved an issue with filtering by Custom Attributes. #7800

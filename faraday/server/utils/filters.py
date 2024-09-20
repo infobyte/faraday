@@ -227,6 +227,11 @@ class FlaskRestlessUserFilterSchema(FlaskRestlessFilterSchema):
         return User
 
 
+class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Service
+
+
 class FlaskRestlessOperator(Schema):
     _or = fields.Nested("self", attribute='or', data_key='or')
     _and = fields.Nested("self", attribute='and', data_key='and')
@@ -237,6 +242,7 @@ class FlaskRestlessOperator(Schema):
         FlaskRestlessWorkspaceFilterSchema,
         FlaskRestlessUserFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
+        FlaskRestlessServiceFilterSchema,
     ]
 
     def load(

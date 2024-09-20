@@ -8,7 +8,7 @@ from faraday.server.api.modules.workflow import JobView, TaskView, PipelineView,
 from faraday.server.models import Workflow, Action, db, Pipeline
 from faraday.server.utils.workflows import _process_entry, WORKFLOW_QUEUE
 from tests import factories
-from tests.factories import ActionFactory, HostFactory, VulnerabilityFactory, \
+from tests.factories import ActionFactory, HostFactory, ServiceFactory, VulnerabilityFactory, \
     VulnerabilityWebFactory
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 
@@ -377,6 +377,63 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
         assert host.description != "ActionExecuted"
         assert host.description == "testing"
+
+    def test_conditions_on_host_service(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "service/name",
+                "operator": "==",
+                "data": "test"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        service = ServiceFactory.create(name="test", host=host, workspace=ws)
+        service2 = ServiceFactory.create(name="test2", host=host, workspace=ws)
+        db.session.add(host)
+        db.session.add(service)
+        db.session.add(service2)
+        db.session.commit()
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description == "ActionExecuted"
+
+    def test_conditions_on_host_service_fails(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "service/name",
+                "operator": "==",
+                "data": "test"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        service = ServiceFactory.create(name="test3", host=host, workspace=ws)
+        service2 = ServiceFactory.create(name="test2", host=host, workspace=ws)
+        db.session.add(host)
+        db.session.add(service)
+        db.session.add(service2)
+        db.session.commit()
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description != "ActionExecuted"
+
+    def test_conditions_on_host_hostnames(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "hostnames",
+                "operator": "in",
+                "data": "test"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["test", "test2"])
+        db.session.add(host)
+        db.session.commit()
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description == "ActionExecuted"
 
     def test_object_does_not_exist(self, test_client):
         action = ActionFactory.create()

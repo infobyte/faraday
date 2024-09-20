@@ -6,12 +6,12 @@
 
 buildPythonPackage rec {
   pname = "faraday-agent-parameters-types";
-  version = "1.7.0";
+  version = "1.7.1";
 
   src = fetchPypi {
     inherit version;
     pname = "faraday_agent_parameters_types";
-    sha256 = "03b8s649gvl25wrhx7wz4n1fhr2v8yxgfsijky1a1zi1r8xd6nn4";
+    sha256 = "0k5gzgfaagh9sr5jbysshjhhyzxhmsky3mwkq5n320d7m7zzk6na";
   };
 
   buildInputs = [ pytest-runner ];

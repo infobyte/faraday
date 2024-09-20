@@ -435,6 +435,42 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
         assert host.description == "ActionExecuted"
 
+    def test_conditions_contains_CVE(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "cve",
+                "operator": "contains",
+                "data": "2024"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond, model="vulnerability")
+        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
+        vuln.cve = ["CVE-2022-1234", "CVE-2023-12333"]
+        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
+        assert vuln.description != "ActionExecuted"
+        vuln.cve = ["CVE-2024-1234", "CVE-2023-12333"]
+        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_conditions_contains_host_hostnames(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "hostnames",
+                "operator": "contains",
+                "data": "google"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["apple.com", "test2"])
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description != "ActionExecuted"
+        host.set_hostnames(["google.com", "test2"])
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description == "ActionExecuted"
+
     def test_object_does_not_exist(self, test_client):
         action = ActionFactory.create()
         db.session.commit()

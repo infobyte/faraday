@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 import re
-from copy import copy
+from copy import deepcopy
 
 # Related third party imports
 import flask
@@ -209,7 +209,7 @@ WORKFLOW_LIMIT = 2
 
 
 def _get_rules_attributes():
-    rules = copy(rules_attributes)
+    rules = deepcopy(rules_attributes)
 
     custom_fields = (db.session.query(CustomFieldsSchema.field_name,
                                       CustomFieldsSchema.field_type,

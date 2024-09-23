@@ -43,5 +43,21 @@ def downgrade():
     op.drop_column('agent_schedule', 'type')
     scheduler_types_enum = sa.Enum('cloud_agent', 'agent', name='scheduler_types')
     scheduler_types_enum.drop(op.get_bind(), checkfirst=True)
-    op.execute("DELETE FROM user_token WHERE token_scopes = 'scheduler'")
+
+    # Step 1: Create a new enum type without the 'scheduler' value
+    op.execute("CREATE TYPE token_scopes_tmp AS ENUM('gitlab')")
+
+    # Step 2: Alter the table to use the new enum type
+    op.execute("""
+            ALTER TABLE user_token
+            ALTER COLUMN scope
+            SET DATA TYPE token_scopes_tmp
+            USING scope::text::token_scopes_tmp
+        """)
+
+    # Step 3: Drop the old enum type
+    op.execute("DROP TYPE token_scopes")
+
+    # Step 4: Rename the new enum type to the original one
+    op.execute("ALTER TYPE token_scopes_tmp RENAME TO token_scopes")
     # ### end Alembic commands ###

@@ -7,7 +7,7 @@ Create Date: 2024-09-17 18:54:47.529304+00:00
 """
 from alembic import op
 import sqlalchemy as sa
-
+from faraday.server.models import UserToken
 
 # revision identifiers, used by Alembic.
 revision = 'e9a3ba96ea46'
@@ -45,7 +45,12 @@ def downgrade():
     scheduler_types_enum.drop(op.get_bind(), checkfirst=True)
 
     # Step 1: Create a new enum type without the 'scheduler' value
-    op.execute("CREATE TYPE token_scopes_tmp AS ENUM('gitlab')")
+
+    scopes = [scope for scope in UserToken.SCOPES if scope != 'scheduler']
+
+    scopes_str = ', '.join(f"'{scope}'" for scope in scopes)
+
+    op.execute(f"CREATE TYPE token_scopes_tmp AS ENUM({scopes_str})")
 
     # Step 2: Alter the table to use the new enum type
     op.execute("""

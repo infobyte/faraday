@@ -46,7 +46,7 @@ def downgrade():
 
     # Step 1: Create a new enum type without the 'scheduler' value
 
-    scopes = [scope for scope in UserToken.SCOPES if scope != 'scheduler']
+    scopes = [scope for scope in UserToken.SCOPES if scope != UserToken.SCHEDULER_SCOPE]
 
     scopes_str = ', '.join(f"'{scope}'" for scope in scopes)
 

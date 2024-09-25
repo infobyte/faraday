@@ -10,6 +10,7 @@ from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
+from faraday.server.debouncer import debounce_workspace_update
 
 # Local application imports
 from faraday.server.models import (
@@ -25,7 +26,8 @@ from faraday.server.api.base import (
     FilterSetMeta,
     FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin
+    BulkUpdateWorkspacedMixin,
+    FilterWorkspacedMixin,
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -133,7 +135,12 @@ class ServiceFilterSet(FilterSet):
         operators = (operators.Equal,)
 
 
-class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, BulkDeleteWorkspacedMixin, BulkUpdateWorkspacedMixin):
+class ServiceView(PaginatedMixin,
+                  FilterAlchemyMixin,
+                  ReadWriteWorkspacedView,
+                  BulkDeleteWorkspacedMixin,
+                  BulkUpdateWorkspacedMixin,
+                  FilterWorkspacedMixin):
 
     route_base = 'services'
     model_class = Service
@@ -165,7 +172,25 @@ class ServiceView(PaginatedMixin, FilterAlchemyMixin, ReadWriteWorkspacedView, B
         obj = super()._perform_create(data, **kwargs)
         if command_id:
             set_command_id(db.session, obj, True, command_id)
+        if kwargs['workspace_name']:
+            debounce_workspace_update(kwargs['workspace_name'])
         return obj
+
+    def _perform_bulk_delete(self, values, **kwargs):
+        obj = super()._perform_bulk_delete(values, **kwargs)
+        if kwargs['workspace_name']:
+            debounce_workspace_update(kwargs['workspace_name'])
+        return obj
+
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
+        obj = super()._perform_update(object_id, obj, data, workspace_name=workspace_name, partial=partial)
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
+        return obj
+
+    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
 
 
 ServiceView.register(services_api)

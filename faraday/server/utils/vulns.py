@@ -1,18 +1,22 @@
 import re
 import logging
+import json
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
+from sqlalchemy import func, update
 
 from faraday.server.models import (
     CVE,
     db,
     Reference,
     PolicyViolation,
-    OWASP
+    OWASP,
+    VulnerabilityGeneric
 )
 from faraday.server.utils.database import is_unique_constraint_violation
 from faraday.server.utils.reference import create_reference
+from flask import jsonify
 
 logger = logging.getLogger(__name__)
 
@@ -243,22 +247,16 @@ def update_one_host_severity_stat(vulnerability):
     services = []
     if state.attrs.host_id.history.added or state.attrs.service_id.history.added:
         if state.attrs.host_id.history.added:
-            print(state.attrs.host_id.history.added)
-            print(state.attrs.host_id.history.deleted)
             if state.attrs.host_id.history.added[0] is not None:
                 hosts.append(state.attrs.host_id.history.added[0])
             if state.attrs.host_id.history.deleted[0] is not None:
                 hosts.append(state.attrs.host_id.history.deleted[0])
         if state.attrs.service_id.history.added:
-            print(state.attrs.service_id.history.added)
-            print(state.attrs.service_id.history.deleted)
             if state.attrs.service_id.history.added[0] is not None:
                 services.append(state.attrs.service_id.history.added[0])
             if state.attrs.service_id.history.deleted[0] is not None:
                 services.append(state.attrs.service_id.history.deleted[0])
     elif state.attrs.severity.history.added:
-        print(state.attrs.severity.history.added)
-        print(state.attrs.severity.history.deleted)
         if vulnerability.host_id:
             hosts.append(vulnerability.host_id)
         elif vulnerability.service_id:
@@ -266,3 +264,40 @@ def update_one_host_severity_stat(vulnerability):
         else:
             logger.warning("Nor service nor host found in vulnerability ", vulnerability)
     return hosts, services
+
+
+def bulk_update_custom_attributes(vuln_ids: list, data: dict):
+    """
+    Updates or adds specified custom attribute for a list of vulnerabilities without
+    overwriting existing custom attributes.
+
+    :param vuln_ids: List of vulnerability IDs to update.
+    :param data: Dictionary of custom field to update/add.
+    :return: Flask Response object
+    """
+
+    try:
+        for key, value in data["custom_fields"].items():
+            # Prepare the path and value for jsonb_set
+            key_path = f'{{{key}}}'  # e.g., '{string}'
+            value_json = json.dumps(value)
+            # Perform the bulk update
+            stmt = (
+                update(VulnerabilityGeneric)
+                .where(VulnerabilityGeneric.id.in_(vuln_ids))
+                .values(
+                    custom_fields=func.jsonb_set(
+                        func.coalesce(VulnerabilityGeneric.custom_fields, '{}'),  # Handle NULLs
+                        key_path,
+                        value_json,
+                        True  # Create missing
+                    )
+                )
+            )
+            db.session.execute(stmt)
+        db.session.commit()
+        return jsonify({"updated": len(vuln_ids)})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)})

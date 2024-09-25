@@ -17,7 +17,7 @@ from pathlib import Path
 from pytest_factoryboy import register
 from sqlalchemy import event
 
-from faraday.server.app import create_app
+from faraday.server.app import get_app
 from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
 from tests import factories
 
@@ -98,7 +98,7 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def app(request):
-    app = create_app(db_connection_string=request.config.getoption(
+    app = get_app(db_connection_string=request.config.getoption(
         '--connection-string'), testing=True)
     app.test_client_class = CustomClient
 
@@ -118,7 +118,7 @@ def app(request):
 
 @pytest.fixture(scope='session')
 def app2(request):
-    app = create_app(db_connection_string=request.config.getoption(
+    app = get_app(db_connection_string=request.config.getoption(
         '--connection-string'), testing=True)
     app.test_client_class = CustomClient
 

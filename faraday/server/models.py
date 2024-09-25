@@ -14,8 +14,10 @@ from random import SystemRandom
 from typing import Callable
 
 # Related third party imports
+import dateutil
 import cvss
 import jwt
+from croniter import croniter
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -1237,6 +1239,8 @@ class Host(Metadata):
 
     importance = Column(Integer, default=0)
 
+    risk = Column(Integer, default=0)
+
     @classmethod
     def query_with_count(cls, host_ids, workspace):
         query = cls.query.join(Workspace).filter(Workspace.id == workspace.id)
@@ -2150,6 +2154,13 @@ executive_report_workspace_table = Table(
 )
 
 
+def _return_last_30_days() -> list:
+    today = date.today()
+    last_30_days = [today - timedelta(days=i) for i in range(30)]
+    last_30_days = [day.isoformat() for day in last_30_days]
+    return last_30_days
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -2161,6 +2172,8 @@ class Workspace(Metadata):
     name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
+    risk_history_total = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
+    risk_history_avg = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')
@@ -2404,6 +2417,39 @@ class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     weight = db.Column(db.Integer(), nullable=False)
+
+
+class UserToken(Metadata):
+    __tablename__ = 'user_token'
+    GITLAB_SCOPE = 'gitlab'
+    SCOPES = [GITLAB_SCOPE]
+
+    id = Column(Integer(), primary_key=True)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete='CASCADE'), index=True, nullable=False)
+    user = relationship('User',
+                        backref=backref('user_tokens', cascade="all, delete-orphan", passive_deletes=True),
+                        foreign_keys=[user_id])
+
+    token = Column(String(), nullable=False, unique=True)
+    alias = Column(String(), nullable=False)
+    expires_at = Column(DateTime(), nullable=True)
+    scope = Column(Enum(*SCOPES, name='token_scopes'), nullable=False, default="gitlab")
+    revoked = Column(Boolean(), default=False, nullable=False)
+    hide = Column(Boolean(), default=False, nullable=False)
+
+    @hybrid_property
+    def expired(self):
+        return self.expires_at is not None and self.expires_at < datetime.utcnow()
+
+    @expired.expression
+    def expired(cls):
+        return case(
+            [
+                (cls.expires_at != None, cls.expires_at < datetime.utcnow())  # noqa E711
+            ],
+            else_=False
+        )
 
 
 class User(db.Model, UserMixin):
@@ -3170,7 +3216,11 @@ class AgentsSchedule(Metadata):
 
     @property
     def next_run(self):
-        raise NotImplementedError()
+        return croniter(
+            self.crontab,
+            datetime.now(tz=dateutil.tz.gettz(self.timezone)),
+            ret_type=datetime
+        ).get_next(datetime)
 
     @property
     def parent(self):

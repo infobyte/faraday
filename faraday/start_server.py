@@ -35,6 +35,8 @@ logger = logging.getLogger(__name__)
 
 init()
 
+app = get_app(remove_sids=True, start_scheduler=True)
+
 
 def setup_environment(check_deps=False):
     # Configuration files generation
@@ -52,7 +54,6 @@ def is_server_running(port):
 
 def run_server(args):
     daemonize.create_pid_file(args.port)
-    app = get_app()
     try:
         if args.with_workers or args.with_workers_gevent:
             if not server_config.celery_enabled:
@@ -89,7 +90,6 @@ def run_server(args):
 
 
 def check_postgresql():
-    app = get_app()
     with app.app_context():
         try:
             if not db.session.query(Workspace).count():
@@ -121,9 +121,8 @@ def check_alembic_version():
     config.set_main_option("script_location", "migrations")
     script = ScriptDirectory.from_config(config)
 
-    app = get_app()
-
     head_revision = script.get_current_head()
+
     with app.app_context():
         try:
             conn = db.session.connection()

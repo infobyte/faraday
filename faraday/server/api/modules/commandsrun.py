@@ -92,6 +92,9 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
     get_joinedloads = [Command.workspace]
     order_field = Command.start_date.desc()
 
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        return super()._get_eagerloaded_query(*args, **kwargs).filter(Command.command != "bulk_update")
+
     def _envelope_list(self, objects, pagination_metadata=None):
         commands = []
         for command in objects:

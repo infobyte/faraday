@@ -9,7 +9,7 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 scripts/merge-conflict-detector.py
     rules:
-        - !reference [ .dev-staging-master, rules ]
+        #- !reference [ .dev-staging-master, rules ]
         - !reference [ .ignore-on-tag, rules ]
         - when: never
 

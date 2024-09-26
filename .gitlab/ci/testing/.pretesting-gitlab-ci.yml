@@ -11,7 +11,7 @@ merge_conflict_check:
     rules:
         #- !reference [ .dev-staging-master, rules ]
         - !reference [ .ignore-on-tag, rules ]
-        - when: never
+        #- when: never
 
 sanity_check:
     tags:

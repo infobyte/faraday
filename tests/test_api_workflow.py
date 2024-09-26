@@ -1,5 +1,5 @@
 import random
-from time import sleep
+import time
 from unittest import mock
 
 import pytest
@@ -502,7 +502,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(vuln)
         db.session.commit()
         # Fails if we dont wait, "host" not found in Vulnerability
-        sleep(1)
+        time.sleep(1)
         _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
         assert vuln.description == "ActionExecuted"
 

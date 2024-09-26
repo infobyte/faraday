@@ -16,7 +16,8 @@ from gevent.event import Event
 from faraday.server.api.modules.workflow import (
     OPERATORS,
     fields_lookup,
-    rules_attributes,
+    _get_rules_attributes,
+    service_datatypes,
 )
 from faraday.server.extensions import socketio
 from faraday.server.models import (
@@ -173,32 +174,64 @@ def _get_obj_and_workspace(obj_type, obj_ids, ws_id, fields=None, pipeline_id=No
 
 def _process_field_data(obj, field):
 
-    field = field.split('/')
+    fields = field.split('/')
+
+    # Special case for custom fields
+    if fields[0] == "custom_fields":
+        if obj.custom_fields is None:
+            raise ValueError(f"Field \"{fields}\" not found in object {obj}")
+        obj_data_in_field = obj.custom_fields.get(fields[1])
+        if obj_data_in_field is None:
+            raise ValueError(f"Field \"{fields}\" not found in object {obj}")
+        return [obj], field
 
     # special case for vulns web that have host field
-    if "web" in obj.__class__.__name__.lower() and field[0] == "host":
-        field = ["service"] + field
+    if "web" in obj.__class__.__name__.lower() and fields[0] == "host":
+        fields = ["services"] + fields
 
     # special case for service_id
-    if field[0] == "service_id":
-        return obj, "service_id"
+    if fields[0] == "service_id":
+        return [obj], "service_id"
 
-    for route in field:
+    # special case for host services
+    if obj.__class__.__name__.lower() == "host" and field[0] == "service":
+        fields = ["services"] + field[1:]
+
+    if fields[0] == "hostnames":
+        return [obj], "hostnames"
+
+    for route in fields:
+
+        # break if previous iteration was a list
+        if isinstance(obj, list):
+            fields = route
+            break
+
         obj_data_in_field = getattr(obj, route, None)
         if obj_data_in_field is None:
             raise ValueError(f"Field \"{route}\" not found in object {obj}")
         if isinstance(obj_data_in_field, db.Model):
             obj = obj_data_in_field
+        elif isinstance(obj_data_in_field, list):
+            obj = obj_data_in_field
         else:
-            field = route
+            fields = route
             break
-    return obj, field
+
+    if isinstance(fields, list):
+        fields = fields[-1]
+
+    if not isinstance(obj, list):
+        obj = [obj]
+    return obj, fields
 
 
-def _check_leaf(obj, condition):
+def _perform_leaf_check(obj, condition, field):
 
-    target_obj, field = _process_field_data(obj, condition.field)
-    model_data = getattr(target_obj, field, None)
+    if field.startswith("custom_fields"):
+        model_data = obj.custom_fields.get(field.split('/')[1])
+    else:
+        model_data = getattr(obj, field, None)
 
     operator = OPERATORS.get(condition.operator, None)
     if operator is None:
@@ -207,7 +240,15 @@ def _check_leaf(obj, condition):
     class_name = obj.__class__.__name__.lower()
     class_name = "vulnerability" if "web" in class_name else class_name
 
-    data_type = [x.get("type") for x in rules_attributes[class_name] if x.get("name") == condition.field][0]
+    if class_name != "service":
+
+        data_type = [x.get("type") for x in _get_rules_attributes()[class_name] if x.get("name") == condition.field][0]
+
+        # If custom field and data type is datetime change to string
+        if field.startswith("custom_fields") and data_type == "datetime":
+            data_type = "string"
+    else:
+        data_type = service_datatypes.get(condition.field, None)
     data = condition.data
 
     if data_type == "string":
@@ -239,6 +280,14 @@ def _check_leaf(obj, condition):
         model_data = [x.name for x in model_data]
 
     return operator(model_data, data)
+
+
+def _check_leaf(obj, condition):
+    target_objs, field = _process_field_data(obj, condition.field)
+    results = []
+    for target_obj in target_objs:
+        results.append(_perform_leaf_check(target_obj, condition, field))
+    return any(results)
 
 
 def _check_condition(obj, condition):

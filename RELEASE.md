@@ -1,6 +1,23 @@
 New features in the latest update
 =====================================
 
+5.7.0 [Sep 20th, 2024]:
+---
+ * [ADD] Added bulk update feature for custom attributes. #7716
+ * [FIX] Allow services to be searchable. #7514
+ * [FIX] Fixed crash on unsupported image format upload. #7710
+ * [FIX] Fixed service based jobs not working for assets #7778
+ * [FIX] Fixed hostnames not working on pipelines conditions. #7807
+
+5.6.1 [Aug 28th, 2024]:
+---
+ * [FIX] Resolved an issue with filtering by Custom Attributes. #7800
+
+5.6.0 [Aug 23rd, 2024]:
+---
+ * [FIX] Resolved an issue when filtering assets by numeric values. #7769
+ * [ADD] Added workspace update logic on general view. Fixed bug where workspaces updated without making any change on them. #7769
+
 5.5.0 [Aug 1st, 2024]:
 ---
  * [ADD] Added Scheduler feature to community. #7752

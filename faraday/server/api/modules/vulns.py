@@ -83,7 +83,7 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
-from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat
+from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat, bulk_update_custom_attributes
 from faraday.server.debouncer import debounce_workspace_update
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -865,6 +865,9 @@ class VulnerabilityView(PaginatedMixin,
         kwargs['returning'] = returning_rows
         if workspace_name:
             debounce_workspace_update(workspace_name)
+
+        if (len(data) > 0 and len(ids) > 0) and 'custom_fields' in data.keys():
+            return bulk_update_custom_attributes(ids, data)
         return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
 
     def put(self, object_id, workspace_name=None, **kwargs):

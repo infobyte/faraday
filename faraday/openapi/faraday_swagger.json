@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.5.0 API",
+        "title": "Faraday 5.7.0 API",
         "version": "v3"
     },
     "security": [
@@ -2416,6 +2416,47 @@
                     }
                 }
             }
+        },
+        "/_api/v3/ws/{workspace_name}/services/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "Service"
+                ],
+                "description": "Filters, sorts and groups workspaced objects using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid q was sent to the server"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/services": {
             "delete": {

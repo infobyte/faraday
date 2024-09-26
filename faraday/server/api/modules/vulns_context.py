@@ -59,6 +59,7 @@ from faraday.server.utils.database import (
 )
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.vulns import bulk_update_custom_attributes
 from faraday.server.api.modules.vulns import (
     EvidenceSchema,
     VulnerabilitySchema,
@@ -144,6 +145,8 @@ class VulnerabilityContextView(ContextMixin,
             Vulnerability.service_id,
         ]
         kwargs['returning'] = returning_rows
+        if (len(data) > 0 and len(ids) > 0) and "custom_fields" in data.keys():
+            return bulk_update_custom_attributes(ids, data)
         return super()._perform_bulk_update(ids, data, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):

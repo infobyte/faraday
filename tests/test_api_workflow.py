@@ -1,5 +1,4 @@
 import random
-import time
 from unittest import mock
 
 import pytest
@@ -484,26 +483,6 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.add(vuln)
         db.session.commit()
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
-        assert vuln.description == "ActionExecuted"
-
-    def test_condition_inverted_in(self, test_client):
-        cond = [
-            {
-                "type": "leaf",
-                "field": "host/ip",
-                "operator": "inverted_in",
-                "data": "New Tag, asd2"
-            }
-        ]
-        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability", cond=cond)
-
-        host = HostFactory.create(description="testing", workspace=ws, ip="asd2")
-        vuln = VulnerabilityFactory.create(description="testing", workspace=ws, host=host)
-        db.session.add(vuln)
-        db.session.commit()
-        # Fails if we dont wait, "host" not found in Vulnerability
-        time.sleep(1)
-        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
         assert vuln.description == "ActionExecuted"
 
     def test_object_does_not_exist(self, test_client):

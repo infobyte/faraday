@@ -93,12 +93,14 @@ logger = logging.getLogger(__name__)
 class EvidenceSchema(AutoSchema):
     content_type = fields.Method('get_content_type')
     data = fields.Method('get_data')
+    description = fields.String()
 
     class Meta:
         model = File
         fields = (
             'content_type',
-            'data'
+            'data',
+            'description',
         )
 
     @staticmethod

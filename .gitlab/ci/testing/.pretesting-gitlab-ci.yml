@@ -3,15 +3,13 @@ merge_conflict_check:
         - faradaytests
     image: python:3.11
     stage: pre_testing
-    allow_failure: true
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 scripts/merge-conflict-detector.py
     rules:
-        - !reference [ .dev-staging-master, rules ]
         - !reference [ .ignore-on-tag, rules ]
-        - when: never
+        - when: on_success
 
 sanity_check:
     tags:

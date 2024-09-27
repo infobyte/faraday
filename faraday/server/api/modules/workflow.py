@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import re
+from copy import deepcopy
 
 # Related third party imports
 import flask
@@ -24,6 +25,7 @@ from faraday.server.models import (
     WorkflowExecution,
     Workspace,
     Pipeline,
+    CustomFieldsSchema,
 )
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 
@@ -205,6 +207,46 @@ service_datatypes = {
 order_regex = re.compile(r"^$|^\d+(-\d+)*$")
 
 WORKFLOW_LIMIT = 2
+
+
+def _get_rules_attributes():
+    rules = deepcopy(rules_attributes)
+
+    custom_fields = (db.session.query(CustomFieldsSchema.field_name,
+                                      CustomFieldsSchema.field_type,
+                                      CustomFieldsSchema.field_metadata)
+                     .filter(CustomFieldsSchema.table_name == "vulnerability").all())
+
+    for field in custom_fields:
+        if field.field_type in ["str", "choice", "markdown"]:
+            c_type = "string"
+        elif field.field_type == "date":
+            c_type = "datetime"
+        else:
+            c_type = field.field_type
+
+        c_operators = []
+
+        if c_type in ["int", "datetime"]:
+            c_operators = numeric_operators
+        elif c_type == "string":
+            c_operators = string_operators
+        elif c_type == "list":
+            c_operators = in_not_in
+
+        value_dict = {"name": f"custom_fields/{field.field_name}",
+                      "display_name": f"Custom Attribute: {field.field_name}",
+                      "type": c_type,
+                      "operators": c_operators}
+
+        if field.field_type == "choice":
+            value_dict["valid"] = json.loads(field.field_metadata)
+
+        # add value_dict to the vulnerability rules if it's not already there
+        if value_dict not in rules["vulnerability"]:
+            rules["vulnerability"].append(value_dict)
+
+    return rules
 
 
 class PipelineSchema(AutoSchema):
@@ -703,7 +745,8 @@ class JobView(ReadWriteView):
           200:
             description: Ok
         """
-        return flask.jsonify(rules_attributes)
+
+        return flask.jsonify(_get_rules_attributes())
 
     @route('/<int:job_id>/clone', methods=['POST'])
     def clone_wf(self, job_id):

@@ -3699,6 +3699,34 @@ class TestVulnerabilitySearch:
         assert res.status_code == 200
         assert res.json['count'] == 100
 
+    def test_add_evidence_with_description(self, test_client, session, csrf_token):
+        vuln = VulnerabilityFactory.create()
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        # Get vulnerability created
+        res = test_client.get(f'/v3/vulns/{vuln.id}/attachment')
+        assert res.status_code == 200
+        attachments_json = res.json
+
+        attachment = attachments_json['testing_description.txt']
+
+        assert attachment['description'] == 'Attachment description'
+
 
 def test_type_filter(workspace, session,
                      vulnerability_factory,

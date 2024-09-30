@@ -69,7 +69,9 @@ from faraday.server.models import (
     CustomFieldsSchema,
     VulnerabilityGeneric,
     User,
-    VulnerabilityABC, Command, CommandObject,
+    VulnerabilityABC,
+    Command,
+    CommandObject,
 )
 from faraday.server.utils.database import (
     get_or_create,

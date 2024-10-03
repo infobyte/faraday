@@ -10,14 +10,17 @@ import io
 import logging
 import json
 import imghdr
+from datetime import datetime
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
 
 import flask
+import sqlalchemy
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
+from flask_login import current_user
 from filteralchemy import Filter, FilterSet, operators
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
@@ -67,6 +70,8 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     User,
     VulnerabilityABC,
+    Command,
+    CommandObject,
 )
 from faraday.server.utils.database import (
     get_or_create,
@@ -1538,6 +1543,31 @@ class VulnerabilityView(PaginatedMixin,
                         value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
+
+        ws = get_workspace(workspace_name)
+
+        command = Command()
+        command.workspace_id = ws.id
+        command.user_id = current_user.id
+        command.start_date = datetime.utcnow()
+        command.tool = 'web_ui'
+        command.command = 'bulk_update'
+        db.session.add(command)
+        db.session.commit()
+
+        cobjects_list = []
+        for id in ids:
+            cobject_dict = {
+                "object_id": id,
+                "object_type": "vulnerability",
+                "command_id": command.id,
+                "workspace_id": ws.id,
+                "create_date": datetime.utcnow(),
+                "created_persistent": False
+            }
+            cobjects_list.append(cobject_dict)
+        db.session.execute(sqlalchemy.insert(CommandObject).values(cobjects_list))
+        db.session.commit()
 
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats

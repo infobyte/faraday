@@ -17,9 +17,9 @@ depends_on = None
 
 def upgrade():
     op.add_column('faraday_user', sa.Column('session_id', sa.String(length=64), nullable=True))
-    op.create_unique_constraint(None, 'faraday_user', ['session_id'])
+    op.create_unique_constraint('user_session_id_uc', 'faraday_user', ['session_id'])
 
 
 def downgrade():
-    op.drop_constraint(None, 'faraday_user', type_='unique')
+    op.drop_constraint('user_session_id_uc', 'faraday_user', type_='unique')
     op.drop_column('faraday_user', 'session_id')

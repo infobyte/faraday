@@ -21,8 +21,12 @@ if [ ! -f "$FARADAY_HOME/.faraday/config/server.ini" ]; then
     CONNECTION_STRING="connection_string = postgresql+psycopg2:\/\/$PGSQL_USER:$PGSQL_PASSWD@$PGSQL_HOST\/$PGSQL_DBNAME"
     sed -i "s/connection_string = .*/$CONNECTION_STRING/"  $FARADAY_HOME/.faraday/config/server.ini
     if [ ! -z "$REDIS_SERVER" ]; then
-      REDIS_STRING="redis_session_storage = $REDIS_SERVER"
-      sed -i "s/#redis_session_storage = .*/$REDIS_STRING/"  $FARADAY_HOME/.faraday/config/server.ini
+      REDIS_CELERY_BROKER_URL_STRING="celery_broker_url = $REDIS_SERVER"
+      sed -i "s/celery_broker_url = .*/$REDIS_CELERY_BROKER_URL_STRING/" $FARADAY_HOME/.faraday/config/server.ini
+      REDIS_CELERY_BACKEND_STRING="celery_backend_url = $REDIS_SERVER"
+      sed -i "s/celery_backend_url = .*/$REDIS_CELERY_BACKEND_STRING/" $FARADAY_HOME/.faraday/config/server.ini
+      REDIS_SESSION_STORAGE_STRING="redis_session_storage = $REDIS_SERVER"
+      sed -i "s/#redis_session_storage = .*/$REDIS_SESSION_STORAGE_STRING/" $FARADAY_HOME/.faraday/config/server.ini
     fi
 else
     echo "$(date) Using existing server.ini"

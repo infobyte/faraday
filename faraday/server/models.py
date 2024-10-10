@@ -1678,6 +1678,135 @@ class VulnerabilityGeneric(VulnerabilityABC):
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
 
+    _cvss4_vector_string = Column(Text, nullable=True)
+    cvss4_base_score = Column(Float)
+    cvss4_base_severity = Column(Text, nullable=True)
+    cvss4_attack_vector = Column(Text, nullable=True)
+    cvss4_attack_complexity = Column(Text, nullable=True)
+    cvss4_attack_requirements = Column(Text, nullable=True)
+    cvss4_privileges_required = Column(Text, nullable=True)
+    cvss4_user_interaction = Column(Text, nullable=True)
+    cvss4_vulnerable_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_subsequent_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_vulnerable_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_subsequent_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_vulnerable_system_availability_impact = Column(Text, nullable=True)
+    cvss4_subsequent_system_availability_impact = Column(Text, nullable=True)
+    cvss4_safety = Column(Text, nullable=True)
+    cvss4_automatable = Column(Text, nullable=True)
+    cvss4_recovery = Column(Text, nullable=True)
+    cvss4_value_density = Column(Text, nullable=True)
+    cvss4_vulnerability_response_effort = Column(Text, nullable=True)
+    cvss4_provider_urgency = Column(Text, nullable=True)
+    cvss4_modified_attack_vector = Column(Text, nullable=True)
+    cvss4_modified_attack_complexity = Column(Text, nullable=True)
+    cvss4_modified_attack_requirements = Column(Text, nullable=True)
+    cvss4_modified_privileges_required = Column(Text, nullable=True)
+    cvss4_modified_user_interaction = Column(Text, nullable=True)
+    cvss4_modified_vulnerable_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_modified_subsequent_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_modified_vulnerable_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_modified_subsequent_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_modified_vulnerable_system_availability_impact = Column(Text, nullable=True)
+    cvss4_modified_subsequent_system_availability_impact = Column(Text, nullable=True)
+    cvss4_confidentiality_requirement = Column(Text, nullable=True)
+    cvss4_integrity_requirement = Column(Text, nullable=True)
+    cvss4_availability_requirement = Column(Text, nullable=True)
+    cvss4_exploit_maturity = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss4_vector_string(self):
+        return self._cvss4_vector_string
+
+    @cvss4_vector_string.setter
+    def cvss4_vector_string(self, vector_string):
+        self._cvss4_vector_string = vector_string
+        self.set_cvss4_attrs()
+
+    def init_cvss4_attrs(self):
+        self._cvss4_vector_string = None
+        self.cvss4_base_score = None
+        self.cvss4_base_severity = None
+        self.cvss4_attack_vector = None
+        self.cvss4_attack_complexity = None
+        self.cvss4_attack_requirements = None
+        self.cvss4_privileges_required = None
+        self.cvss4_user_interaction = None
+        self.cvss4_vulnerable_system_confidentiality_impact = None
+        self.cvss4_subsequent_system_confidentiality_impact = None
+        self.cvss4_vulnerable_system_integrity_impact = None
+        self.cvss4_subsequent_system_integrity_impact = None
+        self.cvss4_vulnerable_system_availability_impact = None
+        self.cvss4_subsequent_system_availability_impact = None
+        self.cvss4_safety = None
+        self.cvss4_automatable = None
+        self.cvss4_recovery = None
+        self.cvss4_value_density = None
+        self.cvss4_vulnerability_response_effort = None
+        self.cvss4_provider_urgency = None
+        self.cvss4_modified_attack_vector = None
+        self.cvss4_modified_attack_complexity = None
+        self.cvss4_modified_attack_requirements = None
+        self.cvss4_modified_privileges_required = None
+        self.cvss4_modified_user_interaction = None
+        self.cvss4_modified_vulnerable_system_confidentiality_impact = None
+        self.cvss4_modified_subsequent_system_confidentiality_impact = None
+        self.cvss4_modified_vulnerable_system_integrity_impact = None
+        self.cvss4_modified_subsequent_system_integrity_impact = None
+        self.cvss4_modified_vulnerable_system_availability_impact = None
+        self.cvss4_modified_subsequent_system_availability_impact = None
+        self.cvss4_confidentiality_requirement = None
+        self.cvss4_integrity_requirement = None
+        self.cvss4_availability_requirement = None
+        self.cvss4_exploit_maturity = None
+
+    def set_cvss4_attrs(self):
+        """
+        Parse cvss2 and assign attributes
+        """
+        if not self.cvss4_vector_string:
+            self.init_cvss4_attrs()
+            return None
+
+        try:
+            cvss_instance = cvss.CVSS4(self.cvss4_vector_string)
+            self.cvss4_base_score = get_base_score(cvss_instance)
+            self.cvss4_base_severity = get_severity(cvss_instance, 'B')
+            self.cvss4_attack_vector = get_propper_value(cvss_instance, 'AV')
+            self.cvss4_attack_complexity = get_propper_value(cvss_instance, 'AC')
+            self.cvss4_attack_requirements = get_propper_value(cvss_instance, 'AT')
+            self.cvss4_privileges_required = get_propper_value(cvss_instance, 'PR')
+            self.cvss4_user_interaction = get_propper_value(cvss_instance, 'UI')
+            self.cvss4_vulnerable_system_confidentiality_impact = get_propper_value(cvss_instance, 'VC')
+            self.cvss4_subsequent_system_confidentiality_impact = get_propper_value(cvss_instance, 'SC')
+            self.cvss4_vulnerable_system_integrity_impact = get_propper_value(cvss_instance, 'VI')
+            self.cvss4_subsequent_system_integrity_impact = get_propper_value(cvss_instance, 'SI')
+            self.cvss4_vulnerable_system_availability_impact = get_propper_value(cvss_instance, 'VA')
+            self.cvss4_subsequent_system_availability_impact = get_propper_value(cvss_instance, 'SA')
+            self.cvss4_safety = get_propper_value(cvss_instance, 'S')
+            self.cvss4_automatable = get_propper_value(cvss_instance, 'AU')
+            self.cvss4_recovery = get_propper_value(cvss_instance, 'R')
+            self.cvss4_value_density = get_propper_value(cvss_instance, 'V')
+            self.cvss4_vulnerability_response_effort = get_propper_value(cvss_instance, 'RE')
+            self.cvss4_provider_urgency = get_propper_value(cvss_instance, 'U')
+            self.cvss4_modified_attack_vector = get_propper_value(cvss_instance, 'MAV')
+            self.cvss4_modified_attack_complexity = get_propper_value(cvss_instance, 'MAC')
+            self.cvss4_modified_attack_requirements = get_propper_value(cvss_instance, 'MAT')
+            self.cvss4_modified_privileges_required = get_propper_value(cvss_instance, 'MPR')
+            self.cvss4_modified_user_interaction = get_propper_value(cvss_instance, 'MUI')
+            self.cvss4_modified_vulnerable_system_confidentiality_impact = get_propper_value(cvss_instance, 'MVC')
+            self.cvss4_modified_subsequent_system_confidentiality_impact = get_propper_value(cvss_instance, 'MSC')
+            self.cvss4_modified_vulnerable_system_integrity_impact = get_propper_value(cvss_instance, 'MVI')
+            self.cvss4_modified_subsequent_system_integrity_impact = get_propper_value(cvss_instance, 'MSI')
+            self.cvss4_modified_vulnerable_system_availability_impact = get_propper_value(cvss_instance, 'MVA')
+            self.cvss4_modified_subsequent_system_availability_impact = get_propper_value(cvss_instance, 'MSA')
+            self.cvss4_confidentiality_requirement = get_propper_value(cvss_instance, 'CR')
+            self.cvss4_integrity_requirement = get_propper_value(cvss_instance, 'IR')
+            self.cvss4_availability_requirement = get_propper_value(cvss_instance, 'AR')
+            self.cvss4_exploit_maturity = get_propper_value(cvss_instance, 'E')
+        except Exception as e:
+            logger.error("Could not parse cvss %s. %s", self.cvss4_vector_string, e)
+
     cwe = relationship('CWE', secondary=cwe_vulnerability_association)
 
     reference_instances = relationship(

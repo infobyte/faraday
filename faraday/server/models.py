@@ -2551,7 +2551,8 @@ class Role(db.Model, RoleMixin):
 class UserToken(Metadata):
     __tablename__ = 'user_token'
     GITLAB_SCOPE = 'gitlab'
-    SCOPES = [GITLAB_SCOPE]
+    SCHEDULER_SCOPE = 'scheduler'
+    SCOPES = [GITLAB_SCOPE, SCHEDULER_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 
@@ -3316,32 +3317,39 @@ agents_schedule_workspace_table = Table(
 )
 
 
-class AgentsSchedule(Metadata):
+class SchedulerGeneric(Metadata):
+
+    SCHEDULER_TYPES = ['cloud_agent', 'agent']
+
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
-    description = NonBlankColumn(Text)
-    crontab = NonBlankColumn(Text)
-    timezone = NonBlankColumn(Text)
+    description = NonBlankColumn(Text, nullable=False)
+    crontab = NonBlankColumn(Text, nullable=False)
+    timezone = NonBlankColumn(Text, nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
-
-    # N workspace <--> N schedules
-    workspaces = relationship(
-        'Workspace',
-        secondary=agents_schedule_workspace_table,
-        backref='agent_schedule',
-    )
-    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
-    executor = relationship(
-        'Executor',
-        backref=backref('schedules', cascade="all, delete-orphan"),
-    )
     ignore_info = Column(Boolean, default=False)
     resolve_hostname = Column(Boolean, default=True)
     vuln_tag = Column(String, default="")
     service_tag = Column(String, default="")
     host_tag = Column(String, default="")
     parameters = Column(JSONType, nullable=False, default={})
+    type = Column(Enum(*SCHEDULER_TYPES, name='scheduler_types'), nullable=False)
+
+    # N workspace <--> N schedules (base relationship)
+    workspaces = relationship(
+        'Workspace',
+        secondary=agents_schedule_workspace_table,
+        backref='agent_scheduler',
+    )
+
+    @declared_attr
+    def executor_id(self):
+        return Column(Integer, db.ForeignKey('executor.id'), index=True)
+
+    @declared_attr
+    def cloud_agent_id(self):
+        return Column(Integer, db.ForeignKey('cloud_agent.id'), index=True)
 
     @property
     def next_run(self):
@@ -3351,9 +3359,58 @@ class AgentsSchedule(Metadata):
             ret_type=datetime
         ).get_next(datetime)
 
+    __mapper_args__ = {
+        'polymorphic_on': type
+    }
+
+
+class AgentsSchedule(SchedulerGeneric):
+    __tablename__ = None
+
+    executor = relationship(
+        'Executor',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @declared_attr
+    def executor_id(self):
+        return SchedulerGeneric.__table__.c.get('executor_id',
+                                                Column(Integer,
+                                                       db.ForeignKey('executor.id'),
+                                                       nullable=False,
+                                                       index=True))
+
     @property
     def parent(self):
         return self.executor.agent
+
+    __mapper_args__ = {
+        'polymorphic_identity': SchedulerGeneric.SCHEDULER_TYPES[1]
+    }
+
+
+class CloudAgentsSchedule(SchedulerGeneric):
+    __tablename__ = None
+    cloud_agent = relationship(
+        'CloudAgent',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return self.cloud_agent
+
+    @declared_attr
+    def cloud_agent_id(self):
+        return SchedulerGeneric.__table__.c.get('cloud_agent_id',
+                                                Column(Integer,
+                                                       db.ForeignKey('cloud_agent.id'),
+                                                       nullable=False,
+                                                       index=True))
+
+    __mapper_args__ = {
+        'polymorphic_identity': SchedulerGeneric.SCHEDULER_TYPES[0]
+    }
 
 
 class Agent(Metadata):

@@ -1,7 +1,7 @@
 """cloud_agent_scheduler_and_scheduler_token
 
 Revision ID: e9a3ba96ea46
-Revises: ad29e4bcf2cf
+Revises: 47e0c8f9856d
 Create Date: 2024-09-17 18:54:47.529304+00:00
 
 """
@@ -11,7 +11,7 @@ from faraday.server.models import UserToken
 
 # revision identifiers, used by Alembic.
 revision = 'e9a3ba96ea46'
-down_revision = 'ad29e4bcf2cf'
+down_revision = '47e0c8f9856d'
 branch_labels = None
 depends_on = None
 

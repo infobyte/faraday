@@ -99,6 +99,9 @@ OPERATORS = {
     '<=': lambda f, a: f <= a,
     'in': lambda f, a: a in f,
     'not_in': lambda f, a: a not in f,
+    # operator that checks if any item of a list is in another list
+    'any_in': lambda f, a: any(x in f for x in a),
+    'contains': lambda f, a: any(a in x for x in f),
 }
 
 all_valid_operators = list(OPERATORS.keys())
@@ -137,7 +140,7 @@ rules_attributes = {
         {"name": "description", "display_name": "Description", "type": "string", "operators": string_operators},
         {"name": "os", "display_name": "OS", "type": "string", "operators": string_operators},
         {"name": "owned", "display_name": "Owned", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
-        {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in},
+        {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in + ["contains", "any_in"]},
         {"name": "update_date", "display_name": "Last Modified", "type": "datetime", "operators": numeric_operators},
 
         {"name": "importance", "display_name": "Importance", "type": "int", "operators": numeric_operators},
@@ -163,7 +166,7 @@ rules_attributes = {
         {"name": "description", "display_name": "Description", "type": "string", "operators": string_operators},
         {"name": "data", "display_name": "Data", "type": "string", "operators": string_operators},
         {"name": "cwe", "display_name": "CWE", "type": "cwe", "operators": in_not_in},
-        {"name": "cve", "display_name": "CVE", "type": "string", "operators": in_not_in},
+        {"name": "cve", "display_name": "CVE", "type": "string", "operators": in_not_in + ["contains", "any_in"]},
         {"name": "resolution", "display_name": "Resolution", "type": "string", "operators": string_operators},
         {"name": "create_date", "display_name": "Create Date", "type": "datetime", "operators": numeric_operators},
         {"name": "update_date", "display_name": "Update Date", "type": "datetime", "operators": numeric_operators},

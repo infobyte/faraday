@@ -102,6 +102,7 @@ OPERATORS = {
     # operator that checks if any item of a list is in another list
     'any_in': lambda f, a: any(x in f for x in a),
     'contains': lambda f, a: any(a in x for x in f),
+    'inverted_in': lambda f, a: f in a,
 }
 
 all_valid_operators = list(OPERATORS.keys())
@@ -184,7 +185,7 @@ rules_attributes = {
         {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in},
         {"name": "path", "display_name": "Path", "type": "string", "operators": string_operators},
         {"name": "service/name", "display_name": "Service Name", "type": "string", "operators": string_operators},
-        {"name": "host/ip", "display_name": "Asset", "type": "string", "operators": string_operators},
+        {"name": "host/ip", "display_name": "Asset IP", "type": "string", "operators": string_operators + ['inverted_in']},
         {"name": "evidence", "display_name": "Evidence", "type": "null_or_not", "operators": null_not_null},
         {"name": "host/os", "display_name": "Asset OS", "type": "string", "operators": string_operators},
         {"name": "id", "display_name": "ID", "type": "int", "operators": numeric_operators},
@@ -204,6 +205,11 @@ service_datatypes = {
     "service/port": "int",
     "service/status": "string",
     "service/version": "string",
+}
+
+host_datatypes = {
+    "host/ip": "string",
+    "host/os": "string",
 }
 
 order_regex = re.compile(r"^$|^\d+(-\d+)*$")

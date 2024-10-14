@@ -18,6 +18,7 @@ from faraday.server.api.modules.workflow import (
     fields_lookup,
     _get_rules_attributes,
     service_datatypes,
+    host_datatypes,
 )
 from faraday.server.extensions import socketio
 from faraday.server.models import (
@@ -240,17 +241,20 @@ def _perform_leaf_check(obj, condition, field):
     class_name = obj.__class__.__name__.lower()
     class_name = "vulnerability" if "web" in class_name else class_name
 
-    if class_name != "service":
-
+    if class_name == "service":
+        data_type = service_datatypes.get(condition.field, None)
+    elif class_name == "host":
+        data_type = host_datatypes.get(condition.field, None)
+    else:
         data_type = [x.get("type") for x in _get_rules_attributes()[class_name] if x.get("name") == condition.field][0]
 
         # If custom field and data type is datetime change to string
         if field.startswith("custom_fields") and data_type == "datetime":
             data_type = "string"
-    else:
-        data_type = service_datatypes.get(condition.field, None)
+
     data = condition.data
 
+    # Type cases
     if data_type == "string":
         data = str(data)
     elif data_type == "int":
@@ -274,6 +278,10 @@ def _perform_leaf_check(obj, condition, field):
         if model_data is not None:
             vuln_type = "Web Vulnerability"
         return operator(vuln_type, data)
+
+    # Operator cases
+    if condition.operator == "inverted_in":
+        data = [x.strip() for x in data.split(",")]
 
     # Fix specific fields
     if field == "hostnames":

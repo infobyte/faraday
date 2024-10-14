@@ -287,6 +287,9 @@ def _perform_leaf_check(obj, condition, field):
     if field == "hostnames":
         model_data = [x.name for x in model_data]
 
+    if condition.operator == "any_in":
+        data = [x.strip() for x in data.split(",")]
+
     return operator(model_data, data)
 
 

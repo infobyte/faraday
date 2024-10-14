@@ -10,14 +10,17 @@ import io
 import logging
 import json
 import imghdr
+from datetime import datetime
 from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
 from pathlib import Path
 
 import flask
+import sqlalchemy
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
+from flask_login import current_user
 from filteralchemy import Filter, FilterSet, operators
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
@@ -67,6 +70,8 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     User,
     VulnerabilityABC,
+    Command,
+    CommandObject,
 )
 from faraday.server.utils.database import (
     get_or_create,
@@ -198,6 +203,44 @@ class CVSS3Schema(AutoSchema):
     scope = fields.String(attribute="cvss3_scope", dump_only=True, required=False)
 
 
+class CVSS4Schema(AutoSchema):
+    vector_string = fields.String(attribute="cvss4_vector_string", required=False, allow_none=True)
+    base_score = fields.Float(attribute="cvss4_base_score", required=False, dump_only=True)
+    base_severity = fields.String(attribute="cvss4_base_severity", dump_only=True, required=False)
+    attack_vector = fields.String(attribute="cvss4_attack_vector", dump_only=True, required=False)
+    attack_complexity = fields.String(attribute="cvss4_attack_complexity", dump_only=True, required=False)
+    attack_requirements = fields.String(attribute="cvss4_attack_requirements", dump_only=True, required=False)
+    privileges_required = fields.String(attribute="cvss4_privileges_required", dump_only=True, required=False)
+    user_interaction = fields.String(attribute="cvss4_user_interaction", dump_only=True, required=False)
+    vulnerable_system_confidentiality_impact = fields.String(attribute="cvss4_vulnerable_system_confidentiality_impact", dump_only=True, required=False)
+    subsequent_system_confidentiality_impact = fields.String(attribute="cvss4_subsequent_system_confidentiality_impact", dump_only=True, required=False)
+    vulnerable_system_integrity_impact = fields.String(attribute="cvss4_vulnerable_system_integrity_impact", dump_only=True, required=False)
+    subsequent_system_integrity_impact = fields.String(attribute="cvss4_subsequent_system_integrity_impact", dump_only=True, required=False)
+    vulnerable_system_availability_impact = fields.String(attribute="cvss4_vulnerable_system_availability_impact", dump_only=True, required=False)
+    subsequent_system_availability_impact = fields.String(attribute="cvss4_subsequent_system_availability_impact", dump_only=True, required=False)
+    safety = fields.String(attribute="cvss4_safety", dump_only=True, required=False)
+    automatable = fields.String(attribute="cvss4_automatable", dump_only=True, required=False)
+    recovery = fields.String(attribute="cvss4_recovery", dump_only=True, required=False)
+    value_density = fields.String(attribute="cvss4_value_density", dump_only=True, required=False)
+    vulnerability_response_effort = fields.String(attribute="cvss4_vulnerability_response_effort", dump_only=True, required=False)
+    provider_urgency = fields.String(attribute="cvss4_provider_urgency", dump_only=True, required=False)
+    modified_attack_vector = fields.String(attribute="cvss4_modified_attack_vector", dump_only=True, required=False)
+    modified_attack_complexity = fields.String(attribute="cvss4_modified_attack_complexity", dump_only=True, required=False)
+    modified_attack_requirements = fields.String(attribute="cvss4_modified_attack_requirements", dump_only=True, required=False)
+    modified_privileges_required = fields.String(attribute="cvss4_modified_privileges_required", dump_only=True, required=False)
+    modified_user_interaction = fields.String(attribute="cvss4_modified_user_interaction", dump_only=True, required=False)
+    modified_vulnerable_system_confidentiality_impact = fields.String(attribute="cvss4_modified_vulnerable_system_confidentiality_impact", dump_only=True, required=False)
+    modified_subsequent_system_confidentiality_impact = fields.String(attribute="cvss4_modified_subsequent_system_confidentiality_impact", dump_only=True, required=False)
+    modified_vulnerable_system_integrity_impact = fields.String(attribute="cvss4_modified_vulnerable_system_integrity_impact", dump_only=True, required=False)
+    modified_subsequent_system_integrity_impact = fields.String(attribute="cvss4_modified_subsequent_system_integrity_impact", dump_only=True, required=False)
+    modified_vulnerable_system_availability_impact = fields.String(attribute="cvss4_modified_vulnerable_system_availability_impact", dump_only=True, required=False)
+    modified_subsequent_system_availability_impact = fields.String(attribute="cvss4_modified_subsequent_system_availability_impact", dump_only=True, required=False)
+    confidentiality_requirement = fields.String(attribute="cvss4_confidentiality_requirement", dump_only=True, required=False)
+    integrity_requirement = fields.String(attribute="cvss4_integrity_requirement", dump_only=True, required=False)
+    availability_requirement = fields.String(attribute="cvss4_availability_requirement", dump_only=True, required=False)
+    exploit_maturity = fields.String(attribute="cvss4_exploit_maturity", dump_only=True, required=False)
+
+
 class RiskSchema(AutoSchema):
     score = fields.Int(attribute='risk', dump_only=True)
     severity = fields.Method(serialize='get_risk_severity', dump_only=True)
@@ -245,6 +288,7 @@ class VulnerabilitySchema(AutoSchema):
     cve = fields.List(fields.String(), attribute='cve')
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
+    cvss4 = SelfNestedField(CVSS4Schema())
     owasp = fields.List(fields.Pluck(OWASPSchema(), "name"), dump_only=True)
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     tool = fields.String(attribute='tool')
@@ -295,7 +339,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations', '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss2', 'cvss3', 'cwe', 'cve', 'owasp', 'refs', 'command_id',
+            'cvss2', 'cvss3', 'cvss4', 'cwe', 'cve', 'owasp', 'refs', 'command_id',
             'risk', 'workspace_name'
             )
 
@@ -429,8 +473,12 @@ class VulnerabilitySchema(AutoSchema):
     def post_load_cvss3(self, data, **kwargs):
         return self._get_vector_string(data, 'cvss3')
 
+    @post_load
+    def post_load_cvss4(self, data, **kwargs):
+        return self._get_vector_string(data, 'cvss4')
+
     def _get_vector_string(self, data, version):
-        if version not in ['cvss2', 'cvss3']:
+        if version not in ['cvss2', 'cvss3', 'cvss4']:
             return data
 
         if version in data:
@@ -465,7 +513,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
             'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'refs', 'command_id',
+            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'cvss4', 'refs', 'command_id',
             'risk', 'workspace_name'
         )
 
@@ -780,6 +828,9 @@ class VulnerabilityView(PaginatedMixin,
 
         if 'cvss3_vector_string' in data:
             obj.cvss3_vector_string = data.pop('cvss3_vector_string')
+
+        if 'cvss4_vector_string' in data:
+            obj.cvss4_vector_string = data.pop('cvss4_vector_string')
 
         return super()._update_object(obj, data)
 
@@ -1492,6 +1543,31 @@ class VulnerabilityView(PaginatedMixin,
                         value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
+
+        ws = get_workspace(workspace_name)
+
+        command = Command()
+        command.workspace_id = ws.id
+        command.user_id = current_user.id
+        command.start_date = datetime.utcnow()
+        command.tool = 'web_ui'
+        command.command = 'bulk_update'
+        db.session.add(command)
+        db.session.commit()
+
+        cobjects_list = []
+        for id in ids:
+            cobject_dict = {
+                "object_id": id,
+                "object_type": "vulnerability",
+                "command_id": command.id,
+                "workspace_id": ws.id,
+                "create_date": datetime.utcnow(),
+                "created_persistent": False
+            }
+            cobjects_list.append(cobject_dict)
+        db.session.execute(sqlalchemy.insert(CommandObject).values(cobjects_list))
+        db.session.commit()
 
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats

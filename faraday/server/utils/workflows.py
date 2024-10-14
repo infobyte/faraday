@@ -17,7 +17,8 @@ from faraday.server.api.modules.workflow import (
     OPERATORS,
     fields_lookup,
     _get_rules_attributes,
-    service_datatypes, host_datatypes,
+    service_datatypes,
+    host_datatypes,
 )
 from faraday.server.extensions import socketio
 from faraday.server.models import (

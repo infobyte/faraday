@@ -1,7 +1,7 @@
 """add cvss4 columns
 
 Revision ID: 47e0c8f9856d
-Revises: ad29e4bcf2cf
+Revises: 907c72c8d391
 Create Date: 2024-08-17 21:43:12.666824+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '47e0c8f9856d'
-down_revision = 'ad29e4bcf2cf'
+down_revision = '907c72c8d391'
 branch_labels = None
 depends_on = None
 

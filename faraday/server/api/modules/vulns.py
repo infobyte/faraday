@@ -1614,7 +1614,8 @@ class VulnerabilityView(PaginatedMixin,
         return response
 
     def _paginate(self, query, hard_limit=0):
-        return super()._paginate(query, hard_limit=3)
+        limit = faraday_server.vulnerabilities_max_get_limit
+        return super()._paginate(query, hard_limit=limit)
 
 
 VulnerabilityView.register(vulns_api)

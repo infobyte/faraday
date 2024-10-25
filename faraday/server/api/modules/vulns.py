@@ -1613,5 +1613,8 @@ class VulnerabilityView(PaginatedMixin,
                 update_host_stats(host_id_list, service_id_list)
         return response
 
+    def _paginate(self, query, hard_limit=0):
+        return super()._paginate(query, hard_limit=3)
+
 
 VulnerabilityView.register(vulns_api)

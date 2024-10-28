@@ -864,5 +864,9 @@ class VulnerabilityContextView(ContextMixin,
                 update_host_stats(host_id_list, service_id_list)
         return response
 
+    def _paginate(self, query, hard_limit=0):
+        limit = faraday_server.vulnerabilities_max_get_limit
+        return super()._paginate(query, hard_limit=limit)
+
 
 VulnerabilityContextView.register(vulns_context_api)

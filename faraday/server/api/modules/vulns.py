@@ -1241,7 +1241,7 @@ class VulnerabilityView(PaginatedMixin,
                 offset = filters.pop('offset')
             if 'limit' in filters:
                 filter_limit = filters.pop('limit')
-                if filter_limit < limit:
+                if limit > filter_limit > 0:
                     limit = filter_limit
             try:
                 vulns = self._generate_filter_query(

@@ -32,16 +32,16 @@ from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+    CountMultiWorkspacedMixin,
     FilterAlchemyMixin,
     FilterSetMeta,
-    PaginatedMixin,
     InvalidUsage,
-    CountMultiWorkspacedMixin,
-    get_filtered_data,
-    BulkUpdateMixin,
-    BulkDeleteMixin,
+    PaginatedMixin,
     ReadOnlyView,
-    ContextMixin
+    get_filtered_data,
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (

@@ -495,13 +495,17 @@ class VulnerabilityContextView(ContextMixin,
         )if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
-            limit = faraday_server.vulnerabilities_max_get_limit
             if 'offset' in filters:
                 offset = filters.pop('offset')
+
+            limit = faraday_server.vulnerabilities_max_get_limit
             if 'limit' in filters:
-                filter_limit = filters.pop('limit')
-                if limit > filter_limit > 0:
-                    limit = filter_limit
+                if limit:
+                    filter_limit = filters.pop('limit')
+                    if limit > filter_limit > 0:
+                        limit = filter_limit
+                else:
+                    limit = filters.pop('limit')
 
             try:
                 vulns = self._generate_filter_query(

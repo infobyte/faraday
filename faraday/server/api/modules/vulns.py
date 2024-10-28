@@ -1236,11 +1236,13 @@ class VulnerabilityView(PaginatedMixin,
         ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
-            limit = None
+            limit = faraday_server.vulnerabilities_max_get_limit
             if 'offset' in filters:
                 offset = filters.pop('offset')
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
+                filter_limit = filters.pop('limit')
+                if filter_limit < limit:
+                    limit = filter_limit
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,

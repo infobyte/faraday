@@ -72,7 +72,7 @@ from faraday.server.api.modules.vulns import (
     CustomILike,
     VulnerabilityFilterSet
 )
-from settings import get_settings
+from faraday.settings import get_settings
 
 vulns_context_api = Blueprint('vulns_context_api', __name__)
 logger = logging.getLogger(__name__)

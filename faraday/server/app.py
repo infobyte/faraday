@@ -141,7 +141,7 @@ def register_blueprints(app):
         dashboard_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_elk import \
         elk_settings_api  # pylint:disable=import-outside-toplevel
-    from server.api.modules.settings_query_limits import \
+    from faraday.server.api.modules.settings_query_limits import \
         query_limits_settings_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(ui)

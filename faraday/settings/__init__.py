@@ -28,3 +28,5 @@ def load_settings():
     reports_init()
     from faraday.settings.elk import init_setting as elk_init  # pylint: disable=import-outside-toplevel
     elk_init()
+    from faraday.settings.query_limits import init_setting as qlimits_init  # pylint: disable=import-outside-toplevel
+    qlimits_init()

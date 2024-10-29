@@ -90,6 +90,7 @@ from faraday.server.schemas import (
 )
 from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat, bulk_update_custom_attributes
 from faraday.server.debouncer import debounce_workspace_update
+from settings import get_settings
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -1239,7 +1240,7 @@ class VulnerabilityView(PaginatedMixin,
             if 'offset' in filters:
                 offset = filters.pop('offset')
 
-            limit = faraday_server.vulnerabilities_max_get_limit
+            limit = get_settings("query_limits").vuln_query_limit
             if 'limit' in filters:
                 if limit:
                     filter_limit = filters.pop('limit')
@@ -1621,7 +1622,7 @@ class VulnerabilityView(PaginatedMixin,
         return response
 
     def _paginate(self, query, hard_limit=0):
-        limit = faraday_server.vulnerabilities_max_get_limit
+        limit = get_settings("query_limits").vuln_query_limit
         return super()._paginate(query, hard_limit=limit)
 
 

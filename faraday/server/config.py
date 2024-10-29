@@ -154,7 +154,6 @@ class FaradayServerConfigObject(ConfigSection):
         self.socketio_ping_interval = 60
         self.socketio_ping_timeout = 220
         self.socketio_logger = False
-        self.vulnerabilities_max_get_limit = 0  # No limit
 
 
 class StorageConfigObject(ConfigSection):

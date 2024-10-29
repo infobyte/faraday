@@ -72,6 +72,7 @@ from faraday.server.api.modules.vulns import (
     CustomILike,
     VulnerabilityFilterSet
 )
+from settings import get_settings
 
 vulns_context_api = Blueprint('vulns_context_api', __name__)
 logger = logging.getLogger(__name__)
@@ -498,7 +499,7 @@ class VulnerabilityContextView(ContextMixin,
             if 'offset' in filters:
                 offset = filters.pop('offset')
 
-            limit = faraday_server.vulnerabilities_max_get_limit
+            limit = get_settings("query_limits").vuln_query_limit
             if 'limit' in filters:
                 if limit:
                     filter_limit = filters.pop('limit')
@@ -869,7 +870,7 @@ class VulnerabilityContextView(ContextMixin,
         return response
 
     def _paginate(self, query, hard_limit=0):
-        limit = faraday_server.vulnerabilities_max_get_limit
+        limit = get_settings("query_limits").vuln_query_limit
         return super()._paginate(query, hard_limit=limit)
 
 

@@ -88,7 +88,15 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
-from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat, bulk_update_custom_attributes
+from faraday.server.utils.vulns import (
+    FILTER_SET_FIELDS,
+    FILTER_SET_STRICT_FIELDS,
+    SCHEMA_FIELDS,
+    WEB_SCHEMA_FIELDS,
+    bulk_update_custom_attributes,
+    parse_cve_references_and_policyviolations,
+    update_one_host_severity_stat,
+)
 from faraday.server.debouncer import debounce_workspace_update
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -101,10 +109,7 @@ class EvidenceSchema(AutoSchema):
 
     class Meta:
         model = File
-        fields = (
-            'content_type',
-            'data'
-        )
+        fields = ('content_type', 'data')
 
     @staticmethod
     def get_content_type(file_obj):
@@ -289,7 +294,6 @@ class VulnerabilitySchema(AutoSchema):
     cvss2 = SelfNestedField(CVSS2Schema())
     cvss3 = SelfNestedField(CVSS3Schema())
     cvss4 = SelfNestedField(CVSS4Schema())
-    owasp = fields.List(fields.Pluck(OWASPSchema(), "name"), dump_only=True)
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
     parent_type = MutableField(fields.Method('get_parent_type'),
@@ -328,19 +332,7 @@ class VulnerabilitySchema(AutoSchema):
 
     class Meta:
         model = Vulnerability
-        fields = (
-            '_id', 'status',
-            'issuetracker', 'description', 'parent', 'parent_type',
-            'tags', 'severity', '_rev', 'easeofresolution', 'owned',
-            'hostnames', 'owner',
-            'date', 'data',
-            'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations', '_attachments',
-            'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id', 'tool',
-            'cvss2', 'cvss3', 'cvss4', 'cwe', 'cve', 'owasp', 'refs', 'command_id',
-            'risk', 'workspace_name'
-            )
+        fields = SCHEMA_FIELDS
 
     @staticmethod
     def get_type(obj):
@@ -501,20 +493,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 
     class Meta:
         model = VulnerabilityWeb
-        fields = (
-            '_id', 'status', 'parent_type',
-            'website', 'issuetracker', 'description', 'parent',
-            'tags', 'severity', '_rev', 'easeofresolution', 'owned',
-            'hostnames', 'pname', 'query', 'owner',
-            'path', 'date', 'data', 'response',
-            'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations',
-            'request', '_attachments', 'params',
-            'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'tool',
-            'cve', 'cwe', 'owasp', 'cvss2', 'cvss3', 'cvss4', 'refs', 'command_id',
-            'risk', 'workspace_name'
-        )
+        fields = WEB_SCHEMA_FIELDS
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -599,19 +578,8 @@ class VulnerabilityFilterSet(FilterSet):
         # command, impact, issuetracker, tags, date, host
         # evidence, policy violations, hostnames
 
-        fields = (
-            "id", "status", "website", "parameter_name", "query_string", "path", "service",
-            "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "resolution",
-            "description", "command_id", "target", "creator", "method",
-            "ease_of_resolution", "service_id",
-            "status_code", "tool",
-        )
-
-        strict_fields = (
-            "severity", "confirmed", "method", "status", "ease_of_resolution",
-            "service_id",
-        )
+        fields = FILTER_SET_FIELDS
+        strict_fields = FILTER_SET_STRICT_FIELDS
 
         default_operator = CustomILike
         # next line uses dict comprehensions!
@@ -622,8 +590,7 @@ class VulnerabilityFilterSet(FilterSet):
 
     id = IDFilter(fields.Int())
     target = TargetFilter(fields.Str())
-    type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
-                                                  'VulnerabilityWeb'])]))
+    type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability', 'VulnerabilityWeb'])]))
     creator = CreatorFilter(fields.Str())
     service = ServiceFilter(fields.Str())
     severity = Filter(SeverityField())

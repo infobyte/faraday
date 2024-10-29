@@ -15,7 +15,7 @@ DEFAULT_VULN_LIMIT = 0
 
 
 class QueryLimitsSchema(AutoSchema):
-    vuln_query_limit = fields.Int(default=DEFAULT_VULN_LIMIT, required=True)
+    vuln_query_limit = fields.Int(default=DEFAULT_VULN_LIMIT, required=True, validate=lambda x: x >= 0)
 
 
 class QueryLimitsSettings(Settings):

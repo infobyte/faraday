@@ -144,9 +144,10 @@ class TestServerConfig:
         response = test_client.patch("/v3/settings/reports", json=data)
         assert response.status_code == 200
 
-    def test_update_query_limits_success(self, test_client):
+    @pytest.mark.parametrize("limit", [0, 25, 99999])
+    def test_update_query_limits_success(self, test_client, limit):
         data = {
-            "vuln_query_limit": 25,
+            "vuln_query_limit": limit,
         }
         response = test_client.patch("/v3/settings/query_limits", json=data)
         assert response.status_code == 200

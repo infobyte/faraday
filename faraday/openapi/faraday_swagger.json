@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.7.0 API",
+        "title": "Faraday 5.8.0 API",
         "version": "v3"
     },
     "security": [
@@ -7446,6 +7446,7 @@
                     },
                     "cvss2": {},
                     "cvss3": {},
+                    "cvss4": {},
                     "refs": {
                         "type": "array",
                         "items": {
@@ -8090,6 +8091,7 @@
                     },
                     "cvss2": {},
                     "cvss3": {},
+                    "cvss4": {},
                     "cwe": {
                         "type": "array",
                         "items": {
@@ -8372,7 +8374,10 @@
                             ">=",
                             "<=",
                             "in",
-                            "not_in"
+                            "not_in",
+                            "any_in",
+                            "contains",
+                            "inverted_in"
                         ],
                         "nullable": true
                     },

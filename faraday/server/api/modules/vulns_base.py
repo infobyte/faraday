@@ -5,89 +5,86 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Standard library imports
-import http.client
-import io
-import logging
-import json
-import imghdr
-from datetime import datetime
-from json.decoder import JSONDecodeError
 from base64 import b64encode, b64decode
+from datetime import datetime
+from http.client import BAD_REQUEST, OK
+from imghdr import what
+from io import BytesIO
+from json import dumps as json_dumps, loads as json_loads
+from json.decoder import JSONDecodeError
+from logging import getLogger
 from pathlib import Path
 
-import flask
-import sqlalchemy
-from flask import request, send_file
-from flask import Blueprint, make_response
+# Related third party imports
+from depot.manager import DepotManager
+from filteralchemy import Filter, FilterSet, operators
+from flask import Blueprint, abort, jsonify, make_response, request, send_file
 from flask_classful import route
 from flask_login import current_user
-from filteralchemy import Filter, FilterSet, operators
-from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow import Schema, ValidationError, fields, post_load
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, insert as sqlalchemy_insert
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import (
     aliased,
     joinedload,
-    selectin_polymorphic,
-    undefer,
     noload,
+    selectin_polymorphic,
     selectinload,
+    undefer,
 )
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.datastructures import ImmutableMultiDict
-from depot.manager import DepotManager
 
 # Local application imports
-from faraday.server.utils.cwe import create_cwe
-from faraday.server.utils.reference import create_reference
-from faraday.server.utils.search import search
 from faraday.server.api.base import (
     AutoSchema,
-    FilterAlchemyMixin,
-    FilterSetMeta,
-    PaginatedMixin,
-    ReadWriteWorkspacedView,
-    InvalidUsage,
-    CountMultiWorkspacedMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
+    CountMultiWorkspacedMixin,
+    FilterAlchemyMixin,
+    FilterSetMeta,
+    InvalidUsage,
+    PaginatedMixin,
+    ReadWriteWorkspacedView,
     get_filtered_data,
     get_workspace,
 )
 from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.config import faraday_server
+from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
-    db,
-    File,
-    Host,
-    Service,
-    Hostname,
-    Workspace,
-    Vulnerability,
-    VulnerabilityWeb,
-    CustomFieldsSchema,
-    VulnerabilityGeneric,
-    User,
-    VulnerabilityABC,
     Command,
     CommandObject,
+    CustomFieldsSchema,
+    File,
+    Host,
+    Hostname,
+    Service,
+    User,
+    Vulnerability,
+    VulnerabilityABC,
+    VulnerabilityGeneric,
+    VulnerabilityWeb,
+    Workspace,
+    db,
 )
-from faraday.server.utils.database import (
-    get_or_create,
+from faraday.server.schemas import (
+    FaradayCustomField,
+    MetadataSchema,
+    MutableField,
+    PrimaryKeyRelatedField,
+    SelfNestedField,
+    SeverityField,
 )
+from faraday.server.utils.command import set_command_id
+from faraday.server.utils.cwe import create_cwe
+from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.utils.command import set_command_id
-from faraday.server.config import faraday_server
-from faraday.server.schemas import (
-    MutableField,
-    SeverityField,
-    MetadataSchema,
-    SelfNestedField,
-    FaradayCustomField,
-    PrimaryKeyRelatedField,
-)
+from faraday.server.utils.reference import create_reference
+from faraday.server.utils.search import search
 from faraday.server.utils.vulns import (
     FILTER_SET_FIELDS,
     FILTER_SET_STRICT_FIELDS,
@@ -97,10 +94,9 @@ from faraday.server.utils.vulns import (
     parse_cve_references_and_policyviolations,
     update_one_host_severity_stat,
 )
-from faraday.server.debouncer import debounce_workspace_update
 
 vulns_api = Blueprint('vulns_api', __name__)
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class EvidenceSchema(AutoSchema):
@@ -709,7 +705,7 @@ class VulnerabilityView(PaginatedMixin,
         except TypeError:
             # TypeError is raised when trying to instantiate an sqlalchemy model
             # with invalid attributes, for example VulnerabilityWeb with host_id
-            flask.abort(400)
+            abort(400)
 
         obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
         obj.cwe = create_cwe(cwe_list)
@@ -757,10 +753,10 @@ class VulnerabilityView(PaginatedMixin,
             db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             if 'image' in attachment['content_type']:
-                image_format = imghdr.what(None, h=b64decode(attachment['data']))
+                image_format = what(None, h=b64decode(attachment['data']))
                 if image_format and image_format.lower() == "webp":
                     logger.info("Evidence can not be webp format")
-                    flask.abort(400, "Evidence can not be webp format")
+                    abort(400, "Evidence can not be webp format")
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
             get_or_create(
@@ -883,7 +879,7 @@ class VulnerabilityView(PaginatedMixin,
             joinedload('policy_violation_instances'),
         ]
 
-        if flask.request.args.get('get_evidence'):
+        if request.args.get('get_evidence'):
             options.append(joinedload(VulnerabilityGeneric.evidence))
         else:
             options.append(noload(VulnerabilityGeneric.evidence))
@@ -895,7 +891,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _filter_query(self, query):
         query = super()._filter_query(query)
-        search_term = flask.request.args.get('search', None)
+        search_term = request.args.get('search', None)
         if search_term is not None:
             # TODO migration: add more fields to free text search
             like_term = '%' + search_term + '%'
@@ -1011,19 +1007,19 @@ class VulnerabilityView(PaginatedMixin,
 
         if vuln_workspace_check:
             if 'file' not in request.files:
-                flask.abort(400)
+                abort(400)
             vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
             filename = request.files['file'].filename
             _attachments = vuln['_attachments']
             if filename in _attachments:
                 message = 'Evidence already exists in vuln'
-                return make_response(flask.jsonify(message=message, success=False, code=400), 400)
+                return make_response(jsonify(message=message, success=False, code=400), 400)
             else:
                 partial = request.files['file'].read(32)
-                image_format = imghdr.what(None, h=partial)
+                image_format = what(None, h=partial)
                 if image_format and image_format.lower() == "webp":
                     logger.info("Evidence can't be webp")
-                    flask.abort(400, "Evidence can't be webp")
+                    abort(400, "Evidence can't be webp")
                 faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
                 instance, created = get_or_create(
                     db.session,
@@ -1038,9 +1034,9 @@ class VulnerabilityView(PaginatedMixin,
                 debounce_workspace_update(workspace_name)
                 message = 'Evidence upload was successful'
                 logger.info(message)
-                return flask.jsonify({'message': message})
+                return jsonify({'message': message})
         else:
-            flask.abort(404, "Vulnerability not found")
+            abort(404, "Vulnerability not found")
 
     @route('/filter')
     def filter(self, workspace_name):
@@ -1181,12 +1177,12 @@ class VulnerabilityView(PaginatedMixin,
         hostname_filters = []
         vulns = None
         try:
-            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
             if filters:
                 filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError, AttributeError) as ex:
             logger.exception(ex)
-            flask.abort(400, "Invalid filters")
+            abort(400, "Invalid filters")
 
         workspace = get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'exclude': (
@@ -1216,9 +1212,9 @@ class VulnerabilityView(PaginatedMixin,
                     marshmallow_params,
                     bool(exclude_list))
             except TypeError as e:
-                flask.abort(400, e)
+                abort(400, e)
             except AttributeError as e:
-                flask.abort(400, e)
+                abort(400, e)
             # In vulns count we do not need order
             total_vulns = vulns.order_by(None)
             if limit:
@@ -1238,9 +1234,9 @@ class VulnerabilityView(PaginatedMixin,
                     marshmallow_params,
                 )
             except TypeError as e:
-                flask.abort(400, e)
+                abort(400, e)
             except AttributeError as e:
-                flask.abort(400, e)
+                abort(400, e)
             vulns_data, rows_count = get_filtered_data(filters, vulns)
 
             return vulns_data, rows_count
@@ -1277,16 +1273,16 @@ class VulnerabilityView(PaginatedMixin,
                     as_attachment = False
                 else:
                     as_attachment = True
-                return flask.send_file(
-                    io.BytesIO(depot_file.read()),
+                return send_file(
+                    BytesIO(depot_file.read()),
                     attachment_filename=file_obj.filename,
                     as_attachment=as_attachment,
                     mimetype=depot_file.content_type
                 )
             else:
-                flask.abort(404, "File not found")
+                abort(404, "File not found")
         else:
-            flask.abort(404, "Vulnerability not found")
+            abort(404, "Vulnerability not found")
 
     @route('/<int:vuln_id>/attachment', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
@@ -1322,9 +1318,9 @@ class VulnerabilityView(PaginatedMixin,
                 ret = EvidenceSchema().dump(file_obj)
                 res[file_obj.filename] = ret
 
-            return flask.jsonify(res)
+            return jsonify(res)
         else:
-            flask.abort(404, "Vulnerability not found")
+            abort(404, "Vulnerability not found")
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -1353,11 +1349,11 @@ class VulnerabilityView(PaginatedMixin,
                 message = 'Attachment was successfully deleted'
                 debounce_workspace_update(workspace_name)
                 logger.info(message)
-                return flask.jsonify({'message': message})
+                return jsonify({'message': message})
             else:
-                flask.abort(404, "File not found")
+                abort(404, "File not found")
         else:
-            flask.abort(404, "Vulnerability not found")
+            abort(404, "Vulnerability not found")
 
     @route('export_csv', methods=['GET'])
     def export_csv(self, workspace_name):
@@ -1387,7 +1383,7 @@ class VulnerabilityView(PaginatedMixin,
                 "op": "==",
                 "val": "true"
             })
-            filters = json.dumps(filters)
+            filters = json_dumps(filters)
         vulns_query, _ = self._filter(filters, workspace_name, exclude_list=(
             '_attachments',
             'desc'
@@ -1415,7 +1411,7 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        limit = flask.request.args.get('limit', 1)
+        limit = request.args.get('limit', 1)
         workspace = get_workspace(workspace_name)
         data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
             .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
@@ -1429,15 +1425,15 @@ class VulnerabilityView(PaginatedMixin,
             }
             users.append(user)
         response = {'users': users}
-        return flask.jsonify(response)
+        return jsonify(response)
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, workspace_name, **kwargs):
         # TODO BULK_DELETE_SCHEMA
-        if not flask.request.json or 'severities' not in flask.request.json:
+        if not request.json or 'severities' not in request.json:
             return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
-        return self._perform_bulk_delete(flask.request.json['severities'], by='severity',
-                                         workspace_name=workspace_name, **kwargs), 200
+        return self._perform_bulk_delete(request.json['severities'], by='severity',
+                                         workspace_name=workspace_name, **kwargs), OK
     bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
 
     def _bulk_update_query(self, ids, **kwargs):
@@ -1532,7 +1528,7 @@ class VulnerabilityView(PaginatedMixin,
                 "created_persistent": False
             }
             cobjects_list.append(cobject_dict)
-        db.session.execute(sqlalchemy.insert(CommandObject).values(cobjects_list))
+        db.session.execute(sqlalchemy_insert(CommandObject).values(cobjects_list))
         db.session.commit()
 
         if 'returning' in kwargs and kwargs['returning']:
@@ -1556,7 +1552,7 @@ class VulnerabilityView(PaginatedMixin,
         if by_severity == 'severity':
             for severity in values:
                 if severity not in VulnerabilityABC.SEVERITIES:
-                    flask.abort(http.client.BAD_REQUEST, "Severity type not valid")
+                    abort(BAD_REQUEST, "Severity type not valid")
 
             host_ids = host_ids.filter(
                             VulnerabilityGeneric.severity.in_(values)

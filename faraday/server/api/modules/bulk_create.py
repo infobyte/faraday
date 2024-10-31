@@ -73,7 +73,7 @@ from faraday.server.api.base import (
 from faraday.server.api.modules import (
     hosts,
     services,
-    vulns,
+    vulns_base,
 )
 from faraday.server.api.modules.websocket_auth import require_agent_token
 from faraday.server.utils.vulns import (
@@ -89,20 +89,20 @@ bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-class VulnerabilitySchema(vulns.VulnerabilitySchema):
-    class Meta(vulns.VulnerabilitySchema.Meta):
+class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
+    class Meta(vulns_base.VulnerabilitySchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in (vulns.VulnerabilitySchema.Meta.fields + extra_fields)
+            field_name for field_name in (vulns_base.VulnerabilitySchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 
 
-class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
-    class Meta(vulns.VulnerabilityWebSchema.Meta):
+class BulkVulnerabilityWebSchema(vulns_base.VulnerabilityWebSchema):
+    class Meta(vulns_base.VulnerabilityWebSchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in (vulns.VulnerabilityWebSchema.Meta.fields + extra_fields)
+            field_name for field_name in (vulns_base.VulnerabilityWebSchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 

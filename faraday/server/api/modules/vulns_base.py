@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 from base64 import b64encode, b64decode
 from datetime import datetime
-from http.client import BAD_REQUEST, OK
+from http.client import BAD_REQUEST, NOT_FOUND, OK
 from imghdr import what
 from io import BytesIO
 from json import dumps as json_dumps, loads as json_loads
@@ -39,14 +39,15 @@ from werkzeug.datastructures import ImmutableMultiDict
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
-    BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
     CountMultiWorkspacedMixin,
     FilterAlchemyMixin,
     FilterSetMeta,
     InvalidUsage,
     PaginatedMixin,
-    ReadWriteWorkspacedView,
+    ReadOnlyView,
     get_filtered_data,
     get_workspace,
 )
@@ -78,7 +79,6 @@ from faraday.server.schemas import (
     SelfNestedField,
     SeverityField,
 )
-from faraday.server.utils.command import set_command_id
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -91,8 +91,6 @@ from faraday.server.utils.vulns import (
     SCHEMA_FIELDS,
     WEB_SCHEMA_FIELDS,
     bulk_update_custom_attributes,
-    parse_cve_references_and_policyviolations,
-    update_one_host_severity_stat,
 )
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -292,15 +290,14 @@ class VulnerabilitySchema(AutoSchema):
     cvss4 = SelfNestedField(CVSS4Schema())
     tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
-    parent_type = MutableField(fields.Method('get_parent_type'),
-                               fields.String(),
-                               required=True)
+    parent_type = MutableField(fields.Method('get_parent_type'), fields.String(), required=True)
     cwe = fields.List(fields.Pluck(CWESchema(), "name"))
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     easeofresolution = fields.String(
         attribute='ease_of_resolution',
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
-        allow_none=True)
+        allow_none=True,
+    )
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
@@ -310,16 +307,14 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method(
         serialize='get_status',
         validate=OneOf(Vulnerability.STATUSES + ['opened']),
-        deserialize='load_status')
-    type = fields.Method(serialize='get_type',
-                         deserialize='load_type',
-                         required=True)
+        deserialize='load_status',)
+
+    type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(dump_only=True, attribute='target_host_ip')
     host_os = fields.String(dump_only=True, attribute='target_host_os')
     metadata = SelfNestedField(CustomMetadataSchema())
-    date = fields.DateTime(attribute='create_date',
-                           dump_only=True)  # This is only used for sorting
+    date = fields.DateTime(attribute='create_date', dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
     command_id = fields.Int(required=False, load_only=True)
@@ -464,7 +459,8 @@ class VulnerabilitySchema(AutoSchema):
     def post_load_cvss4(self, data, **kwargs):
         return self._get_vector_string(data, 'cvss4')
 
-    def _get_vector_string(self, data, version):
+    @staticmethod
+    def _get_vector_string(data, version):
         if version not in ['cvss2', 'cvss3', 'cvss4']:
             return data
 
@@ -635,12 +631,15 @@ class VulnerabilityFilterSet(FilterSet):
         return query
 
 
-class VulnerabilityView(PaginatedMixin,
-                        FilterAlchemyMixin,
-                        ReadWriteWorkspacedView,
-                        CountMultiWorkspacedMixin,
-                        BulkDeleteWorkspacedMixin,
-                        BulkUpdateWorkspacedMixin):
+class VulnerabilityView(
+    PaginatedMixin,
+    FilterAlchemyMixin,
+    ReadOnlyView,
+    CountMultiWorkspacedMixin,
+    ContextMixin,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
@@ -663,83 +662,6 @@ class VulnerabilityView(PaginatedMixin,
 
         return schema
 
-    def _perform_delete(self, obj, **kwargs):
-        # Update hosts stats
-        host_to_update_stat = None
-        if obj.host_id:
-            host_to_update_stat = obj.host_id
-        elif obj.service_id:
-            host_to_update_stat = obj.service.host_id
-
-        db.session.delete(obj)
-        db.session.commit()
-        logger.info(f"{obj} deleted")
-
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
-
-        if host_to_update_stat:
-            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
-
-            if faraday_server.celery_enabled:
-                update_host_stats.delay([host_to_update_stat], [])
-            else:
-                update_host_stats([host_to_update_stat], [])
-        db.session.commit()
-
-    def _perform_create(self, data, **kwargs):
-        data = self._parse_data(self._get_schema_instance(kwargs), request)
-        obj = None
-        # TODO migration: use default values when popping and validate the
-        # popped object has the expected type.
-        # This will be set after setting the workspace
-        attachments = data.pop('_attachments', {})
-        references = data.pop('refs', [])
-        policyviolations = data.pop('policy_violations', [])
-        cve_list = data.pop('cve', [])
-        cwe_list = data.pop('cwe', [])
-        command_id = data.pop('command_id', None)
-
-        try:
-            obj = super()._perform_create(data, **kwargs)
-        except TypeError:
-            # TypeError is raised when trying to instantiate an sqlalchemy model
-            # with invalid attributes, for example VulnerabilityWeb with host_id
-            abort(400)
-
-        obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
-        obj.cwe = create_cwe(cwe_list)
-
-        db.session.flush()
-        if command_id:
-            set_command_id(db.session, obj, True, command_id)
-        self._process_attachments(obj, attachments)
-        if not obj.tool:
-            if obj.creator_command_tool:
-                obj.tool = obj.creator_command_tool
-            else:
-                obj.tool = "Web UI"
-        db.session.commit()
-
-        # Update hosts stats
-        host_to_update_stat = None
-        if obj.host_id:
-            host_to_update_stat = obj.host_id
-        elif obj.service_id:
-            host_to_update_stat = obj.service.host_id
-
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
-
-        if host_to_update_stat:
-            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
-            if faraday_server.celery_enabled:
-                update_host_stats.delay([host_to_update_stat], [])
-            else:
-                update_host_stats([host_to_update_stat], [])
-
-        return obj
-
     @staticmethod
     def _process_attachments(obj, attachments):
         old_attachments = db.session.query(File).options(
@@ -749,14 +671,17 @@ class VulnerabilityView(PaginatedMixin,
             object_id=obj.id,
             object_type='vulnerability',
         )
+
         for old_attachment in old_attachments:
             db.session.delete(old_attachment)
+
         for filename, attachment in attachments.items():
             if 'image' in attachment['content_type']:
                 image_format = what(None, h=b64decode(attachment['data']))
                 if image_format and image_format.lower() == "webp":
                     logger.info("Evidence can not be webp format")
-                    abort(400, "Evidence can not be webp format")
+                    abort(BAD_REQUEST, "Evidence can not be webp format")
+
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
             get_or_create(
@@ -768,57 +693,6 @@ class VulnerabilityView(PaginatedMixin,
                 filename=Path(filename).name,
                 content=faraday_file,
             )
-
-    def _update_object(self, obj, data, **kwargs):
-        data.pop('type', '')  # It's forbidden to change vuln type!
-        data.pop('tool', '')
-
-        cwe_list = data.pop('cwe', None)
-        if cwe_list:
-            # We need to instantiate cwe objects before updating
-            obj.cwe = create_cwe(cwe_list)
-
-        reference_list = data.pop('refs', None)
-        if reference_list is not None:
-            # We need to instantiate reference objects before updating
-            obj.refs = create_reference(reference_list, vulnerability_id=obj.id)
-
-        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
-        # vector string into fields and calculates the scores
-        if 'cvss2_vector_string' in data:
-            obj.cvss2_vector_string = data.pop('cvss2_vector_string')
-
-        if 'cvss3_vector_string' in data:
-            obj.cvss3_vector_string = data.pop('cvss3_vector_string')
-
-        if 'cvss4_vector_string' in data:
-            obj.cvss4_vector_string = data.pop('cvss4_vector_string')
-
-        return super()._update_object(obj, data)
-
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
-        attachments = data.pop('_attachments', None if partial else {})
-
-        # get hosts and services to update vuln stats
-        hosts, services = update_one_host_severity_stat(obj)
-
-        obj = super()._perform_update(object_id, obj, data, workspace_name)
-        db.session.flush()
-        if attachments is not None:
-            self._process_attachments(obj, attachments)
-
-        db.session.commit()
-
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
-
-        if hosts or services:
-            from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
-            if faraday_server.celery_enabled:
-                update_host_stats.delay(hosts, services)
-            else:
-                update_host_stats(hosts, services)
-        return obj
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
         returning_rows = [
@@ -837,19 +711,12 @@ class VulnerabilityView(PaginatedMixin,
             return bulk_update_custom_attributes(ids, data)
         return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
 
-    def put(self, object_id, workspace_name=None, **kwargs):
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
-        return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
-
     def _get_eagerloaded_query(self, *args, **kwargs):
-        """Eager hostnames loading.
-
-        This is too complex to get_joinedloads so I have to
-        override the function
         """
-        query = super()._get_eagerloaded_query(
-            *args, **kwargs)
+        Eager hostnames loading.
+        This is too complex to get_joinedloads, so I have to override the function.
+        """
+        query = super()._get_eagerloaded_query(*args, **kwargs)
         options = [
             joinedload(Vulnerability.host).
             load_only(Host.id).  # Only hostnames are needed
@@ -873,10 +740,6 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-
-            joinedload('refs'),
-            joinedload('cve_instances'),
-            joinedload('policy_violation_instances'),
         ]
 
         if request.args.get('get_evidence'):
@@ -902,7 +765,7 @@ class VulnerabilityView(PaginatedMixin,
 
     @property
     def model_class(self):
-        if request.method == 'POST':
+        if request.method == 'POST' and request.json:
             return self.model_class_dict[request.json['type']]
         # We use Generic to list all vulns from all types
         return self.model_class_dict['VulnerabilityGeneric']
@@ -919,7 +782,8 @@ class VulnerabilityView(PaginatedMixin,
         # We use web since it has all the fields
         return self.schema_class_dict['VulnerabilityWeb']
 
-    def _envelope_list(self, objects, pagination_metadata=None):
+    @staticmethod
+    def _envelope_list(objects, pagination_metadata=None):
         vulns = []
         for index, vuln in enumerate(objects):
             # we use index when the filter endpoint uses group by and
@@ -973,8 +837,7 @@ class VulnerabilityView(PaginatedMixin,
                     0: "False"
                 }
                 confirmed = group[type]
-                group[type] = group['name'] = confirmed_map.get(
-                    confirmed, confirmed)
+                group[type] = group['name'] = confirmed_map.get(confirmed, confirmed)
             else:
                 group['name'] = group[type]
             return group
@@ -986,7 +849,7 @@ class VulnerabilityView(PaginatedMixin,
         return res
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])
-    def post_attachment(self, workspace_name, vuln_id):
+    def post_attachment(self, vuln_id, **kwargs):
         """
         ---
         post:
@@ -1000,46 +863,42 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
+        vuln_permission_check = self._apply_filter_context(
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
+            operation="write"
+        ).first()
 
-        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
-            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
-                              Workspace.name == workspace_name).first()
+        if not vuln_permission_check:
+            abort(NOT_FOUND, "Vulnerability not found")
 
-        if vuln_workspace_check:
-            if 'file' not in request.files:
-                abort(400)
-            vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
-            filename = request.files['file'].filename
-            _attachments = vuln['_attachments']
-            if filename in _attachments:
-                message = 'Evidence already exists in vuln'
-                return make_response(jsonify(message=message, success=False, code=400), 400)
-            else:
-                partial = request.files['file'].read(32)
-                image_format = what(None, h=partial)
-                if image_format and image_format.lower() == "webp":
-                    logger.info("Evidence can't be webp")
-                    abort(400, "Evidence can't be webp")
-                faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
-                instance, created = get_or_create(
-                    db.session,
-                    File,
-                    object_id=vuln_id,
-                    object_type='vulnerability',
-                    name=filename,
-                    filename=filename,
-                    content=faraday_file
-                )
-                db.session.commit()
-                debounce_workspace_update(workspace_name)
-                message = 'Evidence upload was successful'
-                logger.info(message)
-                return jsonify({'message': message})
-        else:
-            abort(404, "Vulnerability not found")
+        if 'file' not in request.files:
+            abort(BAD_REQUEST, "File not sent")
+
+        vuln = VulnerabilitySchema().dump(vuln_permission_check)
+        filename = request.files['file'].filename
+        _attachments = vuln['_attachments']
+
+        if filename in _attachments:
+            message = 'Evidence already exists in vuln'
+            return make_response(jsonify(message=message, success=False, code=BAD_REQUEST), BAD_REQUEST)
+
+        faraday_file = FaradayUploadedFile(request.files['file'].read())
+        get_or_create(
+            db.session,
+            File,
+            object_id=vuln_id,
+            object_type='vulnerability',
+            name=filename,
+            filename=filename,
+            content=faraday_file
+        )
+        db.session.commit()
+        message = 'Evidence upload was successful'
+        logger.info(message)
+        return jsonify({'message': message})
 
     @route('/filter')
-    def filter(self, workspace_name):
+    def filter(self, **kwargs):
         """
         ---
         get:
@@ -1062,12 +921,12 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
+        workspace_name = kwargs.get('workspace_name')
         filters = request.args.get('q', '{}')
         export_csv = request.args.get('export_csv', '')
-        filtered_vulns, count = self._filter(filters, workspace_name, exclude_list=(
-            '_attachments',
-            'desc'
-        ) if export_csv.lower() == 'true' else None)
+        filtered_vulns, count = self._filter(
+            filters, exclude_list=('_attachments', 'desc') if export_csv.lower() == 'true' else None, **kwargs
+        )
 
         class PageMeta:
             total = 0
@@ -1079,10 +938,16 @@ class VulnerabilityView(PaginatedMixin,
             for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
                 custom_fields_columns.append(custom_field.field_name)
             memory_file = export_vulns_to_csv(filtered_vulns, custom_fields_columns)
-            return send_file(memory_file,
-                             attachment_filename=f"Faraday-SR-{workspace_name}.csv",
-                             as_attachment=True,
-                             cache_timeout=-1)
+            if workspace_name:
+                return send_file(memory_file,
+                                 attachment_filename=f"Faraday-SR-{workspace_name}.csv",
+                                 as_attachment=True,
+                                 cache_timeout=-1)
+            else:
+                return send_file(memory_file,
+                                 attachment_filename="Faraday-SR-Context.csv",
+                                 as_attachment=True,
+                                 cache_timeout=-1)
         else:
             return self._envelope_list(filtered_vulns, pagination_metadata)
 
@@ -1098,8 +963,7 @@ class VulnerabilityView(PaginatedMixin,
                 field_filter = {
                     "name": fieldname,
                     "op": operator,
-                    "val": argument,
-
+                    "val": argument
                 }
                 if otherfield:
                     field_filter.update({"field": otherfield})
@@ -1120,13 +984,17 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    @staticmethod
-    def _generate_filter_query(vulnerability_class,
-                               filters,
-                               hostname_filters,
-                               workspace,
-                               marshmallow_params,
-                               is_csv=False):
+    def _generate_filter_query(
+            self,
+            vulnerability_class,
+            filters,
+            hostname_filters,
+            marshmallow_params,
+            is_csv=False,
+            **kwargs,
+    ):
+        workspace = kwargs.get('workspace')
+
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if
                            host_os_filter.get('name') == 'host__os']
 
@@ -1136,10 +1004,14 @@ class VulnerabilityView(PaginatedMixin,
             filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if
                                   host_os_filter.get('name') != 'host__os']
 
-        vulns = search(db.session,
-                       vulnerability_class,
-                       filters)
-        vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
+        vulns = search(db.session, vulnerability_class, filters)
+
+        if workspace:
+            vulns = vulns.filter(VulnerabilityGeneric.workspace == workspace)
+        else:
+            vulns = self._apply_filter_context(vulns)
+            vulns = vulns.filter(vulnerability_class.workspace.has(active=True))
+
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
             vulns = vulns.join(Host).join(Service).filter(Host.os == os_value)
@@ -1173,7 +1045,7 @@ class VulnerabilityView(PaginatedMixin,
             ), *options)
         return vulns
 
-    def _filter(self, filters, workspace_name, exclude_list=None):
+    def _filter(self, filters, exclude_list=None, **kwargs):
         hostname_filters = []
         vulns = None
         try:
@@ -1182,9 +1054,12 @@ class VulnerabilityView(PaginatedMixin,
                 filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError, AttributeError) as ex:
             logger.exception(ex)
-            abort(400, "Invalid filters")
+            abort(BAD_REQUEST, "Invalid filters")
 
-        workspace = get_workspace(workspace_name)
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            kwargs['workspace'] = get_workspace(workspace_name)
+
         marshmallow_params = {'many': True, 'context': {}, 'exclude': (
             '_attachments',
             'description',
@@ -1203,18 +1078,21 @@ class VulnerabilityView(PaginatedMixin,
                 offset = filters.pop('offset')
             if 'limit' in filters:
                 limit = filters.pop('limit')  # we need to remove pagination, since
+
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
                     filters,
                     hostname_filters,
-                    workspace,
                     marshmallow_params,
-                    bool(exclude_list))
+                    bool(exclude_list),
+                    **kwargs,
+                )
             except TypeError as e:
-                abort(400, e)
+                abort(BAD_REQUEST, e)
             except AttributeError as e:
-                abort(400, e)
+                abort(BAD_REQUEST, e)
+
             # In vulns count we do not need order
             total_vulns = vulns.order_by(None)
             if limit:
@@ -1224,25 +1102,27 @@ class VulnerabilityView(PaginatedMixin,
 
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
             return vulns, total_vulns.count()
+
         else:
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
                     filters,
                     hostname_filters,
-                    workspace,
                     marshmallow_params,
+                    **kwargs,
                 )
             except TypeError as e:
-                abort(400, e)
+                abort(BAD_REQUEST, e)
             except AttributeError as e:
-                abort(400, e)
+                abort(BAD_REQUEST, e)
+
             vulns_data, rows_count = get_filtered_data(filters, vulns)
 
             return vulns_data, rows_count
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['GET'])
-    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
+    def get_attachment(self, vuln_id, attachment_filename, **kwargs):
         """
         ---
         get:
@@ -1256,36 +1136,39 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
-            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
-                              Workspace.name == workspace_name).first()
+        vuln_permission_check = self._apply_filter_context(
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+        ).first()
 
-        if vuln_workspace_check:
-            file_obj = db.session.query(File).filter_by(object_type='vulnerability',
-                                                        object_id=vuln_id,
-                                                        filename=attachment_filename.replace(" ", "%20")).first()
-            if file_obj:
-                depot = DepotManager.get()
-                depot_file = depot.get(file_obj.content.get('file_id'))
-                if depot_file.content_type.startswith('image/'):
-                    # Image content types are safe (they can't be executed like
-                    # html) so we don't have to force the download of the file
-                    as_attachment = False
-                else:
-                    as_attachment = True
-                return send_file(
-                    BytesIO(depot_file.read()),
-                    attachment_filename=file_obj.filename,
-                    as_attachment=as_attachment,
-                    mimetype=depot_file.content_type
-                )
-            else:
-                abort(404, "File not found")
+        file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+                                                    object_id=vuln_id,
+                                                    filename=attachment_filename.replace(" ", "%20")).first()
+
+        if not vuln_permission_check or not file_obj:
+            abort(NOT_FOUND, "File not found")
+
+        depot = DepotManager.get()
+        depot_file = depot.get(file_obj.content.get('file_id'))
+
+        if not depot_file:
+            abort(NOT_FOUND, "File not found")
+
+        if depot_file.content_type.startswith('image/'):
+            # Image content types are safe (they can't be executed like
+            # html) so we don't have to force the download of the file
+            as_attachment = False
         else:
-            abort(404, "Vulnerability not found")
+            as_attachment = True
+
+        return send_file(
+            BytesIO(depot_file.read()),
+            attachment_filename=depot_file.filename,
+            as_attachment=as_attachment,
+            mimetype=depot_file.content_type
+        )
 
     @route('/<int:vuln_id>/attachment', methods=['GET'])
-    def get_attachments_by_vuln(self, workspace_name, vuln_id):
+    def get_attachments_by_vuln(self, vuln_id, **kwargs):
         """
         ---
         get:
@@ -1306,24 +1189,23 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
-        workspace = get_workspace(workspace_name)
-        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
-            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
-                              Workspace.name == workspace.name).first()
-        if vuln_workspace_check:
-            files = db.session.query(File).filter_by(object_type='vulnerability',
-                                                     object_id=vuln_id).all()
-            res = {}
-            for file_obj in files:
-                ret = EvidenceSchema().dump(file_obj)
-                res[file_obj.filename] = ret
+        vuln_permission_check = self._apply_filter_context(
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+        ).first()
 
-            return jsonify(res)
-        else:
-            abort(404, "Vulnerability not found")
+        if not vuln_permission_check:
+            abort(NOT_FOUND, "Vulnerability not found")
+        files = db.session.query(File).filter_by(object_type='vulnerability', object_id=vuln_id).all()
+
+        res = {}
+        for file_obj in files:
+            ret = EvidenceSchema().dump(file_obj)
+            res[file_obj.filename] = ret
+
+        return jsonify(res)
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
-    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+    def delete_attachment(self, vuln_id, attachment_filename, **kwargs):
         """
         ---
         delete:
@@ -1333,30 +1215,29 @@ class VulnerabilityView(PaginatedMixin,
             200:
               description: Ok
         """
-        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
-            Workspace).filter(
-            VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name).first()
+        vuln_permission_check = self._apply_filter_context(
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+        ).first()
 
-        if vuln_workspace_check:
-            file_obj = db.session.query(File).filter_by(object_type='vulnerability',
-                                                        object_id=vuln_id,
-                                                        filename=attachment_filename).first()
-            if file_obj:
-                db.session.delete(file_obj)
-                db.session.commit()
-                depot = DepotManager.get()
-                depot.delete(file_obj.content.get('file_id'))
-                message = 'Attachment was successfully deleted'
-                debounce_workspace_update(workspace_name)
-                logger.info(message)
-                return jsonify({'message': message})
-            else:
-                abort(404, "File not found")
-        else:
-            abort(404, "Vulnerability not found")
+        if not vuln_permission_check:
+            abort(NOT_FOUND, "Vulnerability not found")
+
+        file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+                                                    object_id=vuln_id,
+                                                    filename=attachment_filename).first()
+        if not file_obj:
+            abort(NOT_FOUND, "File not found")
+
+        db.session.delete(file_obj)
+        db.session.commit()
+        depot = DepotManager.get()
+        depot.delete(file_obj.content.get('file_id'))
+        message = 'Attachment was successfully deleted'
+        logger.info(message)
+        return jsonify({'message': message})
 
     @route('export_csv', methods=['GET'])
-    def export_csv(self, workspace_name):
+    def export_csv(self, **kwargs):
         """
         ---
         get:
@@ -1370,11 +1251,14 @@ class VulnerabilityView(PaginatedMixin,
           200:
             description: Ok
         """
+        workspace_name = kwargs.get('workspace_name')
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q', '{}')
         custom_fields_columns = []
+
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
+
         if confirmed:
             if 'filters' not in filters:
                 filters = {'filters': []}
@@ -1384,19 +1268,25 @@ class VulnerabilityView(PaginatedMixin,
                 "val": "true"
             })
             filters = json_dumps(filters)
-        vulns_query, _ = self._filter(filters, workspace_name, exclude_list=(
-            '_attachments',
-            'desc'
-        ))
+
+        vulns_query, _ = self._filter(filters, exclude_list=('_attachments', 'desc'), **kwargs)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
-        logger.info(f"csv file with vulns from workspace {workspace_name} exported")
-        return send_file(memory_file,
-                         attachment_filename=f"Faraday-SR-{workspace_name}.csv",
-                         as_attachment=True,
-                         cache_timeout=-1)
+
+        if workspace_name:
+            logger.info(f"CSV file with vulnerabilities from workspace {workspace_name} exported")
+            return send_file(memory_file,
+                             attachment_filename=f"Faraday-SR-{workspace_name}.csv",
+                             as_attachment=True,
+                             cache_timeout=-1)
+        else:
+            logger.info("CSV file exported with context vulnerabilities")
+            return send_file(memory_file,
+                             attachment_filename="Faraday-SR-Context.csv",
+                             as_attachment=True,
+                             cache_timeout=-1)
 
     @route('top_users', methods=['GET'])
-    def top_users(self, workspace_name):
+    def top_users(self, **kwargs):
         """
         ---
         get:
@@ -1412,10 +1302,19 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
         limit = request.args.get('limit', 1)
-        workspace = get_workspace(workspace_name)
-        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
-            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
-            .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
+        workspace_name = kwargs.get('workspace_name')
+
+        if workspace_name:
+            workspace = get_workspace(workspace_name)
+            data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
+                .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
+                .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
+        else:
+            data = self._apply_filter_context(
+                db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)
+                .group_by(User.id)
+            ).order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
+
         users = []
         for item in data:
             user = {
@@ -1428,19 +1327,12 @@ class VulnerabilityView(PaginatedMixin,
         return jsonify(response)
 
     @route('', methods=['DELETE'])
-    def bulk_delete(self, workspace_name, **kwargs):
+    def bulk_delete(self, **kwargs):
         # TODO BULK_DELETE_SCHEMA
         if not request.json or 'severities' not in request.json:
-            return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
-        return self._perform_bulk_delete(request.json['severities'], by='severity',
-                                         workspace_name=workspace_name, **kwargs), OK
-    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
-
-    def _bulk_update_query(self, ids, **kwargs):
-        # It IS better to as is but warn of ON CASCADE
-        query = self.model_class.query.filter(self.model_class.id.in_(ids))
-        workspace = get_workspace(kwargs.pop("workspace_name"))
-        return query.filter(self.model_class.workspace_id == workspace.id)
+            return super().bulk_delete(self, **kwargs)
+        return self._perform_bulk_delete(request.json['severities'], by='severity', **kwargs), OK
+    bulk_delete.__doc__ = BulkDeleteMixin.bulk_delete.__doc__
 
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
@@ -1448,8 +1340,7 @@ class VulnerabilityView(PaginatedMixin,
             query = self.model_class.query.filter(self.model_class.id.in_(ids))
         else:
             query = self.model_class.query.filter(self.model_class.severity.in_(ids))
-        workspace = get_workspace(kwargs.pop("workspace_name"))
-        return query.filter(self.model_class.workspace_id == workspace.id)
+        return self._apply_filter_context(query)
 
     def _get_model_association_proxy_fields(self):
         return [
@@ -1472,6 +1363,8 @@ class VulnerabilityView(PaginatedMixin,
             custom_behaviour_fields['cvss2_vector_string'] = data.pop('cvss2_vector_string')
         if 'cvss3_vector_string' in data:
             custom_behaviour_fields['cvss3_vector_string'] = data.pop('cvss3_vector_string')
+        if 'cvss4_vector_string' in data:
+            custom_behaviour_fields['cvss_4_vector_string'] = data.pop('cvss4_vector_string')
 
         cwe_list = data.pop('cwe', None)
         if cwe_list is not None:
@@ -1493,12 +1386,13 @@ class VulnerabilityView(PaginatedMixin,
 
         return custom_behaviour_fields
 
-    def _post_bulk_update(self, ids, extracted_data, workspace_name, **kwargs):
+    def _post_bulk_update(self, ids, extracted_data, **kwargs):
+        workspaces_and_ids = (db.session.query(Workspace, func.array_agg(VulnerabilityGeneric.id))
+                              .join(VulnerabilityGeneric).filter(VulnerabilityGeneric.id.in_(ids))
+                              .group_by(Workspace.id).all())
+
         if extracted_data:
-            queryset = self._bulk_update_query(
-                                               ids,
-                                               workspace_name=workspace_name,
-                                               **kwargs)
+            queryset = self._bulk_update_query(ids, **kwargs)
             for obj in queryset.all():
                 for (key, value) in extracted_data.items():
                     if key == 'refs':
@@ -1506,30 +1400,32 @@ class VulnerabilityView(PaginatedMixin,
                     setattr(obj, key, value)
                     db.session.add(obj)
 
-        ws = get_workspace(workspace_name)
+        if workspaces_and_ids:
+            for ws_vulns in workspaces_and_ids:
+                ws_id = ws_vulns[0].id
 
-        command = Command()
-        command.workspace_id = ws.id
-        command.user_id = current_user.id
-        command.start_date = datetime.utcnow()
-        command.tool = 'web_ui'
-        command.command = 'bulk_update'
-        db.session.add(command)
-        db.session.commit()
+                command = Command()
+                command.workspace_id = ws_id
+                command.user_id = current_user.id
+                command.start_date = datetime.utcnow()
+                command.tool = 'web_ui'
+                command.command = 'bulk_update'
+                db.session.add(command)
+                db.session.commit()
+                cobjects_list = []
 
-        cobjects_list = []
-        for id in ids:
-            cobject_dict = {
-                "object_id": id,
-                "object_type": "vulnerability",
-                "command_id": command.id,
-                "workspace_id": ws.id,
-                "create_date": datetime.utcnow(),
-                "created_persistent": False
-            }
-            cobjects_list.append(cobject_dict)
-        db.session.execute(sqlalchemy_insert(CommandObject).values(cobjects_list))
-        db.session.commit()
+                for id in ws_vulns[1]:
+                    cobject_dict = {
+                        "object_id": id,
+                        "object_type": "vulnerability",
+                        "command_id": command.id,
+                        "workspace_id": ws_id,
+                        "create_date": datetime.utcnow(),
+                        "created_persistent": False
+                    }
+                    cobjects_list.append(cobject_dict)
+                db.session.execute(sqlalchemy_insert(CommandObject).values(cobjects_list))
+                db.session.commit()
 
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats
@@ -1541,12 +1437,26 @@ class VulnerabilityView(PaginatedMixin,
             else:
                 update_host_stats(host_id_list, service_id_list)
 
+        for workspace in [x[0] for x in workspaces_and_ids]:
+            debounce_workspace_update(workspace.name)
+
     def _perform_bulk_delete(self, values, **kwargs):
         # Get host and service ids in order to update host stats
         host_ids = db.session.query(
             VulnerabilityGeneric.host_id,
             VulnerabilityGeneric.service_id
         )
+
+        if kwargs.get("by", "id") != "severity":
+            workspaces = (self._get_context_workspace_query(operation='write')
+                          .join(VulnerabilityGeneric)
+                          .filter(VulnerabilityGeneric.id.in_(values))
+                          .distinct(Workspace.id).all())
+        else:
+            workspaces = (self._get_context_workspace_query(operation='write')
+                          .join(VulnerabilityGeneric)
+                          .filter(VulnerabilityGeneric.severity.in_(values))
+                          .distinct(Workspace.id).all())
 
         by_severity = kwargs.get('by', None)
         if by_severity == 'severity':
@@ -1555,24 +1465,29 @@ class VulnerabilityView(PaginatedMixin,
                     abort(BAD_REQUEST, "Severity type not valid")
 
             host_ids = host_ids.filter(
-                            VulnerabilityGeneric.severity.in_(values)
-                        ).all()
+                VulnerabilityGeneric.severity.in_(values)
+            ).all()
         else:
             host_ids = host_ids.filter(
-                            VulnerabilityGeneric.id.in_(values)
-                        ).all()
+                VulnerabilityGeneric.id.in_(values)
+            ).all()
 
         response = super()._perform_bulk_delete(values, **kwargs)
         deleted = response.json.get('deleted', 0)
         if deleted > 0:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
-            debounce_workspace_update(kwargs['workspace_name'])
+
+            for workspace in workspaces:
+                debounce_workspace_update(workspace.name)
+
             host_id_list = [data[0] for data in host_ids if data[0]]
             service_id_list = [data[1] for data in host_ids if data[1]]
+
             if faraday_server.celery_enabled:
                 update_host_stats.delay(host_id_list, service_id_list)
             else:
                 update_host_stats(host_id_list, service_id_list)
+
         return response
 
 

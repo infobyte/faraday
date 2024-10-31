@@ -363,6 +363,10 @@ class VulnerabilitySchema(AutoSchema):
         return {}
 
     @staticmethod
+    def load_issuetracker(obj):
+        return {}
+
+    @staticmethod
     def load_status(value):
         if value == 'opened':
             return 'open'

@@ -2169,7 +2169,7 @@ def get_user_permissions(user):
     return permissions
 
 
-class ContextMixin(ReadOnlyView):
+class ContextMixin(GenericView):
 
     count_extra_filters = []
 

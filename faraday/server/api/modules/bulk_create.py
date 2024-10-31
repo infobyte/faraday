@@ -1,74 +1,37 @@
 # Standard library imports
-import logging
-import re
-import string
-import random
-import json
 from copy import deepcopy
-import time
 from datetime import datetime, timedelta, date
+from json import dump as json_dump
+from logging import getLogger
+from random import choice
+from re import findall
+from string import ascii_uppercase, digits
+from time import time
 from typing import Type
 
 # Related third party imports
-import flask_login
-import flask
-import sqlalchemy
-import cvss
-
-from flask import abort
+from cvss import CVSS2, CVSS3
+from flask import Blueprint, abort, jsonify, request
+from flask_login import current_user
 from sqlalchemy import func, text
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from marshmallow import (
     Schema,
     ValidationError,
-    validates_schema,
     fields,
     post_load,
     utils,
+    validates_schema,
 )
 from marshmallow.validate import Range
 
 # Local application imports
-from faraday.server.utils.cvss import (
-    get_base_score,
-    get_severity,
-    get_temporal_score,
-    get_environmental_score,
-    get_propper_value,
-    get_exploitability_score,
-    get_impact_score
-)
-from faraday.server.models import (
-    db,
-    Command,
-    CommandObject,
-    Credential,
-    Host,
-    Hostname,
-    Service,
-    Vulnerability,
-    AgentExecution,
-    Workspace,
-    Metadata,
-    CVE,
-    VulnerabilityReference,
-    owasp_vulnerability_association,
-    cwe_vulnerability_association,
-    PolicyViolationVulnerabilityAssociation,
-    SeveritiesHistogram,
-    cve_vulnerability_association,
-)
-from faraday.server.utils.cwe import get_or_create_cwe
-from faraday.server.utils.database import (
-    get_conflict_object,
-    is_unique_constraint_violation,
-    get_object_type_for,
-)
 from faraday.server.api.base import (
     AutoSchema,
     GenericWorkspacedView,
-    get_workspace
+    get_workspace,
 )
 from faraday.server.api.modules import (
     hosts,
@@ -76,17 +39,51 @@ from faraday.server.api.modules import (
     vulns_base,
 )
 from faraday.server.api.modules.websocket_auth import require_agent_token
-from faraday.server.utils.vulns import (
-    get_or_create_owasp,
-    create_cve_obj,
-    create_policy_violation_obj
+from faraday.server.config import CONST_FARADAY_HOME_PATH, faraday_server
+from faraday.server.models import (
+    AgentExecution,
+    Command,
+    CommandObject,
+    Credential,
+    CVE,
+    Host,
+    Hostname,
+    Metadata,
+    PolicyViolationVulnerabilityAssociation,
+    Service,
+    SeveritiesHistogram,
+    Vulnerability,
+    VulnerabilityReference,
+    Workspace,
+    cve_vulnerability_association,
+    cwe_vulnerability_association,
+    db,
+    owasp_vulnerability_association,
 )
-from faraday.server.config import CONST_FARADAY_HOME_PATH
-from faraday.server.config import faraday_server
 from faraday.server.tasks import process_report_task
+from faraday.server.utils.cvss import (
+    get_base_score,
+    get_environmental_score,
+    get_exploitability_score,
+    get_impact_score,
+    get_propper_value,
+    get_severity,
+    get_temporal_score,
+)
+from faraday.server.utils.cwe import get_or_create_cwe
+from faraday.server.utils.database import (
+    get_conflict_object,
+    get_object_type_for,
+    is_unique_constraint_violation,
+)
+from faraday.server.utils.vulns import (
+    create_cve_obj,
+    create_policy_violation_obj,
+    get_or_create_owasp,
+)
 
-bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
-logger = logging.getLogger(__name__)
+bulk_create_api = Blueprint('bulk_create_api', __name__)
+logger = getLogger(__name__)
 
 
 class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
@@ -247,7 +244,7 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
         obj.workspace = ws
         db.session.add(obj)
         db.session.commit()
-    except sqlalchemy.exc.IntegrityError as ex:
+    except IntegrityError as ex:
         if not is_unique_constraint_violation(ex):
             raise
         nested.rollback()
@@ -319,7 +316,7 @@ def get_created_tuple(obj: object) -> tuple:
 
 def _create_host(ws, host_data, command: dict):
     logger.debug("Trying to create host...")
-    start_time = time.time()
+    start_time = time()
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services', [])
     credentials = host_data.pop('credentials', [])
@@ -347,7 +344,7 @@ def _create_host(ws, host_data, command: dict):
             created_updated_count['created'] += _result['created']
             created_updated_count['updated'] += _result['updated']
 
-    start_time_vulns = time.time()
+    start_time_vulns = time()
     total_vulns = len(_vulns)
     host_vulns_created = []
     if total_vulns > 0:
@@ -376,7 +373,7 @@ def _create_host(ws, host_data, command: dict):
         created_updated_count['created'] += _result['created']
         created_updated_count['updated'] += _result['updated']
 
-    logger.debug(f"Host vulnerabilities creation took {time.time() - start_time_vulns}."
+    logger.debug(f"Host vulnerabilities creation took {time() - start_time_vulns}."
                  f" Created: {created_updated_count['created']}."
                  f" Updated: {created_updated_count['updated']}"
                  )
@@ -386,7 +383,7 @@ def _create_host(ws, host_data, command: dict):
         logger.debug(f"Needs to create {total_credentials} credentials...")
         for cred_data in credentials:
             _create_credential(ws, cred_data, command, host=host)
-    logger.debug(f"Create host took {time.time() - start_time}")
+    logger.debug(f"Create host took {time() - start_time}")
 
     return created_updated_count
 
@@ -600,7 +597,7 @@ def _create_service(ws, host, service_data, command: dict):
 
     _create_command_object_for(ws, created, service, command)
 
-    start_time_vulns = time.time()
+    start_time_vulns = time()
     total_service_vulns = len(_vulns)
     host_vulns_created = []
     if total_service_vulns > 0:
@@ -627,7 +624,7 @@ def _create_service(ws, host, service_data, command: dict):
 
         created_updated_count = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
 
-    logger.debug(f"Service vulnerabilities creation took {time.time() - start_time_vulns}")
+    logger.debug(f"Service vulnerabilities creation took {time() - start_time_vulns}")
 
     total_service_creds = len(creds)
     if total_service_creds > 0:
@@ -753,7 +750,7 @@ def set_cvss2(vuln_data):
     vs2 = vuln_data.pop('cvss2_vector_string', None)
     if vs2:
         try:
-            cvss_instance = cvss.CVSS2(vs2)
+            cvss_instance = CVSS2(vs2)
             vuln_data['_cvss2_vector_string'] = vs2
             vuln_data['cvss2_base_score'] = get_base_score(cvss_instance)
             vuln_data['cvss2_base_severity'] = get_severity(cvss_instance, 'B')
@@ -812,7 +809,7 @@ def set_cvss3_data(vuln_data):
     vs3 = vuln_data.pop('cvss3_vector_string', None)
     if vs3:
         try:
-            cvss_instance = cvss.CVSS3(vs3)
+            cvss_instance = CVSS3(vs3)
             vuln_data['_cvss3_vector_string'] = vs3
             vuln_data['cvss3_base_score'] = get_base_score(cvss_instance)
             vuln_data['cvss3_base_severity'] = get_severity(cvss_instance, 'B')
@@ -907,7 +904,7 @@ def set_relationships_data(vulnerability, command):
 
     parsed_cve_list = []
     for cve in cve_list:
-        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+        parsed_cve_list += findall(CVE.CVE_PATTERN, cve.upper())
     for parsed_cve in parsed_cve_list:
         cve = create_cve_obj(parsed_cve)
         if cve:
@@ -1010,10 +1007,10 @@ class BulkCreateView(GenericWorkspacedView):
         """
         agent = None
 
-        if flask_login.current_user.is_anonymous:
+        if current_user.is_anonymous:
             agent = require_agent_token()
-        data = self._parse_data(self._get_schema_instance({}), flask.request)
-        json_data = flask.request.json
+        data = self._parse_data(self._get_schema_instance({}), request)
+        json_data = request.json
         workspace = get_workspace(workspace_name)
 
         if 'execution_id' in data:
@@ -1047,8 +1044,8 @@ class BulkCreateView(GenericWorkspacedView):
                 abort(400, "Trying to update a not existent command")
             db.session.flush()
         else:
-            if flask_login.current_user.is_anonymous:
-                flask.abort(400, "argument expected: execution_id")
+            if current_user.is_anonymous:
+                abort(400, "argument expected: execution_id")
 
             command = Command(**(data['command']))
             command.workspace = workspace
@@ -1057,14 +1054,14 @@ class BulkCreateView(GenericWorkspacedView):
 
         if data['hosts']:
             # Create random file
-            chars = string.ascii_uppercase + string.digits
-            random_prefix = ''.join(random.choice(chars) for _ in range(30))  # nosec
+            chars = ascii_uppercase + digits
+            random_prefix = ''.join(choice(chars) for _ in range(30))  # nosec
             json_file = f"{random_prefix}.json"
             file_path = CONST_FARADAY_HOME_PATH / 'uploaded_reports' / json_file
             with file_path.open('w') as output:
-                json.dump(json_data, output)
+                json_dump(json_data, output)
             logger.info("Create tmp json file for bulk_create: %s", file_path)
-            user_id = flask_login.current_user.id if not flask_login.current_user.is_anonymous else None
+            user_id = current_user.id if not current_user.is_anonymous else None
             if faraday_server.celery_enabled:
                 from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
                 process_report(workspace.name,
@@ -1100,7 +1097,7 @@ class BulkCreateView(GenericWorkspacedView):
             logger.warning(data)
             logger.warning(json_data)
             _update_command(command.id, data['command'])
-        return flask.jsonify(
+        return jsonify(
             {
                 "message": "Created",
                 "command_id": command.id

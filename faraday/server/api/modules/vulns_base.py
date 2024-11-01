@@ -51,7 +51,7 @@ from faraday.server.api.base import (
     get_filtered_data,
     get_workspace,
 )
-from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.api.modules.services_base import ServiceSchema
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.fields import FaradayUploadedFile

@@ -35,7 +35,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules import (
     hosts,
-    services,
+    services_base,
     vulns_base,
 )
 from faraday.server.api.modules.websocket_auth import require_agent_token
@@ -141,7 +141,7 @@ class BulkCredentialSchema(AutoSchema):
         fields = ('username', 'password', 'description', 'name')
 
 
-class BulkServiceSchema(services.ServiceSchema):
+class BulkServiceSchema(services_base.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
@@ -161,9 +161,9 @@ class BulkServiceSchema(services.ServiceSchema):
         # Don't require the parent field
         return
 
-    class Meta(services.ServiceSchema.Meta):
+    class Meta(services_base.ServiceSchema.Meta):
         fields = tuple(
-            field_name for field_name in services.ServiceSchema.Meta.fields
+            field_name for field_name in services_base.ServiceSchema.Meta.fields
             if field_name not in ('parent', 'ports')
         ) + ('vulnerabilities',)
 

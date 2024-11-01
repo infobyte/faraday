@@ -5,29 +5,30 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Related third party imports
-from flask import Blueprint, abort, make_response, jsonify
-from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
-from marshmallow import fields, post_load, ValidationError
+from flask import Blueprint
+from filteralchemy import FilterSet, operators
+from marshmallow import ValidationError, fields, post_load
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
-from faraday.server.debouncer import debounce_workspace_update
 
 # Local application imports
+from faraday.server.api.base import (
+    AutoSchema,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+    FilterAlchemyMixin,
+    FilterSetMeta,
+    FilterMixin,
+    PaginatedMixin,
+    ReadOnlyView,
+)
+from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.models import (
     Host,
     Service,
     Workspace,
-    db
-)
-from faraday.server.api.base import (
-    AutoSchema,
-    ReadWriteWorkspacedView,
-    PaginatedMixin,
-    FilterSetMeta,
-    FilterAlchemyMixin,
-    BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin,
-    FilterWorkspacedMixin,
+    db,
 )
 from faraday.server.schemas import (
     MetadataSchema,
@@ -35,7 +36,8 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.utils.command import set_command_id
+from faraday.server.utils.search import search
+from faraday.server.utils.services import FILTER_SET_FIELDS, SCHEMA_FIELDS
 
 services_api = Blueprint('services_api', __name__)
 
@@ -66,6 +68,10 @@ class ServiceSchema(AutoSchema):
     summary = fields.String(dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+
+    class Meta:
+        model = Service
+        fields = SCHEMA_FIELDS
 
     @staticmethod
     def load_ports(value):
@@ -117,30 +123,24 @@ class ServiceSchema(AutoSchema):
 
         return data
 
-    class Meta:
-        model = Service
-        fields = ('id', '_id', 'status', 'parent', 'type',
-                  'protocol', 'description', '_rev',
-                  'owned', 'owner', 'credentials', 'vulns',
-                  'name', 'version', '_id', 'port', 'ports',
-                  'metadata', 'summary', 'host_id', 'command_id',
-                  'workspace_name', 'parent_name')
-
 
 class ServiceFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Service
-        fields = ('id', 'host_id', 'protocol', 'name', 'port')
+        fields = FILTER_SET_FIELDS
         default_operator = operators.Equal
         operators = (operators.Equal,)
 
 
-class ServiceView(PaginatedMixin,
-                  FilterAlchemyMixin,
-                  ReadWriteWorkspacedView,
-                  BulkDeleteWorkspacedMixin,
-                  BulkUpdateWorkspacedMixin,
-                  FilterWorkspacedMixin):
+class ServiceView(
+    PaginatedMixin,
+    FilterMixin,
+    FilterAlchemyMixin,
+    ReadOnlyView,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+):
 
     route_base = 'services'
     model_class = Service
@@ -164,33 +164,27 @@ class ServiceView(PaginatedMixin,
                       if pagination_metadata is not None else len(services))
         }
 
-    def _perform_create(self, data, **kwargs):
-        command_id = data.pop('command_id', None)
-        port_number = data.get("port", "1")
-        if not port_number.isdigit():
-            abort(make_response(jsonify(message="Invalid Port number"), 400))
-        obj = super()._perform_create(data, **kwargs)
-        if command_id:
-            set_command_id(db.session, obj, True, command_id)
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
-        return obj
-
     def _perform_bulk_delete(self, values, **kwargs):
-        obj = super()._perform_bulk_delete(values, **kwargs)
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
-        return obj
+        workspaces = Workspace.query.join(Service).filter(Service.id.in_(values)).distinct(Workspace.name).all()
+        response = super()._perform_bulk_delete(values, **kwargs)
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+        return response
 
-    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
-        obj = super()._perform_update(object_id, obj, data, workspace_name=workspace_name, partial=partial)
+    def _post_bulk_update(self, ids, extracted_data, data=None, **kwargs):
+        workspace_name = kwargs.get('workspace_name')
         if workspace_name:
             debounce_workspace_update(workspace_name)
-        return obj
 
-    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
+
+        filter_query = search(db.session, self.model_class, filters)
+
+        filter_query = (self._apply_filter_context(filter_query).
+                        filter(Service.workspace.has(active=True)))  # only services from active workspaces
+        return filter_query
 
 
 ServiceView.register(services_api)

@@ -35,7 +35,7 @@ from faraday.server.api.base import (
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin, CountMultiWorkspacedMixin, get_workspace,
 )
-from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.api.modules.services_base import ServiceSchema
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,

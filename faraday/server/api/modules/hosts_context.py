@@ -25,7 +25,7 @@ from faraday.server.api.base import (
     FilterAlchemyMixin,
     ContextMixin
 )
-from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.api.modules.services_base import ServiceSchema
 
 from faraday.server.models import Host, Workspace, Service, db, Hostname, CommandObject, Command
 from faraday.server.debouncer import debounce_workspace_update

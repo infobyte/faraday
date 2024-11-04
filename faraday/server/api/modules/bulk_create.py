@@ -34,7 +34,7 @@ from faraday.server.api.base import (
     get_workspace,
 )
 from faraday.server.api.modules import (
-    hosts,
+    hosts_base,
     services_base,
     vulns_base,
 )
@@ -168,7 +168,7 @@ class BulkServiceSchema(services_base.ServiceSchema):
         ) + ('vulnerabilities',)
 
 
-class HostBulkSchema(hosts.HostSchema):
+class HostBulkSchema(hosts_base.HostSchema):
     ip = fields.String(required=True)
     services = fields.Nested(
         BulkServiceSchema(many=True, context={'updating': False}),
@@ -186,8 +186,8 @@ class HostBulkSchema(hosts.HostSchema):
         missing=[],
     )
 
-    class Meta(hosts.HostSchema.Meta):
-        fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
+    class Meta(hosts_base.HostSchema.Meta):
+        fields = hosts_base.HostSchema.Meta.fields + ('services', 'vulnerabilities')
 
     @validates_schema
     def validate_schema(self, data, **kwargs):

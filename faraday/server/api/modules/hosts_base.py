@@ -1,41 +1,38 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
 # Standard library imports
-import logging
-import csv
-import re
-from io import StringIO
+from logging import getLogger
 
 # Related third party imports
-import wtforms
-import pytz
-import flask
-from flask import Blueprint, make_response, jsonify, abort
-from flask_classful import route
-from flask_wtf.csrf import validate_csrf
-from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
+from flask import Blueprint, request
+from flask_classful import route
+from marshmallow import Schema, fields
+from pytz import utc
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload, undefer
 
 # Local application imports
-from faraday.server.utils.database import get_or_create
-from faraday.server.utils.command import set_command_id
 from faraday.server.api.base import (
-    ReadWriteWorkspacedView,
-    PaginatedMixin,
     AutoSchema,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+    CountMultiWorkspacedMixin,
     FilterAlchemyMixin,
     FilterSetMeta,
-    FilterWorkspacedMixin,
-    BulkDeleteWorkspacedMixin,
-    BulkUpdateWorkspacedMixin, CountMultiWorkspacedMixin, get_workspace,
+    FilterMixin,
+    PaginatedMixin,
+    ReadOnlyView,
+    get_workspace,
 )
 from faraday.server.api.modules.services_base import ServiceSchema
+from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.models import Command, CommandObject, Host, Hostname, Service, Workspace, db
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
@@ -43,11 +40,11 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.utils.hosts import FILTER_SET_FIELDS, SCHEMA_FIELDS
+from faraday.server.utils.search import search
 
 host_api = Blueprint('host_api', __name__)
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 def get_total_count(obj):
@@ -74,8 +71,7 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='', dump_only=True)
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = NullToBlankString(
-        attribute="default_gateway_ip", required=False)
+    default_gateway = NullToBlankString(attribute="default_gateway_ip", required=False)
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
@@ -100,12 +96,7 @@ class HostSchema(AutoSchema):
 
     class Meta:
         model = Host
-        fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
-                  'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type', 'service_summaries', 'versions',
-                  'importance', 'severity_counts', 'command_id', 'workspace_name'
-                  )
+        fields = SCHEMA_FIELDS
 
     @staticmethod
     def get_service_summaries(obj):
@@ -122,14 +113,12 @@ class HostSchema(AutoSchema):
 
 class ServiceNameFilter(Filter):
     """Filter hosts by service name"""
-
     def filter(self, query, model, attr, value):
         return query.filter(model.services.any(Service.name == value))
 
 
 class ServicePortFilter(Filter):
     """Filter hosts by service port"""
-
     def filter(self, query, model, attr, value):
         try:
             return query.filter(model.services.any(Service.port == int(value)))
@@ -140,19 +129,22 @@ class ServicePortFilter(Filter):
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('id', 'ip', 'name', 'os', 'service', 'port')
+        fields = FILTER_SET_FIELDS
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceNameFilter(fields.Str())
     port = ServicePortFilter(fields.Str())
 
 
-class HostsView(PaginatedMixin,
-                FilterAlchemyMixin,
-                ReadWriteWorkspacedView,
-                FilterWorkspacedMixin,
-                CountMultiWorkspacedMixin,
-                BulkDeleteWorkspacedMixin,
-                BulkUpdateWorkspacedMixin):
+class HostView(
+    PaginatedMixin,
+    FilterAlchemyMixin,
+    FilterMixin,
+    CountMultiWorkspacedMixin,
+    ReadOnlyView,
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+):
     route_base = 'hosts'
     model_class = Host
     order_field = desc(Host.vulnerability_critical_generic_count), \
@@ -215,15 +207,40 @@ class HostsView(PaginatedMixin,
             200:
               description: Ok
         """
-        kwargs['show_stats'] = flask.request.args.get('stats', '') != 'false'
+        kwargs['show_stats'] = request.args.get('stats', '') != 'false'
 
         if not kwargs['show_stats']:
             kwargs['exclude'] = ['severity_counts', 'vulns', 'credentials', 'services']
 
         return super().index(**kwargs)
 
+    def _generate_filter_query(
+            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
+    ):
+
+        filter_query = search(db.session, self.model_class, filters)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = filter_query.options(
+                undefer(self.model_class.vulnerability_critical_generic_count),
+                undefer(self.model_class.vulnerability_high_generic_count),
+                undefer(self.model_class.vulnerability_medium_generic_count),
+                undefer(self.model_class.vulnerability_low_generic_count),
+                undefer(self.model_class.vulnerability_info_generic_count),
+                undefer(self.model_class.vulnerability_unclassified_generic_count),
+                undefer(self.model_class.credentials_count),
+                undefer(self.model_class.open_service_count),
+                joinedload(self.model_class.hostnames),
+                joinedload(self.model_class.services),
+                joinedload(self.model_class.update_user),
+                joinedload(getattr(self.model_class, 'creator')).load_only('username'),
+            )
+        filter_query = (self._apply_filter_context(filter_query).
+                        filter(Host.workspace.has(active=True)))  # only hosts from active workspaces
+        return filter_query
+
     @route('/filter')
-    def filter(self, workspace_name):
+    def filter(self, **kwargs):
         """
         ---
         get:
@@ -246,8 +263,8 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
-        filters = flask.request.args.get('q', '{"filters": []}')
-        filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)
+        filters = request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, severity_count=True, **kwargs)
 
         class PageMeta:
             total = 0
@@ -256,78 +273,8 @@ class HostsView(PaginatedMixin,
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    @route('/bulk_create', methods=['POST'])
-    def bulk_create(self, workspace_name):
-        """
-        ---
-        post:
-          tags: ["Bulk", "Host"]
-          description: Creates hosts in bulk
-          responses:
-            201:
-              description: Created
-              content:
-                application/json:
-                  schema: HostSchema
-            400:
-              description: Bad request
-            403:
-              description: Forbidden
-        tags: ["Bulk", "Host"]
-        responses:
-          200:
-            description: Ok
-        """
-        try:
-            validate_csrf(flask.request.form.get('csrf_token'))
-        except wtforms.ValidationError:
-            flask.abort(403)
-
-        def parse_hosts(list_string):
-            items = re.findall(r"([.a-zA-Z0-9_-]+)", list_string)
-            return items
-
-        workspace = get_workspace(workspace_name)
-
-        logger.info("Create hosts from CSV")
-        if 'file' not in flask.request.files:
-            abort(400, "Missing File in request")
-        hosts_file = flask.request.files['file']
-        stream = StringIO(hosts_file.stream.read().decode("utf-8"), newline=None)
-        FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
-        try:
-            hosts_reader = csv.DictReader(stream)
-            if set(hosts_reader.fieldnames) != FILE_HEADERS:
-                logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
-                abort(400, f"Missing Required headers in CSV ({FILE_HEADERS})")
-            hosts_created_count = 0
-            hosts_with_errors_count = 0
-            for host_dict in hosts_reader:
-                try:
-                    hostnames = parse_hosts(host_dict.pop('hostnames'))
-                    other_fields = {'owned': False, 'mac': '00:00:00:00:00:00', 'default_gateway_ip': 'None'}
-                    host_dict.update(other_fields)
-                    host = super()._perform_create(host_dict, workspace_name)
-                    host.workspace = workspace
-                    for name in hostnames:
-                        get_or_create(db.session, Hostname, name=name, host=host, workspace=host.workspace)
-                    db.session.commit()
-                except Exception as e:
-                    logger.error("Error creating host (%s)", e)
-                    hosts_with_errors_count += 1
-                else:
-                    logger.debug("Host Created (%s)", host_dict)
-                    hosts_created_count += 1
-            logger.info("Hosts created in bulk")
-            debounce_workspace_update(workspace_name)
-            return make_response(jsonify(hosts_created=hosts_created_count,
-                                         hosts_with_errors=hosts_with_errors_count), 200)
-        except Exception as e:
-            logger.error("Error parsing hosts CSV (%s)", e)
-            abort(400, f"Error parsing hosts CSV ({e})")
-
     @route('/<host_id>/services')
-    def service_list(self, workspace_name, host_id):
+    def service_list(self, host_id, **kwargs):
         """
         ---
         get:
@@ -344,11 +291,15 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
-        services = self._get_object(host_id, workspace_name).services
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            services = self._get_object(host_id, workspace_name).services
+        else:
+            services = self._get_object(host_id).services
         return ServiceSchema(many=True).dump(services)
 
     @route('/countVulns')
-    def count_vulns(self, workspace_name):
+    def count_vulns(self, **kwargs):
         """
         ---
         get:
@@ -365,9 +316,13 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
-        workspace = get_workspace(workspace_name)
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            workspaces = [get_workspace(workspace_name)]
+        else:
+            workspaces = self._get_context_workspace_query().all()
 
-        host_ids = flask.request.args.get('hosts', None)
+        host_ids = request.args.get('hosts', None)
         if host_ids:
             host_id_list = host_ids.split(',')
         else:
@@ -376,15 +331,17 @@ class HostsView(PaginatedMixin,
         res_dict = {'hosts': {}}
 
         host_count_schema = HostCountSchema()
-        host_count = Host.query_with_count(host_id_list, workspace)
 
-        for host in host_count.all():
-            res_dict["hosts"][host.id] = host_count_schema.dump(host)
+        for workspace in workspaces:
+            host_count = Host.query_with_count(host_id_list, workspace)
+
+            for host in host_count.all():
+                res_dict["hosts"][host.id] = host_count_schema.dump(host)
 
         return res_dict
 
     @route('/<host_id>/tools_history')
-    def tool_impacted_by_host(self, workspace_name, host_id):
+    def tool_impacted_by_host(self, host_id, **kwargs):
         """
         ---
         get:
@@ -401,11 +358,9 @@ class HostsView(PaginatedMixin,
           200:
             description: Ok
         """
-        workspace = get_workspace(workspace_name)
         query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
                                                        CommandObject.object_type == 'host',
                                                        Command.id == CommandObject.command_id,
-                                                       Host.workspace_id == workspace.id,
                                                        Host.id == host_id).order_by(desc(CommandObject.create_date))
         result = query.all()
         res_dict = {'tools': []}
@@ -415,44 +370,16 @@ class HostsView(PaginatedMixin,
                                       'user': command.user,
                                       'params': command.params,
                                       'command_id': command.id,
-                                      'create_date': command.create_date.replace(tzinfo=pytz.utc).isoformat()})
+                                      'create_date': command.create_date.replace(tzinfo=utc).isoformat()})
         return res_dict
-
-    def _perform_create(self, data, **kwargs):
-        hostnames = data.pop('hostnames', [])
-        command_id = data.pop('command_id', None)
-        host = super()._perform_create(data, **kwargs)
-        for name in hostnames:
-            get_or_create(db.session, Hostname, name=name, host=host,
-                          workspace=host.workspace)
-        if command_id:
-            set_command_id(db.session, host, True, command_id)
-        db.session.commit()
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
-        return host
-
-    def _update_object(self, obj, data, **kwargs):
-        try:
-            hostnames = data.pop('hostnames')
-        except KeyError:
-            pass
-        else:
-            obj.set_hostnames(hostnames)
-
-        # A commit is required here, otherwise it breaks (i'm not sure why)
-        db.session.commit()
-
-        return super()._update_object(obj, data)
 
     def _filter_query(self, query):
         query = super()._filter_query(query)
-        search_term = flask.request.args.get('search', None)
+        search_term = request.args.get('search', None)
         if search_term is not None:
             like_term = '%' + search_term + '%'
             match_ip = Host.ip.ilike(like_term)
-            match_service_name = Host.services.any(
-                Service.name.ilike(like_term))
+            match_service_name = Host.services.any(Service.name.ilike(like_term))
             match_os = Host.os.ilike(like_term)
             match_hostname = Host.hostnames.any(Hostname.name.ilike(like_term))
             query = query.filter(match_ip
@@ -460,44 +387,6 @@ class HostsView(PaginatedMixin,
                                  | match_os
                                  | match_hostname)
         return query
-
-    def patch(self, object_id, workspace_name=None, **kwargs):
-        """
-        ---
-          tags: ["{tag_name}"]
-          summary: Updates {class_model}
-          parameters:
-          - in: path
-            name: object_id
-            required: true
-            schema:
-              type: integer
-          - in: path
-            name: workspace_name
-            required: true
-            schema:
-              type: string
-          requestBody:
-            required: true
-            content:
-              application/json:
-                schema: {schema_class}
-          responses:
-            200:
-              description: Ok
-              content:
-                application/json:
-                  schema: {schema_class}
-            409:
-              description: Duplicated key found
-              content:
-                application/json:
-                  schema: {schema_class}
-        """
-        kwargs['exclude'] = ['severity_counts']
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
-        return super().patch(object_id, workspace_name=workspace_name, **kwargs)
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []
@@ -515,13 +404,14 @@ class HostsView(PaginatedMixin,
         }
 
     @route('', methods=['DELETE'])
-    def bulk_delete(self, workspace_name, **kwargs):
+    def bulk_delete(self, **kwargs):
+        workspace_name = kwargs.get('workspace_name')
         if workspace_name:
             debounce_workspace_update(workspace_name)
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
-        return BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+        return BulkDeleteMixin.bulk_delete(self, **kwargs)
 
-    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+    bulk_delete.__doc__ = BulkDeleteMixin.bulk_delete.__doc__
 
     def _pre_bulk_update(self, data, **kwargs):
         hostnames = data.pop('hostnames', None)
@@ -534,8 +424,17 @@ class HostsView(PaginatedMixin,
         if "hostnames" in extracted_data:
             for obj in self._bulk_update_query(ids, **kwargs).all():
                 obj.set_hostnames(extracted_data["hostnames"])
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
+
+        workspaces = Workspace.query.join(Host).filter(Host.id.in_(ids)).distinct(Workspace.name).all()
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+
+    def _perform_bulk_delete(self, values, **kwargs):
+        workspaces = Workspace.query.join(Host).filter(Host.id.in_(values)).distinct(Workspace.name).all()
+        response = super()._perform_bulk_delete(values, **kwargs)
+        for workspace in workspaces:
+            debounce_workspace_update(workspace.name)
+        return response
 
 
-HostsView.register(host_api)
+HostView.register(host_api)

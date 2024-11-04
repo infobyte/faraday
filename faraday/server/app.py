@@ -107,8 +107,8 @@ def register_blueprints(app):
     from faraday.server.api.modules.global_commands import globalcommands_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.activity_feed import activityfeed_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.credentials import credentials_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts import host_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts_context import host_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_base import host_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_workspaced import host_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.licenses import license_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.services_base import services_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.services_workspaced import services_workspaced_api  # pylint:disable=import-outside-toplevel
@@ -148,7 +148,7 @@ def register_blueprints(app):
     app.register_blueprint(activityfeed_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(credentials_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(host_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(host_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(host_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(info_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(license_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(services_api, url_prefix=app.config['APPLICATION_PREFIX'])

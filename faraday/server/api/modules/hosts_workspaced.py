@@ -143,7 +143,7 @@ class HostWorkspacedView(
         else:
             obj.set_hostnames(hostnames)
 
-        # A commit is required here, otherwise it breaks (i'm not sure why)
+        # A commit is required here, otherwise it breaks (I'm not sure why)
         db.session.commit()
 
         return super()._update_object(obj, data)

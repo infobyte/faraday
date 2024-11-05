@@ -1460,20 +1460,19 @@ class VulnerabilityView(
             host_ids = host_ids.filter(
                 VulnerabilityGeneric.severity.in_(values)
             ).all()
+
+            workspaces = (self._get_context_workspace_query(operation='write')
+                          .join(VulnerabilityGeneric)
+                          .filter(VulnerabilityGeneric.severity.in_(values))
+                          .distinct(Workspace.id).all())
         else:
             host_ids = host_ids.filter(
                 VulnerabilityGeneric.id.in_(values)
             ).all()
 
-        if not by_severity:
             workspaces = (self._get_context_workspace_query(operation='write')
                           .join(VulnerabilityGeneric)
                           .filter(VulnerabilityGeneric.id.in_(values))
-                          .distinct(Workspace.id).all())
-        else:
-            workspaces = (self._get_context_workspace_query(operation='write')
-                          .join(VulnerabilityGeneric)
-                          .filter(VulnerabilityGeneric.severity.in_(values))
                           .distinct(Workspace.id).all())
 
         response = super()._perform_bulk_delete(values, **kwargs)

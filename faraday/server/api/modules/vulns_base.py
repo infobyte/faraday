@@ -1,6 +1,6 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
@@ -273,7 +273,6 @@ class ReferenceSchema(AutoSchema):
 
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
-
     _rev = fields.String(dump_only=True, default='')
     _attachments = fields.Method(serialize='get_attachments', deserialize='load_attachments', default=[])
     owned = fields.Boolean(dump_only=True, default=False)
@@ -307,8 +306,8 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method(
         serialize='get_status',
         validate=OneOf(Vulnerability.STATUSES + ['opened']),
-        deserialize='load_status',)
-
+        deserialize='load_status',
+    )
     type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(dump_only=True, attribute='target_host_ip')
@@ -448,7 +447,7 @@ class VulnerabilitySchema(AutoSchema):
             raise ValidationError(f'Parent id not found: {parent_id}') from e
         data[parent_field] = parent.id
         # TODO migration: check what happens when updating the parent from
-        # service to host or viceverse
+        # service to host or vice versa
         return data
 
     @post_load
@@ -570,18 +569,10 @@ class CustomILike(operators.Operator):
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
-        # TODO migration: Check if we should add fields owner,
-        # command, impact, issuetracker, tags, date, host
-        # evidence, policy violations, hostnames
-
         fields = FILTER_SET_FIELDS
         strict_fields = FILTER_SET_STRICT_FIELDS
-
         default_operator = CustomILike
-        # next line uses dict comprehensions!
-        column_overrides = {
-            field: _strict_filtering for field in strict_fields
-        }
+        column_overrides = {field: _strict_filtering for field in strict_fields}
         operators = (CustomILike, operators.Equal)
 
     id = IDFilter(fields.Int())
@@ -698,7 +689,7 @@ class VulnerabilityView(
                 content=faraday_file,
             )
 
-    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+    def _perform_bulk_update(self, ids, data, **kwargs):
         returning_rows = [
             VulnerabilityGeneric.id,
             VulnerabilityGeneric.name,
@@ -708,12 +699,14 @@ class VulnerabilityView(
             Vulnerability.service_id,
         ]
         kwargs['returning'] = returning_rows
+
+        workspace_name = kwargs.get('workspace_name')
         if workspace_name:
             debounce_workspace_update(workspace_name)
 
         if (len(data) > 0 and len(ids) > 0) and 'custom_fields' in data.keys():
             return bulk_update_custom_attributes(ids, data)
-        return super()._perform_bulk_update(ids, data, workspace_name, **kwargs)
+        return super()._perform_bulk_update(ids, data, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """
@@ -770,14 +763,14 @@ class VulnerabilityView(
     @property
     def model_class(self):
         if request.method == 'POST' and request.json:
-            return self.model_class_dict[request.json['type']]
+            return self.model_class_dict[request.json.get('type', 'VulnerabilityGeneric')]
         # We use Generic to list all vulns from all types
         return self.model_class_dict['VulnerabilityGeneric']
 
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST' and request.json:
-            requested_type = request.json.get('type', None)
+            requested_type = request.json.get('type')
             if not requested_type:
                 raise InvalidUsage('Type is required.')
             if requested_type not in self.schema_class_dict:
@@ -786,8 +779,7 @@ class VulnerabilityView(
         # We use web since it has all the fields
         return self.schema_class_dict['VulnerabilityWeb']
 
-    @staticmethod
-    def _envelope_list(objects, pagination_metadata=None):
+    def _envelope_list(self, objects, pagination_metadata=None):
         vulns = []
         for index, vuln in enumerate(objects):
             # we use index when the filter endpoint uses group by and
@@ -833,8 +825,7 @@ class VulnerabilityView(
                     "medium": "med"
                 }
                 severity = group[type]
-                group['severity'] = group['name'] = severity_map.get(
-                    severity, severity)
+                group['severity'] = group['name'] = severity_map.get(severity, severity)
             elif type == "confirmed":
                 confirmed_map = {
                     1: "True",
@@ -1199,6 +1190,7 @@ class VulnerabilityView(
 
         if not vuln_permission_check:
             abort(NOT_FOUND, "Vulnerability not found")
+
         files = db.session.query(File).filter_by(object_type='vulnerability', object_id=vuln_id).all()
 
         res = {}

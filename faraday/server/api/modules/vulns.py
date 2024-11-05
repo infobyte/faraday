@@ -98,12 +98,14 @@ logger = logging.getLogger(__name__)
 class EvidenceSchema(AutoSchema):
     content_type = fields.Method('get_content_type')
     data = fields.Method('get_data')
+    description = fields.String()
 
     class Meta:
         model = File
         fields = (
             'content_type',
-            'data'
+            'data',
+            'description',
         )
 
     @staticmethod
@@ -1043,38 +1045,44 @@ class VulnerabilityView(PaginatedMixin,
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
 
-        if vuln_workspace_check:
-            if 'file' not in request.files:
-                flask.abort(400)
-            vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
-            filename = request.files['file'].filename
-            _attachments = vuln['_attachments']
-            if filename in _attachments:
-                message = 'Evidence already exists in vuln'
-                return make_response(flask.jsonify(message=message, success=False, code=400), 400)
-            else:
-                partial = request.files['file'].read(32)
-                image_format = imghdr.what(None, h=partial)
-                if image_format and image_format.lower() == "webp":
-                    logger.info("Evidence can't be webp")
-                    flask.abort(400, "Evidence can't be webp")
-                faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
-                instance, created = get_or_create(
-                    db.session,
-                    File,
-                    object_id=vuln_id,
-                    object_type='vulnerability',
-                    name=filename,
-                    filename=filename,
-                    content=faraday_file
-                )
-                db.session.commit()
-                debounce_workspace_update(workspace_name)
-                message = 'Evidence upload was successful'
-                logger.info(message)
-                return flask.jsonify({'message': message})
-        else:
+        if not vuln_workspace_check:
             flask.abort(404, "Vulnerability not found")
+
+        if 'file' not in request.files:
+            flask.abort(400)
+
+        vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
+        filename = request.files['file'].filename
+        _attachments = vuln['_attachments']
+
+        if filename in _attachments:
+            message = 'Evidence already exists in vuln'
+            return make_response(flask.jsonify(message=message, success=False, code=400), 400)
+
+        description = request.form.get('description')
+        partial = request.files['file'].read(32)
+        image_format = imghdr.what(None, h=partial)
+
+        if image_format and image_format.lower() == "webp":
+            logger.info("Evidence can't be webp")
+            flask.abort(400, "Evidence can't be webp")
+
+        faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
+        get_or_create(
+            db.session,
+            File,
+            object_id=vuln_id,
+            object_type='vulnerability',
+            name=filename,
+            filename=filename,
+            content=faraday_file,
+            description=description,
+        )
+        db.session.commit()
+        debounce_workspace_update(workspace_name)
+        message = 'Evidence upload was successful'
+        logger.info(message)
+        return flask.jsonify({'message': message})
 
     @route('/filter')
     def filter(self, workspace_name):

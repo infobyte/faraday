@@ -316,25 +316,31 @@ class VulnerabilityContextView(ContextMixin,
 
         if not vuln_permission_check:
             flask.abort(404, "Vulnerability not found")
+
         if 'file' not in request.files:
             flask.abort(400)
+
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename
         _attachments = vuln['_attachments']
+
         if filename in _attachments:
             message = 'Evidence already exists in vuln'
             return make_response(flask.jsonify(message=message, success=False, code=400), 400)
 
+        description = request.form.get('description')
         faraday_file = FaradayUploadedFile(request.files['file'].read())
-        instance, created = get_or_create(
+        get_or_create(
             db.session,
             File,
             object_id=vuln_id,
             object_type='vulnerability',
             name=filename,
             filename=filename,
-            content=faraday_file
+            content=faraday_file,
+            description=description,
         )
+
         db.session.commit()
         message = 'Evidence upload was successful'
         logger.info(message)

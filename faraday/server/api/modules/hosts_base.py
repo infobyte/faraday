@@ -4,9 +4,6 @@ Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-# Standard library imports
-from logging import getLogger
-
 # Related third party imports
 from filteralchemy import Filter, FilterSet, operators
 from flask import Blueprint, request
@@ -44,7 +41,6 @@ from faraday.server.utils.hosts import FILTER_SET_FIELDS, SCHEMA_FIELDS
 from faraday.server.utils.search import search
 
 host_api = Blueprint('host_api', __name__)
-logger = getLogger(__name__)
 
 
 def get_total_count(obj):

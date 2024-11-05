@@ -1,6 +1,6 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
@@ -8,14 +8,14 @@ See the file 'doc/LICENSE' for the license information
 from http.client import BAD_REQUEST
 
 # Related third party imports
-from flask import Blueprint, abort, make_response, jsonify
+from flask import Blueprint, abort, jsonify, make_response
 
 # Local application imports
 from faraday.server.api.base import (
-    ReadWriteWorkspacedView,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
     FilterWorkspacedMixin,
+    ReadWriteWorkspacedView,
 )
 from faraday.server.api.modules.services_base import ServiceFilterSet, ServiceView
 from faraday.server.debouncer import debounce_workspace_update

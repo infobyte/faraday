@@ -30,9 +30,9 @@ from faraday.server.models import (
     VulnerabilityWeb,
     db,
 )
+from faraday.server.utils.command import set_command_id
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
-from faraday.server.utils.command import set_command_id
 from faraday.server.utils.vulns import (
     WORKSPACED_SCHEMA_EXCLUDE_FIELDS,
     parse_cve_references_and_policyviolations,

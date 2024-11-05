@@ -390,12 +390,12 @@ class VulnerabilitySchema(AutoSchema):
             raise ValidationError("Invalid parent type") from e
         return value
 
-    @post_load
-    def post_load_owasp(self, data, **kwargs):
-        owasp = data.pop('owasp', None)
-        if owasp:
-            data['owasp'] = [item['name'] for item in owasp]
-        return data
+    # @post_load
+    # def post_load_owasp(self, data, **kwargs):
+    #     owasp = data.pop('owasp', None)
+    #     if owasp:
+    #         data['owasp'] = [item['name'] for item in owasp]
+    #     return data
 
     @post_load
     def post_load_impact(self, data, **kwargs):

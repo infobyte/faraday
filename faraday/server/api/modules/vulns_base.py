@@ -1451,19 +1451,8 @@ class VulnerabilityView(
             VulnerabilityGeneric.service_id
         )
 
-        if kwargs.get("by", "id") != "severity":
-            workspaces = (self._get_context_workspace_query(operation='write')
-                          .join(VulnerabilityGeneric)
-                          .filter(VulnerabilityGeneric.id.in_(values))
-                          .distinct(Workspace.id).all())
-        else:
-            workspaces = (self._get_context_workspace_query(operation='write')
-                          .join(VulnerabilityGeneric)
-                          .filter(VulnerabilityGeneric.severity.in_(values))
-                          .distinct(Workspace.id).all())
-
-        by_severity = kwargs.get('by', None)
-        if by_severity == 'severity':
+        by_severity = kwargs.get('by', None) == 'severity'
+        if by_severity:
             for severity in values:
                 if severity not in VulnerabilityABC.SEVERITIES:
                     abort(BAD_REQUEST, "Severity type not valid")
@@ -1475,6 +1464,17 @@ class VulnerabilityView(
             host_ids = host_ids.filter(
                 VulnerabilityGeneric.id.in_(values)
             ).all()
+
+        if not by_severity:
+            workspaces = (self._get_context_workspace_query(operation='write')
+                          .join(VulnerabilityGeneric)
+                          .filter(VulnerabilityGeneric.id.in_(values))
+                          .distinct(Workspace.id).all())
+        else:
+            workspaces = (self._get_context_workspace_query(operation='write')
+                          .join(VulnerabilityGeneric)
+                          .filter(VulnerabilityGeneric.severity.in_(values))
+                          .distinct(Workspace.id).all())
 
         response = super()._perform_bulk_delete(values, **kwargs)
         deleted = response.json.get('deleted', 0)

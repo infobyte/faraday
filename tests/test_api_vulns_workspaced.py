@@ -2521,6 +2521,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         ], key=lambda i: (i['count'], i['name'], i['severity']))
 
     def test_count_severity_map(self, test_client, second_workspace, session):
+        VulnerabilityGeneric.query.delete()
+        session.commit()
         vulns = self.factory.create_batch(4, severity='informational',
                                           workspace=second_workspace)
         vulns += self.factory.create_batch(3, severity='medium',

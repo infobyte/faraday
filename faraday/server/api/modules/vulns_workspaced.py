@@ -189,6 +189,27 @@ class VulnerabilityWorkspacedView(
 
         return obj
 
+    def count(self, **kwargs):
+        """
+        ---
+        get:
+          tags: ["Vulnerability"]
+          summary: "Group vulnerabilities by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: VulnerabilityWeb
+            404:
+              description: group_by is not specified
+        tags: ["Vulnerability"]
+        responses:
+          200:
+            description: Ok
+        """
+        return VulnerabilityView.count(self, **kwargs)
+
     def put(self, object_id, workspace_name=None, **kwargs):
         if workspace_name:
             debounce_workspace_update(workspace_name)

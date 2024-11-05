@@ -1,12 +1,12 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
 # Related third party imports
-from flask import Blueprint
 from filteralchemy import FilterSet, operators
+from flask import Blueprint
 from marshmallow import ValidationError, fields, post_load
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
@@ -18,8 +18,8 @@ from faraday.server.api.base import (
     BulkUpdateMixin,
     ContextMixin,
     FilterAlchemyMixin,
-    FilterSetMeta,
     FilterMixin,
+    FilterSetMeta,
     PaginatedMixin,
     ReadOnlyView,
 )

@@ -1460,7 +1460,7 @@ class UpdateMixin:
         obj = self._get_object(object_id, **kwargs)
         context = {'updating': True, 'object': obj}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context), request)
-        # just in case an schema allows id as writable.
+        # just in case a schema allows id as writable.
         data.pop('id', None)
 
         self._update_object(obj, data, partial=False)
@@ -1540,7 +1540,7 @@ class UpdateMixin:
         obj = self._get_object(object_id, **kwargs)
         context = {'updating': True, 'object': obj}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True), request)
-        # just in case an schema allows id as writable.
+        # just in case a schema allows id as writable.
         data.pop('id', None)
         self._update_object(obj, data, partial=True)
         self._perform_update(object_id, obj, data, partial=True, **kwargs)
@@ -1577,7 +1577,7 @@ class BulkUpdateMixin(FilterObjects):
         objects = self._get_objects(ids, **kwargs)
         context = {'updating': True, 'objects': objects}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True), request)
-        # just in case an schema allows id as writable.
+        # just in case a schema allows id as writable.
         data.pop('id', None)
         data.pop('ids', None)
 
@@ -1598,8 +1598,7 @@ class BulkUpdateMixin(FilterObjects):
             post_bulk_update_data = self._pre_bulk_update(data, workspace_name=workspace_name, **kwargs)
             if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
                 returns = None
-                _time = (
-                    time())
+                _time = time()
                 if 'returning' in kwargs:
                     returns = db.session.execute(sqlalchemy_update(self.model_class)
                                                  .where(self.model_class.id.in_(ids))

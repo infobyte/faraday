@@ -1,6 +1,6 @@
 """
 Faraday Penetration Test IDE
-Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
+Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
@@ -10,36 +10,34 @@ from logging import getLogger
 
 # Related third party imports
 from flask import Blueprint, abort, request
-from sqlalchemy.orm import (
-    joinedload,
-    selectin_polymorphic,
-    undefer,
-    noload,
-)
+from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
 
 # Local application imports
 from faraday.server.api.base import (
-    ReadWriteWorkspacedView,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
+    ReadWriteWorkspacedView,
     get_workspace,
 )
 from faraday.server.api.modules.vulns_base import VulnerabilityFilterSet, VulnerabilityView
+from faraday.server.config import faraday_server
+from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.models import (
-    db,
     Host,
     Service,
     Vulnerability,
-    VulnerabilityWeb,
     VulnerabilityGeneric,
+    VulnerabilityWeb,
+    db,
 )
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.command import set_command_id
-from faraday.server.utils.vulns import WORKSPACED_SCHEMA_EXCLUDE_FIELDS
-from faraday.server.config import faraday_server
-from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.utils.vulns import (
+    WORKSPACED_SCHEMA_EXCLUDE_FIELDS,
+    parse_cve_references_and_policyviolations,
+    update_one_host_severity_stat,
+)
 
 vulns_workspaced_api = Blueprint('vulns_workspaced_api', __name__)
 logger = getLogger(__name__)
@@ -58,6 +56,66 @@ class VulnerabilityWorkspacedView(
     VulnerabilityView,
 ):
     filterset_class = VulnerabilityWorkspacedFilterSet
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        """
+        Eager hostnames loading.
+        This is too complex to get_joinedloads, so I have to override the function.
+        """
+        query = super()._get_eagerloaded_query(*args, **kwargs)
+        options = [
+            joinedload(Vulnerability.host).
+            load_only(Host.id).  # Only hostnames are needed
+            joinedload(Host.hostnames),
+
+            joinedload(Vulnerability.service).
+            joinedload(Service.host).
+            joinedload(Host.hostnames),
+
+            joinedload(VulnerabilityWeb.service).
+            joinedload(Service.host).
+            joinedload(Host.hostnames),
+
+            joinedload(VulnerabilityGeneric.update_user),
+            undefer(VulnerabilityGeneric.creator_command_id),
+            undefer(VulnerabilityGeneric.creator_command_tool),
+            undefer(VulnerabilityGeneric.target_host_ip),
+            undefer(VulnerabilityGeneric.target_host_os),
+            joinedload(VulnerabilityGeneric.tags),
+            joinedload(VulnerabilityGeneric.cwe),
+            joinedload(VulnerabilityGeneric.owasp),
+            joinedload(Vulnerability.owasp),
+            joinedload(VulnerabilityWeb.owasp),
+
+            joinedload('refs'),
+            joinedload('cve_instances'),
+            joinedload('policy_violation_instances'),
+        ]
+
+        if request.args.get('get_evidence'):
+            options.append(joinedload(VulnerabilityGeneric.evidence))
+        else:
+            options.append(noload(VulnerabilityGeneric.evidence))
+
+        return query.options(selectin_polymorphic(
+            VulnerabilityGeneric,
+            [Vulnerability, VulnerabilityWeb]
+        ), *options)
+
+    def _bulk_update_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        query = self.model_class.query.filter(self.model_class.id.in_(ids))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
+        return query.filter(self.model_class.workspace_id == workspace.id)
+
+    def _bulk_delete_query(self, ids, **kwargs):
+        # It IS better to as is but warn of ON CASCADE
+        if kwargs.get("by", "id") != "severity":
+            query = self.model_class.query.filter(self.model_class.id.in_(ids))
+        else:
+            query = self.model_class.query.filter(self.model_class.severity.in_(ids))
+        workspace = get_workspace(kwargs.pop("workspace_name"))
+        return query.filter(self.model_class.workspace_id == workspace.id)
 
     def _perform_delete(self, obj, **kwargs):
         # Update hosts stats
@@ -99,7 +157,7 @@ class VulnerabilityWorkspacedView(
         try:
             obj = super()._perform_create(data, **kwargs)
         except TypeError:
-            # TypeError is raised when trying to instantiate an sqlalchemy model
+            # TypeError is raised when trying to instantiate a sqlalchemy model
             # with invalid attributes, for example VulnerabilityWeb with host_id
             abort(BAD_REQUEST)
 
@@ -150,7 +208,7 @@ class VulnerabilityWorkspacedView(
             # We need to instantiate reference objects before updating
             obj.refs = create_reference(reference_list, vulnerability_id=obj.id)
 
-        # This fields (cvss2 and cvss3) are better to be processed in this way because the model parse
+        # These fields (cvss2, cvss3 and cvss4) are better to be processed in this way because the model parse
         # vector string into fields and calculates the scores
         if 'cvss2_vector_string' in data:
             obj.cvss2_vector_string = data.pop('cvss2_vector_string')
@@ -214,66 +272,6 @@ class VulnerabilityWorkspacedView(
         if workspace_name:
             debounce_workspace_update(workspace_name)
         return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)
-
-    def _get_eagerloaded_query(self, *args, **kwargs):
-        """
-        Eager hostnames loading.
-        This is too complex to get_joinedloads, so I have to override the function.
-        """
-        query = super()._get_eagerloaded_query(*args, **kwargs)
-        options = [
-            joinedload(Vulnerability.host).
-            load_only(Host.id).  # Only hostnames are needed
-            joinedload(Host.hostnames),
-
-            joinedload(Vulnerability.service).
-            joinedload(Service.host).
-            joinedload(Host.hostnames),
-
-            joinedload(VulnerabilityWeb.service).
-            joinedload(Service.host).
-            joinedload(Host.hostnames),
-
-            joinedload(VulnerabilityGeneric.update_user),
-            undefer(VulnerabilityGeneric.creator_command_id),
-            undefer(VulnerabilityGeneric.creator_command_tool),
-            undefer(VulnerabilityGeneric.target_host_ip),
-            undefer(VulnerabilityGeneric.target_host_os),
-            joinedload(VulnerabilityGeneric.tags),
-            joinedload(VulnerabilityGeneric.cwe),
-            joinedload(VulnerabilityGeneric.owasp),
-            joinedload(Vulnerability.owasp),
-            joinedload(VulnerabilityWeb.owasp),
-
-            joinedload('refs'),
-            joinedload('cve_instances'),
-            joinedload('policy_violation_instances'),
-        ]
-
-        if request.args.get('get_evidence'):
-            options.append(joinedload(VulnerabilityGeneric.evidence))
-        else:
-            options.append(noload(VulnerabilityGeneric.evidence))
-
-        return query.options(selectin_polymorphic(
-            VulnerabilityGeneric,
-            [Vulnerability, VulnerabilityWeb]
-        ), *options)
-
-    def _bulk_update_query(self, ids, **kwargs):
-        # It IS better to as is but warn of ON CASCADE
-        query = self.model_class.query.filter(self.model_class.id.in_(ids))
-        workspace = get_workspace(kwargs.pop("workspace_name"))
-        return query.filter(self.model_class.workspace_id == workspace.id)
-
-    def _bulk_delete_query(self, ids, **kwargs):
-        # It IS better to as is but warn of ON CASCADE
-        if kwargs.get("by", "id") != "severity":
-            query = self.model_class.query.filter(self.model_class.id.in_(ids))
-        else:
-            query = self.model_class.query.filter(self.model_class.severity.in_(ids))
-        workspace = get_workspace(kwargs.pop("workspace_name"))
-        return query.filter(self.model_class.workspace_id == workspace.id)
 
 
 VulnerabilityWorkspacedView.register(vulns_workspaced_api)

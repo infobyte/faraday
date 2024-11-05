@@ -1,6 +1,7 @@
 # Standard library imports
 from copy import deepcopy
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
+from http.client import BAD_REQUEST, CREATED, NOT_FOUND
 from json import dump as json_dump
 from logging import getLogger
 from random import choice
@@ -13,10 +14,6 @@ from typing import Type
 from cvss import CVSS2, CVSS3
 from flask import Blueprint, abort, jsonify, request
 from flask_login import current_user
-from sqlalchemy import func, text
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 from marshmallow import (
     Schema,
     ValidationError,
@@ -26,6 +23,10 @@ from marshmallow import (
     validates_schema,
 )
 from marshmallow.validate import Range
+from sqlalchemy import func, text
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
 from faraday.server.api.base import (
@@ -235,7 +236,7 @@ class BulkCreateSchema(Schema):
 def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
     """Check for conflicts and create a new object
 
-    Is is passed the data parsed by the marshmallow schema (it
+    It is passed the data parsed by the marshmallow schema (it
     transform from raw post data to a JSON)
     """
     nested = db.session.begin_nested()
@@ -471,7 +472,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
             data = processed_data.get(r[1], None)
             logger.debug(f"Found conflict {r[0]}/{r[1]}")
             # Delete from lists
-            logger.debug("Data On conflic %s", data)
+            logger.debug(f"Data On conflict {data}")
             if data['references']:
                 for reference in data['references']:
                     reference_sequence_id = db.session.execute(
@@ -480,7 +481,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     reference['id'] = reference_sequence_id
                     reference['vulnerability_id'] = v_id
                     references_created.append(reference)
-            logger.debug("Data vulnerability On conflic %s", data['vuln_data'])
+            logger.debug(f"Data vulnerability On conflict {data['vuln_data']}")
             updated += 1
             set_histogram(histogram, data['vuln_data'])
         else:
@@ -1015,7 +1016,7 @@ class BulkCreateView(GenericWorkspacedView):
 
         if 'execution_id' in data:
             if not workspace:
-                abort(404, f"No such workspace: {workspace_name}")
+                abort(NOT_FOUND, f"No such workspace: {workspace_name}")
 
             execution_id = data["execution_id"]
 
@@ -1028,24 +1029,24 @@ class BulkCreateView(GenericWorkspacedView):
                     NoResultFound(
                         f"No row was found for agent executor id {execution_id}")
                 )
-                abort(400, "Can not find an agent execution with that id")
+                abort(BAD_REQUEST, "Can not find an agent execution with that id")
 
             if workspace_name != agent_execution.workspace.name:
                 logger.exception(
                     ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
                                f"to workspace {agent_execution.workspace.name}")
                 )
-                abort(400, "Trying to write to the incorrect workspace")
+                abort(BAD_REQUEST, "Trying to write to the incorrect workspace")
             command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
             if command is None:
                 logger.exception(
                     ValueError(f"There is no command with {agent_execution.command.id}")
                 )
-                abort(400, "Trying to update a not existent command")
+                abort(BAD_REQUEST, "Trying to update a not existent command")
             db.session.flush()
         else:
             if current_user.is_anonymous:
-                abort(400, "argument expected: execution_id")
+                abort(BAD_REQUEST, "argument expected: execution_id")
 
             command = Command(**(data['command']))
             command.workspace = workspace
@@ -1060,7 +1061,7 @@ class BulkCreateView(GenericWorkspacedView):
             file_path = CONST_FARADAY_HOME_PATH / 'uploaded_reports' / json_file
             with file_path.open('w') as output:
                 json_dump(json_data, output)
-            logger.info("Create tmp json file for bulk_create: %s", file_path)
+            logger.info(f"Create tmp json file for bulk_create: {file_path}")
             user_id = current_user.id if not current_user.is_anonymous else None
             if faraday_server.celery_enabled:
                 from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
@@ -1102,7 +1103,7 @@ class BulkCreateView(GenericWorkspacedView):
                 "message": "Created",
                 "command_id": command.id
             }
-        ), 201
+        ), CREATED
 
     post.is_public = True
 

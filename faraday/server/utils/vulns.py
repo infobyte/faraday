@@ -20,7 +20,6 @@ from flask import jsonify
 
 logger = logging.getLogger(__name__)
 
-
 # Meta fields in common for VulnerabilitySchema, VulnerabilityWebSchema and VulnerabilityFilterSet
 BASE_FIELDS = (
     "command_id",
@@ -37,7 +36,6 @@ BASE_FIELDS = (
     "tool",
 )
 
-
 # Meta fields in common for VulnerabilityWebSchema and VulnerabilityFilterSet
 WEB_BASE_FIELDS = (
     "method",
@@ -47,7 +45,6 @@ WEB_BASE_FIELDS = (
     "status_code",
     "website",
 )
-
 
 # Meta fields in common for VulnerabilitySchema and VulnerabilityWebSchema
 SCHEMA_FIELDS = BASE_FIELDS + (
@@ -82,7 +79,6 @@ SCHEMA_FIELDS = BASE_FIELDS + (
     "workspace_name",
 )
 
-
 # Meta fields exclusive for VulnerabilityWebSchema
 WEB_SCHEMA_FIELDS = SCHEMA_FIELDS + WEB_BASE_FIELDS + (
     "owasp",
@@ -90,7 +86,6 @@ WEB_SCHEMA_FIELDS = SCHEMA_FIELDS + WEB_BASE_FIELDS + (
     "pname",
     "query",
 )
-
 
 # Meta fields exclusive for VulnerabilityFilterSet
 FILTER_SET_FIELDS = BASE_FIELDS + WEB_BASE_FIELDS + (
@@ -102,7 +97,6 @@ FILTER_SET_FIELDS = BASE_FIELDS + WEB_BASE_FIELDS + (
     "service_id",
 )
 
-
 FILTER_SET_STRICT_FIELDS = (
     "confirmed",
     "ease_of_resolution",
@@ -110,8 +104,8 @@ FILTER_SET_STRICT_FIELDS = (
     "service_id",
     "severity",
     "status",
+    "workspace.name",
 )
-
 
 WORKSPACED_SCHEMA_EXCLUDE_FIELDS = ("workspace.name",)
 

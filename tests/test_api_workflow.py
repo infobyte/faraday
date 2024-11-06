@@ -382,7 +382,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         cond = [
             {
                 "type": "leaf",
-                "field": "service/name",
+                "field": "services/name",
                 "operator": "==",
                 "data": "test"
             }
@@ -417,6 +417,109 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
         assert host.description != "ActionExecuted"
+
+    def test_conditions_on_host_hostnames(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "hostnames",
+                "operator": "in",
+                "data": "test"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["test", "test2"])
+        db.session.add(host)
+        db.session.commit()
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description == "ActionExecuted"
+
+    def test_custom_fields_conditions(self, test_client):
+        cf = factories.CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name="test",
+            field_type="string",
+            field_order=1,
+            field_display_name="test",
+        )
+        db.session.add(cf)
+        db.session.commit()
+        cond = [
+            {
+                "type": "leaf",
+                "field": "custom_fields/test",
+                "operator": "==",
+                "data": "test"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability", cond=cond)
+        vuln = VulnerabilityFactory.create(description="asd", workspace=ws, custom_fields={"test": "test"})
+        db.session.add(vuln)
+        db.session.commit()
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_custom_fields_conditions_date(self, test_client):
+        cf = factories.CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name="test_date",
+            field_type="date",
+            field_order=1,
+            field_display_name="test_date",
+        )
+        db.session.add(cf)
+        db.session.commit()
+        cond = [
+            {
+                "type": "leaf",
+                "field": "custom_fields/test_date",
+                "operator": "==",
+                "data": "2024-09-12"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability", cond=cond)
+        vuln = VulnerabilityFactory.create(description="asd", workspace=ws, custom_fields={"test_date": "2024-09-12"})
+        db.session.add(vuln)
+        db.session.commit()
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_conditions_contains_CVE(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "cve",
+                "operator": "contains",
+                "data": "2024"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond, model="vulnerability")
+        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
+        vuln.cve = ["CVE-2022-1234", "CVE-2023-12333"]
+        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
+        assert vuln.description != "ActionExecuted"
+        vuln.cve = ["CVE-2024-1234", "CVE-2023-12333"]
+        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_conditions_contains_host_hostnames(self, test_client):
+        cond = [
+            {
+                "type": "leaf",
+                "field": "hostnames",
+                "operator": "contains",
+                "data": "google"
+            }
+        ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, cond=cond)
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["apple.com", "test2"])
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description != "ActionExecuted"
+        host.set_hostnames(["google.com", "test2"])
+        _process_entry(host.__class__.__name__, [host.id], host.workspace.id)
+        assert host.description == "ActionExecuted"
 
     def test_object_does_not_exist(self, test_client):
         action = ActionFactory.create()
@@ -474,6 +577,44 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.confirmed is True
+
+    def test_condition_any_in_cve(self, test_client):
+        cond = [
+                {
+                    "type": "leaf",
+                    "field": "cve",
+                    "operator": "any_in",
+                    "data": "CVE-2004-1234, CVE-2024-6001"
+                }
+            ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability", cond=cond)
+
+        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
+        vuln.cve = ["cve-2004-1234"]
+        db.session.add(vuln)
+        db.session.commit()
+
+        _process_entry(vuln.__class__.__name__, [vuln.id], ws.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_condition_any_in_hostnames(self, test_client):
+        cond = [
+                {
+                    "type": "leaf",
+                    "field": "hostnames",
+                    "operator": "any_in",
+                    "data": "google.com, asd2"
+                }
+            ]
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="host", cond=cond)
+
+        host = HostFactory.create(description="testing", workspace=ws)
+        host.set_hostnames(["google.com"])
+        db.session.add(host)
+        db.session.commit()
+
+        _process_entry(host.__class__.__name__, [host.id], ws.id)
+        assert host.description == "ActionExecuted"
 
     def test_action_execute_references(self, test_client):
         action = ActionFactory.create(command="APPEND", field="references", value="New ref")

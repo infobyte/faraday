@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal as D
 
-from cvss import CVSS3
+from cvss import CVSS3, CVSS4
 from cvss.cvss2 import round_to_1_decimal
 from cvss.cvss3 import round_up
 
@@ -63,7 +63,7 @@ def get_severity(cvss_instance, severity: str) -> [None, str]:
 def get_propper_value(cvss_instance, attr: str) -> [None, str]:
     if cvss_instance.get_value_description(attr) == 'Not Defined':
         return None
-    if isinstance(cvss_instance, CVSS3) and not attr_exists_in_vector(cvss_instance, attr):
+    if (isinstance(cvss_instance, CVSS3) or isinstance(cvss_instance, CVSS4)) and not attr_exists_in_vector(cvss_instance, attr):
         return None
     return cvss_instance.get_value_description(attr).lower()
 

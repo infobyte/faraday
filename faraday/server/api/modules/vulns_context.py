@@ -8,13 +8,16 @@ import http
 import io
 import logging
 import json
+from datetime import datetime
 from json.decoder import JSONDecodeError
 
 # Related third party imports
 import flask
+import sqlalchemy
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
+from flask_login import current_user
 from filteralchemy import operators
 from marshmallow import ValidationError
 from sqlalchemy import desc, func
@@ -53,12 +56,15 @@ from faraday.server.models import (
     User,
     Workspace,
     VulnerabilityABC,
+    Command,
+    CommandObject,
 )
 from faraday.server.utils.database import (
     get_or_create,
 )
 from faraday.server.utils.export import export_vulns_to_csv
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.vulns import bulk_update_custom_attributes
 from faraday.server.api.modules.vulns import (
     EvidenceSchema,
     VulnerabilitySchema,
@@ -144,6 +150,8 @@ class VulnerabilityContextView(ContextMixin,
             Vulnerability.service_id,
         ]
         kwargs['returning'] = returning_rows
+        if (len(data) > 0 and len(ids) > 0) and "custom_fields" in data.keys():
+            return bulk_update_custom_attributes(ids, data)
         return super()._perform_bulk_update(ids, data, **kwargs)
 
     def _get_eagerloaded_query(self, *args, **kwargs):
@@ -308,25 +316,31 @@ class VulnerabilityContextView(ContextMixin,
 
         if not vuln_permission_check:
             flask.abort(404, "Vulnerability not found")
+
         if 'file' not in request.files:
             flask.abort(400)
+
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename
         _attachments = vuln['_attachments']
+
         if filename in _attachments:
             message = 'Evidence already exists in vuln'
             return make_response(flask.jsonify(message=message, success=False, code=400), 400)
 
+        description = request.form.get('description')
         faraday_file = FaradayUploadedFile(request.files['file'].read())
-        instance, created = get_or_create(
+        get_or_create(
             db.session,
             File,
             object_id=vuln_id,
             object_type='vulnerability',
             name=filename,
             filename=filename,
-            content=faraday_file
+            content=faraday_file,
+            description=description,
         )
+
         db.session.commit()
         message = 'Evidence upload was successful'
         logger.info(message)
@@ -736,6 +750,8 @@ class VulnerabilityContextView(ContextMixin,
             custom_behaviour_fields['cvss2_vector_string'] = data.pop('cvss2_vector_string')
         if 'cvss3_vector_string' in data:
             custom_behaviour_fields['cvss3_vector_string'] = data.pop('cvss3_vector_string')
+        if 'cvss4_vector_string' in data:
+            custom_behaviour_fields['cvss_4_vector_string'] = data.pop('cvss4_vector_string')
 
         cwe_list = data.pop('cwe', None)
         if cwe_list is not None:
@@ -759,7 +775,9 @@ class VulnerabilityContextView(ContextMixin,
         return custom_behaviour_fields
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
-        workspaces = Workspace.query.join(VulnerabilityGeneric).filter(VulnerabilityGeneric.id.in_(ids)).distinct(Workspace.id).all()
+        workspaces_and_ids = (db.session.query(Workspace, func.array_agg(VulnerabilityGeneric.id))
+                              .join(VulnerabilityGeneric).filter(VulnerabilityGeneric.id.in_(ids))
+                              .group_by(Workspace.id).all())
         if extracted_data:
             queryset = self._bulk_update_query(ids, **kwargs)
             for obj in queryset.all():
@@ -768,6 +786,35 @@ class VulnerabilityContextView(ContextMixin,
                         value = create_reference(value, obj.id)
                     setattr(obj, key, value)
                     db.session.add(obj)
+
+        if workspaces_and_ids:
+            for ws_vulns in workspaces_and_ids:
+
+                ws_name = ws_vulns[0].name
+                ws_id = ws_vulns[0].id
+
+                command = Command()
+                command.workspace_id = ws_id
+                command.user_id = current_user.id
+                command.start_date = datetime.utcnow()
+                command.tool = 'web_ui'
+                command.command = 'bulk_update'
+                db.session.add(command)
+                db.session.commit()
+                cobjects_list = []
+
+                for id in ws_vulns[1]:
+                    cobject_dict = {
+                        "object_id": id,
+                        "object_type": "vulnerability",
+                        "command_id": command.id,
+                        "workspace_id": ws_id,
+                        "create_date": datetime.utcnow(),
+                        "created_persistent": False
+                    }
+                    cobjects_list.append(cobject_dict)
+                db.session.execute(sqlalchemy.insert(CommandObject).values(cobjects_list))
+                db.session.commit()
 
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats
@@ -779,7 +826,7 @@ class VulnerabilityContextView(ContextMixin,
             else:
                 update_host_stats(host_id_list, service_id_list)
 
-        for workspace in workspaces:
+        for workspace in [x[0] for x in workspaces_and_ids]:
             debounce_workspace_update(workspace.name)
 
     def _perform_bulk_delete(self, values, **kwargs):

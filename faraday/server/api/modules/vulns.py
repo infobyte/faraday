@@ -90,6 +90,7 @@ from faraday.server.schemas import (
 )
 from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat, bulk_update_custom_attributes
 from faraday.server.debouncer import debounce_workspace_update
+from faraday.settings import get_settings
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -1244,11 +1245,18 @@ class VulnerabilityView(PaginatedMixin,
         ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
-            limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
+
+            limit = get_settings("query_limits").vuln_query_limit
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
+                if limit:
+                    filter_limit = filters.pop('limit')
+                    if limit > filter_limit > 0:
+                        limit = filter_limit
+                else:
+                    limit = filters.pop('limit')
+
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
@@ -1620,6 +1628,10 @@ class VulnerabilityView(PaginatedMixin,
             else:
                 update_host_stats(host_id_list, service_id_list)
         return response
+
+    def _paginate(self, query, hard_limit=0):
+        limit = get_settings("query_limits").vuln_query_limit
+        return super()._paginate(query, hard_limit=limit)
 
 
 VulnerabilityView.register(vulns_api)

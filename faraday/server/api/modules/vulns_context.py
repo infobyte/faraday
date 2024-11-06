@@ -32,16 +32,16 @@ from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+    CountMultiWorkspacedMixin,
     FilterAlchemyMixin,
     FilterSetMeta,
-    PaginatedMixin,
     InvalidUsage,
-    CountMultiWorkspacedMixin,
-    get_filtered_data,
-    BulkUpdateMixin,
-    BulkDeleteMixin,
+    PaginatedMixin,
     ReadOnlyView,
-    ContextMixin
+    get_filtered_data,
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -72,6 +72,7 @@ from faraday.server.api.modules.vulns import (
     CustomILike,
     VulnerabilityFilterSet
 )
+from faraday.settings import get_settings
 
 vulns_context_api = Blueprint('vulns_context_api', __name__)
 logger = logging.getLogger(__name__)
@@ -501,11 +502,17 @@ class VulnerabilityContextView(ContextMixin,
         )if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
-            limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
+
+            limit = get_settings("query_limits").vuln_query_limit
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
+                if limit:
+                    filter_limit = filters.pop('limit')
+                    if limit > filter_limit > 0:
+                        limit = filter_limit
+                else:
+                    limit = filters.pop('limit')
 
             try:
                 vulns = self._generate_filter_query(
@@ -867,6 +874,10 @@ class VulnerabilityContextView(ContextMixin,
             else:
                 update_host_stats(host_id_list, service_id_list)
         return response
+
+    def _paginate(self, query, hard_limit=0):
+        limit = get_settings("query_limits").vuln_query_limit
+        return super()._paginate(query, hard_limit=limit)
 
 
 VulnerabilityContextView.register(vulns_context_api)

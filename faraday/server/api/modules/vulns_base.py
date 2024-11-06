@@ -100,10 +100,11 @@ logger = getLogger(__name__)
 class EvidenceSchema(AutoSchema):
     content_type = fields.Method('get_content_type')
     data = fields.Method('get_data')
+    description = fields.String()
 
     class Meta:
         model = File
-        fields = ('content_type', 'data')
+        fields = ('content_type', 'data', 'description')
 
     @staticmethod
     def get_content_type(file_obj):
@@ -877,6 +878,8 @@ class VulnerabilityView(
             message = 'Evidence already exists in vuln'
             return make_response(jsonify(message=message, success=False, code=BAD_REQUEST), BAD_REQUEST)
 
+        description = request.form.get('description')
+
         faraday_file = FaradayUploadedFile(request.files['file'].read())
         get_or_create(
             db.session,
@@ -885,9 +888,11 @@ class VulnerabilityView(
             object_type='vulnerability',
             name=filename,
             filename=filename,
-            content=faraday_file
+            content=faraday_file,
+            description=description,
         )
         db.session.commit()
+        debounce_workspace_update(vuln_permission_check.workspace.name)
         message = 'Evidence upload was successful'
         logger.info(message)
         return jsonify({'message': message})

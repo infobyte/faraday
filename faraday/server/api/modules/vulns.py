@@ -38,6 +38,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
+from faraday.server.utils.csrf import validate_file
 # Local application imports
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
@@ -1042,15 +1043,19 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
 
+        try:
+            validate_file(request)
+        except FileNotFoundError:
+            flask.abort(400, "File not found in request")
+        except ValidationError as e:
+            flask.abort(403, str(e))
+
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
 
         if not vuln_workspace_check:
             flask.abort(404, "Vulnerability not found")
-
-        if 'file' not in request.files:
-            flask.abort(400)
 
         vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
         filename = request.files['file'].filename

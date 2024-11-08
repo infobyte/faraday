@@ -23,7 +23,6 @@ class EmptySchema(Schema):
 
 class InfoView(GenericView):
     route_base = 'info'
-    route_prefix = ''
     schema_class = EmptySchema
 
     def get(self):
@@ -41,8 +40,6 @@ class InfoView(GenericView):
         response.status_code = 200
 
         return response
-
-    get.is_public = True
 
 
 class ConfigView(GenericView):
@@ -67,8 +64,6 @@ class ConfigView(GenericView):
         }
 
         return flask.jsonify(doc)
-
-    get.is_public = True
 
 
 InfoView.register(info_api)

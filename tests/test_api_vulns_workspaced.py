@@ -1292,6 +1292,10 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
     def test_filter_by_target(self, test_client, session, host_factory,
                               service_factory, vulnerability_factory,
                               vulnerability_web_factory):
+
+        # Change setting
+        test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 0})
+
         host = host_factory.create(workspace=self.workspace,
                                    ip='9.9.9.9')
         expected_ids = set()
@@ -4761,6 +4765,62 @@ class TestVulnerabilitySearch:
             paginated_vulns.add(res.json['vulnerabilities'][0]['id'])
 
         assert expected_vulns == paginated_vulns
+
+    def test_vuln_get_limit(self, test_client, session):
+
+        # Change setting
+        test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 25})
+
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vulns = VulnerabilityWebFactory.create_batch(50,
+                                                     workspace=workspace,
+                                                     severity='high'
+                                                     )
+        session.add_all(vulns)
+        session.add(host)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
+
+        assert res.status_code == 200
+        assert res.json['count'] == 50
+        assert len(res.json['vulnerabilities']) == 25
+
+    @pytest.mark.parametrize("limit", [
+        ["5", 5],
+        [None, 25],
+        ["100", 25]
+    ])
+    def test_vuln_filter_limit(self, test_client, session, limit):
+
+        # Change setting
+        test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 25})
+
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vulns = VulnerabilityWebFactory.create_batch(50,
+                                                     workspace=workspace,
+                                                     severity='high'
+                                                     )
+        session.add_all(vulns)
+        session.add(host)
+        session.commit()
+
+        if limit[0] is None:
+            query_filter = {}
+        else:
+            query_filter = {
+                "filters": [],
+                "limit": limit[0],
+                "offset": "1",
+            }
+        res = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+        )
+        assert res.status_code == 200
+        assert res.json['count'] == 50
+        assert len(res.json['vulnerabilities']) == limit[1]
 
     @pytest.mark.skip_sql_dialect('sqlite')
     @pytest.mark.usefixtures('ignore_nplusone')

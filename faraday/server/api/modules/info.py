@@ -23,6 +23,7 @@ class EmptySchema(Schema):
 
 class InfoView(GenericView):
     route_base = 'info'
+    route_prefix = ''
     schema_class = EmptySchema
 
     def get(self):

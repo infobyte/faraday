@@ -2546,6 +2546,7 @@ class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     weight = db.Column(db.Integer(), nullable=False)
+    custom = db.Column(db.Boolean(), nullable=False, default=True)
 
 
 class UserToken(Metadata):
@@ -3767,6 +3768,77 @@ class SlackNotification(db.Model):
     slack_id = Column(String, nullable=False)
     message = Column(String, nullable=False)
     processed = Column(Boolean, default=False)
+
+
+class Module(db.Model):
+    __tablename__ = 'module'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+
+class Endpoint(db.Model):
+    __tablename__ = 'endpoint'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    path = Column(String, nullable=False)
+    module_id = Column(Integer, ForeignKey('module.id'), index=True, nullable=False)
+    module = relationship(
+        'Module',
+        backref=backref('module_endpoints', cascade="all, delete-orphan"),
+        foreign_keys=[module_id],
+    )
+
+
+class Method(db.Model):
+    __tablename__ = 'method'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+
+class EndpointMethodAssociation(db.Model):
+    __tablename__ = 'endpoint_method_association'
+
+    id = Column(Integer, primary_key=True)
+
+    endpoint_id = Column(Integer, ForeignKey('endpoint.id'), index=True, nullable=False)
+    endpoint = relationship(
+        'Endpoint',
+        backref=backref('method_associations', cascade="all, delete-orphan"),
+        foreign_keys=[endpoint_id],
+    )
+    method_id = Column(Integer, ForeignKey('method.id'), index=True, nullable=False)
+    method = relationship(
+        'Method',
+        backref=backref('endpoint_associations', cascade="all, delete-orphan"),
+        foreign_keys=[method_id],
+    )
+
+    display_name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+
+
+class RolePermission(db.Model):
+    __tablename__ = 'role_permission'
+
+    id = Column(Integer, primary_key=True)
+
+    endpoint_method_id = Column(Integer, ForeignKey('endpoint_method_association.id'), index=True, nullable=False)
+    endpoint_method = relationship(
+        'EndpointMethodAssociation',
+        backref=backref('role_permissions_association', cascade="all, delete-orphan"),
+        foreign_keys=[endpoint_method_id],
+    )
+    role_id = Column(Integer, ForeignKey('faraday_role.id'), index=True, nullable=False)
+    role = relationship(
+        'Role',
+        backref=backref('endpoint_method_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[role_id],
+    )
+
+    allowed = Column(Boolean, default=False, nullable=False)
 
 
 # Indexes to speed up queries

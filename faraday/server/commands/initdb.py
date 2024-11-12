@@ -105,8 +105,8 @@ class InitDB:
         try:
             statement = text(
                 "INSERT "
-                "INTO faraday_role(name, weight) "
-                "VALUES ('admin', 10),('asset_owner', 20),('pentester', 30),('client', 40);"
+                "INTO faraday_role(name, weight, custom) "
+                "VALUES ('admin', 10, false),('asset_owner', 20, false),('pentester', 30, false),('client', 40, false);"
             )
             connection = engine.connect()
             connection.execute(statement)

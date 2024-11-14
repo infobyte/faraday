@@ -14,6 +14,7 @@ from json.decoder import JSONDecodeError
 # Related third party imports
 import flask
 import sqlalchemy
+from wtforms import ValidationError as WTFormsValidationError
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
@@ -28,6 +29,7 @@ from depot.manager import DepotManager
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import debounce_workspace_update
 # Local application imports
+from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
@@ -310,6 +312,13 @@ class VulnerabilityContextView(ContextMixin,
           200:
             description: Ok
         """
+        try:
+            validate_file(request)
+        except FileNotFoundError:
+            flask.abort(400, "File not found in request")
+        except WTFormsValidationError as e:
+            flask.abort(403, str(e))
+
         vuln_permission_check = self._apply_filter_context(
             db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
             operation="write"
@@ -317,9 +326,6 @@ class VulnerabilityContextView(ContextMixin,
 
         if not vuln_permission_check:
             flask.abort(404, "Vulnerability not found")
-
-        if 'file' not in request.files:
-            flask.abort(400)
 
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename

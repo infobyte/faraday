@@ -17,6 +17,7 @@ from pathlib import Path
 
 import flask
 import sqlalchemy
+from wtforms import ValidationError as WTFormsValidationError
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
@@ -39,6 +40,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
 # Local application imports
+from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
@@ -1042,15 +1044,19 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
 
+        try:
+            validate_file(request)
+        except FileNotFoundError:
+            flask.abort(400, "File not found in request")
+        except WTFormsValidationError as e:
+            flask.abort(403, str(e))
+
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
 
         if not vuln_workspace_check:
             flask.abort(404, "Vulnerability not found")
-
-        if 'file' not in request.files:
-            flask.abort(400)
 
         vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
         filename = request.files['file'].filename

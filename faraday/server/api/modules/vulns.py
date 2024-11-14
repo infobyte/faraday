@@ -39,8 +39,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
-from faraday.server.utils.csrf import validate_file
 # Local application imports
+from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search

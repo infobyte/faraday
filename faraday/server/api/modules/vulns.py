@@ -17,6 +17,7 @@ from pathlib import Path
 
 import flask
 import sqlalchemy
+from wtforms import ValidationError as WTFormsValidationError
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
@@ -1047,7 +1048,7 @@ class VulnerabilityView(PaginatedMixin,
             validate_file(request)
         except FileNotFoundError:
             flask.abort(400, "File not found in request")
-        except ValidationError as e:
+        except WTFormsValidationError as e:
             flask.abort(403, str(e))
 
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(

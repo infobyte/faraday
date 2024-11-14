@@ -17,6 +17,7 @@ from pathlib import Path
 
 import flask
 import sqlalchemy
+from wtforms import ValidationError as WTFormsValidationError
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
@@ -39,6 +40,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
 # Local application imports
+from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
@@ -90,6 +92,7 @@ from faraday.server.schemas import (
 )
 from faraday.server.utils.vulns import parse_cve_references_and_policyviolations, update_one_host_severity_stat, bulk_update_custom_attributes
 from faraday.server.debouncer import debounce_workspace_update
+from faraday.settings import get_settings
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -98,12 +101,14 @@ logger = logging.getLogger(__name__)
 class EvidenceSchema(AutoSchema):
     content_type = fields.Method('get_content_type')
     data = fields.Method('get_data')
+    description = fields.String()
 
     class Meta:
         model = File
         fields = (
             'content_type',
-            'data'
+            'data',
+            'description',
         )
 
     @staticmethod
@@ -1039,42 +1044,52 @@ class VulnerabilityView(PaginatedMixin,
             description: Ok
         """
 
+        try:
+            validate_file(request)
+        except FileNotFoundError:
+            flask.abort(400, "File not found in request")
+        except WTFormsValidationError as e:
+            flask.abort(403, str(e))
+
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
 
-        if vuln_workspace_check:
-            if 'file' not in request.files:
-                flask.abort(400)
-            vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
-            filename = request.files['file'].filename
-            _attachments = vuln['_attachments']
-            if filename in _attachments:
-                message = 'Evidence already exists in vuln'
-                return make_response(flask.jsonify(message=message, success=False, code=400), 400)
-            else:
-                partial = request.files['file'].read(32)
-                image_format = imghdr.what(None, h=partial)
-                if image_format and image_format.lower() == "webp":
-                    logger.info("Evidence can't be webp")
-                    flask.abort(400, "Evidence can't be webp")
-                faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
-                instance, created = get_or_create(
-                    db.session,
-                    File,
-                    object_id=vuln_id,
-                    object_type='vulnerability',
-                    name=filename,
-                    filename=filename,
-                    content=faraday_file
-                )
-                db.session.commit()
-                debounce_workspace_update(workspace_name)
-                message = 'Evidence upload was successful'
-                logger.info(message)
-                return flask.jsonify({'message': message})
-        else:
+        if not vuln_workspace_check:
             flask.abort(404, "Vulnerability not found")
+
+        vuln = VulnerabilitySchema().dump(vuln_workspace_check[0])
+        filename = request.files['file'].filename
+        _attachments = vuln['_attachments']
+
+        if filename in _attachments:
+            message = 'Evidence already exists in vuln'
+            return make_response(flask.jsonify(message=message, success=False, code=400), 400)
+
+        description = request.form.get('description')
+        partial = request.files['file'].read(32)
+        image_format = imghdr.what(None, h=partial)
+
+        if image_format and image_format.lower() == "webp":
+            logger.info("Evidence can't be webp")
+            flask.abort(400, "Evidence can't be webp")
+
+        faraday_file = FaradayUploadedFile(partial + request.files['file'].read())
+        get_or_create(
+            db.session,
+            File,
+            object_id=vuln_id,
+            object_type='vulnerability',
+            name=filename,
+            filename=filename,
+            content=faraday_file,
+            description=description,
+        )
+        db.session.commit()
+        debounce_workspace_update(workspace_name)
+        message = 'Evidence upload was successful'
+        logger.info(message)
+        return flask.jsonify({'message': message})
 
     @route('/filter')
     def filter(self, workspace_name):
@@ -1236,11 +1251,18 @@ class VulnerabilityView(PaginatedMixin,
         ) if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
-            limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
+
+            limit = get_settings("query_limits").vuln_query_limit
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
+                if limit:
+                    filter_limit = filters.pop('limit')
+                    if limit > filter_limit > 0:
+                        limit = filter_limit
+                else:
+                    limit = filters.pop('limit')
+
             try:
                 vulns = self._generate_filter_query(
                     VulnerabilityGeneric,
@@ -1612,6 +1634,10 @@ class VulnerabilityView(PaginatedMixin,
             else:
                 update_host_stats(host_id_list, service_id_list)
         return response
+
+    def _paginate(self, query, hard_limit=0):
+        limit = get_settings("query_limits").vuln_query_limit
+        return super()._paginate(query, hard_limit=limit)
 
 
 VulnerabilityView.register(vulns_api)

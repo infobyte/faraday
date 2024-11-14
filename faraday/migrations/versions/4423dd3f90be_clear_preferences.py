@@ -16,7 +16,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("UPDATE faraday_user SET preferences = NULL;")
+    op.execute("UPDATE faraday_user SET preferences = '{}';")
 
 
 def downgrade():

@@ -3215,7 +3215,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         file_contents = b'my file contents'
         data = {
-            'file': (BytesIO(file_contents), 'borrar.txt')
+            'file': (BytesIO(file_contents), 'borrar.txt'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
 

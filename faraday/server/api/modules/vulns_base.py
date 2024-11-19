@@ -35,6 +35,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.datastructures import ImmutableMultiDict
+from wtforms import ValidationError as WTFormsValidationError
 
 # Local application imports
 from faraday.server.api.base import (
@@ -79,6 +80,7 @@ from faraday.server.schemas import (
     SelfNestedField,
     SeverityField,
 )
+from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -868,8 +870,12 @@ class VulnerabilityView(
         if not vuln_permission_check:
             abort(NOT_FOUND, "Vulnerability not found")
 
-        if 'file' not in request.files:
-            abort(BAD_REQUEST, "File not sent")
+        try:
+            validate_file(request)
+        except FileNotFoundError:
+            flask.abort(400, "File not found in request")
+        except WTFormsValidationError as e:
+            flask.abort(403, str(e))
 
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename

@@ -1825,7 +1825,8 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         session.commit()
         file_contents = b'my file contents'
         data = {
-            'file': (BytesIO(file_contents), 'borrar.txt')
+            'file': (BytesIO(file_contents), 'borrar.txt'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
         res = test_client.post(
@@ -1838,7 +1839,7 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         depot = DepotManager.get()
         assert file_contents == depot.get(file_id).read()
 
-    def test_add_attachment_to_vuln_fails_readonly(self, test_client, session, host_with_hostnames):
+    def test_add_attachment_to_vuln_fails_readonly(self, test_client, session, host_with_hostnames, csrf_token):
         ws = WorkspaceFactory.create(name='abc')
         session.add(ws)
         vuln = VulnerabilityFactory.create(workspace=ws)
@@ -1846,7 +1847,8 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         session.commit()
         file_contents = b'my file contents'
         data = {
-            'file': (BytesIO(file_contents), 'borrar.txt')
+            'file': (BytesIO(file_contents), 'borrar.txt'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
 

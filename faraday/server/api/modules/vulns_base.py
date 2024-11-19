@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 from base64 import b64encode, b64decode
 from datetime import datetime
-from http.client import BAD_REQUEST, NOT_FOUND, OK
+from http.client import BAD_REQUEST, FORBIDDEN, NOT_FOUND, OK
 from imghdr import what
 from io import BytesIO
 from json import dumps as json_dumps, loads as json_loads
@@ -873,9 +873,9 @@ class VulnerabilityView(
         try:
             validate_file(request)
         except FileNotFoundError:
-            flask.abort(400, "File not found in request")
+            abort(BAD_REQUEST, "File not found in request")
         except WTFormsValidationError as e:
-            flask.abort(403, str(e))
+            abort(FORBIDDEN, str(e))
 
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename

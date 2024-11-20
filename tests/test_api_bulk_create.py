@@ -47,6 +47,18 @@ vuln_data = {
     'impact': {'accountability': True, 'availability': False},
     'refs': [{'name': 'http://some_url.com/example', 'type': 'other'}],
     'cve': ['CVE-2021-1234', 'CVE-2020-0001'],
+    'cvss2': {
+        'vector_string': 'AV:L/AC:M/Au:N/C:P/I:P/A:C',
+        'base_score': 5.9
+    },
+    'cvss3': {
+        'vector_string': 'CVSS:3.1/AV:A/AC:H/PR:H/UI:R/S:U/C:H/I:H/A:H/E:H/RL:W/RC:R',
+        'base_score': 6.3
+    },
+    'cvss4': {
+        'vector_string': 'CVSS:4.0/AV:A/AC:L/AT:P/PR:L/UI:A/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L',
+        'base_score': 5.9
+    },
     'cwe': ['cwe-123', 'CWE-485'],
     'tool': 'some_tool',
     'policyviolations': ['policy_1', 'policy_2'],
@@ -150,6 +162,12 @@ def test_create_host_vuln(session, workspace, host):
     assert created_vuln['impact_availability'] == vuln_data['impact']['availability']
     assert created_vuln['impact_integrity'] is False
     assert created_vuln['impact_confidentiality'] is False
+    assert created_vuln['_cvss2_vector_string'] == vuln_data['cvss2']['vector_string']
+    assert created_vuln['cvss2_base_score'] == vuln_data['cvss2']['base_score']
+    assert created_vuln['_cvss3_vector_string'] == vuln_data['cvss3']['vector_string']
+    assert created_vuln['cvss3_base_score'] == vuln_data['cvss3']['base_score']
+    assert created_vuln['_cvss4_vector_string'] == vuln_data['cvss4']['vector_string']
+    assert created_vuln['cvss4_base_score'] == vuln_data['cvss4']['base_score']
 
     # Policy Violations
     assert len(created_vuln_data[vuln_id]['policy_violations_associations']) == len(vuln_data['policyviolations'])

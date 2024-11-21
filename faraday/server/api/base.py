@@ -18,6 +18,7 @@ import flask
 import flask_login
 import sqlalchemy
 from sqlalchemy import func, desc, asc, and_
+from sqlalchemy.engine import ResultProxy
 from sqlalchemy.orm import joinedload, undefer, with_expression
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
@@ -350,6 +351,13 @@ class GenericView(FlaskView):
             query = self._get_base_query(**kwargs)
         try:
             obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
+        except AttributeError:
+            # Handle the case where `query` is a ResultProxy, this comes from Workspace query_object_with_count
+            if isinstance(query, ResultProxy):
+                res = db.session.query(self.model_class).filter(self.model_class.name.in_(object_ids)).all()
+                return res
+            # If it's another AttributeError, re-raise
+            raise
         except NoResultFound:
             return []
         return obj

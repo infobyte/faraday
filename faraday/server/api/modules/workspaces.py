@@ -42,6 +42,7 @@ from faraday.server.api.base import (
     FilterMixin,
     BulkDeleteMixin,
     PaginatedMixin,
+    BulkUpdateMixin
 )
 
 logger = logging.getLogger(__name__)
@@ -201,7 +202,7 @@ def request_histogram():
     return histogram_days, histogram_dict
 
 
-class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin, BulkUpdateMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -545,6 +546,16 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.name.in_(ids))
+
+    @route('/bulk_update', methods=["PATCH"])
+    def bulk_update(self, **kwargs):
+        return super().bulk_update(**kwargs)
+
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+
+        # Lookup field is set to 'name', so this is a patch to use bulk_update and send the right ids
+        real_ids = [id_[0] for id_ in db.session.query(Workspace.id).filter(Workspace.name.in_(ids)).all()]
+        return super()._perform_bulk_update(real_ids, data, workspace_name, **kwargs)
 
 
 WorkspaceView.register(workspace_api)

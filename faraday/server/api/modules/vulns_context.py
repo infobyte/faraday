@@ -14,6 +14,7 @@ from json.decoder import JSONDecodeError
 # Related third party imports
 import flask
 import sqlalchemy
+from wtforms import ValidationError as WTFormsValidationError
 from flask import request, send_file
 from flask import Blueprint, make_response
 from flask_classful import route
@@ -28,20 +29,21 @@ from depot.manager import DepotManager
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import debounce_workspace_update
 # Local application imports
+from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.api.base import (
+    BulkDeleteMixin,
+    BulkUpdateMixin,
+    ContextMixin,
+    CountMultiWorkspacedMixin,
     FilterAlchemyMixin,
     FilterSetMeta,
-    PaginatedMixin,
     InvalidUsage,
-    CountMultiWorkspacedMixin,
-    get_filtered_data,
-    BulkUpdateMixin,
-    BulkDeleteMixin,
+    PaginatedMixin,
     ReadOnlyView,
-    ContextMixin
+    get_filtered_data,
 )
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
@@ -72,6 +74,7 @@ from faraday.server.api.modules.vulns import (
     CustomILike,
     VulnerabilityFilterSet
 )
+from faraday.settings import get_settings
 
 vulns_context_api = Blueprint('vulns_context_api', __name__)
 logger = logging.getLogger(__name__)
@@ -309,6 +312,13 @@ class VulnerabilityContextView(ContextMixin,
           200:
             description: Ok
         """
+        try:
+            validate_file(request)
+        except FileNotFoundError:
+            flask.abort(400, "File not found in request")
+        except WTFormsValidationError as e:
+            flask.abort(403, str(e))
+
         vuln_permission_check = self._apply_filter_context(
             db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
             operation="write"
@@ -316,25 +326,28 @@ class VulnerabilityContextView(ContextMixin,
 
         if not vuln_permission_check:
             flask.abort(404, "Vulnerability not found")
-        if 'file' not in request.files:
-            flask.abort(400)
+
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename
         _attachments = vuln['_attachments']
+
         if filename in _attachments:
             message = 'Evidence already exists in vuln'
             return make_response(flask.jsonify(message=message, success=False, code=400), 400)
 
+        description = request.form.get('description')
         faraday_file = FaradayUploadedFile(request.files['file'].read())
-        instance, created = get_or_create(
+        get_or_create(
             db.session,
             File,
             object_id=vuln_id,
             object_type='vulnerability',
             name=filename,
             filename=filename,
-            content=faraday_file
+            content=faraday_file,
+            description=description,
         )
+
         db.session.commit()
         message = 'Evidence upload was successful'
         logger.info(message)
@@ -495,11 +508,17 @@ class VulnerabilityContextView(ContextMixin,
         )if not exclude_list else exclude_list}
         if 'group_by' not in filters:
             offset = None
-            limit = None
             if 'offset' in filters:
                 offset = filters.pop('offset')
+
+            limit = get_settings("query_limits").vuln_query_limit
             if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
+                if limit:
+                    filter_limit = filters.pop('limit')
+                    if limit > filter_limit > 0:
+                        limit = filter_limit
+                else:
+                    limit = filters.pop('limit')
 
             try:
                 vulns = self._generate_filter_query(
@@ -861,6 +880,10 @@ class VulnerabilityContextView(ContextMixin,
             else:
                 update_host_stats(host_id_list, service_id_list)
         return response
+
+    def _paginate(self, query, hard_limit=0):
+        limit = get_settings("query_limits").vuln_query_limit
+        return super()._paginate(query, hard_limit=limit)
 
 
 VulnerabilityContextView.register(vulns_context_api)

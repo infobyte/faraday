@@ -1465,6 +1465,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         secondary='command_object',
         primaryjoin='and_(VulnerabilityGeneric.id == CommandObject.object_id, CommandObject.object_type == "vulnerability")',
         collection_class=set,
+        passive_deletes=True,
     )
 
     _cvss2_vector_string = Column(Text, nullable=True)

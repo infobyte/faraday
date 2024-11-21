@@ -6,11 +6,11 @@
 
 buildPythonPackage rec {
   pname = "cvss";
-  version = "3.2";
+  version = "3.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "12zs22hq1nnpb9dygmigrp7ikh5jad0z2f7gqb0dxjg6x6ahz3jy";
+    sha256 = "1h7v75i7wlxzqrvb1fa289y0lgfaaxwd5492mdi25c2qxs1p22df";
   };
 
   # TODO FIXME

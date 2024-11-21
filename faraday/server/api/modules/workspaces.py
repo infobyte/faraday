@@ -549,6 +549,15 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
 
     @route('/bulk_update', methods=["PATCH"])
     def bulk_update(self, **kwargs):
+        """
+          ---
+          tags: [Workspace]
+          summary: "Update a group of Workspace records by ids."
+          responses:
+            204:
+              description: Ok
+        """
+
         return super().bulk_update(**kwargs)
 
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):

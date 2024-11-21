@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.8.0 API",
+        "title": "Faraday 5.9.0 API",
         "version": "v3"
     },
     "security": [
@@ -6750,6 +6750,60 @@
                     }
                 }
             }
+        },
+        "/_api/v3/settings/query_limits": {
+            "get": {
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Retrieves settings of {route_base}",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "schema_class": null
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin user required"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Creates/Updates settings of {route_base}",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "schema_class": null
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "schema_class": null
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin user required"
+                    }
+                }
+            }
         }
     },
     "openapi": "3.0.2",
@@ -6764,8 +6818,8 @@
                     },
                     "command": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "duration": {
                         "nullable": true
@@ -6773,13 +6827,13 @@
                     "itime": {},
                     "ip": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "hostname": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "params": {
                         "type": "string",
@@ -6787,8 +6841,8 @@
                     },
                     "user": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "creator": {
                         "readOnly": true
@@ -6798,18 +6852,19 @@
                     },
                     "tool": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "import_source": {
                         "enum": [
                             "report",
                             "shell",
                             "agent",
-                            "cloud_agent"
+                            "cloud_agent",
+                            null
                         ],
-                        "nullable": true,
-                        "maxLength": 11
+                        "maxLength": 11,
+                        "nullable": true
                     },
                     "metadata": {}
                 },
@@ -6828,18 +6883,18 @@
                     },
                     "command": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "ip": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "hostname": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "params": {
                         "type": "string",
@@ -6847,26 +6902,27 @@
                     },
                     "user": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "workspace": {
                         "readOnly": true
                     },
                     "tool": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "import_source": {
                         "enum": [
                             "report",
                             "shell",
                             "agent",
-                            "cloud_agent"
+                            "cloud_agent",
+                            null
                         ],
-                        "nullable": true,
-                        "maxLength": 11
+                        "maxLength": 11,
+                        "nullable": true
                     },
                     "itime": {},
                     "sum_created_vulnerabilities": {
@@ -7125,8 +7181,8 @@
                     },
                     "protocol": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "description": {
                         "type": "string",
@@ -7204,8 +7260,8 @@
                     },
                     "product": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "start": {
                         "type": "string",
@@ -7247,8 +7303,8 @@
                     },
                     "protocol": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "name": {
                         "type": "string",
@@ -7324,7 +7380,8 @@
                             "simple",
                             "moderate",
                             "difficult",
-                            "infeasible"
+                            "infeasible",
+                            null
                         ],
                         "nullable": true
                     },
@@ -7368,8 +7425,8 @@
                     },
                     "name": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "service": {
                         "readOnly": true,
@@ -7481,6 +7538,9 @@
                     },
                     "data": {
                         "readOnly": true
+                    },
+                    "description": {
+                        "type": "string"
                     }
                 }
             },
@@ -7516,8 +7576,8 @@
                     },
                     "name": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "references": {},
                     "refs": {
@@ -7539,7 +7599,8 @@
                             "simple",
                             "moderate",
                             "difficult",
-                            "infeasible"
+                            "infeasible",
+                            null
                         ],
                         "nullable": true
                     },
@@ -7622,8 +7683,8 @@
                     },
                     "customer": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "description": {
                         "type": "string",
@@ -7773,7 +7834,8 @@
                     },
                     "parameters_metadata": {
                         "type": "object",
-                        "readOnly": true
+                        "readOnly": true,
+                        "additionalProperties": {}
                     },
                     "schedules": {
                         "readOnly": true,
@@ -7793,8 +7855,8 @@
                     },
                     "name": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "status": {
                         "type": "string",
@@ -7903,8 +7965,8 @@
                     },
                     "protocol": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "description": {
                         "type": "string",
@@ -8013,7 +8075,8 @@
                             "simple",
                             "moderate",
                             "difficult",
-                            "infeasible"
+                            "infeasible",
+                            null
                         ],
                         "nullable": true
                     },
@@ -8045,8 +8108,8 @@
                     },
                     "name": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "service": {
                         "readOnly": true,
@@ -8237,8 +8300,8 @@
                 "properties": {
                     "command": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "duration": {
                         "type": "integer",
@@ -8250,13 +8313,13 @@
                     },
                     "ip": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "hostname": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "params": {
                         "type": "string",
@@ -8264,24 +8327,25 @@
                     },
                     "user": {
                         "type": "string",
-                        "nullable": true,
-                        "maxLength": 250
+                        "maxLength": 250,
+                        "nullable": true
                     },
                     "creator": {},
                     "tool": {
                         "type": "string",
-                        "nullable": true,
-                        "minLength": 1
+                        "minLength": 1,
+                        "nullable": true
                     },
                     "import_source": {
                         "enum": [
                             "report",
                             "shell",
                             "agent",
-                            "cloud_agent"
+                            "cloud_agent",
+                            null
                         ],
-                        "nullable": true,
-                        "maxLength": 11
+                        "maxLength": 11,
+                        "nullable": true
                     }
                 },
                 "required": [
@@ -8377,7 +8441,8 @@
                             "not_in",
                             "any_in",
                             "contains",
-                            "inverted_in"
+                            "inverted_in",
+                            null
                         ],
                         "nullable": true
                     },
@@ -8452,7 +8517,8 @@
                         "type": "string",
                         "enum": [
                             "asset",
-                            ""
+                            "",
+                            null
                         ],
                         "nullable": true
                     },
@@ -8553,7 +8619,8 @@
                         "type": "array",
                         "writeOnly": true,
                         "items": {
-                            "type": "object"
+                            "type": "object",
+                            "additionalProperties": {}
                         }
                     },
                     "tasks": {
@@ -8664,7 +8731,8 @@
                         "type": "array",
                         "writeOnly": true,
                         "items": {
-                            "type": "object"
+                            "type": "object",
+                            "additionalProperties": {}
                         }
                     },
                     "tasks": {

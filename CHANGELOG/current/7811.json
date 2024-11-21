@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[ADD] Added the `description` field to evidence attachments in the `VulnerabilitySchema`. #7811"
-}

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed vulnerability deletion when it has more than one command associated. #7859"
-}

@@ -28,7 +28,8 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
         "data", "website", "path", "status_code", "request", "response", "method",
         "params", "pname", "query", "cve", "cvss2_vector_string", "cvss2_base_score",
-        "cvss3_vector_string", "cvss3_base_score", "cwe", "policyviolations", "external_id",
+        "cvss3_vector_string", "cvss3_base_score", 'cvss4_vector_string', 'cvss4_base_score',
+        "cwe", "policyviolations", "external_id",
         "impact_confidentiality", "impact_integrity", "impact_availability",
         "impact_accountability", "update_date"
     ]

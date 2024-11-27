@@ -200,6 +200,8 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
         "cvss2_base_score": vuln.get('cvss2').get('base_score', None),
         "cvss3_vector_string": vuln.get('cvss3').get('vector_string', None),
         "cvss3_base_score": vuln.get('cvss3').get('base_score', None),
+        "cvss4_vector_string": vuln.get('cvss4').get('vector_string', None),
+        "cvss4_base_score": vuln.get('cvss4').get('base_score', None),
         "policyviolations": vuln.get('policyviolations', None),
         "external_id": vuln.get('external_id', None),
         "impact_confidentiality": vuln["impact"]["confidentiality"],

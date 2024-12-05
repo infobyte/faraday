@@ -3259,7 +3259,7 @@ class Condition(Metadata):
     type = Column(Enum(*TYPES, name='condition_types'))
     field = Column(String(50), nullable=True)
     operator = Column(String(50), nullable=True)
-    data = Column(String(50), nullable=True)
+    data = Column(Text, nullable=True)
     is_root = Column(Boolean, nullable=False, default=False)
 
     # N to 1

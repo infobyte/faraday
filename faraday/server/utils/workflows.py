@@ -188,7 +188,7 @@ def _process_field_data(obj, field):
 
     # special case for vulns web that have host field
     if "web" in obj.__class__.__name__.lower() and fields[0] == "host":
-        fields = ["services"] + fields
+        fields = ["service"] + fields
 
     # special case for service_id
     if fields[0] == "service_id":

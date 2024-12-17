@@ -1,6 +1,14 @@
 New features in the latest update
 =====================================
 
+5.9.0 [Nov 21st, 2024]:
+---
+ * [ADD] Added more validations to attachments. #7851
+ * [MOD] Removed __license_version__ from init.py. #7763
+ * [ADD] Added a configurable limit to the retrieval of vulnerabilities. #7841
+ * [ADD] Added the `description` field to evidence attachments in the `VulnerabilitySchema`. #7811
+ * [FIX] Fixed vulnerability deletion when it has more than one command associated. #7859
+
 5.8.0 [Oct 24th, 2024]:
 ---
  * [ADD] Added support for CVSS 4.0. #7753

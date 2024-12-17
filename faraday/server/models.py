@@ -1417,6 +1417,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
     epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
+    is_main = Column(Boolean, nullable=True, default=None)
 
     vulnerability_duplicate_id = Column(
         Integer,

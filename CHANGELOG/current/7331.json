@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Added authorization to the config endpoint. #7331"
+}

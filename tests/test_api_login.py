@@ -9,7 +9,6 @@ from unittest import mock
 from faraday.server.models import User
 from tests import factories
 
-from server.app import get_app
 from faraday.server.config import FaradayServerConfigObject
 
 mocked_config = FaradayServerConfigObject()
@@ -257,8 +256,6 @@ class TestLogin:
             ws = factories.WorkspaceFactory.create(name='wonderland')
             session.add(ws)
             session.commit()
-
-            print(get_app().config.get('PERMANENT_SESSION_LIFETIME'))
 
             credentials = b"alice:passguord"
             b64credentials = base64.b64encode(credentials)

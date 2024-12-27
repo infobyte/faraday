@@ -742,6 +742,7 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
 
 
 def set_cvss_data(vuln_data):
+    set_cvss4_data(vuln_data)
     set_cvss3_data(vuln_data)
     set_cvss2(vuln_data)
 
@@ -878,6 +879,89 @@ def init_cvss3_data(vuln_data):
     vuln_data['cvss3_modified_availability_impact'] = None
     vuln_data['cvss3_exploitability_score'] = None
     vuln_data['cvss3_impact_score'] = None
+
+
+def init_cvss4_data(vuln_data):
+    vuln_data['_cvss4_vector_string'] = None
+    vuln_data['cvss4_base_score'] = None
+    vuln_data['cvss4_base_severity'] = None
+    vuln_data['cvss4_attack_vector'] = None
+    vuln_data['cvss4_attack_complexity'] = None
+    vuln_data['cvss4_attack_requirements'] = None
+    vuln_data['cvss4_privileges_required'] = None
+    vuln_data['cvss4_user_interaction'] = None
+    vuln_data['cvss4_vulnerable_system_confidentiality_impact'] = None
+    vuln_data['cvss4_subsequent_system_confidentiality_impact'] = None
+    vuln_data['cvss4_vulnerable_system_integrity_impact'] = None
+    vuln_data['cvss4_subsequent_system_integrity_impact'] = None
+    vuln_data['cvss4_vulnerable_system_availability_impact'] = None
+    vuln_data['cvss4_subsequent_system_availability_impact'] = None
+    vuln_data['cvss4_safety'] = None
+    vuln_data['cvss4_automatable'] = None
+    vuln_data['cvss4_recovery'] = None
+    vuln_data['cvss4_value_density'] = None
+    vuln_data['cvss4_vulnerability_response_effort'] = None
+    vuln_data['cvss4_provider_urgency'] = None
+    vuln_data['cvss4_modified_attack_vector'] = None
+    vuln_data['cvss4_modified_attack_complexity'] = None
+    vuln_data['cvss4_modified_attack_requirements'] = None
+    vuln_data['cvss4_modified_privileges_required'] = None
+    vuln_data['cvss4_modified_user_interaction'] = None
+    vuln_data['cvss4_modified_vulnerable_system_confidentiality_impact'] = None
+    vuln_data['cvss4_modified_subsequent_system_confidentiality_impact'] = None
+    vuln_data['cvss4_modified_vulnerable_system_integrity_impact'] = None
+    vuln_data['cvss4_modified_subsequent_system_integrity_impact'] = None
+    vuln_data['cvss4_modified_vulnerable_system_availability_impact'] = None
+    vuln_data['cvss4_modified_subsequent_system_availability_impact'] = None
+    vuln_data['cvss4_confidentiality_requirement'] = None
+    vuln_data['cvss4_integrity_requirement'] = None
+    vuln_data['cvss4_availability_requirement'] = None
+    vuln_data['cvss4_exploit_maturity'] = None
+
+
+def set_cvss4_data(vuln_data):
+    init_cvss4_data(vuln_data)
+    vs4 = vuln_data.pop('cvss4_vector_string', None)
+    if vs4:
+        try:
+            cvss_instance = cvss.CVSS4(vs4)
+            vuln_data['_cvss4_vector_string'] = vs4
+            vuln_data['cvss4_base_score'] = get_base_score(cvss_instance)
+            vuln_data['cvss4_base_severity'] = get_severity(cvss_instance, 'B')
+            vuln_data['cvss4_attack_vector'] = get_propper_value(cvss_instance, 'AV')
+            vuln_data['cvss4_attack_complexity'] = get_propper_value(cvss_instance, 'AC')
+            vuln_data['cvss4_attack_requirements'] = get_propper_value(cvss_instance, 'AT')
+            vuln_data['cvss4_privileges_required'] = get_propper_value(cvss_instance, 'PR')
+            vuln_data['cvss4_user_interaction'] = get_propper_value(cvss_instance, 'UI')
+            vuln_data['cvss4_vulnerable_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'VC')
+            vuln_data['cvss4_subsequent_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'SC')
+            vuln_data['cvss4_vulnerable_system_integrity_impact'] = get_propper_value(cvss_instance, 'VI')
+            vuln_data['cvss4_subsequent_system_integrity_impact'] = get_propper_value(cvss_instance, 'SI')
+            vuln_data['cvss4_vulnerable_system_availability_impact'] = get_propper_value(cvss_instance, 'VA')
+            vuln_data['cvss4_subsequent_system_availability_impact'] = get_propper_value(cvss_instance, 'SA')
+            vuln_data['cvss4_safety'] = get_propper_value(cvss_instance, 'S')
+            vuln_data['cvss4_automatable'] = get_propper_value(cvss_instance, 'AU')
+            vuln_data['cvss4_recovery'] = get_propper_value(cvss_instance, 'R')
+            vuln_data['cvss4_value_density'] = get_propper_value(cvss_instance, 'V')
+            vuln_data['cvss4_vulnerability_response_effort'] = get_propper_value(cvss_instance, 'RE')
+            vuln_data['cvss4_provider_urgency'] = get_propper_value(cvss_instance, 'U')
+            vuln_data['cvss4_modified_attack_vector'] = get_propper_value(cvss_instance, 'MAV')
+            vuln_data['cvss4_modified_attack_complexity'] = get_propper_value(cvss_instance, 'MAC')
+            vuln_data['cvss4_modified_attack_requirements'] = get_propper_value(cvss_instance, 'MAT')
+            vuln_data['cvss4_modified_privileges_required'] = get_propper_value(cvss_instance, 'MPR')
+            vuln_data['cvss4_modified_user_interaction'] = get_propper_value(cvss_instance, 'MUI')
+            vuln_data['cvss4_modified_vulnerable_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'MVC')
+            vuln_data['cvss4_modified_subsequent_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'MSC')
+            vuln_data['cvss4_modified_vulnerable_system_integrity_impact'] = get_propper_value(cvss_instance, 'MVI')
+            vuln_data['cvss4_modified_subsequent_system_integrity_impact'] = get_propper_value(cvss_instance, 'MSI')
+            vuln_data['cvss4_modified_vulnerable_system_availability_impact'] = get_propper_value(cvss_instance, 'MVA')
+            vuln_data['cvss4_modified_subsequent_system_availability_impact'] = get_propper_value(cvss_instance, 'MSA')
+            vuln_data['cvss4_confidentiality_requirement'] = get_propper_value(cvss_instance, 'CR')
+            vuln_data['cvss4_integrity_requirement'] = get_propper_value(cvss_instance, 'IR')
+            vuln_data['cvss4_availability_requirement'] = get_propper_value(cvss_instance, 'AR')
+            vuln_data['cvss4_exploit_maturity'] = get_propper_value(cvss_instance, 'E')
+        except Exception as e:
+            logger.exception("Could not create cvss4", exc_info=e)
 
 
 def set_relationships_data(vulnerability, command):

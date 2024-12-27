@@ -11,7 +11,7 @@ from time import time
 from typing import Type
 
 # Related third party imports
-from cvss import CVSS2, CVSS3
+from cvss import CVSS2, CVSS3, CVSS4
 from flask import Blueprint, abort, jsonify, request
 from flask_login import current_user
 from marshmallow import (
@@ -240,6 +240,7 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
     transform from raw post data to a JSON)
     """
     nested = db.session.begin_nested()
+    obj = None
     try:
         obj = model_class(**data)
         obj.workspace = ws
@@ -924,7 +925,7 @@ def set_cvss4_data(vuln_data):
     vs4 = vuln_data.pop('cvss4_vector_string', None)
     if vs4:
         try:
-            cvss_instance = cvss.CVSS4(vs4)
+            cvss_instance = CVSS4(vs4)
             vuln_data['_cvss4_vector_string'] = vs4
             vuln_data['cvss4_base_score'] = get_base_score(cvss_instance)
             vuln_data['cvss4_base_severity'] = get_severity(cvss_instance, 'B')

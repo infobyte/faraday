@@ -20,8 +20,8 @@ let
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/47601b24042f77383ac10633c92d39ae90e9ede5.tar.gz";
-      sha256 = "1sxm6l65lzx9583f2xbrf692gjgqj9rdx88b08yiyic3c6icwc0k";
+        "https://github.com/infobyte/nixpkgs/archive/b383cdd8037355bb0a34bee2672fbd9b346f11d7.tar.gz";
+      sha256 = "1x0j1385qxxyf08zvj96m3wl8y0vyi0q85jidgn7bsjzy4ylzy7q";
     };
 
   packageOverrides = self: super: {
@@ -31,6 +31,8 @@ let
     bidict = self.callPackage ./packages/bidict { };
 
     bleach = self.callPackage ./packages/bleach { };
+
+    cvss = self.callPackage ./packages/cvss { };
 
     faraday-agent-parameters-types =
       self.callPackage ./packages/faraday-agent-parameters-types { };

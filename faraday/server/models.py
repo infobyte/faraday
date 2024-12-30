@@ -1195,13 +1195,6 @@ class Host(Metadata):
         cascade="all, delete-orphan"
     )
 
-    @property
-    def service(self):
-        if self.services:
-            return self.services[0]
-        else:
-            return None
-
     # 1 workspace <--> N hosts
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
@@ -1467,6 +1460,14 @@ class VulnerabilityGeneric(VulnerabilityABC):
         backref=backref("vulnerabilities")
     )
 
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(VulnerabilityGeneric.id == CommandObject.object_id, CommandObject.object_type == "vulnerability")',
+        collection_class=set,
+        passive_deletes=True,
+    )
+
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
     cvss2_exploitability_score = Column(Float)
@@ -1677,6 +1678,135 @@ class VulnerabilityGeneric(VulnerabilityABC):
             self.cvss3_impact_score = get_impact_score(cvss_instance)
         except Exception as e:
             logger.error("Could not parse cvss %s. %s", self.cvss3_vector_string, e)
+
+    _cvss4_vector_string = Column(Text, nullable=True)
+    cvss4_base_score = Column(Float)
+    cvss4_base_severity = Column(Text, nullable=True)
+    cvss4_attack_vector = Column(Text, nullable=True)
+    cvss4_attack_complexity = Column(Text, nullable=True)
+    cvss4_attack_requirements = Column(Text, nullable=True)
+    cvss4_privileges_required = Column(Text, nullable=True)
+    cvss4_user_interaction = Column(Text, nullable=True)
+    cvss4_vulnerable_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_subsequent_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_vulnerable_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_subsequent_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_vulnerable_system_availability_impact = Column(Text, nullable=True)
+    cvss4_subsequent_system_availability_impact = Column(Text, nullable=True)
+    cvss4_safety = Column(Text, nullable=True)
+    cvss4_automatable = Column(Text, nullable=True)
+    cvss4_recovery = Column(Text, nullable=True)
+    cvss4_value_density = Column(Text, nullable=True)
+    cvss4_vulnerability_response_effort = Column(Text, nullable=True)
+    cvss4_provider_urgency = Column(Text, nullable=True)
+    cvss4_modified_attack_vector = Column(Text, nullable=True)
+    cvss4_modified_attack_complexity = Column(Text, nullable=True)
+    cvss4_modified_attack_requirements = Column(Text, nullable=True)
+    cvss4_modified_privileges_required = Column(Text, nullable=True)
+    cvss4_modified_user_interaction = Column(Text, nullable=True)
+    cvss4_modified_vulnerable_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_modified_subsequent_system_confidentiality_impact = Column(Text, nullable=True)
+    cvss4_modified_vulnerable_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_modified_subsequent_system_integrity_impact = Column(Text, nullable=True)
+    cvss4_modified_vulnerable_system_availability_impact = Column(Text, nullable=True)
+    cvss4_modified_subsequent_system_availability_impact = Column(Text, nullable=True)
+    cvss4_confidentiality_requirement = Column(Text, nullable=True)
+    cvss4_integrity_requirement = Column(Text, nullable=True)
+    cvss4_availability_requirement = Column(Text, nullable=True)
+    cvss4_exploit_maturity = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss4_vector_string(self):
+        return self._cvss4_vector_string
+
+    @cvss4_vector_string.setter
+    def cvss4_vector_string(self, vector_string):
+        self._cvss4_vector_string = vector_string
+        self.set_cvss4_attrs()
+
+    def init_cvss4_attrs(self):
+        self._cvss4_vector_string = None
+        self.cvss4_base_score = None
+        self.cvss4_base_severity = None
+        self.cvss4_attack_vector = None
+        self.cvss4_attack_complexity = None
+        self.cvss4_attack_requirements = None
+        self.cvss4_privileges_required = None
+        self.cvss4_user_interaction = None
+        self.cvss4_vulnerable_system_confidentiality_impact = None
+        self.cvss4_subsequent_system_confidentiality_impact = None
+        self.cvss4_vulnerable_system_integrity_impact = None
+        self.cvss4_subsequent_system_integrity_impact = None
+        self.cvss4_vulnerable_system_availability_impact = None
+        self.cvss4_subsequent_system_availability_impact = None
+        self.cvss4_safety = None
+        self.cvss4_automatable = None
+        self.cvss4_recovery = None
+        self.cvss4_value_density = None
+        self.cvss4_vulnerability_response_effort = None
+        self.cvss4_provider_urgency = None
+        self.cvss4_modified_attack_vector = None
+        self.cvss4_modified_attack_complexity = None
+        self.cvss4_modified_attack_requirements = None
+        self.cvss4_modified_privileges_required = None
+        self.cvss4_modified_user_interaction = None
+        self.cvss4_modified_vulnerable_system_confidentiality_impact = None
+        self.cvss4_modified_subsequent_system_confidentiality_impact = None
+        self.cvss4_modified_vulnerable_system_integrity_impact = None
+        self.cvss4_modified_subsequent_system_integrity_impact = None
+        self.cvss4_modified_vulnerable_system_availability_impact = None
+        self.cvss4_modified_subsequent_system_availability_impact = None
+        self.cvss4_confidentiality_requirement = None
+        self.cvss4_integrity_requirement = None
+        self.cvss4_availability_requirement = None
+        self.cvss4_exploit_maturity = None
+
+    def set_cvss4_attrs(self):
+        """
+        Parse cvss2 and assign attributes
+        """
+        if not self.cvss4_vector_string:
+            self.init_cvss4_attrs()
+            return None
+
+        try:
+            cvss_instance = cvss.CVSS4(self.cvss4_vector_string)
+            self.cvss4_base_score = get_base_score(cvss_instance)
+            self.cvss4_base_severity = get_severity(cvss_instance, 'B')
+            self.cvss4_attack_vector = get_propper_value(cvss_instance, 'AV')
+            self.cvss4_attack_complexity = get_propper_value(cvss_instance, 'AC')
+            self.cvss4_attack_requirements = get_propper_value(cvss_instance, 'AT')
+            self.cvss4_privileges_required = get_propper_value(cvss_instance, 'PR')
+            self.cvss4_user_interaction = get_propper_value(cvss_instance, 'UI')
+            self.cvss4_vulnerable_system_confidentiality_impact = get_propper_value(cvss_instance, 'VC')
+            self.cvss4_subsequent_system_confidentiality_impact = get_propper_value(cvss_instance, 'SC')
+            self.cvss4_vulnerable_system_integrity_impact = get_propper_value(cvss_instance, 'VI')
+            self.cvss4_subsequent_system_integrity_impact = get_propper_value(cvss_instance, 'SI')
+            self.cvss4_vulnerable_system_availability_impact = get_propper_value(cvss_instance, 'VA')
+            self.cvss4_subsequent_system_availability_impact = get_propper_value(cvss_instance, 'SA')
+            self.cvss4_safety = get_propper_value(cvss_instance, 'S')
+            self.cvss4_automatable = get_propper_value(cvss_instance, 'AU')
+            self.cvss4_recovery = get_propper_value(cvss_instance, 'R')
+            self.cvss4_value_density = get_propper_value(cvss_instance, 'V')
+            self.cvss4_vulnerability_response_effort = get_propper_value(cvss_instance, 'RE')
+            self.cvss4_provider_urgency = get_propper_value(cvss_instance, 'U')
+            self.cvss4_modified_attack_vector = get_propper_value(cvss_instance, 'MAV')
+            self.cvss4_modified_attack_complexity = get_propper_value(cvss_instance, 'MAC')
+            self.cvss4_modified_attack_requirements = get_propper_value(cvss_instance, 'MAT')
+            self.cvss4_modified_privileges_required = get_propper_value(cvss_instance, 'MPR')
+            self.cvss4_modified_user_interaction = get_propper_value(cvss_instance, 'MUI')
+            self.cvss4_modified_vulnerable_system_confidentiality_impact = get_propper_value(cvss_instance, 'MVC')
+            self.cvss4_modified_subsequent_system_confidentiality_impact = get_propper_value(cvss_instance, 'MSC')
+            self.cvss4_modified_vulnerable_system_integrity_impact = get_propper_value(cvss_instance, 'MVI')
+            self.cvss4_modified_subsequent_system_integrity_impact = get_propper_value(cvss_instance, 'MSI')
+            self.cvss4_modified_vulnerable_system_availability_impact = get_propper_value(cvss_instance, 'MVA')
+            self.cvss4_modified_subsequent_system_availability_impact = get_propper_value(cvss_instance, 'MSA')
+            self.cvss4_confidentiality_requirement = get_propper_value(cvss_instance, 'CR')
+            self.cvss4_integrity_requirement = get_propper_value(cvss_instance, 'IR')
+            self.cvss4_availability_requirement = get_propper_value(cvss_instance, 'AR')
+            self.cvss4_exploit_maturity = get_propper_value(cvss_instance, 'E')
+        except Exception as e:
+            logger.error("Could not parse cvss %s. %s", self.cvss4_vector_string, e)
 
     cwe = relationship('CWE', secondary=cwe_vulnerability_association)
 
@@ -2422,8 +2552,8 @@ class Role(db.Model, RoleMixin):
 class UserToken(Metadata):
     __tablename__ = 'user_token'
     GITLAB_SCOPE = 'gitlab'
-    SERVICE_DESK_SCOPE = 'service_desk'
-    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE]
+    SCHEDULER_SCOPE = 'scheduler'
+    SCOPES = [GITLAB_SCOPE, SCHEDULER_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 
@@ -2495,6 +2625,8 @@ class User(db.Model, UserMixin):
         secondary=association_workspace_and_users_table,
         back_populates="allowed_users",
     )
+
+    session_id = Column(String(64), unique=True)
 
     def __repr__(self):
         return f"<{'LDAP ' if self.user_type == LDAP_TYPE else ''}User: {self.username}>"
@@ -3127,7 +3259,7 @@ class Condition(Metadata):
     type = Column(Enum(*TYPES, name='condition_types'))
     field = Column(String(50), nullable=True)
     operator = Column(String(50), nullable=True)
-    data = Column(String(50), nullable=True)
+    data = Column(Text, nullable=True)
     is_root = Column(Boolean, nullable=False, default=False)
 
     # N to 1
@@ -3188,32 +3320,39 @@ agents_schedule_workspace_table = Table(
 )
 
 
-class AgentsSchedule(Metadata):
+class SchedulerGeneric(Metadata):
+
+    SCHEDULER_TYPES = ['cloud_agent', 'agent']
+
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
-    description = NonBlankColumn(Text)
-    crontab = NonBlankColumn(Text)
-    timezone = NonBlankColumn(Text)
+    description = NonBlankColumn(Text, nullable=False)
+    crontab = NonBlankColumn(Text, nullable=False)
+    timezone = NonBlankColumn(Text, nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
-
-    # N workspace <--> N schedules
-    workspaces = relationship(
-        'Workspace',
-        secondary=agents_schedule_workspace_table,
-        backref='agent_schedule',
-    )
-    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
-    executor = relationship(
-        'Executor',
-        backref=backref('schedules', cascade="all, delete-orphan"),
-    )
     ignore_info = Column(Boolean, default=False)
     resolve_hostname = Column(Boolean, default=True)
     vuln_tag = Column(String, default="")
     service_tag = Column(String, default="")
     host_tag = Column(String, default="")
     parameters = Column(JSONType, nullable=False, default={})
+    type = Column(Enum(*SCHEDULER_TYPES, name='scheduler_types'), nullable=False)
+
+    # N workspace <--> N schedules (base relationship)
+    workspaces = relationship(
+        'Workspace',
+        secondary=agents_schedule_workspace_table,
+        backref='agent_scheduler',
+    )
+
+    @declared_attr
+    def executor_id(self):
+        return Column(Integer, db.ForeignKey('executor.id'), index=True)
+
+    @declared_attr
+    def cloud_agent_id(self):
+        return Column(Integer, db.ForeignKey('cloud_agent.id'), index=True)
 
     @property
     def next_run(self):
@@ -3223,9 +3362,58 @@ class AgentsSchedule(Metadata):
             ret_type=datetime
         ).get_next(datetime)
 
+    __mapper_args__ = {
+        'polymorphic_on': type
+    }
+
+
+class AgentsSchedule(SchedulerGeneric):
+    __tablename__ = None
+
+    executor = relationship(
+        'Executor',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @declared_attr
+    def executor_id(self):
+        return SchedulerGeneric.__table__.c.get('executor_id',
+                                                Column(Integer,
+                                                       db.ForeignKey('executor.id'),
+                                                       nullable=False,
+                                                       index=True))
+
     @property
     def parent(self):
         return self.executor.agent
+
+    __mapper_args__ = {
+        'polymorphic_identity': SchedulerGeneric.SCHEDULER_TYPES[1]
+    }
+
+
+class CloudAgentsSchedule(SchedulerGeneric):
+    __tablename__ = None
+    cloud_agent = relationship(
+        'CloudAgent',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return self.cloud_agent
+
+    @declared_attr
+    def cloud_agent_id(self):
+        return SchedulerGeneric.__table__.c.get('cloud_agent_id',
+                                                Column(Integer,
+                                                       db.ForeignKey('cloud_agent.id'),
+                                                       nullable=False,
+                                                       index=True))
+
+    __mapper_args__ = {
+        'polymorphic_identity': SchedulerGeneric.SCHEDULER_TYPES[0]
+    }
 
 
 class Agent(Metadata):

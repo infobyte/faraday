@@ -14,7 +14,7 @@ import sqlalchemy as sa
 from depot.fields.upload import UploadedFile
 from depot.io.utils import file_from_content, INMEMORY_FILESIZE
 from depot.manager import DepotManager
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from sqlalchemy.dialects.postgresql.json import JSONB
 from webargs.core import ValidationError
 
@@ -49,7 +49,10 @@ class FaradayUploadedFile(UploadedFile):
         image_format = imghdr.what(None, h=content[:32])
         if image_format:
             content_type = f'image/{image_format}'
-            self.generate_thumbnail(content)
+            try:
+                self.generate_thumbnail(content)
+            except UnidentifiedImageError:
+                pass
         return super().process_content(
                 content, filename, content_type)
 

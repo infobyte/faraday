@@ -1,6 +1,40 @@
 New features in the latest update
 =====================================
 
+5.9.0 [Nov 21st, 2024]:
+---
+ * [ADD] Added more validations to attachments. #7851
+ * [MOD] Removed __license_version__ from init.py. #7763
+ * [ADD] Added a configurable limit to the retrieval of vulnerabilities. #7841
+ * [ADD] Added the `description` field to evidence attachments in the `VulnerabilitySchema`. #7811
+ * [FIX] Fixed vulnerability deletion when it has more than one command associated. #7859
+
+5.8.0 [Oct 24th, 2024]:
+---
+ * [ADD] Added support for CVSS 4.0. #7753
+ * [ADD] Improved filtering for better notification links. #7655
+ * [ADD] Added new operator ANY_IN for pipeline job conditions. #7804
+ * [ADD] Added contains conditional for pipelines conditions. #7805
+ * [ADD] Added custom fields as conditions. #7721
+ * [FIX] Updated nginx config template for socketio. #7629
+
+5.7.0 [Sep 20th, 2024]:
+---
+ * [ADD] Added bulk update feature for custom attributes. #7716
+ * [FIX] Allow services to be searchable. #7514
+ * [FIX] Fixed crash on unsupported image format upload. #7710
+ * [FIX] Fixed service based jobs not working for assets #7778
+ * [FIX] Fixed hostnames not working on pipelines conditions. #7807
+
+5.6.1 [Aug 28th, 2024]:
+---
+ * [FIX] Resolved an issue with filtering by Custom Attributes. #7800
+
+5.6.0 [Aug 23rd, 2024]:
+---
+ * [FIX] Resolved an issue when filtering assets by numeric values. #7769
+ * [ADD] Added workspace update logic on general view. Fixed bug where workspaces updated without making any change on them. #7769
+
 5.5.0 [Aug 1st, 2024]:
 ---
  * [ADD] Added Scheduler feature to community. #7752

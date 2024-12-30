@@ -27,13 +27,13 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    location {% if multitenant_url %}/{{ multitenant_url }}{% endif %}/websockets {
+    location {% if multitenant_url %}/{{ multitenant_url }}{% endif %}/socketio {
+        include proxy_params;
         proxy_http_version 1.1;
-        proxy_pass http://localhost:{{ faraday_ws_port }}/websockets;
-
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_buffering off;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Connection "Upgrade";
+        proxy_pass http://localhost:{{ faraday_port }};
     }
 }
 

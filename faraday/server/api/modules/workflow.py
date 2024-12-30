@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import re
+from copy import deepcopy
 
 # Related third party imports
 import flask
@@ -24,6 +25,7 @@ from faraday.server.models import (
     WorkflowExecution,
     Workspace,
     Pipeline,
+    CustomFieldsSchema,
 )
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 
@@ -97,6 +99,10 @@ OPERATORS = {
     '<=': lambda f, a: f <= a,
     'in': lambda f, a: a in f,
     'not_in': lambda f, a: a not in f,
+    # operator that checks if any item of a list is in another list
+    'any_in': lambda f, a: any(x in f for x in a),
+    'contains': lambda f, a: any(a in x for x in f),
+    'inverted_in': lambda f, a: f in a,
 }
 
 all_valid_operators = list(OPERATORS.keys())
@@ -131,11 +137,11 @@ null_not_null = [
 
 rules_attributes = {
     "host": [
-        {"name": "ip", "display_name": "IP", "type": "string", "operators": string_operators},
+        {"name": "ip", "display_name": "Asset", "type": "string", "operators": string_operators},
         {"name": "description", "display_name": "Description", "type": "string", "operators": string_operators},
         {"name": "os", "display_name": "OS", "type": "string", "operators": string_operators},
         {"name": "owned", "display_name": "Owned", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
-        {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in},
+        {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in + ["contains", "any_in"]},
         {"name": "update_date", "display_name": "Last Modified", "type": "datetime", "operators": numeric_operators},
 
         {"name": "importance", "display_name": "Importance", "type": "int", "operators": numeric_operators},
@@ -161,7 +167,7 @@ rules_attributes = {
         {"name": "description", "display_name": "Description", "type": "string", "operators": string_operators},
         {"name": "data", "display_name": "Data", "type": "string", "operators": string_operators},
         {"name": "cwe", "display_name": "CWE", "type": "cwe", "operators": in_not_in},
-        {"name": "cve", "display_name": "CVE", "type": "string", "operators": in_not_in},
+        {"name": "cve", "display_name": "CVE", "type": "string", "operators": in_not_in + ["contains", "any_in"]},
         {"name": "resolution", "display_name": "Resolution", "type": "string", "operators": string_operators},
         {"name": "create_date", "display_name": "Create Date", "type": "datetime", "operators": numeric_operators},
         {"name": "update_date", "display_name": "Update Date", "type": "datetime", "operators": numeric_operators},
@@ -179,7 +185,7 @@ rules_attributes = {
         {"name": "hostnames", "display_name": "Hostnames", "type": "string", "operators": in_not_in},
         {"name": "path", "display_name": "Path", "type": "string", "operators": string_operators},
         {"name": "service/name", "display_name": "Service Name", "type": "string", "operators": string_operators},
-        {"name": "host/ip", "display_name": "Asset IP", "type": "string", "operators": string_operators},
+        {"name": "host/ip", "display_name": "Asset IP", "type": "string", "operators": string_operators + ['inverted_in']},
         {"name": "evidence", "display_name": "Evidence", "type": "null_or_not", "operators": null_not_null},
         {"name": "host/os", "display_name": "Asset OS", "type": "string", "operators": string_operators},
         {"name": "id", "display_name": "ID", "type": "int", "operators": numeric_operators},
@@ -194,9 +200,61 @@ rules_attributes = {
     ]
 }
 
+service_datatypes = {
+    "service/name": "string",
+    "service/port": "int",
+    "service/status": "string",
+    "service/version": "string",
+}
+
+host_datatypes = {
+    "host/ip": "string",
+    "host/os": "string",
+}
+
 order_regex = re.compile(r"^$|^\d+(-\d+)*$")
 
 WORKFLOW_LIMIT = 2
+
+
+def _get_rules_attributes():
+    rules = deepcopy(rules_attributes)
+
+    custom_fields = (db.session.query(CustomFieldsSchema.field_name,
+                                      CustomFieldsSchema.field_type,
+                                      CustomFieldsSchema.field_metadata)
+                     .filter(CustomFieldsSchema.table_name == "vulnerability").all())
+
+    for field in custom_fields:
+        if field.field_type in ["str", "choice", "markdown"]:
+            c_type = "string"
+        elif field.field_type == "date":
+            c_type = "datetime"
+        else:
+            c_type = field.field_type
+
+        c_operators = []
+
+        if c_type in ["int", "datetime"]:
+            c_operators = numeric_operators
+        elif c_type == "string":
+            c_operators = string_operators
+        elif c_type == "list":
+            c_operators = in_not_in
+
+        value_dict = {"name": f"custom_fields/{field.field_name}",
+                      "display_name": f"Custom Attribute: {field.field_name}",
+                      "type": c_type,
+                      "operators": c_operators}
+
+        if field.field_type == "choice":
+            value_dict["valid"] = json.loads(field.field_metadata)
+
+        # add value_dict to the vulnerability rules if it's not already there
+        if value_dict not in rules["vulnerability"]:
+            rules["vulnerability"].append(value_dict)
+
+    return rules
 
 
 class PipelineSchema(AutoSchema):
@@ -695,7 +753,8 @@ class JobView(ReadWriteView):
           200:
             description: Ok
         """
-        return flask.jsonify(rules_attributes)
+
+        return flask.jsonify(_get_rules_attributes())
 
     @route('/<int:job_id>/clone', methods=['POST'])
     def clone_wf(self, job_id):

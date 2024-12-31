@@ -2553,7 +2553,8 @@ class UserToken(Metadata):
     __tablename__ = 'user_token'
     GITLAB_SCOPE = 'gitlab'
     SCHEDULER_SCOPE = 'scheduler'
-    SCOPES = [GITLAB_SCOPE, SCHEDULER_SCOPE]
+    SERVICE_DESK_SCOPE = 'service_desk'
+    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 
@@ -3259,7 +3260,7 @@ class Condition(Metadata):
     type = Column(Enum(*TYPES, name='condition_types'))
     field = Column(String(50), nullable=True)
     operator = Column(String(50), nullable=True)
-    data = Column(String(50), nullable=True)
+    data = Column(Text, nullable=True)
     is_root = Column(Boolean, nullable=False, default=False)
 
     # N to 1

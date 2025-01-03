@@ -97,6 +97,7 @@ build_nix_python3_dev:
     - cp -r $(readlink result)/* /opt/faraday
     - tar rvf /py3.tar /opt/faraday
     - mv /py3.tar $CI_PROJECT_DIR
+    - echo $AWS_FRONT_BRANCH
   artifacts:
     name: python3
     paths:
@@ -111,7 +112,7 @@ build_nix_python3_dev:
   needs:
     - project: faradaysec/faraday-react
       job: npm_build
-      ref: community/dev
+      ref: $AWS_FRONT_BRANCH
       artifacts: true
 
 build_nix_python3_staging:

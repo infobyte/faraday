@@ -802,6 +802,7 @@ class VulnerabilityView(PaginatedMixin,
                     flask.abort(400, "Evidence can not be webp format")
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
+            description = attachment.get('description')
             get_or_create(
                 db.session,
                 File,
@@ -810,6 +811,7 @@ class VulnerabilityView(PaginatedMixin,
                 name=Path(filename).stem,
                 filename=Path(filename).name,
                 content=faraday_file,
+                description=description,
             )
 
     def _update_object(self, obj, data, **kwargs):

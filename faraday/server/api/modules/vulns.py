@@ -129,6 +129,10 @@ class ImpactSchema(Schema):
     integrity = fields.Boolean(attribute='impact_integrity', default=False)
 
 
+class PatchAttachmentSchema(Schema):
+    description = fields.String(required=True)
+
+
 class CustomMetadataSchema(MetadataSchema):
     """
     Implements command_id and creator logic
@@ -1092,6 +1096,55 @@ class VulnerabilityView(PaginatedMixin,
         message = 'Evidence upload was successful'
         logger.info(message)
         return flask.jsonify({'message': message})
+
+    @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['PATCH'])
+    def patch_attachment(self, workspace_name, vuln_id, attachment_filename):
+        """
+        ---
+        patch:
+          tags: ["Vulnerability", "File"]
+          description: Updates the description of an attachment.
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                      example: "Updated attachment description"
+          responses:
+            200:
+              description: Updated successfully
+            404:
+              description: Attachment or Vulnerability not found
+            400:
+              description: Validation error
+        """
+        # Validate JSON input
+        schema = PatchAttachmentSchema()
+        try:
+            data = schema.load(request.get_json())
+        except ValidationError as e:
+            flask.abort(400, str(e.messages))
+
+        # Check if attachment exists
+        try:
+            attachment = db.session.query(File).filter_by(
+                object_type='vulnerability',
+                object_id=vuln_id,
+                filename=attachment_filename
+            ).one()
+        except NoResultFound:
+            flask.abort(404, "Attachment or Vulnerability not found")
+
+        # Update and commit the changes
+        attachment.description = data["description"]
+        db.session.commit()
+        debounce_workspace_update(workspace_name)
+
+        return flask.jsonify({"message": "Attachment updated successfully"}), 200
 
     @route('/filter')
     def filter(self, workspace_name):

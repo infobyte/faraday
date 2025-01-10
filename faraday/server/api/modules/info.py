@@ -65,7 +65,7 @@ class ConfigView(GenericView):
                 'smtp_enabled': False
             }
             return flask.jsonify(doc)
-        return flask.jsonify({'connected': 'ok'})
+        return flask.jsonify({'connection': 'succesful'})
 
     get.is_public = True
 

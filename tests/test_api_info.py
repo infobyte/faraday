@@ -23,7 +23,7 @@ class TestAPIInfoEndpoint:
     def test_api_config_no_login(self, test_client, session):
         response = test_client.get('config')
         assert response.status_code == 200
-        assert response.json['connected'] == 'ok'
+        assert response.json['connection'] == 'succesful'
 
     @pytest.mark.usefixtures('logged_user')
     def test_get_config(self, test_client):

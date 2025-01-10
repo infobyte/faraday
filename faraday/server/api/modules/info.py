@@ -62,10 +62,11 @@ class ConfigView(GenericView):
             doc = {
                 'ver': f_version,
                 'show_vulns_by_price': DashboardSettings.settings.show_vulns_by_price,
-                'smtp_enabled': False
+                'smtp_enabled': False,
+                'sso_enabled': False
             }
             return flask.jsonify(doc)
-        return flask.jsonify({'connection': 'succesful'})
+        return flask.jsonify({'sso_enabled': False})
 
     get.is_public = True
 

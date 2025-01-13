@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.10.1 [Jan 13th, 2025]:
+---
+ * [FIX] Fix config endpoint authentication. #7889
+
 5.10.0 [Jan 6th, 2025]:
 ---
  * [ADD] CVSS4 data is now included in CSV exports. #7850

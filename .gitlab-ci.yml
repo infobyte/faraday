@@ -8,6 +8,7 @@ variables:
   APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
   DEBIAN_FRONTEND: noninteractive
   IMAGE_TAG: 'egrep -o "[0-9]\.([0-9]|[0-9][0-9])(\.[0-9])?" faraday/__init__.py'
+  AWS_FRONT_BRANCH: 'community/dev'
   VAULT_SERVER_URL: https://tluav-lb.faradaysec.com
   VAULT_AUTH_ROLE: faraday-env-readonly
   VAULT_AUTH_PATH: jwt

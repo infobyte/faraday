@@ -1417,6 +1417,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
     epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
+    is_main = Column(Boolean, nullable=True, default=None)
 
     vulnerability_duplicate_id = Column(
         Integer,
@@ -2553,7 +2554,8 @@ class UserToken(Metadata):
     __tablename__ = 'user_token'
     GITLAB_SCOPE = 'gitlab'
     SCHEDULER_SCOPE = 'scheduler'
-    SCOPES = [GITLAB_SCOPE, SCHEDULER_SCOPE]
+    SERVICE_DESK_SCOPE = 'service_desk'
+    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 

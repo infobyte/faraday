@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed an issue where evidence descriptions were not saved correctly during manual vulnerability creation. #7867"
+}

@@ -5246,6 +5246,67 @@ class TestVulnerabilitySearch:
 
         assert attachment['description'] == 'Attachment description'
 
+    def test_patch_attachment_description(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        patch_data = {'description': 'Updated attachment description'}
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/testing_description.txt',
+            json=patch_data,
+        )
+
+        assert res.status_code == 200
+
+        updated_attachment = session.query(File).filter_by(
+            object_type='vulnerability',
+            object_id=vuln.id,
+            filename='testing_description.txt'
+        ).one()
+        assert updated_attachment.description == 'Updated attachment description'
+
+    def test_patch_attachment_description_bad_body(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        patch_data = {'descriptions': 'Updated attachment description'}
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/testing_description.txt',
+            json=patch_data,
+        )
+
+        assert res.status_code == 400
+
 
 def test_type_filter(workspace, session,
                      vulnerability_factory,

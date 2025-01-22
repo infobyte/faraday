@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Standard library imports
-from http.client import BAD_REQUEST
+from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 from logging import getLogger
 
 # Related third party imports
@@ -159,7 +159,7 @@ class VulnerabilityWorkspacedView(
         except TypeError:
             # TypeError is raised when trying to instantiate a sqlalchemy model
             # with invalid attributes, for example VulnerabilityWeb with host_id
-            abort(BAD_REQUEST)
+            abort(HTTP_BAD_REQUEST)
 
         obj = parse_cve_references_and_policyviolations(obj, references, policyviolations, cve_list)
         obj.cwe = create_cwe(cwe_list)

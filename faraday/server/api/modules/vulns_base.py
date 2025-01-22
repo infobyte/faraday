@@ -7,7 +7,12 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 from base64 import b64encode, b64decode
 from datetime import datetime
-from http.client import BAD_REQUEST, FORBIDDEN, NOT_FOUND, OK
+from http.client import (
+    BAD_REQUEST as HTTP_BAD_REQUEST,
+    FORBIDDEN as HTTP_FORBIDDEN,
+    NOT_FOUND as HTTP_NOT_FOUND,
+    OK as HTTP_OK,
+)
 from imghdr import what
 from io import BytesIO
 from json import dumps as json_dumps, loads as json_loads
@@ -683,7 +688,7 @@ class VulnerabilityView(
                 image_format = what(None, h=b64decode(attachment['data']))
                 if image_format and image_format.lower() == "webp":
                     logger.info("Evidence can not be webp format")
-                    abort(BAD_REQUEST, "Evidence can not be webp format")
+                    abort(HTTP_BAD_REQUEST, "Evidence can not be webp format")
 
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             filename = filename.replace(" ", "_")
@@ -874,14 +879,14 @@ class VulnerabilityView(
         ).first()
 
         if not vuln_permission_check:
-            abort(NOT_FOUND, "Vulnerability not found")
+            abort(HTTP_NOT_FOUND, "Vulnerability not found")
 
         try:
             validate_file(request)
         except FileNotFoundError:
-            abort(BAD_REQUEST, "File not found in request")
+            abort(HTTP_BAD_REQUEST, "File not found in request")
         except WTFormsValidationError as e:
-            abort(FORBIDDEN, str(e))
+            abort(HTTP_FORBIDDEN, str(e))
 
         vuln = VulnerabilitySchema().dump(vuln_permission_check)
         filename = request.files['file'].filename
@@ -889,7 +894,7 @@ class VulnerabilityView(
 
         if filename in _attachments:
             message = 'Evidence already exists in vuln'
-            return make_response(jsonify(message=message, success=False, code=BAD_REQUEST), BAD_REQUEST)
+            return make_response(jsonify(message=message, success=False, code=HTTP_BAD_REQUEST), HTTP_BAD_REQUEST)
 
         description = request.form.get('description')
 
@@ -941,14 +946,14 @@ class VulnerabilityView(
         ).first()
 
         if not vuln_permission_check:
-            abort(NOT_FOUND, "Vulnerability not found")
+            abort(HTTP_NOT_FOUND, "Vulnerability not found")
 
         # Validate JSON input
         schema = PatchAttachmentSchema()
         try:
             data = schema.load(request.get_json())
         except ValidationError as e:
-            abort(BAD_REQUEST, str(e.messages))
+            abort(HTTP_BAD_REQUEST, str(e.messages))
 
         # Check if attachment exists
         try:
@@ -958,14 +963,14 @@ class VulnerabilityView(
                 filename=attachment_filename
             ).one()
         except NoResultFound:
-            abort(NOT_FOUND, "Attachment or Vulnerability not found")
+            abort(HTTP_NOT_FOUND, "Attachment or Vulnerability not found")
 
         # Update and commit the changes
         attachment.description = data["description"]
         db.session.commit()
         debounce_workspace_update(vuln_permission_check.workspace.name)
 
-        return jsonify({"message": "Attachment updated successfully"}), OK
+        return jsonify({"message": "Attachment updated successfully"}), HTTP_OK
 
     @route('/filter')
     def filter(self, **kwargs):
@@ -1124,7 +1129,7 @@ class VulnerabilityView(
                 filters['filters'], hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError, AttributeError) as ex:
             logger.exception(ex)
-            abort(BAD_REQUEST, "Invalid filters")
+            abort(HTTP_BAD_REQUEST, "Invalid filters")
 
         workspace_name = kwargs.get('workspace_name')
         if workspace_name:
@@ -1165,9 +1170,9 @@ class VulnerabilityView(
                     **kwargs,
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
 
             # In vulns count we do not need order
             total_vulns = vulns.order_by(None)
@@ -1189,9 +1194,9 @@ class VulnerabilityView(
                     **kwargs,
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
 
             vulns_data, rows_count = get_filtered_data(filters, vulns)
 
@@ -1221,13 +1226,13 @@ class VulnerabilityView(
                                                     filename=attachment_filename.replace(" ", "%20")).first()
 
         if not vuln_permission_check or not file_obj:
-            abort(NOT_FOUND, "File not found")
+            abort(HTTP_NOT_FOUND, "File not found")
 
         depot = DepotManager.get()
         depot_file = depot.get(file_obj.content.get('file_id'))
 
         if not depot_file:
-            abort(NOT_FOUND, "File not found")
+            abort(HTTP_NOT_FOUND, "File not found")
 
         if depot_file.content_type.startswith('image/'):
             # Image content types are safe (they can't be executed like
@@ -1270,7 +1275,7 @@ class VulnerabilityView(
         ).first()
 
         if not vuln_permission_check:
-            abort(NOT_FOUND, "Vulnerability not found")
+            abort(HTTP_NOT_FOUND, "Vulnerability not found")
 
         files = db.session.query(File).filter_by(object_type='vulnerability', object_id=vuln_id).all()
 
@@ -1297,13 +1302,13 @@ class VulnerabilityView(
         ).first()
 
         if not vuln_permission_check:
-            abort(NOT_FOUND, "Vulnerability not found")
+            abort(HTTP_NOT_FOUND, "Vulnerability not found")
 
         file_obj = db.session.query(File).filter_by(object_type='vulnerability',
                                                     object_id=vuln_id,
                                                     filename=attachment_filename).first()
         if not file_obj:
-            abort(NOT_FOUND, "File not found")
+            abort(HTTP_NOT_FOUND, "File not found")
 
         db.session.delete(file_obj)
         db.session.commit()
@@ -1408,7 +1413,7 @@ class VulnerabilityView(
         # TODO BULK_DELETE_SCHEMA
         if not request.json or 'severities' not in request.json:
             return super().bulk_delete(self, **kwargs)
-        return self._perform_bulk_delete(request.json['severities'], by='severity', **kwargs), OK
+        return self._perform_bulk_delete(request.json['severities'], by='severity', **kwargs), HTTP_OK
     bulk_delete.__doc__ = BulkDeleteMixin.bulk_delete.__doc__
 
     def _bulk_delete_query(self, ids, **kwargs):
@@ -1528,7 +1533,7 @@ class VulnerabilityView(
         if by_severity:
             for severity in values:
                 if severity not in VulnerabilityABC.SEVERITIES:
-                    abort(BAD_REQUEST, "Severity type not valid")
+                    abort(HTTP_BAD_REQUEST, "Severity type not valid")
 
             host_ids = host_ids.filter(
                 VulnerabilityGeneric.severity.in_(values)

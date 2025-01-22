@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Standard library imports
-from http.client import BAD_REQUEST
+from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 
 # Related third party imports
 from flask import Blueprint, abort, jsonify, make_response
@@ -47,7 +47,7 @@ class ServiceWorkspacedView(
         port_number = data.get("port", "1")
 
         if not port_number.isdigit():
-            abort(make_response(jsonify(message="Invalid Port number"), BAD_REQUEST))
+            abort(make_response(jsonify(message="Invalid Port number"), HTTP_BAD_REQUEST))
 
         service = super()._perform_create(data, workspace_name)
 

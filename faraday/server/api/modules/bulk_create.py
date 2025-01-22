@@ -1,7 +1,7 @@
 # Standard library imports
 from copy import deepcopy
 from datetime import date, datetime, timedelta
-from http.client import BAD_REQUEST, CREATED, NOT_FOUND
+from http.client import BAD_REQUEST as HTTP_BAD_REQUEST, CREATED as HTTP_CREATED, NOT_FOUND as HTTP_NOT_FOUND
 from json import dump as json_dump
 from logging import getLogger
 from random import choice
@@ -1101,7 +1101,7 @@ class BulkCreateView(GenericWorkspacedView):
 
         if 'execution_id' in data:
             if not workspace:
-                abort(NOT_FOUND, f"No such workspace: {workspace_name}")
+                abort(HTTP_NOT_FOUND, f"No such workspace: {workspace_name}")
 
             execution_id = data["execution_id"]
 
@@ -1114,24 +1114,24 @@ class BulkCreateView(GenericWorkspacedView):
                     NoResultFound(
                         f"No row was found for agent executor id {execution_id}")
                 )
-                abort(BAD_REQUEST, "Can not find an agent execution with that id")
+                abort(HTTP_BAD_REQUEST, "Can not find an agent execution with that id")
 
             if workspace_name != agent_execution.workspace.name:
                 logger.exception(
                     ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
                                f"to workspace {agent_execution.workspace.name}")
                 )
-                abort(BAD_REQUEST, "Trying to write to the incorrect workspace")
+                abort(HTTP_BAD_REQUEST, "Trying to write to the incorrect workspace")
             command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
             if command is None:
                 logger.exception(
                     ValueError(f"There is no command with {agent_execution.command.id}")
                 )
-                abort(BAD_REQUEST, "Trying to update a not existent command")
+                abort(HTTP_BAD_REQUEST, "Trying to update a not existent command")
             db.session.flush()
         else:
             if current_user.is_anonymous:
-                abort(BAD_REQUEST, "argument expected: execution_id")
+                abort(HTTP_BAD_REQUEST, "argument expected: execution_id")
 
             command = Command(**(data['command']))
             command.workspace = workspace
@@ -1188,7 +1188,7 @@ class BulkCreateView(GenericWorkspacedView):
                 "message": "Created",
                 "command_id": command.id
             }
-        ), CREATED
+        ), HTTP_CREATED
 
     post.is_public = True
 

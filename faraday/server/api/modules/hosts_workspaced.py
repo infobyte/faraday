@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 # Standard library imports
 from csv import DictReader
-from http.client import BAD_REQUEST, FORBIDDEN, OK
+from http.client import BAD_REQUEST as HTTP_BAD_REQUEST, FORBIDDEN as HTTP_FORBIDDEN, OK as HTTP_OK
 from io import StringIO
 from logging import getLogger
 from re import findall
@@ -76,7 +76,7 @@ class HostWorkspacedView(
         try:
             validate_csrf(request.form.get('csrf_token'))
         except ValidationError:
-            abort(FORBIDDEN)
+            abort(HTTP_FORBIDDEN)
 
         def parse_hosts(list_string):
             items = findall(r"([.a-zA-Z0-9_-]+)", list_string)
@@ -86,7 +86,7 @@ class HostWorkspacedView(
 
         logger.info("Create hosts from CSV")
         if 'file' not in request.files:
-            abort(BAD_REQUEST, "Missing File in request")
+            abort(HTTP_BAD_REQUEST, "Missing File in request")
         hosts_file = request.files['file']
         stream = StringIO(hosts_file.stream.read().decode("utf-8"), newline=None)
         FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
@@ -94,7 +94,7 @@ class HostWorkspacedView(
             hosts_reader = DictReader(stream)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
-                abort(BAD_REQUEST, f"Missing Required headers in CSV ({FILE_HEADERS})")
+                abort(HTTP_BAD_REQUEST, f"Missing Required headers in CSV ({FILE_HEADERS})")
             hosts_created_count = 0
             hosts_with_errors_count = 0
             for host_dict in hosts_reader:
@@ -116,10 +116,10 @@ class HostWorkspacedView(
             logger.info("Hosts created in bulk")
             debounce_workspace_update(workspace_name)
             return make_response(jsonify(hosts_created=hosts_created_count,
-                                         hosts_with_errors=hosts_with_errors_count), OK)
+                                         hosts_with_errors=hosts_with_errors_count), HTTP_OK)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
-            abort(BAD_REQUEST, f"Error parsing hosts CSV ({e})")
+            abort(HTTP_BAD_REQUEST, f"Error parsing hosts CSV ({e})")
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])

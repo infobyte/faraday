@@ -8,15 +8,15 @@ See the file 'doc/LICENSE' for the license information
 from collections import defaultdict
 from datetime import timezone
 from http.client import (
-    BAD_REQUEST,
-    CONFLICT,
-    CREATED,
-    FORBIDDEN,
-    INTERNAL_SERVER_ERROR,
-    NO_CONTENT,
-    NOT_FOUND,
-    OK,
-    UNPROCESSABLE_ENTITY,
+    BAD_REQUEST as HTTP_BAD_REQUEST,
+    CONFLICT as HTTP_CONFLICT,
+    CREATED as HTTP_CREATED,
+    FORBIDDEN as HTTP_FORBIDDEN,
+    INTERNAL_SERVER_ERROR as HTTP_INTERNAL_SERVER_ERROR,
+    NO_CONTENT as HTTP_NO_CONTENT,
+    NOT_FOUND as HTTP_NOT_FOUND,
+    OK as HTTP_OK,
+    UNPROCESSABLE_ENTITY as HTTP_UNPROCESSABLE_ENTITY,
 )
 from json import JSONDecodeError, dumps as json_dumps, loads as json_loads
 from logging import getLogger
@@ -95,10 +95,10 @@ def get_group_by_and_sort_dir(model_class):
     # Also we should check that the field exists in the db and isn't, for
     # example, a relationship
     if not group_by or group_by not in inspect(model_class).attrs:
-        abort(BAD_REQUEST, {"message": "group_by is a required parameter"})
+        abort(HTTP_BAD_REQUEST, {"message": "group_by is a required parameter"})
 
     if sort_dir and sort_dir not in ('asc', 'desc'):
-        abort(BAD_REQUEST, {"message": "order must be 'desc' or 'asc'"})
+        abort(HTTP_BAD_REQUEST, {"message": "order must be 'desc' or 'asc'"})
 
     return group_by, sort_dir
 
@@ -107,14 +107,14 @@ def get_workspace(workspace_name):
     try:
         ws = Workspace.query.filter_by(name=workspace_name).one()
         if not ws.active:
-            abort(FORBIDDEN, f"Disabled workspace: {workspace_name}")
+            abort(HTTP_FORBIDDEN, f"Disabled workspace: {workspace_name}")
         return ws
     except NoResultFound:
-        abort(NOT_FOUND, f"No such workspace: {workspace_name}")
+        abort(HTTP_NOT_FOUND, f"No such workspace: {workspace_name}")
 
 
 class InvalidUsage(Exception):
-    status_code = BAD_REQUEST
+    status_code = HTTP_BAD_REQUEST
 
     def __init__(self, message, status_code=None, payload=None):
         Exception.__init__(self)
@@ -265,7 +265,7 @@ class GenericView(FlaskView):
             self.lookup_field_type(object_id)
         except ValueError:
             if raise_error:
-                abort(NOT_FOUND, 'Invalid format of lookup field')
+                abort(HTTP_NOT_FOUND, 'Invalid format of lookup field')
             return False
         return True
 
@@ -345,7 +345,7 @@ class GenericView(FlaskView):
         try:
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
-            abort(NOT_FOUND, f'Object with id "{object_id}" not found')
+            abort(HTTP_NOT_FOUND, f'Object with id "{object_id}" not found')
         return obj
 
     def _get_objects(self, object_ids, eagerload=False, **kwargs):
@@ -391,7 +391,7 @@ class GenericView(FlaskView):
         400 instead of 409"""
         super().register(app, *args, **kwargs)
 
-        @app.errorhandler(UNPROCESSABLE_ENTITY)
+        @app.errorhandler(HTTP_UNPROCESSABLE_ENTITY)
         def handle_error(err):  # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
@@ -402,9 +402,9 @@ class GenericView(FlaskView):
                 messages = ['Invalid request']
             return jsonify({
                 'messages': messages,
-            }), BAD_REQUEST
+            }), HTTP_BAD_REQUEST
 
-        @app.errorhandler(CONFLICT)
+        @app.errorhandler(HTTP_CONFLICT)
         def handle_conflict(err):  # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc', None) or getattr(err, 'description', None)
@@ -413,11 +413,11 @@ class GenericView(FlaskView):
                 messages = exc.messages
             else:
                 messages = ['Invalid request']
-            return jsonify(messages), CONFLICT
+            return jsonify(messages), HTTP_CONFLICT
 
-        @app.errorhandler(FORBIDDEN)
+        @app.errorhandler(HTTP_FORBIDDEN)
         def handle_forbidden(err):  # pylint: disable=unused-variable
-            return jsonify({"message": err.description}), FORBIDDEN
+            return jsonify({"message": err.description}), HTTP_FORBIDDEN
 
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):  # pylint: disable=unused-variable
@@ -430,12 +430,12 @@ class GenericView(FlaskView):
             response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
             return flask.jsonify(response), 404"""
 
-        @app.errorhandler(INTERNAL_SERVER_ERROR)
+        @app.errorhandler(HTTP_INTERNAL_SERVER_ERROR)
         def handle_server_error(err):  # pylint: disable=unused-variable
             response = {'success': False,
                         'message': f"Exception: {err.original_exception}" if faraday_server.debug else
                         'Internal Server Error'}
-            return jsonify(response), INTERNAL_SERVER_ERROR
+            return jsonify(response), HTTP_INTERNAL_SERVER_ERROR
 
 
 class GenericWorkspacedView(GenericView):
@@ -468,7 +468,7 @@ class GenericWorkspacedView(GenericView):
         try:
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
-            abort(NOT_FOUND, f'Object with id "{object_id}" not found')
+            abort(HTTP_NOT_FOUND, f'Object with id "{object_id}" not found')
         return obj
 
     def _set_schema_context(self, context, **kwargs):
@@ -482,7 +482,7 @@ class GenericWorkspacedView(GenericView):
             sup.before_request(name, *args, **kwargs)
         if (get_workspace(kwargs['workspace_name']).readonly
                 and request.method not in ['GET', 'HEAD', 'OPTIONS']):
-            abort(FORBIDDEN, "Altering a readonly workspace is not allowed")
+            abort(HTTP_FORBIDDEN, "Altering a readonly workspace is not allowed")
 
 
 class GenericMultiWorkspacedView(GenericWorkspacedView):
@@ -664,13 +664,13 @@ class PaginatedMixin:
                 page = int(request.args.get(
                     self.page_number_parameter_name, 1))
             except (TypeError, ValueError):
-                abort(NOT_FOUND, 'Invalid page number')
+                abort(HTTP_NOT_FOUND, 'Invalid page number')
 
             try:
                 per_page = int(request.args[
                                    self.per_page_parameter_name])
             except (TypeError, ValueError):
-                abort(NOT_FOUND, 'Invalid per_page value')
+                abort(HTTP_NOT_FOUND, 'Invalid per_page value')
 
             pagination_metadata = query.paginate(page=page, per_page=per_page, error_out=False)
             return pagination_metadata.items, pagination_metadata
@@ -757,7 +757,7 @@ class FilterWorkspacedMixin(ListMixin):
             filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
-            abort(BAD_REQUEST, "Invalid filters")
+            abort(HTTP_BAD_REQUEST, "Invalid filters")
 
         workspace = get_workspace(workspace_name)
         filter_query = None
@@ -775,9 +775,9 @@ class FilterWorkspacedMixin(ListMixin):
                     severity_count=severity_count
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
 
             count = filter_query.count()
             filter_query = filter_query.limit(limit).offset(offset)
@@ -791,9 +791,9 @@ class FilterWorkspacedMixin(ListMixin):
                     workspace,
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             data, rows_count = get_filtered_data(filters, filter_query)
             return data, rows_count
 
@@ -811,11 +811,11 @@ class FilterObjects:
             filters_to_validate = FlaskRestlessSchema().load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
-            abort(BAD_REQUEST, "Invalid filters")
+            abort(HTTP_BAD_REQUEST, "Invalid filters")
 
         if hasattr(self, 'fields_to_exclude'):
             if not self._validate_fields_standalone(filters_to_validate):
-                abort(BAD_REQUEST, "Invalid filters")
+                abort(HTTP_BAD_REQUEST, "Invalid filters")
 
         return filters
 
@@ -899,7 +899,7 @@ class FilterObjects:
             filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
-            abort(BAD_REQUEST, "Invalid filters")
+            abort(HTTP_BAD_REQUEST, "Invalid filters")
 
         workspace = get_workspace(workspace_name) if workspace_name else None
 
@@ -920,9 +920,9 @@ class FilterObjects:
                     workspace=workspace
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
@@ -941,9 +941,9 @@ class FilterObjects:
                     workspace=workspace
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
 
@@ -1093,7 +1093,7 @@ class FilterMixin(ListMixin):
             filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
-            abort(BAD_REQUEST, "Invalid filters")
+            abort(HTTP_BAD_REQUEST, "Invalid filters")
 
         filter_query = None
         if 'group_by' not in filters:
@@ -1112,9 +1112,9 @@ class FilterMixin(ListMixin):
                     list_view=list_view
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
@@ -1134,9 +1134,9 @@ class FilterMixin(ListMixin):
                     filters,
                 )
             except TypeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
-                abort(BAD_REQUEST, e)
+                abort(HTTP_BAD_REQUEST, e)
 
             if extra_alchemy_filters is not None:
                 filter_query += filter_query.filter(extra_alchemy_filters)
@@ -1278,7 +1278,7 @@ class CreateMixin:
         if not current_user.is_anonymous:
             created.creator = current_user
         db.session.commit()
-        return self._dump(created, kwargs), CREATED
+        return self._dump(created, kwargs), HTTP_CREATED
 
     def _perform_create(self, data, **kwargs):
         """Check for conflicts and create a new object
@@ -1296,13 +1296,13 @@ class CreateMixin:
             logger.info(f"Couldn't create {obj}")
             if not is_unique_constraint_violation(ex):
                 if not_null_constraint_violation(ex):
-                    abort(make_response({'message': 'Be sure to send all required parameters.'}, BAD_REQUEST))
+                    abort(make_response({'message': 'Be sure to send all required parameters.'}, HTTP_BAD_REQUEST))
                 else:
                     raise
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:
-                abort(CONFLICT, ValidationError(
+                abort(HTTP_CONFLICT, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -1415,7 +1415,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             workspace = get_workspace(workspace_name)
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
-                abort(CONFLICT, ValidationError(
+                abort(HTTP_CONFLICT, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -1470,7 +1470,7 @@ class UpdateMixin:
         self._update_object(obj, data, partial=False)
         self._perform_update(object_id, obj, data, **kwargs)
 
-        return self._dump(obj, kwargs), OK
+        return self._dump(obj, kwargs), HTTP_OK
 
     def _update_object(self, obj, data, **kwargs):
         """Perform changes in the selected object
@@ -1501,7 +1501,7 @@ class UpdateMixin:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
-                abort(CONFLICT, ValidationError(
+                abort(HTTP_CONFLICT, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -1549,7 +1549,7 @@ class UpdateMixin:
         self._update_object(obj, data, partial=True)
         self._perform_update(object_id, obj, data, partial=True, **kwargs)
 
-        return self._dump(obj, kwargs, exclude=exclude), OK
+        return self._dump(obj, kwargs, exclude=exclude), HTTP_OK
 
 
 class BulkUpdateMixin(FilterObjects):
@@ -1576,7 +1576,7 @@ class BulkUpdateMixin(FilterObjects):
             filtered_objects = self._process_filter_data(request.args.get('q', '{"filters": []}'), workspace_name)
             ids = list(x.get("obj_id") for x in filtered_objects[0])
         else:
-            abort(BAD_REQUEST)
+            abort(HTTP_BAD_REQUEST)
 
         objects = self._get_objects(ids, **kwargs)
         context = {'updating': True, 'objects': objects}
@@ -1585,7 +1585,7 @@ class BulkUpdateMixin(FilterObjects):
         data.pop('id', None)
         data.pop('ids', None)
 
-        return self._perform_bulk_update(ids, data, **kwargs), OK
+        return self._perform_bulk_update(ids, data, **kwargs), HTTP_OK
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
@@ -1621,7 +1621,7 @@ class BulkUpdateMixin(FilterObjects):
             return jsonify(response)
         except ValueError as e:
             db.session.rollback()
-            abort(BAD_REQUEST, ValidationError(
+            abort(HTTP_BAD_REQUEST, ValidationError(
                {
                    'message': str(e),
                }
@@ -1635,7 +1635,7 @@ class BulkUpdateMixin(FilterObjects):
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
             conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
             if conflict_obj is not None:
-                abort(CONFLICT, ValidationError(
+                abort(HTTP_CONFLICT, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -1643,7 +1643,7 @@ class BulkUpdateMixin(FilterObjects):
                     }
                 ))
             elif len(ids) >= 2:
-                abort(CONFLICT, ValidationError(
+                abort(HTTP_CONFLICT, ValidationError(
                     {
                         'message': 'Updating more than one object with unique data',
                         'data': data
@@ -1782,7 +1782,7 @@ class DeleteMixin:
         obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj, **kwargs)
         # TODO: Check _post_delete def differences with corp
-        return None, NO_CONTENT
+        return None, HTTP_NO_CONTENT
 
     def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
@@ -1813,9 +1813,9 @@ class BulkDeleteMixin(FilterObjects):
             filtered_objects = self._process_filter_data(request.args.get('q', '{"filters": []}'))
             ids = list(x.get("id") for x in filtered_objects[0])
         else:
-            abort(BAD_REQUEST)
+            abort(HTTP_BAD_REQUEST)
         # TODO: Check _post_bulk_delete with corp
-        return self._perform_bulk_delete(ids, **kwargs), OK
+        return self._perform_bulk_delete(ids, **kwargs), HTTP_OK
 
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
@@ -1998,7 +1998,7 @@ class CountMultiWorkspacedMixin:
         workspace_names_list = request.args.get('workspaces', None)
 
         if not workspace_names_list:
-            abort(BAD_REQUEST, {"message": "workspaces is a required parameter"})
+            abort(HTTP_BAD_REQUEST, {"message": "workspaces is a required parameter"})
 
         workspace_names_list = workspace_names_list.split(',')
 

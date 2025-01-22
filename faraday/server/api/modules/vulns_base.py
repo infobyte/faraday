@@ -911,7 +911,7 @@ class VulnerabilityView(
         return jsonify({'message': message})
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>', methods=['PATCH'])
-    def patch_attachment(self, workspace_name, vuln_id, attachment_filename):
+    def patch_attachment(self, vuln_id, attachment_filename, **kwargs):
         """
         ---
         patch:
@@ -935,12 +935,20 @@ class VulnerabilityView(
             400:
               description: Validation error
         """
+        vuln_permission_check = self._apply_filter_context(
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
+            operation="write"
+        ).first()
+
+        if not vuln_permission_check:
+            abort(NOT_FOUND, "Vulnerability not found")
+
         # Validate JSON input
         schema = PatchAttachmentSchema()
         try:
             data = schema.load(request.get_json())
         except ValidationError as e:
-            flask.abort(400, str(e.messages))
+            abort(BAD_REQUEST, str(e.messages))
 
         # Check if attachment exists
         try:
@@ -950,14 +958,14 @@ class VulnerabilityView(
                 filename=attachment_filename
             ).one()
         except NoResultFound:
-            flask.abort(404, "Attachment or Vulnerability not found")
+            abort(NOT_FOUND, "Attachment or Vulnerability not found")
 
         # Update and commit the changes
         attachment.description = data["description"]
         db.session.commit()
-        debounce_workspace_update(workspace_name)
+        debounce_workspace_update(vuln_permission_check.workspace.name)
 
-        return flask.jsonify({"message": "Attachment updated successfully"}), 200
+        return jsonify({"message": "Attachment updated successfully"}), OK
 
     @route('/filter')
     def filter(self, **kwargs):

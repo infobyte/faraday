@@ -3306,6 +3306,7 @@ class Executor(Metadata):
     )
     parameters_metadata = Column(JSONType, nullable=False, default={})
     last_run = Column(DateTime)
+    category = Column(JSONType, nullable=True)
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -3508,6 +3509,7 @@ class CloudAgent(Metadata):
     slug = Column(String, nullable=False, unique=True)
     access_token = Column(Text, unique=True)
     params = Column(JSONType)
+    category = Column(JSONType, nullable=True)
 
     @property
     def last_run(self):

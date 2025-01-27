@@ -266,9 +266,65 @@ class VulnerabilityWorkspacedView(
           200:
             description: Ok
         """
-        return VulnerabilityView.count(self, **kwargs)
+        res = super().count(**kwargs)
+
+        def convert_group(group, type):
+            group = group.copy()
+
+            if type == "severity":
+                severity_map = {
+                    "informational": "info",
+                    "medium": "med"
+                }
+                severity = group[type]
+                group['severity'] = group['name'] = severity_map.get(
+                    severity, severity)
+            elif type == "confirmed":
+                confirmed_map = {
+                    1: "True",
+                    0: "False"
+                }
+                confirmed = group[type]
+                group[type] = group['name'] = confirmed_map.get(
+                    confirmed, confirmed)
+            else:
+                group['name'] = group[type]
+            return group
+
+        if request.args.get('group_by') == 'severity':
+            res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
+        if request.args.get('group_by') == 'confirmed':
+            res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
+        return res
 
     def put(self, object_id, workspace_name=None, **kwargs):
+        """
+                ---
+                  tags: ["Vulnerability"]
+                  summary: Updates Vulnerability
+                  parameters:
+                  - in: path
+                    name: object_id
+                    required: true
+                    schema:
+                      type: integer
+                  - in: path
+                    name: workspace_name
+                    required: true
+                    schema:
+                      type: string
+                  requestBody:
+                    required: true
+                    content:
+                      application/json:
+                        schema: VulnerabilitySchema
+                  responses:
+                    200:
+                      description: Ok
+                      content:
+                        application/json:
+                          schema: VulnerabilitySchema
+                """
         if workspace_name:
             debounce_workspace_update(workspace_name)
         return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)

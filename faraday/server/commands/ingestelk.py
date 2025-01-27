@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch, helpers, __version__
 import click
 from sqlalchemy.orm import joinedload
 
-from faraday.server.api.modules.vulns import VulnerabilitySchema
+from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.models import Workspace, VulnerabilityGeneric
 from faraday.settings import get_settings
 

@@ -27,11 +27,11 @@ from depot.manager import DepotManager
 
 from hypothesis import given, settings, strategies as st
 
-from faraday.server.api.modules.vulns_context import (
-    VulnerabilityContextFilterSet,
-    VulnerabilityContextView
+from faraday.server.api.modules.vulns_base import (
+    VulnerabilityFilterSet,
+    VulnerabilityView
 )
-from faraday.server.api.modules.vulns import VulnerabilitySchema
+from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.schemas import NullToBlankString
 from tests import factories
@@ -184,7 +184,7 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
     api_endpoint = 'vulns'
     # unique_fields = ['ip']
     # update_fields = ['ip', 'description', 'os']
-    view_class = VulnerabilityContextView
+    view_class = VulnerabilityView
     patchable_fields = ['name']
 
     @pytest.fixture(autouse=True)
@@ -2590,7 +2590,7 @@ class TestCustomFieldVulnerabilityContext(ReadOnlyAPITests):
     model = Vulnerability
     factory = factories.VulnerabilityFactory
     api_endpoint = 'vulns'
-    view_class = VulnerabilityContextView
+    view_class = VulnerabilityView
     patchable_fields = ['name']
 
     @pytest.mark.skip(reason='POST methods not supported')
@@ -3795,7 +3795,7 @@ class TestVulnerabilitySearch:
 def test_type_filter(workspace, session,
                      vulnerability_factory,
                      vulnerability_web_factory):
-    filter_ = VulnerabilityContextFilterSet().filters['type']
+    filter_ = VulnerabilityFilterSet().filters['type']
     std_vulns = vulnerability_factory.create_batch(10, workspace=workspace)
     web_vulns = vulnerability_web_factory.create_batch(10, workspace=workspace)
     session.add_all(std_vulns)
@@ -3820,7 +3820,7 @@ def test_type_filter(workspace, session,
 def test_creator_filter(workspace, session,
                         empty_command_factory, command_object_factory,
                         vulnerability_factory, vulnerability_web_factory):
-    filter_ = VulnerabilityContextFilterSet().filters['creator']
+    filter_ = VulnerabilityFilterSet().filters['creator']
     std_vulns = vulnerability_factory.create_batch(10,
                                                    workspace=workspace)[:5]
     session.add(workspace)
@@ -3849,7 +3849,7 @@ def test_creator_filter(workspace, session,
 
 def test_service_filter(workspace, session, host, service_factory,
                         vulnerability_factory, vulnerability_web_factory):
-    filter_ = VulnerabilityContextFilterSet().filters['service']
+    filter_ = VulnerabilityFilterSet().filters['service']
 
     vulnerability_factory.create_batch(5, host=host, service=None,
                                        workspace=workspace)
@@ -3878,7 +3878,7 @@ def test_service_filter(workspace, session, host, service_factory,
 
 def test_name_filter(workspace, session, host, vulnerability_factory):
     """Test case insensitivity and partial match detection"""
-    filter_ = VulnerabilityContextFilterSet().filters['name']
+    filter_ = VulnerabilityFilterSet().filters['name']
     vulnerability_factory.create_batch(5, host=host, workspace=workspace)
     expected_vulns = vulnerability_factory.create_batch(
         5, host=host, workspace=workspace, name="Old OpenSSL version")

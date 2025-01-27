@@ -20,6 +20,95 @@ from flask import jsonify
 
 logger = logging.getLogger(__name__)
 
+# Meta fields in common for VulnerabilitySchema, VulnerabilityWebSchema and VulnerabilityFilterSet
+BASE_FIELDS = (
+    "command_id",
+    "confirmed",
+    "data",
+    "description",
+    "id",
+    "name",
+    "resolution",
+    "service",
+    "severity",
+    "status",
+    "target",
+    "tool",
+)
+
+# Meta fields in common for VulnerabilityWebSchema and VulnerabilityFilterSet
+WEB_BASE_FIELDS = (
+    "method",
+    "path",
+    "request",
+    "response",
+    "status_code",
+    "website",
+)
+
+# Meta fields in common for VulnerabilitySchema and VulnerabilityWebSchema
+SCHEMA_FIELDS = BASE_FIELDS + (
+    "_attachments",
+    "_id",
+    "_rev",
+    "custom_fields",
+    "cve",
+    "cvss2",
+    "cvss3",
+    "cvss4",
+    "cwe",
+    "date",
+    "desc",
+    "easeofresolution",
+    "external_id",
+    "host_os",
+    "hostnames",
+    "impact",
+    "issuetracker",
+    "metadata",
+    "obj_id",
+    "owned",
+    "owner",
+    "parent",
+    "parent_type",
+    "policyviolations",
+    "refs",
+    "risk",
+    "tags",
+    "type",
+    "workspace_name",
+)
+
+# Meta fields exclusive for VulnerabilityWebSchema
+WEB_SCHEMA_FIELDS = SCHEMA_FIELDS + WEB_BASE_FIELDS + (
+    "owasp",
+    "params",
+    "pname",
+    "query",
+)
+
+# Meta fields exclusive for VulnerabilityFilterSet
+FILTER_SET_FIELDS = BASE_FIELDS + WEB_BASE_FIELDS + (
+    "creator",
+    "ease_of_resolution",
+    "parameter_name",
+    "parameters",
+    "query_string",
+    "service_id",
+)
+
+FILTER_SET_STRICT_FIELDS = (
+    "confirmed",
+    "ease_of_resolution",
+    "method",
+    "service_id",
+    "severity",
+    "status",
+    "workspace.name",
+)
+
+WORKSPACED_SCHEMA_EXCLUDE_FIELDS = ("workspace.name",)
+
 
 def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):
     vuln.refs = create_reference(references, vuln.id)

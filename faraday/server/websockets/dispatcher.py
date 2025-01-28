@@ -5,10 +5,12 @@ See the file 'doc/LICENSE' for the license information
 """
 # Standard library imports
 import logging
+from datetime import datetime
 
 # Related third party imports
 import itsdangerous
 from flask import current_app, request
+from sqlalchemy.orm.attributes import flag_modified
 
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.models import Workspace, db, Executor, Agent
@@ -34,6 +36,14 @@ def update_executors(agent, executors):
         )
 
         executor.parameters_metadata = raw_executor['args']
+        category = executor.category
+        if category is not None:
+            category["last_connected_date"] = str(datetime.now()).split(".")[0]
+            executor.category = category
+            flag_modified(executor, "category")
+        else:
+            category = {"category": [], "last_connected_date": str(datetime.now()).split(".")[0]}
+            executor.category = category
         db.session.add(executor)
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])

@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 """
 # Standard library imports
 import logging
-from datetime import datetime
 
 # Related third party imports
 import itsdangerous
@@ -38,11 +37,13 @@ def update_executors(agent, executors):
         executor.parameters_metadata = raw_executor['args']
         category = executor.category
         if category is not None:
-            category["last_connected_date"] = str(datetime.now()).split(".")[0]
+            for raw_category in raw_executor["category"]:
+                if raw_category not in category["category"]:
+                    category["category"].append(raw_category)
             executor.category = category
             flag_modified(executor, "category")
         else:
-            category = {"category": [], "last_connected_date": str(datetime.now()).split(".")[0]}
+            category = {"category": raw_executor["category"]}
             executor.category = category
         db.session.add(executor)
         db.session.commit()

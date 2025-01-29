@@ -9,7 +9,6 @@ import logging
 # Related third party imports
 import itsdangerous
 from flask import current_app, request
-from sqlalchemy.orm.attributes import flag_modified
 
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.models import Workspace, db, Executor, Agent
@@ -35,14 +34,7 @@ def update_executors(agent, executors):
         )
 
         executor.parameters_metadata = raw_executor['args']
-        category = executor.category
-        if category is not None:
-            for raw_category in raw_executor["category"]:
-                if raw_category not in category["category"]:
-                    category["category"].append(raw_category)
-            executor.category = category
-            flag_modified(executor, "category")
-        else:
+        if raw_executor["category"]:
             category = {"category": raw_executor["category"]}
             executor.category = category
         db.session.add(executor)

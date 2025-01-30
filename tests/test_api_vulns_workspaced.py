@@ -28,11 +28,8 @@ from depot.manager import DepotManager
 from hypothesis import given, settings, strategies as st
 from cvss import CVSS3
 
-from faraday.server.api.modules.vulns import (
-    VulnerabilityFilterSet,
-    VulnerabilitySchema,
-    VulnerabilityView
-)
+from faraday.server.api.modules.vulns_base import VulnerabilitySchema
+from faraday.server.api.modules.vulns_workspaced import VulnerabilityWorkspacedFilterSet, VulnerabilityWorkspacedView
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.schemas import NullToBlankString
 from tests import factories
@@ -192,7 +189,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
     api_endpoint = 'vulns'
     # unique_fields = ['ip']
     # update_fields = ['ip', 'description', 'os']
-    view_class = VulnerabilityView
+    view_class = VulnerabilityWorkspacedView
     patchable_fields = ['name']
 
     def test_backward_json_compatibility(self, test_client, second_workspace, session):
@@ -2528,6 +2525,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         ], key=lambda i: (i['count'], i['name'], i['severity']))
 
     def test_count_severity_map(self, test_client, second_workspace, session):
+        VulnerabilityGeneric.query.delete()
+        session.commit()
         vulns = self.factory.create_batch(4, severity='informational',
                                           workspace=second_workspace)
         vulns += self.factory.create_batch(3, severity='medium',
@@ -4034,7 +4033,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
     model = Vulnerability
     factory = factories.VulnerabilityFactory
     api_endpoint = 'vulns'
-    view_class = VulnerabilityView
+    view_class = VulnerabilityWorkspacedView
     patchable_fields = ['name']
 
     def test_create_vuln_with_custom_fields_shown(self, test_client, second_workspace, session):
@@ -5247,11 +5246,72 @@ class TestVulnerabilitySearch:
 
         assert attachment['description'] == 'Attachment description'
 
+    def test_patch_attachment_description(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        patch_data = {'description': 'Updated attachment description'}
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/testing_description.txt',
+            json=patch_data,
+        )
+
+        assert res.status_code == 200
+
+        updated_attachment = session.query(File).filter_by(
+            object_type='vulnerability',
+            object_id=vuln.id,
+            filename='testing_description.txt'
+        ).one()
+        assert updated_attachment.description == 'Updated attachment description'
+
+    def test_patch_attachment_description_bad_body(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        patch_data = {'descriptions': 'Updated attachment description'}
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/testing_description.txt',
+            json=patch_data,
+        )
+
+        assert res.status_code == 400
+
 
 def test_type_filter(workspace, session,
                      vulnerability_factory,
                      vulnerability_web_factory):
-    filter_ = VulnerabilityFilterSet().filters['type']
+    filter_ = VulnerabilityWorkspacedFilterSet().filters['type']
     std_vulns = vulnerability_factory.create_batch(10, workspace=workspace)
     web_vulns = vulnerability_web_factory.create_batch(10, workspace=workspace)
     session.add_all(std_vulns)
@@ -5276,7 +5336,7 @@ def test_type_filter(workspace, session,
 def test_creator_filter(workspace, session,
                         empty_command_factory, command_object_factory,
                         vulnerability_factory, vulnerability_web_factory):
-    filter_ = VulnerabilityFilterSet().filters['creator']
+    filter_ = VulnerabilityWorkspacedFilterSet().filters['creator']
     std_vulns = vulnerability_factory.create_batch(10,
                                                    workspace=workspace)[:5]
     session.add(workspace)
@@ -5305,7 +5365,7 @@ def test_creator_filter(workspace, session,
 
 def test_service_filter(workspace, session, host, service_factory,
                         vulnerability_factory, vulnerability_web_factory):
-    filter_ = VulnerabilityFilterSet().filters['service']
+    filter_ = VulnerabilityWorkspacedFilterSet().filters['service']
 
     vulnerability_factory.create_batch(5, host=host, service=None,
                                        workspace=workspace)
@@ -5334,7 +5394,7 @@ def test_service_filter(workspace, session, host, service_factory,
 
 def test_name_filter(workspace, session, host, vulnerability_factory):
     """Test case insensitivity and partial match detection"""
-    filter_ = VulnerabilityFilterSet().filters['name']
+    filter_ = VulnerabilityWorkspacedFilterSet().filters['name']
     vulnerability_factory.create_batch(5, host=host, workspace=workspace)
     expected_vulns = vulnerability_factory.create_batch(
         5, host=host, workspace=workspace, name="Old OpenSSL version")

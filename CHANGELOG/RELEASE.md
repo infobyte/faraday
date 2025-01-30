@@ -1,11 +1,12 @@
 New features in the latest update
 =====================================
 
+
 5.11.0 [Jan 30th, 2025]:
 ---
- * [ADD] Attachment descriptions can now be updated. #7868
- * [MOD] Refactored contextualized modules to improve code readability and maintainability. No changes to functionality. #7781
  * [FIX] Fixed an issue where evidence descriptions were not saved correctly during manual vulnerability creation. #7867
+ * [MOD] Refactored contextualized modules to improve code readability and maintainability. No changes to functionality. #7781
+ * [ADD] Attachment descriptions can now be updated. #7868
 
 5.10.1 [Jan 13th, 2025]:
 ---
@@ -30,17 +31,17 @@ New features in the latest update
  * [ADD] Added support for CVSS 4.0. #7753
  * [ADD] Improved filtering for better notification links. #7655
  * [ADD] Added new operator ANY_IN for pipeline job conditions. #7804
- * [ADD] Added contains conditional for pipelines conditions. #7805
- * [ADD] Added custom fields as conditions. #7721
  * [FIX] Updated nginx config template for socketio. #7629
+ * [ADD] Added contains conditional for pipelines conditions. #7805
+ * [ADD] Add custom fields as conditions. #7721
 
 5.7.0 [Sep 20th, 2024]:
 ---
  * [ADD] Added bulk update feature for custom attributes. #7716
+ * [FIX] Fix hostnames not working on pipelines conditions. #7807
  * [FIX] Allow services to be searchable. #7514
  * [FIX] Fixed crash on unsupported image format upload. #7710
  * [FIX] Fixed service based jobs not working for assets #7778
- * [FIX] Fixed hostnames not working on pipelines conditions. #7807
 
 5.6.1 [Aug 28th, 2024]:
 ---
@@ -74,12 +75,12 @@ New features in the latest update
 
 5.3.0 [May 23rd, 2024]:
 ---
- * [ADD] Add vulnerability endpoint that retrieves all the objects that the users has access to. #7521
- * [ADD] Add services and host endpoints that retrieves all the information that the users has access to. #7503
- * [MOD] Modify version of libraries accordingly to dependabot findings. #7691
  * [MOD] Modified parameters for interactive swagger. #7610
+ * [ADD] Add services and host endoints that retrives all the information that the users has access. #7503
  * [FIX] Revised the references fetching strategy to enhance memory usage during CSV export. #7712
- * [FIX] Fixed creation of vulnerability from template. #7711
+ * [FIX] Fixed creation of vuln from template. #7711
+ * [MOD] Modify version of libraries accordingly to dependabot findings. #7691
+ * [ADD] Add vuln endoint that retrives all the objects that the users has access. #7521
 
 5.2.2 [Apr 5th, 2024]:
 ---
@@ -92,24 +93,19 @@ New features in the latest update
 5.2.0 [Mar 12th, 2024]:
 ---
  * [FIX] Fix hosts stats when bulk delete is applied to vulns. #7676
- * [FIX] Fix agents status from database. We were not updating the agents status on faraday-server restarts. #7677
+ * [FIX] The server was not updating the agents status on restart. #7677
  * [MOD] Remove websockets port from docker-compose. #7679
-
-5.1.1 [Feb 9th, 2024]:
----
- * [FIX] Improve of host view performance.
 
 5.1.0 [Feb 8th, 2024]:
 ---
+ * [MOD] Modify analytics type enum. #7615
  * [ADD] Performance improved in `assets` views making several vulnerabilities stats statics in asset's model. #7634
+ * [FIX] Fix references. #7648
  * [ADD] Now `custom fields` are available for filtering vulnerabilities. Also add `date` type for custom fields. #7625
  * [MOD] We changed the order in which we set the path constant of `faraday_home` in order to fix a bug with faraday_manage when is installed by deb/rpm. #7653
- * [MOD] Modify analytics type enum. #7615
- * [FIX] Fix references. #7648
 
 5.0.1 [Jan 2nd, 2024]:
 ---
- * [MOD] Code refactor.
 
 5.0.0 [Dec 13th, 2023]:
 ---
@@ -122,8 +118,8 @@ New features in the latest update
 
 4.6.1 [Oct 19th, 2023]:
 ---
- * [ADD] New `exclude_stats` query param in workspace endpoint. #7595
  * [MOD] Optimize hosts API when stats aren't needed. #7596
+ * [ADD] New `exclude_stats` query param in workspace endpoint. #7595
  * [FIX] Filter .webp files in vulns attachment endpoint because CVE-2023-4863. #7603
 
 4.6.0 [Sep 6th, 2023]:

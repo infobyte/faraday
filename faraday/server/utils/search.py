@@ -527,29 +527,27 @@ class QueryBuilder:
                 table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
 
                 field, key = fieldname.split('->')
-                if field == 'custom_fields':
-                    custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
-                else:
-                    custom_field = None
+                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+
                 try:
                     op, op_type = get_json_operator(operator)
                 except TypeError as e:
                     raise TypeError('Invalid filters') from e
 
                 if op in ['like', 'ilike']:
-                    if (custom_field and custom_field.field_type == 'list') or field == 'category':
+                    if custom_field.field_type == 'list':
                         op_type = 'list_contains'
 
                 if op_type in ['any', 'not_any']:
                     if not argument.isnumeric():
                         argument = f"\"{argument}\""
 
-                if custom_field and custom_field.field_type == 'date':
+                if custom_field.field_type == 'date':
                     argument = date.fromisoformat(argument)
                     op_type = 'date'
 
                 if op_type == 'compare':
-                    if custom_field and custom_field.field_type == 'int':
+                    if custom_field.field_type == 'int':
                         op_type = 'compare_int'
 
                 increment_bind_counter()

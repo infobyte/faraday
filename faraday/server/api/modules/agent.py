@@ -50,6 +50,7 @@ class ExecutorSchema(AutoSchema):
     agent_id = fields.Integer(dump_only=True, attribute='agent_id')
     last_run = fields.DateTime(dump_only=True)
     schedules = fields.Nested(AgentsScheduleSchema(), dump_only=True, many=True)
+    tool = fields.String(dump_only=True)
 
     class Meta:
         model = Executor
@@ -59,7 +60,8 @@ class ExecutorSchema(AutoSchema):
             'agent_id',
             'last_run',
             'parameters_metadata',
-            'schedules'
+            'schedules',
+            'tool',
         )
 
 

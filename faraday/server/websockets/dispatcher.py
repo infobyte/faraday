@@ -35,7 +35,7 @@ def update_executors(agent, executors):
 
         executor.parameters_metadata = raw_executor['args']
         if raw_executor.get("category"):
-            category = {"category": raw_executor["category"]}
+            category = raw_executor["category"]
             executor.category = category
         db.session.add(executor)
         db.session.commit()

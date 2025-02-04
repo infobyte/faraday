@@ -3307,6 +3307,7 @@ class Executor(Metadata):
     parameters_metadata = Column(JSONType, nullable=False, default={})
     last_run = Column(DateTime)
     category = Column(JSONType, nullable=True)
+    tool = Column(String(50), nullable=True)
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 

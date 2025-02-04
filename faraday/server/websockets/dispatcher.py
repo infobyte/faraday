@@ -37,6 +37,8 @@ def update_executors(agent, executors):
         if raw_executor.get("category"):
             category = raw_executor["category"]
             executor.category = category
+        if raw_executor.get("tool"):
+            executor.tool = raw_executor["tool"]
         db.session.add(executor)
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])

@@ -3490,6 +3490,7 @@ class AgentExecution(Metadata):
         foreign_keys=[command_id],
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
+    triggered_by = Column(String, nullable=True)
 
     @property
     def parent(self):
@@ -3556,6 +3557,7 @@ class CloudAgentExecution(Metadata):
         backref=backref('cloud_agent_execution_id', cascade="all, delete-orphan")
     )
     last_run = Column(DateTime)
+    triggered_by = Column(String, nullable=True)
 
     @property
     def parent(self):

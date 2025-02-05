@@ -22,6 +22,8 @@ def upgrade():
     op.add_column('cloud_agent', sa.Column('category', JSONType(), nullable=True))
     op.add_column('executor', sa.Column('category', JSONType(), nullable=True))
     op.add_column('executor', sa.Column('tool', sa.String(length=50), nullable=True))
+    op.add_column('agent_execution', sa.Column('triggered_by', sa.String(), nullable=True))
+    op.add_column('cloud_agent_execution', sa.Column('triggered_by', sa.String(), nullable=True))
     # ### end Alembic commands ###
 
 
@@ -30,4 +32,6 @@ def downgrade():
     op.drop_column('executor', 'tool')
     op.drop_column('executor', 'category')
     op.drop_column('cloud_agent', 'category')
+    op.drop_column('cloud_agent_execution', 'triggered_by')
+    op.drop_column('agent_execution', 'triggered_by')
     # ### end Alembic commands ###

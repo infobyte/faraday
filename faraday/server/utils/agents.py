@@ -21,7 +21,8 @@ def get_command_and_agent_execution(
         user_id: int,
         username: str = '',
         hostname: str = '',
-        message: str = ''
+        message: str = '',
+        triggered_by: str = '',
 ) -> Tuple[Command, AgentExecution]:
     params = ', '.join([f'{key}={value}' for (key, value) in parameters.items()])
 
@@ -44,6 +45,7 @@ def get_command_and_agent_execution(
         executor=executor,
         workspace_id=workspace.id,
         parameters_data=parameters,
-        command=command
+        command=command,
+        triggered_by=triggered_by
     )
     return command, agent_execution

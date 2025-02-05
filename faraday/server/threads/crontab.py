@@ -169,7 +169,8 @@ class AgentsCronItem(CronItem):
                                                                                workspace=workspace,
                                                                                user_id=schedule.creator.id,
                                                                                parameters=schedule.parameters,
-                                                                               username=schedule.creator.username)
+                                                                               username=schedule.creator.username,
+                                                                               triggered_by=schedule.description)
                 except Exception as e:
                     logger.exception(f"Scheduler with id {self.schedule_id} could not run.", exc_info=e)
                     continue

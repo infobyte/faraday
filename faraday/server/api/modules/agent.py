@@ -220,7 +220,8 @@ class AgentView(ReadWriteView):
                                                                            workspace=workspace,
                                                                            user_id=user_id,
                                                                            parameters=executor_data["args"],
-                                                                           username=username)
+                                                                           username=username,
+                                                                           triggered_by=username)
                 commands.append(command)
                 agent_executions.append(agent_execution)
 

@@ -23,7 +23,12 @@ from faraday.server.api.base import (
     PaginatedMixin,
     ReadOnlyView,
 )
-from faraday.server.debouncer import debounce_workspace_update
+
+from faraday.server.debouncer import (
+    debounce_workspace_service_count,
+    debounce_workspace_update,
+    debounce_workspace_vulns_count_update,
+)
 from faraday.server.models import (
     Host,
     Service,
@@ -165,10 +170,20 @@ class ServiceView(
         }
 
     def _perform_bulk_delete(self, values, **kwargs):
-        workspaces = Workspace.query.join(Service).filter(Service.id.in_(values)).distinct(Workspace.name).all()
+        workspace_names = [workspace.name for workspace in
+                           Workspace.query.join(Service).filter(Service.id.in_(values)).distinct(Workspace.name).all()]
+        services_host_id = db.session.query(Service.host_id).filter(
+            Service.id.in_(values)).all()  # obtain services host ids before deleting them
         response = super()._perform_bulk_delete(values, **kwargs)
-        for workspace in workspaces:
-            debounce_workspace_update(workspace.name)
+        host_ids = []
+        for host_id in services_host_id:
+            host_ids.append(host_id[0])
+        from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
+        update_host_stats(host_ids, [])
+        for workspace_name in workspace_names:
+            debounce_workspace_service_count(workspace_name=workspace_name)
+            debounce_workspace_vulns_count_update(workspace_name=workspace_name)
+            debounce_workspace_update(workspace_name)
         return response
 
     def _post_bulk_update(self, ids, extracted_data, data=None, **kwargs):

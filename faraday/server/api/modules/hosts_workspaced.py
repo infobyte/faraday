@@ -26,8 +26,13 @@ from faraday.server.api.base import (
     get_workspace,
 )
 from faraday.server.api.modules.hosts_base import HostFilterSet, HostView
-from faraday.server.debouncer import debounce_workspace_update
-from faraday.server.models import Host, Hostname, Service, db
+from faraday.server.debouncer import (
+    debounce_workspace_update,
+    debounce_workspace_host_count,
+    debounce_workspace_vulns_count_update,
+    debounce_workspace_service_count,
+)
+from faraday.server.models import Host, Hostname, Service, db, Workspace
 from faraday.server.utils.command import set_command_id
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.hosts import WORKSPACED_SCHEMA_EXCLUDE_FIELDS
@@ -115,11 +120,30 @@ class HostWorkspacedView(
                     hosts_created_count += 1
             logger.info("Hosts created in bulk")
             debounce_workspace_update(workspace_name)
+            debounce_workspace_host_count(workspace_name=workspace_name)
             return make_response(jsonify(hosts_created=hosts_created_count,
                                          hosts_with_errors=hosts_with_errors_count), HTTP_OK)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
             abort(HTTP_BAD_REQUEST, f"Error parsing hosts CSV ({e})")
+
+    @route('', methods=['DELETE'])
+    def bulk_delete(self, workspace_name, **kwargs):
+        response = BulkDeleteWorkspacedMixin.bulk_delete(self, workspace_name, **kwargs)
+        self._post_bulk_delete(workspace_name)
+        return response
+
+    def _post_bulk_delete(self, workspace_name):
+        if not workspace_name:
+            return
+        _workspace = (db.session.query(Workspace.id, Workspace.name)
+                      .filter_by(name=workspace_name).first())
+        if _workspace:
+            #  Calculate workspace stats
+            debounce_workspace_vulns_count_update(_workspace[0])
+            debounce_workspace_service_count(_workspace[0])
+            debounce_workspace_host_count(_workspace[0])
+            debounce_workspace_update(_workspace[1])
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
@@ -133,6 +157,7 @@ class HostWorkspacedView(
         db.session.commit()
         if kwargs['workspace_name']:
             debounce_workspace_update(kwargs['workspace_name'])
+            debounce_workspace_host_count(workspace_name=kwargs['workspace_name'])
         return host
 
     def _update_object(self, obj, data, **kwargs):

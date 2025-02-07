@@ -25,8 +25,6 @@ from faraday.server.models import (
     Workspace,
     SeveritiesHistogram,
     Vulnerability,
-    _make_vuln_count_property,
-    count_vulnerability_severities,
     _last_run_agent_date,
     _make_generic_count_property,
 )
@@ -51,22 +49,96 @@ workspace_api = Blueprint('workspace_api', __name__)
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
+    host_confirmed = fields.Integer(dump_only=True, attribute='host_confirmed_count')
+    host_notclosed = fields.Integer(dump_only=True, attribute='host_notclosed_count')
+    host_notclosed_confirmed = fields.Integer(dump_only=True, attribute='host_notclosed_confirmed_count')
     services = fields.Integer(dump_only=True, attribute='total_service_count')
-    web_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_count')
-    code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
-    std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
-    opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
-    re_opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_re_opened_count')
-    risk_accepted_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_risk_accepted_count')
-    closed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_closed_count')
-    confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
-    critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
-    info_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
-    high_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
-    medium_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
-    low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
-    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
-    total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+    open_services = fields.Integer(dump_only=True, attribute='open_service_count')
+    service_confirmed = fields.Integer(dump_only=True, attribute='service_confirmed_count')
+    service_notclosed = fields.Integer(dump_only=True, attribute='service_notclosed_count')
+    service_notclosed_confirmed = fields.Integer(dump_only=True, attribute='service_notclosed_confirmed_count')
+
+    #  Total by vulnerability type
+    web_vulns = fields.Integer(dump_only=True, attribute='vulnerability_web_count')
+    code_vulns = fields.Integer(dump_only=True, attribute='vulnerability_code_count')
+    std_vulns = fields.Integer(dump_only=True, attribute='vulnerability_standard_count')
+
+    #  Total by vulnerability status
+    opened_vulns = fields.Integer(dump_only=True, attribute='vulnerability_open_count')
+    re_opened_vulns = fields.Integer(dump_only=True, attribute='vulnerability_re_opened_count')
+    risk_accepted_vulns = fields.Integer(dump_only=True, attribute='vulnerability_risk_accepted_count')
+    closed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_closed_count')
+
+    #  Total by other
+    confirmed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_confirmed_count')
+    notclosed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_notclosed_count')
+    notclosed_confirmed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_notclosed_confirmed_count')
+    total_vulns = fields.Integer(dump_only=True, attribute='vulnerability_total_count')
+
+    # Total by severity
+    critical_vulns = fields.Integer(dump_only=True, attribute='vulnerability_critical_count')
+    high_vulns = fields.Integer(dump_only=True, attribute='vulnerability_high_count')
+    medium_vulns = fields.Integer(dump_only=True, attribute='vulnerability_medium_count')
+    low_vulns = fields.Integer(dump_only=True, attribute='vulnerability_low_count')
+    info_vulns = fields.Integer(dump_only=True, attribute='vulnerability_informational_count')
+    unclassified_vulns = fields.Integer(dump_only=True, attribute='vulnerability_unclassified_count')
+
+    # Confirmed by vulnerability type
+    web_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_web_confirmed_count')
+    code_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_code_confirmed_count')
+    std_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_standard_confirmed_count')
+
+    # Confirmed by vulnerability status
+    opened_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_open_confirmed_count')
+    re_opened_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_re_opened_confirmed_count')
+    risk_accepted_vulns_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_risk_accepted_confirmed_count')
+    closed_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_closed_confirmed_count')
+
+    # Confirmed by severity
+    critical_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_critical_confirmed_count')
+    high_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_high_confirmed_count')
+    medium_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_medium_confirmed_count')
+    low_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_low_confirmed_count')
+    info_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_informational_confirmed_count')
+    unclassified_vulns_confirmed = fields.Integer(dump_only=True,
+                                                  attribute='vulnerability_unclassified_confirmed_count')
+
+    # Not closed by vulnerability type
+    web_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_web_notclosed_count')
+    code_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_code_notclosed_count')
+    std_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_standard_notclosed_count')
+
+    # Not closed by severity
+    critical_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_critical_notclosed_count')
+    high_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_high_notclosed_count')
+    medium_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_medium_notclosed_count')
+    low_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_low_notclosed_count')
+    info_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_informational_notclosed_count')
+    unclassified_vulns_notclosed = fields.Integer(dump_only=True,
+                                                  attribute='vulnerability_unclassified_notclosed_count')
+
+    # Confirmed and not closed by vulnerability type
+    web_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_web_notclosed_confirmed_count')
+    code_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                    attribute='vulnerability_code_notclosed_confirmed_count')
+    std_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_standard_notclosed_confirmed_count')
+
+    # Confirmed and not closed by severity
+    critical_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                        attribute='vulnerability_critical_notclosed_confirmed_count')
+    high_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                    attribute='vulnerability_high_notclosed_confirmed_count')
+    medium_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                      attribute='vulnerability_medium_notclosed_confirmed_count')
+    low_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_low_notclosed_confirmed_count')
+    info_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                    attribute='vulnerability_informational_notclosed_confirmed_count')
+    unclassified_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                            attribute='vulnerability_unclassified_notclosed_confirmed_count')
 
 
 class HistogramSchema(Schema):
@@ -355,100 +427,15 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
-        obj = None
-        confirmed = self._get_querystring_boolean_field('confirmed')
-        only_opened = self._get_querystring_boolean_field('only_opened')
-
-        extra_query = ""
-        if only_opened:
-            extra_query = "status!='closed'"
 
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
 
-        # Vulnerability Types
-        query = query.options(
-            with_expression(
-                Workspace.vulnerability_web_count,
-                _make_vuln_count_property('vulnerability_web',
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False),
-            ),
-            with_expression(
-                Workspace.vulnerability_standard_count,
-                _make_vuln_count_property('vulnerability',
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False)
-            ),
-            with_expression(
-                Workspace.vulnerability_code_count,
-                _make_vuln_count_property('vulnerability_code',
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False),
-            ),
-            with_expression(
-                Workspace.vulnerability_total_count,
-                _make_vuln_count_property(type_=None,
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False)
-            ),
-        )
-
-        # Vulnerability by status
-        if not only_opened:
-            query = query.options(
-                with_expression(Workspace.vulnerability_closed_count,
-                                _make_vuln_count_property(None,
-                                                          confirmed=confirmed,
-                                                          extra_query=" status='closed' ",
-                                                          use_column_property=False),
-                                )
-            )
-
-        query = query.options(
-            with_expression(Workspace.vulnerability_open_count,
-                            _make_vuln_count_property(None,
-                                                      confirmed=confirmed,
-                                                      extra_query=" status='open' ",
-                                                      use_column_property=False),
-                            ),
-            with_expression(Workspace.vulnerability_re_opened_count,
-                            _make_vuln_count_property(None,
-                                                      confirmed=confirmed,
-                                                      extra_query=" status='re-opened' ",
-                                                      use_column_property=False),
-                            ),
-            with_expression(Workspace.vulnerability_risk_accepted_count,
-                            _make_vuln_count_property(None,
-                                                      confirmed=confirmed,
-                                                      extra_query=" status='risk-accepted' ",
-                                                      use_column_property=False),
-                            ),
-        )
-
-        # Vulnerabilities by severities
-        query = count_vulnerability_severities(query,
-                                               Workspace,
-                                               confirmed=confirmed,
-                                               all_severities=True,
-                                               only_opened=only_opened)
         query = query.options(
             with_expression(
                 Workspace.credential_count,
                 _make_generic_count_property('workspace', 'credential', use_column_property=False)
-            ),
-            with_expression(
-                Workspace.host_count,
-                _make_generic_count_property('workspace', 'host', use_column_property=False)
-            ),
-            with_expression(
-                Workspace.total_service_count,
-                _make_generic_count_property('workspace', 'service', use_column_property=False)
-            ),
+            )
         )
         try:
             obj = query.one()

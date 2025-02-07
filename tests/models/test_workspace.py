@@ -113,7 +113,7 @@ def test_vuln_no_count(workspace, second_workspace, database):
     populate_workspace(workspace)
     populate_workspace(second_workspace)
     workspace = Workspace.query.get(workspace.id)
-    assert workspace.vulnerability_web_count is None
-    assert workspace.vulnerability_code_count is None
-    assert workspace.vulnerability_standard_count is None
-    assert workspace.vulnerability_total_count is None
+    assert workspace.vulnerability_web_count == 0
+    assert workspace.vulnerability_code_count == 0
+    assert workspace.vulnerability_standard_count == 0
+    assert workspace.vulnerability_total_count == 0

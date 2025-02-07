@@ -133,6 +133,8 @@ class HostWorkspacedView(
         self._post_bulk_delete(workspace_name)
         return response
 
+    bulk_delete.__doc__ = BulkDeleteWorkspacedMixin.bulk_delete.__doc__
+
     def _post_bulk_delete(self, workspace_name):
         if not workspace_name:
             return

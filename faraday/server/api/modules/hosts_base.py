@@ -406,9 +406,6 @@ class HostView(
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, **kwargs):
-        workspace_name = kwargs.get('workspace_name')
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
         return BulkDeleteMixin.bulk_delete(self, **kwargs)
 

@@ -18,7 +18,7 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
 )
 from faraday.server.api.modules.services_base import ServiceFilterSet, ServiceView
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.debouncer import debounce_workspace_update, debounce_workspace_service_count
 from faraday.server.models import db
 from faraday.server.utils.command import set_command_id
 from faraday.server.utils.services import WORKSPACED_SCHEMA_EXCLUDE_FIELDS
@@ -55,6 +55,7 @@ class ServiceWorkspacedView(
             set_command_id(db.session, service, True, command_id)
 
         debounce_workspace_update(workspace_name)
+        debounce_workspace_service_count(workspace_name=workspace_name)
 
         return service
 

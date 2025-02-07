@@ -157,7 +157,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
     patchable_fields = ['description']
 
     def test_workspace_update_date(self, session, workspace_factory):
-        from faraday.server.app import get_debouncer
+        from faraday.server.debouncer import Debouncer
 
         raw_data_1 = {'name': 'test_update_1'}
         raw_data_2 = {'name': 'test_update_2'}
@@ -170,7 +170,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         ws3 = workspace_factory.create(public=False, name='test_update_3')
         session.commit()
 
-        debouncer = get_debouncer()
+        debouncer = Debouncer(wait=5)
 
         for i in range(1, 50):
             debounce_workspace_update(raw_data_1['name'], debouncer)
@@ -179,7 +179,7 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
             debounce_workspace_update(raw_data_1['name'], debouncer)
 
         assert len(debouncer.actions) == 1
-        time.sleep(11)
+        time.sleep(7)
         test_update2 = session.query(Workspace).filter(Workspace.name == raw_data_2['name']).first()
         test_update3 = session.query(Workspace).filter(Workspace.name == raw_data_3['name']).first()
         test_update1 = session.query(Workspace).filter(Workspace.name == raw_data_1['name']).first()

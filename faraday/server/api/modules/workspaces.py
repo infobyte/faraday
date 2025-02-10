@@ -348,13 +348,16 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
                 description: invalid q was sent to the server
 
         """
+        exclude = []
+        exclude_stats = flask.request.args.get('exclude_stats', type=lambda v: v.lower() == 'true')
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
-
+        if exclude_stats:
+            exclude = ['stats']
         histogram_days, histogram_dict = None, None
         if histogram:
             histogram_days, histogram_dict = request_histogram()
         filters = flask.request.args.get('q', '{"filters": []}')
-        filtered_objs, count = self._filter(filters, severity_count=False, host_vulns=False)
+        filtered_objs, count = self._filter(filters, severity_count=False, host_vulns=False, exclude=exclude)
         objects = []
 
         for workspace_stat in filtered_objs:

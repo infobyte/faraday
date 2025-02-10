@@ -994,7 +994,7 @@ class FilterMixin(ListMixin):
         filter_query = search(db.session,
                               self.model_class,
                               filters)
-        # TODO: Refactor all stats
+        # TODO: Refactor all stats, remove this code because now stats are precalculated. Severity count was set default to false.
         if only_total_vulns:
             filter_query = filter_query.options(
                 with_expression(

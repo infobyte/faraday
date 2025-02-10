@@ -174,7 +174,6 @@ class AgentView(ReadWriteView):
         user = flask_login.current_user
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
-        executor_data = data['executor_data']
         workspaces = [get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
         plugins_args = {
             "ignore_info": data.get('ignore_info', False),
@@ -186,10 +185,11 @@ class AgentView(ReadWriteView):
         }
         if agent.is_offline:
             abort(http.HTTPStatus.GONE, "Agent is offline")
-        return self._run_agent(agent, executor_data, workspaces, plugins_args, user.username, user.id)
+        return self._run_agent(agent, data, workspaces, plugins_args, user.username, user.id)
 
     @staticmethod
-    def _run_agent(agent: Agent, executor_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
+    def _run_agent(agent: Agent, parameters_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
+        executor_data = parameters_data["executor_data"]
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                              Executor.agent_id == agent.id).one()
@@ -219,7 +219,7 @@ class AgentView(ReadWriteView):
                 command, agent_execution = get_command_and_agent_execution(executor=executor,
                                                                            workspace=workspace,
                                                                            user_id=user_id,
-                                                                           parameters=executor_data["args"],
+                                                                           parameters=parameters_data,
                                                                            username=username,
                                                                            triggered_by=username)
                 commands.append(command)

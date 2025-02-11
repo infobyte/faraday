@@ -163,12 +163,21 @@ class AgentsCronItem(CronItem):
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             agent_executions = []
             commands = []
+            parameters_data = {
+                "ignore_info": schedule.ignore_info,
+                "resolve_hostname": schedule.resolve_hostname,
+                "executor_data": {
+                    "args": schedule.parameters,
+                    "executor": schedule.executor.name
+                },
+                "workspaces_names": [workspace.name for workspace in schedule.workspaces]
+            }
             for workspace in schedule.workspaces:
                 try:
                     command, agent_execution = get_command_and_agent_execution(executor=schedule.executor,
                                                                                workspace=workspace,
                                                                                user_id=schedule.creator.id,
-                                                                               parameters=schedule.parameters,
+                                                                               parameters=parameters_data,
                                                                                username=schedule.creator.username,
                                                                                triggered_by=schedule.description)
                 except Exception as e:
@@ -182,12 +191,6 @@ class AgentsCronItem(CronItem):
                 "ignore_info": schedule.ignore_info,
                 "resolve_hostname": schedule.resolve_hostname
             }
-            if schedule.vuln_tag:
-                plugin_args["vuln_tag"] = schedule.vuln_tag.split(",")
-            if schedule.service_tag:
-                plugin_args["service_tag"] = schedule.service_tag.split(",")
-            if schedule.host_tag:
-                plugin_args["host_tag"] = schedule.host_tag.split(",")
             message = {
                 "execution_ids": [agent_execution.id for agent_execution in agent_executions],
                 "agent_id": schedule.executor.agent.id,

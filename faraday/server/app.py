@@ -143,6 +143,7 @@ def register_blueprints(app):
         elk_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_query_limits import \
         query_limits_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent_execution import agent_execution_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(ui)
     app.register_blueprint(commandsrun_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -180,6 +181,7 @@ def register_blueprints(app):
     app.register_blueprint(elk_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(swagger_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(query_limits_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(agent_execution_api, url_prefix=app.config['APPLICATION_PREFIX'])
 
 
 def check_testing_configuration(testing, app):

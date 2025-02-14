@@ -14,6 +14,7 @@ import flask_login
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import func
 from faraday_agent_parameters_types.utils import type_validate, get_manifests
 
 from faraday.server.api.base import (
@@ -23,6 +24,7 @@ from faraday.server.api.base import (
 from faraday.server.extensions import socketio
 from faraday.server.models import (
     Agent,
+    AgentExecution,
     Executor,
     db,
 )
@@ -215,13 +217,15 @@ class AgentView(ReadWriteView):
 
             commands = []
             agent_executions = []
+            run_id = (db.session.query(func.max(AgentExecution.run_id)).scalar() or 0) + 1  # gets last run_id + 1, or 1 if run_id is None in db.
             for workspace in workspaces:
                 command, agent_execution = get_command_and_agent_execution(executor=executor,
                                                                            workspace=workspace,
                                                                            user_id=user_id,
                                                                            parameters=parameters_data,
                                                                            username=username,
-                                                                           triggered_by=username)
+                                                                           triggered_by=username,
+                                                                           run_id=run_id)
                 commands.append(command)
                 agent_executions.append(agent_execution)
 

@@ -19,6 +19,7 @@ def get_command_and_agent_execution(
         parameters: dict,
         workspace: Workspace,
         user_id: int,
+        run_id: int,
         username: str = '',
         hostname: str = '',
         message: str = '',
@@ -46,6 +47,7 @@ def get_command_and_agent_execution(
         workspace_id=workspace.id,
         parameters_data=parameters,
         command=command,
-        triggered_by=triggered_by
+        triggered_by=triggered_by,
+        run_id=run_id
     )
     return command, agent_execution

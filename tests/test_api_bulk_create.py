@@ -1008,7 +1008,8 @@ class TestBulkCreateAPI:
         command, new_agent_execution = get_command_and_agent_execution(executor=agent_execution.executor,
                                                                        workspace=workspace,
                                                                        user_id=user.id,
-                                                                       parameters=agent_execution.parameters_data)
+                                                                       parameters=agent_execution.parameters_data,
+                                                                       run_id=1)
         agent = agent_execution.executor.agent
         session.add(new_agent_execution)
         session.commit()

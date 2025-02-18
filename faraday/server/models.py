@@ -1224,8 +1224,6 @@ class Host(Metadata):
         __host_vulnerabilities + __service_vulnerabilities,
         deferred=True)
 
-    credentials_count = _make_generic_count_property('host', 'credential')
-
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
@@ -1247,7 +1245,6 @@ class Host(Metadata):
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            undefer(cls.credentials_count),
             undefer(cls.open_service_count),
             joinedload(cls.hostnames),
             joinedload(cls.services),
@@ -1344,7 +1341,6 @@ class Service(Metadata):
 
     vulnerability_count = _make_generic_count_property('service',
                                                        'vulnerability')
-    credentials_count = _make_generic_count_property('service', 'credential')
 
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
@@ -1477,7 +1473,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
 
     credentials = relationship("Credential",
-                               secondary='credential_vulnerability_association',
+                               secondary='association_table_vulnerabilities_credentials',
                                back_populates='vulnerabilities')
 
     _cvss2_vector_string = Column(Text, nullable=True)
@@ -2228,8 +2224,8 @@ class Credential(Metadata):
     owned = Column(Boolean, default=False)
 
     vulnerabilities = relationship("Vulnerability",
-                                   secondary=association_table_vulnerabilities_credentials,
-                                   backref='credentials')
+                                   secondary='association_table_vulnerabilities_credentials',
+                                   back_populates='credentials')
 
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='credentials', foreign_keys='Credential.workspace_id')

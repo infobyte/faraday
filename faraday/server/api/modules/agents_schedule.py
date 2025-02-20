@@ -295,6 +295,7 @@ class AgentsScheduleView(
                         type: integer
                         description: Count of Agent Schedulers
         """
+        #  ONLY FOR COMMUNITY
         counts = db.session.query(
             AgentsSchedule.type,
             db.func.count(AgentsSchedule.id).label('count')

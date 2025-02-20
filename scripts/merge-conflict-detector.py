@@ -75,8 +75,6 @@ def get_current_branch():
 
 
 def branch_exists(branch_name):
-    logger = logging.getLogger().setLevel(getattr(logging, args.log_level.upper()))
-    logger.info(f'Checking if branch {branch_name} exists')
     exit_code = subprocess.call(
         ['git', 'ls-remote', '--exit-code', 'origin', branch_name])
     if exit_code == 0:

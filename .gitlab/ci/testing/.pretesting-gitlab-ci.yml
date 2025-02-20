@@ -6,7 +6,6 @@ merge_conflict_check:
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
-        - git fetch
         - python3 scripts/merge-conflict-detector.py
     rules:
         - !reference [ .ignore-on-tag, rules ]

@@ -116,8 +116,8 @@ def main(branch):
     for target_version in versions_to_test:
         logger.info(f'Target version: {target_version}')
         logger.info(f'Version: {version}')
-        overriden_branch = branch.replace(version, target_version)
-        overriden_branch = overriden_branch.strip()
+        overriden_branch = branch.replace(f"{version}/dev", f"{target_version}/dev")
+        overriden_branch = overriden_branch.replace(f"tkt_{version}", f"tkt_{target_version}")
         logger.info(f'Overriden branch: {overriden_branch}')
         if target_version != version and \
                 branch_exists(overriden_branch):

@@ -117,6 +117,7 @@ def main(branch):
         logger.info(f'Target version: {target_version}')
         logger.info(f'Version: {version}')
         overriden_branch = branch.replace(version, target_version)
+        overriden_branch = overriden_branch.strip()
         logger.info(f'Overriden branch: {overriden_branch}')
         if target_version != version and \
                 branch_exists(overriden_branch):

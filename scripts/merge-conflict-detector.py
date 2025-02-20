@@ -76,7 +76,7 @@ def get_current_branch():
 
 def branch_exists(branch_name):
     exit_code = subprocess.call(
-        ['git', 'ls-remote', '--exit-code', 'origin', branch_name])
+        ['git', 'rev-parse', '--verify', '--quiet', branch_name])
     if exit_code == 0:
         return True
     elif exit_code == 1:
@@ -115,6 +115,7 @@ def main(branch):
     logger.info(f'versions to test: {versions_to_test}')
     for target_version in versions_to_test:
         logger.info(f'Target version: {target_version}')
+        logger.info(f'Version: {version}')
         overriden_branch = branch.replace(version, target_version)
         logger.info(f'Overriden branch: {overriden_branch}')
         if target_version != version and \
@@ -122,6 +123,7 @@ def main(branch):
             branches_to_test.append(overriden_branch)
             # break  # Uncomment if want to cut the checker on merging to black if has overridden pink branch
         else:
+            logger.info("Entro por else")
             branches_to_test.append(BRANCH_FORMAT.format(target_version))
     logger.info(f'BRANCHES TO TEST: {branches_to_test}')
 

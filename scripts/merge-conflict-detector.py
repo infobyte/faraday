@@ -112,16 +112,20 @@ def main(branch):
 
     versions_to_test = VERSIONS[VERSIONS.index(version):]
     branches_to_test = []
+    logger.info(f'versions to test: {versions_to_test}')
     for target_version in versions_to_test:
+        logger.info(f'Target version: {target_version}')
         overriden_branch = branch.replace(version, target_version)
+        logger.info(f'Overriden branch: {overriden_branch}')
         if target_version != version and \
                 branch_exists(overriden_branch):
             branches_to_test.append(overriden_branch)
             # break  # Uncomment if want to cut the checker on merging to black if has overridden pink branch
         else:
             branches_to_test.append(BRANCH_FORMAT.format(target_version))
+    logger.info(f'BRANCHES TO TEST: {branches_to_test}')
 
-    logging.info(f'Testing merges in branches {branches_to_test}')
+    logger.info(f'Testing merges in branches {branches_to_test}')
 
     success = True
     cur_branch = branch

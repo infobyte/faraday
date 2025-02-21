@@ -828,12 +828,12 @@ class VulnerabilityView(
             description: Ok
         """
 
-        extra_filters = [Workspace.active == True]
+        extra_filters = [Workspace.active == True]  # noqa
 
         if User.ADMIN_ROLE not in current_user.roles_list:
             extra_filters.append(or_(
                 Workspace.allowed_users.any(User.id == current_user.id),
-                Workspace.public == True
+                Workspace.public == True  # noqa
             ))
 
         query = (

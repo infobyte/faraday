@@ -41,20 +41,6 @@ class TestCascadeDelete:
         self.host.set_hostnames(['a.com', 'b.com'])
         self.service = service
 
-        self.host_cred = credential_factory.create(
-            host=self.host,
-            service=None,
-            workspace=workspace,
-            creator=user,
-        )
-
-        self.service_cred = credential_factory.create(
-            host=None,
-            service=service,
-            workspace=workspace,
-            creator=user,
-        )
-
         self.host_vuln = vulnerability_factory.create(
             host=self.host,
             service=None,
@@ -171,8 +157,7 @@ class TestCascadeDelete:
 
     def test_delete_host_cascade(self):
         with self.assert_deletes(self.host, self.service,
-                                 self.host_vuln, self.service_vuln,
-                                 self.host_cred, self.service_cred):
+                                 self.host_vuln, self.service_vuln):
             self.session.delete(self.host)
 
     # def test_delete_workspace(self, user):
@@ -202,7 +187,6 @@ class TestCascadeDelete:
 
     def test_delete_user_does_not_delete_childs(self):
         objs = [self.workspace, self.host, self.service,
-                self.host_cred, self.service_cred,
                 self.host_vuln, self.service_vuln,
                 self.attachment, self.host_attachment,
                 self.comment, self.reply_comment,

@@ -17,9 +17,9 @@ from faraday.server.api.modules.services_workspaced import ServiceWorkspacedView
 from tests import factories
 from tests.test_api_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin, BulkUpdateTestsMixin
 from faraday.server.models import (
-    Service, Credential, Vulnerability
+    Service, Vulnerability
 )
-from tests.factories import HostFactory, EmptyCommandFactory, CredentialFactory, VulnerabilityFactory
+from tests.factories import HostFactory, EmptyCommandFactory, VulnerabilityFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -51,7 +51,6 @@ class TestListServiceView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
                 '_rev',
                 'owned',
                 'owner',
-                'credentials',
                 'name',
                 'version',
                 '_id',
@@ -340,7 +339,6 @@ class TestListServiceView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
         super().test_bulk_update_cant_change_id(test_client)
 
     def test_bulk_delete_with_references(self, test_client, session):
-        previous_creds = Credential.query.count()
         previous_vulns = Vulnerability.query.count()
         previous_services = Service.query.count()
 
@@ -349,9 +347,7 @@ class TestListServiceView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
         service_3 = self.factory.create(workspace=self.workspace)
 
         for _ in range(3):
-            CredentialFactory.create(service=service_1, workspace=self.workspace)
             VulnerabilityFactory.create(service=service_2, workspace=self.workspace)
-            CredentialFactory.create(service=service_3, workspace=self.workspace)
             VulnerabilityFactory.create(service=service_3, workspace=self.workspace)
         session.commit()
 

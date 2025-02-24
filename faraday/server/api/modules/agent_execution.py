@@ -4,7 +4,7 @@ from flask import Blueprint
 from marshmallow import fields
 from sqlalchemy import func
 
-from faraday.server.api.base import ReadOnlyView, PaginatedMixin, AutoSchema
+from faraday.server.api.base import ReadOnlyView, PaginatedMixin, AutoSchema, FilterMixin
 from faraday.server.models import AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 
@@ -44,7 +44,7 @@ class AgentExecutionSchema(AutoSchema):
         return obj.executor.category
 
 
-class AgentExecutionView(PaginatedMixin, ReadOnlyView):
+class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
     route_base = 'agent_executions'
     model_class = AgentExecution
     schema_class = AgentExecutionSchema

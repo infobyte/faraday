@@ -26,19 +26,17 @@ from dateutil import parser
 from depot.manager import DepotManager
 
 from hypothesis import given, settings, strategies as st
-from cvss import CVSS3
 
-from faraday.server.api.modules.vulns import (
+from faraday.server.api.modules.vulns_base import (
     VulnerabilityFilterSet,
-    VulnerabilitySchema,
     VulnerabilityView
 )
+from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.schemas import NullToBlankString
 from tests import factories
-from tests.conftest import TEST_DATA_PATH
-from tests.test_api_workspaced_base import (
-    ReadWriteAPITests,
+from tests.test_api_non_workspaced_base import (
+    ReadOnlyAPITests,
     BulkDeleteTestsMixin,
     BulkUpdateTestsMixin
 )
@@ -47,28 +45,21 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
-    Reference,
-    PolicyViolation,
     CommandObject,
     File,
     Host,
     Service,
     CVE,
-    SeveritiesHistogram,
-    CWE,
-    Command,
+    SeveritiesHistogram
 )
 from tests.factories import (
     ServiceFactory,
-    CommandFactory,
     CommandObjectFactory,
     HostFactory,
     EmptyCommandFactory,
     UserFactory,
     VulnerabilityWebFactory,
     VulnerabilityFactory,
-    ReferenceFactory,
-    PolicyViolationFactory,
     HostnameFactory,
     WorkspaceFactory,
     CustomFieldsSchemaFactory
@@ -77,7 +68,7 @@ from tests.factories import (
 
 def _create_post_data_vulnerability(name, vuln_type, parent_id,
                                     parent_type, refs, policyviolations,
-                                    status='open', cve=[], cvss2={}, cvss3={}, cvss4={}, cwe=[],  # TODO: Remove defaults []
+                                    status='open', cve=[], cvss2={}, cvss3={}, cwe=[],  # TODO: Sacar default []
                                     attachments=None, impact=None,
                                     description='desc1234',
                                     confirmed=True, data='data1234',
@@ -119,7 +110,6 @@ def _create_post_data_vulnerability(name, vuln_type, parent_id,
         'cve': cve,
         'cvss2': cvss2,
         'cvss3': cvss3,
-        'cvss4': cvss4,
         'cwe': cwe,
         'resolution': resolution,
         'severity': severity,
@@ -184,9 +174,11 @@ GROUP = [
             ],
         ]
 
+VULNS_COUNT = 5
+
 
 @pytest.mark.usefixtures('logged_user')
-class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
+class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Vulnerability
     factory = factories.VulnerabilityFactory
     api_endpoint = 'vulns'
@@ -194,6 +186,143 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
     # update_fields = ['ip', 'description', 'os']
     view_class = VulnerabilityView
     patchable_fields = ['name']
+
+    @pytest.fixture(autouse=True)
+    def load_many_objects(self, database, session, workspace):
+        self.objects = self.factory.create_batch(
+            VULNS_COUNT, workspace=workspace)
+        self.first_object = self.objects[0]
+        session.add_all(self.objects)
+        session.commit()
+        assert workspace.id is not None
+        self.workspace = workspace
+        return workspace
+
+    @pytest.fixture
+    def mock_envelope_list(self, monkeypatch):
+        assert self.view_class is not None, 'You must define view_class ' \
+                                            'in order to use ListTestsMixin or PaginationTestsMixin'
+
+        def _envelope_list(_, objects, pagination_metadata=None):
+            return {"data": objects}
+
+        monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
+
+    def test_bulk_update_custom_attributes(self, test_client, second_workspace, session):
+
+        host = HostFactory.create(workspace=self.workspace)
+        host2 = HostFactory.create(workspace=second_workspace)
+        custom_field_schema = CustomFieldsSchemaFactory(
+            field_name='string',
+            field_type='str',
+            field_display_name='string',
+            table_name='vulnerability'
+        )
+        custom_field_schema2 = CustomFieldsSchemaFactory(
+            field_name='int',
+            field_type='int',
+            field_display_name='int',
+            table_name='vulnerability'
+        )
+        custom_field_schema3 = CustomFieldsSchemaFactory(
+            field_name='string2',
+            field_type='str',
+            field_display_name='string2',
+            table_name='vulnerability'
+        )
+        session.add(host)
+        session.add(host2)
+        session.add(custom_field_schema)
+        session.add(custom_field_schema2)
+        session.add(custom_field_schema3)
+        session.commit()
+        vuln1 = VulnerabilityFactory.create(workspace=self.workspace)
+        vuln2 = VulnerabilityFactory.create(workspace=second_workspace)
+        vuln3 = VulnerabilityFactory.create(workspace=self.workspace)
+        vuln1.custom_fields = {}
+        vuln2.custom_fields = {}
+        vuln3.custom_fields = {}
+        session.add(vuln1)
+        session.add(vuln2)
+        session.add(vuln3)
+
+        vuln_id_1 = vuln1.id
+        vuln_id_2 = vuln2.id
+        vuln_id_3 = vuln3.id
+
+        # Bulk update: Add a custom attribute to both vulnerabilities
+
+        bulk_update_data = {
+            "ids": [vuln_id_1, vuln_id_2],
+            "custom_fields": {"string": "test"}
+        }
+
+        res_update = test_client.patch(self.url(), data=bulk_update_data)
+        assert res_update.status_code == 200
+
+        vuln_1 = Vulnerability.query.get(vuln_id_1)
+        vuln_2 = Vulnerability.query.get(vuln_id_2)
+
+        assert vuln_1.custom_fields['string'] == "test"
+        assert vuln_2.custom_fields['string'] == "test"
+
+        # Bulk update: Add another custom attribute to both vulnerabilities
+
+        bulk_update_data = {
+            "ids": [vuln_id_1, vuln_id_2],
+            "custom_fields": {"int": 10000}
+        }
+
+        res_update = test_client.patch(self.url(), data=bulk_update_data)
+
+        assert res_update.status_code == 200
+
+        vuln_1 = Vulnerability.query.get(vuln_id_1)
+        vuln_2 = Vulnerability.query.get(vuln_id_2)
+
+        custom_fields = {"string": "test", "int": 10000}
+
+        assert vuln_1.custom_fields == custom_fields
+        assert vuln_2.custom_fields == custom_fields
+
+        # Bulk update: Update an existing custom attribute in both vulnerabilities
+
+        bulk_update_data = {
+            "ids": [vuln_id_1, vuln_id_2],
+            "custom_fields": {"string": "test2"}
+        }
+
+        res_update = test_client.patch(self.url(), data=bulk_update_data)
+
+        assert res_update.status_code == 200
+
+        vuln_1 = Vulnerability.query.get(vuln_id_1)
+        vuln_2 = Vulnerability.query.get(vuln_id_2)
+
+        custom_fields = {"string": "test2", "int": 10000}
+
+        assert vuln_1.custom_fields == custom_fields
+        assert vuln_2.custom_fields == custom_fields
+
+        # Bulk update: Add a custom attribute to two of three vulnerabilities
+
+        bulk_update_data = {
+            "ids": [vuln_id_1, vuln_id_3],
+            "custom_fields": {"string2": "string2"}
+        }
+
+        res_update = test_client.patch(self.url(), data=bulk_update_data)
+
+        assert res_update.status_code == 200
+
+        vuln_1 = Vulnerability.query.get(vuln_id_1)
+        vuln_2 = Vulnerability.query.get(vuln_id_2)
+        vuln_3 = Vulnerability.query.get(vuln_id_3)
+
+        assert "string2" not in vuln_2.custom_fields.keys()
+        assert vuln_2.custom_fields == custom_fields
+        assert vuln_3.custom_fields == {"string2": "string2"}
+        assert vuln_1.custom_fields == {"string2": "string2", "string": "test2", "int": 10000}
 
     def test_backward_json_compatibility(self, test_client, second_workspace, session):
         new_obj = self.factory.create(workspace=second_workspace)
@@ -314,37 +443,38 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert set(res.json['hostnames']) == {hostname.name for hostname in
                                               host_with_hostnames.hostnames}
 
-    def test_create_vuln(self, host_with_hostnames, test_client, session):
-        """
-        This one should only check basic vuln properties
-        :param host_with_hostnames:
-        :param test_client:
-        :param session:
-        :return:
-        """
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-        assert res.json['name'] == 'New vulns'
-        assert res.json['type'] == 'Vulnerability'
-        assert res.json['parent'] == host_with_hostnames.id
-        assert res.json['parent_type'] == 'Host'
-        assert res.json['desc'] == 'helloworld'
-        assert res.json['description'] == 'helloworld'
-        assert res.json['severity'] == 'low'
+    def test_wont_get_vulns_from_inactive_workspace(self, vulnerability_factory, second_workspace, test_client, session):
+        vulns = VulnerabilityWeb.query.all()
+        for vuln in vulns:
+            session.delete(vuln)
+        session.commit()
+
+        vulns = Vulnerability.query.all()
+        for vuln in vulns:
+            session.delete(vuln)
+        session.commit()
+
+        vulns_unconfirmed = vulnerability_factory.create_batch(4, confirmed=False,
+                                                               workspace=self.workspace,
+                                                               status='open',
+                                                               severity='critical')
+
+        vulns_high = vulnerability_factory.create_batch(4,
+                                                        confirmed=True,
+                                                        workspace=second_workspace,
+                                                        status='open',
+                                                        severity='high')
+        session.add_all(vulns_unconfirmed + vulns_high)
+        session.commit()
+
+        response = test_client.get(f'{self.url()}/filter')
+        assert response.status_code == 200
+        assert response.json['count'] == 8
+
+        second_workspace.active = False
+        response = test_client.get(f'{self.url()}/filter')
+        assert response.status_code == 200
+        assert response.json['count'] == 4
 
     def test_histogram_creation(self, vulnerability_factory, second_workspace, test_client, session):
         """
@@ -727,151 +857,6 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert histogram[0].date == datetime.date.today()
         assert histogram[0].confirmed == 4
 
-    def test_create_cannot_create_vuln_with_empty_name_fails(
-            self, host, session, test_client):
-        # I'm using this to test the NonBlankColumn which works for
-        # all models. Think twice before removing this test
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='',
-            vuln_type='Vulnerability',
-            parent_id=host.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='aaa',
-            severity='low',
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-        assert b'Shorter than minimum length 1' in res.data
-
-    def test_create_cannot_create_vuln_with_empty_fields(
-            self, session, test_client):
-        # I'm using this to test the NonBlankColumn which works for
-        # all models. Think twice before removing this test
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='',
-            vuln_type='',
-            parent_id='',
-            parent_type='',
-            refs=[],
-            policyviolations=[],
-            description='',
-            severity='',
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-
-    def test_create_create_vuln_with_empty_desc_success(
-            self, host, session, test_client):
-        # I'm using this to test the NonBlankColumn which works for
-        # all models. Think twice before removing this test
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='Empty desc',
-            vuln_type='Vulnerability',
-            parent_id=host.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='',
-            severity='low',
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 201
-
-    def test_create_vuln_with_attachments(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        attachment = NamedTemporaryFile(mode="wb+")
-        file_content = b'test file'
-        attachment.write(file_content)
-        attachment.seek(0)
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-            attachments=[attachment]
-        )
-
-        res = test_client.post(self.url(), data=raw_data)
-        vuln_id = res.json['_id']
-        assert res.status_code == 201
-        filename = attachment.name.split('/')[-1]
-        assert filename in res.json['_attachments']
-        attachment.close()
-        # check the attachment can be downloaded
-        res = test_client.get(join(self.url(), f'{vuln_id}/attachment/{filename}'))
-        assert res.status_code == 200
-        assert res.data == file_content
-
-        res = test_client.get(join(
-            self.url(),
-            f'{vuln_id}/attachment/notexistingattachment.png'
-        ))
-        assert res.status_code == 404
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_update_vuln_add_attachment_on_update(self, test_client, session):
-        host = HostFactory.create(workspace=self.workspace)
-        vuln = VulnerabilityFactory.create(workspace=self.workspace, host_id=host.id)
-        session.add(vuln)
-        session.commit()  # flush host_with_hostnames
-        attachment = NamedTemporaryFile()
-        file_content = b'test file'
-        attachment.write(file_content)
-        attachment.seek(0)
-        raw_data = self._create_put_data(
-            'Updated with attachment',
-            'Updated vuln',
-            'open',
-            host.id,
-            'Host',
-            attachments=[attachment]
-        )
-        res = test_client.put(self.url(obj=vuln, workspace=self.workspace), data=raw_data)
-        assert res.status_code == 200
-        filename = attachment.name.split('/')[-1]
-        res = test_client.get(join(
-            self.url(), f'{vuln.id}/attachment/{filename}'
-        ))
-        assert res.status_code == 200
-        assert res.data == file_content
-
-        new_attachment = NamedTemporaryFile()
-        new_filename = new_attachment.name.split('/')[-1]
-        file_content = b'new test file'
-        new_attachment.write(file_content)
-        new_attachment.seek(0)
-        raw_data = self._create_put_data(
-            'Updated with attachment',
-            'Updated vuln',
-            'open',
-            host.id,
-            'Host',
-            attachments=[new_attachment]
-        )
-        res = test_client.put(self.url(obj=vuln, workspace=self.workspace),
-                              data=raw_data)
-        assert res.status_code == 200
-
-        # verify that the old file was deleted and the new one exists
-        res = test_client.get(join(
-            self.url(), f'{vuln.id}/attachment/{filename}'
-        ))
-        assert res.status_code == 404
-        res = test_client.get(join(
-            self.url(), f'{vuln.id}/attachment/{new_filename}'
-        ))
-        assert res.status_code == 200
-        assert res.data == file_content
-
     def test_get_attachments_by_vuln(self, test_client, session, workspace):
         vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)
@@ -886,97 +871,10 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(new_attach)
         session.commit()
 
-        res = test_client.get(join(self.url(workspace=workspace), f'{vuln.id}/attachment'))
+        res = test_client.get(join(self.url(), f'{vuln.id}/attachment'))
         assert res.status_code == 200
         assert new_attach.filename in res.json
         assert 'image/png' in res.json[new_attach.filename]['content_type']
-
-    def test_create_vuln_props(self, host_with_hostnames, test_client, session):
-        """
-        This one should check all the vuln props that don't have a specific case
-        :param host_with_hostnames:
-        :param test_client:
-        :param session:
-        :return:
-        """
-        session.commit()  # flush host_with_hostnames
-        vuln_props = {
-            'confirmed': False,
-            'data': 'hellodata',
-            'easeofresolution': Vulnerability.EASE_OF_RESOLUTIONS[0],
-            'owned': True,
-            'resolution': 'helloresolution',
-            'status': 'closed',
-        }
-        vuln_props_excluded = ['owned']
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-            **vuln_props
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        for prop, value in vuln_props.items():
-            if prop not in vuln_props_excluded:
-                assert res.json[prop] == value, prop
-
-    def test_create_idempotent(self, host_with_hostnames, test_client, session):
-        """
-        This test makes sure that creating the same vuln twice doesn't duplicate the entry or has any other collateral effects
-        :param host_with_hostnames:
-        :param test_client:
-        :param session:
-        :return:
-        """
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='Vulnerability name goes here',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='Description goes here',
-            severity='critical',
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 409
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-
-    def test_create_vuln_with_closed_status(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            status='closed',
-            refs=[],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-        assert res.json['status'] == 'closed'
-        assert res.json['name'] == 'New vulns'
-        assert res.json['type'] == 'Vulnerability'
-        assert res.json['parent'] == host_with_hostnames.id
-        assert res.json['parent_type'] == 'Host'
 
     def _create_put_data(self,
                          name, desc, status, parent, parent_type,
@@ -1033,135 +931,12 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         return raw_data
 
-    def test_update_vuln_from_open_to_close(self, test_client, session, host_with_hostnames):
-        vuln = self.factory.create(status='open', host=host_with_hostnames, service=None,
-                                   workspace=host_with_hostnames.workspace)
-        session.commit()
-        raw_data = self._create_put_data(
-            name='New name',
-            desc='New desc',
-            status='closed',
-            parent=vuln.host.id,
-            parent_type='Host',
-            refs=[{'name': 'ref1', 'type': 'exploit'}],
-            policy_violations=['pv0']
-        )
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.put(self.url(vuln), data=raw_data)
-        assert res.status_code == 200
-        assert vuln_count_previous == session.query(Vulnerability).count()
-        assert res.json['status'] == 'closed'
-        assert res.json['name'] == 'New name'
-        assert res.json['desc'] == 'New desc'
-
-    def test_update_vuln_from_correct_type_to_incorrect(self, test_client, session, host_with_hostnames):
-        vuln = self.factory.create(status='open', host=host_with_hostnames, service=None,
-                                   workspace=host_with_hostnames.workspace)
-        session.commit()
-        raw_data = self._create_put_data(
-            name='New name',
-            desc='New desc',
-            status='open',
-            parent=vuln.host.id,
-            parent_type='Host',
-            refs=['ref1'],
-            policy_violations=['pv0']
-        )
-        raw_data['type'] = "ASDADADASD"
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.put(self.url(vuln), data=raw_data)
-        assert res.status_code in [400, 409]
-        assert vuln_count_previous == session.query(Vulnerability).count()
-
-    def test_update_vuln_cve(self, test_client, session, host_with_hostnames):
-        vuln = self.factory.create(status='open', cve=['CVE-2021-1234'], host=host_with_hostnames, service=None,
-                                   workspace=host_with_hostnames.workspace)
-        session.add(vuln)
-        session.commit()
-
-        vuln = self.factory.create(status='open', cve=['CVE-2021-1234'], host=host_with_hostnames, service=None,
-                                   workspace=host_with_hostnames.workspace)
-        session.add(vuln)
-        session.commit()
-
-        raw_data = self._create_put_data(
-            name='New name',
-            desc='New desc',
-            status='open',
-            parent=vuln.host.id,
-            parent_type='Host',
-            policy_violations=['pv0'],
-            cve=['cve-2021-1234']
-        )
-        vuln_count_previous = session.query(CVE).count()
-        assert vuln_count_previous == 1
-        res = test_client.put(self.url(vuln), data=raw_data)
-        assert res.status_code == 200
-        assert vuln_count_previous == session.query(CVE).count()
-
-    def test_update_vuln_cwe(self, test_client, session, host_with_hostnames):
-        v1 = self.factory.create(status='open', host=host_with_hostnames, service=None,
-                                   workspace=host_with_hostnames.workspace)
-        v1.cwe = [CWE(name='CWE-123'), CWE(name='CWE-124')]
-        session.add(v1)
-        session.commit()
-
-        v2 = self.factory.create(status='open', host=host_with_hostnames, service=None,
-                                   workspace=host_with_hostnames.workspace)
-        v2.cwe = [CWE(name='CWE-890'), CWE(name='cwe-999')]
-        session.add(v2)
-        session.commit()
-
-        raw_data = self._create_put_data(
-            name='New name',
-            desc='New desc',
-            status='open',
-            parent=v1.host.id,
-            parent_type='Host',
-            policy_violations=['pv0'],
-            cwe=['CWE-189']
-        )
-        vuln_count_previous = session.query(CWE).count()
-        assert vuln_count_previous == 4
-        res = test_client.put(self.url(v1), data=raw_data)
-        assert res.status_code == 200
-        assert len(res.json['cwe']) == 1
-        assert res.json['cwe'][0] == 'CWE-189'
-        current_cwes = session.query(CWE).count()
-        assert current_cwes == vuln_count_previous + 1
-
-    def test_create_vuln_web(self, host_with_hostnames, test_client, session):
-        service = ServiceFactory.create(host=host_with_hostnames, workspace=host_with_hostnames.workspace)
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='VulnerabilityWeb',
-            parent_id=service.id,
-            parent_type='Service',
-            refs=[],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        vuln_web_count_previous = session.query(VulnerabilityWeb).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert vuln_web_count_previous + 1 == session.query(VulnerabilityWeb).count()
-        assert vuln_count_previous == session.query(Vulnerability).count()
-        assert res.json['name'] == 'New vulns'
-        assert res.json['owner'] == 'test'
-        assert res.json['type'] == 'VulnerabilityWeb'
-        assert res.json['parent'] == service.id
-        assert res.json['parent_type'] == 'Service'
-        assert res.json['method'] == 'GET'
-        assert res.json['path'] == '/pepep'
-
     @pytest.mark.parametrize('param_name', ['query', 'query_string'])
     @pytest.mark.usefixtures('mock_envelope_list')
     def test_filter_by_querystring(
             self, test_client, session, second_workspace,
             vulnerability_web_factory, param_name):
-        # VulnerabilityFilterSet has duplicate fields with the same function.
+        # VulnerabilityContextFilterSet has duplicate fields with the same function.
         # This was designed to maintain backwards compatibility
 
         VulnerabilityGeneric.query.delete(synchronize_session='fetch')
@@ -1179,7 +954,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         expected_ids = {vuln.id for vuln in expected_vulns}
 
         res = test_client.get(urljoin(
-            self.url(workspace=second_workspace), f'?{param_name}=bbb'))
+            self.url(), f'?{param_name}=bbb'))
         assert res.status_code == 200
 
         for vuln in res.json['data']:
@@ -1211,8 +986,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         expected_ids.update(vuln.id for vuln in medium_vulns)
         expected_ids.update(vuln.id for vuln in medium_vulns_web)
 
-        res = test_client.get(urljoin(self.url(
-            workspace=second_workspace), f'?severity={medium_name}'))
+        res = test_client.get(urljoin(self.url(), f'?severity={medium_name}'))
         assert res.status_code == 200
         for vuln in res.json['data']:
             assert vuln['severity'] == 'med'
@@ -1249,16 +1023,14 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         expected_ids = {vuln.id for vuln in expected_vulns}
 
         # This shouldn't show any vulns with POSTT method
-        res = test_client.get(urljoin(self.url(
-            workspace=second_workspace), '?method=POST'))
+        res = test_client.get(urljoin(self.url(), '?method=POST'))
         assert res.status_code == 200
         assert {vuln['_id'] for vuln in res.json['data']} == expected_ids, "This may fail because no presence of " \
                                                                            "filter_alchemy branch"
 
         # This shouldn't show any vulns since by default method filter is
         # an exact match, not a like statement
-        res = test_client.get(urljoin(self.url(
-            workspace=second_workspace), '?method=%25POST%25'))
+        res = test_client.get(urljoin(self.url(), '?method=%25POST%25'))
         assert res.status_code == 200
         assert len(res.json['data']) == 0
 
@@ -1283,8 +1055,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         expected_ids = {vuln.id for vuln in expected_vulns}
 
-        res = test_client.get(urljoin(self.url(
-            workspace=second_workspace), '?website=faradaysec.com'))
+        res = test_client.get(urljoin(self.url(), '?website=faradaysec.com'))
         assert res.status_code == 200
 
         for vuln in res.json['data']:
@@ -1552,79 +1323,19 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
                                              method=method)
 
         session.commit()
-        res = test_client.get(self.url(workspace=second_workspace)
+        res = test_client.get(self.url()
                               + '?sort=method&sort_dir=asc')
         assert res.status_code == 200, res.data
-        assert len(res.json['data']) == 30
+        assert len(res.json['data']) == 35
         assert ''.join(v['method'] for v in res.json['data']
                        if v['method']) == 'abcdefghij'
 
-        res = test_client.get(self.url(workspace=second_workspace)
+        res = test_client.get(self.url()
                               + '?sort=method&sort_dir=desc')
         assert res.status_code == 200, res.data
-        assert len(res.json['data']) == 30
+        assert len(res.json['data']) == 35
         assert ''.join(v['method'] for v in res.json['data']
                        if v['method']) == 'abcdefghij'[::-1]
-
-    def test_create_vuln_with_evidence(self, host_with_hostnames, test_client,
-                                       session):
-        session.commit()  # flush host_with_hostnames
-        attachments = [
-            (TEST_DATA_PATH / 'faraday.png').open('rb'),
-            (TEST_DATA_PATH / 'test.html').open('rb')
-        ]
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            attachments=attachments,
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-
-        assert res.status_code == 201
-        assert len(res.json['_attachments']) == 2
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-        [fileobj.close() for fileobj in attachments]
-
-    @pytest.mark.parametrize('cve_list', [
-        {
-            'cve': {'data': ['cve-2017-0002', 'CVE-2017-0012', 'CVE-2017-0012'], 'count': 2}
-        },
-        {
-            'cve': {'data': [], 'count': 0}
-        },
-        {
-            'cve': {'data': ['cve-2017-0003', 'CVE-2017-0012', 'CVE-2017-0012'], 'count': 2}
-        },
-        {
-            'cve': {'data': ['asdf-2017-0003', 'CVE-2017-0012', 'CVE-2017-0013'], 'count': 2}
-        },
-        {
-            'cve': {'data': ['CVE-2017-0003, CVE-2017-0012', 'CVE-2017-0013'], 'count': 3}
-        },
-    ])
-    def test_create_vuln_with_cve(self, cve_list, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            cve=cve_list['cve']['data'],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert session.query(CVE).count() == cve_list['cve']['count']
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
 
     @pytest.mark.usefixtures("ignore_nplusone")
     def test_filter_vulns_not_contains_cve(self, test_client, session, host, vulnerability_factory,
@@ -1659,778 +1370,16 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"filters":[{"name":"cve_instances","op":"not_any","val":{"name":"name","op":"eq","val":"CVE-2014-0160"}}]}'
         }
-        res = test_client.get(f'/v3/ws/{self.workspace.name}/vulns/filter', query_string=data)
+        url = join(
+            self.url(),
+            'filter'
+        )
+        res = test_client.get(url, query_string=data)
 
         assert res.status_code == 200
         assert len(res.json['vulnerabilities']) == 2
         assert 'first_cve' not in res.json['vulnerabilities'][0]['value']['name']
         assert 'first_cve' not in res.json['vulnerabilities'][1]['value']['name']
-
-    # TODO: is this repeated?
-    def test_patch_vuln_with_cve_list(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            cve=['CVE-2017-0002', 'CVE-2017-0012', 'CVE-2017-0012'],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-
-        new_cve_list = ['CVE-2017-0001']
-        res = test_client.patch(f'{self.url(res.json["_id"], workspace=ws)}', data={'cve': new_cve_list})
-        assert res.status_code == 200
-        assert set(res.json['cve']) == set(new_cve_list)
-
-    def test_create_vuln_and_get_cve_list(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            cve=['CVE-2017-0002', 'CVE-2017-0012', 'CVE-2017-0012'],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert len(res.json['cve']) == 2
-
-    def test_create_vuln_with_malformed_cve_list(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            cve=['CVE-2017-0002', 'CVE-2017-0X12', 'CVE-2017-0012'],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert len(res.json['cve']) == 2
-        assert set(res.json['cve']) == {'CVE-2017-0002', 'CVE-2017-0012'}
-
-    def test_create_vuln_with_policyviolations(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=['PCI DSS Credir card not encrypted',
-                              'PCI DSS Credir card not encrypted'],
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert session.query(PolicyViolation).count() == 1
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-
-    @pytest.mark.parametrize('cvss', [
-        {
-            'version': 'cvss2',
-            'vector': 'AV:L/AC:M/Au:N/C:P/I:P/A:C',
-            'base_score': 5.9,
-            'impact_score': 8.5,
-            'exploitability_score': 3.4,
-            'temporal_score': None,
-            'environmental_score': None,
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:C/C:H/I:H/A:H',
-            'base_score': 8.0,
-            'temporal_score': 8.0,
-            'impact_score': 6.1,
-            'exploitability_score': 1.3,
-            'environmental_score': 8.1,  # There is a difference between first.org and nvd. Nvd result is 8.0
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:P/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:L',
-            'base_score': 3.7,
-            'temporal_score': 3.7,
-            'environmental_score': 3.7,
-            'impact_score': 2.8,
-            'exploitability_score': 0.7,
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N',
-            'base_score': 0.0,
-            'temporal_score': 0.0,
-            'environmental_score': 0.0,
-            'impact_score': 0.0,
-            'exploitability_score': 3.9,
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N/E:U/RL:T/RC:C/CR:H/IR:M/AR:M/MAV:A/MAC:H/MPR:L/MUI:R/MS:U/MC:X/MI:L/MA:H',
-            'base_score': 0.0,
-            'temporal_score': 0.0,
-            'environmental_score': 4.5,
-            'impact_score': 0.0,
-            'exploitability_score': 3.9  # 3.7 ,
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:L/E:U/RL:T/RC:C/CR:H/IR:M/AR:M/MAV:A/MAC:H/MPR:L/MUI:R/MS:U/MC:X/MI:L/MA:H',
-            'base_score': 8.7,
-            'temporal_score': 7.7,
-            'environmental_score': 6.0,
-            'impact_score': 6.0,
-            'exploitability_score': 2.1,  # 2.5
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:A/AC:H/PR:L/UI:R/S:U/C:L/I:L/A:H/E:U/RL:T/RC:C/CR:L/IR:H/AR:M/MAV:N/MAC:L/MPR:L/MUI:R/MS:U/MC:X/MI:L/MA:N',
-            'base_score': 5.6,
-            'temporal_score': 4.9,
-            'environmental_score': 4.2,
-            'impact_score': 4.8,
-            'exploitability_score': 0.9,
-        },
-        {
-            'version': 'cvss3',
-            'vector': 'CVSS:3.1/AV:A/AC:H/PR:H/UI:R/S:U/C:H/I:H/A:H/E:H/RL:W/RC:R',
-            'base_score': 6.3,
-            'temporal_score': 5.9,
-            'environmental_score': 5.9,
-            'impact_score': 5.9,
-            'exploitability_score': 0.4,
-        },
-        {
-            'version': 'cvss4',
-            'vector': 'CVSS:4.0/AV:A/AC:L/AT:P/PR:L/UI:A/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L',
-            'base_score': 5.9
-        }
-    ])
-    def test_create_vuln_with_cvss_scores(self, host_with_hostnames, test_client, session, cvss):
-        session.commit()  # flush host_with_hostnames
-        cvss2 = {}
-        cvss3 = {}
-        cvss4 = {}
-        if cvss['version'] == 'cvss2':
-            cvss2 = {'vector_string': cvss['vector']}
-        elif cvss['version'] == 'cvss3':
-            cvss3 = {'vector_string': cvss['vector']}
-        else:
-            cvss4 = {'vector_string': cvss['vector']}
-
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            policyviolations=[],
-            refs=[],
-            cvss2=cvss2,
-            cvss3=cvss3,
-            cvss4=cvss4,
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-
-        assert res.json[cvss['version']] is not None
-        if cvss['version'] == 'cvss4':
-            assert res.json[cvss['version']]['base_score'] == cvss['base_score']
-        else:
-            assert res.json[cvss['version']]['base_score'] == cvss['base_score']
-            assert res.json[cvss['version']]['temporal_score'] == cvss['temporal_score']
-            assert res.json[cvss['version']]['environmental_score'] == cvss['environmental_score']
-            assert res.json[cvss['version']]['impact_score'] == cvss['impact_score']
-            assert res.json[cvss['version']]['exploitability_score'] == cvss['exploitability_score']
-        if cvss3:
-            vuln = VulnerabilityGeneric.query.with_entities(VulnerabilityGeneric.cvss3_scope)\
-                .filter(VulnerabilityGeneric.id == res.json['obj_id']).first()
-            assert vuln is not None
-            assert vuln.cvss3_scope == CVSS3(cvss3['vector_string']).get_value_description('S').lower()
-
-    def test_create_vuln_with_cvss_only_mandatory(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        cvss2 = {'vector_string': 'AV:L/AC:L/Au:M/C:N/I:P/A:C'}
-        cvss3 = {'vector_string': 'CVSS:3.0/S:C/C:H/I:H/A:N/AV:P/AC:H/PR:H/UI:R'}
-        cvss4 = {'vector_string': 'CVSS:4.0/AV:A/AC:H/AT:P/PR:L/UI:A/VC:L/VI:H/VA:L/SC:H/SI:L/SA:H'}
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            policyviolations=[],
-            refs=[],
-            cvss2=cvss2,
-            cvss3=cvss3,
-            cvss4=cvss4,
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-
-        assert res.json['cvss2'] is not None
-        assert res.json['cvss2']['base_score'] == 5.0
-        assert res.json['cvss2']['base_severity'] == 'medium'
-        assert res.json['cvss2']['temporal_severity'] is None
-        assert res.json['cvss2']['temporal_score'] is None
-        assert res.json['cvss2']['environmental_score'] is None
-        assert res.json['cvss2']['environmental_severity'] is None
-        assert res.json['cvss2']['access_vector'] == 'local'
-        assert res.json['cvss2']['access_complexity'] == 'low'
-        assert res.json['cvss2']['authentication'] == 'multiple'
-        assert res.json['cvss2']['confidentiality_impact'] == 'none'
-        assert res.json['cvss2']['integrity_impact'] == 'partial'
-        assert res.json['cvss2']['availability_impact'] == 'complete'
-        assert res.json['cvss2']['exploitability'] is None
-        assert res.json['cvss2']['remediation_level'] is None
-        assert res.json['cvss2']['report_confidence'] is None
-        assert res.json['cvss2']['collateral_damage_potential'] is None
-        assert res.json['cvss2']['target_distribution'] is None
-        assert res.json['cvss2']['confidentiality_requirement'] is None
-        assert res.json['cvss2']['integrity_requirement'] is None
-        assert res.json['cvss2']['availability_requirement'] is None
-
-        assert res.json['cvss3'] is not None
-        assert res.json['cvss3']['base_score'] == 6.5
-        assert res.json['cvss3']['temporal_score'] == 6.5
-        assert res.json['cvss3']['environmental_score'] == 6.5
-        assert res.json['cvss3']['attack_vector'] == 'physical'
-        assert res.json['cvss3']['attack_complexity'] == 'high'
-        assert res.json['cvss3']['privileges_required'] == 'high'
-        assert res.json['cvss3']['user_interaction'] == 'required'
-        assert res.json['cvss3']['confidentiality_impact'] == 'high'
-        assert res.json['cvss3']['integrity_impact'] == 'high'
-        assert res.json['cvss3']['availability_impact'] == 'none'
-        assert res.json['cvss3']['scope'] == 'changed'
-        assert res.json['cvss3']['exploit_code_maturity'] is None
-        assert res.json['cvss3']['remediation_level'] is None
-        assert res.json['cvss3']['report_confidence'] is None
-        assert res.json['cvss3']['confidentiality_requirement'] is None
-        assert res.json['cvss3']['integrity_requirement'] is None
-        assert res.json['cvss3']['availability_requirement'] is None
-        assert res.json['cvss3']['modified_attack_vector'] is None
-        assert res.json['cvss3']['modified_attack_complexity'] is None
-        assert res.json['cvss3']['modified_privileges_required'] is None
-        assert res.json['cvss3']['modified_user_interaction'] is None
-        assert res.json['cvss3']['modified_scope'] is None
-        assert res.json['cvss3']['modified_confidentiality_impact'] is None
-        assert res.json['cvss3']['modified_integrity_impact'] is None
-        assert res.json['cvss3']['modified_availability_impact'] is None
-
-        assert res.json['cvss4'] is not None
-        assert res.json['cvss4']['base_score'] == 6.0
-        assert res.json['cvss4']['base_severity'] == 'medium'
-        assert res.json['cvss4']['attack_vector'] == 'adjacent'
-        assert res.json['cvss4']['attack_complexity'] == 'high'
-        assert res.json['cvss4']['attack_requirements'] == 'present'
-        assert res.json['cvss4']['privileges_required'] == 'low'
-        assert res.json['cvss4']['user_interaction'] == 'active'
-        assert res.json['cvss4']['vulnerable_system_confidentiality_impact'] == 'low'
-        assert res.json['cvss4']['vulnerable_system_integrity_impact'] == 'high'
-        assert res.json['cvss4']['vulnerable_system_availability_impact'] == 'low'
-        assert res.json['cvss4']['subsequent_system_confidentiality_impact'] == 'high'
-        assert res.json['cvss4']['subsequent_system_integrity_impact'] == 'low'
-        assert res.json['cvss4']['subsequent_system_availability_impact'] == 'high'
-        assert res.json['cvss4']['safety'] is None
-        assert res.json['cvss4']['automatable'] is None
-        assert res.json['cvss4']['recovery'] is None
-        assert res.json['cvss4']['value_density'] is None
-        assert res.json['cvss4']['vulnerability_response_effort'] is None
-        assert res.json['cvss4']['provider_urgency'] is None
-        assert res.json['cvss4']['modified_attack_vector'] is None
-        assert res.json['cvss4']['modified_attack_complexity'] is None
-        assert res.json['cvss4']['modified_attack_requirements'] is None
-        assert res.json['cvss4']['modified_privileges_required'] is None
-        assert res.json['cvss4']['modified_user_interaction'] is None
-        assert res.json['cvss4']['modified_vulnerable_system_confidentiality_impact'] is None
-        assert res.json['cvss4']['modified_subsequent_system_confidentiality_impact'] is None
-        assert res.json['cvss4']['modified_vulnerable_system_integrity_impact'] is None
-        assert res.json['cvss4']['modified_subsequent_system_integrity_impact'] is None
-        assert res.json['cvss4']['modified_vulnerable_system_availability_impact'] is None
-        assert res.json['cvss4']['modified_subsequent_system_availability_impact'] is None
-        assert res.json['cvss4']['confidentiality_requirement'] is None
-        assert res.json['cvss4']['integrity_requirement'] is None
-        assert res.json['cvss4']['availability_requirement'] is None
-        assert res.json['cvss4']['exploit_maturity'] is None
-
-    def test_create_vuln_with_cvss(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        cvss2 = {'vector_string': 'AV:L/AC:L/Au:M/C:N/I:P/A:C/E:U/RL:W/RC:ND/CDP:L/TD:H/CR:ND/IR:ND'}
-        cvss3 = {'vector_string': 'CVSS:3.0/S:C/C:H/I:H/A:N/AV:P/AC:H/PR:H/UI:R/E:H/RL:O/RC:R/CR:H/IR:X/AR:X/MAC:H/MPR:X/MUI:X/MC:L/MA:X'}
-        cvss4 = {'vector_string': 'CVSS:4.0/AV:N/AC:H/AT:P/PR:L/UI:A/VC:L/VI:H/VA:L/SC:H/SI:L/SA:H/E:A/CR:L/IR:M/AR:H/MAV:A/MAC:H/MAT:P/MPR:H/MUI:A/MVC:H/MVI:L/MVA:H/MSC:L/MSI:S/MSA:N/S:P/AU:N/R:U/V:C/RE:M/U:Green'}
-
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            policyviolations=[],
-            refs=[],
-            cvss2=cvss2,
-            cvss3=cvss3,
-            cvss4=cvss4,
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert res.json['cvss2'] is not None
-        assert res.json['cvss2']['base_score'] == 5.0
-        assert res.json['cvss2']['temporal_score'] == 4.0
-        assert res.json['cvss2']['environmental_score'] == 4.6
-        assert res.json['cvss2']['access_vector'] == 'local'
-        assert res.json['cvss2']['access_complexity'] == 'low'
-        assert res.json['cvss2']['authentication'] == 'multiple'
-        assert res.json['cvss2']['confidentiality_impact'] == 'none'
-        assert res.json['cvss2']['integrity_impact'] == 'partial'
-        assert res.json['cvss2']['availability_impact'] == 'complete'
-        assert res.json['cvss2']['exploitability'] == 'unproven'
-        assert res.json['cvss2']['remediation_level'] == 'workaround'
-        assert res.json['cvss2']['report_confidence'] is None
-        assert res.json['cvss2']['collateral_damage_potential'] == 'low'
-        assert res.json['cvss2']['target_distribution'] == 'high'
-        assert res.json['cvss2']['confidentiality_requirement'] is None
-        assert res.json['cvss2']['integrity_requirement'] is None
-        assert res.json['cvss2']['availability_requirement'] is None
-
-        assert res.json['cvss3'] is not None
-        assert res.json['cvss3']['base_score'] == 6.5
-        assert res.json['cvss3']['temporal_score'] == 6.0
-        assert res.json['cvss3']['environmental_score'] == 5.3
-        assert res.json['cvss3']['attack_vector'] == 'physical'
-        assert res.json['cvss3']['attack_complexity'] == 'high'
-        assert res.json['cvss3']['privileges_required'] == 'high'
-        assert res.json['cvss3']['user_interaction'] == 'required'
-        assert res.json['cvss3']['confidentiality_impact'] == 'high'
-        assert res.json['cvss3']['integrity_impact'] == 'high'
-        assert res.json['cvss3']['availability_impact'] == 'none'
-        assert res.json['cvss3']['exploit_code_maturity'] == 'high'
-        assert res.json['cvss3']['remediation_level'] == 'official fix'
-        assert res.json['cvss3']['report_confidence'] == 'reasonable'
-        assert res.json['cvss3']['confidentiality_requirement'] == 'high'
-        assert res.json['cvss3']['integrity_requirement'] is None
-        assert res.json['cvss3']['availability_requirement'] is None
-        assert res.json['cvss3']['modified_attack_vector'] is None
-        assert res.json['cvss3']['modified_attack_complexity'] == 'high'
-        assert res.json['cvss3']['modified_privileges_required'] == 'high'
-        assert res.json['cvss3']['modified_user_interaction'] == 'required'
-        assert res.json['cvss3']['modified_scope'] is None
-        assert res.json['cvss3']['modified_confidentiality_impact'] == 'low'
-        assert res.json['cvss3']['modified_integrity_impact'] is None
-        assert res.json['cvss3']['modified_availability_impact'] == 'none'
-
-        assert res.json['cvss4'] is not None
-        assert res.json['cvss4']['base_score'] == 6.9
-        assert res.json['cvss4']['base_severity'] == 'medium'
-        assert res.json['cvss4']['attack_vector'] == 'network'
-        assert res.json['cvss4']['attack_complexity'] == 'high'
-        assert res.json['cvss4']['attack_requirements'] == 'present'
-        assert res.json['cvss4']['privileges_required'] == 'low'
-        assert res.json['cvss4']['user_interaction'] == 'active'
-        assert res.json['cvss4']['vulnerable_system_confidentiality_impact'] == 'low'
-        assert res.json['cvss4']['vulnerable_system_integrity_impact'] == 'high'
-        assert res.json['cvss4']['vulnerable_system_availability_impact'] == 'low'
-        assert res.json['cvss4']['subsequent_system_confidentiality_impact'] == 'high'
-        assert res.json['cvss4']['subsequent_system_integrity_impact'] == 'low'
-        assert res.json['cvss4']['subsequent_system_availability_impact'] == 'high'
-        assert res.json['cvss4']['safety'] == 'present'
-        assert res.json['cvss4']['automatable'] == 'no'
-        assert res.json['cvss4']['recovery'] == 'user'
-        assert res.json['cvss4']['value_density'] == 'concentrated'
-        assert res.json['cvss4']['vulnerability_response_effort'] == 'moderate'
-        assert res.json['cvss4']['provider_urgency'] == 'green'
-        assert res.json['cvss4']['modified_attack_vector'] == 'adjacent'
-        assert res.json['cvss4']['modified_attack_complexity'] == 'high'
-        assert res.json['cvss4']['modified_attack_requirements'] == 'present'
-        assert res.json['cvss4']['modified_privileges_required'] == 'high'
-        assert res.json['cvss4']['modified_user_interaction'] == 'active'
-        assert res.json['cvss4']['modified_vulnerable_system_confidentiality_impact'] == 'high'
-        assert res.json['cvss4']['modified_subsequent_system_confidentiality_impact'] == 'low'
-        assert res.json['cvss4']['modified_vulnerable_system_integrity_impact'] == 'low'
-        assert res.json['cvss4']['modified_subsequent_system_integrity_impact'] == 'safety'
-        assert res.json['cvss4']['modified_vulnerable_system_availability_impact'] == 'high'
-        assert res.json['cvss4']['modified_subsequent_system_availability_impact'] == 'negligible'
-        assert res.json['cvss4']['confidentiality_requirement'] == 'low'
-        assert res.json['cvss4']['integrity_requirement'] == 'medium'
-        assert res.json['cvss4']['availability_requirement'] == 'high'
-        assert res.json['cvss4']['exploit_maturity'] == 'attacked'
-
-    def test_create_vuln_with_empty_cvss(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        cvss2 = {'vector_string': 'AV:L/AC:L/Au:M/C:N/I:P/A:C/E:U/RL:W/RC:ND/CDP:L/TD:H/CR:ND/IR:ND'}
-        cvss3 = {'vector_string': 'CVSS:3.0/S:C/C:H/I:H/A:N/AV:P/AC:H/PR:H/UI:R/E:H/RL:O/RC:R/CR:H/IR:X/AR:X/MAC:H/MPR:X/MUI:X/MC:L/MA:X'}
-        cvss4 = {'vector_string': 'CVSS:4.0/AV:A/AC:H/AT:P/PR:L/UI:P/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L'}
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            policyviolations=[],
-            refs=[],
-            cvss2=cvss2,
-            cvss3=cvss3,
-            cvss4=cvss4,
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        vuln = session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == res.json['_id']).first()
-        assert vuln.cvss2_vector_string == cvss2['vector_string']
-        assert vuln.cvss3_vector_string == cvss3['vector_string']
-        assert vuln.cvss4_vector_string == cvss4['vector_string']
-        vuln.cvss2_vector_string = ''
-        vuln.cvss3_vector_string = ''
-        vuln.cvss4_vector_string = ''
-        assert vuln.cvss2_vector_string is None
-        assert vuln.cvss2_base_score is None
-        assert vuln.cvss2_temporal_score is None
-        assert vuln.cvss2_environmental_score is None
-
-        assert vuln.cvss3_vector_string is None
-        assert vuln.cvss3_base_score is None
-        assert vuln.cvss3_temporal_score is None
-        assert vuln.cvss3_environmental_score is None
-
-        assert vuln.cvss4_vector_string is None
-        assert vuln.cvss4_base_score is None
-
-    def test_create_vuln_with_cvss_malformed(self, host_with_hostnames, test_client, session):
-        """
-        this will create vuln but cvss will have only the malformed vector string
-        """
-        session.commit()  # flush host_with_hostnames
-        cvss2 = {'vector_string': 'AV:L/AC:L/Au:M/C:N/I:P/A:J'}
-        cvss3 = {'vector_string': 'CVSS:3.0/S:C/C:H/I:H/A:N/AV:P'}
-        cvss4 = {'vector_string': 'CVSS:4.0/VA:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/PU:N/PA:N/PI:N/SA:U'}
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            policyviolations=[],
-            refs=[],
-            cvss2=cvss2,
-            cvss3=cvss3,
-            cvss4=cvss4,
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert res.json['cvss2']['vector_string'] == cvss2['vector_string']
-        assert res.json['cvss3']['vector_string'] == cvss3['vector_string']
-        assert res.json['cvss4']['vector_string'] == cvss4['vector_string']
-
-    def test_create_vuln_imapct_verification(self, host_with_hostnames, test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            impact={
-                'accountability': True,
-                'availability': True,
-                'confidentiality': True,
-                'integrity': True
-            }
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        assert vuln_count_previous + 1 == session.query(Vulnerability).count()
-        assert res.json['name'] == 'New vulns'
-        assert res.json['impact'] == {'accountability': True,
-                                      'availability': True,
-                                      'confidentiality': True,
-                                      'integrity': True}
-
-    def test_handles_invalid_impact(self, host_with_hostnames, test_client,
-                                    session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            impact={
-                'accountability': True,
-                'integrity': 'aaaa',
-                'invalid': None,
-            }
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 400
-
-    def test_create_vuln_with_invalid_type(self,
-                                           host_with_hostnames,
-                                           test_client,
-                                           session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='VulnerabilitySarasa',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[]
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(
-            self.url(workspace=ws),
-            data=raw_data,
-        )
-        assert res.status_code == 400
-        assert vuln_count_previous == session.query(Vulnerability).count()
-        assert res.json['message'] == 'Invalid vulnerability type.'
-
-    def test_create_vuln_without_type(self, host_with_hostnames, test_client, session):
-        """
-        This one should only check basic vuln properties
-        :param host_with_hostnames:
-        :param test_client:
-        :param session:
-        :return:
-        """
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='a',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        raw_data.pop("type")
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 400
-        assert vuln_count_previous == session.query(Vulnerability).count()
-        assert res.json['message'] == 'Type is required.'
-
-    def test_create_vuln_with_invalid_severity(self,
-                                               host_with_hostnames,
-                                               test_client, session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            severity="invalid",
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 400
-        assert vuln_count_previous == session.query(Vulnerability).count()
-        assert b'Invalid severity type.' in res.data
-
-    def test_modify_parent(self, test_client, session, workspace):
-        host = HostFactory.create(ip='127.0.0.1', workspace=workspace)
-        session.add(host)
-        session.commit()
-        vulnerability = VulnerabilityFactory.create(
-            name='test',
-            host=host,
-            service=None,
-            workspace=workspace,
-            severity='low'
-        )
-        session.add(vulnerability)
-        session.commit()
-
-        assert vulnerability.host_id == host.id
-
-        new_host = HostFactory(ip="192.168.10.1", workspace=workspace)
-        session.add(new_host)
-        session.commit()
-
-        data = {
-            "parent": new_host.id,
-            "parent_type": "Host"
-        }
-        res = test_client.patch(f'{self.url(workspace=workspace)}/{vulnerability.id}', data=data)
-        assert res.status_code == 200
-        assert res.json['parent'] == new_host.id
-
-    def test_modify_parent_with_no_parent_type_or_parent(self, test_client, session, workspace):
-        host = HostFactory.create(ip='127.0.0.1', workspace=workspace)
-        session.add(host)
-        session.commit()
-
-        service = ServiceFactory.create(name="ssh", workspace=workspace)
-        session.add(service)
-        session.commit()
-
-        vulnerability = VulnerabilityFactory.create(
-            name='test',
-            host=host,
-            service=None,
-            workspace=workspace,
-            severity='low'
-        )
-        session.add(vulnerability)
-        session.commit()
-
-        assert vulnerability.host_id == host.id
-
-        new_host = HostFactory(ip="192.168.10.1", workspace=workspace)
-        session.add(new_host)
-        session.commit()
-
-        data = {
-            "parent": new_host.id,
-        }
-        res = test_client.patch(f'{self.url(workspace=workspace)}/{vulnerability.id}', data=data)
-        assert res.status_code == 400
-
-        data = {
-            "parent_type": "Service",
-        }
-        res = test_client.patch(f'{self.url(workspace=workspace)}/{vulnerability.id}', data=data)
-        assert res.status_code == 400
-
-    def test_modify_web_vuln_parent_with_host_parent_type(self, test_client, session, workspace):
-        service = ServiceFactory.create(name="ssh", workspace=workspace)
-        session.add(service)
-        session.commit()
-        vulnerability = VulnerabilityWebFactory.create(
-            name='test',
-            host=None,
-            service=service,
-            workspace=workspace,
-            severity='low'
-        )
-        session.add(vulnerability)
-        session.commit()
-
-        assert vulnerability.service_id == service.id
-
-        new_host = HostFactory(ip="192.168.10.1", workspace=workspace)
-        session.add(new_host)
-        session.commit()
-
-        data = {
-            "parent": new_host.id,
-            "parent_type": "Host"
-        }
-        res = test_client.patch(f'{self.url(workspace=workspace)}/{vulnerability.id}', data=data)
-        assert res.status_code == 400
-        assert vulnerability.parent.id == service.id
-
-    def test_modify_vulnerability_parent_from_host_parent_to_service_parent(self, test_client, session, workspace):
-        host = HostFactory.create(ip='127.0.0.1', workspace=workspace)
-        session.add(host)
-        session.commit()
-
-        vulnerability = VulnerabilityFactory.create(
-            name='test',
-            host=host,
-            service=None,
-            workspace=workspace,
-            severity='low'
-        )
-        session.add(vulnerability)
-        session.commit()
-        assert vulnerability.host_id == host.id
-
-        service = ServiceFactory.create(name="ssh2", workspace=workspace)
-        session.add(service)
-        session.commit()
-        web_vulnerability = VulnerabilityWebFactory.create(
-            name='test',
-            host=None,
-            service=service,
-            workspace=workspace,
-            severity='low'
-        )
-        session.add(web_vulnerability)
-        session.commit()
-        assert web_vulnerability.service_id == service.id
-
-        new_service = ServiceFactory.create(name="ssh1", workspace=workspace)
-        session.add(new_service)
-        session.commit()
-
-        data = {
-            "parent": new_service.id,
-            "parent_type": "Service"
-        }
-        res = test_client.patch(f'{self.url(workspace=workspace)}/{vulnerability.id}', data=data)
-        assert res.status_code == 200
-        assert res.json['parent'] == new_service.id
-        assert res.json['parent_type'] == "Service"
-
-        res = test_client.patch(f'{self.url(workspace=workspace)}/{web_vulnerability.id}', data=data)
-        assert res.status_code == 200
-        assert res.json['parent'] == new_service.id
-        assert res.json['parent_type'] == "Service"
-
-    def test_create_vuln_with_invalid_ease_of_resolution(self,
-                                                         host_with_hostnames,
-                                                         test_client,
-                                                         session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            easeofresolution='frutafrutafruta'
-        )
-        ws = host_with_hostnames.workspace
-        vuln_count_previous = session.query(Vulnerability).count()
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 400
-        assert vuln_count_previous == session.query(Vulnerability).count()
-        assert list(res.json['messages']['json'].keys()) == ['easeofresolution']
-        assert 'Must be one of' in res.json['messages']['json']['easeofresolution'][0]
-
-    def test_create_vuln_with_null_ease_of_resolution(self,
-                                                      host_with_hostnames,
-                                                      test_client,
-                                                      session):
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            easeofresolution=None,
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws),
-                               data=raw_data)
-        assert res.status_code == 201, (res.status_code, res.data)
-        created_vuln = Vulnerability.query.get(res.json['_id'])
-        assert created_vuln.ease_of_resolution is None
 
     def test_count_order_by_incorrect_keyword(self, test_client, session):
         for i, vuln in enumerate(self.objects[:3]):
@@ -2527,7 +1476,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             {"name": "critical", "severity": "critical", "count": 1},
         ], key=lambda i: (i['count'], i['name'], i['severity']))
 
-    def test_count_severity_map(self, test_client, second_workspace, session):
+    def test_count_severity_map(self, test_client, second_workspace, session, logged_user):
+        Vulnerability.query.delete()
         vulns = self.factory.create_batch(4, severity='informational',
                                           workspace=second_workspace)
         vulns += self.factory.create_batch(3, severity='medium',
@@ -2538,7 +1488,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
 
         res = test_client.get(
-            join(self.url(workspace=second_workspace), 'count?group_by=severity'
+            join(self.url(), 'count?group_by=severity'
                  ))
         assert res.status_code == 200
         assert res.json['total_count'] == 9
@@ -2642,12 +1592,13 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             vulnerability_web_factory.create(service=service,
                                              workspace=second_workspace),
         ]
-
+        vulns_ids = [v.id for v in vulns]
         session.commit()
-        res = test_client.get(self.url(workspace=second_workspace))
+        res = test_client.get(self.url())
         assert res.status_code == 200
         for v in res.json['data']:
-            assert v['target'] == host.ip
+            if v['_id'] in vulns_ids:
+                assert v['target'] == host.ip
 
     @pytest.mark.usefixtures('mock_envelope_list')
     def test_os(self, test_client, session, second_workspace,
@@ -2668,10 +1619,13 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         ]
 
         session.commit()
-        res = test_client.get(self.url(workspace=second_workspace))
+        vulns_ids = [v.id for v in vulns]
+
+        res = test_client.get(self.url())
         assert res.status_code == 200
         for v in res.json['data']:
-            assert v['host_os'] == host.os
+            if v['_id'] in vulns_ids:
+                assert v['host_os'] == host.os
 
     @pytest.mark.usefixtures('mock_envelope_list')
     def test_filter_by_command_id(self, test_client, session,
@@ -2724,8 +1678,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         expected_ids.update(vuln.id for vuln in high_vulns)
         web_expected_ids.update(vuln.id for vuln in high_vulns_web)
 
-        res = test_client.get(urljoin(self.url(
-            workspace=second_workspace), f'?command_id={command.id}'))
+        res = test_client.get(urljoin(self.url(), f'?command_id={command.id}'))
         assert res.status_code == 200
         for vuln in res.json['data']:
             command_object = CommandObject.query.filter_by(
@@ -2737,8 +1690,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert {vuln['_id'] for vuln in res.json['data']} == expected_ids
 
         # Check for web vulns
-        res = test_client.get(urljoin(self.url(
-            workspace=second_workspace), f'?command_id={web_command.id}'))
+        res = test_client.get(urljoin(self.url(), f'?command_id={web_command.id}'))
         assert res.status_code == 200
         for vuln in res.json['data']:
             command_object = CommandObject.query.filter_by(
@@ -2748,12 +1700,6 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             ).first()
             vuln['metadata']['command_id'] == command_object.command.id
         assert {vuln['_id'] for vuln in res.json['data']} == web_expected_ids
-
-        # Check for cross-workspace bugs
-        res = test_client.get(urljoin(self.url(
-            workspace=workspace), f'?command_id={web_command.id}'))
-        assert res.status_code == 200
-        assert len(res.json['data']) == 0
 
     def test_vulnerability_metadata(self, session, test_client, workspace):
         owner = UserFactory.create()
@@ -2799,315 +1745,13 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         }
         assert expected_metadata == from_json_vuln[0]['value']['metadata']
 
-    @pytest.mark.parametrize("parent_type, parent_factory", [
-        ("Host", HostFactory),
-        ("Service", ServiceFactory),
-    ], ids=["with host parent", "with service parent"])
-    def test_create_with_parent_of_other_workspace(
-            self, parent_type, parent_factory, test_client, session,
-            second_workspace):
-        parent = parent_factory.create(workspace=second_workspace)
-        session.commit()
-        assert parent.workspace_id != self.workspace.id
-        data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=parent.id,
-            parent_type=parent_type,
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        res = test_client.post(self.url(), data=data)
-        assert res.status_code == 400
-        assert b'Parent id not found' in res.data
-
-    @pytest.mark.parametrize("parent_type, parent_factory", [
-        ("Host", HostFactory),
-        ("Service", ServiceFactory),
-    ], ids=["with host parent", "with service parent"])
-    def test_update_with_parent_of_other_workspace(
-            self, parent_type, parent_factory, test_client, session,
-            second_workspace, credential_factory):
-        parent = parent_factory.create(workspace=second_workspace)
-        session.add(parent)
-        session.commit()
-        assert parent.workspace_id != self.workspace.id
-        data = self._create_put_data(
-            name='New name',
-            desc='New desc',
-            status='closed',
-            parent=parent.id,
-            parent_type=parent_type,
-            refs=[{'name': 'ref1', 'type': 'patch'}],
-            policy_violations=['pv0']
-        )
-        res = test_client.put(self.url(self.first_object), data=data)
-        assert res.status_code == 400
-        assert b'Parent id not found' in res.data
-
-    def test_create_vuln_multiple_times_returns_conflict(self, host_with_hostnames, test_client, session):
-        """
-        This one should only check basic vuln properties
-        :param host_with_hostnames:
-        :param test_client:
-        :param session:
-        :return:
-        """
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 409
-
-    def test_create_webvuln_multiple_times_returns_conflict(self, host_with_hostnames, test_client, session):
-        """
-        This one should only check basic vuln properties
-        :param host_with_hostnames:
-        :param test_client:
-        :param session:
-        :return:
-        """
-        service = ServiceFactory.create(workspace=self.workspace)
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulnsweb',
-            vuln_type='VulnerabilityWeb',
-            parent_id=service.id,
-            parent_type='Service',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        ws = host_with_hostnames.workspace
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 201
-        res = test_client.post(self.url(workspace=ws), data=raw_data)
-        assert res.status_code == 409
-
-    def test_create_similar_vuln_service_and_vuln_web_conflict_succeed(
-            self, service, vulnerability_factory, vulnerability_web_factory,
-            session, test_client, workspace):
-        service_vuln = vulnerability_factory.create(
-            service=service, host=None, workspace=workspace,
-            name="test conflict", description="test"
-        )
-        session.commit()
-        old_count = VulnerabilityGeneric.query.count()
-        raw_data = _create_post_data_vulnerability(
-            name='test conflict',
-            description='test',
-            vuln_type='Vulnerability',
-            parent_id=service.id,
-            parent_type='Service',
-            refs=[],
-            policyviolations=[],
-            severity='low',
-        )
-        raw_data['type'] = 'VulnerabilityWeb'
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 201
-        assert VulnerabilityGeneric.query.count() == old_count + 1
-
-    def test_update_conflict(self, host, vulnerability_factory, session,
-                             test_client):
-        vulnerability_factory.create(
-            workspace=self.workspace, host=host, service=None,
-            name="x", description="x")
-        target_vuln = vulnerability_factory.create(
-            workspace=self.workspace, host=host, service=None,
-            name="y", description="y")
-        session.commit()
-        raw_data = self._create_put_data(
-            'x',
-            'x',
-            'open',
-            host.id,
-            'Host',
-        )
-        res = test_client.put(self.url(obj=target_vuln), data=raw_data)
-        assert res.status_code == 409, res.json
-
-    def test_create_and_update_webvuln(self, host_with_hostnames, test_client, session):
-        """
-            This reproduces a bug found. after creating an object with a
-            command, the update caused an integrity error within the same
-            command scope.
-        """
-        command = CommandFactory.create(workspace=self.workspace)
-        service = ServiceFactory.create(workspace=self.workspace)
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulnsweb',
-            vuln_type='VulnerabilityWeb',
-            parent_id=service.id,
-            parent_type='Service',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        ws_name = host_with_hostnames.workspace.name
-        res = test_client.post(
-            urljoin(self.url(workspace=host_with_hostnames.workspace), f'?command_id={command.id}'),
-            data=raw_data
-        )
-        assert res.status_code == 201
-        raw_data = _create_post_data_vulnerability(
-            name='Update vulnsweb',
-            vuln_type='VulnerabilityWeb',
-            parent_id=service.id,
-            parent_type='Service',
-            refs=[],
-            policyviolations=[],
-            description='Update helloworld',
-            severity='high',
-        )
-        res = test_client.put(
-            join(
-                self.url(workspace=host_with_hostnames.workspace), f'{res.json["_id"]}?command_id={command.id}'
-            ),
-            data=raw_data
-        )
-        assert res.status_code == 200
-
-    def test_create_vuln_from_command(self, test_client, session):
-        command = EmptyCommandFactory.create(workspace=self.workspace)
-        service = ServiceFactory.create(workspace=self.workspace)
-        session.commit()
-        assert len(command.command_objects) == 0
-        url = urljoin(self.url(workspace=command.workspace), f"?{urlencode({'command_id': command.id})}")
-        raw_data = _create_post_data_vulnerability(
-            name='Update vulnsweb',
-            vuln_type='VulnerabilityWeb',
-            parent_id=service.id,
-            parent_type='Service',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='high',
-        )
-        res = test_client.post(url, data=raw_data)
-
-        assert res.status_code == 201
-        assert len(command.command_objects) == 1
-        cmd_obj = command.command_objects[0]
-        assert cmd_obj.object_type == 'vulnerability'
-        assert cmd_obj.object_id == res.json['_id']
-        assert res.json['metadata']['creator'] == command.tool
-
-    def test_with_invalid_id_returns_400(self, session, test_client):
-        """
-            Bug found on hackaton.
-        """
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id='',
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-
-    def test_vuln_created_without_command_has_webui_in_metadata(self, test_client, session):
-        host = HostFactory.create(workspace=self.workspace)
-        session.commit()  # flush host_with_hostnames
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            description='helloworld',
-            severity='low',
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 201
-        assert res.json['metadata']['creator'] == 'Web UI'
-
-    def test_invalid_host_id_error_message(self, test_client):
-        """
-            This test reporduces a bug when the parent_id is a string it returned
-            the error message "Invalid Parent Type"
-        """
-        raw_data = {
-            'confirmed': False,
-            'data': None,
-            'desc': 'pepe',
-            'description': 'pepe',
-            'metadata': {
-                'command_id': '',
-                'create_time': 1518627247.194113,
-                'creator': '',
-                'owner': '',
-                'update_action': 0,
-                'update_controller_action': 'No model controller call',
-                'update_time': 1518627247.194114,
-                'update_user': ''},
-            'name': 'vuln1',
-            'owned': False,
-            'owner': '',
-            'parent': '358302',
-            'parent_type': 'Host',
-            'policyviolations': [],
-            'refs': [],
-            'resolution': '',
-            'severity': 'critical',
-            'status': 'open',
-            'type': 'Vulnerability'
-        }
-
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-        assert res.json == {'messages': {'json': {'_schema': ['Parent id not found: 358302']}}}
-
-    def test_after_deleting_vuln_ref_and_policies_remains(self, session, test_client):
-        vuln = VulnerabilityFactory.create(workspace=self.workspace)
-        ref1 = ReferenceFactory.create(workspace=self.workspace)
-        pv1 = PolicyViolationFactory.create(workspace=self.workspace)
-        vuln.reference_instances.add(ref1)
-        vuln.policy_violation_instances.add(pv1)
-        session.add(vuln)
-        session.commit()
-
-        assert Reference.query.count() == 1
-        assert PolicyViolation.query.count() == 1
-        assert Vulnerability.query.count() == 6
-
-        res = test_client.delete(self.url(vuln))
-
-        assert res.status_code == 204
-
-        assert Reference.query.count() == 1
-        assert PolicyViolation.query.count() == 1
-        assert Vulnerability.query.count() == 5
-
     def test_search_by_id(self, session, test_client):
         vuln = VulnerabilityFactory.create()
         vuln2 = VulnerabilityFactory.create(workspace=vuln.workspace)
         session.add(vuln)
         session.add(vuln2)
         session.commit()
-        res = test_client.get(self.url(workspace=vuln.workspace) + f'?id={vuln.id}')
+        res = test_client.get(self.url() + f'?id={vuln.id}')
         assert res.json['count'] == 1
         assert res.json['vulnerabilities'][0]['value']['name'] == vuln.name
 
@@ -3124,7 +1768,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(service)
         session.add(hostname)
         session.commit()
-        url = urljoin(self.url(workspace=workspace), f'?hostnames={hostname.name}')
+        url = urljoin(self.url(), f'?hostnames={hostname.name}')
         res = test_client.get(url)
 
         assert res.status_code == 200
@@ -3143,17 +1787,16 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(host)
         session.add(hostname)
         session.commit()
-        url = urljoin(self.url(workspace=workspace), f'?hostnames={hostname.name}')
+        url = urljoin(self.url(), f'?hostnames={hostname.name}')
         res = test_client.get(url)
         assert res.status_code == 200
         assert res.json['count'] == 1
         assert res.json['vulnerabilities'][0]['value']['name'] == vuln.name
 
-    # TODO el siguiente test no funciona, nos preocupamos por arreglarlo?
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Ojo que esto no estaria funcionando, de todas formas estamos pensando en sacar estos filters")
     def test_hostnames_comma_separated(self, test_client, session):
         # Create Host A with hostname HA
-        hostnameA = HostnameFactory.create(workspace=self.workspace)
+        hostnameA = HostnameFactory.create()
         hostnameA.host.workspace = hostnameA.workspace
         # Create Host B with hostname HB
         hostnameB = HostnameFactory.create(workspace=hostnameA.workspace)
@@ -3169,43 +1812,9 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
 
         # Search with hosnames=HA,HB
-        res = test_client.get(urljoin(self.url(workspace=vuln.workspace), f'?hostname={hostnameA},{hostnameB}'))
+        res = test_client.get(urljoin(self.url(), f'?hostname={hostnameA},{hostnameB}'))
         assert res.status_code == 200
         assert res.json['count'] == 2
-
-    def test_missing_policy_violation_case(self, test_client, session):
-        """
-            bug found when a json was missing the policyviolations key
-        """
-        host = HostFactory.create(workspace=self.workspace)
-        session.commit()
-        data = {
-            'name': 'Test Alert policy_violations',
-            'severity': 'informational',
-            'creator': 'Zap',
-            'parent_type': 'Host',
-            'parent': host.id,
-            'type': 'Vulnerability',
-        }
-        res = test_client.post(self.url(), data=data)
-        assert res.status_code == 201
-
-    def test_missing_references_case(self, test_client, session):
-        """
-            bug found when a json was missing the policyviolations key
-        """
-        host = HostFactory.create(workspace=self.workspace)
-        session.commit()
-        data = {
-            'name': 'Test Alert policy_violations',
-            'severity': 'informational',
-            'creator': 'Zap',
-            'parent_type': 'Host',
-            'parent': host.id,
-            'type': 'Vulnerability',
-        }
-        res = test_client.post(self.url(), data=data)
-        assert res.status_code == 201
 
     def test_add_attachment_to_vuln(self, test_client, session, csrf_token,
                                     host_with_hostnames):
@@ -3220,9 +1829,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
-
         res = test_client.post(
-            f'/v3/ws/abc/vulns/{vuln.id}/attachment',
+            join(self.url(vuln.id), 'attachment'),
             data=data, headers=headers, use_json_data=False)
 
         assert res.status_code == 200
@@ -3231,7 +1839,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         depot = DepotManager.get()
         assert file_contents == depot.get(file_id).read()
 
-    def test_add_attachment_to_vuln_fails_readonly(self, test_client, session, host_with_hostnames):
+    def test_add_attachment_to_vuln_fails_readonly(self, test_client, session, host_with_hostnames, csrf_token):
         ws = WorkspaceFactory.create(name='abc')
         session.add(ws)
         vuln = VulnerabilityFactory.create(workspace=ws)
@@ -3239,7 +1847,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         file_contents = b'my file contents'
         data = {
-            'file': (BytesIO(file_contents), 'borrar.txt')
+            'file': (BytesIO(file_contents), 'borrar.txt'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
 
@@ -3247,79 +1856,17 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
 
         res = test_client.post(
-            f'/v3/ws/abc/vulns/{vuln.id}/attachment',
+            join(self.url(vuln), 'attachment'),
             data=data, headers=headers, use_json_data=False)
-        assert res.status_code == 403
+        assert res.status_code == 404
         query_test = session.query(Vulnerability).filter_by(id=vuln.id).first().evidence
         assert query_test == []
-
-    def test_delete_attachment_from_vuln(self, test_client, session, host_with_hostnames):
-        session.commit()  # flush host_with_hostnames
-        ws_name = host_with_hostnames.workspace.name
-        attachment = NamedTemporaryFile()
-        file_content = b'test file'
-        attachment.write(file_content)
-        attachment.seek(0)
-        vuln = _create_post_data_vulnerability(
-            name='Testing vuln',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            attachments=[attachment]
-        )
-        res = test_client.post(f'/v3/ws/{ws_name}/vulns', data=vuln)
-        assert res.status_code == 201
-
-        filename = attachment.name.split('/')[-1]
-        vuln_id = res.json['_id']
-        res = test_client.delete(
-            f'/v3/ws/{ws_name}/vulns/{vuln_id}/attachment/{filename}'
-        )
-        assert res.status_code == 200
-
-        query_test = session.query(Vulnerability).filter_by(id=vuln_id).first().evidence
-        assert query_test == []
-
-    def test_delete_attachment_from_vuln_fails_readonly(self, test_client, session, host_with_hostnames):
-        session.commit()  # flush host_with_hostnames
-        ws_name = host_with_hostnames.workspace.name
-        attachment = NamedTemporaryFile()
-        file_content = b'test file'
-        attachment.write(file_content)
-        attachment.seek(0)
-        vuln = _create_post_data_vulnerability(
-            name='Testing vuln',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type='Host',
-            refs=[],
-            policyviolations=[],
-            attachments=[attachment]
-        )
-        res = test_client.post(f'/v3/ws/{ws_name}/vulns', data=vuln)
-        assert res.status_code == 201
-
-        self.workspace.readonly = True
-        session.commit()
-
-        filename = attachment.name.split('/')[-1]
-        vuln_id = res.json['_id']
-        res = test_client.delete(
-            f'/v3/ws/{ws_name}/vulns/{vuln_id}/attachment/{filename}'
-        )
-        assert res.status_code == 403
-
-        query_test = session.query(Vulnerability).filter_by(id=vuln_id).first().evidence
-        assert len(query_test) == 1
-        assert query_test[0].filename == filename
 
     def test_invalid_vuln_filters(self, test_client, session, workspace):
         data = {
             "q": {"filters": [{"name": "severity", "op": "eq", "val": "medium"}]}
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 400
 
     def test_vuln_filter_exception(self, test_client, workspace, session):
@@ -3329,7 +1876,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"filters":[{"name":"severity","op":"eq","val":"medium"}]}'
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200
         assert res.json['count'] == 1
 
@@ -3352,15 +1899,15 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"group_by":[{"field":"creator_id"}]}'
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200
-        assert res.json['count'] == 1  # all vulns created by the same creator
         expected = [{'count': 2, 'creator_id': creator.id}]
-        assert [vuln['value'] for vuln in res.json['vulnerabilities']] == expected
+        assert [vuln['value'] for vuln in res.json['vulnerabilities'] if vuln['value']['creator_id'] == creator.id] == expected
 
     def test_vuln_group_by_severity_does_not_duplicate_groups(self, test_client, session):
         workspace = WorkspaceFactory.create()
         creator = UserFactory.create()
+        Vulnerability.query.delete()
         vuln = VulnerabilityFactory.create_batch(size=10,
                                                  workspace=workspace,
                                                  severity="critical",
@@ -3377,18 +1924,18 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"group_by":[{"field":"severity"}]}'
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
-        assert res.status_code == 200, res.json
-        assert res.json['count'] == 1, res.json  # all vulns created by the same creator
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
+        assert res.status_code == 200
         expected = {
             'count': 1,
             'vulnerabilities': [
                 {'id': 0, 'key': 0, 'value': {'count': 20, 'severity': 'critical'}}
             ]
         }
-        assert res.json == expected, res.json
+        assert res.json == expected
 
     def test_vuln_group_by_multiple_fields(self, test_client, session):
+        Vulnerability.query.delete()
         workspace = WorkspaceFactory.create()
         creator = UserFactory.create()
         vuln = VulnerabilityFactory.create_batch(size=10,
@@ -3409,7 +1956,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"group_by":[{"field":"severity"}, {"field": "name"}]}'
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200, res.json
         assert res.json['count'] == 2, res.json  # all vulns created by the same creator
         expected = {'vulnerabilities': [
@@ -3443,10 +1990,11 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': json.dumps({"group_by": [{"field": col_name}]})
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200, res.json
 
     def test_vuln_restless_group_same_name_description(self, test_client, session):
+        Vulnerability.query.delete()
         workspace = WorkspaceFactory.create()
         creator = UserFactory.create()
         vuln = VulnerabilityFactory.create(
@@ -3477,7 +2025,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"group_by":[{"field":"name"}, {"field":"description"}]}'
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200
         assert res.json['count'] == 2
         expected = [{'count': 2, 'name': 'test', 'description': 'test'},
@@ -3544,7 +2092,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': json.dumps(query)
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200
         assert res.json['count'] == 12
         expected_order = ['critical', 'critical', 'med', 'med', 'med', 'med', 'med', 'med', 'med', 'med', 'med', 'med']
@@ -3558,7 +2106,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': json.dumps({"filters": [{"name": "creator", "op": "eq", "val": vuln.creator.username}]})
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200
 
     def test_vuln_web_filter_exception(self, test_client, workspace, session):
@@ -3568,34 +2116,9 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         data = {
             'q': '{"filters":[{"name":"severity","op":"eq","val":"medium"}]}'
         }
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
+        res = test_client.get(join(self.url(), 'filter'), query_string=data)
         assert res.status_code == 200
         assert res.json['count'] == 1
-
-    def test_add_vuln_without_parent_id(self, test_client):
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=0,
-            parent_type="Host",
-            refs=[],
-            policyviolations=[],
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.status_code == 400
-
-    def test_add_vuln_with_unknown_parent_type(self, test_client, session, host_with_hostnames):
-        session.commit()
-        raw_data = _create_post_data_vulnerability(
-            name='New vulns',
-            vuln_type='Vulnerability',
-            parent_id=host_with_hostnames.id,
-            parent_type="invalid_host",
-            refs=[],
-            policyviolations=[],
-        )
-        res = test_client.post(self.url(), data=raw_data)
-        assert res.json['messages']['json']['_schema'][0] == 'Unknown parent type'
 
     def test_add_empty_attachment(self, test_client, session, workspace, csrf_token):
         vuln = VulnerabilityFactory.create(workspace=workspace)
@@ -3603,7 +2126,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
 
         res = test_client.post(
-            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            join(self.url(vuln), 'attachment'),
             data={'csrf_token': csrf_token},
             headers={'Content-Type': 'multipart/form-data'},
             use_json_data=False)
@@ -3611,15 +2134,15 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
     def test_get_attachment_with_invalid_workspace_and_vuln(self, test_client):
         res = test_client.get(
-            "/v3/ws/invalid_ws/vulns/invalid_vuln/attachment/random_name"
+            join(self.url('invalid_vuln'), 'attachment/random_name')
         )
         assert res.status_code == 404
 
     def test_delete_attachment_with_invalid_workspace_and_vuln(self, test_client):
         res = test_client.delete(
-            "/v3/ws/invalid_ws/vulns/invalid_vuln/attachment/random_name"
+            join(self.url('invalid_vuln'), 'attachment/random_name')
         )
-        # assert res.status_code == 404  # Should check why should return 404 and not 405
+        # assert res.status_code == 404  # Should check why should return 404 and not 405 hablar con Diego
         assert res.status_code == 405
 
     def test_delete_invalid_attachment(self, test_client, workspace, session):
@@ -3627,20 +2150,24 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(vuln)
         session.commit()
         res = test_client.delete(
-            f"/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/random_name"
+            join(self.url(vuln), 'attachment/random_name')
         )
         assert res.status_code == 404
 
-    def test_export_vuln_csv_empty_workspace(self, test_client, session):
-        ws = WorkspaceFactory(name='abc')
-        res = test_client.get(f'/v3/ws/{ws.name}/vulns/export_csv')
+    def test_export_vuln_csv_empty_instance(self, test_client, session):
+        Vulnerability.query.delete()
+
+        res = test_client.get(
+            join(self.url(), 'export_csv')
+        )
         expected_headers = [
             "confirmed", "id", "date", "name", "severity", "service",
             "target", "desc", "status", "hostnames", "comments", "owner",
             "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
             "data", "website", "path", "status_code", "request", "response", "method",
             "params", "pname", "query", "cve", 'cvss2_vector_string', 'cvss2_base_score',
-            'cvss3_vector_string', 'cvss3_base_score', 'cwe', "policyviolations", "external_id",
+            'cvss3_vector_string', 'cvss3_base_score', 'cvss4_vector_string', 'cvss4_base_score',
+            'cwe', "policyviolations", "external_id",
             "impact_confidentiality", "impact_integrity", "impact_availability", "impact_accountability",
             "update_date", "host_id", "host_description", "mac",
             "host_owned", "host_creator_id", "host_date", "host_update_date",
@@ -3658,7 +2185,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         res = test_client.get(
             join(
-                self.url(workspace=workspace),
+                self.url(),
                 'export_csv?q={"filters":[{"name":"confirmed","op":"==","val":"true"}]}'
             )
         )
@@ -3667,6 +2194,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_export_vuln_csv_unicode_bug(self, test_client, session):
+        Vulnerability.query.delete()
         workspace = WorkspaceFactory.create()
         desc = 'Latin-1 Supplement \xa1 \xa2 \xa3 \xa4 \xa5 \xa6 \xa7 \xa8'
         confirmed_vulns = VulnerabilityFactory.create(
@@ -3675,19 +2203,20 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             workspace=workspace)
         session.add(confirmed_vulns)
         session.commit()
-        res = test_client.get(join(self.url(workspace=workspace), 'export_csv'))
+        res = test_client.get(join(self.url(), 'export_csv'))
         assert res.status_code == 200
         assert self._verify_csv(res.data, confirmed=True)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_export_vuln_csv_filters_confirmed_using_filters_query_severity(self, test_client, session):
+        Vulnerability.query.delete()
         workspace = WorkspaceFactory.create()
         confirmed_vulns = VulnerabilityFactory.create(confirmed=True, severity='critical', workspace=workspace)
         session.add(confirmed_vulns)
         session.commit()
         res = test_client.get(
             join(
-                self.url(workspace=workspace),
+                self.url(),
                 'export_csv?q={"filters":[{"name":"severity","op":"==","val":"critical"}]}'
             )
         )
@@ -3707,6 +2236,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_export_vulns_check_update_time(self, session, test_client):
+        Vulnerability.query.delete()
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -3725,7 +2255,12 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(vuln)
         session.commit()
 
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/export_csv')
+        res = test_client.get(
+            join(
+                self.url(),
+                'export_csv'
+            )
+        )
         assert res.status_code == 200
 
         csv_data = csv.DictReader(StringIO(res.data.decode('utf-8')), delimiter=',')
@@ -3818,6 +2353,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         return True
 
     @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.skip("POST not implemented yet")
     def test_update_vuln_cant_change_tool(self, test_client, session):
         host = HostFactory.create(workspace=self.workspace)
         tool = "tool_name"
@@ -3837,6 +2373,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.status_code == 200
         assert res.json['tool'] == tool
 
+    @pytest.mark.skip("POST not implemented yet")
     def test_patch_with_attachments(self, test_client, session, workspace):
         vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)
@@ -3859,6 +2396,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert 'image/png' in res.json[new_attach.filename]['content_type']
 
     @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.skip("POST not implemented yet")
     def test_bulk_update_vuln_cant_change_tool_type_or_attachments(self, test_client, session):
         host = HostFactory.create(workspace=self.workspace)
         tool = "tool_name"
@@ -3889,7 +2427,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)
         session.commit()
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter?export_csv=true')
+        res = test_client.get(join(self.url(), 'filter?export_csv=true'))
 
         assert res.status_code == 200
         assert self._verify_csv(res.data)
@@ -3901,8 +2439,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(vuln_critical)
         session.add(vuln_info)
         session.commit()
-        url = (f'/v3/ws/{ws.name}/vulns/filter?'
-               'q={"filters":[{"name":"severity","op":"==","val":"critical"}]}&export_csv=false')
+        url = join(self.url(),
+               'filter?q={"filters":[{"name":"severity","op":"==","val":"critical"}, {"name":"workspace","op":"has","val":{"name":"name","op":"eq","val":"abc"}}]}&export_csv=false')
 
         res = test_client.get(url)
 
@@ -3912,15 +2450,17 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert self._verify_csv(res.data)
 
     def test_export_csv_with_false_argument(self, test_client, session):
-        ws = WorkspaceFactory(name="abc")
+        ws = WorkspaceFactory()
         vuln_high = VulnerabilityFactory.create(workspace=ws, severity="high")
         vuln_low = VulnerabilityFactory.create(workspace=ws, severity="low")
         session.add(vuln_high)
         session.add(vuln_low)
         session.commit()
-        url = (f'/v3/ws/{ws.name}/vulns/filter?'
-               'q={"filters":[{"name":"severity","op":"==","val":"high"}]}&export_csv=false')
-
+        url = join(
+            self.url(),
+            'filter?q={"filters":[{"name":"severity","op":"==","val":"high"}, {"name":"workspace","op":"has","val":'
+            f'{{"name":"name","op":"eq","val":"{ws.name}"}}}}]}}&export_csv=false'
+        )
         res = test_client.get(url)
 
         # Response should contain only the vulns filtered, in this case only the vuln with high severity
@@ -3929,15 +2469,19 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.json["vulnerabilities"][0]["value"]["severity"] == "high"
 
     def test_export_csv_with_empty_workspace(self, test_client, session):
-        ws = WorkspaceFactory(name='abc')
-        res = test_client.get(f'/v3/ws/{ws.name}/vulns/filter?export_csv=true')
+        ws = WorkspaceFactory()
+        url = join(self.url(),
+                   f'filter?q={{"filters":[{{"name":"workspace","op":"has","val":'
+                   f'{{"name":"name","op":"eq","val":"{ws.name}"}}}}]}}&export_csv=true')
+        res = test_client.get(url)
         expected_headers = [
             "confirmed", "id", "date", "name", "severity", "service",
             "target", "desc", "status", "hostnames", "comments", "owner",
             "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
             "data", "website", "path", "status_code", "request", "response", "method",
             "params", "pname", "query", "cve", 'cvss2_vector_string', 'cvss2_base_score',
-            'cvss3_vector_string', 'cvss3_base_score', 'cwe', "policyviolations", "external_id",
+            'cvss3_vector_string', 'cvss3_base_score', 'cvss4_vector_string', 'cvss4_base_score',
+            'cwe', "policyviolations", "external_id",
             "impact_confidentiality", "impact_integrity", "impact_availability", "impact_accountability",
             "update_date", "host_id", "host_description", "mac",
             "host_owned", "host_creator_id", "host_date", "host_update_date",
@@ -3958,7 +2502,9 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             workspace=workspace)
         session.add(confirmed_vulns)
         session.commit()
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter?export_csv=true')
+        url = join(self.url(),
+               f'filter?q={{"filters":[{{"name":"workspace","op":"has","val":{{"name":"name","op":"eq","val":"{workspace.name}"}}}}]}}&export_csv=true')
+        res = test_client.get(url)
         assert res.status_code == 200
         assert self._verify_csv(res.data, confirmed=True)
 
@@ -3982,7 +2528,14 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(vuln)
         session.commit()
 
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter?export_csv=true')
+        url = join(
+            self.url(),
+           f'filter?q={{"filters":[{{"name":"workspace","op":"has","val":{{"name":"name","op":"eq","val":"{workspace.name}"}}}}]}}&export_csv=true'
+        )
+
+        res = test_client.get(
+            url
+        )
         assert res.status_code == 200
 
         csv_data = csv.DictReader(StringIO(res.data.decode('utf-8')), delimiter=',')
@@ -4022,20 +2575,25 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(vuln)
         session.commit()
 
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter?export_csv=true')
+        url = join(
+            self.url(),
+            f'filter?q={{"filters":[{{"name":"workspace","op":"has","val":{{"name":"name","op":"eq","val":"{workspace.name}"}}}}]}}&export_csv=true'
+        )
+        res = test_client.get(url)
 
         assert res.status_code == 200
         assert self._verify_csv(res.data)
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestCustomFieldVulnerability(ReadWriteAPITests):
+class TestCustomFieldVulnerabilityContext(ReadOnlyAPITests):
     model = Vulnerability
     factory = factories.VulnerabilityFactory
     api_endpoint = 'vulns'
     view_class = VulnerabilityView
     patchable_fields = ['name']
 
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_vuln_with_custom_fields_shown(self, test_client, second_workspace, session):
         host = HostFactory.create(workspace=self.workspace)
         custom_field_schema = CustomFieldsSchemaFactory(
@@ -4063,6 +2621,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert res.status_code == 201
         assert res.json['custom_fields']['cvss'] == '321321'
 
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_vuln_with_custom_fields_using_field_display_name_continues_with_warning(self, test_client,
                                                                                             second_workspace, session,
                                                                                             caplog):
@@ -4092,6 +2651,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert res.status_code == 201
         assert "Invalid custom field" in caplog.text
 
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_vuln_with_custom_fields_list(self, test_client, second_workspace, session):
         host = HostFactory.create(workspace=self.workspace)
         custom_field_schema = CustomFieldsSchemaFactory(
@@ -4119,6 +2679,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert res.status_code == 201
         assert res.json['custom_fields']['changes'] == ['1', '2', '3']
 
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_vuln_with_custom_fields_with_invalid_type_fails(self, test_client, second_workspace, session):
         host = HostFactory.create(workspace=self.workspace)
         custom_field_schema = CustomFieldsSchemaFactory(
@@ -4145,138 +2706,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
 
         assert res.status_code == 400
 
-    def test_bulk_update_custom_attributes(self, test_client, session):
-        host = HostFactory.create(workspace=self.workspace)
-        custom_field_schema = CustomFieldsSchemaFactory(
-            field_name='string',
-            field_type='str',
-            field_display_name='string',
-            table_name='vulnerability'
-        )
-        custom_field_schema2 = CustomFieldsSchemaFactory(
-            field_name='int',
-            field_type='int',
-            field_display_name='int',
-            table_name='vulnerability'
-        )
-        custom_field_schema3 = CustomFieldsSchemaFactory(
-            field_name='string2',
-            field_type='str',
-            field_display_name='string2',
-            table_name='vulnerability'
-        )
-        session.add(host)
-        session.add(custom_field_schema)
-        session.add(custom_field_schema2)
-        session.add(custom_field_schema3)
-        session.commit()
-        vuln1 = VulnerabilityFactory.create(workspace=self.workspace)
-        vuln2 = VulnerabilityFactory.create(workspace=self.workspace)
-        vuln3 = VulnerabilityFactory.create(workspace=self.workspace)
-        vuln1.custom_fields = {}
-        vuln2.custom_fields = {}
-        vuln3.custom_fields = {}
-        session.add(vuln1)
-        session.add(vuln2)
-        session.add(vuln3)
-
-        vuln_id_1 = vuln1.id
-        vuln_id_2 = vuln2.id
-        vuln_id_3 = vuln3.id
-
-        # Bulk update: Add a custom attribute to both vulnerabilities
-
-        bulk_update_data = {
-            "ids": [vuln_id_1, vuln_id_2],
-            "custom_fields": {"string": "test"}
-        }
-
-        res_update = test_client.patch(self.url(workspace=self.workspace), data=bulk_update_data)
-
-        assert res_update.status_code == 200
-
-        vuln_1 = Vulnerability.query.get(vuln_id_1)
-        vuln_2 = Vulnerability.query.get(vuln_id_2)
-
-        assert vuln_1.custom_fields['string'] == "test"
-        assert vuln_2.custom_fields['string'] == "test"
-
-        # Bulk update: Add another custom attribute to both vulnerabilities
-
-        bulk_update_data = {
-            "ids": [vuln_id_1, vuln_id_2],
-            "custom_fields": {"int": 10000}
-        }
-
-        res_update = test_client.patch(self.url(workspace=self.workspace), data=bulk_update_data)
-
-        assert res_update.status_code == 200
-
-        vuln_1 = Vulnerability.query.get(vuln_id_1)
-        vuln_2 = Vulnerability.query.get(vuln_id_2)
-
-        custom_fields = {"string": "test", "int": 10000}
-
-        assert vuln_1.custom_fields == custom_fields
-        assert vuln_2.custom_fields == custom_fields
-
-        # Bulk update: Update an existing custom attribute in both vulnerabilities
-
-        bulk_update_data = {
-            "ids": [vuln_id_1, vuln_id_2],
-            "custom_fields": {"string": "test2"}
-        }
-
-        res_update = test_client.patch(self.url(workspace=self.workspace), data=bulk_update_data)
-
-        assert res_update.status_code == 200
-
-        vuln_1 = Vulnerability.query.get(vuln_id_1)
-        vuln_2 = Vulnerability.query.get(vuln_id_2)
-
-        custom_fields = {"string": "test2", "int": 10000}
-
-        assert vuln_1.custom_fields == custom_fields
-        assert vuln_2.custom_fields == custom_fields
-
-        # Bulk update: Add a custom attribute to two of three vulnerabilities
-
-        bulk_update_data = {
-            "ids": [vuln_id_1, vuln_id_3],
-            "custom_fields": {"string2": "string2"}
-        }
-
-        res_update = test_client.patch(self.url(workspace=self.workspace), data=bulk_update_data)
-
-        assert res_update.status_code == 200
-
-        vuln_1 = Vulnerability.query.get(vuln_id_1)
-        vuln_2 = Vulnerability.query.get(vuln_id_2)
-        vuln_3 = Vulnerability.query.get(vuln_id_3)
-
-        assert "string2" not in vuln_2.custom_fields.keys()
-        assert vuln_2.custom_fields == custom_fields
-        assert vuln_3.custom_fields == {"string2": "string2"}
-        assert vuln_1.custom_fields == {"string2": "string2", "string": "test2", "int": 10000}
-
-    def test_bulk_update_create_command(self, test_client, session):
-        ws = WorkspaceFactory(name='abc')
-        vuln1 = VulnerabilityFactory.create(workspace=ws)
-        vuln2 = VulnerabilityFactory.create(workspace=ws)
-        session.add(vuln1)
-        session.add(vuln2)
-        session.commit()
-        update_data = {
-            "ids": [vuln1.id, vuln2.id],
-            "desc": "UPDATED",
-            "description": "UPDATED"
-        }
-        res = test_client.patch(f'/v3/ws/{ws.name}/vulns', data=update_data)
-        assert res.status_code == 200
-
-        _command = session.query(Command).filter(Command.command == "bulk_update").first()
-        assert _command
-
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_vuln_with_invalid_custom_fields_continues_with_warning(self, test_client, second_workspace, session,
                                                                            caplog):
         host = HostFactory.create(workspace=self.workspace)
@@ -4298,6 +2728,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert res.status_code == 201
         assert "Invalid custom field" in caplog.text
 
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_create_vuln_web_with_host_as_parent_fails(
             self, host, session, test_client):
         session.commit()  # flush host_with_hostnames
@@ -4314,6 +2745,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
 
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_create_create_vuln_web_with_host_as_parent_fails_using_service_id(
             self, host, session, test_client):
         service = ServiceFactory.create(workspace=host.workspace)
@@ -4333,6 +2765,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert res.status_code == 400
 
     @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.skip(reason='POST methods not supported')
     def test_bulk_delete_vuln_id(self, host_with_hostnames, test_client, session):
         """
         This one should only check basic vuln properties
@@ -4364,13 +2797,13 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         )
         ws_name = host_with_hostnames.workspace.name
         vuln_count_previous = session.query(Vulnerability).count()
-        res_1 = test_client.post(f'/v3/ws/{ws_name}/vulns', data=raw_data_vuln_1)
-        res_2 = test_client.post(f'/v3/ws/{ws_name}/vulns', data=raw_data_vuln_2)
+        res_1 = test_client.post(self.url(), data=raw_data_vuln_1)
+        res_2 = test_client.post(self.url(), data=raw_data_vuln_2)
         vuln_1_id = int(res_1.json['obj_id'])
         vuln_2_id = int(res_2.json['obj_id'])
         vulns_to_delete = [vuln_1_id, vuln_2_id]
         request_data = {'ids': vulns_to_delete}
-        delete_response = test_client.delete(f'/v3/ws/{ws_name}/vulns', data=request_data)
+        delete_response = test_client.delete(self.url(), data=request_data)
         vuln_count_after = session.query(Vulnerability).count()
         deleted_vulns = delete_response.json['deleted']
         assert delete_response.status_code == 200
@@ -4410,19 +2843,26 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         )
         ws_name = host_with_hostnames.workspace.name
         vuln_count_previous = session.query(Vulnerability).count()
-        res_1 = test_client.post(f'/v3/ws/{ws_name}/vulns', data=raw_data_vuln_1)
-        res_2 = test_client.post(f'/v3/ws/{ws_name}/vulns', data=raw_data_vuln_2)
+        res_1 = test_client.post(self.url(), data=raw_data_vuln_1)
+        res_2 = test_client.post(self.url(), data=raw_data_vuln_2)
         vuln_1_id = res_1.json['obj_id']
         vuln_2_id = res_2.json['obj_id']
         vulns_to_delete = [vuln_1_id, vuln_2_id]
         request_data = {'severities': ['low']}
-        delete_response = test_client.delete(f'/v3/ws/{ws_name}/vulns/bulk_delete', data=request_data)
+        delete_response = test_client.delete(
+            join(
+                self.url(),
+                'bulk_delete'
+            ),
+            data=request_data
+        )
         vuln_count_after = session.query(Vulnerability).count()
         deleted_vulns = delete_response.json['deleted_vulns']
         assert delete_response.status_code == 200
         assert vuln_count_previous == vuln_count_after
         assert deleted_vulns == len(vulns_to_delete)
 
+    @pytest.mark.skip("Post not implemented yet")
     def test_create_vuln_with_tool(self, host_with_hostnames, test_client, session):
         """
         This one should only check basic vuln properties
@@ -4451,6 +2891,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert vuln_count_previous + 1 == session.query(Vulnerability).count()
         assert res.json['tool'] == tool_name
 
+    @pytest.mark.skip("Post not implemented yet")
     def test_create_vuln_without_tool(self, host_with_hostnames, test_client, session):
         """
         This one should only check basic vuln properties
@@ -4477,6 +2918,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert vuln_count_previous + 1 == session.query(Vulnerability).count()
         assert res.json['tool'] == "Web UI"
 
+    @pytest.mark.skip("Post not implemented yet")
     def test_create_vuln_from_command_with_tool(self, test_client, session):
         command = EmptyCommandFactory.create(workspace=self.workspace)
         service = ServiceFactory.create(workspace=self.workspace)
@@ -4502,6 +2944,7 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert cmd_obj.object_id == res.json['_id']
         assert res.json['tool'] == tool
 
+    @pytest.mark.skip("Post not implemented yet")
     def test_create_vuln_from_command_without_tool(self, test_client, session):
         command = EmptyCommandFactory.create(workspace=self.workspace)
         service = ServiceFactory.create(workspace=self.workspace)
@@ -4549,18 +2992,17 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
         assert all([not was_deleted(obj) for obj in all_objs[2:]])
         assert self.model.query.count() == 3
 
-    def test_bulk_delete_by_severity_invalid_severity(self, test_client):
-        all_objs = self.model.query.all()
-        for obj in all_objs[0:2]:
-            obj.severity = 'low'  # Factory just use "critical" or "high"
-
-        data = {"severities": ["sarasa"]}
-        res = test_client.delete(self.url(), data=data)
-        assert res.status_code == 400
-
 
 @pytest.mark.usefixtures('logged_user')
 class TestVulnerabilitySearch:
+
+    def url(self, obj=None):
+        url = 'v3/vulns'
+        if obj is not None:
+            id_ = str(getattr(obj, self.lookup_field)) if isinstance(
+                obj, self.model) else str(obj)
+            url = join(url, id_)
+        return url
 
     @pytest.mark.skip_sql_dialect('sqlite')
     def test_search_by_hostname_vulns(self, test_client, session):
@@ -4576,7 +3018,10 @@ class TestVulnerabilitySearch:
                             [{"name": "hostnames", "op": "eq", "val": "pepe"}]
                         }
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -4596,8 +3041,10 @@ class TestVulnerabilitySearch:
         query_filter = {"filters":
                             [{"name": "hostnames", "op": "eq", "val": "pepe"}]
                         }
+
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns?q={json.dumps(query_filter)}'
+            self.url(),
+            query_string=json.dumps(query_filter)
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -4619,7 +3066,10 @@ class TestVulnerabilitySearch:
                             [{"name": "hostnames", "op": "eq", "val": "pepe"}]
                         }
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -4630,7 +3080,10 @@ class TestVulnerabilitySearch:
                             []
                         }
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 0
@@ -4640,9 +3093,11 @@ class TestVulnerabilitySearch:
                             [{"name": "code", "op": "eq", "val": "test"}]
                         }
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
-
         assert res.status_code == 400, res.json
 
     @pytest.mark.skip_sql_dialect('sqlite')
@@ -4659,7 +3114,10 @@ class TestVulnerabilitySearch:
             {"and": [{"name": "hostnames", "op": "eq", "val": "pepe"}]}
         ]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -4691,7 +3149,10 @@ class TestVulnerabilitySearch:
                 "offset": offset * 10,
             }
             res = test_client.get(
-                f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+                join(
+                    self.url(),
+                    f'filter?q={json.dumps(query_filter)}'
+                )
             )
             assert res.status_code == 200
             assert res.json['count'] == 20, query_filter
@@ -4721,7 +3182,10 @@ class TestVulnerabilitySearch:
                 "offset": 10 * offset,
             }
             res = test_client.get(
-                f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+                join(
+                    self.url(),
+                    f'filter?q={json.dumps(query_filter)}'
+                )
             )
             assert res.status_code == 200
             assert res.json['count'] == 100
@@ -4760,7 +3224,10 @@ class TestVulnerabilitySearch:
                 "offset": offset,
             }
             res = test_client.get(
-                f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+                join(
+                    self.url(),
+                    f'filter?q={json.dumps(query_filter)}'
+                )
             )
             assert res.status_code == 200
             assert res.json['count'] == 10
@@ -4768,7 +3235,7 @@ class TestVulnerabilitySearch:
 
         assert expected_vulns == paginated_vulns
 
-    def test_vuln_get_limit(self, test_client, session):
+    def test_vuln_get_limit_context(self, test_client, session):
 
         # Change setting
         test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 25})
@@ -4783,7 +3250,7 @@ class TestVulnerabilitySearch:
         session.add(host)
         session.commit()
 
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
+        res = test_client.get('/v3/vulns')
 
         assert res.status_code == 200
         assert res.json['count'] == 50
@@ -4794,7 +3261,7 @@ class TestVulnerabilitySearch:
         [None, 25],
         ["100", 25]
     ])
-    def test_vuln_filter_limit(self, test_client, session, limit):
+    def test_vuln_filter_limit_context(self, test_client, session, limit):
 
         # Change setting
         test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 25})
@@ -4818,7 +3285,7 @@ class TestVulnerabilitySearch:
                 "offset": "1",
             }
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            f'/v3/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 50
@@ -4855,7 +3322,10 @@ class TestVulnerabilitySearch:
             {"name": "host__os", "op": "has", "val": "Linux"}
         ]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -4903,7 +3373,10 @@ class TestVulnerabilitySearch:
             {"name": "create_date", "op": "eq", "val": vuln.create_date.strftime("%Y-%m-%d")}
         ]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 3
@@ -4918,7 +3391,10 @@ class TestVulnerabilitySearch:
             {"name": "create_date", "op": "eq", "val": "30/01/2020"}
         ]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -4927,7 +3403,10 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'host_id', 'op': 'not_in',
                                      'val': '\U0010a1a7\U00093553\U000eb46a\x1e\x10\r\x18%\U0005ddfa0\x05\U000fdeba\x08\x04絮'}]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -4935,7 +3414,10 @@ class TestVulnerabilitySearch:
     def test_search_hypothesis_test_found_case_2(self, test_client, session, workspace):
         query_filter = {'filters': [{'name': 'host__os', 'op': 'ilike', 'val': -1915870387}]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -4947,7 +3429,10 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_3(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -4959,7 +3444,10 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_4(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -4971,7 +3459,10 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_5(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -4979,7 +3470,10 @@ class TestVulnerabilitySearch:
     def test_search_hypothesis_test_found_case_6(self, test_client, session, workspace):
         query_filter = {'filters': [{'name': 'resolution', 'op': '==', 'val': ''}]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
 
@@ -4989,7 +3483,10 @@ class TestVulnerabilitySearch:
             {'name': 'name', 'op': '>', 'val': '\U0004e755\U0007a789\U000e02d1\U000b3d32\x10\U000ad0e2,\x05\x1a'},
             {'name': 'creator', 'op': 'eq', 'val': 21883}]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5000,7 +3497,10 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_7_valid(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
 
@@ -5008,7 +3508,10 @@ class TestVulnerabilitySearch:
     def test_search_hypothesis_test_found_case_8(self, test_client, session, workspace):
         query_filter = {'filters': [{'name': 'hostnames', 'op': '==', 'val': ''}]}
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
 
@@ -5018,7 +3521,10 @@ class TestVulnerabilitySearch:
                                      'val': '0\x00\U00034383$\x13-\U000375fb\U0007add2\x01\x01\U0010c23a'}]}
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5027,7 +3533,10 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'impact_integrity', 'op': 'neq', 'val': 0}]}
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5036,7 +3545,10 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'host_id', 'op': 'like', 'val': '0'}]}
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5046,7 +3558,10 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'custom_fields', 'op': 'like', 'val': ''}]}
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5055,7 +3570,10 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'impact_accountability', 'op': 'ilike', 'val': '0'}]}
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5069,10 +3587,19 @@ class TestVulnerabilitySearch:
         session.add_all(vulns_web)
         session.add_all(vulns)
         session.commit()
-        query_filter = {'filters': [{'name': 'severity', 'op': 'eq', 'val': 'high'}]}
+        query_filter = {
+            'filters':
+                [
+                    {'name': 'severity', 'op': 'eq', 'val': 'high'},
+                    {"name": "workspace", "op": "has", "val": {"name": "name", "op": "eq", "val": workspace.name}}
+                ]
+        }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 20
@@ -5095,7 +3622,10 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 400
 
@@ -5108,7 +3638,10 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
 
@@ -5133,7 +3666,10 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         expected_order = sort_order["expected"]
@@ -5157,7 +3693,10 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         expected_order = ['critical', 'high', 'med', 'low']
@@ -5172,7 +3711,10 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         expected_order = ['low', 'med', 'high', 'critical']
@@ -5213,13 +3755,16 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
         )
         assert res.status_code == 200
         assert res.json['count'] == 100
 
-    def test_add_evidence_with_description(self, test_client, session, workspace, csrf_token):
-        vuln = VulnerabilityFactory.create(workspace=workspace)
+    def test_add_evidence_with_description(self, test_client, session, csrf_token):
+        vuln = VulnerabilityFactory.create()
         session.add(vuln)
         session.commit()
 
@@ -5231,14 +3776,14 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.post(
-            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            f'/v3/vulns/{vuln.id}/attachment',
             data=data,
             use_json_data=False
         )
         assert res.status_code == 200
 
         # Get vulnerability created
-        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment')
+        res = test_client.get(f'/v3/vulns/{vuln.id}/attachment')
         assert res.status_code == 200
         attachments_json = res.json
 
@@ -5415,32 +3960,48 @@ def test_hypothesis(host_with_hostnames, test_client, session):
     VulnerabilityData = vulnerability_json(host_with_hostnames.id, 'Host')
     VulnerabilityDataWithId = vulnerability_json(host_with_hostnames.id, 'Host', vuln)
 
+    def url(obj=None):
+        url = 'v3/vulns'
+        if obj is not None:
+            id_ = str(obj._id) if isinstance(
+                obj, Vulnerability) else str(obj)
+            url = join(url, id_)
+        return url
+
     @given(VulnerabilityData)
     def send_api_create_request(raw_data):
         ws_name = host_with_hostnames.workspace.name
-        res = test_client.post(f'/v3/ws/{ws_name}/vulns/',
+        res = test_client.post(url(),
                                data=raw_data)
         assert res.status_code in [201, 400, 409]
 
     @given(VulnerabilityData)
     def send_api_create_request_v3(raw_data):
         ws_name = host_with_hostnames.workspace.name
-        res = test_client.post(f'/v3/ws/{ws_name}/vulns/',
+        res = test_client.post(url(),
                                data=raw_data)
         assert res.status_code in [201, 400, 409]
 
     @given(VulnerabilityDataWithId)
     def send_api_update_request(raw_data):
         ws_name = host_with_hostnames.workspace.name
-        res = test_client.put(f"/v3/ws/{ws_name}/vulns/{raw_data['_id']}",
-                              data=raw_data)
+        res = test_client.put(
+            join(
+                url(raw_data['_id'])
+            ),
+            data=raw_data
+        )
         assert res.status_code in [200, 400, 409, 405]
 
     @given(VulnerabilityDataWithId)
     def send_api_update_request_v3(raw_data):
         ws_name = host_with_hostnames.workspace.name
-        res = test_client.put(f"/v3/ws/{ws_name}/vulns/{raw_data['_id']}",
-                              data=raw_data)
+        res = test_client.put(
+            join(
+                url(raw_data['_id'])
+            ),
+            data=raw_data
+        )
         assert res.status_code in [200, 400, 409, 405]
 
     send_api_create_request()
@@ -5485,12 +4046,20 @@ def test_filter_hypothesis(host_with_hostnames, test_client, session):
     session.commit()
     FilterData = filter_json()
 
+    def url(obj=None, filter=''):
+        url = f'v3/vulns/filter?q={filter}'
+        if obj is not None:
+            id_ = str(obj._id) if isinstance(
+                obj, Vulnerability) else str(obj)
+            url = join(url, id_)
+        return url
+
     @given(FilterData)
     @settings(deadline=None)
     def send_api_filter_request(raw_filter):
         ws_name = host_with_hostnames.workspace.name
         encoded_filter = urllib.parse.quote(json.dumps(raw_filter))
-        res = test_client.get(f'/v3/ws/{ws_name}/vulns/filter?q={encoded_filter}')
+        res = test_client.get(url(encoded_filter))
         if res.status_code not in [200, 400]:
             print(json.dumps(raw_filter))
 
@@ -5501,7 +4070,7 @@ def test_filter_hypothesis(host_with_hostnames, test_client, session):
     def send_api_filter_request_v3(raw_filter):
         ws_name = host_with_hostnames.workspace.name
         encoded_filter = urllib.parse.quote(json.dumps(raw_filter))
-        res = test_client.get(f'/v3/ws/{ws_name}/vulns/filter?q={encoded_filter}')
+        res = test_client.get(url(encoded_filter))
         if res.status_code not in [200, 400]:
             print(json.dumps(raw_filter))
 

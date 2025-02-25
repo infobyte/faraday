@@ -1,108 +1,106 @@
 # Standard library imports
-import logging
-import re
-import string
-import random
-import json
 from copy import deepcopy
-import time
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
+from http.client import BAD_REQUEST as HTTP_BAD_REQUEST, CREATED as HTTP_CREATED, NOT_FOUND as HTTP_NOT_FOUND
+from json import dump as json_dump
+from logging import getLogger
+from random import choice
+from re import findall
+from string import ascii_uppercase, digits
+from time import time
 from typing import Type
 
 # Related third party imports
-import flask_login
-import flask
-import sqlalchemy
-import cvss
-
-from flask import abort
-from sqlalchemy import func, text
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm.exc import NoResultFound
+from cvss import CVSS2, CVSS3, CVSS4
+from flask import Blueprint, abort, jsonify, request
+from flask_login import current_user
 from marshmallow import (
     Schema,
     ValidationError,
-    validates_schema,
     fields,
     post_load,
     utils,
+    validates_schema,
 )
 from marshmallow.validate import Range
+from sqlalchemy import func, text
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
-from faraday.server.utils.cvss import (
-    get_base_score,
-    get_severity,
-    get_temporal_score,
-    get_environmental_score,
-    get_propper_value,
-    get_exploitability_score,
-    get_impact_score
+from faraday.server.api.base import (
+    AutoSchema,
+    GenericWorkspacedView,
+    get_workspace,
 )
+from faraday.server.api.modules import (
+    hosts_base,
+    services_base,
+    vulns_base,
+)
+from faraday.server.api.modules.websocket_auth import require_agent_token
+from faraday.server.config import CONST_FARADAY_HOME_PATH, faraday_server
 from faraday.server.models import (
-    db,
+    AgentExecution,
     Command,
     CommandObject,
     Credential,
+    CVE,
     Host,
     Hostname,
-    Service,
-    Vulnerability,
-    AgentExecution,
-    Workspace,
     Metadata,
-    CVE,
-    VulnerabilityReference,
-    owasp_vulnerability_association,
-    cwe_vulnerability_association,
     PolicyViolationVulnerabilityAssociation,
+    Service,
     SeveritiesHistogram,
+    Vulnerability,
+    VulnerabilityReference,
+    Workspace,
     cve_vulnerability_association,
+    cwe_vulnerability_association,
+    db,
+    owasp_vulnerability_association,
+)
+from faraday.server.tasks import process_report_task
+from faraday.server.utils.cvss import (
+    get_base_score,
+    get_environmental_score,
+    get_exploitability_score,
+    get_impact_score,
+    get_propper_value,
+    get_severity,
+    get_temporal_score,
 )
 from faraday.server.utils.cwe import get_or_create_cwe
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation,
     get_object_type_for,
+    is_unique_constraint_violation,
 )
-from faraday.server.api.base import (
-    AutoSchema,
-    GenericWorkspacedView,
-    get_workspace
-)
-from faraday.server.api.modules import (
-    hosts,
-    services,
-    vulns,
-)
-from faraday.server.api.modules.websocket_auth import require_agent_token
 from faraday.server.utils.vulns import (
-    get_or_create_owasp,
     create_cve_obj,
-    create_policy_violation_obj
+    create_policy_violation_obj,
+    get_or_create_owasp,
 )
-from faraday.server.config import CONST_FARADAY_HOME_PATH
-from faraday.server.config import faraday_server
-from faraday.server.tasks import process_report_task
 
-bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
-logger = logging.getLogger(__name__)
+bulk_create_api = Blueprint('bulk_create_api', __name__)
+logger = getLogger(__name__)
 
 
-class VulnerabilitySchema(vulns.VulnerabilitySchema):
-    class Meta(vulns.VulnerabilitySchema.Meta):
+class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
+    class Meta(vulns_base.VulnerabilitySchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in (vulns.VulnerabilitySchema.Meta.fields + extra_fields)
+            field_name for field_name in (vulns_base.VulnerabilitySchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 
 
-class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
-    class Meta(vulns.VulnerabilityWebSchema.Meta):
+class BulkVulnerabilityWebSchema(vulns_base.VulnerabilityWebSchema):
+    class Meta(vulns_base.VulnerabilityWebSchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in (vulns.VulnerabilityWebSchema.Meta.fields + extra_fields)
+            field_name for field_name in (vulns_base.VulnerabilityWebSchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 
@@ -144,7 +142,7 @@ class BulkCredentialSchema(AutoSchema):
         fields = ('username', 'password', 'description', 'name')
 
 
-class BulkServiceSchema(services.ServiceSchema):
+class BulkServiceSchema(services_base.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
@@ -164,14 +162,14 @@ class BulkServiceSchema(services.ServiceSchema):
         # Don't require the parent field
         return
 
-    class Meta(services.ServiceSchema.Meta):
+    class Meta(services_base.ServiceSchema.Meta):
         fields = tuple(
-            field_name for field_name in services.ServiceSchema.Meta.fields
+            field_name for field_name in services_base.ServiceSchema.Meta.fields
             if field_name not in ('parent', 'ports')
         ) + ('vulnerabilities',)
 
 
-class HostBulkSchema(hosts.HostSchema):
+class HostBulkSchema(hosts_base.HostSchema):
     ip = fields.String(required=True)
     services = fields.Nested(
         BulkServiceSchema(many=True, context={'updating': False}),
@@ -189,8 +187,8 @@ class HostBulkSchema(hosts.HostSchema):
         missing=[],
     )
 
-    class Meta(hosts.HostSchema.Meta):
-        fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
+    class Meta(hosts_base.HostSchema.Meta):
+        fields = hosts_base.HostSchema.Meta.fields + ('services', 'vulnerabilities')
 
     @validates_schema
     def validate_schema(self, data, **kwargs):
@@ -238,16 +236,17 @@ class BulkCreateSchema(Schema):
 def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
     """Check for conflicts and create a new object
 
-    Is is passed the data parsed by the marshmallow schema (it
+    It is passed the data parsed by the marshmallow schema (it
     transform from raw post data to a JSON)
     """
     nested = db.session.begin_nested()
+    obj = None
     try:
         obj = model_class(**data)
         obj.workspace = ws
         db.session.add(obj)
         db.session.commit()
-    except sqlalchemy.exc.IntegrityError as ex:
+    except IntegrityError as ex:
         if not is_unique_constraint_violation(ex):
             raise
         nested.rollback()
@@ -319,7 +318,7 @@ def get_created_tuple(obj: object) -> tuple:
 
 def _create_host(ws, host_data, command: dict):
     logger.debug("Trying to create host...")
-    start_time = time.time()
+    start_time = time()
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services', [])
     credentials = host_data.pop('credentials', [])
@@ -347,7 +346,7 @@ def _create_host(ws, host_data, command: dict):
             created_updated_count['created'] += _result['created']
             created_updated_count['updated'] += _result['updated']
 
-    start_time_vulns = time.time()
+    start_time_vulns = time()
     total_vulns = len(_vulns)
     host_vulns_created = []
     if total_vulns > 0:
@@ -376,7 +375,7 @@ def _create_host(ws, host_data, command: dict):
         created_updated_count['created'] += _result['created']
         created_updated_count['updated'] += _result['updated']
 
-    logger.debug(f"Host vulnerabilities creation took {time.time() - start_time_vulns}."
+    logger.debug(f"Host vulnerabilities creation took {time() - start_time_vulns}."
                  f" Created: {created_updated_count['created']}."
                  f" Updated: {created_updated_count['updated']}"
                  )
@@ -386,7 +385,7 @@ def _create_host(ws, host_data, command: dict):
         logger.debug(f"Needs to create {total_credentials} credentials...")
         for cred_data in credentials:
             _create_credential(ws, cred_data, command, host=host)
-    logger.debug(f"Create host took {time.time() - start_time}")
+    logger.debug(f"Create host took {time() - start_time}")
 
     return created_updated_count
 
@@ -474,7 +473,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
             data = processed_data.get(r[1], None)
             logger.debug(f"Found conflict {r[0]}/{r[1]}")
             # Delete from lists
-            logger.debug("Data On conflic %s", data)
+            logger.debug(f"Data On conflict {data}")
             if data['references']:
                 for reference in data['references']:
                     reference_sequence_id = db.session.execute(
@@ -483,7 +482,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     reference['id'] = reference_sequence_id
                     reference['vulnerability_id'] = v_id
                     references_created.append(reference)
-            logger.debug("Data vulnerability On conflic %s", data['vuln_data'])
+            logger.debug(f"Data vulnerability On conflict {data['vuln_data']}")
             updated += 1
             set_histogram(histogram, data['vuln_data'])
         else:
@@ -600,7 +599,7 @@ def _create_service(ws, host, service_data, command: dict):
 
     _create_command_object_for(ws, created, service, command)
 
-    start_time_vulns = time.time()
+    start_time_vulns = time()
     total_service_vulns = len(_vulns)
     host_vulns_created = []
     if total_service_vulns > 0:
@@ -627,7 +626,7 @@ def _create_service(ws, host, service_data, command: dict):
 
         created_updated_count = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
 
-    logger.debug(f"Service vulnerabilities creation took {time.time() - start_time_vulns}")
+    logger.debug(f"Service vulnerabilities creation took {time() - start_time_vulns}")
 
     total_service_creds = len(creds)
     if total_service_creds > 0:
@@ -744,6 +743,7 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
 
 
 def set_cvss_data(vuln_data):
+    set_cvss4_data(vuln_data)
     set_cvss3_data(vuln_data)
     set_cvss2(vuln_data)
 
@@ -753,7 +753,7 @@ def set_cvss2(vuln_data):
     vs2 = vuln_data.pop('cvss2_vector_string', None)
     if vs2:
         try:
-            cvss_instance = cvss.CVSS2(vs2)
+            cvss_instance = CVSS2(vs2)
             vuln_data['_cvss2_vector_string'] = vs2
             vuln_data['cvss2_base_score'] = get_base_score(cvss_instance)
             vuln_data['cvss2_base_severity'] = get_severity(cvss_instance, 'B')
@@ -812,7 +812,7 @@ def set_cvss3_data(vuln_data):
     vs3 = vuln_data.pop('cvss3_vector_string', None)
     if vs3:
         try:
-            cvss_instance = cvss.CVSS3(vs3)
+            cvss_instance = CVSS3(vs3)
             vuln_data['_cvss3_vector_string'] = vs3
             vuln_data['cvss3_base_score'] = get_base_score(cvss_instance)
             vuln_data['cvss3_base_severity'] = get_severity(cvss_instance, 'B')
@@ -882,6 +882,89 @@ def init_cvss3_data(vuln_data):
     vuln_data['cvss3_impact_score'] = None
 
 
+def init_cvss4_data(vuln_data):
+    vuln_data['_cvss4_vector_string'] = None
+    vuln_data['cvss4_base_score'] = None
+    vuln_data['cvss4_base_severity'] = None
+    vuln_data['cvss4_attack_vector'] = None
+    vuln_data['cvss4_attack_complexity'] = None
+    vuln_data['cvss4_attack_requirements'] = None
+    vuln_data['cvss4_privileges_required'] = None
+    vuln_data['cvss4_user_interaction'] = None
+    vuln_data['cvss4_vulnerable_system_confidentiality_impact'] = None
+    vuln_data['cvss4_subsequent_system_confidentiality_impact'] = None
+    vuln_data['cvss4_vulnerable_system_integrity_impact'] = None
+    vuln_data['cvss4_subsequent_system_integrity_impact'] = None
+    vuln_data['cvss4_vulnerable_system_availability_impact'] = None
+    vuln_data['cvss4_subsequent_system_availability_impact'] = None
+    vuln_data['cvss4_safety'] = None
+    vuln_data['cvss4_automatable'] = None
+    vuln_data['cvss4_recovery'] = None
+    vuln_data['cvss4_value_density'] = None
+    vuln_data['cvss4_vulnerability_response_effort'] = None
+    vuln_data['cvss4_provider_urgency'] = None
+    vuln_data['cvss4_modified_attack_vector'] = None
+    vuln_data['cvss4_modified_attack_complexity'] = None
+    vuln_data['cvss4_modified_attack_requirements'] = None
+    vuln_data['cvss4_modified_privileges_required'] = None
+    vuln_data['cvss4_modified_user_interaction'] = None
+    vuln_data['cvss4_modified_vulnerable_system_confidentiality_impact'] = None
+    vuln_data['cvss4_modified_subsequent_system_confidentiality_impact'] = None
+    vuln_data['cvss4_modified_vulnerable_system_integrity_impact'] = None
+    vuln_data['cvss4_modified_subsequent_system_integrity_impact'] = None
+    vuln_data['cvss4_modified_vulnerable_system_availability_impact'] = None
+    vuln_data['cvss4_modified_subsequent_system_availability_impact'] = None
+    vuln_data['cvss4_confidentiality_requirement'] = None
+    vuln_data['cvss4_integrity_requirement'] = None
+    vuln_data['cvss4_availability_requirement'] = None
+    vuln_data['cvss4_exploit_maturity'] = None
+
+
+def set_cvss4_data(vuln_data):
+    init_cvss4_data(vuln_data)
+    vs4 = vuln_data.pop('cvss4_vector_string', None)
+    if vs4:
+        try:
+            cvss_instance = CVSS4(vs4)
+            vuln_data['_cvss4_vector_string'] = vs4
+            vuln_data['cvss4_base_score'] = get_base_score(cvss_instance)
+            vuln_data['cvss4_base_severity'] = get_severity(cvss_instance, 'B')
+            vuln_data['cvss4_attack_vector'] = get_propper_value(cvss_instance, 'AV')
+            vuln_data['cvss4_attack_complexity'] = get_propper_value(cvss_instance, 'AC')
+            vuln_data['cvss4_attack_requirements'] = get_propper_value(cvss_instance, 'AT')
+            vuln_data['cvss4_privileges_required'] = get_propper_value(cvss_instance, 'PR')
+            vuln_data['cvss4_user_interaction'] = get_propper_value(cvss_instance, 'UI')
+            vuln_data['cvss4_vulnerable_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'VC')
+            vuln_data['cvss4_subsequent_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'SC')
+            vuln_data['cvss4_vulnerable_system_integrity_impact'] = get_propper_value(cvss_instance, 'VI')
+            vuln_data['cvss4_subsequent_system_integrity_impact'] = get_propper_value(cvss_instance, 'SI')
+            vuln_data['cvss4_vulnerable_system_availability_impact'] = get_propper_value(cvss_instance, 'VA')
+            vuln_data['cvss4_subsequent_system_availability_impact'] = get_propper_value(cvss_instance, 'SA')
+            vuln_data['cvss4_safety'] = get_propper_value(cvss_instance, 'S')
+            vuln_data['cvss4_automatable'] = get_propper_value(cvss_instance, 'AU')
+            vuln_data['cvss4_recovery'] = get_propper_value(cvss_instance, 'R')
+            vuln_data['cvss4_value_density'] = get_propper_value(cvss_instance, 'V')
+            vuln_data['cvss4_vulnerability_response_effort'] = get_propper_value(cvss_instance, 'RE')
+            vuln_data['cvss4_provider_urgency'] = get_propper_value(cvss_instance, 'U')
+            vuln_data['cvss4_modified_attack_vector'] = get_propper_value(cvss_instance, 'MAV')
+            vuln_data['cvss4_modified_attack_complexity'] = get_propper_value(cvss_instance, 'MAC')
+            vuln_data['cvss4_modified_attack_requirements'] = get_propper_value(cvss_instance, 'MAT')
+            vuln_data['cvss4_modified_privileges_required'] = get_propper_value(cvss_instance, 'MPR')
+            vuln_data['cvss4_modified_user_interaction'] = get_propper_value(cvss_instance, 'MUI')
+            vuln_data['cvss4_modified_vulnerable_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'MVC')
+            vuln_data['cvss4_modified_subsequent_system_confidentiality_impact'] = get_propper_value(cvss_instance, 'MSC')
+            vuln_data['cvss4_modified_vulnerable_system_integrity_impact'] = get_propper_value(cvss_instance, 'MVI')
+            vuln_data['cvss4_modified_subsequent_system_integrity_impact'] = get_propper_value(cvss_instance, 'MSI')
+            vuln_data['cvss4_modified_vulnerable_system_availability_impact'] = get_propper_value(cvss_instance, 'MVA')
+            vuln_data['cvss4_modified_subsequent_system_availability_impact'] = get_propper_value(cvss_instance, 'MSA')
+            vuln_data['cvss4_confidentiality_requirement'] = get_propper_value(cvss_instance, 'CR')
+            vuln_data['cvss4_integrity_requirement'] = get_propper_value(cvss_instance, 'IR')
+            vuln_data['cvss4_availability_requirement'] = get_propper_value(cvss_instance, 'AR')
+            vuln_data['cvss4_exploit_maturity'] = get_propper_value(cvss_instance, 'E')
+        except Exception as e:
+            logger.exception("Could not create cvss4", exc_info=e)
+
+
 def set_relationships_data(vulnerability, command):
 
     vulnerability.pop('_attachments', {})
@@ -907,7 +990,7 @@ def set_relationships_data(vulnerability, command):
 
     parsed_cve_list = []
     for cve in cve_list:
-        parsed_cve_list += re.findall(CVE.CVE_PATTERN, cve.upper())
+        parsed_cve_list += findall(CVE.CVE_PATTERN, cve.upper())
     for parsed_cve in parsed_cve_list:
         cve = create_cve_obj(parsed_cve)
         if cve:
@@ -1010,15 +1093,15 @@ class BulkCreateView(GenericWorkspacedView):
         """
         agent = None
 
-        if flask_login.current_user.is_anonymous:
+        if current_user.is_anonymous:
             agent = require_agent_token()
-        data = self._parse_data(self._get_schema_instance({}), flask.request)
-        json_data = flask.request.json
+        data = self._parse_data(self._get_schema_instance({}), request)
+        json_data = request.json
         workspace = get_workspace(workspace_name)
 
         if 'execution_id' in data:
             if not workspace:
-                abort(404, f"No such workspace: {workspace_name}")
+                abort(HTTP_NOT_FOUND, f"No such workspace: {workspace_name}")
 
             execution_id = data["execution_id"]
 
@@ -1031,24 +1114,24 @@ class BulkCreateView(GenericWorkspacedView):
                     NoResultFound(
                         f"No row was found for agent executor id {execution_id}")
                 )
-                abort(400, "Can not find an agent execution with that id")
+                abort(HTTP_BAD_REQUEST, "Can not find an agent execution with that id")
 
             if workspace_name != agent_execution.workspace.name:
                 logger.exception(
                     ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
                                f"to workspace {agent_execution.workspace.name}")
                 )
-                abort(400, "Trying to write to the incorrect workspace")
+                abort(HTTP_BAD_REQUEST, "Trying to write to the incorrect workspace")
             command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
             if command is None:
                 logger.exception(
                     ValueError(f"There is no command with {agent_execution.command.id}")
                 )
-                abort(400, "Trying to update a not existent command")
+                abort(HTTP_BAD_REQUEST, "Trying to update a not existent command")
             db.session.flush()
         else:
-            if flask_login.current_user.is_anonymous:
-                flask.abort(400, "argument expected: execution_id")
+            if current_user.is_anonymous:
+                abort(HTTP_BAD_REQUEST, "argument expected: execution_id")
 
             command = Command(**(data['command']))
             command.workspace = workspace
@@ -1057,14 +1140,14 @@ class BulkCreateView(GenericWorkspacedView):
 
         if data['hosts']:
             # Create random file
-            chars = string.ascii_uppercase + string.digits
-            random_prefix = ''.join(random.choice(chars) for _ in range(30))  # nosec
+            chars = ascii_uppercase + digits
+            random_prefix = ''.join(choice(chars) for _ in range(30))  # nosec
             json_file = f"{random_prefix}.json"
             file_path = CONST_FARADAY_HOME_PATH / 'uploaded_reports' / json_file
             with file_path.open('w') as output:
-                json.dump(json_data, output)
-            logger.info("Create tmp json file for bulk_create: %s", file_path)
-            user_id = flask_login.current_user.id if not flask_login.current_user.is_anonymous else None
+                json_dump(json_data, output)
+            logger.info(f"Create tmp json file for bulk_create: {file_path}")
+            user_id = current_user.id if not current_user.is_anonymous else None
             if faraday_server.celery_enabled:
                 from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
                 process_report(workspace.name,
@@ -1100,12 +1183,12 @@ class BulkCreateView(GenericWorkspacedView):
             logger.warning(data)
             logger.warning(json_data)
             _update_command(command.id, data['command'])
-        return flask.jsonify(
+        return jsonify(
             {
                 "message": "Created",
                 "command_id": command.id
             }
-        ), 201
+        ), HTTP_CREATED
 
     post.is_public = True
 

@@ -7,13 +7,11 @@ See the file 'doc/LICENSE' for the license information
 # Related third party imports
 from flask import Blueprint
 from marshmallow import fields, validate
-from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    FilterSetMeta,
     FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
@@ -25,8 +23,7 @@ credentials_api = Blueprint('credentials_api', __name__)
 
 
 class CredentialSchema(AutoSchema):
-    _id = fields.Integer(dump_only=True, attribute='id')
-    owned = fields.Boolean(default=False, dump_only=True)
+    owned = fields.Boolean(default=False)
     username = fields.String(default='', required=True,
                              validate=validate.Length(min=1, error="Username must be defined"))
     password = fields.String(default='')
@@ -40,16 +37,6 @@ class CredentialSchema(AutoSchema):
         model = Credential
 
 
-class CredentialFilterSet(FilterSet):
-    class Meta(FilterSetMeta):
-        model = Credential
-        fields = (
-            'username',
-        )
-        default_operator = operators.Equal
-        operators = (operators.Equal, )
-
-
 class CredentialView(FilterAlchemyMixin,
                      ReadWriteWorkspacedView,
                      BulkDeleteWorkspacedMixin,
@@ -57,7 +44,6 @@ class CredentialView(FilterAlchemyMixin,
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
-    filterset_class = CredentialFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):
         credentials = []

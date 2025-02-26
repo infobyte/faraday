@@ -12,12 +12,10 @@ from marshmallow import fields, validate
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    FilterAlchemyMixin,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
 )
 from faraday.server.models import Credential
-from faraday.server.schemas import SelfNestedField, MetadataSchema
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -30,15 +28,11 @@ class CredentialSchema(AutoSchema):
     endpoint = fields.String(default='')
     leak_date = fields.DateTime(allow_none=True)
 
-    # for filtering
-    metadata = SelfNestedField(MetadataSchema())
-
     class Meta:
         model = Credential
 
 
-class CredentialView(FilterAlchemyMixin,
-                     ReadWriteWorkspacedView,
+class CredentialView(ReadWriteWorkspacedView,
                      BulkDeleteWorkspacedMixin,
                      BulkUpdateWorkspacedMixin):
     route_base = 'credential'

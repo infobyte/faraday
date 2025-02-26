@@ -332,6 +332,7 @@ class VulnerabilitySchema(AutoSchema):
     command_id = fields.Int(required=False, load_only=True)
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+    credentials = fields.Method('get_credentials', dump_only=True)
 
     class Meta:
         model = Vulnerability
@@ -486,6 +487,10 @@ class VulnerabilitySchema(AutoSchema):
             if vector_string in cvss:
                 data[vector_string] = cvss[vector_string]
         return data
+
+    @staticmethod
+    def get_credentials(obj):
+        return [credential.id for credential in obj.credentials]
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):

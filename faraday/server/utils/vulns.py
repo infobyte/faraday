@@ -77,6 +77,7 @@ SCHEMA_FIELDS = BASE_FIELDS + (
     "tags",
     "type",
     "workspace_name",
+    "credentials"
 )
 
 # Meta fields exclusive for VulnerabilityWebSchema

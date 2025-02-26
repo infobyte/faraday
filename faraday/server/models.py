@@ -3305,6 +3305,7 @@ class Executor(Metadata):
         backref=backref('executors', cascade="all, delete-orphan"),
     )
     parameters_metadata = Column(JSONType, nullable=False, default={})
+    parameters_data = Column(JSONType, nullable=False, default={})
     last_run = Column(DateTime)
     category = Column(JSONType, nullable=True)
     tool = Column(String(50), nullable=True)
@@ -3512,6 +3513,7 @@ class CloudAgent(Metadata):
     slug = Column(String, nullable=False, unique=True)
     access_token = Column(Text, unique=True)
     params = Column(JSONType)
+    parameters_data = Column(JSONType, nullable=False, default={})
     category = Column(JSONType, nullable=True)
 
     @property

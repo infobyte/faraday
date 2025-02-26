@@ -2230,6 +2230,10 @@ class Credential(db.Model):
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='credentials', foreign_keys='Credential.workspace_id')
 
+    @property
+    def parent(self):
+        return
+
 
 association_workspace_and_users_table = Table(
     'workspace_permission_association',

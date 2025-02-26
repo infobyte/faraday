@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 # Related third party imports
 from flask import Blueprint
-from marshmallow import fields, validate
+from marshmallow import fields
 
 # Local application imports
 from faraday.server.api.base import (
@@ -16,24 +16,20 @@ from faraday.server.api.base import (
     BulkUpdateWorkspacedMixin,
 )
 from faraday.server.models import Credential
-from faraday.server.schemas import SelfNestedField, MetadataSchema, PrimaryKeyRelatedField
+from faraday.server.schemas import PrimaryKeyRelatedField
 
 credentials_api = Blueprint('credentials_api', __name__)
 
 
 class CredentialSchema(AutoSchema):
     owned = fields.Boolean(default=False)
-    username = fields.String(default='', required=True,
-                             validate=validate.Length(min=1, error="Username must be defined"))
-    password = fields.String(default='')
-    endpoint = fields.String(default='')
+    username = fields.String(required=True)
+    password = fields.String(required=True)
+    endpoint = fields.String(required=True)
     leak_date = fields.DateTime(allow_none=True)
 
     vulnerabilities = PrimaryKeyRelatedField('id', many=True, allow_none=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
-
-    # for filtering
-    metadata = SelfNestedField(MetadataSchema())
 
     class Meta:
         model = Credential

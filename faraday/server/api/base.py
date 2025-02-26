@@ -2150,9 +2150,8 @@ def get_user_permissions(user):
         'licences', 'methodology_templates', 'task_templates', 'users',
         'vulnerability_template', 'workspaces',
         'agents', 'agents_schedules', 'commands', 'comments', 'hosts',
-        'executive_reports', 'services', 'methodologies', 'tasks', 'vulns',
-        'credentials',
-    }
+        'executive_reports', 'services', 'methodologies', 'tasks', 'vulns'
+        }
 
     for entity in generic_entities:
         permissions[entity]['view'] = ALLOWED

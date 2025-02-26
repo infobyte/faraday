@@ -1224,8 +1224,6 @@ class Host(Metadata):
         __host_vulnerabilities + __service_vulnerabilities,
         deferred=True)
 
-    credentials_count = _make_generic_count_property('host', 'credential')
-
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
@@ -1247,7 +1245,6 @@ class Host(Metadata):
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            undefer(cls.credentials_count),
             undefer(cls.open_service_count),
             joinedload(cls.hostnames),
             joinedload(cls.services),
@@ -1344,7 +1341,6 @@ class Service(Metadata):
 
     vulnerability_count = _make_generic_count_property('service',
                                                        'vulnerability')
-    credentials_count = _make_generic_count_property('service', 'credential')
 
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
@@ -1377,6 +1373,13 @@ owasp_vulnerability_association = Table('owasp_vulnerability_association',
                                         Column('vulnerability_id', Integer, ForeignKey('vulnerability.id',
                                                                                        ondelete='CASCADE'))
                                         )
+
+association_table_vulnerabilities_credentials = Table(
+    'association_table_vulnerabilities_credentials',
+    db.Model.metadata,
+    Column('vulnerability_id', Integer, ForeignKey('vulnerability.id', ondelete='CASCADE')),
+    Column('credential_id', Integer, ForeignKey('credential.id', ondelete='CASCADE'))
+)
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1468,6 +1471,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
         collection_class=set,
         passive_deletes=True,
     )
+
+    credentials = relationship("Credential",
+                               secondary='association_table_vulnerabilities_credentials',
+                               back_populates='vulnerabilities')
 
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
@@ -2210,63 +2217,18 @@ class PolicyViolation(Metadata):
 class Credential(Metadata):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
-    username = BlankColumn(Text)
-    password = BlankColumn(Text)
-    description = BlankColumn(Text)
-    name = BlankColumn(Text)
+    password = Column(Text)
+    username = Column(Text)
+    endpoint = Column(Text)
+    leak_date = Column(DateTime)
+    owned = Column(Boolean, default=False)
 
-    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
-    host = relationship('Host',
-                        backref=backref("credentials", cascade="all, delete-orphan"),
-                        foreign_keys=[host_id])
+    vulnerabilities = relationship("Vulnerability",
+                                   secondary='association_table_vulnerabilities_credentials',
+                                   back_populates='credentials')
 
-    service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
-    service = relationship('Service',
-                           backref=backref('credentials', cascade="all, delete-orphan"),
-                           foreign_keys=[service_id])
-
-    # 1 workspace <--> N credentials
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
-    workspace = relationship('Workspace',
-                             backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
-                             foreign_keys=[workspace_id])
-
-    _host_ip_query = (
-        select([Host.ip]).
-        where(text('credential.host_id = host.id'))
-    )
-
-    _service_ip_query = (
-        select([text('host_inner.ip || \'/\' || service.name')]).
-        select_from(text('host as host_inner, service')).
-        where(text('credential.service_id = service.id and host_inner.id = service.host_id'))
-    )
-
-    target_ip = column_property(
-        case([
-            (text('credential.host_id IS NOT null'), _host_ip_query.as_scalar()),
-            (text('credential.service_id IS NOT null'), _service_ip_query.as_scalar())
-        ]),
-        deferred=True
-    )
-
-    __table_args__ = (
-        CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
-                        '(host_id IS NOT NULL AND service_id IS NULL)',
-                        name='check_credential_host_service'),
-        UniqueConstraint(
-            'username',
-            'host_id',
-            'service_id',
-            'workspace_id',
-            name='uix_credential_username_host_service_workspace'
-        ),
-    )
-
-    @property
-    def parent(self):
-        return self.host or self.service
+    workspace = relationship('Workspace', backref='credentials', foreign_keys='Credential.workspace_id')
 
 
 association_workspace_and_users_table = Table(

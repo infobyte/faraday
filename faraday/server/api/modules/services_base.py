@@ -62,7 +62,6 @@ class ServiceSchema(AutoSchema):
     parent_name = fields.String(attribute='host.ip', dump_only=True)
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
-    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Service', dump_only=True)
     summary = fields.String(dump_only=True)
@@ -146,8 +145,8 @@ class ServiceView(
     model_class = Service
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
-    get_undefer = [Service.credentials_count, Service.vulnerability_count]
-    get_joinedloads = [Service.credentials, Service.update_user]
+    get_undefer = [Service.vulnerability_count]
+    get_joinedloads = [Service.update_user]
     filterset_class = ServiceFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):

@@ -2214,7 +2214,7 @@ class PolicyViolation(Metadata):
         return
 
 
-class Credential(Metadata):
+class Credential(db.Model):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     password = Column(Text)

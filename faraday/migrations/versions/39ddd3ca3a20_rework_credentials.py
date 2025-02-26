@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
 
-    op.drop_table('credential')
+    op.execute('DROP TABLE IF EXISTS credential')
     op.create_table('credential',
     sa.Column('id', sa.Integer(), nullable=False, autoincrement=True, primary_key=True),
     sa.Column('password', sa.Text(), nullable=False),

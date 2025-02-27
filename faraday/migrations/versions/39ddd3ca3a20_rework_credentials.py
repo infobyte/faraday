@@ -29,6 +29,10 @@ def upgrade():
     sa.Column('workspace_id', sa.Integer(), nullable=False),
     sa.Column('create_date', sa.DateTime(), nullable=False),
     sa.Column('update_date', sa.DateTime(), nullable=False),
+    sa.Column('creator_id', sa.Integer(), nullable=True),
+    sa.Column('update_user_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['creator_id'], ['faraday_user.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['update_user_id'], ['faraday_user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ondelete='CASCADE')
     )
 

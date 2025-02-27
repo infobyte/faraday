@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 import http
 import logging
 from datetime import datetime
+from urllib.parse import urlparse
 
 import pyotp
 import flask
@@ -35,6 +36,54 @@ from faraday.server.utils.agents import get_command_and_agent_execution
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
+
+
+def is_valid_url(url):
+    """Check if a string is a valid URL."""
+    parsed = urlparse(url)
+    return bool(parsed.scheme) and bool(parsed.netloc)
+
+
+def validate_type(base, type_, value):
+    """Validate a value based on its base and type."""
+
+    if base == "string":
+        if type_ == "url":
+            # Check if it is a valid URL
+            if not is_valid_url(value):
+                return f"Expected {type_}, got {type(value).__name__}"
+        elif not isinstance(value, str):
+            return f"Expected {type_}, got {type(value).__name__}"
+
+    elif base == "integer":
+        if not isinstance(value, int):
+            return f"Expected {type_}, got {type(value).__name__}"
+
+    elif base == "boolean":
+        if not isinstance(value, bool):
+            return f"Expected {type_}, got {type(value).__name__}"
+
+    elif base == "list":
+        if not isinstance(value, list):
+            return f"Expected list, got {type(value).__name__}"
+
+    return None  # No error, value is valid
+
+
+def validate_executor_args(parameters_metadata, args):
+    """Validate executor arguments based on parameters metadata."""
+    errors = {}
+
+    # Iterate through the passed arguments (args)
+    for param_name, param_value in args.items():
+        # If this param exists in the metadata, validate it
+        if param_name in parameters_metadata:
+            param_metadata = parameters_metadata[param_name]
+            error = validate_type(param_metadata["base"], param_metadata["type"], param_value)
+            if error:
+                errors[param_name] = error
+
+    return errors
 
 
 class AgentsScheduleSchema(AutoSchema):
@@ -314,6 +363,64 @@ class AgentView(ReadWriteView):
             return flask.jsonify(manifest)
         except ValueError as e:
             flask.abort(400, e)
+
+    @route('/save_parameters', methods=['POST'])
+    def save_parameters_data(self):
+        """
+        ---
+        tags: ["Agent"]
+        description: Saves parameters data for an executor
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executor_id:
+                    type: integer
+                    description: The ID of the executor
+                  parameters_data:
+                    type: object
+                    description: Full parameters data to be saved
+        responses:
+          200:
+            description: Parameters saved successfully
+          400:
+            description: Validation error
+          404:
+            description: Executor not found
+        """
+        if flask.request.content_type != 'application/json':
+            abort(400, "Only application/json is a valid content-type")
+
+        data = request.get_json()
+        executor_id = data.get("executor_id")
+        parameters_data = data.get("parameters_data")
+
+        if not executor_id:
+            abort(400, "Missing 'executor_id' in request body")
+        if not parameters_data:
+            abort(400, "Missing 'parameters_data' in request body")
+
+        executor = Executor.query.get(executor_id)
+        if not executor:
+            abort(404, "Executor not found")
+
+        executor_data = parameters_data.get("executor_data", {})
+        args = executor_data.get("args", {})
+        parameters_metadata = executor.parameters_metadata
+
+        validation_errors = validate_executor_args(parameters_metadata, args)
+
+        if validation_errors:
+            return jsonify({"errors": validation_errors}), 400
+        print(validation_errors)
+
+        # Proceed to save the parameters data if validation passes
+        executor.parameters_data = parameters_data
+        db.session.commit()
+
+        return jsonify({"message": "Parameters saved successfully"}), 200
 
 
 AgentView.register(agent_api)

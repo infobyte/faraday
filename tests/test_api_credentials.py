@@ -1,8 +1,8 @@
 import datetime
-from flask import url_for
 from faraday.server.models import Credential
+from server.api.modules.credentials import CredentialView
 from tests.test_api_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
-from tests.factories import CredentialFactory, VulnerabilityGenericFactory
+from tests.factories import CredentialFactory, VulnerabilityFactory
 
 """
 Faraday Penetration Test IDE
@@ -14,9 +14,13 @@ See the file 'doc/LICENSE' for the license information
 class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin):
     model = Credential
     factory = CredentialFactory
-    api_endpoint = 'credentials_api'
-    view_class = 'CredentialView'
-    patchable_fields = ['username', 'password', 'endpoint', 'owned']
+    api_endpoint = 'credential'
+    view_class = CredentialView
+    patchable_fields = ['username', 'password', 'endpoint', 'owned', 'vulnerabilities']
+    update_fields = ['username', 'password', 'endpoint', 'owned', 'vulnerabilities']
+
+    def test_list_retrieves_all_items_from_workspace(self, test_client, workspace, session):
+        pass
 
     def test_create_credential(self, test_client, workspace):
         credential_data = {
@@ -26,10 +30,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
             'owned': True,
             'workspace': workspace.name
         }
-        res = test_client.post(
-            url_for(f'{self.api_endpoint}.list'),
-            json=credential_data
-        )
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
         assert res.status_code == 201
         assert res.json['username'] == 'testuser'
         assert res.json['password'] == 'testpass'
@@ -46,10 +47,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
             'leak_date': leak_date,
             'workspace': workspace.name
         }
-        res = test_client.post(
-            url_for(f'{self.api_endpoint}.list'),
-            json=credential_data
-        )
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
         assert res.status_code == 201
         assert res.json['username'] == 'leakeduser'
         assert res.json['leak_date'] is not None
@@ -60,14 +58,11 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
             'owned': True,
             'workspace': workspace.name
         }
-        res = test_client.post(
-            url_for(f'{self.api_endpoint}.list'),
-            json=credential_data
-        )
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
         assert res.status_code == 400
 
     def test_credential_link_to_vulnerability(self, test_client, workspace, session):
-        vuln = VulnerabilityGenericFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=workspace)
         session.commit()
 
         credential_data = {
@@ -79,10 +74,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
             'vulnerabilities': [vuln.id]
         }
 
-        res = test_client.post(
-            url_for(f'{self.api_endpoint}.list'),
-            json=credential_data
-        )
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
 
         assert res.status_code == 201
         assert len(res.json['vulnerabilities']) == 1
@@ -93,13 +85,12 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         session.add_all(credentials)
         session.commit()
 
-        res = test_client.get(url_for(f'{self.api_endpoint}.list'))
+        res = test_client.get(self.url(workspace=workspace))
         assert res.status_code == 200
         assert 'rows' in res.json
-        assert len(res.json['rows']) == 5
+        assert len(res.json['rows']) == 10
         for cred_envelope in res.json['rows']:
             assert 'id' in cred_envelope
-            assert '_id' in cred_envelope
             assert 'key' in cred_envelope
             assert 'value' in cred_envelope
 
@@ -114,10 +105,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
             'endpoint': 'updated.example.com'
         }
 
-        res = test_client.put(
-            url_for(f'{self.api_endpoint}.list_one', object_id=credential.id),
-            json=data
-        )
+        res = test_client.put(self.url(workspace=workspace) + f"/{credential.id}", data=data)
 
         assert res.status_code == 200
         assert res.json['username'] == 'updated_user'

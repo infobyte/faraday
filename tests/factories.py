@@ -410,7 +410,7 @@ class VulnerabilityTemplateFactory(FaradayFactory):
         return ret
 
 
-class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
+class CredentialFactory(WorkspaceObjectFactory):
     username = FuzzyText()
     password = FuzzyText()
     endpoint = FuzzyText()

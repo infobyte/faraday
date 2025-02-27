@@ -56,9 +56,8 @@ class CredentialView(ReadWriteWorkspacedView,
         credentials = []
         for credential in objects:
             credentials.append({
-                'id': credential['_id'],
-                '_id': credential['_id'],
-                'key': credential['_id'],
+                'id': credential['id'],
+                'key': credential['id'],
                 'value': credential
             })
         return {

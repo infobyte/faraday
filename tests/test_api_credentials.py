@@ -1,6 +1,6 @@
 import datetime
 from faraday.server.models import Credential
-from server.api.modules.credentials import CredentialView
+from faraday.server.api.modules.credentials import CredentialView
 from tests.test_api_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
 from tests.factories import CredentialFactory, VulnerabilityFactory
 

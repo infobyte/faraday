@@ -27,6 +27,8 @@ def upgrade():
     sa.Column('leak_date', sa.DateTime(), nullable=True),
     sa.Column('owned', sa.Boolean(), nullable=False, server_default='false'),
     sa.Column('workspace_id', sa.Integer(), nullable=False),
+    sa.Column('create_date', sa.DateTime(), nullable=False),
+    sa.Column('update_date', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ondelete='CASCADE')
     )
 

@@ -30,6 +30,7 @@ import dateutil
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
+    FilterMixin,
     InvalidUsage,
     PaginatedMixin,
     ReadWriteView,
@@ -171,7 +172,8 @@ class AgentsScheduleSchema(AutoSchema):
 
 class AgentsScheduleView(
         PaginatedMixin,
-        ReadWriteView):
+        ReadWriteView,
+        FilterMixin,):
     route_base = 'agents_schedule'
     model_class = AgentsSchedule
     order_field = AgentsSchedule.id.asc()

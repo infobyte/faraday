@@ -141,6 +141,10 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert vuln1.id in vuln_ids
         assert vuln2.id in vuln_ids
 
+        # Check if the credentials are in the vulnerabilities
+        assert credential in vuln1.credentials
+        assert credential in vuln2.credentials
+
         # Test 2: Replace with only vuln3 (should have only vuln3)
         patch_data = {
             'vulnerabilities': [vuln3.id]

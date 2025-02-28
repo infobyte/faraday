@@ -494,7 +494,7 @@ class VulnerabilitySchema(AutoSchema):
         return [credential.id for credential in obj.credentials]
 
     @staticmethod
-    def load_credentials(obj, value):
+    def load_credentials(value):
         creds = db.session.query(Credential).filter(Credential.id.in_(value)).all()
         return creds
 

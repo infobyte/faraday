@@ -194,4 +194,4 @@ check out the documentation [here](https://api.faradaysec.com/).
 * Issue tracker and feedback: [Github issue tracker](https://github.com/infobyte/faraday/issues)
 * Frequently Asked Questions: [FaradaySEC FAQ](https://docs.faradaysec.com/FAQ/)
 * Twitter: [@faradaysec](https://twitter.com/faradaysec)
-* Try one of our [Demos](https://demo101.faradaysec.com/#/login)
+* Try one of our [Demos](https://cloud.faradaysec.com/cloud/trial/request)

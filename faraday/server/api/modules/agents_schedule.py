@@ -308,7 +308,7 @@ class AgentsScheduleView(
         for scheduler_type, count in counts:
             if scheduler_type == 'cloud_agent':
                 continue
-            elif scheduler_type == 'agent':
+            if scheduler_type == 'agent':
                 result['agent_schedulers'] = count
 
         return flask.jsonify(result)

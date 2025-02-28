@@ -1,11 +1,17 @@
+import base64
 import pytest
 from flask_security.utils import hash_password
 import jwt
 import time
 from flask import current_app
+from unittest import mock
 
 from faraday.server.models import User
 from tests import factories
+
+from faraday.server.config import FaradayServerConfigObject
+
+mocked_config = FaradayServerConfigObject()
 
 
 class TestLogin:
@@ -233,3 +239,27 @@ class TestLogin:
         assert res.status_code == 200
         cookies = [cookie.name for cookie in test_client.cookie_jar]
         assert "remember_token" not in cookies
+
+    @pytest.mark.parametrize('session_timeout', [0.8, 1.0, -0.5, 0, 1, 2, 999, -999.0])
+    def test_session_timeout_setting(self, test_client, session, session_timeout):
+        mocked_config.session_timeout = session_timeout
+        with mock.patch('faraday.server.config.faraday_server', mocked_config):
+            test_client.cookie_jar.clear()
+            alice = factories.UserFactory.create(
+                    active=True,
+                    username='alice',
+                    password=hash_password('passguord'),
+                    roles=['admin'])
+            session.add(alice)
+            session.commit()
+
+            ws = factories.WorkspaceFactory.create(name='wonderland')
+            session.add(ws)
+            session.commit()
+
+            credentials = b"alice:passguord"
+            b64credentials = base64.b64encode(credentials)
+            headers = {'Authorization': b'Basic ' + b64credentials}
+
+            response = test_client.get('/v3/ws/wonderland', headers=headers)
+            assert response.status_code == 200

@@ -111,3 +111,49 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.json['username'] == 'updated_user'
         assert res.json['password'] == 'updated_pass'
         assert res.json['endpoint'] == 'updated.example.com'
+
+    def test_patch_credential_vulnerabilities(self, test_client, workspace, session):
+        # Create initial vulnerabilities
+        vuln1 = VulnerabilityFactory.create(workspace=workspace)
+        vuln2 = VulnerabilityFactory.create(workspace=workspace)
+        vuln3 = VulnerabilityFactory.create(workspace=workspace)
+        session.commit()
+
+        # Create credential with vuln1 linked
+        credential = CredentialFactory.create(workspace=workspace)
+        credential.vulnerabilities.append(vuln1)
+        session.commit()
+
+        # Verify initial state
+        res = test_client.get(self.url(workspace=workspace) + f"/{credential.id}")
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 1
+        assert res.json['vulnerabilities'][0]['_id'] == vuln1.id
+
+        # Test 1: Add vuln2 (should have vuln1 and vuln2)
+        patch_data = {
+            'vulnerabilities': [vuln1.id, vuln2.id]
+        }
+        res = test_client.patch(self.url(workspace=workspace) + f"/{credential.id}", data=patch_data)
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 2
+        vuln_ids = [v['_id'] for v in res.json['vulnerabilities']]
+        assert vuln1.id in vuln_ids
+        assert vuln2.id in vuln_ids
+
+        # Test 2: Replace with only vuln3 (should have only vuln3)
+        patch_data = {
+            'vulnerabilities': [vuln3.id]
+        }
+        res = test_client.patch(self.url(workspace=workspace) + f"/{credential.id}", data=patch_data)
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 1
+        assert res.json['vulnerabilities'][0]['_id'] == vuln3.id
+
+        # Test 3: Empty the vulnerabilities list (should have no vulns)
+        patch_data = {
+            'vulnerabilities': []
+        }
+        res = test_client.patch(self.url(workspace=workspace) + f"/{credential.id}", data=patch_data)
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 0

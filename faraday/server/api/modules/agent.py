@@ -150,12 +150,14 @@ class AgentCreationSchema(Schema):
     id = fields.Integer(dump_only=True)
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
+    description = fields.String(required=False)
 
     class Meta:
         fields = (
             'id',
             'name',
-            'token'
+            'token',
+            'description'
         )
 
 

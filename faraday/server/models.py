@@ -3427,6 +3427,7 @@ class Agent(Metadata):
     token = Column(Text, unique=True, nullable=False, default=lambda: "".
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     name = NonBlankColumn(Text)
+    description = BlankColumn(Text)
     active = Column(Boolean, default=True)
     sid = Column(Text)  # socketio sid
 

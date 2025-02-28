@@ -128,12 +128,14 @@ class AgentSchema(AutoSchema):
     is_online = fields.Boolean(dump_only=True)
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
     last_run = fields.DateTime(dump_only=True)
+    description = fields.String(dump_only=True)
 
     class Meta:
         model = Agent
         fields = (
             'id',
             'name',
+            'description',
             'status',
             'active',
             'create_date',

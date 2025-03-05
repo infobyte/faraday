@@ -418,7 +418,6 @@ class AgentView(ReadWriteView):
 
         if validation_errors:
             return jsonify({"errors": validation_errors}), 400
-        print(validation_errors)
 
         # Proceed to save the parameters data if validation passes
         executor.parameters_data = parameters_data

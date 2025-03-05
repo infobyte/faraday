@@ -29,6 +29,7 @@ def upgrade():
     op.add_column('executor', sa.Column('parameters_data', sa.JSON(), nullable=False, server_default='{}'))
     op.add_column('cloud_agent', sa.Column('parameters_data', sa.JSON(), nullable=False, server_default='{}'))
     op.add_column('agent', sa.Column('description', sa.Text(), nullable=False, server_default=''))
+    op.add_column('cloud_agent', sa.Column('description', sa.Text(), nullable=False, server_default=''))
     # ### end Alembic commands ###
 
 
@@ -44,4 +45,5 @@ def downgrade():
     op.drop_column('executor', 'parameters_data')
     op.drop_column('cloud_agent', 'parameters_data')
     op.drop_column('agent', 'description')
+    op.drop_column('cloud_agent', 'description')
     # ### end Alembic commands ###

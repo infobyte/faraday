@@ -3513,6 +3513,7 @@ class CloudAgent(Metadata):
     params = Column(JSONType)
     parameters_data = Column(JSONType, nullable=False, default={})
     category = Column(JSONType, nullable=True)
+    description = BlankColumn(Text)
 
     @property
     def last_run(self):

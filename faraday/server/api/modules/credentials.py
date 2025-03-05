@@ -17,6 +17,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.models import Credential, db, VulnerabilityGeneric
 from faraday.server.api.modules.vulns_base import VulnerabilitySchema
+from faraday.server.schemas import SelfNestedField, MetadataSchema
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -40,6 +41,8 @@ class CredentialSchema(AutoSchema):
     )
 
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+
+    metadata = SelfNestedField(MetadataSchema())
 
     class Meta:
         model = Credential

@@ -3445,13 +3445,10 @@ class Agent(Metadata):
 
     @property
     def status(self):
-        if self.active:
-            if self.is_online:
-                return 'online'
-            else:
-                return 'offline'
+        if self.is_online:
+            return 'online'
         else:
-            return 'paused'
+            return 'offline'
 
     @property
     def last_run(self):

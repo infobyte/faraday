@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed session timeout setting not working on numbers less than 1. #7874"
+}

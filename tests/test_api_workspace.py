@@ -713,3 +713,48 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
+
+    def test_bulk_update_workspaces(self, session, test_client, user, workspace_factory):
+        # Clear existing data
+        Workspace.query.delete()
+
+        # Create workspaces using the factory
+        ws1 = workspace_factory.create(name='test1', public=False, active=False)
+        ws2 = workspace_factory.create(name='test2', public=False, active=False)
+        ws3 = workspace_factory.create(name='test3', public=False, active=False)
+        ws4 = workspace_factory.create(name='other_workspace', public=False, active=False)
+
+        # Commit to ensure objects are in the database
+        session.commit()
+
+        # Define the bulk update request body
+        bulk_update_body = {
+            "ids": ["test1", "test2", "test3"],
+            "active": True,
+            "public": True,  # Additional fields can be updated
+            "description": "TEST"
+        }
+
+        # Perform the bulk update request
+        response = test_client.patch(
+            '/v3/ws/bulk_update',
+            json=bulk_update_body,
+        )
+
+        # Validate the response
+        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+        response_data = response.json
+        assert response_data['updated'] == 3, "Expected 3 workspaces to be updated"
+
+        # Re-fetch updated workspaces from the database
+        updated_workspaces = Workspace.query.filter(Workspace.name.in_(bulk_update_body['ids'])).all()
+
+        for ws in updated_workspaces:
+            assert ws.active is True, f"Workspace {ws.name} should be active"
+            assert ws.public is True, f"Workspace {ws.name} should be public"
+            assert ws.description == 'TEST', "Workspace description should be TEST"
+
+        # Validate unaffected workspace
+        other_workspace = Workspace.query.filter_by(name='other_workspace').first()
+        assert other_workspace.active is False, "Other workspaces should not be updated"
+        assert other_workspace.public is False, "Other workspaces should not be updated"

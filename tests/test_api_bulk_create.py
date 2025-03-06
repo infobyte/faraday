@@ -64,7 +64,6 @@ vuln_data = {
     'policyviolations': ['policy_1', 'policy_2'],
     'data': 'test data\nmore data',
     'custom_fields': {'changes': ['1', '2', '3']},
-    'status': 'open',
 }
 
 vuln_web_data = {

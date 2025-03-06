@@ -20,7 +20,9 @@ from faraday_agent_parameters_types.utils import type_validate, get_manifests
 
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView, get_workspace
+    ReadWriteView,
+    FilterMixin,
+    get_workspace
 )
 from faraday.server.extensions import socketio
 from faraday.server.models import (
@@ -185,7 +187,7 @@ class AgentRunSchema(Schema):
         self.unknown = EXCLUDE
 
 
-class AgentView(ReadWriteView):
+class AgentView(ReadWriteView, FilterMixin):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema

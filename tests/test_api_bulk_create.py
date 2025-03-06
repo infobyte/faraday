@@ -934,8 +934,6 @@ def test_bulk_create_on_existing_status(session, host, vulnerability_factory, st
     vuln = vulnerability_factory.create(workspace=host.workspace, host=host, service=None, status=statuses[0])
     session.add(vuln)
     session.commit()
-    session.add(vuln)
-    session.commit()
     new_vuln_data = {
         'name': vuln.name,
         'description': vuln.description,

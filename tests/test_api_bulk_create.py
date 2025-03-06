@@ -64,6 +64,7 @@ vuln_data = {
     'policyviolations': ['policy_1', 'policy_2'],
     'data': 'test data\nmore data',
     'custom_fields': {'changes': ['1', '2', '3']},
+    'status': 'open',
 }
 
 vuln_web_data = {
@@ -922,6 +923,40 @@ def test_creates_command_object_on_duplicates(session, command, service, vulnera
     command2_dict = {'id': command2.id, 'tool': command2.tool, 'user': command2.user}
     bc._create_host(command.workspace, data, command2_dict)
     assert count(Command, command.workspace) == 2
+
+
+@pytest.mark.parametrize('statuses', [('open', 'closed', 'closed'),
+                                      ('closed', 'open', 're-opened'),
+                                      ('re-opened', 'closed', 'closed'),
+                                      ('closed', 're-opened', 're-opened'),
+                                      ('open', 'open', 'open'),
+                                      ('closed', 'closed', 'closed')])
+def test_bulk_create_on_existing_status(session, host, vulnerability_factory, statuses):
+    vuln = vulnerability_factory.create(workspace=host.workspace, host=host, service=None, status=statuses[0])
+    session.add(vuln)
+    session.commit()
+    session.add(vuln)
+    session.commit()
+    new_vuln_data = {
+        'name': vuln.name,
+        'description': vuln.description,
+        'severity': vuln.severity,
+        'type': 'vulnerability',
+        'status': statuses[1],
+    }
+    new_host_data = {
+        "ip": host.ip,
+        "description": host.description,
+        "hostnames": [hn.name for hn in host.hostnames],
+        "vulnerabilities": [new_vuln_data]
+    }
+    command = new_empty_command(host.workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_host(host.workspace, new_host_data, command_dict)
+    vuln = Vulnerability.query.get(vuln.id)
+    assert vuln.status == statuses[2]
 
 
 class TestBulkCreateAPI:

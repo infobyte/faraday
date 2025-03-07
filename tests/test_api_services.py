@@ -13,6 +13,7 @@ from tests.test_api_non_workspaced_base import ReadOnlyAPITests, BulkDeleteTests
 from faraday.server.models import (
     Service
 )
+from tests.factories import VulnerabilityFactory
 
 
 @pytest.mark.skip_sql_dialect('sqlite')
@@ -96,3 +97,19 @@ class TestListServiceView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTest
         res = test_client.get(f"{self.url()}/filter")
         assert res.status_code == 200
         assert len(res.json['services']) == OBJECT_COUNT
+
+    def test_bulk_delete_with_references(self, test_client, session, workspace):
+        service_1 = self.factory.create(workspace=workspace)
+        service_2 = self.factory.create(workspace=workspace)
+        service_3 = self.factory.create(workspace=workspace)
+
+        for _ in range(3):
+            VulnerabilityFactory.create(service=service_2, workspace=workspace)
+            VulnerabilityFactory.create(service=service_3, workspace=workspace)
+        session.commit()
+
+        raw_data = {'ids': [service_1.id, service_2.id, service_3.id]}
+        res = test_client.delete(self.url(), data=raw_data)
+
+        assert res.status_code == 200
+        assert res.json['deleted'] == 3

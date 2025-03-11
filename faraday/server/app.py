@@ -407,6 +407,20 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
 
     login_failed_message = ("Invalid username or password", 'error')
 
+    parsed_broker_url = faraday.server.config.faraday_server.celery_broker_url.split(":")
+    if len(parsed_broker_url) == 1:
+        # assuming redis
+        broker_url = f"redis://{parsed_broker_url[0]}:6379/0"
+    else:
+        broker_url = faraday.server.config.faraday_server.celery_broker_url
+
+    parsed_backend_url = faraday.server.config.faraday_server.celery_backend_url.split(":")
+    if len(parsed_backend_url) == 1:
+        # assuming redis
+        backend_url = f"redis://{parsed_backend_url[0]}:6379/0"
+    else:
+        backend_url = faraday.server.config.faraday_server.celery_backend_url
+
     app.config.update({
         'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
         'SECURITY_PASSWORD_SINGLE_HASH': True,
@@ -451,8 +465,10 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
         'IMPORTS': ('faraday.server.tasks', ),
-        'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
-        'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
+        # 'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
+        # 'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
+        'CELERY_BROKER_URL': broker_url,
+        'CELERY_RESULT_BACKEND': backend_url,
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

@@ -618,16 +618,16 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace):
         bc._create_host(workspace, host_data_copy, command_dict)
 
 
-def test_create_host_with_cred_fails(session, workspace):
+def test_create_host_ignores_cred(session, workspace):
     host_data_copy = host_data.copy()
     host_data_copy['credentials'] = [credential_data]
+    host_data_loaded = bc.HostBulkSchema().load(host_data_copy)
     command = new_empty_command(workspace)
     db.session.add(command)
     db.session.commit()
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
-    with pytest.raises(BaseException):
-        # Fails
-        bc._create_host(workspace, host_data_copy, command_dict)
+    bc._create_host(workspace, host_data_loaded, command_dict)
+    assert count(Host, workspace) == 1
 
 
 def test_create_service_with_vuln(session, host):

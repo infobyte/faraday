@@ -75,6 +75,13 @@ vuln_web_data = {
     'owasp': ['owasp1', 'owasp2']
 }
 
+credential_data = {
+    'name': 'test credential',
+    'description': 'test',
+    'username': 'admin',
+    'password': '12345',
+}
+
 command_data = {
     'tool': 'pytest',
     'command': 'pytest tests/test_api_bulk_create.py',
@@ -608,6 +615,18 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace):
     db.session.commit()
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
     with pytest.raises(Exception):
+        bc._create_host(workspace, host_data_copy, command_dict)
+
+
+def test_create_host_with_cred_fails(session, workspace):
+    host_data_copy = host_data.copy()
+    host_data_copy['credentials'] = [credential_data]
+    command = new_empty_command(workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    with pytest.raises(BaseException):
+        # Fails
         bc._create_host(workspace, host_data_copy, command_dict)
 
 

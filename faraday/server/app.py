@@ -469,6 +469,14 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         # 'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
         'CELERY_BROKER_URL': broker_url,
         'CELERY_RESULT_BACKEND': backend_url,
+        'CELERY_BROKER_BACKEND_TRANSPORT_OPTIONS': {
+            'global_keyprefix': '' if not faraday_server.celery_queue_prefix \
+                else faraday_server.celery_queue_prefix,
+        },
+        'CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS': {
+            'global_keyprefix': '' if not faraday_server.celery_queue_prefix \
+                else faraday_server.celery_queue_prefix,
+        }
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

@@ -30,7 +30,11 @@ let
 
     bidict = self.callPackage ./packages/bidict { };
 
+    billiard = self.callPackage ./packages/billiard { };
+
     bleach = self.callPackage ./packages/bleach { };
+
+    celery = self.callPackage ./packages/celery { };
 
     cvss = self.callPackage ./packages/cvss { };
 
@@ -63,6 +67,8 @@ let
 
     flask-wtf = self.callPackage ./packages/flask-wtf { };
 
+    kombu = self.callPackage ./packages/kombu { };
+
     marshmallow-sqlalchemy =
       self.callPackage ./packages/marshmallow-sqlalchemy { };
 
@@ -71,6 +77,8 @@ let
     simplekv = self.callPackage ./packages/simplekv { };
 
     sqlalchemy = self.callPackage ./packages/sqlalchemy { };
+
+    vine = self.callPackage ./packages/vine { };
 
     werkzeug = self.callPackage ./packages/werkzeug { };
 

@@ -3,18 +3,19 @@ Faraday Penetration Test IDE
 Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-import json
+
 # Standard library imports
 import logging
+import json
 
 # Related third party imports
 import itsdangerous
 from flask import current_app, request
-
-from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
-from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution
 from flask_socketio import Namespace
 
+# Local imports
+from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
+from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution
 from faraday.server.utils.database import get_or_create
 
 logger = logging.getLogger(__name__)

@@ -107,14 +107,14 @@ def register_blueprints(app):
     from faraday.server.api.modules.global_commands import globalcommands_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.activity_feed import activityfeed_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.credentials import credentials_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts import host_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts_context import host_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_base import host_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_workspaced import host_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.licenses import license_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.services import services_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.services_context import services_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services_base import services_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services_workspaced import services_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.session import session_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.vulns import vulns_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.vulns_context import vulns_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns_base import vulns_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns_workspaced import vulns_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.vulnerability_template import \
         vulnerability_template_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.workspaces import workspace_api  # pylint:disable=import-outside-toplevel
@@ -151,14 +151,14 @@ def register_blueprints(app):
     app.register_blueprint(activityfeed_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(credentials_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(host_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(host_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(host_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(info_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(license_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(services_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(services_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(services_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(session_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(vulns_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(vulns_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(vulns_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(vulnerability_template_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(workspace_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(handlers_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -449,7 +449,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
             # 'sha512_crypt',
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(
-            hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
+            hours=abs(faraday.server.config.faraday_server.session_timeout or 12.0)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
         'IMPORTS': ('faraday.server.tasks', ),

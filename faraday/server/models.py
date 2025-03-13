@@ -2280,8 +2280,8 @@ association_workspace_and_users_table = Table(
 executive_report_workspace_table = Table(
     "executive_report_workspace_table",
     db.Model.metadata,
-    Column("workspace_id", Integer, ForeignKey("workspace.id")),
-    Column("executive_report_id", Integer, ForeignKey("executive_report.id")),
+    Column("workspace_id", Integer, ForeignKey("workspace.id", ondelete="CASCADE")),
+    Column("executive_report_id", Integer, ForeignKey("executive_report.id", ondelete="CASCADE")),
 )
 
 

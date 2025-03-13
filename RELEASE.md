@@ -1,6 +1,18 @@
 New features in the latest update
 =====================================
 
+5.12.0 [Mar 13th, 2025]:
+---
+ * [ADD] Added update in bulk mode for workspaces. #7830
+ * [ADD] Added endpoint to count agent schedulers. #7905
+ * [FIX] Fixed session timeout setting not working on numbers less than 1. #7874
+
+5.11.0 [Jan 30th, 2025]:
+---
+ * [ADD] Attachment descriptions can now be updated. #7868
+ * [MOD] Refactored contextualized modules to improve code readability and maintainability. No changes to functionality. #7781
+ * [FIX] Fixed an issue where evidence descriptions were not saved correctly during manual vulnerability creation. #7867
+
 5.10.1 [Jan 13th, 2025]:
 ---
  * [FIX] Fix config endpoint authentication. #7889

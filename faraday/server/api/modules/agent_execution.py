@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class AgentExecutionSchema(AutoSchema):
+    id = fields.Integer(dump_only=True)
     agent_name = fields.Method("get_agent_name", dump_only=True)
     tool = fields.Method("get_tool", dump_only=True)
     create_date = fields.DateTime(dump_only=True)
@@ -29,7 +30,7 @@ class AgentExecutionSchema(AutoSchema):
     class Meta:
         model = AgentExecution
         fields = (
-            'agent_name', 'tool', 'create_date', 'type',
+            'id', 'agent_name', 'tool', 'create_date', 'type',
             'running', 'successful', 'category', 'parameters_data',
             'triggered_by', 'executor', 'command', 'run_id'
         )
@@ -49,6 +50,11 @@ class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
     model_class = AgentExecution
     schema_class = AgentExecutionSchema
     order_field = AgentExecution.id.desc()
+
+    def _filter(self, *args, **kwargs):
+        subquery = db.session.query(func.min(AgentExecution.id)).group_by(AgentExecution.run_id).subquery()
+        kwargs["extra_alchemy_filters"] = (AgentExecution.id.in_(subquery))
+        return super()._filter(*args, **kwargs)
 
     def _paginate(self, query, hard_limit=0):
         # Select only distinct run_id rows

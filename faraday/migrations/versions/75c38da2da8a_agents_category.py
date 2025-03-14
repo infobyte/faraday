@@ -1,7 +1,7 @@
 """agents category
 
 Revision ID: 75c38da2da8a
-Revises: 618a59151523
+Revises: 293724cb146d
 Create Date: 2025-01-27 20:36:41.962127+00:00
 
 """
@@ -12,7 +12,7 @@ from faraday.server.fields import JSONType
 
 # revision identifiers, used by Alembic.
 revision = '75c38da2da8a'
-down_revision = '618a59151523'
+down_revision = '293724cb146d'
 branch_labels = None
 depends_on = None
 

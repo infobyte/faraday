@@ -1,7 +1,7 @@
 """stats columns on ws
 
 Revision ID: f2435999bc54
-Revises: 618a59151523
+Revises: 293724cb146d
 Create Date: 2025-02-06 16:13:43.952670+00:00
 
 """
@@ -14,7 +14,7 @@ from faraday.server.tasks import update_host_stats
 
 # revision identifiers, used by Alembic.
 revision = 'f2435999bc54'
-down_revision = '618a59151523'
+down_revision = '293724cb146d'
 branch_labels = None
 depends_on = None
 

@@ -52,7 +52,12 @@ class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
     order_field = AgentExecution.id.desc()
 
     def _filter(self, *args, **kwargs):
-        subquery = db.session.query(func.min(AgentExecution.id)).group_by(AgentExecution.run_id).subquery()
+        subquery = (
+            db.session.query(func.min(AgentExecution.id))
+            .filter(AgentExecution.run_id.isnot(None))  # Exclude NULL run_id
+            .group_by(AgentExecution.run_id)
+            .subquery()
+        )
         kwargs["extra_alchemy_filters"] = (AgentExecution.id.in_(subquery))
         return super()._filter(*args, **kwargs)
 
@@ -60,6 +65,7 @@ class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
         # Select only distinct run_id rows
         subquery = (
             db.session.query(AgentExecution.run_id, func.min(AgentExecution.id).label("min_id"))
+            .filter(AgentExecution.run_id.isnot(None))
             .group_by(AgentExecution.run_id)
             .subquery()
         )

@@ -34,6 +34,7 @@ BASE_FIELDS = (
     "status",
     "target",
     "tool",
+    "status_history",
 )
 
 # Meta fields in common for VulnerabilityWebSchema and VulnerabilityFilterSet

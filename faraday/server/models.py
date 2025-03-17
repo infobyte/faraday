@@ -3790,7 +3790,7 @@ class VulnerabilityStatusHistory(db.Model):
     id = Column(Integer, primary_key=True)
     status = Column(Enum(*STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), index=True, nullable=False)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), index=True, nullable=False)
     vulnerability = relationship(
         'Vulnerability',
         backref=backref('status_history', cascade="all, delete-orphan"),

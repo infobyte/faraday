@@ -289,13 +289,12 @@ class VulnerabilityStatusHistorySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     status = fields.String()
     date = fields.DateTime(dump_only=True)
-    created_closed = fields.Boolean()
     message = fields.String()
     username = fields.String()
 
     class Meta:
         model = VulnerabilityStatusHistory
-        fields = ('_id', 'status', 'date', 'created_closed', 'message', 'username')
+        fields = ('_id', 'status', 'date', 'message', 'username')
 
 
 class VulnerabilitySchema(AutoSchema):

@@ -3772,6 +3772,35 @@ class SlackNotification(db.Model):
     processed = Column(Boolean, default=False)
 
 
+class VulnerabilityStatusHistory(db.Model):
+
+    STATUS_OPEN = 'open'
+    STATUS_RE_OPENED = 're-opened'
+    STATUS_CLOSED = 'closed'
+    STATUS_RISK_ACCEPTED = 'risk-accepted'
+
+    STATUSES = [
+        STATUS_OPEN,
+        STATUS_CLOSED,
+        STATUS_RE_OPENED,
+        STATUS_RISK_ACCEPTED
+    ]
+
+    __tablename__ = 'vulnerability_status_history'
+    id = Column(Integer, primary_key=True)
+    status = Column(Enum(*STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    date = Column(DateTime, default=datetime.utcnow)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), index=True, nullable=False)
+    vulnerability = relationship(
+        'Vulnerability',
+        backref=backref('status_history', cascade="all, delete-orphan"),
+        foreign_keys=[vulnerability_id]
+    )
+    created_closed = Column(Boolean, default=False)
+    message = Column(Text, nullable=True)
+    username = Column(String, nullable=True)
+
+
 # Indexes to speed up queries
 Index("idx_vulnerability_severity_hostid_serviceid",
       VulnerabilityGeneric.__table__.c.severity,

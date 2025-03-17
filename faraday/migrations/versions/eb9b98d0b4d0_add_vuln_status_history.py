@@ -25,7 +25,7 @@ def upgrade():
     sa.Column('vulnerability_id', sa.Integer(), nullable=False),
     sa.Column('message', sa.Text(), nullable=True),
     sa.Column('username', sa.String(), nullable=True),
-    sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ),
+    sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete="CASCADE"),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_vulnerability_status_history_vulnerability_id'), 'vulnerability_status_history', ['vulnerability_id'], unique=False)

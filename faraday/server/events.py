@@ -79,7 +79,6 @@ def create_vulnerability_initial_status(mapper, connection, instance):
         vulnerability_id=instance.id,
         status=instance.status,
         username=username,
-        created_closed=(instance.status == VulnerabilityStatusHistory.STATUS_CLOSED)
     )
 
     db.session.add(status_history)

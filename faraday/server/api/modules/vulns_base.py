@@ -76,6 +76,7 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Workspace,
     db,
+    VulnerabilityStatusHistory,
 )
 from faraday.server.schemas import (
     FaradayCustomField,
@@ -284,6 +285,19 @@ class ReferenceSchema(AutoSchema):
     type = fields.String()
 
 
+class VulnerabilityStatusHistorySchema(AutoSchema):
+    _id = fields.Integer(dump_only=True, attribute='id')
+    status = fields.String()
+    date = fields.DateTime(dump_only=True)
+    created_closed = fields.Boolean()
+    message = fields.String()
+    username = fields.String()
+
+    class Meta:
+        model = VulnerabilityStatusHistory
+        fields = ('_id', 'status', 'date', 'created_closed', 'message', 'username')
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(dump_only=True, default='')
@@ -332,6 +346,7 @@ class VulnerabilitySchema(AutoSchema):
     command_id = fields.Int(required=False, load_only=True)
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+    status_history = fields.List(fields.Nested(VulnerabilityStatusHistorySchema), dump_only=True)
 
     class Meta:
         model = Vulnerability

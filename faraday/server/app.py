@@ -470,12 +470,10 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         'CELERY_BROKER_URL': broker_url,
         'CELERY_RESULT_BACKEND': backend_url,
         'CELERY_BROKER_BACKEND_TRANSPORT_OPTIONS': {
-            'global_keyprefix': '' if not faraday_server.celery_queue_prefix \
-                else faraday_server.celery_queue_prefix,
+            'global_keyprefix': '' if not faraday_server.celery_queue_prefix else faraday_server.celery_queue_prefix,
         },
         'CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS': {
-            'global_keyprefix': '' if not faraday_server.celery_queue_prefix \
-                else faraday_server.celery_queue_prefix,
+            'global_keyprefix': '' if not faraday_server.celery_queue_prefix else faraday_server.celery_queue_prefix,
         }
     })
 

@@ -59,7 +59,6 @@ def create_vulnerability_status_history(mapper, connection, instance):
             vulnerability_id=instance.id,
             status=new_status,
             username=username,
-            message=f"Status changed from {old_status} to {new_status}"
         )
 
         db.session.add(status_history)

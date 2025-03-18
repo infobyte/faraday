@@ -3796,7 +3796,6 @@ class VulnerabilityStatusHistory(db.Model):
         backref=backref('status_history', cascade="all, delete-orphan"),
         foreign_keys=[vulnerability_id]
     )
-    message = Column(Text, nullable=True)
     username = Column(String, nullable=True)
 
 

@@ -286,7 +286,7 @@ class ReferenceSchema(AutoSchema):
 
 
 class VulnerabilityStatusHistorySchema(AutoSchema):
-    _id = fields.Integer(dump_only=True, attribute='id')
+    id = fields.Integer(dump_only=True)
     status = fields.String()
     date = fields.DateTime(dump_only=True)
     username = fields.String()

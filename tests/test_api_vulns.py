@@ -3179,8 +3179,8 @@ class TestVulnerabilitySearch:
         for offset in range(0, 10):
             query_filter = {
                 "filters": [{"name": "severity", "op": "eq", "val": "high"}],
-                "limit": "1",
-                "offset": offset,
+                "limit": 10,
+                "offset": 10 * offset,
             }
             res = test_client.get(
                 join(
@@ -3190,8 +3190,8 @@ class TestVulnerabilitySearch:
             )
             assert res.status_code == 200
             assert res.json['count'] == 100
-            paginated_vulns.add(res.json['vulnerabilities'][0]['id'])
-
+            for vuln in res.json['vulnerabilities']:
+                paginated_vulns.add(vuln['id'])
         assert expected_vulns == paginated_vulns
 
     @pytest.mark.skip_sql_dialect('sqlite')

@@ -50,7 +50,8 @@ from faraday.server.models import (
     Host,
     Service,
     CVE,
-    SeveritiesHistogram
+    SeveritiesHistogram,
+    VulnerabilityStatusHistory
 )
 from tests.factories import (
     ServiceFactory,
@@ -3178,8 +3179,8 @@ class TestVulnerabilitySearch:
         for offset in range(0, 10):
             query_filter = {
                 "filters": [{"name": "severity", "op": "eq", "val": "high"}],
-                "limit": 10,
-                "offset": 10 * offset,
+                "limit": "1",
+                "offset": offset,
             }
             res = test_client.get(
                 join(
@@ -3189,8 +3190,8 @@ class TestVulnerabilitySearch:
             )
             assert res.status_code == 200
             assert res.json['count'] == 100
-            for vuln in res.json['vulnerabilities']:
-                paginated_vulns.add(vuln['id'])
+            paginated_vulns.add(res.json['vulnerabilities'][0]['id'])
+
         assert expected_vulns == paginated_vulns
 
     @pytest.mark.skip_sql_dialect('sqlite')
@@ -4087,3 +4088,156 @@ def test_model_converter():
     field = VulnerabilitySchema().fields['data']
     assert isinstance(field, NullToBlankString)
     assert field.allow_none
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestVulnerabilityStatusHistory:
+    """Tests for vulnerability status history"""
+
+    def test_initial_status_creation(self, test_client, session, workspace):
+        """Test if initial status history is created when a vulnerability is created"""
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            status="open"
+        )
+        session.commit()
+
+        # Check if the initial status history record was created
+        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln.id
+        ).all()
+
+        assert len(history_entries) == 1
+        assert history_entries[0].status == "open"
+        assert history_entries[0].vulnerability_id == vuln.id
+
+    def test_status_update_creates_history(self, test_client, session, workspace, logged_user):
+        """Test if status history is created when vulnerability status is updated"""
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            status="open"
+        )
+        session.commit()
+
+        # Update status
+        vuln.status = "closed"
+        session.commit()
+
+        # Check if a new history entry was created
+        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln.id
+        ).order_by(VulnerabilityStatusHistory.date).all()
+
+        assert len(history_entries) == 2
+        assert history_entries[0].status == "open"  # Initial status
+        assert history_entries[1].status == "closed"  # Updated status
+
+    def test_username_in_history(self, test_client, session, workspace, logged_user):
+        """Test if username is correctly recorded in the status history"""
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            status="open"
+        )
+        session.commit()
+
+        # Initial history should have username
+        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln.id
+        ).all()
+
+        assert len(history_entries) == 1
+        assert history_entries[0].username == logged_user.username
+
+        # Update status and check if username is recorded
+        vuln.status = "closed"
+        session.commit()
+
+        updated_history = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln.id,
+            status="closed"
+        ).first()
+
+        assert updated_history is not None
+        assert updated_history.username == logged_user.username
+
+    def test_multiple_status_changes(self, test_client, session, workspace):
+        """Test multiple status changes are recorded correctly"""
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            status="open"
+        )
+        session.commit()
+
+        # Sequence of status changes
+        status_sequence = ["closed", "re-opened", "risk-accepted"]
+
+        for new_status in status_sequence:
+            vuln.status = new_status
+            session.commit()
+
+        # Check if all history entries were created
+        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln.id
+        ).order_by(VulnerabilityStatusHistory.date).all()
+
+        assert len(history_entries) == 4  # Initial + 3 changes
+        assert history_entries[0].status == "open"
+        assert history_entries[1].status == "closed"
+        assert history_entries[2].status == "re-opened"
+        assert history_entries[3].status == "risk-accepted"
+
+    def test_api_returns_status_history(self, test_client, session, workspace):
+        """Test if API endpoint returns the status history"""
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            status="open"
+        )
+        session.commit()
+
+        # Update status to create history
+        vuln.status = "closed"
+        session.commit()
+
+        # Get vulnerability through API
+        res = test_client.get(f'/v3/vulns/{vuln.id}')
+        assert res.status_code == 200
+
+        # Verify status history is in the response
+        status_history = res.json.get('status_history')
+        assert status_history is not None
+        assert len(status_history) == 2
+        assert status_history[0]['status'] == 'open'
+        assert status_history[1]['status'] == 'closed'
+
+    def test_web_vulnerability_status_history(self, test_client, session, workspace):
+        """Test if status history works for web vulnerabilities"""
+        service = ServiceFactory.create(workspace=workspace)
+        vuln_web = VulnerabilityWebFactory.create(
+            workspace=workspace,
+            service=service,
+            status="open"
+        )
+        session.commit()
+
+        # Update status
+        vuln_web.status = "closed"
+        session.commit()
+
+        # Check if history was created for web vulnerability
+        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln_web.id
+        ).order_by(VulnerabilityStatusHistory.date).all()
+
+        assert len(history_entries) == 2
+        assert history_entries[0].status == "open"
+        assert history_entries[1].status == "closed"

@@ -626,6 +626,7 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
         workspace=factory.SelfAttribute("..workspace"),
         end_date=None
     )
+    run_id = FuzzyIncrementalInteger(1, 65535)
 
     class Meta:
         model = AgentExecution

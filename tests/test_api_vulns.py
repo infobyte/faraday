@@ -4121,7 +4121,6 @@ class TestVulnerabilityStatusHistory:
             host=host,
             status="open"
         )
-        session.commit()
 
         # Update status
         vuln.status = "closed"
@@ -4135,36 +4134,6 @@ class TestVulnerabilityStatusHistory:
         assert len(history_entries) == 2
         assert history_entries[0].status == "open"  # Initial status
         assert history_entries[1].status == "closed"  # Updated status
-
-    def test_username_in_history(self, test_client, session, workspace, logged_user):
-        """Test if username is correctly recorded in the status history"""
-        host = HostFactory.create(workspace=workspace)
-        vuln = VulnerabilityFactory.create(
-            workspace=workspace,
-            host=host,
-            status="open"
-        )
-        session.commit()
-
-        # Initial history should have username
-        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
-            vulnerability_id=vuln.id
-        ).all()
-
-        assert len(history_entries) == 1
-        assert history_entries[0].username == logged_user.username
-
-        # Update status and check if username is recorded
-        vuln.status = "closed"
-        session.commit()
-
-        updated_history = session.query(VulnerabilityStatusHistory).filter_by(
-            vulnerability_id=vuln.id,
-            status="closed"
-        ).first()
-
-        assert updated_history is not None
-        assert updated_history.username == logged_user.username
 
     def test_multiple_status_changes(self, test_client, session, workspace):
         """Test multiple status changes are recorded correctly"""

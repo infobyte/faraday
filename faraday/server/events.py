@@ -273,8 +273,9 @@ def alter_histogram_on_update_general(connection, workspace_id, status_history=N
                                     critical=critical,
                                     confirmed=confirmed_counter)
 
-    elif status_history.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]\
-            and status_history.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+    elif (len(status_history.deleted) > 0
+          and status_history.added[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]
+          and status_history.deleted[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]):
         if len(severity_history.unchanged) > 0:
             severity = severity_history.unchanged[0]
         if len(severity_history.deleted) > 0:
@@ -283,8 +284,9 @@ def alter_histogram_on_update_general(connection, workspace_id, status_history=N
             medium, high, critical = _decrease_severities_histogram(severity)
             _create_or_update_histogram(connection, workspace_id, medium=medium, high=high,
                                         critical=critical, confirmed=confirmed_counter_on_close)
-    elif status_history.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED] \
-            and status_history.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]:
+    elif (len(status_history.deleted) > 0
+          and status_history.added[0] in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]
+          and status_history.deleted[0] in [Vulnerability.STATUS_CLOSED, Vulnerability.STATUS_RISK_ACCEPTED]):
         if len(severity_history.unchanged) > 0:
             severity = severity_history.unchanged[0]
         if len(severity_history.added) > 0:

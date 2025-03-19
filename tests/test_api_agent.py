@@ -471,7 +471,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                     "args": {
                         key: "test_value" if meta["base"] == "string" else True if meta["base"] == "boolean" else [
                             "test_item"]
-                        for key, meta in executor.parameters_metadata.items()
+                        for key, meta in executor.parameters_metadata.items()  # Creates args dynamically based in parameters metadata
                         if meta["mandatory"]
                     }
                 }

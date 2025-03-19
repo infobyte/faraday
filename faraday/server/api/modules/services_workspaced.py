@@ -62,6 +62,7 @@ class ServiceWorkspacedView(
     def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False):
         service = super()._perform_update(object_id, obj, data, workspace_name=workspace_name, partial=partial)
         debounce_workspace_update(workspace_name)
+        debounce_workspace_service_count(workspace_name=workspace_name)
         return service
 
 

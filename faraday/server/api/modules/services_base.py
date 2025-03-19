@@ -190,6 +190,7 @@ class ServiceView(
         workspaces = Workspace.query.join(Service).filter(Service.id.in_(ids)).distinct(Workspace.name).all()
         for workspace in workspaces:
             debounce_workspace_update(workspace.name)
+            debounce_workspace_service_count(workspace_id=workspace.id)
 
     def _generate_filter_query(
             self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False

@@ -9,7 +9,6 @@ from unittest import mock
 from posixpath import join
 from urllib.parse import urljoin
 import pyotp
-import json
 import pytest
 
 from faraday.server.api.modules.agent import AgentView
@@ -457,11 +456,13 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         ]
 
     @pytest.mark.parametrize("executor_index", [0, 1, 2, 3, 4])
-    def test_save_parameters_success(self, test_client, executors, executor_index):
+    def test_save_parameters_success(self, test_client, session, executors, executor_index):
         """
         Ensures valid parameters are saved successfully for all executor types.
         """
         executor = executors[executor_index]
+        session.add(executor)
+        session.commit()
 
         valid_data = {
             "executor_id": executor.id,
@@ -478,7 +479,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         }
 
         response = test_client.post(
-            self.url() + '/save_parameters', data=json.dumps(valid_data), content_type="application/json"
+            self.url() + '/save_parameters', json=valid_data, content_type="application/json"
         )
         assert response.status_code == 200
         assert response.json["message"] == "Parameters saved successfully"

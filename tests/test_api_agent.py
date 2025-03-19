@@ -9,6 +9,7 @@ from unittest import mock
 from posixpath import join
 from urllib.parse import urljoin
 import pyotp
+import json
 import pytest
 
 from faraday.server.api.modules.agent import AgentView
@@ -417,3 +418,67 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         assert "BURP_API_PULL_INTERVAL" in res.json["burp"]["optional_environment_variables"]
         assert "TENABLE_PULL_INTERVAL" in res.json["tenableio"]["optional_environment_variables"]
         assert res.status_code == 200
+
+    @pytest.fixture
+    def executors(self, workspace):
+        """
+        Creates multiple executors with different parameters_metadata structures.
+        """
+        return [
+            factories.ExecutorFactory.create(
+                parameters_metadata={
+                    "NUCLEI_TARGET": {"base": "list", "type": "list", "mandatory": True},
+                    "NUCLEI_EXCLUDE": {"base": "list", "type": "list", "mandatory": False},
+                },
+            ),
+            factories.ExecutorFactory.create(
+                parameters_metadata={
+                    "TARGET_URL": {"base": "string", "type": "string", "mandatory": True},
+                    "NAMED_CONFIGURATION": {"base": "string", "type": "string", "mandatory": False},
+                },
+            ),
+            factories.ExecutorFactory.create(
+                parameters_metadata={
+                    "TOKEN": {"base": "string", "type": "string", "mandatory": True},
+                    "GET_HOTSPOT": {"base": "boolean", "type": "boolean", "mandatory": False},
+                    "COMPONENT_KEY": {"base": "string", "type": "string", "mandatory": False},
+                },
+            ),
+            factories.ExecutorFactory.create(
+                parameters_metadata={
+                    "DAYS_OLD": {"base": "string", "type": "string", "mandatory": True}
+                },
+            ),
+            factories.ExecutorFactory.create(
+                parameters_metadata={
+                    "SHODAN_QUERY": {"base": "string", "type": "string", "mandatory": True}
+                },
+            ),
+        ]
+
+    @pytest.mark.parametrize("executor_index", [0, 1, 2, 3, 4])
+    def test_save_parameters_success(self, test_client, executors, executor_index):
+        """
+        Ensures valid parameters are saved successfully for all executor types.
+        """
+        executor = executors[executor_index]
+
+        valid_data = {
+            "executor_id": executor.id,
+            "parameters_data": {
+                "executor_data": {
+                    "args": {
+                        key: "test_value" if meta["base"] == "string" else True if meta["base"] == "boolean" else [
+                            "test_item"]
+                        for key, meta in executor.parameters_metadata.items()
+                        if meta["mandatory"]
+                    }
+                }
+            },
+        }
+
+        response = test_client.post(
+            self.url() + '/save_parameters', data=json.dumps(valid_data), content_type="application/json"
+        )
+        assert response.status_code == 200
+        assert response.json["message"] == "Parameters saved successfully"

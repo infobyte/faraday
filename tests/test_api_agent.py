@@ -8,6 +8,7 @@ from unittest import mock
 
 from posixpath import join
 from urllib.parse import urljoin
+from html import unescape
 import pyotp
 import pytest
 
@@ -483,3 +484,50 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         )
         assert response.status_code == 200
         assert response.json["message"] == "Parameters saved successfully"
+
+    def test_save_parameters_data_missing_executor_id(self, test_client, session):
+        """Test missing executor_id returns 400."""
+        data = {"parameters_data": {"executor_data": {"args": {}}}}
+        response = test_client.post(self.url() + '/save_parameters', json=data, content_type="application/json")
+        assert response.status_code == 400
+        # Unescape HTML entities to check against raw text
+        response_text = unescape(response.data.decode('utf-8'))
+        assert "Missing 'executor_id'" in response_text
+
+    def test_save_parameters_data_missing_parameters_data(self, test_client, session):
+        """Test missing parameters_data returns 400."""
+        executor = factories.ExecutorFactory(parameters_metadata={})
+        session.add(executor)
+        session.commit()
+
+        data = {"executor_id": executor.id}
+        response = test_client.post(self.url() + '/save_parameters', json=data, content_type="application/json")
+        assert response.status_code == 400
+        response_text = unescape(response.data.decode('utf-8'))
+        assert "Missing 'parameters_data'" in response_text
+
+    def test_save_parameters_data_invalid_args(self, test_client, session):
+        """Test invalid/missing mandatory args in executor_data returns 400."""
+        executor = factories.ExecutorFactory(
+            parameters_metadata={
+                "TARGET": {"base": "list", "type": "list", "mandatory": True},  # Required field
+                "OPTION_SC": {"base": "boolean", "type": "boolean", "mandatory": False}
+            }
+        )
+        session.add(executor)
+        session.commit()
+
+        data = {
+            "executor_id": executor.id,
+            "parameters_data": {
+                "executor_data": {
+                    "args": {
+                        "OPTION_SC": 1  # This field should be boolean
+                    }
+                }
+            }
+        }
+        response = test_client.post(self.url() + '/save_parameters', json=data, content_type="application/json")
+        print(response.json)
+        assert response.status_code == 400
+        assert response.json["errors"]['OPTION_SC'] == 'Expected boolean, got int'

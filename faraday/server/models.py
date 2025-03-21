@@ -3796,7 +3796,7 @@ class VulnerabilityStatusHistory(db.Model):
         backref=backref('status_history', cascade="all, delete-orphan"),
         foreign_keys=[vulnerability_id]
     )
-    username = Column(String, nullable=False, default='system')
+    username = Column(String, nullable=True)
 
 
 # Indexes to speed up queries

@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('status', sa.Enum('open', 'closed', 're-opened', 'risk-accepted', name='vulnerability_status_history_statuses'), nullable=False),
     sa.Column('date', sa.DateTime(), nullable=True, server_default=sa.text('now()')),
     sa.Column('vulnerability_id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(), nullable=False, default='system', server_default='system'),
+    sa.Column('username', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete="CASCADE"),
     sa.PrimaryKeyConstraint('id')
     )

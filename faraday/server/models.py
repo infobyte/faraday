@@ -18,6 +18,7 @@ import dateutil
 import cvss
 import jwt
 from croniter import croniter
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -3490,7 +3491,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
     triggered_by = Column(String, nullable=True)
-    run_id = Column(Integer, nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True)
 
     @property
     def parent(self):
@@ -3560,7 +3561,7 @@ class CloudAgentExecution(Metadata):
     )
     last_run = Column(DateTime)
     triggered_by = Column(String, nullable=True)
-    run_id = Column(Integer, nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True)
 
     @property
     def parent(self):

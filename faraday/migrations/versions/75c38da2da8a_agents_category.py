@@ -10,7 +10,6 @@ import sqlalchemy as sa
 from faraday.server.fields import JSONType
 
 
-# revision identifiers, used by Alembic.
 revision = '75c38da2da8a'
 down_revision = '293724cb146d'
 branch_labels = None

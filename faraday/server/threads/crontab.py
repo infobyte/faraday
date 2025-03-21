@@ -9,15 +9,15 @@ import logging
 import threading
 import time
 from time import sleep
+from uuid import uuid4
 
 # Related third party imports
 from croniter import croniter
 import dateutil
-from sqlalchemy import func
 
 # Local application imports
 from faraday.server.extensions import socketio
-from faraday.server.models import AgentsSchedule, db, AgentExecution
+from faraday.server.models import AgentsSchedule, db
 from faraday.server.utils.agents import get_command_and_agent_execution
 
 logger = logging.getLogger(__name__)
@@ -173,8 +173,7 @@ class AgentsCronItem(CronItem):
                 },
                 "workspaces_names": [workspace.name for workspace in schedule.workspaces]
             }
-            run_id = (db.session.query(func.max(
-                AgentExecution.run_id)).scalar() or 0) + 1  # gets last run_id + 1, or 1 if run_id is None in db.
+            run_uuid = uuid4()
             for workspace in schedule.workspaces:
                 try:
                     command, agent_execution = get_command_and_agent_execution(executor=schedule.executor,
@@ -183,7 +182,7 @@ class AgentsCronItem(CronItem):
                                                                                parameters=parameters_data,
                                                                                username=schedule.creator.username,
                                                                                triggered_by=schedule.description,
-                                                                               run_id=run_id)
+                                                                               run_uuid=run_uuid)
                 except Exception as e:
                     logger.exception(f"Scheduler with id {self.schedule_id} could not run.", exc_info=e)
                     continue

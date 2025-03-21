@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[ADD] Added new fields and features for agents and executors: `category`, `description`, and `run_id` for tracking agent runs. Introduced agent run status logs view for both agents and cloud agents, including filters. Added `triggered_by` field to track execution initiators (user or scheduler). Enabled endpoint for saving executor/cloud agent configurations. Added pagination and filtering for agent lists. Updated agent status logic to show `online` or `offline` regardless of activation state. #7868"
+  "md": "[ADD] Added new fields and features for agents and executors: `category`, `description`, and `run_uuid` for tracking agent runs. Introduced agent run status logs view for both agents and cloud agents, including filters. Added `triggered_by` field to track execution initiators (user or scheduler). Enabled endpoint for saving executor/cloud agent configurations. Added pagination and filtering for agent lists. Updated agent status logic to show `online` or `offline` regardless of activation state. #7868"
 }

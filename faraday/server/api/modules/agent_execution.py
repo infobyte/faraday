@@ -25,14 +25,14 @@ class AgentExecutionSchema(AutoSchema):
     triggered_by = fields.String(dump_only=True)
     executor = PrimaryKeyRelatedField('id', dump_only=True)
     command = PrimaryKeyRelatedField('id', dump_only=True, allow_none=True)
-    run_id = fields.Integer()
+    run_uuid = fields.UUID()
 
     class Meta:
         model = AgentExecution
         fields = (
             'id', 'agent_name', 'tool', 'create_date', 'type',
             'running', 'successful', 'category', 'parameters_data',
-            'triggered_by', 'executor', 'command', 'run_id'
+            'triggered_by', 'executor', 'command', 'run_uuid'
         )
 
     def get_agent_name(self, obj):
@@ -54,19 +54,19 @@ class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
     def _filter(self, *args, **kwargs):
         subquery = (
             db.session.query(func.min(AgentExecution.id))
-            .filter(AgentExecution.run_id.isnot(None))  # Exclude NULL run_id
-            .group_by(AgentExecution.run_id)
+            .filter(AgentExecution.run_uuid.isnot(None))  # Exclude NULL run_uuid
+            .group_by(AgentExecution.run_uuid)
             .subquery()
         )
         kwargs["extra_alchemy_filters"] = (AgentExecution.id.in_(subquery))
         return super()._filter(*args, **kwargs)
 
     def _paginate(self, query, hard_limit=0):
-        # Select only distinct run_id rows
+        # Select only distinct run_uuid rows
         subquery = (
-            db.session.query(AgentExecution.run_id, func.min(AgentExecution.id).label("min_id"))
-            .filter(AgentExecution.run_id.isnot(None))
-            .group_by(AgentExecution.run_id)
+            db.session.query(AgentExecution.run_uuid, func.min(AgentExecution.id).label("min_id"))
+            .filter(AgentExecution.run_uuid.isnot(None))
+            .group_by(AgentExecution.run_uuid)
             .subquery()
         )
 

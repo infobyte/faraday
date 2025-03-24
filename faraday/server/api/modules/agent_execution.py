@@ -52,9 +52,18 @@ class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
     order_field = AgentExecution.id.desc()
 
     def _filter(self, *args, **kwargs):
+        """
+        Groups AgentExecutions by run_uuid, returning only one representative row per group.
+
+        Uses the earliest execution (minimum ID) in each run_uuid group as the representative row.
+        This is safe because all executions with the same run_uuid share identical values for
+        frontend-required fields (running, successful, parameters_data.)
+
+        Filters out executions with NULL run_uuid to avoid grouping old undefined executions.
+        """
         subquery = (
             db.session.query(func.min(AgentExecution.id))
-            .filter(AgentExecution.run_uuid.isnot(None))  # Exclude NULL run_uuid
+            .filter(AgentExecution.run_uuid.isnot(None))
             .group_by(AgentExecution.run_uuid)
             .subquery()
         )

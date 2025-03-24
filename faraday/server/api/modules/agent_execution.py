@@ -71,7 +71,7 @@ class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
         return super()._filter(*args, **kwargs)
 
     def _paginate(self, query, hard_limit=0):
-        # Select only distinct run_uuid rows
+        #  Same as _filter
         subquery = (
             db.session.query(AgentExecution.run_uuid, func.min(AgentExecution.id).label("min_id"))
             .filter(AgentExecution.run_uuid.isnot(None))

@@ -1381,10 +1381,22 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         assert 'first_cve' not in res.json['vulnerabilities'][0]['value']['name']
         assert 'first_cve' not in res.json['vulnerabilities'][1]['value']['name']
 
-    def test_count(self, test_client, session):
+    def test_count_and_inactive(self, test_client, session, second_workspace):
+        vulns = self.factory.create_batch(5, severity='informational', workspace=second_workspace)
+        session.add_all(vulns)
+        session.commit()
+
         res = test_client.get(join(self.url(), "count"))
         assert res.status_code == 200
-        assert res.json['total_count'] == 0
+        assert res.json['total_count'] == 10
+
+        second_workspace.active = False
+        session.add(second_workspace)
+        session.commit()
+
+        res = test_client.get(join(self.url(), "count"))
+        assert res.status_code == 200
+        assert res.json['total_count'] == 5
 
     def test_count_multiworkspace_one_workspace(self, test_client, session):
         for i, vuln in enumerate(self.objects):

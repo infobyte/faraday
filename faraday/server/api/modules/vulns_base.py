@@ -28,7 +28,7 @@ from flask_classful import route
 from flask_login import current_user
 from marshmallow import Schema, ValidationError, fields, post_load
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, func, insert as sqlalchemy_insert, or_
+from sqlalchemy import desc, func, insert as sqlalchemy_insert
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import (
     aliased,
@@ -829,12 +829,6 @@ class VulnerabilityView(
         """
 
         extra_filters = [Workspace.active == True]  # noqa
-
-        if User.ADMIN_ROLE not in current_user.roles_list:
-            extra_filters.append(or_(
-                Workspace.allowed_users.any(User.id == current_user.id),
-                Workspace.public == True  # noqa
-            ))
 
         query = (
             db.session.query(func.count(VulnerabilityGeneric.id))

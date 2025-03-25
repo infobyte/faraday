@@ -465,8 +465,6 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
         'IMPORTS': ('faraday.server.tasks', ),
-        # 'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
-        # 'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
         'CELERY_BROKER_URL': broker_url,
         'CELERY_RESULT_BACKEND': backend_url,
         'CELERY_BROKER_BACKEND_TRANSPORT_OPTIONS': {

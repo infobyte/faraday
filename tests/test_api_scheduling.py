@@ -182,7 +182,36 @@ class TestAgentScheduleView(ReadWriteAPITests):
             ],
             'order_operations': ORDER,
             'group_operations': GROUP,
-        }])
+        },
+        {
+            'test_name': 'filter_by_description_nonexistent',
+            'filter_field_name': 'description',
+            'filter_operations': [
+                {
+                    'filter_operation': 'eq',
+                    'filter_value': '"Nonexistent description"',
+                    'res_status_code': 200,
+                    'count': 0
+                }
+            ],
+            'order_operations': ORDER,
+            'group_operations': GROUP,
+        },
+        {
+            'test_name': 'filter_by_vuln_tag_nonexistent',
+            'filter_field_name': 'vuln_tag',
+            'filter_operations': [
+                {
+                    'filter_operation': 'eq',
+                    'filter_value': '"vuln_tag_3"',
+                    'res_status_code': 200,
+                    'count': 0
+                }
+            ],
+            'order_operations': ORDER,
+            'group_operations': GROUP,
+        }
+    ])
     def test_filter_agent_scheduler(self, test_client, session, filter_params):
 
         # Create agent scheduler entries

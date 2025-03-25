@@ -1438,6 +1438,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
+    status_history = relationship(
+        'VulnerabilityStatusHistory',
+        cascade="all, delete-orphan"
+    )
+
     # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
@@ -3793,7 +3798,6 @@ class VulnerabilityStatusHistory(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), index=True, nullable=False)
     vulnerability = relationship(
         'Vulnerability',
-        backref=backref('status_history', cascade="all, delete-orphan"),
         foreign_keys=[vulnerability_id]
     )
     username = Column(String, nullable=True)

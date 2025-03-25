@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import datetime
 import logging
 import os
+import re
 
 import string
 import sys
@@ -407,19 +408,26 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
 
     login_failed_message = ("Invalid username or password", 'error')
 
+    broker_url = None
     parsed_broker_url = faraday.server.config.faraday_server.celery_broker_url.split(":")
-    if len(parsed_broker_url) == 1:
-        # assuming redis
+    if len(parsed_broker_url) == 1 and parsed_broker_url[0]:
         broker_url = f"redis://{parsed_broker_url[0]}:6379/0"
-    else:
-        broker_url = faraday.server.config.faraday_server.celery_broker_url
+    elif len(parsed_broker_url) > 1:
+        if re.match(r"^rediss?$|^amqps?$", parsed_broker_url[0]):
+            broker_url = faraday.server.config.faraday_server.celery_broker_url
+        else:
+            broker_url = f"redis://{faraday.server.config.faraday_server.celery_broker_url}"
 
+    backend_url = None
     parsed_backend_url = faraday.server.config.faraday_server.celery_backend_url.split(":")
-    if len(parsed_backend_url) == 1:
+    if len(parsed_backend_url) == 1 and parsed_backend_url[0]:
         # assuming redis
         backend_url = f"redis://{parsed_backend_url[0]}:6379/0"
-    else:
-        backend_url = faraday.server.config.faraday_server.celery_backend_url
+    elif len(parsed_backend_url) > 1:
+        if re.match(r"^rediss?$", parsed_backend_url[0]):
+            backend_url = faraday.server.config.faraday_server.celery_backend_url
+        else:
+            backend_url = f"redis://{faraday.server.config.faraday_server.celery_backend_url}"
 
     app.config.update({
         'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,

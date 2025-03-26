@@ -4,6 +4,7 @@ import time
 from threading import Timer
 from datetime import datetime
 from sqlalchemy import func, text
+from sqlalchemy.sql.functions import coalesce
 from faraday.server.models import db, Workspace, Host, Service, VulnerabilityGeneric
 
 
@@ -312,19 +313,22 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
 
         vuln_counts = (
             db.session.query(
-                func.sum(Host.vulnerability_critical_generic_count).label('total_critical'),
-                func.sum(Host.vulnerability_high_generic_count).label('total_high'),
-                func.sum(Host.vulnerability_medium_generic_count).label('total_medium'),
-                func.sum(Host.vulnerability_low_generic_count).label('total_low'),
-                func.sum(Host.vulnerability_info_generic_count).label('total_info'),
-                func.sum(Host.vulnerability_unclassified_generic_count).label('total_unclassified'),
-                func.sum(
-                    Host.vulnerability_critical_generic_count
-                    + Host.vulnerability_high_generic_count
-                    + Host.vulnerability_medium_generic_count
-                    + Host.vulnerability_low_generic_count
-                    + Host.vulnerability_info_generic_count
-                    + Host.vulnerability_unclassified_generic_count
+                coalesce(func.sum(Host.vulnerability_critical_generic_count), 0).label('total_critical'),
+                coalesce(func.sum(Host.vulnerability_high_generic_count), 0).label('total_high'),
+                coalesce(func.sum(Host.vulnerability_medium_generic_count), 0).label('total_medium'),
+                coalesce(func.sum(Host.vulnerability_low_generic_count), 0).label('total_low'),
+                coalesce(func.sum(Host.vulnerability_info_generic_count), 0).label('total_info'),
+                coalesce(func.sum(Host.vulnerability_unclassified_generic_count), 0).label('total_unclassified'),
+                coalesce(
+                    func.sum(
+                        Host.vulnerability_critical_generic_count
+                        + Host.vulnerability_high_generic_count
+                        + Host.vulnerability_medium_generic_count
+                        + Host.vulnerability_low_generic_count
+                        + Host.vulnerability_info_generic_count
+                        + Host.vulnerability_unclassified_generic_count
+                    ),
+                    0
                 ).label('total_vulnerabilities')
             )
             .filter(Host.workspace_id == workspace_id)

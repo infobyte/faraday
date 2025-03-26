@@ -60,6 +60,7 @@ from faraday.server.models import (
     cwe_vulnerability_association,
     db,
     owasp_vulnerability_association,
+    VulnerabilityStatusHistory,
 )
 from faraday.server.tasks import process_report_task
 from faraday.server.utils.cvss import (
@@ -413,6 +414,35 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
         where=(Vulnerability.status == 'closed')
     ).returning(text('id'), text('_tmp_id'))
     result = db.session.execute(on_update_stmt)
+
+    # Create status history entries for newly created vulnerabilities
+    # Since bulk insert bypasses the SQLAlchemy ORM events
+    username = 'system'
+    try:
+        if hasattr(current_user, 'username'):
+            username = current_user.username
+    except Exception:
+        pass
+
+    # Collect vulnerability IDs and their statuses
+    vuln_statuses = []
+    for row in result:
+        vuln_id = row[0]  # The ID column returned by the insert/update
+        for vuln_data in host_vulns_created:
+            if vuln_data.get('id') == row[1]:  # Match based on the temporary ID
+                status = vuln_data.get('status', 'open')
+                vuln_statuses.append((vuln_id, status))
+                break
+
+    # Create status history entries
+    for vuln_id, status in vuln_statuses:
+        status_history = VulnerabilityStatusHistory(
+            vulnerability_id=vuln_id,
+            status=status,
+            username=username,
+        )
+        db.session.add(status_history)
+
     db.session.commit()
     total_result = manage_relationships(
         processed_data,

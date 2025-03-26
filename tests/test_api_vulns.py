@@ -4129,7 +4129,7 @@ class TestVulnerabilityStatusHistory:
         # Check if a new history entry was created
         history_entries = session.query(VulnerabilityStatusHistory).filter_by(
             vulnerability_id=vuln.id
-        ).order_by(VulnerabilityStatusHistory.date).all()
+        ).order_by(VulnerabilityStatusHistory.change_date).all()
 
         assert len(history_entries) == 2
         assert history_entries[0].status == "open"  # Initial status
@@ -4155,7 +4155,7 @@ class TestVulnerabilityStatusHistory:
         # Check if all history entries were created
         history_entries = session.query(VulnerabilityStatusHistory).filter_by(
             vulnerability_id=vuln.id
-        ).order_by(VulnerabilityStatusHistory.date).all()
+        ).order_by(VulnerabilityStatusHistory.change_date).all()
 
         assert len(history_entries) == 4  # Initial + 3 changes
         assert history_entries[0].status == "open"
@@ -4205,8 +4205,84 @@ class TestVulnerabilityStatusHistory:
         # Check if history was created for web vulnerability
         history_entries = session.query(VulnerabilityStatusHistory).filter_by(
             vulnerability_id=vuln_web.id
-        ).order_by(VulnerabilityStatusHistory.date).all()
+        ).order_by(VulnerabilityStatusHistory.change_date).all()
 
         assert len(history_entries) == 2
         assert history_entries[0].status == "open"
         assert history_entries[1].status == "closed"
+
+    def test_bulk_update_creates_status_history(self, test_client, session, workspace):
+        host = HostFactory.create(workspace=workspace)
+        vulns = []
+        for i in range(3):
+            vuln = VulnerabilityFactory.create(
+                workspace=workspace,
+                host=host,
+                status="open"
+            )
+            vulns.append(vuln)
+        session.commit()
+
+        vuln_ids = [v.id for v in vulns]
+
+        data = {
+            "status": "closed",
+            "ids": vuln_ids
+        }
+        res = test_client.patch(f'/v3/ws/{workspace.name}/vulns', json=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 3
+
+        # Check if status history entries were created
+        for vuln_id in vuln_ids:
+            history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+                vulnerability_id=vuln_id
+            ).order_by(VulnerabilityStatusHistory.change_date).all()
+
+            assert len(history_entries) == 2
+            assert history_entries[0].status == "open"
+            assert history_entries[1].status == "closed"
+
+    def test_bulk_create_creates_status_history(self, test_client, session, workspace):
+        host = HostFactory.create(workspace=workspace)
+        session.commit()
+
+        data = {
+            "hosts": [
+                {
+                    "ip": host.ip,
+                    "vulnerabilities": [
+                        {
+                            "name": "Test Vuln 1",
+                            "description": "Test description",
+                            "severity": "high",
+                            "status": "open",
+                            "type": "vulnerability"
+                        },
+                        {
+                            "name": "Test Vuln 2",
+                            "description": "Test description 2",
+                            "severity": "medium",
+                            "status": "closed",
+                            "type": "vulnerability"
+                        }
+                    ]
+                }
+            ]
+        }
+
+        res = test_client.post(f'/v3/ws/{workspace.name}/bulk_create', json=data)
+        assert res.status_code == 201
+
+        vulns = session.query(Vulnerability).filter(
+            Vulnerability.workspace_id == workspace.id,
+            Vulnerability.name.in_(["Test Vuln 1", "Test Vuln 2"])
+        ).all()
+
+        for vuln in vulns:
+            history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+                vulnerability_id=vuln.id
+            ).order_by(VulnerabilityStatusHistory.change_date).all()
+
+            assert len(history_entries) == 1
+            assert history_entries[0].status == vuln.status

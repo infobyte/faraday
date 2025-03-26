@@ -734,7 +734,39 @@ class VulnerabilityView(
 
         if (len(data) > 0 and len(ids) > 0) and 'custom_fields' in data.keys():
             return bulk_update_custom_attributes(ids, data)
-        return super()._perform_bulk_update(ids, data, **kwargs)
+
+        # Check if the status field is being updated
+        status_changed = 'status' in data
+
+        # Store the response before returning it
+        response = super()._perform_bulk_update(ids, data, **kwargs)
+
+        # If the status was changed in the bulk update, we need to create status history entries manually
+        # since the SQLAlchemy event listeners are not triggered by bulk operations
+        if status_changed and response.json.get('updated', 0) > 0:
+            username = None
+            try:
+                from flask_login import current_user
+                if hasattr(current_user, 'username'):
+                    username = current_user.username
+            except Exception:
+                username = 'system'
+
+            # Get the new status from the data
+            new_status = data['status']
+
+            # Create history entries for each updated vulnerability
+            for vuln_id in ids:
+                status_history = VulnerabilityStatusHistory(
+                    vulnerability_id=vuln_id,
+                    status=new_status,
+                    username=username,
+                )
+                db.session.add(status_history)
+
+            db.session.commit()
+
+        return response
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """

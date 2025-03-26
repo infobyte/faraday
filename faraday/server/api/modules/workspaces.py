@@ -16,7 +16,7 @@ import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from sqlalchemy.orm import with_expression
+from sqlalchemy.orm import with_expression, joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
@@ -358,7 +358,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         if histogram:
             histogram_days, histogram_dict = request_histogram()
         filters = flask.request.args.get('q', '{"filters": []}')
-        filtered_objs, count = self._filter(filters, severity_count=False, host_vulns=False, exclude=exclude)
+        filtered_objs, count = self._filter(filters, exclude=exclude)
         objects = []
 
         for workspace_stat in filtered_objs:
@@ -383,6 +383,18 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
+
+    def _generate_filter_query(self, filters):
+        filter_query = super()._generate_filter_query(filters)
+        filter_query.options(
+                    with_expression(
+                     Workspace.credential_count,
+                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
+                    ),
+                    joinedload(Workspace.scope),
+                    joinedload(Workspace.allowed_users),
+        )
+        return filter_query
 
     def _envelope_list(self, objects, pagination_metadata=None):
         return {

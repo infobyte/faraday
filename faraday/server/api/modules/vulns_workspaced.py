@@ -128,19 +128,19 @@ class VulnerabilityWorkspacedView(
         db.session.delete(obj)
         db.session.commit()
         logger.info(f"{obj} deleted")
-
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
 
         if host_to_update_stat:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
 
             if faraday_server.celery_enabled:
-                update_host_stats.delay([host_to_update_stat], [], workspace_name=kwargs['workspace_name'])
+                update_host_stats.delay([host_to_update_stat], [], workspace_name=workspace_name)
             else:
-                update_host_stats([host_to_update_stat], [], workspace_name=kwargs['workspace_name'])
+                update_host_stats([host_to_update_stat], [], workspace_name=workspace_name)
         else:
-            debounce_workspace_vulns_count_update(workspace_name=kwargs['workspace_name'])
+            debounce_workspace_vulns_count_update(workspace_name=workspace_name)
         db.session.commit()
 
     def _perform_create(self, data, **kwargs):

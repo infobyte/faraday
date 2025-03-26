@@ -132,9 +132,10 @@ class HostWorkspacedView(
         if command_id:
             set_command_id(db.session, host, True, command_id)
         db.session.commit()
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
-            debounce_workspace_host_count(workspace_name=kwargs['workspace_name'])
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
+            debounce_workspace_host_count(workspace_name=workspace_name)
         return host
 
     def _update_object(self, obj, data, **kwargs):

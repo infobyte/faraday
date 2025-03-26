@@ -288,12 +288,12 @@ class ReferenceSchema(AutoSchema):
 class VulnerabilityStatusHistorySchema(AutoSchema):
     id = fields.Integer(dump_only=True)
     status = fields.String()
-    date = fields.DateTime(dump_only=True)
+    change_date = fields.DateTime(dump_only=True)
     username = fields.String()
 
     class Meta:
         model = VulnerabilityStatusHistory
-        fields = ('_id', 'status', 'date', 'username')
+        fields = ('_id', 'status', 'change_date', 'username')
 
 
 class VulnerabilitySchema(AutoSchema):

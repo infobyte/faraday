@@ -3794,7 +3794,7 @@ class VulnerabilityStatusHistory(db.Model):
     __tablename__ = 'vulnerability_status_history'
     id = Column(Integer, primary_key=True)
     status = Column(Enum(*STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
-    date = Column(DateTime, default=datetime.utcnow)
+    change_date = Column(DateTime, default=datetime.utcnow, index=True)
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), index=True, nullable=False)
     vulnerability = relationship(
         'Vulnerability',

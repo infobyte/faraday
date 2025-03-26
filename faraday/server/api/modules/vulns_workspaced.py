@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 from logging import getLogger
 
+import flask_login
 # Related third party imports
 from flask import Blueprint, abort, request
 from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
@@ -174,6 +175,23 @@ class VulnerabilityWorkspacedView(
             else:
                 obj.tool = "Web UI"
         db.session.commit()
+
+        # Create a new vulnerability status history
+        from faraday.server.models import VulnerabilityStatusHistory  # pylint:disable=import-outside-toplevel
+
+        username = 'system'
+        try:
+            if hasattr(flask_login.current_user, 'username'):
+                username = flask_login.current_user.username
+        except Exception:
+            pass
+
+        status_history = VulnerabilityStatusHistory(
+            vulnerability_id=obj.id,
+            status=obj.status,
+            username=username,
+        )
+        db.session.add(status_history)
 
         # Update hosts stats
         host_to_update_stat = None

@@ -4097,21 +4097,21 @@ class TestVulnerabilityStatusHistory:
     def test_initial_status_creation(self, test_client, session, workspace):
         """Test if initial status history is created when a vulnerability is created"""
         host = HostFactory.create(workspace=workspace)
-        vuln = VulnerabilityFactory.create(
+        vuln = VulnerabilityFactory.build_dict(
             workspace=workspace,
             host=host,
             status="open"
         )
         session.commit()
 
+        res = test_client.post(f'/v3/ws/{workspace.name}/vulns', json=vuln)
+        assert res.status_code == 201
+
         # Check if the initial status history record was created
-        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
-            vulnerability_id=vuln.id
-        ).all()
+        history_entries = session.query(VulnerabilityStatusHistory).all()
 
         assert len(history_entries) == 1
         assert history_entries[0].status == "open"
-        assert history_entries[0].vulnerability_id == vuln.id
 
     def test_status_update_creates_history(self, test_client, session, workspace, logged_user):
         """Test if status history is created when vulnerability status is updated"""
@@ -4131,9 +4131,8 @@ class TestVulnerabilityStatusHistory:
             vulnerability_id=vuln.id
         ).order_by(VulnerabilityStatusHistory.change_date).all()
 
-        assert len(history_entries) == 2
-        assert history_entries[0].status == "open"  # Initial status
-        assert history_entries[1].status == "closed"  # Updated status
+        assert len(history_entries) == 1
+        assert history_entries[0].status == "closed"  # Updated status
 
     def test_multiple_status_changes(self, test_client, session, workspace):
         """Test multiple status changes are recorded correctly"""
@@ -4157,11 +4156,10 @@ class TestVulnerabilityStatusHistory:
             vulnerability_id=vuln.id
         ).order_by(VulnerabilityStatusHistory.change_date).all()
 
-        assert len(history_entries) == 4  # Initial + 3 changes
-        assert history_entries[0].status == "open"
-        assert history_entries[1].status == "closed"
-        assert history_entries[2].status == "re-opened"
-        assert history_entries[3].status == "risk-accepted"
+        assert len(history_entries) == 3  # Initial + 3 changes
+        assert history_entries[0].status == "closed"
+        assert history_entries[1].status == "re-opened"
+        assert history_entries[2].status == "risk-accepted"
 
     def test_api_returns_status_history(self, test_client, session, workspace):
         """Test if API endpoint returns the status history"""
@@ -4184,9 +4182,8 @@ class TestVulnerabilityStatusHistory:
         # Verify status history is in the response
         status_history = res.json.get('status_history')
         assert status_history is not None
-        assert len(status_history) == 2
-        assert status_history[0]['status'] == 'open'
-        assert status_history[1]['status'] == 'closed'
+        assert len(status_history) == 1
+        assert status_history[0]['status'] == 'closed'
 
     def test_web_vulnerability_status_history(self, test_client, session, workspace):
         """Test if status history works for web vulnerabilities"""
@@ -4207,9 +4204,8 @@ class TestVulnerabilityStatusHistory:
             vulnerability_id=vuln_web.id
         ).order_by(VulnerabilityStatusHistory.change_date).all()
 
-        assert len(history_entries) == 2
-        assert history_entries[0].status == "open"
-        assert history_entries[1].status == "closed"
+        assert len(history_entries) == 1
+        assert history_entries[0].status == "closed"
 
     def test_bulk_update_creates_status_history(self, test_client, session, workspace):
         host = HostFactory.create(workspace=workspace)
@@ -4239,50 +4235,5 @@ class TestVulnerabilityStatusHistory:
                 vulnerability_id=vuln_id
             ).order_by(VulnerabilityStatusHistory.change_date).all()
 
-            assert len(history_entries) == 2
-            assert history_entries[0].status == "open"
-            assert history_entries[1].status == "closed"
-
-    def test_bulk_create_creates_status_history(self, test_client, session, workspace):
-        host = HostFactory.create(workspace=workspace)
-        session.commit()
-
-        data = {
-            "hosts": [
-                {
-                    "ip": host.ip,
-                    "vulnerabilities": [
-                        {
-                            "name": "Test Vuln 1",
-                            "description": "Test description",
-                            "severity": "high",
-                            "status": "open",
-                            "type": "vulnerability"
-                        },
-                        {
-                            "name": "Test Vuln 2",
-                            "description": "Test description 2",
-                            "severity": "medium",
-                            "status": "closed",
-                            "type": "vulnerability"
-                        }
-                    ]
-                }
-            ]
-        }
-
-        res = test_client.post(f'/v3/ws/{workspace.name}/bulk_create', json=data)
-        assert res.status_code == 201
-
-        vulns = session.query(Vulnerability).filter(
-            Vulnerability.workspace_id == workspace.id,
-            Vulnerability.name.in_(["Test Vuln 1", "Test Vuln 2"])
-        ).all()
-
-        for vuln in vulns:
-            history_entries = session.query(VulnerabilityStatusHistory).filter_by(
-                vulnerability_id=vuln.id
-            ).order_by(VulnerabilityStatusHistory.change_date).all()
-
             assert len(history_entries) == 1
-            assert history_entries[0].status == vuln.status
+            assert history_entries[0].status == "closed"

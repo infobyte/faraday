@@ -64,25 +64,6 @@ def create_vulnerability_status_history(mapper, connection, instance):
         db.session.add(status_history)
 
 
-def create_vulnerability_initial_status(mapper, connection, instance):
-    """Create initial status history when vulnerability is created"""
-    username = None
-    try:
-        if hasattr(current_user, 'username'):
-            username = current_user.username
-    except Exception:
-        username = 'system'
-
-    # Create initial status history record
-    status_history = VulnerabilityStatusHistory(
-        vulnerability_id=instance.id,
-        status=instance.status,
-        username=username,
-    )
-
-    db.session.add(status_history)
-
-
 def new_object_event(mapper, connection, instance):
     # Since we don't have jet a model for workspace we
     # retrieve the name from the connection string
@@ -393,4 +374,3 @@ event.listen(Query, "before_compile_update", alter_histogram_on_before_compile_u
 
 # Vulnerability status history
 event.listen(VulnerabilityGeneric, "after_update", create_vulnerability_status_history, propagate=True)
-event.listen(VulnerabilityGeneric, "after_insert", create_vulnerability_initial_status, propagate=True)

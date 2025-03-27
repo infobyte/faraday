@@ -994,14 +994,14 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters):
+    def _generate_filter_query(self, filters, severity_count=None):
         filter_query = search(db.session,
                               self.model_class,
                               filters)
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                exclude=[], return_objects=False) -> Tuple[list, int]:
+                exclude=[], return_objects=False, severity_count=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
@@ -1019,7 +1019,7 @@ class FilterMixin(ListMixin):
                 limit = filters.pop('limit')
             try:
                 filter_query = self._generate_filter_query(
-                    filters,
+                    filters, severity_count=severity_count
                 )
             except TypeError as e:
                 abort(HTTP_BAD_REQUEST, e)
@@ -1041,7 +1041,7 @@ class FilterMixin(ListMixin):
         else:
             try:
                 filter_query = self._generate_filter_query(
-                    filters,
+                    filters, severity_count=severity_count
                 )
             except TypeError as e:
                 abort(HTTP_BAD_REQUEST, e)

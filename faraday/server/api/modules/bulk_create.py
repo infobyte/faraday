@@ -412,7 +412,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "custom_fields": stmt.excluded.custom_fields
         },
         where=(Vulnerability.status == 'closed')
-    ).returning(text('id'), text('_tmp_id'))
+    ).returning(text('id'), text('_tmp_id'), text('status'))
     result = db.session.execute(on_update_stmt)
 
     # Create status history entries for newly created vulnerabilities
@@ -425,20 +425,10 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
         pass
 
     # Collect vulnerability IDs and their statuses
-    vuln_statuses = []
     for row in result:
-        vuln_id = row[0]  # The ID column returned by the insert/update
-        for vuln_data in host_vulns_created:
-            if vuln_data.get('id') == row[1]:  # Match based on the temporary ID
-                status = vuln_data.get('status', 'open')
-                vuln_statuses.append((vuln_id, status))
-                break
-
-    # Create status history entries
-    for vuln_id, status in vuln_statuses:
         status_history = VulnerabilityStatusHistory(
-            vulnerability_id=vuln_id,
-            status=status,
+            vulnerability_id=row[0],
+            status=row[2],
             username=username,
         )
         db.session.add(status_history)

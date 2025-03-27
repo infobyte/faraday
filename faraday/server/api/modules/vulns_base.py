@@ -821,7 +821,12 @@ class VulnerabilityView(
               description: Ok
               content:
                 application/json:
-                  schema: VulnerabilityWeb
+                  schema:
+                    type: object
+                    properties:
+                      total_count:
+                        type: integer
+                        description: Total number of vulnerabilities
         tags: ["Vulnerability"]
         responses:
           200:

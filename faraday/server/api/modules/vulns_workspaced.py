@@ -3,7 +3,6 @@ Faraday Penetration Test IDE
 Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
 # Standard library imports
 from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 from logging import getLogger
@@ -236,6 +235,27 @@ class VulnerabilityWorkspacedView(
 
         if 'cvss4_vector_string' in data:
             obj.cvss4_vector_string = data.pop('cvss4_vector_string')
+
+        new_status = data.pop('status', None)
+        if new_status is not None:
+            old_status = obj.status
+            setattr(obj, 'status', new_status)
+            # Create a new vulnerability status history
+            from faraday.server.models import VulnerabilityStatusHistory  # pylint:disable=import-outside-toplevel
+
+            username = 'system'
+            try:
+                if hasattr(flask_login.current_user, 'username'):
+                    username = flask_login.current_user.username
+            except Exception:
+                pass
+
+            status_history = VulnerabilityStatusHistory(
+                vulnerability_id=obj.id,
+                status=obj.status,
+                username=username,
+            )
+            db.session.add(status_history)
 
         return super()._update_object(obj, data)
 

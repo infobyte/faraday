@@ -27,41 +27,9 @@ from faraday.server.models import (
     VulnerabilityWeb,
     VulnerabilityGeneric,
     db,
-    VulnerabilityStatusHistory,
 )
-
-from flask_login import current_user
-
 logger = logging.getLogger(__name__)
 changes_queue = Queue()
-
-
-def create_vulnerability_status_history(mapper, connection, instance):
-    """Create a history entry when vulnerability status changes"""
-    history = get_history(instance, 'status')
-
-    if history.has_changes():
-        old_status = history.deleted[0] if history.deleted else None
-        new_status = history.added[0] if history.added else None
-
-        if old_status == new_status:
-            return
-
-        # Determine username if possible
-        username = None
-        try:
-            if hasattr(current_user, 'username'):
-                username = current_user.username
-        except Exception:
-            username = 'system'
-
-        status_history = VulnerabilityStatusHistory(
-            vulnerability_id=instance.id,
-            status=new_status,
-            username=username,
-        )
-
-        db.session.add(status_history)
 
 
 def new_object_event(mapper, connection, instance):
@@ -371,6 +339,3 @@ event.listen(VulnerabilityGeneric, "before_update", alter_histogram_on_update, p
 event.listen(VulnerabilityGeneric, "after_delete", alter_histogram_on_delete, propagate=True)
 event.listen(Query, "before_compile_delete", alter_histogram_on_before_compile_delete)
 event.listen(Query, "before_compile_update", alter_histogram_on_before_compile_update)
-
-# Vulnerability status history
-event.listen(VulnerabilityGeneric, "after_update", create_vulnerability_status_history, propagate=True)

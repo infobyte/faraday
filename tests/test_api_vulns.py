@@ -4123,8 +4123,12 @@ class TestVulnerabilityStatusHistory:
         )
 
         # Update status
-        vuln.status = "closed"
-        session.commit()
+        vuln_data = {
+            "status": "closed"
+        }
+
+        res = test_client.patch(f'/v3/ws/{workspace.name}/vulns/{vuln.id}', json=vuln_data)
+        assert res.status_code == 200
 
         # Check if a new history entry was created
         history_entries = session.query(VulnerabilityStatusHistory).filter_by(
@@ -4148,8 +4152,11 @@ class TestVulnerabilityStatusHistory:
         status_sequence = ["closed", "re-opened", "risk-accepted"]
 
         for new_status in status_sequence:
-            vuln.status = new_status
-            session.commit()
+            res = test_client.patch(
+                f'/v3/ws/{workspace.name}/vulns/{vuln.id}',
+                json={"status": new_status}
+            )
+            assert res.status_code == 200
 
         # Check if all history entries were created
         history_entries = session.query(VulnerabilityStatusHistory).filter_by(
@@ -4172,8 +4179,11 @@ class TestVulnerabilityStatusHistory:
         session.commit()
 
         # Update status to create history
-        vuln.status = "closed"
-        session.commit()
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}',
+            json={"status": "closed"}
+        )
+        assert res.status_code == 200
 
         # Get vulnerability through API
         res = test_client.get(f'/v3/vulns/{vuln.id}')
@@ -4196,8 +4206,11 @@ class TestVulnerabilityStatusHistory:
         session.commit()
 
         # Update status
-        vuln_web.status = "closed"
-        session.commit()
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln_web.id}',
+            json={"status": "closed"}
+        )
+        assert res.status_code == 200
 
         # Check if history was created for web vulnerability
         history_entries = session.query(VulnerabilityStatusHistory).filter_by(

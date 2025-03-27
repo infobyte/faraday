@@ -88,7 +88,7 @@ from faraday.server.schemas import (
 from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.database import get_or_create
-from faraday.server.utils.export import export_vulns_to_csv
+from faraday.server.utils.export import export_vulns_to_csv, export_vulns_to_csv_limited
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
@@ -1000,6 +1000,7 @@ class VulnerabilityView(
         workspace_name = kwargs.get('workspace_name')
         filters = request.args.get('q', '{}')
         export_csv = request.args.get('export_csv', '')
+        export_csv_limited = request.args.get('export_csv_limited', '')
         filtered_vulns, count = self._filter(
             filters, exclude_list=('_attachments', 'desc') if export_csv.lower() == 'true' else None, **kwargs
         )
@@ -1022,6 +1023,18 @@ class VulnerabilityView(
             else:
                 return send_file(memory_file,
                                  attachment_filename="Faraday-SR-Context.csv",
+                                 as_attachment=True,
+                                 cache_timeout=-1)
+        elif export_csv_limited.lower() == 'true':
+            memory_file = export_vulns_to_csv_limited(filtered_vulns)
+            if workspace_name:
+                return send_file(memory_file,
+                                 attachment_filename=f"Faraday-SR-{workspace_name}.csv",
+                                 as_attachment=True,
+                                 cache_timeout=-1)
+            else:
+                return send_file(memory_file,
+                                 attachment_filename="Faraday-SR-Limited.csv",
                                  as_attachment=True,
                                  cache_timeout=-1)
         else:

@@ -98,6 +98,7 @@ from faraday.server.utils.vulns import (
     SCHEMA_FIELDS,
     WEB_SCHEMA_FIELDS,
     bulk_update_custom_attributes,
+    VALID_FILTER_VULN_COLUMNS,
 )
 from faraday.settings import get_settings
 
@@ -1146,6 +1147,13 @@ class VulnerabilityView(
             'policyviolations',
             'data',
         ) if not exclude_list else exclude_list}
+        if 'columns' in filters:
+            columns = filters.pop('columns')
+            if len(columns) > 0:
+                for column in columns:
+                    if column not in VALID_FILTER_VULN_COLUMNS:
+                        abort(400, f"Invalid column {column}")
+                    marshmallow_params.setdefault('only', []).append(column)
         if 'group_by' not in filters:
             offset = None
             if 'offset' in filters:

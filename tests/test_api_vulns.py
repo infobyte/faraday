@@ -64,6 +64,7 @@ from tests.factories import (
     WorkspaceFactory,
     CustomFieldsSchemaFactory
 )
+from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
 
 
 def _create_post_data_vulnerability(name, vuln_type, parent_id,
@@ -3762,6 +3763,51 @@ class TestVulnerabilitySearch:
         )
         assert res.status_code == 200
         assert res.json['count'] == 100
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.parametrize("column", VALID_FILTER_VULN_COLUMNS)
+    def test_custom_columns_with_filter(self, test_client, session, column):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        med_vulns = VulnerabilityFactory.create_batch(10,
+                                                      workspace=workspace,
+                                                      severity='medium'
+                                                      )
+        session.add_all(med_vulns)
+        session.add(host)
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": [column],
+        }
+        res = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+        )
+        assert res.status_code == 200
+        assert res.json['count'] == 10
+        assert column in res.json['vulnerabilities'][0]["value"]
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_custom_columns_with_filter_invalid_column(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        med_vulns = VulnerabilityFactory.create_batch(10,
+                                                      workspace=workspace,
+                                                      severity='medium'
+                                                      )
+        session.add_all(med_vulns)
+        session.add(host)
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": ["invalid"],
+        }
+        res = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+        )
+        assert res.status_code == 400
 
     def test_add_evidence_with_description(self, test_client, session, csrf_token):
         vuln = VulnerabilityFactory.create()

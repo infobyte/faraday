@@ -995,6 +995,10 @@ class FilterMixin(ListMixin):
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters, severity_count=None):
+
+        #  TODO: Refactor severity count usage, its only used on hosts,
+        #  but hosts calls _filter from super class so this param is needed
+
         filter_query = search(db.session,
                               self.model_class,
                               filters)

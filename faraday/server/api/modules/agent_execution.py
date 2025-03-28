@@ -23,13 +23,14 @@ class AgentExecutionSchema(AutoSchema):
     parameters_data = fields.Raw(dump_only=True)
     triggered_by = fields.String(dump_only=True)
     executor = PrimaryKeyRelatedField('id', dump_only=True)
+    update_date = fields.DateTime(dump_only=True)
 
     class Meta:
         model = AgentExecution
         fields = (
             'agent_name', 'tool', 'create_date', 'type',
             'running', 'successful', 'category', 'parameters_data',
-            'triggered_by', 'executor'
+            'triggered_by', 'executor', 'update_date'
         )
 
     def get_agent_name(self, obj):

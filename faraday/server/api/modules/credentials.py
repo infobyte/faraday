@@ -67,6 +67,7 @@ class CredentialView(ReadWriteWorkspacedView,
             })
         return {
             'rows': credentials,
+            'count': len(credentials),
         }
 
 

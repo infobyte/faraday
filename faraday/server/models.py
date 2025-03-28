@@ -1190,6 +1190,14 @@ class Host(Metadata):
     mac = BlankColumn(Text)
     net_segment = BlankColumn(Text)
 
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(Host.id == CommandObject.object_id, CommandObject.object_type == "host")',
+        collection_class=set,
+        passive_deletes=True
+    )
+
     services = relationship(
         'Service',
         order_by='Service.protocol,Service.port',
@@ -1329,6 +1337,15 @@ class Service(Metadata):
     banner = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
+
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(Service.id == CommandObject.object_id, CommandObject.object_type == "service")',
+        collection_class=set,
+        passive_deletes=True
+    )
+
     host = relationship(
         'Host',
         foreign_keys=[host_id],

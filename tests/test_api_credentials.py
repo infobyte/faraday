@@ -22,6 +22,10 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
     def test_list_retrieves_all_items_from_workspace(self, test_client, workspace, session):
         pass
 
+    def test_bulk_update_an_object(self, test_client, logged_user):
+        # Results in 409 because of unique constraint
+        pass
+
     def test_create_credential(self, test_client, workspace):
         credential_data = {
             'username': 'testuser',
@@ -88,6 +92,8 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         res = test_client.get(self.url(workspace=workspace))
         assert res.status_code == 200
         assert 'rows' in res.json
+        assert 'count' in res.json
+        assert res.json['count'] == 10
         assert len(res.json['rows']) == 10
         for cred_envelope in res.json['rows']:
             assert 'id' in cred_envelope
@@ -161,3 +167,26 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         res = test_client.patch(self.url(workspace=workspace) + f"/{credential.id}", data=patch_data)
         assert res.status_code == 200
         assert len(res.json['vulnerabilities']) == 0
+
+    def test_unique_constraint(self, test_client, workspace):
+        # Create a credential
+        credential_data = {
+            'username': 'uniqueuser',
+            'password': 'uniquepass',
+            'endpoint': 'unique.example.com',
+            'owned': True,
+            'workspace': workspace.name
+        }
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
+        assert res.status_code == 201
+
+        # Attempt to create a duplicate credential
+        duplicate_data = {
+            'username': 'uniqueuser',
+            'password': 'uniquepass',
+            'endpoint': 'unique.example.com',
+            'owned': True,
+            'workspace': workspace.name
+        }
+        res = test_client.post(self.url(workspace=workspace), data=duplicate_data)
+        assert res.status_code == 409

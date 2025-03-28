@@ -33,7 +33,9 @@ def upgrade():
     sa.Column('update_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['creator_id'], ['faraday_user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['update_user_id'], ['faraday_user.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ondelete='CASCADE')
+    sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ondelete='CASCADE'),
+    sa.UniqueConstraint('username', 'password', 'endpoint', 'workspace_id',
+                        name='uix_credential_username_password_endpoint_workspace')
     )
 
     op.create_table('association_table_vulnerabilities_credentials',

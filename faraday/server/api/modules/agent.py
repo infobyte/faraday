@@ -271,6 +271,7 @@ class AgentView(ReadWriteView, FilterMixin):
 
             commands = []
             agent_executions = []
+            workspaces_commands = []
             run_uuid = uuid4()
             for workspace in workspaces:
                 command, agent_execution = get_command_and_agent_execution(executor=executor,
@@ -281,10 +282,17 @@ class AgentView(ReadWriteView, FilterMixin):
                                                                            triggered_by=username,
                                                                            run_uuid=run_uuid)
                 commands.append(command)
+                db.session.add(command)
+                db.session.commit()
                 agent_executions.append(agent_execution)
+                workspaces_commands.append({"workspace_name": workspace.name, "command_id": command.id})
+
+            parameters_data["workspaces_commands"] = workspaces_commands
+            parameters_data.pop("workspaces_names", None)
 
             executor.last_run = datetime.utcnow()
             for agent_execution in agent_executions:
+                agent_execution.parameters_data = parameters_data
                 db.session.add(agent_execution)
             db.session.commit()
 

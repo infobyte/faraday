@@ -164,6 +164,7 @@ class AgentsCronItem(CronItem):
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             agent_executions = []
             commands = []
+            workspaces_commands = []
             parameters_data = {
                 "ignore_info": schedule.ignore_info,
                 "resolve_hostname": schedule.resolve_hostname,
@@ -188,7 +189,16 @@ class AgentsCronItem(CronItem):
                     continue
                 agent_executions.append(agent_execution)
                 commands.append(command)
+                db.session.add(command)
+                db.session.commit()
+                workspaces_commands.append({"workspace_name": workspace.name, "command_id": command.id})
+
+            parameters_data["workspaces_commands"] = workspaces_commands
+            parameters_data.pop("workspaces_names", None)
+            for agent_execution in agent_executions:
+                agent_execution.parameters_data = parameters_data
                 db.session.add(agent_execution)
+
             db.session.commit()
             plugin_args = {
                 "ignore_info": schedule.ignore_info,

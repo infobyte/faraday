@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class AgentExecutionSchema(AutoSchema):
-    id = fields.Integer(dump_only=True)
     agent_name = fields.Method("get_agent_name", dump_only=True)
     tool = fields.Method("get_tool", dump_only=True)
     create_date = fields.DateTime(dump_only=True)
@@ -24,15 +23,13 @@ class AgentExecutionSchema(AutoSchema):
     parameters_data = fields.Raw(dump_only=True)
     triggered_by = fields.String(dump_only=True)
     executor = PrimaryKeyRelatedField('id', dump_only=True)
-    command = PrimaryKeyRelatedField('id', dump_only=True, allow_none=True)
-    run_uuid = fields.UUID()
 
     class Meta:
         model = AgentExecution
         fields = (
-            'id', 'agent_name', 'tool', 'create_date', 'type',
+            'agent_name', 'tool', 'create_date', 'type',
             'running', 'successful', 'category', 'parameters_data',
-            'triggered_by', 'executor', 'command', 'run_uuid'
+            'triggered_by', 'executor'
         )
 
     def get_agent_name(self, obj):

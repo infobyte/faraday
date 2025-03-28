@@ -101,6 +101,30 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     return memory_file
 
 
+def export_credentials_to_csv(credentials):
+    buffer = StringIO()
+
+    headers = [
+        "username", "password", "endpoint"
+    ]
+
+    writer = csv.DictWriter(buffer, fieldnames=headers)
+    writer.writeheader()
+
+    for credential in credentials:
+        row = {
+            'username': credential.get("username"),
+            'password': credential.get("password"),
+            'endpoint': credential.get("endpoint"),
+        }
+        writer.writerow(row)
+
+    memory_file = BytesIO()
+    memory_file.write(buffer.getvalue().encode('utf8'))
+    memory_file.seek(0)
+    return memory_file
+
+
 def _build_hosts_data(hosts_id):
     hosts = db.session.query(Host)\
                             .filter(Host.id.in_(hosts_id)).all()

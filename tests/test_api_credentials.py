@@ -209,7 +209,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
 
     def test_credential_filter_export_csv(self, test_client, workspace, session):
         # Create some credentials
-        credential1 = CredentialFactory.create(workspace=workspace, username='testuser1')
+        credential1 = CredentialFactory.create(workspace=workspace, username='testuser1', password='testpass', endpoint='test.example.com')
         credential2 = CredentialFactory.create(workspace=workspace, username='testuser2')
         session.add_all([credential1, credential2])
         session.commit()
@@ -218,7 +218,11 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         res = test_client.get(self.url(workspace=workspace) + '/filter?q={"filters":[{"name":"username","op":"eq","val":"testuser1"}]}&export_csv=true')
         assert res.status_code == 200
         assert res.headers['Content-Type'] == 'text/csv; charset=utf-8'
+        _decoded_data = res.data.decode('utf-8')
         assert 'attachment; filename=Faraday-SR-Context.csv' in res.headers['Content-Disposition']
+        assert 'username,password,endpoint' in _decoded_data
+        assert 'testuser1,testpass,test.example.com' in _decoded_data
+        assert 'testuser2' not in _decoded_data
 
     @pytest.mark.skip(reason="Figure out to make this test work")
     def test_bulk_create_credentials_from_csv(self, test_client, workspace, session):

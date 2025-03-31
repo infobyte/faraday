@@ -73,7 +73,7 @@ class CredentialView(ReadWriteWorkspacedView,
             })
         return {
             'rows': credentials,
-            'count': len(credentials),
+            'count': (pagination_metadata and pagination_metadata.total or len(credentials)),
         }
 
     @route('/bulk_create', methods=['POST'])

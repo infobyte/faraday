@@ -21,7 +21,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules.vulns_base import VulnerabilityFilterSet, VulnerabilityView
 from faraday.server.config import faraday_server
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.debouncer import debounce_workspace_update, debounce_workspace_vulns_count_update
 from faraday.server.models import (
     Host,
     Service,
@@ -128,17 +128,19 @@ class VulnerabilityWorkspacedView(
         db.session.delete(obj)
         db.session.commit()
         logger.info(f"{obj} deleted")
-
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
 
         if host_to_update_stat:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
 
             if faraday_server.celery_enabled:
-                update_host_stats.delay([host_to_update_stat], [])
+                update_host_stats.delay([host_to_update_stat], [], workspace_name=workspace_name)
             else:
-                update_host_stats([host_to_update_stat], [])
+                update_host_stats([host_to_update_stat], [], workspace_name=workspace_name)
+        else:
+            debounce_workspace_vulns_count_update(workspace_name=workspace_name)
         db.session.commit()
 
     def _perform_create(self, data, **kwargs):
@@ -181,16 +183,18 @@ class VulnerabilityWorkspacedView(
             host_to_update_stat = obj.host_id
         elif obj.service_id:
             host_to_update_stat = obj.service.host_id
-
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
 
         if host_to_update_stat:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             if faraday_server.celery_enabled:
-                update_host_stats.delay([host_to_update_stat], [])
+                update_host_stats.delay([host_to_update_stat], [], workspace_name=workspace_name)
             else:
-                update_host_stats([host_to_update_stat], [])
+                update_host_stats([host_to_update_stat], [], workspace_name=workspace_name)
+        else:
+            debounce_workspace_vulns_count_update(workspace_name=workspace_name)
 
         return obj
 
@@ -241,10 +245,11 @@ class VulnerabilityWorkspacedView(
         if hosts or services:
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             if faraday_server.celery_enabled:
-                update_host_stats.delay(hosts, services)
+                update_host_stats.delay(hosts, services, workspace_name=workspace_name)
             else:
-                update_host_stats(hosts, services)
-
+                update_host_stats(hosts, services, workspace_name=workspace_name)
+        else:
+            debounce_workspace_vulns_count_update(workspace_name=workspace_name)
         return obj
 
     def count(self, **kwargs):

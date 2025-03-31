@@ -178,17 +178,17 @@ class VulnerabilityWorkspacedView(
         # Create a new vulnerability status history
         from faraday.server.models import VulnerabilityStatusHistory  # pylint:disable=import-outside-toplevel
 
-        username = 'system'
+        user_id = None
         try:
-            if hasattr(flask_login.current_user, 'username'):
-                username = flask_login.current_user.username
+            if hasattr(flask_login.current_user, 'id'):
+                user_id = flask_login.current_user.id
         except Exception:
             pass
 
         status_history = VulnerabilityStatusHistory(
             vulnerability_id=obj.id,
             status=obj.status,
-            username=username,
+            user_id=user_id,
         )
         db.session.add(status_history)
 
@@ -243,17 +243,17 @@ class VulnerabilityWorkspacedView(
             # Create a new vulnerability status history
             from faraday.server.models import VulnerabilityStatusHistory  # pylint:disable=import-outside-toplevel
 
-            username = 'system'
+            user_id = None
             try:
-                if hasattr(flask_login.current_user, 'username'):
-                    username = flask_login.current_user.username
+                if hasattr(flask_login.current_user, 'id'):
+                    user_id = flask_login.current_user.id
             except Exception:
                 pass
 
             status_history = VulnerabilityStatusHistory(
                 vulnerability_id=obj.id,
                 status=obj.status,
-                username=username,
+                user_id=user_id,
             )
             db.session.add(status_history)
 

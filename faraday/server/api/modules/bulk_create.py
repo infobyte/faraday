@@ -417,10 +417,10 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
 
     # Create status history entries for newly created vulnerabilities
     # Since bulk insert bypasses the SQLAlchemy ORM events
-    username = 'system'
+    user_id = None
     try:
-        if hasattr(current_user, 'username'):
-            username = current_user.username
+        if hasattr(current_user, 'id'):
+            user_id = current_user.id
     except Exception:
         pass
 
@@ -433,7 +433,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
         status_history = VulnerabilityStatusHistory(
             vulnerability_id=row[0],
             status=row[2],
-            username=username,
+            user_config_dir=user_id,
         )
         db.session.add(status_history)
 

@@ -4250,3 +4250,37 @@ class TestVulnerabilityStatusHistory:
 
             assert len(history_entries) == 1
             assert history_entries[0].status == "closed"
+
+    def test_status_history_user(self, test_client, session, workspace, logged_user):
+        """Test if the user who changed the status is recorded"""
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            status="open"
+        )
+        session.commit()
+
+        # Update status
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}',
+            json={"status": "closed"}
+        )
+        assert res.status_code == 200
+
+        # Check if the user is recorded in the history
+        history_entries = session.query(VulnerabilityStatusHistory).filter_by(
+            vulnerability_id=vuln.id
+        ).order_by(VulnerabilityStatusHistory.change_date).all()
+
+        assert len(history_entries) == 1
+        assert history_entries[0].user.username == logged_user.username
+
+        # Get vulnerability through API
+        res = test_client.get(f'/v3/vulns/{vuln.id}')
+        assert res.status_code == 200
+        # Verify status history is in the response
+        status_history = res.json.get('status_history')
+        assert status_history is not None
+        assert len(status_history) == 1
+        assert status_history[0]['user'] == logged_user.username

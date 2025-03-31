@@ -3800,7 +3800,13 @@ class VulnerabilityStatusHistory(db.Model):
         'Vulnerability',
         foreign_keys=[vulnerability_id]
     )
-    username = Column(String, nullable=True)
+    # username = Column(String, nullable=True)
+    # add a user relation that just returns the user that made the change
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), index=True, nullable=True)
+    user = relationship(
+        'User',
+        foreign_keys=[user_id]
+    )
 
 
 # Indexes to speed up queries

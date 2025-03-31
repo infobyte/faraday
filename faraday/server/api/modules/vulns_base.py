@@ -289,11 +289,17 @@ class VulnerabilityStatusHistorySchema(AutoSchema):
     id = fields.Integer(dump_only=True)
     status = fields.String()
     change_date = fields.DateTime(dump_only=True)
-    username = fields.String()
+    user_id = fields.Integer(load_only=True)
+    user = fields.Method(serialize='get_user', dump_only=True)
 
     class Meta:
         model = VulnerabilityStatusHistory
-        fields = ('_id', 'status', 'change_date', 'username')
+        fields = ('id', 'status', 'change_date', 'user')
+
+    @staticmethod
+    def get_user(obj):
+        if obj.user:
+            return obj.user.username
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -744,13 +750,13 @@ class VulnerabilityView(
         # If the status was changed in the bulk update, we need to create status history entries manually
         # since the SQLAlchemy event listeners are not triggered by bulk operations
         if status_changed and response.json.get('updated', 0) > 0:
-            username = None
+            user_id = None
             try:
                 from flask_login import current_user
-                if hasattr(current_user, 'username'):
-                    username = current_user.username
+                if hasattr(current_user, 'id'):
+                    user_id = current_user.id
             except Exception:
-                username = 'system'
+                user_id = None
 
             # Get the new status from the data
             new_status = data['status']
@@ -760,7 +766,7 @@ class VulnerabilityView(
                 status_history = VulnerabilityStatusHistory(
                     vulnerability_id=vuln_id,
                     status=new_status,
-                    username=username,
+                    user_id=user_id,
                 )
                 db.session.add(status_history)
 

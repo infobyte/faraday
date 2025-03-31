@@ -424,8 +424,12 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     except Exception:
         pass
 
+    # result is a ResultProxy object
+    # It can be iterated only once, so we need to store the results in a list
+    results_processed: list[tuple] = result.fetchall()
+
     # Collect vulnerability IDs and their statuses
-    for row in result:
+    for row in results_processed:
         status_history = VulnerabilityStatusHistory(
             vulnerability_id=row[0],
             status=row[2],
@@ -436,7 +440,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     db.session.commit()
     total_result = manage_relationships(
         processed_data,
-        result,
+        results_processed,
         workspace_id=workspace_id
     )
     return total_result

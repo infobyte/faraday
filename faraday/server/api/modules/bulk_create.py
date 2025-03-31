@@ -433,7 +433,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
         status_history = VulnerabilityStatusHistory(
             vulnerability_id=row[0],
             status=row[2],
-            user_config_dir=user_id,
+            user_id=user_id,
         )
         db.session.add(status_history)
 

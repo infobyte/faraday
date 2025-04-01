@@ -81,15 +81,11 @@ class CredentialView(ReadWriteWorkspacedView,
         """
         ---
         post:
-        tags: ["Credential"]
-        description: Import credentials from CSV
-        responses:
+          tags: ["Credential"]
+          description: Import credentials from CSV
+          responses:
             201:
-            description: Created
-        tags: ["Credential"]
-        responses:
-        201:
-            description: Created
+              description: Created
         """
         if 'file' not in request.files:
             abort(make_response({"message": "No file provided."}, 400))
@@ -149,20 +145,16 @@ class CredentialView(ReadWriteWorkspacedView,
             db.session.rollback()
             abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, 400))
 
-    @route('/filter')
+    @route('/filter', methods=['GET'])
     def filter(self, workspace_name, **kwargs):
         """
         ---
         get:
-        tags: ["Credential"]
-        description: Filter credentials
-        responses:
+          tags: ["Credential"]
+          description: Filter Credentials
+          responses:
             200:
-            description: OK
-        tags: ["Credential"]
-        responses:
-        200:
-            description: OK
+              description: Credentials filtered successfully
         """
         filters = request.args.get('q', '{}')
         export_csv = request.args.get('export_csv', '')

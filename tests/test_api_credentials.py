@@ -1,11 +1,10 @@
 import datetime
 import io
-import pytest
 from faraday.server.models import Credential
 from faraday.server.api.modules.credentials import CredentialView
 from tests.test_api_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
 from tests.factories import CredentialFactory, VulnerabilityFactory
-from pathlib import Path
+from tests.conftest import TEST_DATA_PATH
 
 """
 Faraday Penetration Test IDE
@@ -224,50 +223,26 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert 'testuser1,testpass,test.example.com' in _decoded_data
         assert 'testuser2' not in _decoded_data
 
-    @pytest.mark.skip(reason="Figure out to make this test work")
-    def test_bulk_create_credentials_from_csv(self, test_client, workspace, session):
-        # get csv file from ./data/credential_test_success.csv
-        csv_file_path = (Path(__file__).parent / 'data/credential_test_success.csv')
-        with open(csv_file_path) as csv_file:
-            csv_content = csv_file.read()
-        csv_file = io.StringIO(csv_content)
-        csv_file.name = 'credentials.csv'
-        csv_file.seek(0)
-        # Prepare the request data
+    def test_bulk_create_credentials_from_csv(self, test_client, workspace, session, csrf_token):
+        # Get the CSV file path
+        path = TEST_DATA_PATH / "credential_test_success.csv"
+
+        with path.open('r') as csv_file:
+            file_contents = csv_file.read().encode('utf-8')
+
         data = {
-            'file': csv_file
-        }
-        # Set the content type to multipart/form-data
-        headers = {
-            'Content-Type': 'multipart/form-data'
+            'file': (io.BytesIO(file_contents), 'credentials.csv'),
+            'csrf_token': csrf_token
         }
 
-        # Send the request
-        res = test_client.post(self.url(workspace=workspace) + '/bulk_create', data=data, headers=headers)
+        res = test_client.post(
+                self.url(workspace=workspace) + '/import_csv',
+                data=data,
+                use_json_data=False
+        )
 
-        # Check response
         assert res.status_code == 201
-        assert 'message' in res.json
-        assert 'CSV imported successfully' in res.json['message']
-        assert 'Created: 3 credentials' in res.json['message']
+        assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials'
 
-        # Verify credentials were created in the database
-        credentials = session.query(Credential).filter(
-            Credential.workspace_id == workspace.id
-        ).all()
-
-        # Find our imported credentials
-        csv_credentials = [c for c in credentials if c.username.startswith('csv_user')]
-        assert len(csv_credentials) == 3
-
-        # Verify the leak dates were properly set
-        for cred in csv_credentials:
-            if cred.username == 'csv_user1':
-                assert cred.leak_date.strftime('%Y-%m-%d') == '2023-01-01'
-            elif cred.username == 'csv_user2':
-                assert cred.leak_date is None
-            elif cred.username == 'csv_user3':
-                assert cred.leak_date.strftime('%Y-%m-%d') == '2023-03-15'
-
-            # Verify all credentials have owned=False by default
-            assert cred.owned is False
+        creds = Credential.query.filter_by(workspace=workspace).all()
+        assert len(creds) == 7

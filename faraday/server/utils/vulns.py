@@ -77,6 +77,7 @@ SCHEMA_FIELDS = BASE_FIELDS + (
     "tags",
     "type",
     "workspace_name",
+    "u_date",
 )
 
 # Meta fields exclusive for VulnerabilityWebSchema
@@ -138,6 +139,8 @@ VALID_FILTER_VULN_COLUMNS = [
     'website',
     'host_os',
     'impact',
+    'u_date',
+    'type',
 ]
 
 

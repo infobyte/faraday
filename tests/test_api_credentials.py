@@ -5,6 +5,7 @@ from faraday.server.api.modules.credentials import CredentialView
 from tests.test_api_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
 from tests.factories import CredentialFactory, VulnerabilityFactory
 from tests.conftest import TEST_DATA_PATH
+import pytest
 
 """
 Faraday Penetration Test IDE
@@ -205,6 +206,30 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.status_code == 200
         assert len(res.json['rows']) == 1
         assert res.json['rows'][0]['value']['username'] == 'testuser1'
+
+    @pytest.mark.parametrize('field', [
+        ['username', 'eq', 'username'],
+        ['password', 'eq', 'password'],
+        ['endpoint', 'eq', 'endpoint'],
+        ['owned', 'eq', 'false'],
+        ['leak_date', '>=', '2023-10-01'],
+        ])
+    def test_credential_filter_all_fields(self, test_client, workspace, session, field):
+        session.query(Credential).delete()
+        session.commit()
+        # Create a credential with the specified field
+        credential = CredentialFactory.create(workspace=workspace, username='username', password='password', endpoint='endpoint', owned=False, leak_date='2023-10-01')
+        session.add(credential)
+        session.commit()
+
+        res = test_client.get(self.url(workspace=workspace) + f'/filter?q={{"filters":[{{"name":"{field[0]}","op":"{field[1]}","val":"{field[2]}"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json['rows']) == 1
+        if field[0] == 'leak_date':
+            field[2] = field[2] + 'T00:00:00+00:00'
+        if field[0] == 'owned':
+            field[2] = False
+        assert res.json['rows'][0]['value'][field[0]] == field[2]
 
     def test_credential_filter_export_csv(self, test_client, workspace, session):
         # Create some credentials

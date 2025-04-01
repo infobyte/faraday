@@ -755,8 +755,8 @@ class VulnerabilityView(
                 from flask_login import current_user
                 if hasattr(current_user, 'id'):
                     user_id = current_user.id
-            except Exception:
-                user_id = None
+            except AttributeError as e:
+                logger.debug("Current user not found", exc_info=e)
 
             # Get the new status from the data
             new_status = data['status']

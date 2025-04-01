@@ -182,8 +182,8 @@ class VulnerabilityWorkspacedView(
         try:
             if hasattr(flask_login.current_user, 'id'):
                 user_id = flask_login.current_user.id
-        except Exception:
-            pass
+        except AttributeError as e:
+            logger.debug("Current user not found", exc_info=e)
 
         status_history = VulnerabilityStatusHistory(
             vulnerability_id=obj.id,
@@ -247,8 +247,8 @@ class VulnerabilityWorkspacedView(
             try:
                 if hasattr(flask_login.current_user, 'id'):
                     user_id = flask_login.current_user.id
-            except Exception:
-                pass
+            except AttributeError as e:
+                logger.debug("Current user not found", exc_info=e)
 
             status_history = VulnerabilityStatusHistory(
                 vulnerability_id=obj.id,

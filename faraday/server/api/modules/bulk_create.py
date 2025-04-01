@@ -421,8 +421,8 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     try:
         if hasattr(current_user, 'id'):
             user_id = current_user.id
-    except Exception:
-        pass
+    except AttributeError as e:
+        logger.debug("Current user not found", exc_info=e)
 
     # result is a ResultProxy object
     # It can be iterated only once, so we need to store the results in a list

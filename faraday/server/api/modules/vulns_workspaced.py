@@ -10,7 +10,7 @@ from logging import getLogger
 import flask_login
 # Related third party imports
 from flask import Blueprint, abort, request
-from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
+from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload, selectinload
 
 # Local application imports
 from faraday.server.api.base import (
@@ -29,6 +29,7 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     VulnerabilityWeb,
     db,
+    VulnerabilityStatusHistory,
 )
 from faraday.server.utils.command import set_command_id
 from faraday.server.utils.cwe import create_cwe
@@ -86,7 +87,7 @@ class VulnerabilityWorkspacedView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-
+            selectinload(VulnerabilityGeneric.status_history),
             joinedload('refs'),
             joinedload('cve_instances'),
             joinedload('policy_violation_instances'),
@@ -175,9 +176,6 @@ class VulnerabilityWorkspacedView(
                 obj.tool = "Web UI"
         db.session.commit()
 
-        # Create a new vulnerability status history
-        from faraday.server.models import VulnerabilityStatusHistory  # pylint:disable=import-outside-toplevel
-
         user_id = None
         try:
             if hasattr(flask_login.current_user, 'id'):
@@ -240,8 +238,6 @@ class VulnerabilityWorkspacedView(
         if new_status is not None:
             old_status = obj.status
             setattr(obj, 'status', new_status)
-            # Create a new vulnerability status history
-            from faraday.server.models import VulnerabilityStatusHistory  # pylint:disable=import-outside-toplevel
 
             user_id = None
             try:

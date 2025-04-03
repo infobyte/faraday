@@ -802,6 +802,7 @@ class VulnerabilityView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+            selectinload(VulnerabilityGeneric.status_history),
         ]
 
         if request.args.get('get_evidence'):

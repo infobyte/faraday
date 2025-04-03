@@ -1440,7 +1440,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     status_history = relationship(
         'VulnerabilityStatusHistory',
-        cascade="all, delete-orphan"
+        backref='vulnerability',
+        cascade="all, delete-orphan",
+        foreign_keys="VulnerabilityStatusHistory.vulnerability_id",
+        primaryjoin="VulnerabilityGeneric.id == VulnerabilityStatusHistory.vulnerability_id",
+        order_by="desc(VulnerabilityStatusHistory.change_date)"
     )
 
     # 1 workspace <--> N vulnerabilities
@@ -3796,16 +3800,17 @@ class VulnerabilityStatusHistory(db.Model):
     status = Column(Enum(*STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
     change_date = Column(DateTime, default=datetime.utcnow, index=True)
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), index=True, nullable=False)
-    vulnerability = relationship(
-        'Vulnerability',
-        foreign_keys=[vulnerability_id]
-    )
-    # username = Column(String, nullable=True)
+
     # add a user relation that just returns the user that made the change
     user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), index=True, nullable=True)
     user = relationship(
         'User',
         foreign_keys=[user_id]
+    )
+
+    __table_args__ = (
+        Index('ix_vulnerability_status_history_vuln_date', vulnerability_id, change_date),
+        Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
     )
 
 

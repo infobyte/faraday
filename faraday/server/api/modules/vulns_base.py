@@ -752,7 +752,6 @@ class VulnerabilityView(
         if status_changed and response.json.get('updated', 0) > 0:
             user_id = None
             try:
-                from flask_login import current_user
                 if hasattr(current_user, 'id'):
                     user_id = current_user.id
             except AttributeError as e:

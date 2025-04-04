@@ -139,7 +139,7 @@ VALID_FILTER_VULN_COLUMNS = [
     'website',
     'host_os',
     'impact',
-    'u_date',
+    'update_date',
     'type',
 ]
 

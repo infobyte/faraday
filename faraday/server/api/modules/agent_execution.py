@@ -4,7 +4,7 @@ from flask import Blueprint
 from marshmallow import fields
 from sqlalchemy import func
 
-from faraday.server.api.base import ReadOnlyView, PaginatedMixin, AutoSchema, FilterMixin
+from faraday.server.api.base import ReadOnlyView, PaginatedMixin, AutoSchema, FilterMixin, BulkDeleteMixin
 from faraday.server.models import AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class AgentExecutionSchema(AutoSchema):
+    id = fields.Integer(dump_only=True)
     agent_name = fields.Method("get_agent_name", dump_only=True)
     tool = fields.Method("get_tool", dump_only=True)
     create_date = fields.DateTime(dump_only=True)
@@ -20,7 +21,7 @@ class AgentExecutionSchema(AutoSchema):
     running = fields.Boolean(dump_only=True)
     successful = fields.Boolean(dump_only=True)
     category = fields.Method("get_category", dump_only=True)
-    parameters_data = fields.Raw(dump_only=True)
+    parameters_data = fields.Raw(dump_only=True)  # includes command
     triggered_by = fields.String(dump_only=True)
     executor = PrimaryKeyRelatedField('id', dump_only=True)
     update_date = fields.DateTime(dump_only=True)
@@ -28,7 +29,7 @@ class AgentExecutionSchema(AutoSchema):
     class Meta:
         model = AgentExecution
         fields = (
-            'agent_name', 'tool', 'create_date', 'type',
+            'id', 'agent_name', 'tool', 'create_date', 'type',
             'running', 'successful', 'category', 'parameters_data',
             'triggered_by', 'executor', 'update_date'
         )
@@ -43,7 +44,7 @@ class AgentExecutionSchema(AutoSchema):
         return obj.executor.category
 
 
-class AgentExecutionView(PaginatedMixin, ReadOnlyView, FilterMixin):
+class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMixin):
     route_base = 'agent_executions'
     model_class = AgentExecution
     schema_class = AgentExecutionSchema

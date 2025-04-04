@@ -119,56 +119,56 @@ def upgrade():
 
     # Insert rows into the 'permissions_group' table
     op.execute(
-        f"INSERT INTO permissions_group (id, name) VALUES (1, '{GROUP_ADMIN}'), (2, '{GROUP_ALL}'), (3, '{GROUP_INTEGRATIONS}'), (4, '{GROUP_AGENTS}'), (5, '{GROUP_ANALYTICS}');"
-        f"INSERT INTO permissions_group (id, name) VALUES (6, '{GROUP_VULNERABILITIES}'), (7, '{GROUP_COMMENTS}'), (8, '{GROUP_ASSETS}'), (9, '{GROUP_PLANNERS}'), (10, '{GROUP_EXECUTIVE_REPORTS}');"
-        f"INSERT INTO permissions_group (id, name) VALUES (11, '{GROUP_SETTINGS}'), (12, '{GROUP_USER_TOKENS}'), (13, '{GROUP_PIPELINES}'), (14, '{GROUP_WORKSPACES}');"
+        f"INSERT INTO permissions_group (id, name) VALUES (1, '{GROUP_ADMIN}'), (2, '{GROUP_ALL}'), (3, '{GROUP_INTEGRATIONS}'), (4, '{GROUP_AGENTS}'), (5, '{GROUP_ANALYTICS}');"  # nosec B608
+        f"INSERT INTO permissions_group (id, name) VALUES (6, '{GROUP_VULNERABILITIES}'), (7, '{GROUP_COMMENTS}'), (8, '{GROUP_ASSETS}'), (9, '{GROUP_PLANNERS}'), (10, '{GROUP_EXECUTIVE_REPORTS}');"  # nosec B608
+        f"INSERT INTO permissions_group (id, name) VALUES (11, '{GROUP_SETTINGS}'), (12, '{GROUP_USER_TOKENS}'), (13, '{GROUP_PIPELINES}'), (14, '{GROUP_WORKSPACES}');"  # nosec B608
     )
 
     # Insert rows into the 'permissions_unit' table
-    op.execute(
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (1, '{UNIT_USERS}', 1), (2, '{UNIT_LOGS}', 1);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (3, '{UNIT_TOKENS}', 2), (4, '{UNIT_WHOAMI}', 2), (5, '{UNIT_SWAGGER}', 2), (6, '{UNIT_EXPLOITS}', 2), (7, '{UNIT_NOTIFICATIONS}', 2), (8, '{UNIT_INFO}', 2);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (9, '{UNIT_PREFERENCES}', 2), (10, '{UNIT_SEARCH_FILTERS}', 2), (11, '{UNIT_TAGS}', 2), (12, '{UNIT_SESSIONS}', 2), (13, '{UNIT_COMMANDS}', 2);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (14, '{UNIT_GITLAB}', 3), (15, '{UNIT_JIRA}', 3), (16, '{UNIT_SERVICE_DESK}', 3), (17, '{UNIT_SERVICE_NOW}', 3), (18, '{UNIT_WEB_HELP_DESK}', 3), (19, '{UNIT_ACTIVE_INTEGRATIONS}', 3);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (27, '{UNIT_BULK_CREATE}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10);"
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3);"
+    op.execute(  # nosec
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (1, '{UNIT_USERS}', 1), (2, '{UNIT_LOGS}', 1);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (3, '{UNIT_TOKENS}', 2), (4, '{UNIT_WHOAMI}', 2), (5, '{UNIT_SWAGGER}', 2), (6, '{UNIT_EXPLOITS}', 2), (7, '{UNIT_NOTIFICATIONS}', 2), (8, '{UNIT_INFO}', 2);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (9, '{UNIT_PREFERENCES}', 2), (10, '{UNIT_SEARCH_FILTERS}', 2), (11, '{UNIT_TAGS}', 2), (12, '{UNIT_SESSIONS}', 2), (13, '{UNIT_COMMANDS}', 2);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (14, '{UNIT_GITLAB}', 3), (15, '{UNIT_JIRA}', 3), (16, '{UNIT_SERVICE_DESK}', 3), (17, '{UNIT_SERVICE_NOW}', 3), (18, '{UNIT_WEB_HELP_DESK}', 3), (19, '{UNIT_ACTIVE_INTEGRATIONS}', 3);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (27, '{UNIT_BULK_CREATE}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3);"  # nosec B608
     )
 
     # Insert rows into the 'permissions_unit_action' table
-    op.execute(
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (1, '{CREATE}', 1), (2, '{READ}', 1), (3, '{UPDATE}', 1), (4, '{DELETE}', 1);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (5, '{READ}', 2), (6, '{READ}', 3), (7, '{READ}', 4), (8, '{READ}', 5), (9, '{READ}', 6);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (10, '{CREATE}', 7), (11, '{READ}', 7), (12, '{UPDATE}', 7), (13, '{DELETE}', 7);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (14, '{READ}', 8), (15, '{READ}', 9), (16, '{READ}', 10), (17, '{READ}', 12);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (18, '{CREATE}', 11), (19, '{READ}', 11), (20, '{UPDATE}', 11), (21, '{DELETE}', 11);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (22, '{CREATE}', 13), (23, '{READ}', 13), (24, '{UPDATE}', 13), (25, '{DELETE}', 13);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (26, '{CREATE}', 14), (27, '{READ}', 14), (28, '{UPDATE}', 14), (29, '{DELETE}', 14);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (30, '{CREATE}', 15), (31, '{READ}', 15), (32, '{UPDATE}', 15), (33, '{DELETE}', 15);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (34, '{CREATE}', 16), (35, '{READ}', 16), (36, '{UPDATE}', 16), (37, '{DELETE}', 16);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (38, '{CREATE}', 17), (39, '{READ}', 17), (40, '{UPDATE}', 17), (41, '{DELETE}', 17);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (42, '{CREATE}', 18), (43, '{READ}', 18), (44, '{UPDATE}', 18), (45, '{DELETE}', 18);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (46, '{READ}', 19), (47, '{READ}', 24), (48, '{CREATE}', 27), (49, '{CREATE}', 31);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (50, '{CREATE}', 20), (51, '{READ}', 20), (52, '{UPDATE}', 20), (53, '{DELETE}', 20);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (54, '{CREATE}', 21), (55, '{READ}', 21), (56, '{UPDATE}', 21), (57, '{DELETE}', 21);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (58, '{CREATE}', 22), (59, '{READ}', 22), (60, '{UPDATE}', 22), (61, '{DELETE}', 22);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (62, '{CREATE}', 23), (63, '{READ}', 23), (64, '{UPDATE}', 23), (65, '{DELETE}', 23);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (66, '{CREATE}', 25), (67, '{READ}', 25), (68, '{UPDATE}', 25), (69, '{DELETE}', 25);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (70, '{CREATE}', 26), (71, '{READ}', 26), (72, '{UPDATE}', 26), (73, '{DELETE}', 26);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (74, '{CREATE}', 28), (75, '{READ}', 28), (76, '{UPDATE}', 28), (77, '{DELETE}', 28);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (78, '{CREATE}', 29), (79, '{READ}', 29), (80, '{UPDATE}', 29), (81, '{DELETE}', 29);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (82, '{CREATE}', 30), (83, '{READ}', 30), (84, '{UPDATE}', 30), (85, '{DELETE}', 30);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (86, '{CREATE}', 32), (87, '{READ}', 32), (88, '{UPDATE}', 32), (89, '{DELETE}', 32);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (90, '{CREATE}', 33), (91, '{READ}', 33), (92, '{UPDATE}', 33), (93, '{DELETE}', 33);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (94, '{CREATE}', 34), (95, '{READ}', 34), (96, '{UPDATE}', 34), (97, '{DELETE}', 34);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (98, '{CREATE}', 35), (99, '{READ}', 35), (100, '{UPDATE}', 35), (101, '{DELETE}', 35);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (102, '{CREATE}', 36), (103, '{READ}', 36), (104, '{UPDATE}', 36), (105, '{DELETE}', 36);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (106, '{CREATE}', 37), (107, '{READ}', 37), (108, '{UPDATE}', 37), (109, '{DELETE}', 37);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (110, '{CREATE}', 38), (111, '{READ}', 38), (112, '{UPDATE}', 38), (113, '{DELETE}', 38);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (114, '{CREATE}', 39), (115, '{READ}', 39), (116, '{UPDATE}', 39), (117, '{DELETE}', 39);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (118, '{CREATE}', 40), (119, '{READ}', 40), (120, '{UPDATE}', 40), (121, '{DELETE}', 40);"
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (122, '{READ}', 41);"
+    op.execute(  # nosec
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (1, '{CREATE}', 1), (2, '{READ}', 1), (3, '{UPDATE}', 1), (4, '{DELETE}', 1);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (5, '{READ}', 2), (6, '{READ}', 3), (7, '{READ}', 4), (8, '{READ}', 5), (9, '{READ}', 6);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (10, '{CREATE}', 7), (11, '{READ}', 7), (12, '{UPDATE}', 7), (13, '{DELETE}', 7);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (14, '{READ}', 8), (15, '{READ}', 9), (16, '{READ}', 10), (17, '{READ}', 12);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (18, '{CREATE}', 11), (19, '{READ}', 11), (20, '{UPDATE}', 11), (21, '{DELETE}', 11);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (22, '{CREATE}', 13), (23, '{READ}', 13), (24, '{UPDATE}', 13), (25, '{DELETE}', 13);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (26, '{CREATE}', 14), (27, '{READ}', 14), (28, '{UPDATE}', 14), (29, '{DELETE}', 14);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (30, '{CREATE}', 15), (31, '{READ}', 15), (32, '{UPDATE}', 15), (33, '{DELETE}', 15);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (34, '{CREATE}', 16), (35, '{READ}', 16), (36, '{UPDATE}', 16), (37, '{DELETE}', 16);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (38, '{CREATE}', 17), (39, '{READ}', 17), (40, '{UPDATE}', 17), (41, '{DELETE}', 17);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (42, '{CREATE}', 18), (43, '{READ}', 18), (44, '{UPDATE}', 18), (45, '{DELETE}', 18);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (46, '{READ}', 19), (47, '{READ}', 24), (48, '{CREATE}', 27), (49, '{CREATE}', 31);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (50, '{CREATE}', 20), (51, '{READ}', 20), (52, '{UPDATE}', 20), (53, '{DELETE}', 20);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (54, '{CREATE}', 21), (55, '{READ}', 21), (56, '{UPDATE}', 21), (57, '{DELETE}', 21);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (58, '{CREATE}', 22), (59, '{READ}', 22), (60, '{UPDATE}', 22), (61, '{DELETE}', 22);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (62, '{CREATE}', 23), (63, '{READ}', 23), (64, '{UPDATE}', 23), (65, '{DELETE}', 23);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (66, '{CREATE}', 25), (67, '{READ}', 25), (68, '{UPDATE}', 25), (69, '{DELETE}', 25);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (70, '{CREATE}', 26), (71, '{READ}', 26), (72, '{UPDATE}', 26), (73, '{DELETE}', 26);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (74, '{CREATE}', 28), (75, '{READ}', 28), (76, '{UPDATE}', 28), (77, '{DELETE}', 28);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (78, '{CREATE}', 29), (79, '{READ}', 29), (80, '{UPDATE}', 29), (81, '{DELETE}', 29);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (82, '{CREATE}', 30), (83, '{READ}', 30), (84, '{UPDATE}', 30), (85, '{DELETE}', 30);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (86, '{CREATE}', 32), (87, '{READ}', 32), (88, '{UPDATE}', 32), (89, '{DELETE}', 32);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (90, '{CREATE}', 33), (91, '{READ}', 33), (92, '{UPDATE}', 33), (93, '{DELETE}', 33);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (94, '{CREATE}', 34), (95, '{READ}', 34), (96, '{UPDATE}', 34), (97, '{DELETE}', 34);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (98, '{CREATE}', 35), (99, '{READ}', 35), (100, '{UPDATE}', 35), (101, '{DELETE}', 35);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (102, '{CREATE}', 36), (103, '{READ}', 36), (104, '{UPDATE}', 36), (105, '{DELETE}', 36);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (106, '{CREATE}', 37), (107, '{READ}', 37), (108, '{UPDATE}', 37), (109, '{DELETE}', 37);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (110, '{CREATE}', 38), (111, '{READ}', 38), (112, '{UPDATE}', 38), (113, '{DELETE}', 38);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (114, '{CREATE}', 39), (115, '{READ}', 39), (116, '{UPDATE}', 39), (117, '{DELETE}', 39);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (118, '{CREATE}', 40), (119, '{READ}', 40), (120, '{UPDATE}', 40), (121, '{DELETE}', 40);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (122, '{READ}', 41);"  # nosec B608
     )
 
     # Insert rows into the 'role_permission' table for ADMIN role

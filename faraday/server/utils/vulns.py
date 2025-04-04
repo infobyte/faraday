@@ -77,7 +77,7 @@ SCHEMA_FIELDS = BASE_FIELDS + (
     "tags",
     "type",
     "workspace_name",
-    "u_date",
+    "update_date",
 )
 
 # Meta fields exclusive for VulnerabilityWebSchema

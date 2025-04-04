@@ -1,7 +1,7 @@
 """analytics user settings
 
 Revision ID: 615a6fdd9af4
-Revises: 293724cb146d
+Revises: f2435999bc54
 Create Date: 2025-04-01 15:26:42.904208+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = '615a6fdd9af4'
-down_revision = '293724cb146d'
+down_revision = 'f2435999bc54'
 branch_labels = None
 depends_on = None
 

@@ -1,7 +1,7 @@
 """agents category
 
 Revision ID: 75c38da2da8a
-Revises: 293724cb146d
+Revises: f2435999bc54
 Create Date: 2025-01-27 20:36:41.962127+00:00
 
 """
@@ -11,7 +11,7 @@ from faraday.server.fields import JSONType
 
 
 revision = '75c38da2da8a'
-down_revision = '293724cb146d'
+down_revision = 'f2435999bc54'
 branch_labels = None
 depends_on = None
 

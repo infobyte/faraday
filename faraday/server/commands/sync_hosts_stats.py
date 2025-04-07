@@ -1,7 +1,5 @@
 from faraday.server.models import db, Host
 from faraday.server.config import faraday_server
-from faraday.server.tasks import calc_vulnerability_stats
-from tqdm import tqdm
 from colorama import Fore
 
 
@@ -22,5 +20,4 @@ def _sync_hosts_stats(async_mode=False):
                 update_host_stats(_hosts_id, [])
         else:
             print(F"[{Fore.GREEN}*{Fore.RESET}] Updating synchronously")
-            for host_id in tqdm(_hosts_id, colour="blue"):
-                calc_vulnerability_stats(host_id)
+            update_host_stats(_hosts_id, [])

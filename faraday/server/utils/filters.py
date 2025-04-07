@@ -28,6 +28,7 @@ from faraday.server.models import (
     CustomFieldsSchema,
     Agent,
     AgentExecution,
+    AgentsSchedule,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -246,6 +247,12 @@ class FlaskRestlessAgentSchema(FlaskRestlessFilterSchema):
         return Agent
 
 
+class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
+
+    def _model_class(self):
+        return AgentsSchedule
+
+
 class FlaskRestlessOperator(Schema):
     _or = fields.Nested("self", attribute='or', data_key='or')
     _and = fields.Nested("self", attribute='and', data_key='and')
@@ -341,6 +348,7 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessUserFilterSchema,
         FlaskRestlessAgentExecutionSchema,
         FlaskRestlessAgentSchema,
+        FlaskRestlessAgentSchedulerSchema,
     ]
 
     def load(

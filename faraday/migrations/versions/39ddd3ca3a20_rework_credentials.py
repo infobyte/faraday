@@ -39,8 +39,8 @@ def upgrade():
     )
 
     op.create_table('association_table_vulnerabilities_credentials',
-    sa.Column('vulnerability_id', sa.Integer(), nullable=True),
-    sa.Column('credential_id', sa.Integer(), nullable=True),
+    sa.Column('vulnerability_id', sa.Integer(), nullable=False),
+    sa.Column('credential_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['credential_id'], ['credential.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete='CASCADE')
     )

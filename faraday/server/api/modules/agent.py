@@ -97,6 +97,9 @@ class ExecutorSchema(AutoSchema):
     parameters_metadata = fields.Dict(
         dump_only=True
     )
+    parameters_data = fields.Dict(
+        dump_only=True
+    )
     id = fields.Integer(dump_only=True)
     name = fields.String(dump_only=True)
     agent_id = fields.Integer(dump_only=True, attribute='agent_id')
@@ -113,6 +116,7 @@ class ExecutorSchema(AutoSchema):
             'agent_id',
             'last_run',
             'parameters_metadata',
+            'parameters_data',
             'schedules',
             'tool',
             'category',

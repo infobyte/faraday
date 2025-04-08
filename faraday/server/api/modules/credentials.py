@@ -110,37 +110,51 @@ class CredentialView(ReadWriteWorkspacedView,
 
             created_credentials = 0
             errors = []
+            batch_size = 1000
+            batch_count = 0
 
-            for row in credentials_reader:
-                try:
-                    owned = False
-                    leak_date = None
-                    if 'leak_date' in row and row['leak_date']:
-                        try:
-                            leak_date = datetime.strptime(row['leak_date'], '%Y-%m-%d')
-                        except ValueError:
-                            errors.append(f"Invalid leak_date format for {row['username']}. Using ISO format YYYY-MM-DD")
+            try:
+                for row in credentials_reader:
+                    try:
+                        owned = False
+                        leak_date = None
+                        if 'leak_date' in row and row['leak_date']:
+                            try:
+                                leak_date = datetime.strptime(row['leak_date'], '%Y-%m-%d')
+                            except ValueError:
+                                errors.append(f"Invalid leak_date format for {row['username']}. Using ISO format YYYY-MM-DD")
 
-                    credential = Credential(
-                        username=row['username'],
-                        password=row['password'],
-                        endpoint=row['endpoint'],
-                        owned=owned,
-                        leak_date=leak_date,
-                        workspace=workspace
-                    )
+                        credential = Credential(
+                            username=row['username'],
+                            password=row['password'],
+                            endpoint=row['endpoint'],
+                            owned=owned,
+                            leak_date=leak_date,
+                            workspace=workspace
+                        )
 
-                    db.session.add(credential)
-                    created_credentials += 1
-                except Exception as e:
-                    errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
+                        db.session.add(credential)
+                        created_credentials += 1
+                        batch_count += 1
 
-            db.session.commit()
+                        if batch_count >= batch_size:
+                            db.session.commit()
+                            batch_count = 0
 
-            return make_response({
-                "message": f"CSV imported successfully - Created: {created_credentials} credentials",
-                "errors": errors
-            }, HTTPStatus.CREATED)
+                    except Exception as e:
+                        errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
+
+                if batch_count > 0:
+                    db.session.commit()
+
+                return make_response({
+                    "message": f"CSV imported successfully - Created: {created_credentials} credentials",
+                    "errors": errors
+                }, HTTPStatus.CREATED)
+
+            except Exception as e:
+                db.session.rollback()
+                raise e
 
         except Exception as e:
             db.session.rollback()
@@ -156,6 +170,8 @@ class CredentialView(ReadWriteWorkspacedView,
           responses:
             200:
               description: Credentials filtered successfully
+            400:
+              description: Bad Request
         """
         filters = request.args.get('q', '{}')
         export_csv = request.args.get('export_csv', '')
@@ -164,7 +180,7 @@ class CredentialView(ReadWriteWorkspacedView,
         if export_csv.lower() == 'true':
             memory_file = export_credentials_to_csv(filtered_creds)
             return send_file(memory_file,
-                             attachment_filename="Faraday-SR-Context.csv",
+                             attachment_filename=f"Faraday-{workspace_name}-Credentials.csv",
                              as_attachment=True,
                              cache_timeout=-1)
 

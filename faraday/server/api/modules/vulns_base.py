@@ -763,6 +763,7 @@ class VulnerabilityView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+            joinedload(VulnerabilityGeneric.credentials),
         ]
 
         if request.args.get('get_evidence'):

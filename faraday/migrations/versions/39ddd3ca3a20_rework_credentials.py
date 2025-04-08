@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False, autoincrement=True, primary_key=True),
     sa.Column('password', sa.Text(), nullable=False),
     sa.Column('username', sa.Text(), nullable=False),
-    sa.Column('endpoint', sa.Text(), nullable=True),
+    sa.Column('endpoint', sa.Text(), nullable=False, default=''),
     sa.Column('leak_date', sa.DateTime(), nullable=True),
     sa.Column('owned', sa.Boolean(), nullable=False, server_default='false'),
     sa.Column('workspace_id', sa.Integer(), nullable=False),
@@ -38,6 +38,9 @@ def upgrade():
                         name='uix_credential_username_password_endpoint_workspace')
     )
 
+    op.create_index('ix_credential_leak_date', 'credential', ['leak_date'])
+    op.create_index('ix_credential_leak_date_workspace_id', 'credential', ['workspace_id', 'leak_date'])
+
     op.create_table('association_table_vulnerabilities_credentials',
     sa.Column('vulnerability_id', sa.Integer(), nullable=False),
     sa.Column('credential_id', sa.Integer(), nullable=False),
@@ -45,7 +48,23 @@ def upgrade():
     sa.ForeignKeyConstraint(['vulnerability_id'], ['vulnerability.id'], ondelete='CASCADE')
     )
 
+    op.create_index('ix_association_vuln_creds_vuln_id',
+                    'association_table_vulnerabilities_credentials',
+                    ['vulnerability_id'])
+
+    op.create_index('ix_association_vuln_creds_cred_id',
+                    'association_table_vulnerabilities_credentials',
+                    ['credential_id'])
+
 
 def downgrade():
+    op.drop_index('ix_association_vuln_creds_vuln_id',
+                 table_name='association_table_vulnerabilities_credentials')
+    op.drop_index('ix_association_vuln_creds_cred_id',
+                 table_name='association_table_vulnerabilities_credentials')
+
     op.drop_table('association_table_vulnerabilities_credentials')
+
+    op.drop_index('ix_credential_leak_date_workspace_id', table_name='credential')
+    op.drop_index('ix_credential_leak_date', table_name='credential')
     op.drop_table('credential')

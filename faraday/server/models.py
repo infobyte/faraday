@@ -1378,7 +1378,9 @@ association_table_vulnerabilities_credentials = Table(
     'association_table_vulnerabilities_credentials',
     db.Model.metadata,
     Column('vulnerability_id', Integer, ForeignKey('vulnerability.id', ondelete='CASCADE')),
-    Column('credential_id', Integer, ForeignKey('credential.id', ondelete='CASCADE'))
+    Column('credential_id', Integer, ForeignKey('credential.id', ondelete='CASCADE')),
+    Index('ix_association_vuln_creds_vuln_id', 'vulnerability_id'),
+    Index('ix_association_vuln_creds_cred_id', 'credential_id')
 )
 
 
@@ -2219,13 +2221,14 @@ class Credential(Metadata):
     id = Column(Integer, primary_key=True)
     password = Column(Text)
     username = Column(Text)
-    endpoint = Column(Text)
+    endpoint = Column(Text, default='')
     leak_date = Column(DateTime)
     owned = Column(Boolean, default=False)
 
     vulnerabilities = relationship("Vulnerability",
                                    secondary='association_table_vulnerabilities_credentials',
-                                   back_populates='credentials')
+                                   back_populates='credentials',
+                                   lazy='selectin')
 
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='credentials', foreign_keys='Credential.workspace_id')
@@ -2233,6 +2236,8 @@ class Credential(Metadata):
     __table_args__ = (
         UniqueConstraint('username', 'password', 'endpoint', 'workspace_id',
                          name='uix_credential_username_password_endpoint_workspace'),
+        Index('ix_credential_leak_date_workspace_id', leak_date, workspace_id),
+        Index('ix_credential_leak_date', leak_date),
     )
 
     @property

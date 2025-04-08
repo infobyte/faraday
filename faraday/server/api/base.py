@@ -32,6 +32,7 @@ from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaMeta, SQLAlchemyAutoSchemaOpts
 from sqlalchemy import and_, asc, desc, func, update as sqlalchemy_update
+from sqlalchemy.engine import ResultProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload, undefer, with_expression
@@ -360,6 +361,13 @@ class GenericView(FlaskView):
             query = self._get_base_query(**kwargs)
         try:
             obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
+        except AttributeError:
+            # Handle the case where `query` is a ResultProxy, this comes from Workspace query_object_with_count
+            if isinstance(query, ResultProxy):
+                res = db.session.query(self.model_class).filter(self.model_class.name.in_(object_ids)).all()
+                return res
+            # If it's another AttributeError, re-raise
+            raise
         except NoResultFound:
             return []
         return obj

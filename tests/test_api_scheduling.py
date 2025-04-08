@@ -132,3 +132,54 @@ class TestAgentScheduleView(ReadWriteAPITests):
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         super().test_patch_update_an_object_does_not_fail_with_partial_data(test_client, logged_user)
+
+    def test_count_agent_schedulers(self, test_client, session):
+        # Cleanup - Delete all schedules from the AgentsSchedule table
+        session.execute('DELETE FROM agents_schedule_workspace_table')
+        session.query(AgentsSchedule).delete()
+        session.commit()
+
+        workspaces = [WorkspaceFactory.create()]
+
+        # Create and add two AgentSchedulers
+        agent1 = AgentFactory.create()
+        session.add(agent1)
+
+        executor1 = ExecutorFactory.create(agent=agent1)
+        session.add(executor1)
+
+        agent_schedule1 = AgentScheduleFactory.create(
+            crontab='*/5 * * * *',
+            workspaces=workspaces,
+            executor=executor1,
+            type='agent',
+            description='agent scheduler 1'
+        )
+        session.add(agent_schedule1)
+
+        agent2 = AgentFactory.create()
+        session.add(agent2)
+
+        executor2 = ExecutorFactory.create(agent=agent2)
+        session.add(executor2)
+
+        agent_schedule2 = AgentScheduleFactory.create(
+            crontab='*/5 * * * *',
+            workspaces=workspaces,
+            executor=executor2,
+            type='agent',
+            description='agent scheduler 2'
+        )
+        session.add(agent_schedule2)
+        session.commit()
+
+        response = test_client.get("/v3/agents_schedule/count_schedulers")
+
+        # Assert that the status code is 200
+        assert response.status_code == 200
+
+        # Extract the count from the response
+        counts = response.json
+
+        # Assert that only agent schedulers are counted
+        assert counts['agent_schedulers'] == 2

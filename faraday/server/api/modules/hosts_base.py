@@ -28,7 +28,12 @@ from faraday.server.api.base import (
     get_workspace,
 )
 from faraday.server.api.modules.services_base import ServiceSchema
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.debouncer import (
+    debounce_workspace_update,
+    debounce_workspace_host_count,
+    debounce_workspace_vulns_count_update,
+    debounce_workspace_service_count,
+)
 from faraday.server.models import Command, CommandObject, Host, Hostname, Service, Workspace, db
 from faraday.server.schemas import (
     MetadataSchema,
@@ -398,9 +403,6 @@ class HostView(
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, **kwargs):
-        workspace_name = kwargs.get('workspace_name')
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
         return BulkDeleteMixin.bulk_delete(self, **kwargs)
 
@@ -427,6 +429,9 @@ class HostView(
         response = super()._perform_bulk_delete(values, **kwargs)
         for workspace in workspaces:
             debounce_workspace_update(workspace.name)
+            debounce_workspace_host_count(workspace_id=workspace.id)
+            debounce_workspace_vulns_count_update(workspace_id=workspace.id)
+            debounce_workspace_service_count(workspace_id=workspace.id)
         return response
 
 

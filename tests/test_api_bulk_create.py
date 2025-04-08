@@ -866,6 +866,71 @@ def test_creates_command_object_on_duplicates(session, command, service, vulnera
     assert count(Command, command.workspace) == 2
 
 
+@pytest.mark.parametrize('statuses', [('open', 'closed', 'closed'),
+                                      ('closed', 'open', 're-opened'),
+                                      ('re-opened', 'closed', 'closed'),
+                                      ('closed', 're-opened', 're-opened'),
+                                      ('open', 'open', 'open'),
+                                      ('closed', 'closed', 'closed')])
+def test_bulk_create_on_existing_status_host(session, host, vulnerability_factory, statuses):
+    vuln = vulnerability_factory.create(workspace=host.workspace, host=host, service=None, status=statuses[0])
+    session.add(vuln)
+    session.commit()
+    new_vuln_data = {
+        'name': vuln.name,
+        'description': vuln.description,
+        'severity': vuln.severity,
+        'type': 'vulnerability',
+        'status': statuses[1],
+    }
+    new_host_data = {
+        "ip": host.ip,
+        "description": host.description,
+        "hostnames": [hn.name for hn in host.hostnames],
+        "vulnerabilities": [new_vuln_data]
+    }
+    command = new_empty_command(host.workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_host(host.workspace, new_host_data, command_dict)
+    vuln = Vulnerability.query.get(vuln.id)
+    assert vuln.status == statuses[2]
+
+
+@pytest.mark.parametrize('statuses', [('open', 'closed', 'closed'),
+                                    ('closed', 'open', 're-opened'),
+                                    ('re-opened', 'closed', 'closed'),
+                                    ('closed', 're-opened', 're-opened'),
+                                    ('open', 'open', 'open'),
+                                    ('closed', 'closed', 'closed')])
+def test_bulk_create_on_existing_status_service(session, service, vulnerability_factory, statuses):
+    vuln = vulnerability_factory.create(workspace=service.workspace, host=None, service=service, status=statuses[0])
+    session.add(vuln)
+    session.commit()
+    new_vuln_data = {
+        'name': vuln.name,
+        'description': vuln.description,
+        'severity': vuln.severity,
+        'type': 'vulnerability',
+        'status': statuses[1],
+    }
+    new_service_data = {
+        "name": service.name,
+        "port": service.port,
+        "protocol": service.protocol,
+        "status": "open",
+        "vulnerabilities": [new_vuln_data]
+    }
+    command = new_empty_command(service.workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(service.workspace, service.host, new_service_data, command_dict)
+    vuln = Vulnerability.query.get(vuln.id)
+    assert vuln.status == statuses[2]
+
+
 class TestBulkCreateAPI:
 
     def test_bulk_create_endpoints_fails_without_auth(self, session, workspace, test_client):

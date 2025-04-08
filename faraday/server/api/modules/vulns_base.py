@@ -1503,10 +1503,11 @@ class VulnerabilityView(
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
             service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
+            workspace_ids = [workspace.id for workspace in [x[0] for x in workspaces_and_ids]]
             if faraday_server.celery_enabled:
-                update_host_stats.delay(host_id_list, service_id_list)
+                update_host_stats.delay(host_id_list, service_id_list, workspace_ids=workspace_ids)
             else:
-                update_host_stats(host_id_list, service_id_list)
+                update_host_stats(host_id_list, service_id_list, workspace_ids=workspace_ids)
 
         for workspace in [x[0] for x in workspaces_and_ids]:
             debounce_workspace_update(workspace.name)
@@ -1552,11 +1553,12 @@ class VulnerabilityView(
 
             host_id_list = [data[0] for data in host_ids if data[0]]
             service_id_list = [data[1] for data in host_ids if data[1]]
+            workspace_ids = [workspace.id for workspace in workspaces]
 
             if faraday_server.celery_enabled:
-                update_host_stats.delay(host_id_list, service_id_list)
+                update_host_stats.delay(host_id_list, service_id_list, workspace_ids=workspace_ids)
             else:
-                update_host_stats(host_id_list, service_id_list)
+                update_host_stats(host_id_list, service_id_list, workspace_ids=workspace_ids)
 
         return response
 

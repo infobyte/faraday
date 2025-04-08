@@ -32,6 +32,7 @@ from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaMeta, SQLAlchemyAutoSchemaOpts
 from sqlalchemy import and_, asc, desc, func, update as sqlalchemy_update
+from sqlalchemy.engine import ResultProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload, undefer, with_expression
@@ -47,7 +48,6 @@ from faraday.server.models import (
     CommandObject,
     Workspace,
     WorkspacePermission,
-    _make_generic_count_property,
     _make_vuln_count_property,
     count_vulnerability_severities,
     db,
@@ -360,6 +360,13 @@ class GenericView(FlaskView):
             query = self._get_base_query(**kwargs)
         try:
             obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
+        except AttributeError:
+            # Handle the case where `query` is a ResultProxy, this comes from Workspace query_object_with_count
+            if isinstance(query, ResultProxy):
+                res = db.session.query(self.model_class).filter(self.model_class.name.in_(object_ids)).all()
+                return res
+            # If it's another AttributeError, re-raise
+            raise
         except NoResultFound:
             return []
         return obj
@@ -987,107 +994,18 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(
-            self, filters, severity_count=False, host_vulns=False, only_total_vulns=False, list_view=False
-    ):
+    def _generate_filter_query(self, filters, severity_count=None):
+
+        #  TODO: Refactor severity count usage, its only used on hosts,
+        #  but hosts calls _filter from super class so this param is needed
 
         filter_query = search(db.session,
                               self.model_class,
                               filters)
-        # TODO: Refactor all stats
-        if only_total_vulns:
-            filter_query = filter_query.options(
-                with_expression(
-                    Workspace.vulnerability_total_count,
-                    _make_vuln_count_property(type_=None,
-                                              use_column_property=False)
-                ),
-                joinedload(Workspace.scope),
-                joinedload(Workspace.allowed_users),
-            )
-            return filter_query
-
-        if list_view:
-            filter_query = filter_query.options(
-                with_expression(
-                    Workspace.vulnerability_total_count,
-                    _make_vuln_count_property(type_=None,
-                                              use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.host_count,
-                    _make_generic_count_property('workspace', 'host', use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.total_service_count,
-                    _make_generic_count_property('workspace', 'service', use_column_property=False)
-                ),
-                joinedload(Workspace.scope),
-                joinedload(Workspace.allowed_users),
-            )
-            return filter_query
-
-        if severity_count and 'group_by' not in filters:
-            # TODO: Refactor all stats
-            filter_query = count_vulnerability_severities(filter_query, self.model_class,
-                                                          all_severities=True, host_vulns=host_vulns)
-            filter_query = filter_query.options(
-                with_expression(
-                    Workspace.vulnerability_web_count,
-                    _make_vuln_count_property('vulnerability_web', use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.vulnerability_standard_count,
-                    _make_vuln_count_property('vulnerability', use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.vulnerability_code_count,
-                    _make_vuln_count_property('vulnerability_code', use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.vulnerability_confirmed_count,
-                    _make_vuln_count_property(None,
-                                              confirmed=True,
-                                              use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.vulnerability_open_count,
-                    _make_vuln_count_property(None,
-                                              extra_query=" status!='closed' ",
-                                              use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.vulnerability_closed_count,
-                    _make_vuln_count_property(None,
-                                              extra_query=" status='closed' ",
-                                              use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.vulnerability_total_count,
-                    _make_vuln_count_property(type_=None,
-                                              use_column_property=False)
-                ),
-                with_expression(
-                     Workspace.credential_count,
-                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.host_count,
-                    _make_generic_count_property('workspace', 'host', use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.total_service_count,
-                    _make_generic_count_property('workspace', 'service', use_column_property=False)
-                ),
-                joinedload(Workspace.scope),
-                joinedload(Workspace.allowed_users),
-            )
-
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False, exclude=[], only_total_vulns=False,
-                list_view=False, return_objects=False) -> Tuple[list, int]:
+                exclude=[], return_objects=False, severity_count=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
             filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
@@ -1105,11 +1023,7 @@ class FilterMixin(ListMixin):
                 limit = filters.pop('limit')
             try:
                 filter_query = self._generate_filter_query(
-                    filters,
-                    severity_count=severity_count,
-                    host_vulns=host_vulns,
-                    only_total_vulns=only_total_vulns,
-                    list_view=list_view
+                    filters, severity_count=severity_count
                 )
             except TypeError as e:
                 abort(HTTP_BAD_REQUEST, e)
@@ -1131,7 +1045,7 @@ class FilterMixin(ListMixin):
         else:
             try:
                 filter_query = self._generate_filter_query(
-                    filters,
+                    filters, severity_count=severity_count
                 )
             except TypeError as e:
                 abort(HTTP_BAD_REQUEST, e)

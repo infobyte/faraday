@@ -30,6 +30,7 @@ import dateutil
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
+    FilterMixin,
     InvalidUsage,
     PaginatedMixin,
     ReadWriteView,
@@ -171,7 +172,8 @@ class AgentsScheduleSchema(AutoSchema):
 
 class AgentsScheduleView(
         PaginatedMixin,
-        ReadWriteView):
+        ReadWriteView,
+        FilterMixin,):
     route_base = 'agents_schedule'
     model_class = AgentsSchedule
     order_field = AgentsSchedule.id.asc()
@@ -275,6 +277,43 @@ class AgentsScheduleView(
         return flask.jsonify({
             'commands_id': [command.id for command in commands],
         })
+
+    @route('/count_schedulers', methods=['GET'])
+    def count_schedulers(self):
+        """
+        ---
+        get:
+          tags: ["Scheduler"]
+          summary: Counts schedulers by type
+          responses:
+            200:
+              description: Counts of schedulers by type
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      agent_schedulers:
+                        type: integer
+                        description: Count of Agent Schedulers
+        """
+        #  ONLY FOR COMMUNITY
+        counts = db.session.query(
+            AgentsSchedule.type,
+            db.func.count(AgentsSchedule.id).label('count')
+        ).group_by(AgentsSchedule.type).all()
+
+        result = {
+            'agent_schedulers': 0,
+        }
+
+        for scheduler_type, count in counts:
+            if scheduler_type == 'cloud_agent':
+                continue
+            if scheduler_type == 'agent':
+                result['agent_schedulers'] = count
+
+        return flask.jsonify(result)
 
 
 AgentsScheduleView.register(agents_schedule_api)

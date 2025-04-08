@@ -5,20 +5,19 @@
 { buildPythonPackage, fetchPypi, lib }:
 
 buildPythonPackage rec {
-  pname = "cvss";
-  version = "3.4";
+  pname = "billiard";
+  version = "4.2.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1s0yjlwpkzgrf5ibc5y38dqrv2wnviz6frjl6m9qpid39cj568v3";
+    sha256 = "0vxk9xy6fzkasvyc3irk89f6cml9k6zbgf7msg43y1rrqnq43dhj";
   };
 
   # TODO FIXME
   doCheck = false;
 
   meta = with lib; {
-    description =
-      "CVSS2/3/4 library with interactive calculator for Python 2 and Python 3";
-    homepage = "https://github.com/RedHatProductSecurity/cvss";
+    description = "Python multiprocessing fork with improvements and bugfixes";
+    homepage = "https://github.com/celery/billiard";
   };
 }

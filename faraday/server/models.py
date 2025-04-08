@@ -2221,7 +2221,7 @@ class Credential(Metadata):
     id = Column(Integer, primary_key=True)
     password = Column(Text)
     username = Column(Text)
-    endpoint = Column(Text)
+    endpoint = Column(Text, default='')
     leak_date = Column(DateTime)
     owned = Column(Boolean, default=False)
 

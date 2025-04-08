@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False, autoincrement=True, primary_key=True),
     sa.Column('password', sa.Text(), nullable=False),
     sa.Column('username', sa.Text(), nullable=False),
-    sa.Column('endpoint', sa.Text(), nullable=True),
+    sa.Column('endpoint', sa.Text(), nullable=False, default=''),
     sa.Column('leak_date', sa.DateTime(), nullable=True),
     sa.Column('owned', sa.Boolean(), nullable=False, server_default='false'),
     sa.Column('workspace_id', sa.Integer(), nullable=False),

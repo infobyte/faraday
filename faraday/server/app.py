@@ -231,7 +231,6 @@ def register_handlers(app):
                     logger.warning('Invalid authentication token.')
                     flask.abort(401)
                 else:
-                    session["last_access"] = time()
                     return user
             elif auth_type == 'agent':
                 # Don't handle the agent logic here, do it in another

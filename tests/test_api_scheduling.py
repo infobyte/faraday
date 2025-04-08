@@ -18,6 +18,27 @@ from tests.factories import (
     ExecutorFactory,
     AgentExecutionFactory
 )
+from posixpath import join
+
+ORDER = [
+        [{'field': 'description', 'direction': 'desc'}],
+        [{'field': 'create_date', 'direction': 'desc'}],
+        [{'field': 'type', 'direction': 'desc'}],
+        [
+            {'field': 'description', 'direction': 'desc'},
+            {'field': 'create_date', 'direction': 'desc'},
+            {'field': 'type', 'direction': 'desc'}
+        ],
+    ]
+
+GROUP = [
+        [{'field': 'description'}],
+        [{'field': 'type'}],
+        [
+            {'field': 'description'},
+            {'field': 'type'}
+        ],
+    ]
 
 
 def test_both_schedule_and_manual_agents(session):
@@ -132,6 +153,92 @@ class TestAgentScheduleView(ReadWriteAPITests):
 
     def test_patch_update_an_object_does_not_fail_with_partial_data(self, test_client, logged_user):
         super().test_patch_update_an_object_does_not_fail_with_partial_data(test_client, logged_user)
+
+    @pytest.mark.parametrize('filter_params', [
+        {
+            'test_name': 'filter_by_description',
+            'filter_field_name': 'description',
+            'filter_operations': [
+                {
+                    'filter_operation': 'eq',
+                    'filter_value': '"Agent scheduler description"',
+                    'res_status_code': 200,
+                    'count': 1
+                }
+            ],
+            'order_operations': ORDER,
+            'group_operations': GROUP,
+        },
+        {
+            'test_name': 'filter_by_vuln_tag',
+            'filter_field_name': 'vuln_tag',
+            'filter_operations': [
+                {
+                    'filter_operation': 'like',
+                    'filter_value': '"%vuln_tag_1%"',
+                    'res_status_code': 200,
+                    'count': 1
+                }
+            ],
+            'order_operations': ORDER,
+            'group_operations': GROUP,
+        },
+        {
+            'test_name': 'filter_by_description_nonexistent',
+            'filter_field_name': 'description',
+            'filter_operations': [
+                {
+                    'filter_operation': 'eq',
+                    'filter_value': '"Nonexistent description"',
+                    'res_status_code': 200,
+                    'count': 0
+                }
+            ],
+            'order_operations': ORDER,
+            'group_operations': GROUP,
+        },
+        {
+            'test_name': 'filter_by_vuln_tag_nonexistent',
+            'filter_field_name': 'vuln_tag',
+            'filter_operations': [
+                {
+                    'filter_operation': 'eq',
+                    'filter_value': '"vuln_tag_3"',
+                    'res_status_code': 200,
+                    'count': 0
+                }
+            ],
+            'order_operations': ORDER,
+            'group_operations': GROUP,
+        }
+    ])
+    def test_filter_agent_scheduler(self, test_client, session, filter_params):
+
+        # Create agent scheduler entries
+        scheduler1 = AgentScheduleFactory.create(
+            description="Agent scheduler description",
+            vuln_tag="vuln_tag_1",
+            type="agent",
+            create_date="2024-01-01T00:00:00"
+        )
+        scheduler2 = AgentScheduleFactory.create(
+            description="Another agent scheduler description",
+            vuln_tag="vuln_tag_2",
+            type="agent",
+            create_date="2023-12-31T23:59:59"
+        )
+        session.add_all([scheduler1, scheduler2])
+        session.commit()
+
+        for operation in filter_params['filter_operations']:
+            qparams = f'filter?q={{"filters":[' \
+                      f'{{"name": "{filter_params["filter_field_name"]}", ' \
+                      f'"op":"{operation["filter_operation"]}",' \
+                      f'"val": {operation["filter_value"]} }}]}}'
+            res = test_client.get(join(self.url(), qparams))
+
+            assert res.status_code == operation['res_status_code']
+            assert len(res.json['rows']) == operation['count']
 
     def test_count_agent_schedulers(self, test_client, session):
         # Cleanup - Delete all schedules from the AgentsSchedule table

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Enhanced workspace performance by pre-calculating statistics, reducing the overhead of on-demand calculations during data retrieval. #7780"
+}

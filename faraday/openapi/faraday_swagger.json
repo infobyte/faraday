@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.11.0 API",
+        "title": "Faraday 5.12.0 API",
         "version": "v3"
     },
     "security": [
@@ -3916,6 +3916,19 @@
                 }
             }
         },
+        "/_api/v3/ws/bulk_update": {
+            "patch": {
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Update a group of Workspace records by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            }
+        },
         "/_api/v3/ws/{workspace_id}/change_readonly/": {
             "put": {
                 "tags": [
@@ -5461,6 +5474,32 @@
                     "required": true
                 }
             ]
+        },
+        "/_api/v3/agents_schedule/count_schedulers": {
+            "get": {
+                "tags": [
+                    "Scheduler"
+                ],
+                "summary": "Counts schedulers by type",
+                "responses": {
+                    "200": {
+                        "description": "Counts of schedulers by type",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "agent_schedulers": {
+                                            "type": "integer",
+                                            "description": "Count of Agent Schedulers"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         "/_api/v3/agents_schedule/{object_id}": {
             "delete": {
@@ -9007,6 +9046,9 @@
         },
         {
             "name": "Pipeline"
+        },
+        {
+            "name": "Scheduler"
         },
         {
             "name": "SearchFilter"

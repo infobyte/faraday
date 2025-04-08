@@ -5,20 +5,19 @@
 { buildPythonPackage, fetchPypi, lib }:
 
 buildPythonPackage rec {
-  pname = "cvss";
-  version = "3.4";
+  pname = "vine";
+  version = "5.1.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1s0yjlwpkzgrf5ibc5y38dqrv2wnviz6frjl6m9qpid39cj568v3";
+    sha256 = "1q31krwxdvwawdn1kfqmpplix31d4jhs0qng26908hawsf0yjqlb";
   };
 
   # TODO FIXME
   doCheck = false;
 
   meta = with lib; {
-    description =
-      "CVSS2/3/4 library with interactive calculator for Python 2 and Python 3";
-    homepage = "https://github.com/RedHatProductSecurity/cvss";
+    description = "Python promises.";
+    homepage = "https://github.com/celery/vine";
   };
 }

@@ -25,6 +25,7 @@ from faraday.server.models import Credential, db, VulnerabilityGeneric
 from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 from faraday.server.utils.export import export_credentials_to_csv
+from http import HTTPStatus
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -88,7 +89,7 @@ class CredentialView(ReadWriteWorkspacedView,
               description: Created
         """
         if 'file' not in request.files:
-            abort(make_response({"message": "No file provided."}, 400))
+            abort(make_response({"message": "No file provided."}, HTTPStatus.BAD_REQUEST))
 
         credentials_file = request.files['file']
 
@@ -101,7 +102,7 @@ class CredentialView(ReadWriteWorkspacedView,
             if missing_headers:
                 abort(
                     make_response(
-                        {"message": f"Missing required headers in CSV: {missing_headers}"}, 400
+                        {"message": f"Missing required headers in CSV: {missing_headers}"}, HTTPStatus.BAD_REQUEST
                     )
                 )
 
@@ -139,11 +140,11 @@ class CredentialView(ReadWriteWorkspacedView,
             return make_response({
                 "message": f"CSV imported successfully - Created: {created_credentials} credentials",
                 "errors": errors
-            }, 201)
+            }, HTTPStatus.CREATED)
 
         except Exception as e:
             db.session.rollback()
-            abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, 400))
+            abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, HTTPStatus.BAD_REQUEST))
 
     @route('/filter', methods=['GET'])
     def filter(self, workspace_name, **kwargs):

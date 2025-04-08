@@ -3729,6 +3729,11 @@ class UserNotificationSettings(Metadata):
     agents_email = Column(Boolean, default=False)
     agents_slack = Column(Boolean, default=False)
 
+    analytics_enabled = Column(Boolean, default=True)
+    analytics_app = Column(Boolean, default=True)
+    analytics_email = Column(Boolean, default=False)
+    analytics_slack = Column(Boolean, default=False)
+
     cli_enabled = Column(Boolean, default=True)
     cli_app = Column(Boolean, default=True)
     cli_email = Column(Boolean, default=False)

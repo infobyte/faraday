@@ -20,6 +20,7 @@ from faraday.server.api.base import (
     FilterWorkspacedMixin,
     get_workspace,
     route,
+    PaginatedMixin,
 )
 from faraday.server.models import Credential, db, VulnerabilityGeneric
 from faraday.server.api.modules.vulns_base import VulnerabilitySchema
@@ -60,7 +61,8 @@ class CredentialSchema(AutoSchema):
 class CredentialView(ReadWriteWorkspacedView,
                      BulkDeleteWorkspacedMixin,
                      BulkUpdateWorkspacedMixin,
-                     FilterWorkspacedMixin):
+                     FilterWorkspacedMixin,
+                     PaginatedMixin):
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema

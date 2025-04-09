@@ -243,7 +243,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.status_code == 200
         assert res.headers['Content-Type'] == 'text/csv; charset=utf-8'
         _decoded_data = res.data.decode('utf-8')
-        assert 'attachment; filename=Faraday-SR-Context.csv' in res.headers['Content-Disposition']
+        assert f'attachment; filename=Faraday-{workspace.name}-Credentials.csv' in res.headers['Content-Disposition']
         assert 'username,password,endpoint' in _decoded_data
         assert 'testuser1,testpass,test.example.com' in _decoded_data
         assert 'testuser2' not in _decoded_data

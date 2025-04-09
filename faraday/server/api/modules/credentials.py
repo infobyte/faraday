@@ -26,6 +26,7 @@ from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 from faraday.server.utils.export import export_credentials_to_csv
 from http import HTTPStatus
+from sqlalchemy.exc import IntegrityError
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -108,6 +109,7 @@ class CredentialView(ReadWriteWorkspacedView,
 
             workspace = get_workspace(workspace_name)
 
+            skipped_credentials = 0
             created_credentials = 0
             errors = []
 
@@ -131,14 +133,17 @@ class CredentialView(ReadWriteWorkspacedView,
                     )
 
                     db.session.add(credential)
+                    db.session.commit()
                     created_credentials += 1
+                except IntegrityError as e:
+                    db.session.rollback()
+                    skipped_credentials += 1
+                    errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
                 except Exception as e:
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
 
-            db.session.commit()
-
             return make_response({
-                "message": f"CSV imported successfully - Created: {created_credentials} credentials",
+                "message": f"CSV imported successfully - Created: {created_credentials} credentials, Skipped: {skipped_credentials} credentials",
                 "errors": errors
             }, HTTPStatus.CREATED)
 

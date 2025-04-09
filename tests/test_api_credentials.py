@@ -267,7 +267,31 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         )
 
         assert res.status_code == 201
-        assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials'
+        assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials, Skipped: 0 credentials'
+
+        creds = Credential.query.filter_by(workspace=workspace).all()
+        assert len(creds) == 7
+
+    def test_bulk_create_credentials_from_csv_fail_duplicate(self, test_client, workspace, session, csrf_token):
+        # Get the CSV file path
+        path = TEST_DATA_PATH / "credential_test_fail_duplicate.csv"
+
+        with path.open('r') as csv_file:
+            file_contents = csv_file.read().encode('utf-8')
+
+        data = {
+            'file': (io.BytesIO(file_contents), 'credentials.csv'),
+            'csrf_token': csrf_token
+        }
+
+        res = test_client.post(
+                self.url(workspace=workspace) + '/import_csv',
+                data=data,
+                use_json_data=False
+        )
+
+        assert res.status_code == 201
+        assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials, Skipped: 1 credentials'
 
         creds = Credential.query.filter_by(workspace=workspace).all()
         assert len(creds) == 7

@@ -105,7 +105,7 @@ def export_credentials_to_csv(credentials):
     buffer = StringIO()
 
     headers = [
-        "username", "password", "endpoint"
+        "username", "password", "endpoint", "leak_date",
     ]
 
     writer = csv.DictWriter(buffer, fieldnames=headers)
@@ -116,6 +116,7 @@ def export_credentials_to_csv(credentials):
             'username': credential.get("username"),
             'password': credential.get("password"),
             'endpoint': credential.get("endpoint"),
+            'leak_date': credential.get("leak_date"),
         }
         writer.writerow(row)
 

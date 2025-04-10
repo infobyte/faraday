@@ -117,6 +117,11 @@ class CredentialView(ReadWriteWorkspacedView,
 
         credentials_file = request.files['file']
 
+        if request.form:
+            vulns_ids = request.form.get('vulns_ids', [])
+        else:
+            vulns_ids = []
+
         try:
             io_wrapper = TextIOWrapper(credentials_file, encoding=request.content_encoding or "utf8")
             credentials_reader = csv.DictReader(io_wrapper, skipinitialspace=True)
@@ -131,6 +136,10 @@ class CredentialView(ReadWriteWorkspacedView,
                 )
 
             workspace = get_workspace(workspace_name)
+
+            vulns = db.session.query(VulnerabilityGeneric).filter(
+                VulnerabilityGeneric.id.in_(vulns_ids)
+            ).all() if vulns_ids else []
 
             skipped_credentials = 0
             created_credentials = 0
@@ -154,6 +163,10 @@ class CredentialView(ReadWriteWorkspacedView,
                         leak_date=leak_date,
                         workspace=workspace
                     )
+
+                    if vulns:
+                        for vuln in vulns:
+                            credential.vulnerabilities.append(vuln)
 
                     db.session.add(credential)
                     db.session.commit()

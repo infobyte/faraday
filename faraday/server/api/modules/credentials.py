@@ -80,6 +80,27 @@ class CredentialView(ReadWriteWorkspacedView,
             'count': (pagination_metadata and pagination_metadata.total or len(credentials)),
         }
 
+    def _pre_bulk_update(self, data, **kwargs):
+        vulns_to_add = []
+        if "vulnerabilities" in data:
+            vulns_to_add = data.pop("vulnerabilities")
+        return {"vulnerabilities": vulns_to_add}
+
+    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
+        if "vulnerabilities" in extracted_data:
+            vulns = extracted_data.pop("vulnerabilities")
+            for credential_id in ids:
+                credential = db.session.query(Credential).get(credential_id)
+                if not credential:
+                    continue
+                for vuln in vulns:
+                    if vuln not in credential.vulnerabilities:
+                        credential.vulnerabilities.append(vuln)
+                        db.session.add(credential)
+            db.session.commit()
+
+        return super()._post_bulk_update(ids, extracted_data, workspace_name, data, **kwargs)
+
     @route('/import_csv', methods=['POST'])
     def import_csv(self, workspace_name):
         """

@@ -76,7 +76,7 @@ class CredentialView(ReadWriteWorkspacedView,
             })
         return {
             'rows': credentials,
-            'count': (pagination_metadata and pagination_metadata.total or len(credentials)),
+            'count': pagination_metadata.total if pagination_metadata is not None else len(credentials),
         }
 
     def _pre_bulk_update(self, data, **kwargs):
@@ -213,7 +213,7 @@ class CredentialView(ReadWriteWorkspacedView,
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
 
-        return self._envelope_list(filtered_creds)
+        return self._envelope_list(filtered_creds, pagination_metadata)
 
 
 CredentialView.register(credentials_api)

@@ -285,7 +285,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         data = {
             'file': (io.BytesIO(file_contents), 'credentials.csv'),
             'csrf_token': csrf_token,
-            'vulns_ids': [vuln.id]
+            'vulns_ids': f"{vuln.id}"
         }
 
         res = test_client.post(

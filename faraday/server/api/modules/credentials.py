@@ -8,7 +8,6 @@ See the file 'doc/LICENSE' for the license information
 from flask import Blueprint, request, make_response, abort, send_file
 import csv
 from io import TextIOWrapper
-from datetime import datetime
 from marshmallow import fields
 
 # Local application imports
@@ -118,7 +117,10 @@ class CredentialView(ReadWriteWorkspacedView,
         credentials_file = request.files['file']
 
         if request.form:
-            vulns_ids = request.form.get('vulns_ids', [])
+            vulns_ids = request.form.get('vulns_ids', "")
+            # vulns need to come in string form, separated by commas
+            if vulns_ids:
+                vulns_ids = [int(vuln_id) for vuln_id in vulns_ids.split(',') if vuln_id.isdigit()]
         else:
             vulns_ids = []
 
@@ -148,19 +150,13 @@ class CredentialView(ReadWriteWorkspacedView,
             for row in credentials_reader:
                 try:
                     owned = False
-                    leak_date = None
-                    if 'leak_date' in row and row['leak_date']:
-                        try:
-                            leak_date = datetime.strptime(row['leak_date'], '%Y-%m-%d')
-                        except ValueError:
-                            errors.append(f"Invalid leak_date format for {row['username']}. Using ISO format YYYY-MM-DD")
 
                     credential = Credential(
                         username=row['username'],
                         password=row['password'],
                         endpoint=row['endpoint'],
                         owned=owned,
-                        leak_date=leak_date,
+                        leak_date=row['leak_date'] if 'leak_date' in row else None,
                         workspace=workspace
                     )
 

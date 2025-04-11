@@ -3770,54 +3770,46 @@ class SlackNotification(db.Model):
     processed = Column(Boolean, default=False)
 
 
-class Module(db.Model):
-    __tablename__ = 'module'
+class PermissionsGroup(db.Model):
+    __tablename__ = 'permissions_group'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
 
 
-class Endpoint(db.Model):
-    __tablename__ = 'endpoint'
+class PermissionsUnit(db.Model):
+    __tablename__ = 'permissions_unit'
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    path = Column(String, nullable=False)
-    module_id = Column(Integer, ForeignKey('module.id'), index=True, nullable=False)
-    module = relationship(
-        'Module',
-        backref=backref('module_endpoints', cascade="all, delete-orphan"),
-        foreign_keys=[module_id],
+    permissions_group_id = Column(Integer, ForeignKey('permissions_group.id'), index=True, nullable=False)
+    permissions_group = relationship(
+        'PermissionsGroup',
+        backref=backref('permissions_units', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_group_id],
     )
 
 
-class Method(db.Model):
-    __tablename__ = 'method'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-
-
-class EndpointMethodAssociation(db.Model):
-    __tablename__ = 'endpoint_method_association'
+class PermissionsUnitAction(db.Model):
+    __tablename__ = 'permissions_unit_action'
+    CREATE_ACTION = 'create'
+    READ_ACTION = 'read'
+    UPDATE_ACTION = 'update'
+    DELETE_ACTION = 'delete'
+    RUN_ACTION = 'run'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION]
 
     id = Column(Integer, primary_key=True)
 
-    endpoint_id = Column(Integer, ForeignKey('endpoint.id'), index=True, nullable=False)
-    endpoint = relationship(
-        'Endpoint',
-        backref=backref('method_associations', cascade="all, delete-orphan"),
-        foreign_keys=[endpoint_id],
+    permissions_unit_id = Column(Integer, ForeignKey('permissions_unit.id'), index=True, nullable=False)
+    permissions_unit = relationship(
+        'PermissionsUnit',
+        backref=backref('permissions_actions', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_unit_id],
     )
-    method_id = Column(Integer, ForeignKey('method.id'), index=True, nullable=False)
-    method = relationship(
-        'Method',
-        backref=backref('endpoint_associations', cascade="all, delete-orphan"),
-        foreign_keys=[method_id],
-    )
+    action_type = Column(Enum(*ACTIONS, name='action_types'), nullable=False, default=READ_ACTION)
 
-    display_name = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    __table_args__ = (UniqueConstraint(permissions_unit_id, action_type, name='uix_permissions_unit_action'),)
 
 
 class RolePermission(db.Model):
@@ -3825,20 +3817,22 @@ class RolePermission(db.Model):
 
     id = Column(Integer, primary_key=True)
 
-    endpoint_method_id = Column(Integer, ForeignKey('endpoint_method_association.id'), index=True, nullable=False)
-    endpoint_method = relationship(
-        'EndpointMethodAssociation',
-        backref=backref('role_permissions_association', cascade="all, delete-orphan"),
-        foreign_keys=[endpoint_method_id],
+    unit_action_id = Column(Integer, ForeignKey('permissions_unit_action.id'), index=True, nullable=False)
+    unit_action = relationship(
+        'PermissionsUnitAction',
+        backref=backref('role_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[unit_action_id],
     )
     role_id = Column(Integer, ForeignKey('faraday_role.id'), index=True, nullable=False)
     role = relationship(
         'Role',
-        backref=backref('endpoint_method_permissions', cascade="all, delete-orphan"),
+        backref=backref('unit_action_permissions', cascade="all, delete-orphan"),
         foreign_keys=[role_id],
     )
 
     allowed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (UniqueConstraint(unit_action_id, role_id, name='uix_unit_action_role'),)
 
 
 # Indexes to speed up queries

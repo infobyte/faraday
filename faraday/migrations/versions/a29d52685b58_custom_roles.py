@@ -24,6 +24,7 @@ from faraday.server.utils.permissions import (
     GROUP_USER_TOKENS,
     GROUP_VULNERABILITIES,
     GROUP_WORKSPACES,
+    UNIT_2FA,
     UNIT_ACTIVE_INTEGRATIONS,
     UNIT_AGENTS,
     UNIT_AGENTS_SCHEDULE,
@@ -71,6 +72,7 @@ CREATE = PermissionsUnitAction.CREATE_ACTION
 READ = PermissionsUnitAction.READ_ACTION
 UPDATE = PermissionsUnitAction.UPDATE_ACTION
 DELETE = PermissionsUnitAction.DELETE_ACTION
+RUN = PermissionsUnitAction.RUN_ACTION
 
 
 # revision identifiers, used by Alembic.
@@ -97,7 +99,7 @@ def upgrade():
     op.create_table('permissions_unit_action',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('permissions_unit_id', sa.Integer(), nullable=False),
-    sa.Column('action_type', sa.Enum(CREATE, READ, UPDATE, DELETE, name='action_types'), nullable=False),
+    sa.Column('action_type', sa.Enum(CREATE, READ, UPDATE, DELETE, RUN, name='action_types'), nullable=False),
     sa.ForeignKeyConstraint(['permissions_unit_id'], ['permissions_unit.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('permissions_unit_id', 'action_type', name='uix_permissions_unit_action')
@@ -128,7 +130,7 @@ def upgrade():
     op.execute(  # nosec
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (1, '{UNIT_USERS}', 1), (2, '{UNIT_LOGS}', 1);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (3, '{UNIT_TOKENS}', 2), (4, '{UNIT_WHOAMI}', 2), (5, '{UNIT_SWAGGER}', 2), (6, '{UNIT_EXPLOITS}', 2), (7, '{UNIT_NOTIFICATIONS}', 2), (8, '{UNIT_INFO}', 2);"  # nosec B608
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (9, '{UNIT_PREFERENCES}', 2), (10, '{UNIT_SEARCH_FILTERS}', 2), (11, '{UNIT_TAGS}', 2), (12, '{UNIT_SESSIONS}', 2), (13, '{UNIT_COMMANDS}', 2);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (9, '{UNIT_PREFERENCES}', 2), (10, '{UNIT_SEARCH_FILTERS}', 2), (11, '{UNIT_TAGS}', 2), (12, '{UNIT_SESSIONS}', 2), (13, '{UNIT_COMMANDS}', 2), (42, '{UNIT_2FA}', 2);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (14, '{UNIT_GITLAB}', 3), (15, '{UNIT_JIRA}', 3), (16, '{UNIT_SERVICE_DESK}', 3), (17, '{UNIT_SERVICE_NOW}', 3), (18, '{UNIT_WEB_HELP_DESK}', 3), (19, '{UNIT_ACTIVE_INTEGRATIONS}', 3);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (27, '{UNIT_BULK_CREATE}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6);"  # nosec B608
@@ -168,7 +170,8 @@ def upgrade():
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (110, '{CREATE}', 38), (111, '{READ}', 38), (112, '{UPDATE}', 38), (113, '{DELETE}', 38);"  # nosec B608
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (114, '{CREATE}', 39), (115, '{READ}', 39), (116, '{UPDATE}', 39), (117, '{DELETE}', 39);"  # nosec B608
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (118, '{CREATE}', 40), (119, '{READ}', 40), (120, '{UPDATE}', 40), (121, '{DELETE}', 40);"  # nosec B608
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (122, '{READ}', 41);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (122, '{READ}', 41), (123, '{RUN}', 20), (124, '{RUN}', 21), (125, '{RUN}', 22);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (126, '{RUN}', 23), (127, '{RUN}', 38), (128, '{CREATE}', 42), (129, '{READ}', 42), (130, '{DELETE}', 42);"  # nosec B608
     )
 
     # Insert rows into the 'role_permission' table for ADMIN role
@@ -203,12 +206,14 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (109, 109, 1, true), (110, 110, 1, true), (111, 111, 1, true), (112, 112, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (113, 113, 1, true), (114, 114, 1, true), (115, 115, 1, true), (116, 116, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (117, 117, 1, true), (118, 118, 1, true), (119, 119, 1, true), (120, 120, 1, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (121, 121, 1, true), (122, 122, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (121, 121, 1, true), (122, 122, 1, true), (489, 123, 1, true), (490, 124, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (491, 125, 1, true), (492, 126, 1, true), (493, 127, 1, true), (509, 128, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (510, 129, 1, true), (511, 130, 1, true);"
     )
 
     # Insert rows into the 'role_permission' table for ASSET OWNER role
     op.execute(
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (123, 1, 2, false), (124, 2, 2, false), (125, 3, 2, false), (126, 4, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (123, 1, 2, false), (124, 2, 2, true), (125, 3, 2, true), (126, 4, 2, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (127, 5, 2, false), (128, 6, 2, true), (129, 7, 2, true), (130, 8, 2, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (131, 9, 2, true), (132, 10, 2, true), (133, 11, 2, true), (134, 12, 2, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (135, 13, 2, true), (136, 14, 2, true), (137, 15, 2, true), (138, 16, 2, true);"
@@ -238,12 +243,14 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (231, 109, 2, false), (232, 110, 2, false), (233, 111, 2, false), (234, 112, 2, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (235, 113, 2, false), (236, 114, 2, false), (237, 115, 2, false), (238, 116, 2, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (239, 117, 2, false), (240, 118, 2, false), (241, 119, 2, true), (242, 120, 2, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (243, 121, 2, false), (244, 122, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (243, 121, 2, false), (244, 122, 2, false), (494, 123, 2, false), (495, 124, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (496, 125, 2, false), (497, 126, 2, false), (498, 127, 2, false), (512, 128, 2, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (513, 129, 2, true), (514, 130, 2, true);"
     )
 
     # Insert rows into the 'role_permission' table for PENTESTER role
     op.execute(
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (245, 1, 3, false), (246, 2, 3, false), (247, 3, 3, false), (248, 4, 3, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (245, 1, 3, false), (246, 2, 3, true), (247, 3, 3, true), (248, 4, 3, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (249, 5, 3, false), (250, 6, 3, true), (251, 7, 3, true), (252, 8, 3, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (253, 9, 3, true), (254, 10, 3, true), (255, 11, 3, true), (256, 12, 3, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (257, 13, 3, true), (258, 14, 3, true), (259, 15, 3, true), (260, 16, 3, true);"
@@ -273,12 +280,14 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (353, 109, 3, false), (354, 110, 3, false), (355, 111, 3, false), (356, 112, 3, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (357, 113, 3, false), (358, 114, 3, false), (359, 115, 3, false), (360, 116, 3, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (361, 117, 3, false), (362, 118, 3, false), (363, 119, 3, true), (364, 120, 3, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (365, 121, 3, false), (366, 122, 3, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (365, 121, 3, false), (366, 122, 3, false), (499, 123, 3, true), (500, 124, 3, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (501, 125, 3, true), (502, 126, 3, false), (503, 127, 3, false), (515, 128, 3, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (516, 129, 3, true), (517, 130, 3, true);"
     )
 
     # Insert rows into the 'role_permission' table for CLIENT role
     op.execute(
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (367, 1, 4, false), (368, 2, 4, false), (369, 3, 4, false), (370, 4, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (367, 1, 4, false), (368, 2, 4, true), (369, 3, 4, true), (370, 4, 4, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (371, 5, 4, false), (372, 6, 4, true), (373, 7, 4, true), (374, 8, 4, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (375, 9, 4, true), (376, 10, 4, true), (377, 11, 4, true), (378, 12, 4, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (379, 13, 4, true), (380, 14, 4, true), (381, 15, 4, true), (382, 16, 4, true);"
@@ -308,7 +317,9 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (475, 109, 4, false), (476, 110, 4, false), (477, 111, 4, false), (478, 112, 4, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (479, 113, 4, false), (480, 114, 4, false), (481, 115, 4, false), (482, 116, 4, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (483, 117, 4, false), (484, 118, 4, false), (485, 119, 4, true), (486, 120, 4, false);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (487, 121, 4, false), (488, 122, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (487, 121, 4, false), (488, 122, 4, false), (504, 123, 4, false), (505, 124, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (506, 125, 4, false), (507, 126, 4, false), (508, 127, 4, false), (518, 128, 4, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (519, 129, 4, true), (520, 130, 4, true);"
     )
 
 

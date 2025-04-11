@@ -8,7 +8,7 @@ Faraday is a comprehensive security platform that combines a Flask-based API wit
 +------------------+
 |                  |
 |     Clients      |
-|  - Api Clients   |
+|  - API Clients   |
 |  - Cloud Agents  |
 |  - Faraday Agents|
 |  - Faraday-cli   |
@@ -44,8 +44,8 @@ Faraday is a comprehensive security platform that combines a Flask-based API wit
 - **PostgreSQL**: Primary database for data storage
 - **Long Tasks**: Background jobs processed by workers
 - **Clients**: Various client interfaces including:
-  - Api Clients: External applications using Faraday's API
+  - API Clients: External applications using Faraday's API
   - Cloud Agents: Cloud-based agents for distributed task execution
   - [Faraday Agents](https://github.com/infobyte/faraday_agent_dispatcher): Local agents for task execution
   - [Faraday-cli](https://github.com/infobyte/faraday-cli): Command-line interface
-  - Faraday's React UI: Web-based user interface 
+  - Faraday's React UI: Web-based user interface

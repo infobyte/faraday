@@ -68,3 +68,25 @@ def downgrade():
     op.drop_index('ix_credential_leak_date_workspace_id', table_name='credential')
     op.drop_index('ix_credential_leak_date', table_name='credential')
     op.drop_table('credential')
+    # Recreate the old table to restore the previous schema during downgrade
+    op.create_table('credential',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.Text(), nullable=False),
+    sa.Column('password', sa.Text(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.Column('name', sa.Text(), nullable=True),
+    sa.Column('host_id', sa.Integer(), nullable=True),
+    sa.Column('service_id', sa.Integer(), nullable=True),
+    sa.Column('workspace_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['host_id'], ['host.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['service_id'], ['service.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint(
+            'username',
+            'host_id',
+            'service_id',
+            'workspace_id',
+            name='uix_credential_username_host_service_workspace'
+        )
+    )

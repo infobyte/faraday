@@ -2224,7 +2224,7 @@ class Credential(Metadata):
     leak_date = Column(DateTime)
     owned = Column(Boolean, default=False)
 
-    vulnerabilities = relationship("Vulnerability",
+    vulnerabilities = relationship("VulnerabilityGeneric",
                                    secondary='association_table_vulnerabilities_credentials',
                                    back_populates='credentials',
                                    lazy='selectin')

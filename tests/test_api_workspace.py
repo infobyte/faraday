@@ -4,19 +4,19 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from datetime import date
+from datetime import date, datetime, timedelta
 import time
 from urllib.parse import urljoin
 
 import pytest
 from posixpath import join
 
-from faraday.server.models import Workspace, Scope, SeveritiesHistogram
+from faraday.server.models import Workspace, Scope, SeveritiesHistogram, VulnerabilityGeneric
 from faraday.server.api.modules.workspaces import WorkspaceView
 from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
 from faraday.server.debouncer import debounce_workspace_update
-from faraday.server.tasks import update_host_stats
+from faraday.server.tasks import update_host_stats, update_failed_command_stats
 
 vulnerabilities = [
     {
@@ -922,6 +922,59 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
             assert stats[f'{suffix[1:]}_vulns'] == result[f'{suffix[1:]}_vulns']
         else:
             assert stats['total_vulns'] == result['total_vulns']
+
+    def test_update_failed_command_stats(
+            self,
+            workspace_factory,
+            vulnerability_factory,
+            host_factory,
+            session,
+            test_client,
+            command_factory,
+            command_object_factory,
+    ):
+        from faraday.server.debouncer import Debouncer
+        test_workspace = workspace_factory.create(name='test')
+        session.add(test_workspace)
+        session.commit()
+
+        recent_command = command_factory.create(workspace=test_workspace, end_date=None, create_date=datetime.utcnow())
+        old_command = command_factory.create(workspace=test_workspace, end_date=None,
+                                             create_date=datetime.utcnow() - timedelta(days=10))
+        session.add_all([recent_command, old_command])
+        session.commit()
+        session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace_id == test_workspace.id).delete()
+        session.commit()
+
+        recent_host = host_factory.create(workspace=test_workspace)
+        old_host = host_factory.create(workspace=test_workspace)
+        session.add_all([recent_host, old_host])
+        session.commit()
+
+        recent_command_object = command_object_factory.create(command_id=recent_command.id, object_id=recent_host.id, object_type='host',
+                                      created_persistent=True, workspace=test_workspace)
+        old_command_object = command_object_factory.create(command_id=old_command.id, object_id=old_host.id, object_type='host',
+                                      created_persistent=True, workspace=test_workspace)
+
+        session.add_all([recent_command_object, old_command_object])
+
+        recent_vuln = vulnerability_factory.create(workspace=test_workspace, host=recent_host, service=None, confirmed=True, status='open',
+                                     severity='high')
+        old_vuln = vulnerability_factory.create(workspace=test_workspace, host=old_host, service=None, confirmed=True, status='open',
+                                     severity='high')
+        session.add_all([recent_vuln, old_vuln])
+        session.commit()
+
+        debouncer = Debouncer(wait=1)
+
+        update_failed_command_stats(debouncer=debouncer)
+        time.sleep(3)
+
+        res = test_client.get(self.url(test_workspace))
+        assert res.status_code == 200
+        stats = res.json['stats']
+
+        assert stats['high_vulns'] == 1
 
     @pytest.mark.skip_sql_dialect('sqlite')
     def test_histogram(self,

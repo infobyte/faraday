@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Update stats for hosts and workspaces from failed commands on server start, ensuring data consistency. #7935"
+}

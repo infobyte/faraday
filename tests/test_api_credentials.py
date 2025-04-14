@@ -3,7 +3,7 @@ import io
 from faraday.server.models import Credential
 from faraday.server.api.modules.credentials import CredentialView
 from tests.test_api_workspaced_base import ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTestsMixin
-from tests.factories import CredentialFactory, VulnerabilityFactory
+from tests.factories import CredentialFactory, VulnerabilityFactory, VulnerabilityWebFactory
 from tests.conftest import TEST_DATA_PATH
 import pytest
 
@@ -83,6 +83,23 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
 
         res = test_client.post(self.url(workspace=workspace), data=credential_data)
 
+        assert res.status_code == 201
+        assert len(res.json['vulnerabilities']) == 1
+        assert res.json['vulnerabilities'][0]['_id'] == vuln.id
+
+    def test_credential_link_to_web_vulnerability(self, test_client, workspace, session):
+        vuln = VulnerabilityWebFactory.create(workspace=workspace)
+        session.commit()
+
+        credential_data = {
+            'username': 'webvulnuser',
+            'password': 'webvulnpass',
+            'endpoint': 'webvuln.example.com',
+            'owned': True,
+            'workspace': workspace.name,
+            'vulnerabilities': [vuln.id]
+        }
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
         assert res.status_code == 201
         assert len(res.json['vulnerabilities']) == 1
         assert res.json['vulnerabilities'][0]['_id'] == vuln.id

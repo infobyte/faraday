@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import os
 from tempfile import NamedTemporaryFile
-from time import time, sleep
+from time import time
 import logging
 import random
 

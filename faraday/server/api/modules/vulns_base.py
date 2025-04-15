@@ -76,7 +76,6 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Workspace,
     db,
-    Credential,
 )
 from faraday.server.schemas import (
     FaradayCustomField,
@@ -333,7 +332,6 @@ class VulnerabilitySchema(AutoSchema):
     command_id = fields.Int(required=False, load_only=True)
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
-    credentials = fields.Method(serialize='get_credentials', deserialize='load_credentials', default=[])
 
     class Meta:
         model = Vulnerability
@@ -488,15 +486,6 @@ class VulnerabilitySchema(AutoSchema):
             if vector_string in cvss:
                 data[vector_string] = cvss[vector_string]
         return data
-
-    @staticmethod
-    def get_credentials(obj):
-        return [credential.id for credential in obj.credentials]
-
-    @staticmethod
-    def load_credentials(value):
-        creds = db.session.query(Credential).filter(Credential.id.in_(value)).all()
-        return creds
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):
@@ -763,7 +752,6 @@ class VulnerabilityView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-            joinedload(VulnerabilityGeneric.credentials),
         ]
 
         if request.args.get('get_evidence'):

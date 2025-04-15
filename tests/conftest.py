@@ -110,11 +110,6 @@ def app(request):
     db_password = os.getenv("POSTGRES_PASSWORD")
     connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@postgres/{rand_db}"
 
-    # app = get_app(db_connection_string=request.config.getoption(
-    #     '--connection-string') or connection_string, testing=True)
-    print("#" * 10)
-    print(connection_string)
-    print("#" * 10)
     app = get_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
 
@@ -376,11 +371,14 @@ def get_cursor():
     """
     Gets a psycopg2 cursor for the parent Database
     """
+    db_user = os.getenv("POSTGRES_USER")
+    db_password = os.getenv("POSTGRES_PASSWORD")
+
     conn = psycopg2.connect(
         dbname="postgres",
-        user="postgres",
-        password="superpassword",
-        host="localhost"
+        user=db_user,
+        password=db_password,
+        host="postgres"
     )
 
     conn.set_isolation_level(0)

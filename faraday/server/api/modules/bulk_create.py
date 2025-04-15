@@ -425,10 +425,9 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
                 else_=Vulnerability.status
             ),
             "custom_fields": stmt.excluded.custom_fields
-        },
-        where=(Vulnerability.status == 'closed')
+        }
     ).returning(text('id'), text('_tmp_id'), text('status'))
-    result = db.session.execute(on_update_stmt)
+    result = db.session.execute(on_update_stmt).fetchall()
 
     # Create status history entries for newly created vulnerabilities
     # Since bulk insert bypasses the SQLAlchemy ORM events
@@ -439,12 +438,8 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     except AttributeError as e:
         logger.debug("Current user not found", exc_info=e)
 
-    # result is a ResultProxy object
-    # It can be iterated only once, so we need to store the results in a list
-    results_processed: list[tuple] = result.fetchall()
-
     # Collect vulnerability IDs and their statuses
-    for row in results_processed:
+    for row in result:
         status_history = VulnerabilityStatusHistory(
             vulnerability_id=row[0],
             status=row[2],
@@ -455,7 +450,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     db.session.commit()
     total_result = manage_relationships(
         processed_data,
-        results_processed,
+        result,
         workspace_id=workspace_id
     )
     return total_result

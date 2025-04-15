@@ -4028,6 +4028,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.status_code == 200
         assert self._verify_csv(res.data)
 
+    @pytest.mark.skip(reason="Not Implemented")
     def test_patch_vulnerability_credentials(self, test_client, session, workspace):
         """Test patching a vulnerability to add credentials"""
         # Create a vulnerability

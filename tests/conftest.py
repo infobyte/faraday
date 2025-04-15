@@ -6,6 +6,9 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from tempfile import NamedTemporaryFile
+from time import time, sleep
+import logging
+import random
 
 import json
 import inspect
@@ -16,6 +19,9 @@ from flask_principal import Identity, identity_changed
 from pathlib import Path
 from pytest_factoryboy import register
 from sqlalchemy import event
+
+import psycopg2
+from psycopg2.sql import SQL
 
 from faraday.server.app import get_app
 from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
@@ -98,8 +104,17 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def app(request):
-    app = get_app(db_connection_string=request.config.getoption(
-        '--connection-string'), testing=True)
+    rand_db = create_random_db()
+    logging.warning("\n creating db " + str(rand_db) + "\n")
+
+    connection_string = f"postgresql+psycopg2://postgres:superpassword@localhost/{rand_db}"
+
+    # app = get_app(db_connection_string=request.config.getoption(
+    #     '--connection-string') or connection_string, testing=True)
+    print("#" * 10)
+    print(connection_string)
+    print("#" * 10)
+    app = get_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
@@ -107,8 +122,11 @@ def app(request):
     ctx.push()
 
     def teardown():
-        TEMPORATY_SQLITE.close()
+        # TEMPORATY_SQLITE.close()
         ctx.pop()
+        sleep(10)
+        logging.warning("\n dropping db " + str(rand_db) + "\n")
+        # drop_database(rand_db)
 
     request.addfinalizer(teardown)
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
@@ -351,3 +369,72 @@ def skip_by_sql_dialect(app, request):
 def csrf_token(logged_user, test_client):
     session_response = test_client.get('/session')
     return session_response.json.get('csrf_token')
+
+
+def get_cursor():
+    """
+    Gets a psycopg2 cursor for the parent Database
+    """
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="postgres",
+        password="superpassword",
+        host="localhost"
+    )
+
+    conn.set_isolation_level(0)
+
+    return conn.cursor()
+
+
+def create_database(db_name: str):
+    cur = get_cursor()
+
+    cur.execute(
+        SQL(
+            f"create database {db_name};"
+        )
+    )
+    cur.execute(
+        SQL(
+            f"grant all privileges on database {db_name} to postgres;"
+        )
+    )
+
+
+def drop_database(db_name: str):
+    cur = get_cursor()
+
+    cur.execute(
+        SQL(
+            f"drop database {db_name};"
+        )
+    )
+
+
+def create_random_db():
+    time_str = "".join(str(time()).split("."))
+    random.seed()
+    pref = random.randint(1111, 9999)
+
+    random_db = "project_test_" + "_".join([time_str, str(pref)])
+    create_database(random_db)
+
+    return random_db
+
+
+# @pytest.fixture(scope="session", autouse=True)
+# def use_random_db(request):
+#     """
+#     Forces each parallell worker to generate and use their own random DB.
+#     This is the key to letting us test in parallell!
+#     """
+#     rand_db = create_random_db()
+#     test_helpers.random_db_name = rand_db
+#     logging.warning("\n creating db " + str(rand_db) + "\n")
+#
+#     def after_all_worker_tests():
+#         logging.warning("\n dropping db " + str(rand_db) + "\n")
+#         drop_database(rand_db)
+#
+#     request.addfinalizer(after_all_worker_tests)

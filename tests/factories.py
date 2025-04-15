@@ -411,14 +411,10 @@ class VulnerabilityTemplateFactory(FaradayFactory):
 
 
 class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
-    host = factory.SubFactory(
-        HostFactory, workspace=factory.SelfAttribute('..workspace')
-    )
-    service = factory.SubFactory(
-        ServiceFactory, workspace=factory.SelfAttribute('..workspace')
-    )
     username = FuzzyText()
     password = FuzzyText()
+    endpoint = FuzzyText()
+    leak_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
 
     class Meta:
         model = Credential

@@ -192,7 +192,7 @@ def update_host_stats(hosts: List, services: List, workspace_name: str = None, w
         update_workspace_host_count(workspace_id=workspace_id)
         update_workspace_service_count(workspace_id=workspace_id)
         end_time = datetime.utcnow()
-        print(f"all calcs took {end_time - start_time}")
+        logger.info(f"all calcs took {end_time - start_time}")
         if command_id:
             db.session.query(Command).filter(Command.id == command_id).update({
                 Command.end_date: datetime.utcnow()

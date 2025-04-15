@@ -3809,7 +3809,6 @@ class VulnerabilityStatusHistory(db.Model):
     )
 
     __table_args__ = (
-        Index('ix_vulnerability_status_history_vuln_date', vulnerability_id, change_date),
         Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
     )
 

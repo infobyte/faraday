@@ -106,12 +106,12 @@ def pytest_configure(config):
 def app(request):
     db_user = os.getenv("POSTGRES_USER")
     db_password = os.getenv("POSTGRES_PASSWORD")
+    db_host = os.getenv("POSTGRES_HOST")
 
-    rand_db = create_random_db(db_user, db_password)
+    rand_db = create_random_db(db_user, db_password, db_host)
     logging.warning("\n creating db " + str(rand_db) + "\n")
-    db_user = os.getenv("POSTGRES_USER")
-    db_password = os.getenv("POSTGRES_PASSWORD")
-    connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@postgres/{rand_db}"
+
+    connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{rand_db}"
 
     app = get_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
@@ -123,9 +123,8 @@ def app(request):
     def teardown():
         # TEMPORATY_SQLITE.close()
         ctx.pop()
-        sleep(10)
-        logging.warning("\n dropping db " + str(rand_db) + "\n")
-        drop_database(rand_db, db_user, db_password)
+        logging.warning("\n SHOULD dropping db " + str(rand_db) + "\n")
+        drop_database(rand_db, db_user, db_password, db_host)
 
     request.addfinalizer(teardown)
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
@@ -186,17 +185,23 @@ def celery_app(app):
 @pytest.fixture(scope='session')
 def database(app, request):
     """Session-wide test database."""
-
     def teardown():
-        try:
-            db.engine.execute('DROP TABLE vulnerability CASCADE')
-        except Exception:
-            pass
-        try:
-            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
-        except Exception:
-            pass
+        print("CLOSING ALL SESSIONS")
+        print("CLOSING ALL SESSIONS")
+        print("CLOSING ALL SESSIONS")
+        # db.close_all_sessions()
+        # print("Dropping database")
+        # try:
+        #     db.engine.execute('DROP TABLE vulnerability CASCADE')
+        # except Exception:
+        #     pass
+        # try:
+        #     db.engine.execute('DROP TABLE vulnerability_template CASCADE')
+        # except Exception:
+        #     pass
         db.drop_all()
+        db.session.close()
+        db.engine.dispose()
 
     # Disable check_vulnerability_host_service_source_code constraint because
     # it doesn't work in sqlite
@@ -370,7 +375,7 @@ def csrf_token(logged_user, test_client):
     return session_response.json.get('csrf_token')
 
 
-def get_cursor(db_user: str, db_password: str):
+def get_cursor(db_user: str, db_password: str, db_host: str):
     """
     Gets a psycopg2 cursor for the parent Database
     """
@@ -378,7 +383,7 @@ def get_cursor(db_user: str, db_password: str):
         dbname="postgres",
         user=db_user,
         password=db_password,
-        host="postgres"
+        host=db_host
     )
 
     conn.set_isolation_level(0)
@@ -386,8 +391,8 @@ def get_cursor(db_user: str, db_password: str):
     return conn.cursor()
 
 
-def create_database(db_name: str, db_user: str, db_password: str):
-    cur = get_cursor(db_user, db_password)
+def create_database(db_name: str, db_user: str, db_password: str, db_host: str):
+    cur = get_cursor(db_user, db_password, db_host)
 
     cur.execute(
         SQL(
@@ -399,25 +404,27 @@ def create_database(db_name: str, db_user: str, db_password: str):
             f"grant all privileges on database {db_name} to {db_user};"
         )
     )
+    cur.close()
 
 
-def drop_database(db_name: str, db_user: str, db_password: str):
-    cur = get_cursor(db_user, db_password)
+def drop_database(db_name: str, db_user: str, db_password: str, db_host: str):
+    cur = get_cursor(db_user, db_password, db_host)
 
     cur.execute(
         SQL(
             f"drop database {db_name};"
         )
     )
+    cur.close()
 
 
-def create_random_db(db_user, db_password):
+def create_random_db(db_user, db_password, db_host):
     time_str = "".join(str(time()).split("."))
     random.seed()
     pref = random.randint(1111, 9999)
 
     random_db = "project_test_" + "_".join([time_str, str(pref)])
-    create_database(random_db, db_user, db_password)
+    create_database(random_db, db_user, db_password, db_host)
 
     return random_db
 

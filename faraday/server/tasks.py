@@ -34,8 +34,6 @@ logger = get_task_logger(__name__)
 
 @celery.task
 def on_success_process_report_task(results, command_id=None):
-    command_end_date = datetime.utcnow()
-    start_time = time.time()
     command = db.session.query(Command).filter(Command.id == command_id).first()
     if not command:
         logger.error("File imported but command id %s was not found", command_id)

@@ -866,47 +866,36 @@ class VulnerabilityView(
         ---
         get:
           tags: ["Vulnerability"]
-          summary: "Group vulnerabilities by the field set in the group_by GET parameter."
+          summary: "Count of all vulnerabilities."
           responses:
             200:
               description: Ok
               content:
                 application/json:
-                  schema: VulnerabilityWeb
-            404:
-              description: group_by is not specified
+                  schema:
+                    type: object
+                    properties:
+                      total_count:
+                        type: integer
+                        description: Total number of vulnerabilities
         tags: ["Vulnerability"]
         responses:
           200:
             description: Ok
         """
-        res = super().count(**kwargs)
 
-        def convert_group(group, type):
-            group = group.copy()
+        extra_filters = [Workspace.active == True]  # noqa
 
-            if type == "severity":
-                severity_map = {
-                    "informational": "info",
-                    "medium": "med"
-                }
-                severity = group[type]
-                group['severity'] = group['name'] = severity_map.get(severity, severity)
-            elif type == "confirmed":
-                confirmed_map = {
-                    1: "True",
-                    0: "False"
-                }
-                confirmed = group[type]
-                group[type] = group['name'] = confirmed_map.get(confirmed, confirmed)
-            else:
-                group['name'] = group[type]
-            return group
+        query = (
+            db.session.query(func.count(VulnerabilityGeneric.id))
+            .join(Workspace)
+            .filter(*extra_filters)
+        )
 
-        if request.args.get('group_by') == 'severity':
-            res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
-        if request.args.get('group_by') == 'confirmed':
-            res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
+        vuln_count = query.scalar()
+
+        res = {"total_count": vuln_count}
+
         return res
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])
@@ -1565,10 +1554,11 @@ class VulnerabilityView(
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
             service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
+            workspace_ids = [workspace.id for workspace in [x[0] for x in workspaces_and_ids]]
             if faraday_server.celery_enabled:
-                update_host_stats.delay(host_id_list, service_id_list)
+                update_host_stats.delay(host_id_list, service_id_list, workspace_ids=workspace_ids)
             else:
-                update_host_stats(host_id_list, service_id_list)
+                update_host_stats(host_id_list, service_id_list, workspace_ids=workspace_ids)
 
         for workspace in [x[0] for x in workspaces_and_ids]:
             debounce_workspace_update(workspace.name)
@@ -1614,11 +1604,12 @@ class VulnerabilityView(
 
             host_id_list = [data[0] for data in host_ids if data[0]]
             service_id_list = [data[1] for data in host_ids if data[1]]
+            workspace_ids = [workspace.id for workspace in workspaces]
 
             if faraday_server.celery_enabled:
-                update_host_stats.delay(host_id_list, service_id_list)
+                update_host_stats.delay(host_id_list, service_id_list, workspace_ids=workspace_ids)
             else:
-                update_host_stats(host_id_list, service_id_list)
+                update_host_stats(host_id_list, service_id_list, workspace_ids=workspace_ids)
 
         return response
 

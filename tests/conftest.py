@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+import os
 from tempfile import NamedTemporaryFile
 from time import time, sleep
 import logging
@@ -106,8 +106,9 @@ def pytest_configure(config):
 def app(request):
     rand_db = create_random_db()
     logging.warning("\n creating db " + str(rand_db) + "\n")
-
-    connection_string = f"postgresql+psycopg2://postgres:superpassword@localhost/{rand_db}"
+    db_user = os.getenv("POSTGRES_USER")
+    db_password = os.getenv("POSTGRES_PASSWORD")
+    connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@postgres/{rand_db}"
 
     # app = get_app(db_connection_string=request.config.getoption(
     #     '--connection-string') or connection_string, testing=True)

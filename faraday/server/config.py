@@ -149,11 +149,13 @@ class FaradayServerConfigObject(ConfigSection):
         self.debug = False
         self.delete_report_after_process = True
         self.celery_enabled = True
-        self.celery_broker_url = "127.0.0.1"
-        self.celery_backend_url = "127.0.0.1"
+        self.celery_broker_url = "redis://127.0.0.1:6379/0"
+        self.celery_backend_url = "redis://127.0.0.1:6379/0"
         self.socketio_ping_interval = 60
         self.socketio_ping_timeout = 220
         self.socketio_logger = False
+        self.idle_session_timeout = 0  # Default to 0 seconds (disabled)
+        self.celery_queue_prefix = None
 
 
 class StorageConfigObject(ConfigSection):

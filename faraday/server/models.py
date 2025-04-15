@@ -33,7 +33,6 @@ from sqlalchemy import (
     Table,
     Date,
     event,
-    literal,
     func,
     Index,
 )
@@ -2307,31 +2306,100 @@ class Workspace(Metadata):
     risk_history_avg = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
 
     credential_count = _make_generic_count_property('workspace', 'credential')
-    host_count = _make_generic_count_property('workspace', 'host')
-    open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
-    total_service_count = _make_generic_count_property('workspace', 'service')
+    last_run_agent_date = query_expression()
 
     # Stats
-    # By vuln type
-    vulnerability_web_count = query_expression(literal(0))
-    vulnerability_code_count = query_expression(literal(0))
-    vulnerability_standard_count = query_expression(literal(0))
-    # By vuln status
-    vulnerability_open_count = query_expression(literal(0))
-    vulnerability_re_opened_count = query_expression(literal(0))
-    vulnerability_risk_accepted_count = query_expression(literal(0))
-    vulnerability_closed_count = query_expression(literal(0))
-    # By other
-    vulnerability_confirmed_count = query_expression(literal(0))
-    last_run_agent_date = query_expression()
-    vulnerability_total_count = query_expression(literal(0))
 
-    vulnerability_high_count = query_expression(literal(0))
-    vulnerability_critical_count = query_expression(literal(0))
-    vulnerability_medium_count = query_expression(literal(0))
-    vulnerability_low_count = query_expression(literal(0))
-    vulnerability_informational_count = query_expression(literal(0))
-    vulnerability_unclassified_count = query_expression(literal(0))
+    host_count = Column(Integer, nullable=False, default=0)
+    host_confirmed_count = Column(Integer, nullable=False, default=0)
+    host_notclosed_count = Column(Integer, nullable=False, default=0)
+    host_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    open_service_count = Column(Integer, nullable=False, default=0)
+    total_service_count = Column(Integer, nullable=False, default=0)
+    service_confirmed_count = Column(Integer, nullable=False, default=0)
+    service_notclosed_count = Column(Integer, nullable=False, default=0)
+    service_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by vuln type
+
+    vulnerability_web_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by vuln status
+
+    vulnerability_open_count = Column(Integer, nullable=False, default=0)
+    vulnerability_re_opened_count = Column(Integer, nullable=False, default=0)
+    vulnerability_risk_accepted_count = Column(Integer, nullable=False, default=0)
+    vulnerability_closed_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by dashboard filters
+
+    vulnerability_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_total_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by severity
+
+    vulnerability_high_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed by vuln type
+
+    vulnerability_web_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed by status
+
+    vulnerability_open_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_re_opened_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_risk_accepted_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_closed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed by severity
+
+    vulnerability_high_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Not closed by vuln type
+
+    vulnerability_web_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_notclosed_count = Column(Integer, nullable=False, default=0)
+
+    #  Not closed by severity
+
+    vulnerability_high_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_notclosed_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed and not closed by vuln type:
+
+    vulnerability_web_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    # Confirmed and not closed by severity:
+
+    vulnerability_high_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
 
     importance = Column(Integer, default=0)
 
@@ -3660,6 +3728,11 @@ class UserNotificationSettings(Metadata):
     agents_app = Column(Boolean, default=True)
     agents_email = Column(Boolean, default=False)
     agents_slack = Column(Boolean, default=False)
+
+    analytics_enabled = Column(Boolean, default=True)
+    analytics_app = Column(Boolean, default=True)
+    analytics_email = Column(Boolean, default=False)
+    analytics_slack = Column(Boolean, default=False)
 
     cli_enabled = Column(Boolean, default=True)
     cli_app = Column(Boolean, default=True)

@@ -23,7 +23,10 @@ from faraday.server.models import (
     Vulnerability,
 )
 from faraday.server.utils.workflows import _process_entry
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.debouncer import (debounce_workspace_update,
+                                      debounce_workspace_vulns_count_update,
+                                      debounce_workspace_host_count,
+                                      debounce_workspace_service_count)
 
 logger = get_task_logger(__name__)
 
@@ -66,9 +69,12 @@ def on_success_process_report_task(results, command_id=None):
 
     logger.debug("No pipelines found in ws %s", command.workspace.name)
 
+    host_ids = []
     for result in results:
         if result['created']:
             calc_vulnerability_stats.delay(result['host_id'])
+            host_ids.append(result["host_id"])
+    update_host_stats.delay(host_ids, [], workspace_id=workspace.id)
 
 
 @celery.task()
@@ -168,17 +174,30 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
 
 @celery.task()
-def update_host_stats(hosts: List, services: List) -> None:
+def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False) -> None:
     all_hosts = set(hosts)
     services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
     for host_id in services_host_id:
         all_hosts.add(host_id[0])
     for host in all_hosts:
         # stat calc
-        if faraday_server.celery_enabled:
+        if faraday_server.celery_enabled and not sync:
             calc_vulnerability_stats.delay(host)
         else:
             calc_vulnerability_stats(host)
+    if workspace_id:
+        debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
+        debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)
+        debounce_workspace_service_count(workspace_id=workspace_id, debouncer=debouncer)
+    elif workspace_name:
+        debounce_workspace_vulns_count_update(workspace_name=workspace_name, debouncer=debouncer)
+        debounce_workspace_host_count(workspace_name=workspace_name, debouncer=debouncer)
+        debounce_workspace_service_count(workspace_name=workspace_name, debouncer=debouncer)
+    elif workspace_ids:
+        for workspace_id in workspace_ids:
+            debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
+            debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)
+            debounce_workspace_service_count(workspace_id=workspace_id, debouncer=debouncer)
 
 
 @celery.task()

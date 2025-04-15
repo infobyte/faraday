@@ -26,7 +26,8 @@ from faraday.server.utils.workflows import _process_entry
 from faraday.server.debouncer import (debounce_workspace_update,
                                       debounce_workspace_vulns_count_update,
                                       debounce_workspace_host_count,
-                                      debounce_workspace_service_count)
+                                      debounce_workspace_service_count, update_workspace_vulns_count,
+                                      update_workspace_host_count, update_workspace_service_count)
 
 logger = get_task_logger(__name__)
 
@@ -47,6 +48,15 @@ def on_success_process_report_task(results, command_id=None):
     command.end_date = command_end_date
     logger.error("File for command id %s successfully imported", command_id)
     db.session.commit()
+    host_ids = []
+    for result in results:
+        if result['created']:
+            calc_vulnerability_stats.delay(result['host_id'])
+            host_ids.append(result["host_id"])
+    no_debounce = False
+    if command.import_source == "report":
+        no_debounce = True
+    update_host_stats.delay(host_ids, [], workspace_id=workspace.id, no_debounce=no_debounce)
 
     # Apply Workflow
     pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
@@ -68,13 +78,6 @@ def on_success_process_report_task(results, command_id=None):
             workflow_task.delay("host", host_object_ids, command.workspace.id, update_hosts=False)
 
     logger.debug("No pipelines found in ws %s", command.workspace.name)
-
-    host_ids = []
-    for result in results:
-        if result['created']:
-            calc_vulnerability_stats.delay(result['host_id'])
-            host_ids.append(result["host_id"])
-    update_host_stats.delay(host_ids, [], workspace_id=workspace.id)
 
 
 @celery.task()
@@ -174,7 +177,7 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
 
 @celery.task()
-def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False) -> None:
+def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False, no_debounce: bool = None) -> None:
     all_hosts = set(hosts)
     services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
     for host_id in services_host_id:
@@ -185,6 +188,11 @@ def update_host_stats(hosts: List, services: List, workspace_name: str = None, w
             calc_vulnerability_stats.delay(host)
         else:
             calc_vulnerability_stats(host)
+    if no_debounce:
+        update_workspace_vulns_count(workspace_id=workspace_id)
+        update_workspace_host_count(workspace_id=workspace_id)
+        update_workspace_service_count(workspace_id=workspace_id)
+        return
     if workspace_id:
         debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
         debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)

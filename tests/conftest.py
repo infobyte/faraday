@@ -104,7 +104,10 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def app(request):
-    rand_db = create_random_db()
+    db_user = os.getenv("POSTGRES_USER")
+    db_password = os.getenv("POSTGRES_PASSWORD")
+
+    rand_db = create_random_db(db_user, db_password)
     logging.warning("\n creating db " + str(rand_db) + "\n")
     db_user = os.getenv("POSTGRES_USER")
     db_password = os.getenv("POSTGRES_PASSWORD")
@@ -122,7 +125,7 @@ def app(request):
         ctx.pop()
         sleep(10)
         logging.warning("\n dropping db " + str(rand_db) + "\n")
-        # drop_database(rand_db)
+        drop_database(rand_db, db_user, db_password)
 
     request.addfinalizer(teardown)
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
@@ -367,13 +370,10 @@ def csrf_token(logged_user, test_client):
     return session_response.json.get('csrf_token')
 
 
-def get_cursor():
+def get_cursor(db_user: str, db_password: str):
     """
     Gets a psycopg2 cursor for the parent Database
     """
-    db_user = os.getenv("POSTGRES_USER")
-    db_password = os.getenv("POSTGRES_PASSWORD")
-
     conn = psycopg2.connect(
         dbname="postgres",
         user=db_user,
@@ -386,8 +386,8 @@ def get_cursor():
     return conn.cursor()
 
 
-def create_database(db_name: str):
-    cur = get_cursor()
+def create_database(db_name: str, db_user: str, db_password: str):
+    cur = get_cursor(db_user, db_password)
 
     cur.execute(
         SQL(
@@ -396,13 +396,13 @@ def create_database(db_name: str):
     )
     cur.execute(
         SQL(
-            f"grant all privileges on database {db_name} to postgres;"
+            f"grant all privileges on database {db_name} to {db_user};"
         )
     )
 
 
-def drop_database(db_name: str):
-    cur = get_cursor()
+def drop_database(db_name: str, db_user: str, db_password: str):
+    cur = get_cursor(db_user, db_password)
 
     cur.execute(
         SQL(
@@ -411,13 +411,13 @@ def drop_database(db_name: str):
     )
 
 
-def create_random_db():
+def create_random_db(db_user, db_password):
     time_str = "".join(str(time()).split("."))
     random.seed()
     pref = random.randint(1111, 9999)
 
     random_db = "project_test_" + "_".join([time_str, str(pref)])
-    create_database(random_db)
+    create_database(random_db, db_user, db_password)
 
     return random_db
 

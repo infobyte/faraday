@@ -427,10 +427,3 @@ def create_random_db(db_user, db_password, db_host):
     create_database(random_db, db_user, db_password, db_host)
 
     return random_db
-
-
-@pytest.fixture(autouse=True)
-def patch_debounce_workspace_update():
-    with mocker.patch("faraday.server.api.modules.vulnerability.debounce_workspace_update") as mock_debounce:
-        mock_debounce.return_value = None
-        yield

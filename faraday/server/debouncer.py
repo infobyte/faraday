@@ -1,5 +1,4 @@
 # pylint: disable=R1719,C0415
-import os
 import time
 from threading import Timer
 from datetime import datetime

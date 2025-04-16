@@ -151,6 +151,16 @@ class CredentialView(ReadWriteWorkspacedView,
                 try:
                     owned = False
 
+                    # Handle empty username and password
+                    username = row.get('username')
+                    password = row.get('password')
+                    if username is None or username.strip() == '':
+                        errors.append("Username cannot be empty")
+                        continue
+                    if password is None or password.strip() == '':
+                        errors.append(f"Password cannot be empty for username {username}")
+                        continue
+
                     # Handle empty leak_date
                     leak_date = row.get('leak_date')
                     leak_date = None if leak_date is None or leak_date.strip() == '' else leak_date

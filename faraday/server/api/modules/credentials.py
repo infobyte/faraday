@@ -156,9 +156,11 @@ class CredentialView(ReadWriteWorkspacedView,
                     password = row.get('password')
                     if username is None or username.strip() == '':
                         errors.append("Username cannot be empty")
+                        skipped_credentials += 1
                         continue
                     if password is None or password.strip() == '':
                         errors.append(f"Password cannot be empty for username {username}")
+                        skipped_credentials += 1
                         continue
 
                     # Handle empty leak_date

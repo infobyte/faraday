@@ -2218,8 +2218,8 @@ class PolicyViolation(Metadata):
 class Credential(Metadata):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
-    password = Column(Text)
-    username = Column(Text)
+    password = NonBlankColumn(Text, nullable=False)
+    username = NonBlankColumn(Text, nullable=False)
     endpoint = Column(Text, default='')
     leak_date = Column(DateTime)
     owned = Column(Boolean, default=False)

@@ -23,7 +23,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False, autoincrement=True, primary_key=True),
     sa.Column('password', sa.Text(), nullable=False),
     sa.Column('username', sa.Text(), nullable=False),
-    sa.Column('endpoint', sa.Text(), nullable=False, default=''),
+    sa.Column('endpoint', sa.Text(), nullable=False, server_default=''),
     sa.Column('leak_date', sa.DateTime(), nullable=True),
     sa.Column('owned', sa.Boolean(), nullable=False, server_default='false'),
     sa.Column('workspace_id', sa.Integer(), nullable=False),
@@ -35,7 +35,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['update_user_id'], ['faraday_user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspace.id'], ondelete='CASCADE'),
     sa.UniqueConstraint('username', 'password', 'endpoint', 'workspace_id',
-                        name='uix_credential_username_password_endpoint_workspace')
+                        name='uix_credential_username_password_endpoint_workspace'),
+    sa.CheckConstraint("username != ''", name="check_username_not_empty"),
+    sa.CheckConstraint("password != ''", name="check_password_not_empty")
     )
 
     op.create_index('ix_credential_leak_date', 'credential', ['leak_date'])

@@ -151,12 +151,16 @@ class CredentialView(ReadWriteWorkspacedView,
                 try:
                     owned = False
 
+                    # Handle empty leak_date
+                    leak_date = row.get('leak_date')
+                    leak_date = None if leak_date is None or leak_date.strip() == '' else leak_date
+
                     credential = Credential(
                         username=row['username'],
                         password=row['password'],
                         endpoint=row['endpoint'],
                         owned=owned,
-                        leak_date=row['leak_date'] if 'leak_date' in row else None,
+                        leak_date=leak_date,
                         workspace=workspace
                     )
 

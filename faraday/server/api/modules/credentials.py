@@ -33,8 +33,8 @@ credentials_api = Blueprint('credentials_api', __name__)
 
 class CredentialSchema(AutoSchema):
     owned = fields.Boolean(default=False)
-    username = fields.String(required=True)
-    password = fields.String(required=True)
+    username = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    password = fields.String(required=True, validate=lambda s: bool(s.strip()))
     endpoint = fields.String(required=True)
     leak_date = fields.DateTime(allow_none=True)
 

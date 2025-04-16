@@ -49,7 +49,7 @@ pylint:
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir -p faraday/frontend/www && touch faraday/frontend/www/index.html
         - mkdir run_from
-        - nix-shell --command "cd run_from && pytest ../tests -n 4 --dist loadfile -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB"
+        - nix-shell --command "cd run_from && pytest ../tests -n auto --dist loadfile -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB"
     artifacts:
         when: on_failure
         paths:

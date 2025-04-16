@@ -427,20 +427,3 @@ def create_random_db(db_user, db_password, db_host):
     create_database(random_db, db_user, db_password, db_host)
 
     return random_db
-
-
-# @pytest.fixture(scope="session", autouse=True)
-# def use_random_db(request):
-#     """
-#     Forces each parallell worker to generate and use their own random DB.
-#     This is the key to letting us test in parallell!
-#     """
-#     rand_db = create_random_db()
-#     test_helpers.random_db_name = rand_db
-#     logging.warning("\n creating db " + str(rand_db) + "\n")
-#
-#     def after_all_worker_tests():
-#         logging.warning("\n dropping db " + str(rand_db) + "\n")
-#         drop_database(rand_db)
-#
-#     request.addfinalizer(after_all_worker_tests)

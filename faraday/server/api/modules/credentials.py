@@ -189,6 +189,7 @@ class CredentialView(ReadWriteWorkspacedView,
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
                 except Exception as e:
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
+                    skipped_credentials += 1
 
             return make_response({
                 "message": f"CSV imported successfully - Created: {created_credentials} credentials, Skipped: {skipped_credentials} credentials",

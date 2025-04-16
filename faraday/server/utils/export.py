@@ -116,7 +116,7 @@ def export_credentials_to_csv(credentials):
             'username': credential.get("username"),
             'password': credential.get("password"),
             'endpoint': credential.get("endpoint"),
-            'leak_date': credential.get("leak_date"),
+            'leak_date': credential.get("leak_date") if "leak_date" in credential else "",
         }
         writer.writerow(row)
 

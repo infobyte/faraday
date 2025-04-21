@@ -305,14 +305,21 @@ def _create_host(ws, host_data, command: dict):
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services', [])
     _vulns = host_data.pop('vulnerabilities', [])
+    # Remove credentials if any
+    host_data.pop('credentials', [])
 
     created_updated_count = {'created': 0, 'updated': 0, 'host_id': None}
 
+    host = None
     try:
         created, host = get_or_create(ws, Host, host_data)
         created_updated_count['host_id'] = host.id
     except Exception as e:
         logger.exception("Could not create host %s", host_data['ip'], exc_info=e)
+
+    if not host:
+        logger.error("Failed host creation/retrieval")
+        abort(400)
 
     for name in set(hostnames).difference(set(map(lambda x: x.name, host.hostnames))):
         db.session.add(Hostname(name=name, host=host, workspace=ws))
@@ -581,6 +588,8 @@ def _create_service(ws, host, service_data, command: dict):
     _vulns = service_data.pop('vulnerabilities', [])
     service_data['host'] = host
     created_updated_count = {'created': 0, 'updated': 0}
+    # Remove credentials if any
+    service_data.pop('credentials', [])
 
     created, service = get_or_create(ws, Service, service_data)
 

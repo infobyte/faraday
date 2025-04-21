@@ -410,11 +410,11 @@ class VulnerabilityTemplateFactory(FaradayFactory):
         return ret
 
 
-class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
+class CredentialFactory(WorkspaceObjectFactory):
     username = FuzzyText()
     password = FuzzyText()
     endpoint = FuzzyText()
-    leak_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
+    leak_date = factory.LazyFunction(lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
     class Meta:
         model = Credential

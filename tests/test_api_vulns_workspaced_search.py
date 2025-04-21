@@ -1,44 +1,42 @@
-from os.path import join
-import datetime
 import json
+import datetime
 from io import BytesIO
 
 import pytest
 
-from tests.factories import WorkspaceFactory, HostFactory, HostnameFactory, VulnerabilityFactory, ServiceFactory, \
-    VulnerabilityWebFactory
+from tests.factories import (
+    HostFactory,
+    HostnameFactory,
+    ServiceFactory,
+    VulnerabilityFactory,
+    VulnerabilityWebFactory,
+    WorkspaceFactory,
+)
+from faraday.server.models import File
 
 
 @pytest.mark.usefixtures('logged_user')
 class TestVulnerabilitySearch:
 
-    def url(self, obj=None):
-        url = 'v3/vulns'
-        if obj is not None:
-            id_ = str(getattr(obj, self.lookup_field)) if isinstance(
-                obj, self.model) else str(obj)
-            url = join(url, id_)
-        return url
-
     @pytest.mark.skip_sql_dialect('sqlite')
     @pytest.mark.skip(reason="We need a better solution for searching by hostnames.")
     def test_search_by_hostname_vulns(self, test_client, session):
         workspace = WorkspaceFactory.create()
-        host = HostFactory.create(workspace=workspace)
-        host.hostnames.append(HostnameFactory.create(name='pepe', workspace=workspace))
-        vuln = VulnerabilityFactory.create(host=host, service=None, workspace=workspace)
-        session.add(vuln)
-        session.add(host)
+        host = HostFactory.create_batch(10, workspace=workspace)
+        # host.hostnames.append(HostnameFactory.create(name='pepe', workspace=workspace))
+        vuln = VulnerabilityFactory.create(host=host[0], service=None, workspace=workspace)
+        vuln2 = VulnerabilityFactory.create(host=host[1], service=None, workspace=workspace)
+        session.add_all([vuln, vuln2])
+        session.add_all(host)
         session.commit()
+        session.refresh(vuln)
+        session.refresh(vuln2)
 
         query_filter = {"filters":
                             [{"name": "hostnames", "op": "eq", "val": "pepe"}]
                         }
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -55,21 +53,19 @@ class TestVulnerabilitySearch:
         session.add(vuln)
         session.add(host)
         session.commit()
+        session.refresh(vuln)
 
         query_filter = {"filters":
                             [{"name": "hostnames", "op": "eq", "val": "pepe"}]
                         }
-
         res = test_client.get(
-            self.url(),
-            query_string=json.dumps(query_filter)
+            f'/v3/ws/{workspace.name}/vulns?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
         assert res.json['vulnerabilities'][0]['id'] == vuln.id
 
     @pytest.mark.skip_sql_dialect('sqlite')
-    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.skip(reason="We need a better solution for searching by hostnames.")
     def test_search_hostname_web_vulns(self, test_client, session):
         workspace = WorkspaceFactory.create()
@@ -80,15 +76,13 @@ class TestVulnerabilitySearch:
         session.add(vuln)
         session.add(host)
         session.commit()
+        session.refresh(vuln)
 
         query_filter = {"filters":
                             [{"name": "hostnames", "op": "eq", "val": "pepe"}]
                         }
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -99,10 +93,7 @@ class TestVulnerabilitySearch:
                             []
                         }
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 0
@@ -112,11 +103,9 @@ class TestVulnerabilitySearch:
                             [{"name": "code", "op": "eq", "val": "test"}]
                         }
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
+
         assert res.status_code == 400, res.json
 
     @pytest.mark.skip_sql_dialect('sqlite')
@@ -133,10 +122,7 @@ class TestVulnerabilitySearch:
             {"and": [{"name": "hostnames", "op": "eq", "val": "pepe"}]}
         ]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -168,10 +154,7 @@ class TestVulnerabilitySearch:
                 "offset": offset * 10,
             }
             res = test_client.get(
-                join(
-                    self.url(),
-                    f'filter?q={json.dumps(query_filter)}'
-                )
+                f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
             )
             assert res.status_code == 200
             assert res.json['count'] == 20, query_filter
@@ -201,10 +184,7 @@ class TestVulnerabilitySearch:
                 "offset": 10 * offset,
             }
             res = test_client.get(
-                join(
-                    self.url(),
-                    f'filter?q={json.dumps(query_filter)}'
-                )
+                f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
             )
             assert res.status_code == 200
             assert res.json['count'] == 100
@@ -243,10 +223,7 @@ class TestVulnerabilitySearch:
                 "offset": offset,
             }
             res = test_client.get(
-                join(
-                    self.url(),
-                    f'filter?q={json.dumps(query_filter)}'
-                )
+                f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
             )
             assert res.status_code == 200
             assert res.json['count'] == 10
@@ -254,7 +231,7 @@ class TestVulnerabilitySearch:
 
         assert expected_vulns == paginated_vulns
 
-    def test_vuln_get_limit_context(self, test_client, session):
+    def test_vuln_get_limit(self, test_client, session):
 
         # Change setting
         test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 25})
@@ -269,7 +246,7 @@ class TestVulnerabilitySearch:
         session.add(host)
         session.commit()
 
-        res = test_client.get('/v3/vulns')
+        res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
 
         assert res.status_code == 200
         assert res.json['count'] == 50
@@ -280,7 +257,7 @@ class TestVulnerabilitySearch:
         [None, 25],
         ["100", 25]
     ])
-    def test_vuln_filter_limit_context(self, test_client, session, limit):
+    def test_vuln_filter_limit(self, test_client, session, limit):
 
         # Change setting
         test_client.patch('/v3/settings/query_limits', data={"vuln_query_limit": 25})
@@ -304,7 +281,7 @@ class TestVulnerabilitySearch:
                 "offset": "1",
             }
         res = test_client.get(
-            f'/v3/vulns/filter?q={json.dumps(query_filter)}'
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 50
@@ -341,10 +318,7 @@ class TestVulnerabilitySearch:
             {"name": "host__os", "op": "has", "val": "Linux"}
         ]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 1
@@ -392,10 +366,7 @@ class TestVulnerabilitySearch:
             {"name": "create_date", "op": "eq", "val": vuln.create_date.strftime("%Y-%m-%d")}
         ]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 3
@@ -410,10 +381,7 @@ class TestVulnerabilitySearch:
             {"name": "create_date", "op": "eq", "val": "30/01/2020"}
         ]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -422,10 +390,7 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'host_id', 'op': 'not_in',
                                      'val': '\U0010a1a7\U00093553\U000eb46a\x1e\x10\r\x18%\U0005ddfa0\x05\U000fdeba\x08\x04絮'}]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -433,10 +398,7 @@ class TestVulnerabilitySearch:
     def test_search_hypothesis_test_found_case_2(self, test_client, session, workspace):
         query_filter = {'filters': [{'name': 'host__os', 'op': 'ilike', 'val': -1915870387}]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -448,10 +410,7 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_3(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -463,10 +422,7 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_4(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -478,10 +434,7 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_5(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -489,10 +442,7 @@ class TestVulnerabilitySearch:
     def test_search_hypothesis_test_found_case_6(self, test_client, session, workspace):
         query_filter = {'filters': [{'name': 'resolution', 'op': '==', 'val': ''}]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
 
@@ -502,10 +452,7 @@ class TestVulnerabilitySearch:
             {'name': 'name', 'op': '>', 'val': '\U0004e755\U0007a789\U000e02d1\U000b3d32\x10\U000ad0e2,\x05\x1a'},
             {'name': 'creator', 'op': 'eq', 'val': 21883}]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -516,10 +463,7 @@ class TestVulnerabilitySearch:
     ])
     def test_search_hypothesis_test_found_case_7_valid(self, query_filter, test_client, session, workspace):
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
 
@@ -527,10 +471,7 @@ class TestVulnerabilitySearch:
     def test_search_hypothesis_test_found_case_8(self, test_client, session, workspace):
         query_filter = {'filters': [{'name': 'hostnames', 'op': '==', 'val': ''}]}
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
 
@@ -540,10 +481,7 @@ class TestVulnerabilitySearch:
                                      'val': '0\x00\U00034383$\x13-\U000375fb\U0007add2\x01\x01\U0010c23a'}]}
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -552,10 +490,7 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'impact_integrity', 'op': 'neq', 'val': 0}]}
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -564,10 +499,7 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'host_id', 'op': 'like', 'val': '0'}]}
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -577,10 +509,7 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'custom_fields', 'op': 'like', 'val': ''}]}
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -589,10 +518,7 @@ class TestVulnerabilitySearch:
         query_filter = {'filters': [{'name': 'impact_accountability', 'op': 'ilike', 'val': '0'}]}
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -606,19 +532,10 @@ class TestVulnerabilitySearch:
         session.add_all(vulns_web)
         session.add_all(vulns)
         session.commit()
-        query_filter = {
-            'filters':
-                [
-                    {'name': 'severity', 'op': 'eq', 'val': 'high'},
-                    {"name": "workspace", "op": "has", "val": {"name": "name", "op": "eq", "val": workspace.name}}
-                ]
-        }
+        query_filter = {'filters': [{'name': 'severity', 'op': 'eq', 'val': 'high'}]}
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 20
@@ -641,10 +558,7 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 400
 
@@ -657,10 +571,7 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
 
@@ -685,10 +596,7 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         expected_order = sort_order["expected"]
@@ -712,10 +620,7 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         expected_order = ['critical', 'high', 'med', 'low']
@@ -730,10 +635,7 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         expected_order = ['low', 'med', 'high', 'critical']
@@ -774,16 +676,13 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.get(
-            join(
-                self.url(),
-                f'filter?q={json.dumps(query_filter)}'
-            )
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
         assert res.status_code == 200
         assert res.json['count'] == 100
 
-    def test_add_evidence_with_description(self, test_client, session, csrf_token):
-        vuln = VulnerabilityFactory.create()
+    def test_add_evidence_with_description(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)
         session.commit()
 
@@ -795,17 +694,78 @@ class TestVulnerabilitySearch:
         }
 
         res = test_client.post(
-            f'/v3/vulns/{vuln.id}/attachment',
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
             data=data,
             use_json_data=False
         )
         assert res.status_code == 200
 
         # Get vulnerability created
-        res = test_client.get(f'/v3/vulns/{vuln.id}/attachment')
+        res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment')
         assert res.status_code == 200
         attachments_json = res.json
 
         attachment = attachments_json['testing_description.txt']
 
         assert attachment['description'] == 'Attachment description'
+
+    def test_patch_attachment_description(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        patch_data = {'description': 'Updated attachment description'}
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/testing_description.txt',
+            json=patch_data,
+        )
+
+        assert res.status_code == 200
+
+        updated_attachment = session.query(File).filter_by(
+            object_type='vulnerability',
+            object_id=vuln.id,
+            filename='testing_description.txt'
+        ).one()
+        assert updated_attachment.description == 'Updated attachment description'
+
+    def test_patch_attachment_description_bad_body(self, test_client, session, workspace, csrf_token):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+        session.commit()
+
+        file_contents = b'Testing attachment with description'
+        data = {
+            'file': (BytesIO(file_contents), 'testing_description.txt'),
+            'csrf_token': csrf_token,
+            'description': 'Attachment description'
+        }
+
+        res = test_client.post(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment',
+            data=data,
+            use_json_data=False
+        )
+        assert res.status_code == 200
+
+        patch_data = {'descriptions': 'Updated attachment description'}
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}/attachment/testing_description.txt',
+            json=patch_data,
+        )
+
+        assert res.status_code == 400

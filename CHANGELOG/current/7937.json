@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Calculate stats as soon as file reports are uploaded. #7937"
+}

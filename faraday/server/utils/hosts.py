@@ -3,7 +3,6 @@ SCHEMA_FIELDS = (
     "_id",
     "_rev",
     "command_id",
-    "credentials",
     "default_gateway",
     "description",
     "hostnames",

@@ -233,5 +233,9 @@ class CredentialView(ReadWriteWorkspacedView,
 
         return self._envelope_list(filtered_creds, pagination_metadata)
 
+    def _get_base_query(self, workspace_name):
+        base_query = super()._get_base_query(workspace_name)
+        return base_query.options(db.joinedload('vulnerabilities'))
+
 
 CredentialView.register(credentials_api)

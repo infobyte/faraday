@@ -173,19 +173,8 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
 @celery.task()
 def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False, no_debounce: bool = None, command_id: int = None) -> None:
-    all_hosts = set(hosts)
-    services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
     start_time = datetime.utcnow()
-    for host_id in services_host_id:
-        all_hosts.add(host_id[0])
-    if not no_debounce:  # For reports, we dont need to calculate these stats because they are already calculated.
-        for host in all_hosts:
-            # stat calc
-            if faraday_server.celery_enabled and not sync:
-                calc_vulnerability_stats.delay(host)
-            else:
-                calc_vulnerability_stats(host)
-    else:
+    if no_debounce:  # For reports, we don't need to calculate host stats because they are already calculated.
         update_workspace_vulns_count(workspace_id=workspace_id)
         update_workspace_host_count(workspace_id=workspace_id)
         update_workspace_service_count(workspace_id=workspace_id)
@@ -197,6 +186,17 @@ def update_host_stats(hosts: List, services: List, workspace_name: str = None, w
             })
             db.session.commit()
         return
+
+    all_hosts = set(hosts)
+    services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
+    for host_id in services_host_id:
+        all_hosts.add(host_id[0])
+        for host in all_hosts:
+            # stat calc
+            if faraday_server.celery_enabled and not sync:
+                calc_vulnerability_stats.delay(host)
+            else:
+                calc_vulnerability_stats(host)
     if workspace_id:
         debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
         debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)
@@ -210,6 +210,11 @@ def update_host_stats(hosts: List, services: List, workspace_name: str = None, w
             debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
             debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)
             debounce_workspace_service_count(workspace_id=workspace_id, debouncer=debouncer)
+    if command_id:
+        db.session.query(Command).filter(Command.id == command_id).update({
+            Command.end_date: datetime.utcnow()
+        })
+        db.session.commit()
 
 
 @celery.task()

@@ -104,6 +104,24 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert len(res.json['vulnerabilities']) == 1
         assert res.json['vulnerabilities'][0]['_id'] == vuln.id
 
+    def test_credential_link_to_vulnerability_different_workspace(self, test_client, workspace, session, second_workspace):
+        vuln = VulnerabilityFactory.create(workspace=second_workspace)
+        session.commit()
+
+        credential_data = {
+            'username': 'crosswsuser',
+            'password': 'crosswspass',
+            'endpoint': 'crossws.example.com',
+            'owned': True,
+            'workspace': workspace.name,
+            'vulnerabilities': [vuln.id]
+        }
+
+        res = test_client.post(self.url(workspace=workspace), data=credential_data)
+
+        assert res.status_code == 201
+        assert len(res.json['vulnerabilities']) == 0
+
     def test_envelope_list(self, test_client, workspace, session):
         credentials = CredentialFactory.create_batch(5, workspace=workspace)
         session.add_all(credentials)
@@ -137,6 +155,24 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.json['username'] == 'updated_user'
         assert res.json['password'] == 'updated_pass'
         assert res.json['endpoint'] == 'updated.example.com'
+
+    def test_update_credential_with_vulnerability_different_workspace(self, test_client, workspace, session, second_workspace):
+        credential = CredentialFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=second_workspace)
+        session.add(credential)
+        session.commit()
+
+        data = {
+            'username': 'updated_user',
+            'password': 'updated_pass',
+            'endpoint': 'updated.example.com',
+            'vulnerabilities': [vuln.id]
+        }
+
+        res = test_client.put(self.url(workspace=workspace) + f"/{credential.id}", data=data)
+
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 0
 
     def test_patch_credential_vulnerabilities(self, test_client, workspace, session):
         # Create initial vulnerabilities
@@ -187,6 +223,47 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         res = test_client.patch(self.url(workspace=workspace) + f"/{credential.id}", data=patch_data)
         assert res.status_code == 200
         assert len(res.json['vulnerabilities']) == 0
+
+    def test_patch_credential_with_mixed_workspace_vulnerabilities(self, test_client, workspace, session, second_workspace):
+        vuln1 = VulnerabilityFactory.create(workspace=workspace)
+        vuln2 = VulnerabilityFactory.create(workspace=second_workspace)
+        session.commit()
+
+        credential = CredentialFactory.create(workspace=workspace)
+        session.add(credential)
+        session.commit()
+
+        patch_data = {
+            'vulnerabilities': [vuln1.id, vuln2.id]
+        }
+
+        res = test_client.patch(self.url(workspace=workspace) + f"/{credential.id}", data=patch_data)
+
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 1
+        assert res.json['vulnerabilities'][0]['_id'] == vuln1.id
+
+    def test_bulk_update_with_cross_workspace_vulnerabilities(self, test_client, workspace, session, second_workspace):
+        credential1 = CredentialFactory.create(workspace=workspace)
+        credential2 = CredentialFactory.create(workspace=workspace)
+        vuln1 = VulnerabilityFactory.create(workspace=workspace)
+        vuln2 = VulnerabilityFactory.create(workspace=second_workspace)
+        session.add_all([credential1, credential2, vuln1, vuln2])
+        session.commit()
+
+        data = {
+            'ids': [credential1.id, credential2.id],
+            'vulnerabilities': [vuln1.id, vuln2.id]
+        }
+
+        res = test_client.patch(self.url(workspace=workspace), data=data)
+
+        assert res.status_code == 200
+
+        # Verify that only vuln1 was associated with credentials
+        cred = Credential.query.get(credential1.id)
+        assert len(cred.vulnerabilities) == 1
+        assert cred.vulnerabilities[0].id == vuln1.id
 
     def test_unique_constraint(self, test_client, workspace):
         # Create a credential

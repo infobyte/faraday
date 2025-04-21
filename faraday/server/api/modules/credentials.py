@@ -88,10 +88,24 @@ class CredentialView(ReadWriteWorkspacedView,
     def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
         if "vulnerabilities" in extracted_data:
             vulns = extracted_data.pop("vulnerabilities")
+            workspace = get_workspace(workspace_name)
+
+            if vulns:
+                valid_vulns = []
+                for vuln in vulns:
+                    if vuln.workspace_id == workspace.id:
+                        valid_vulns.append(vuln)
+
+                vulns = valid_vulns
+
             for credential_id in ids:
                 credential = db.session.query(Credential).get(credential_id)
                 if not credential:
                     continue
+
+                if credential.workspace_id != workspace.id:
+                    continue
+
                 if vulns:
                     credential.vulnerabilities = vulns
                 else:
@@ -100,6 +114,50 @@ class CredentialView(ReadWriteWorkspacedView,
             db.session.commit()
 
         return super()._post_bulk_update(ids, extracted_data, workspace_name, data, **kwargs)
+
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
+        vulns = None
+        if "vulnerabilities" in data:
+            vulns = data.pop("vulnerabilities")
+            workspace = get_workspace(workspace_name)
+
+            if vulns:
+                valid_vulns = []
+                for vuln in vulns:
+                    if vuln.workspace_id == workspace.id:
+                        valid_vulns.append(vuln)
+
+                vulns = valid_vulns
+
+        obj = super()._perform_update(object_id, obj, data, workspace_name, partial)
+
+        if vulns is not None:
+            obj.vulnerabilities = vulns
+            db.session.commit()
+
+        return obj
+
+    def _perform_create(self, data, workspace_name=None):
+        vulns = None
+        if "vulnerabilities" in data:
+            vulns = data.pop("vulnerabilities")
+            workspace = get_workspace(workspace_name)
+
+            if vulns:
+                valid_vulns = []
+                for vuln in vulns:
+                    if vuln.workspace_id == workspace.id:
+                        valid_vulns.append(vuln)
+
+                vulns = valid_vulns
+
+        obj = super()._perform_create(data, workspace_name)
+
+        if vulns is not None:
+            obj.vulnerabilities = vulns
+            db.session.commit()
+
+        return obj
 
     @route('/import_csv', methods=['POST'])
     def import_csv(self, workspace_name):

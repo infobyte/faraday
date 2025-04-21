@@ -92,10 +92,11 @@ class CredentialView(ReadWriteWorkspacedView,
                 credential = db.session.query(Credential).get(credential_id)
                 if not credential:
                     continue
-                for vuln in vulns:
-                    if vuln not in credential.vulnerabilities:
-                        credential.vulnerabilities.append(vuln)
-                        db.session.add(credential)
+                if vulns:
+                    credential.vulnerabilities = vulns
+                else:
+                    credential.vulnerabilities = []
+                db.session.add(credential)
             db.session.commit()
 
         return super()._post_bulk_update(ids, extracted_data, workspace_name, data, **kwargs)

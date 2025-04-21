@@ -140,7 +140,8 @@ class CredentialView(ReadWriteWorkspacedView,
             workspace = get_workspace(workspace_name)
 
             vulns = db.session.query(VulnerabilityGeneric).filter(
-                VulnerabilityGeneric.id.in_(vulns_ids)
+                VulnerabilityGeneric.id.in_(vulns_ids),
+                VulnerabilityGeneric.workspace_id == workspace.id
             ).all() if vulns_ids else []
 
             skipped_credentials = 0

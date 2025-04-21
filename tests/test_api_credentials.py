@@ -319,6 +319,40 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert creds[6].vulnerabilities[0].id == vuln.id
         assert len(creds) == 7
 
+    def test_bulk_create_credentials_from_csv_with_vulns_ids_diff_ws(self, test_client, workspace, session, csrf_token, second_workspace):
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        vuln2 = VulnerabilityFactory.create(workspace=second_workspace)
+        session.add(vuln)
+        session.add(vuln2)
+        session.commit()
+        # Get the CSV file path
+        path = TEST_DATA_PATH / "credential_test_success.csv"
+
+        with path.open('r') as csv_file:
+            file_contents = csv_file.read().encode('utf-8')
+
+        data = {
+            'file': (io.BytesIO(file_contents), 'credentials.csv'),
+            'csrf_token': csrf_token,
+            'vulns_ids': f"{vuln.id},{vuln2.id}"
+        }
+
+        res = test_client.post(
+                self.url(workspace=workspace) + '/import_csv',
+                data=data,
+                use_json_data=False
+        )
+
+        assert res.status_code == 201
+        assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials, Skipped: 0 credentials'
+
+        creds = Credential.query.filter_by(workspace=workspace).all()
+        assert creds[5].vulnerabilities[0].id == vuln.id
+        assert creds[6].vulnerabilities[0].id == vuln.id
+        assert len(creds) == 7
+        assert len(vuln2.credentials) == 0
+        assert len(vuln.credentials) == 2
+
     def test_bulk_create_credentials_from_csv_fail_duplicate(self, test_client, workspace, session, csrf_token):
         # Get the CSV file path
         path = TEST_DATA_PATH / "credential_test_fail_duplicate.csv"

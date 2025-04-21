@@ -191,12 +191,12 @@ def update_host_stats(hosts: List, services: List, workspace_name: str = None, w
     services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
     for host_id in services_host_id:
         all_hosts.add(host_id[0])
-        for host in all_hosts:
-            # stat calc
-            if faraday_server.celery_enabled and not sync:
-                calc_vulnerability_stats.delay(host)
-            else:
-                calc_vulnerability_stats(host)
+    for host in all_hosts:
+        # stat calc
+        if faraday_server.celery_enabled and not sync:
+            calc_vulnerability_stats.delay(host)
+        else:
+            calc_vulnerability_stats(host)
     if workspace_id:
         debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
         debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)

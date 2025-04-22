@@ -28,7 +28,12 @@ from faraday.server.api.base import (
     get_workspace,
 )
 from faraday.server.api.modules.services_base import ServiceSchema
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.debouncer import (
+    debounce_workspace_update,
+    debounce_workspace_host_count,
+    debounce_workspace_vulns_count_update,
+    debounce_workspace_service_count,
+)
 from faraday.server.models import Command, CommandObject, Host, Hostname, Service, Workspace, db
 from faraday.server.schemas import (
     MetadataSchema,
@@ -73,7 +78,6 @@ class HostSchema(AutoSchema):
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
     services = fields.Integer(attribute='open_service_count', dump_only=True)
-    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     hostnames = MutableField(
         PrimaryKeyRelatedField('name', many=True,
                                attribute="hostnames",
@@ -152,8 +156,7 @@ class HostView(
 
     schema_class = HostSchema
     filterset_class = HostFilterSet
-    get_undefer = [Host.credentials_count,
-                   Host.open_service_count,
+    get_undefer = [Host.open_service_count,
                    Host.vulnerability_critical_generic_count,
                    Host.vulnerability_high_generic_count,
                    Host.vulnerability_medium_generic_count,
@@ -206,7 +209,7 @@ class HostView(
         kwargs['show_stats'] = request.args.get('stats', '') != 'false'
 
         if not kwargs['show_stats']:
-            kwargs['exclude'] = ['severity_counts', 'vulns', 'credentials', 'services']
+            kwargs['exclude'] = ['severity_counts', 'vulns', 'services']
 
         return super().index(**kwargs)
 
@@ -224,7 +227,6 @@ class HostView(
                 undefer(self.model_class.vulnerability_low_generic_count),
                 undefer(self.model_class.vulnerability_info_generic_count),
                 undefer(self.model_class.vulnerability_unclassified_generic_count),
-                undefer(self.model_class.credentials_count),
                 undefer(self.model_class.open_service_count),
                 joinedload(self.model_class.hostnames),
                 joinedload(self.model_class.services),
@@ -401,9 +403,6 @@ class HostView(
 
     @route('', methods=['DELETE'])
     def bulk_delete(self, **kwargs):
-        workspace_name = kwargs.get('workspace_name')
-        if workspace_name:
-            debounce_workspace_update(workspace_name)
         # TODO REVISE ORIGINAL METHOD TO UPDATE NEW METHOD
         return BulkDeleteMixin.bulk_delete(self, **kwargs)
 
@@ -430,6 +429,9 @@ class HostView(
         response = super()._perform_bulk_delete(values, **kwargs)
         for workspace in workspaces:
             debounce_workspace_update(workspace.name)
+            debounce_workspace_host_count(workspace_id=workspace.id)
+            debounce_workspace_vulns_count_update(workspace_id=workspace.id)
+            debounce_workspace_service_count(workspace_id=workspace.id)
         return response
 
 

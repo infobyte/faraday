@@ -26,7 +26,7 @@ from faraday.server.api.base import (
     get_workspace,
 )
 from faraday.server.api.modules.hosts_base import HostFilterSet, HostView
-from faraday.server.debouncer import debounce_workspace_update
+from faraday.server.debouncer import debounce_workspace_update, debounce_workspace_host_count
 from faraday.server.models import Host, Hostname, Service, db
 from faraday.server.utils.command import set_command_id
 from faraday.server.utils.database import get_or_create
@@ -115,6 +115,7 @@ class HostWorkspacedView(
                     hosts_created_count += 1
             logger.info("Hosts created in bulk")
             debounce_workspace_update(workspace_name)
+            debounce_workspace_host_count(workspace_name=workspace_name)
             return make_response(jsonify(hosts_created=hosts_created_count,
                                          hosts_with_errors=hosts_with_errors_count), HTTP_OK)
         except Exception as e:
@@ -131,8 +132,10 @@ class HostWorkspacedView(
         if command_id:
             set_command_id(db.session, host, True, command_id)
         db.session.commit()
-        if kwargs['workspace_name']:
-            debounce_workspace_update(kwargs['workspace_name'])
+        workspace_name = kwargs.get('workspace_name')
+        if workspace_name:
+            debounce_workspace_update(workspace_name)
+            debounce_workspace_host_count(workspace_name=workspace_name)
         return host
 
     def _update_object(self, obj, data, **kwargs):

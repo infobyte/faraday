@@ -4,6 +4,9 @@ from colorama import Fore
 
 
 def _sync_hosts_stats(async_mode=False):
+    #  TODO: Known issue on community version: async mode does not work,
+    #  so update stats synchronously on community instances
+
     print(f"[{Fore.GREEN}*{Fore.RESET}] Syncing hosts stats ...")
     hosts_id = db.session.query(Host.id).all()
     workspaces_id = db.session.query(Workspace).all()

@@ -15,7 +15,7 @@ WTForms>=2.1
 flask-login>=0.5.0,<0.6.0
 Flask-Security-Too>=4.0.0,<5.0.0
 bleach>=4.1.0,<5.0.0
-marshmallow>=3.19.0
+marshmallow>=3.19.0,<4.0.0
 Pillow>=10.2.0
 psycopg2
 pgcli

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed sync host stats command to update workspaces statistics. #7943"
+}

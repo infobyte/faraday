@@ -188,7 +188,7 @@ def upgrade():
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (146, '{DELETE}', 47);"  # nosec B608
     )
 
-    # Insert rows into the 'role_permission' table for ADMIN role
+    # Insert rows into the 'role_permission' table for the ADMIN role
     op.execute(
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (1, 1, 1, true), (2, 2, 1, true), (3, 3, 1, true), (4, 4, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (5, 5, 1, true), (6, 6, 1, true), (7, 7, 1, true), (8, 8, 1, true);"
@@ -229,7 +229,7 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (571, 145, 1, true), (572, 146, 1, true);"
     )
 
-    # Insert rows into the 'role_permission' table for ASSET OWNER role
+    # Insert rows into the 'role_permission' table for the ASSET OWNER role
     op.execute(
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (123, 1, 2, false), (124, 2, 2, true), (125, 3, 2, true), (126, 4, 2, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (127, 5, 2, false), (128, 6, 2, true), (129, 7, 2, true), (130, 8, 2, true);"
@@ -270,7 +270,7 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (575, 145, 2, false), (576, 146, 2, false);"
     )
 
-    # Insert rows into the 'role_permission' table for PENTESTER role
+    # Insert rows into the 'role_permission' table for the PENTESTER role
     op.execute(
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (245, 1, 3, false), (246, 2, 3, true), (247, 3, 3, true), (248, 4, 3, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (249, 5, 3, false), (250, 6, 3, true), (251, 7, 3, true), (252, 8, 3, true);"
@@ -311,7 +311,7 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (579, 145, 3, true), (580, 146, 3, true);"
     )
 
-    # Insert rows into the 'role_permission' table for CLIENT role
+    # Insert rows into the 'role_permission' table for the CLIENT role
     op.execute(
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (367, 1, 4, false), (368, 2, 4, true), (369, 3, 4, true), (370, 4, 4, false);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (371, 5, 4, false), (372, 6, 4, true), (373, 7, 4, true), (374, 8, 4, true);"

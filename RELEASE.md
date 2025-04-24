@@ -1,6 +1,19 @@
 New features in the latest update
 =====================================
 
+5.13.0 [Apr 24th, 2025]:
+---
+ * [ADD] Added support for vulnerability status changes on report upload. #7903
+ * [ADD] Introduced support for RabbitMQ as a task processing broker. #7866
+ * [ADD] Added filtering to schedulers view. #7857
+ * [ADD] Added Idle Session Timeout feature. #7876
+ * [MOD] Rework the Credential API. #7912
+ * [MOD] Redesigned the Credential Model to work more closely with vulnerabilities. #7911
+ * [FIX] Fixed sync host stats command to update workspaces statistics. #7943
+ * [FIX] Enhanced workspace performance by pre-calculating statistics, reducing the overhead of on-demand calculations during data retrieval. #7780
+ * [FIX] Improved vulnerability count on contextual view. #7901
+ * [FIX] Stats are now calculated automatically upon file report upload. #7937
+
 5.12.0 [Mar 13th, 2025]:
 ---
  * [ADD] Added update in bulk mode for workspaces. #7830

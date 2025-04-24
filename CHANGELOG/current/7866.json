@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "[ADD] Introduced support for RabbitMQ as a task processing broker. #7866"
-}

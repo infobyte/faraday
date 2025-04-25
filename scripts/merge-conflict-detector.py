@@ -76,7 +76,7 @@ def get_current_branch():
 
 def branch_exists(branch_name):
     exit_code = subprocess.call(
-        ['git', 'rev-parse', '--verify', '--quiet', branch_name])
+        ['git', 'rev-parse', '--verify', branch_name])
     if exit_code == 0:
         return True
     elif exit_code == 1:
@@ -112,16 +112,23 @@ def main(branch):
 
     versions_to_test = VERSIONS[VERSIONS.index(version):]
     branches_to_test = []
+    logger.info(f'versions to test: {versions_to_test}')
     for target_version in versions_to_test:
-        overriden_branch = branch.replace(version, target_version)
+        logger.info(f'Target version: {target_version}')
+        logger.info(f'Version: {version}')
+        overriden_branch = branch.replace(f"{version}/dev", f"{target_version}/dev")
+        overriden_branch = overriden_branch.replace(f"tkt_{version}", f"tkt_{target_version}")
+        logger.info(f'Overriden branch: {overriden_branch}')
         if target_version != version and \
                 branch_exists(overriden_branch):
             branches_to_test.append(overriden_branch)
             # break  # Uncomment if want to cut the checker on merging to black if has overridden pink branch
         else:
+            logger.info("Entro por else")
             branches_to_test.append(BRANCH_FORMAT.format(target_version))
+    logger.info(f'BRANCHES TO TEST: {branches_to_test}')
 
-    logging.info(f'Testing merges in branches {branches_to_test}')
+    logger.info(f'Testing merges in branches {branches_to_test}')
 
     success = True
     cur_branch = branch

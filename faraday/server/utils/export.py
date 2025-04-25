@@ -28,7 +28,8 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
         "data", "website", "path", "status_code", "request", "response", "method",
         "params", "pname", "query", "cve", "cvss2_vector_string", "cvss2_base_score",
-        "cvss3_vector_string", "cvss3_base_score", "cwe", "policyviolations", "external_id",
+        "cvss3_vector_string", "cvss3_base_score", 'cvss4_vector_string', 'cvss4_base_score',
+        "cwe", "policyviolations", "external_id",
         "impact_confidentiality", "impact_integrity", "impact_availability",
         "impact_accountability", "update_date"
     ]
@@ -92,6 +93,31 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             host_data = hosts_data[host_id]
             row = {**vuln_data, **host_data, **service_data}
 
+        writer.writerow(row)
+
+    memory_file = BytesIO()
+    memory_file.write(buffer.getvalue().encode('utf8'))
+    memory_file.seek(0)
+    return memory_file
+
+
+def export_credentials_to_csv(credentials):
+    buffer = StringIO()
+
+    headers = [
+        "username", "password", "endpoint", "leak_date",
+    ]
+
+    writer = csv.DictWriter(buffer, fieldnames=headers)
+    writer.writeheader()
+
+    for credential in credentials:
+        row = {
+            'username': credential.get("username"),
+            'password': credential.get("password"),
+            'endpoint': credential.get("endpoint"),
+            'leak_date': credential.get("leak_date") if "leak_date" in credential else "",
+        }
         writer.writerow(row)
 
     memory_file = BytesIO()
@@ -199,6 +225,8 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
         "cvss2_base_score": vuln.get('cvss2').get('base_score', None),
         "cvss3_vector_string": vuln.get('cvss3').get('vector_string', None),
         "cvss3_base_score": vuln.get('cvss3').get('base_score', None),
+        "cvss4_vector_string": vuln.get('cvss4').get('vector_string', None),
+        "cvss4_base_score": vuln.get('cvss4').get('base_score', None),
         "policyviolations": vuln.get('policyviolations', None),
         "external_id": vuln.get('external_id', None),
         "impact_confidentiality": vuln["impact"]["confidentiality"],

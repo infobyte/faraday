@@ -27,11 +27,11 @@ from depot.manager import DepotManager
 
 from hypothesis import given, settings, strategies as st
 
-from faraday.server.api.modules.vulns_context import (
-    VulnerabilityContextFilterSet,
-    VulnerabilityContextView
+from faraday.server.api.modules.vulns_base import (
+    VulnerabilityFilterSet,
+    VulnerabilityView
 )
-from faraday.server.api.modules.vulns import VulnerabilitySchema
+from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.schemas import NullToBlankString
 from tests import factories
@@ -184,7 +184,7 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
     api_endpoint = 'vulns'
     # unique_fields = ['ip']
     # update_fields = ['ip', 'description', 'os']
-    view_class = VulnerabilityContextView
+    view_class = VulnerabilityView
     patchable_fields = ['name']
 
     @pytest.fixture(autouse=True)
@@ -1381,122 +1381,22 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         assert 'first_cve' not in res.json['vulnerabilities'][0]['value']['name']
         assert 'first_cve' not in res.json['vulnerabilities'][1]['value']['name']
 
-    def test_count_order_by_incorrect_keyword(self, test_client, session):
-        for i, vuln in enumerate(self.objects[:3]):
-            vuln.confirmed = True
-            # Set critical severity to first vuln, high to the others
-            if i == 0:
-                vuln.severity = 'critical'
-            else:
-                vuln.severity = 'high'
-
-            session.add(vuln)
-            session.commit()
-
-        # Desc
-        res = test_client.get(
-            join(self.url(), "count?confirmed=1&group_by=severity&order=sc"
-                 ))
-        assert res.status_code == 400
-
-        # Asc
-        res = test_client.get(join(self.url(), "count?confirmed=1&group_by=severity&order=name,asc"))
-        assert res.status_code == 400
-
-    def test_count_order_by(self, test_client, session):
-        for i, vuln in enumerate(self.objects[:3]):
-            vuln.confirmed = True
-            # Set critical severity to first vuln, high to the others
-            if i == 0:
-                vuln.severity = 'critical'
-            else:
-                vuln.severity = 'high'
-
-            session.add(vuln)
-            session.commit()
-
-        # Desc
-        res = test_client.get(
-            join(self.url(), "count?confirmed=1&group_by=severity&order=desc"
-                 ))
-        assert res.status_code == 200
-        assert res.json['total_count'] == 3
-        assert sorted(res.json['groups'], key=lambda i: (i['name'], i['count'], i['severity'])) == sorted([
-            {"name": "high", "severity": "high", "count": 2},
-            {"name": "critical", "severity": "critical", "count": 1},
-        ], key=lambda i: (i['name'], i['count'], i['severity']))
-
-        # Asc
-        res = test_client.get(
-            join(self.url(), "count?confirmed=1&group_by=severity&order=asc"))
-        assert res.status_code == 200
-        assert res.json['total_count'] == 3
-        assert sorted(res.json['groups'], key=lambda i: (i['name'], i['count'], i['severity']), reverse=True) == sorted(
-            [
-                {"name": "critical", "severity": "critical", "count": 1},
-                {"name": "high", "severity": "high", "count": 2},
-            ], key=lambda i: (i['name'], i['count'], i['severity']), reverse=True)
-
-    def test_count_group_by_incorrect_vuln_column(self, test_client, session):
-        for i, vuln in enumerate(self.objects[:3]):
-            vuln.confirmed = True
-            # Set critical severity to first vuln, high to the others
-            if i == 0:
-                vuln.severity = 'critical'
-            else:
-                vuln.severity = 'high'
-
-            session.add(vuln)
-            session.commit()
-
-        res = test_client.get(join(self.url(), "count?confirmed=1&group_by=username"))
-        assert res.status_code == 400
-
-        res = test_client.get(join(self.url(), "count?confirmed=1&group_by="))
-        assert res.status_code == 400
-
-    def test_count_confirmed(self, test_client, session):
-        for i, vuln in enumerate(self.objects[:3]):
-            vuln.confirmed = True
-
-            # Set critical severity to first vuln, high to the others
-            if i == 0:
-                vuln.severity = 'critical'
-            else:
-                vuln.severity = 'high'
-
-            session.add(vuln)
-            session.commit()
-
-        res = test_client.get(join(self.url(), 'count?confirmed=1&group_by=severity'))
-        assert res.status_code == 200
-        assert res.json['total_count'] == 3
-        assert sorted(res.json['groups'], key=lambda i: (i['count'], i['name'], i['severity'])) == sorted([
-            {"name": "high", "severity": "high", "count": 2},
-            {"name": "critical", "severity": "critical", "count": 1},
-        ], key=lambda i: (i['count'], i['name'], i['severity']))
-
-    def test_count_severity_map(self, test_client, second_workspace, session, logged_user):
-        Vulnerability.query.delete()
-        vulns = self.factory.create_batch(4, severity='informational',
-                                          workspace=second_workspace)
-        vulns += self.factory.create_batch(3, severity='medium',
-                                           workspace=second_workspace)
-        vulns += self.factory.create_batch(2, severity='low',
-                                           workspace=second_workspace)
+    def test_count_and_inactive(self, test_client, session, second_workspace):
+        vulns = self.factory.create_batch(5, severity='informational', workspace=second_workspace)
         session.add_all(vulns)
         session.commit()
 
-        res = test_client.get(
-            join(self.url(), 'count?group_by=severity'
-                 ))
+        res = test_client.get(join(self.url(), "count"))
         assert res.status_code == 200
-        assert res.json['total_count'] == 9
-        assert sorted(res.json['groups'], key=lambda i: (i['count'], i['name'], i['severity'])) == sorted([
-            {"name": "med", "severity": "med", "count": 3},
-            {"name": "low", "severity": "low", "count": 2},
-            {"name": "info", "severity": "info", "count": 4},
-        ], key=lambda i: (i['count'], i['name'], i['severity']))
+        assert res.json['total_count'] == 10
+
+        second_workspace.active = False
+        session.add(second_workspace)
+        session.commit()
+
+        res = test_client.get(join(self.url(), "count"))
+        assert res.status_code == 200
+        assert res.json['total_count'] == 5
 
     def test_count_multiworkspace_one_workspace(self, test_client, session):
         for i, vuln in enumerate(self.objects):
@@ -1825,7 +1725,8 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         session.commit()
         file_contents = b'my file contents'
         data = {
-            'file': (BytesIO(file_contents), 'borrar.txt')
+            'file': (BytesIO(file_contents), 'borrar.txt'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
         res = test_client.post(
@@ -1838,7 +1739,7 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         depot = DepotManager.get()
         assert file_contents == depot.get(file_id).read()
 
-    def test_add_attachment_to_vuln_fails_readonly(self, test_client, session, host_with_hostnames):
+    def test_add_attachment_to_vuln_fails_readonly(self, test_client, session, host_with_hostnames, csrf_token):
         ws = WorkspaceFactory.create(name='abc')
         session.add(ws)
         vuln = VulnerabilityFactory.create(workspace=ws)
@@ -1846,7 +1747,8 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         session.commit()
         file_contents = b'my file contents'
         data = {
-            'file': (BytesIO(file_contents), 'borrar.txt')
+            'file': (BytesIO(file_contents), 'borrar.txt'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
 
@@ -2164,7 +2066,8 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
             "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
             "data", "website", "path", "status_code", "request", "response", "method",
             "params", "pname", "query", "cve", 'cvss2_vector_string', 'cvss2_base_score',
-            'cvss3_vector_string', 'cvss3_base_score', 'cwe', "policyviolations", "external_id",
+            'cvss3_vector_string', 'cvss3_base_score', 'cvss4_vector_string', 'cvss4_base_score',
+            'cwe', "policyviolations", "external_id",
             "impact_confidentiality", "impact_integrity", "impact_availability", "impact_accountability",
             "update_date", "host_id", "host_description", "mac",
             "host_owned", "host_creator_id", "host_date", "host_update_date",
@@ -2477,7 +2380,8 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
             "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
             "data", "website", "path", "status_code", "request", "response", "method",
             "params", "pname", "query", "cve", 'cvss2_vector_string', 'cvss2_base_score',
-            'cvss3_vector_string', 'cvss3_base_score', 'cwe', "policyviolations", "external_id",
+            'cvss3_vector_string', 'cvss3_base_score', 'cvss4_vector_string', 'cvss4_base_score',
+            'cwe', "policyviolations", "external_id",
             "impact_confidentiality", "impact_integrity", "impact_availability", "impact_accountability",
             "update_date", "host_id", "host_description", "mac",
             "host_owned", "host_creator_id", "host_date", "host_update_date",
@@ -2586,7 +2490,7 @@ class TestCustomFieldVulnerabilityContext(ReadOnlyAPITests):
     model = Vulnerability
     factory = factories.VulnerabilityFactory
     api_endpoint = 'vulns'
-    view_class = VulnerabilityContextView
+    view_class = VulnerabilityView
     patchable_fields = ['name']
 
     @pytest.mark.skip(reason='POST methods not supported')
@@ -3791,7 +3695,7 @@ class TestVulnerabilitySearch:
 def test_type_filter(workspace, session,
                      vulnerability_factory,
                      vulnerability_web_factory):
-    filter_ = VulnerabilityContextFilterSet().filters['type']
+    filter_ = VulnerabilityFilterSet().filters['type']
     std_vulns = vulnerability_factory.create_batch(10, workspace=workspace)
     web_vulns = vulnerability_web_factory.create_batch(10, workspace=workspace)
     session.add_all(std_vulns)
@@ -3816,7 +3720,7 @@ def test_type_filter(workspace, session,
 def test_creator_filter(workspace, session,
                         empty_command_factory, command_object_factory,
                         vulnerability_factory, vulnerability_web_factory):
-    filter_ = VulnerabilityContextFilterSet().filters['creator']
+    filter_ = VulnerabilityFilterSet().filters['creator']
     std_vulns = vulnerability_factory.create_batch(10,
                                                    workspace=workspace)[:5]
     session.add(workspace)
@@ -3845,7 +3749,7 @@ def test_creator_filter(workspace, session,
 
 def test_service_filter(workspace, session, host, service_factory,
                         vulnerability_factory, vulnerability_web_factory):
-    filter_ = VulnerabilityContextFilterSet().filters['service']
+    filter_ = VulnerabilityFilterSet().filters['service']
 
     vulnerability_factory.create_batch(5, host=host, service=None,
                                        workspace=workspace)
@@ -3874,7 +3778,7 @@ def test_service_filter(workspace, session, host, service_factory,
 
 def test_name_filter(workspace, session, host, vulnerability_factory):
     """Test case insensitivity and partial match detection"""
-    filter_ = VulnerabilityContextFilterSet().filters['name']
+    filter_ = VulnerabilityFilterSet().filters['name']
     vulnerability_factory.create_batch(5, host=host, workspace=workspace)
     expected_vulns = vulnerability_factory.create_batch(
         5, host=host, workspace=workspace, name="Old OpenSSL version")

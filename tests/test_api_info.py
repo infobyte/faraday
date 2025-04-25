@@ -10,10 +10,9 @@ import pytest
 
 class TestAPIInfoEndpoint:
 
-    def test_api_info_public(self, test_client):
+    def test_api_info_no_login(self, test_client):
         response = test_client.get('v3/info')
-        assert response.status_code == 200
-        assert response.json['Faraday Server'] == 'Running'
+        assert response.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_api_info(self, test_client):
@@ -21,11 +20,13 @@ class TestAPIInfoEndpoint:
         assert response.status_code == 200
         assert response.json['Faraday Server'] == 'Running'
 
-    def test_api_config_public(self, test_client, session):
-        from faraday import __version__
+    def test_api_config_no_login(self, test_client, session):
         response = test_client.get('config')
+        keys = ['ver', 'show_vulns_by_price', 'smtp_enabled']
         assert response.status_code == 200
-        assert __version__ in response.json['ver']
+        assert response.json['sso_enabled'] is False
+        for key in keys:
+            assert key not in response.json.keys()
 
     @pytest.mark.usefixtures('logged_user')
     def test_get_config(self, test_client):

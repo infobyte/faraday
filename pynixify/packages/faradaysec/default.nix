@@ -9,7 +9,7 @@
 , filteralchemy-fork, flask, flask-celery-helper, flask-classful
 , flask-kvsession-fork, flask-limiter, flask-login, flask-security-too
 , flask-socketio, flask-sqlalchemy, flask-wtf, flask_mail, gevent
-, gevent-websocket, hypothesis, lib, marshmallow, marshmallow-sqlalchemy
+, gevent-websocket, hypothesis, kombu, lib, marshmallow, marshmallow-sqlalchemy
 , nplusone, pgcli, pillow, psycogreen, psycopg2, pyasn1, pyjwt, pylint
 , pyopenssl, pyotp, pytest, pytest-cov, pytest-factoryboy, pytest-runner, pyyaml
 , redis, requests, responses, service-identity, sh, simplekv, sphinx, sqlalchemy
@@ -18,7 +18,7 @@
 
 buildPythonPackage rec {
   pname = "faradaysec";
-  version = "5.8.0";
+  version = "5.13.0";
 
   src = lib.cleanSource ../../..;
 
@@ -74,6 +74,7 @@ buildPythonPackage rec {
     faraday-agent-parameters-types
     cvss
     celery
+    kombu
     gevent
     psycogreen
     flask-celery-helper

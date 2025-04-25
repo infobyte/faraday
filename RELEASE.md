@@ -1,6 +1,49 @@
 New features in the latest update
 =====================================
 
+5.13.0 [Apr 24th, 2025]:
+---
+ * [ADD] Added support for vulnerability status changes on report upload. #7903
+ * [ADD] Introduced support for RabbitMQ as a task processing broker. #7866
+ * [ADD] Added filtering to schedulers view. #7857
+ * [ADD] Added Idle Session Timeout feature. #7876
+ * [MOD] Rework the Credential API. #7912
+ * [MOD] Redesigned the Credential Model to work more closely with vulnerabilities. #7911
+ * [FIX] Fixed sync host stats command to update workspaces statistics. #7943
+ * [FIX] Enhanced workspace performance by pre-calculating statistics, reducing the overhead of on-demand calculations during data retrieval. #7780
+ * [FIX] Improved vulnerability count on contextual view. #7901
+ * [FIX] Stats are now calculated automatically upon file report upload. #7937
+
+5.12.0 [Mar 13th, 2025]:
+---
+ * [ADD] Added update in bulk mode for workspaces. #7830
+ * [ADD] Added endpoint to count agent schedulers. #7905
+ * [FIX] Fixed session timeout setting not working on numbers less than 1. #7874
+
+5.11.0 [Jan 30th, 2025]:
+---
+ * [ADD] Attachment descriptions can now be updated. #7868
+ * [MOD] Refactored contextualized modules to improve code readability and maintainability. No changes to functionality. #7781
+ * [FIX] Fixed an issue where evidence descriptions were not saved correctly during manual vulnerability creation. #7867
+
+5.10.1 [Jan 13th, 2025]:
+---
+ * [FIX] Fix config endpoint authentication. #7889
+
+5.10.0 [Jan 6th, 2025]:
+---
+ * [ADD] CVSS4 data is now included in CSV exports. #7850
+ * [ADD] Added support for CVSS v4 in bulk imports. #7849
+ * [FIX] Added authorization to the config endpoint. #7331
+
+5.9.0 [Nov 21st, 2024]:
+---
+ * [ADD] Added more validations to attachments. #7851
+ * [MOD] Removed __license_version__ from init.py. #7763
+ * [ADD] Added a configurable limit to the retrieval of vulnerabilities. #7841
+ * [ADD] Added the `description` field to evidence attachments in the `VulnerabilitySchema`. #7811
+ * [FIX] Fixed vulnerability deletion when it has more than one command associated. #7859
+
 5.8.0 [Oct 24th, 2024]:
 ---
  * [ADD] Added support for CVSS 4.0. #7753

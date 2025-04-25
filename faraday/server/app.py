@@ -4,9 +4,11 @@ Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 # Standard library imports
+from time import time
 import datetime
 import logging
 import os
+import re
 
 import string
 import sys
@@ -107,14 +109,14 @@ def register_blueprints(app):
     from faraday.server.api.modules.global_commands import globalcommands_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.activity_feed import activityfeed_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.credentials import credentials_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts import host_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.hosts_context import host_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_base import host_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts_workspaced import host_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.licenses import license_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.services import services_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.services_context import services_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services_base import services_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services_workspaced import services_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.session import session_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.vulns import vulns_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.vulns_context import vulns_context_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns_base import vulns_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns_workspaced import vulns_workspaced_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.vulnerability_template import \
         vulnerability_template_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.workspaces import workspace_api  # pylint:disable=import-outside-toplevel
@@ -150,14 +152,14 @@ def register_blueprints(app):
     app.register_blueprint(activityfeed_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(credentials_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(host_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(host_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(host_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(info_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(license_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(services_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(services_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(services_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(session_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(vulns_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(vulns_context_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(vulns_workspaced_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(vulnerability_template_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(workspace_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(handlers_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -240,6 +242,7 @@ def register_handlers(app):
                 password = flask.request.authorization.get('password', '')
                 user = User.query.filter_by(username=username).first()
                 if user and user.verify_and_update_password(password):
+                    session["last_access"] = time()
                     return user
             else:
                 logger.warning("Invalid authorization type")
@@ -260,6 +263,27 @@ def register_handlers(app):
     @app.before_request
     def load_g_custom_fields():  # pylint:disable=unused-variable
         g.custom_fields = {}
+
+    @app.before_request
+    def idle_session_timeout():
+        if session:
+            limit_timeout = faraday.server.config.faraday_server.idle_session_timeout
+            if not limit_timeout:
+                return
+
+            last_access = session.get("last_access", None)
+            if not last_access:
+                logger.warning("last_access session key not set or invalid")
+                return
+
+            delta = time() - last_access
+            if delta > limit_timeout:
+                logger.info("idle session timed out")
+                session.destroy()
+                KVSessionExtension(app=app).cleanup_sessions(app)
+                flask.abort(401, "Idle session timed out.")
+            else:
+                session["last_access"] = time()
 
     @app.after_request
     def log_queries_count(response):  # pylint:disable=unused-variable
@@ -339,6 +363,7 @@ def user_logged_in_successful(app, user):
     user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
     logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
+    session["last_access"] = time()
 
 
 def uia_username_mapper(identity):
@@ -407,6 +432,27 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
 
     login_failed_message = ("Invalid username or password", 'error')
 
+    broker_url = None
+    parsed_broker_url = faraday.server.config.faraday_server.celery_broker_url.split(":")
+    if len(parsed_broker_url) == 1 and parsed_broker_url[0]:
+        broker_url = f"redis://{parsed_broker_url[0]}:6379/0"
+    elif len(parsed_broker_url) > 1:
+        if re.match(r"^rediss?$|^amqps?$", parsed_broker_url[0]):
+            broker_url = faraday.server.config.faraday_server.celery_broker_url
+        else:
+            broker_url = f"redis://{faraday.server.config.faraday_server.celery_broker_url}"
+
+    backend_url = None
+    parsed_backend_url = faraday.server.config.faraday_server.celery_backend_url.split(":")
+    if len(parsed_backend_url) == 1 and parsed_backend_url[0]:
+        # assuming redis
+        backend_url = f"redis://{parsed_backend_url[0]}:6379/0"
+    elif len(parsed_backend_url) > 1:
+        if re.match(r"^rediss?$", parsed_backend_url[0]):
+            backend_url = faraday.server.config.faraday_server.celery_backend_url
+        else:
+            backend_url = f"redis://{faraday.server.config.faraday_server.celery_backend_url}"
+
     app.config.update({
         'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
         'SECURITY_PASSWORD_SINGLE_HASH': True,
@@ -447,12 +493,18 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
             # 'sha512_crypt',
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(
-            hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
+            hours=abs(faraday.server.config.faraday_server.session_timeout or 12.0)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
         'IMPORTS': ('faraday.server.tasks', ),
-        'CELERY_BROKER_URL': f'redis://{faraday.server.config.faraday_server.celery_broker_url}:6379',
-        'CELERY_RESULT_BACKEND': f'redis://{faraday.server.config.faraday_server.celery_backend_url}:6379',
+        'CELERY_BROKER_URL': broker_url,
+        'CELERY_RESULT_BACKEND': backend_url,
+        'CELERY_BROKER_BACKEND_TRANSPORT_OPTIONS': {
+            'global_keyprefix': '' if not faraday_server.celery_queue_prefix else faraday_server.celery_queue_prefix,
+        },
+        'CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS': {
+            'global_keyprefix': '' if not faraday_server.celery_queue_prefix else faraday_server.celery_queue_prefix,
+        }
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

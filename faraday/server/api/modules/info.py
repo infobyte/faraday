@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 # Related third party imports
 import flask
 from flask import Blueprint
+from flask_login import current_user
 from marshmallow import Schema
 
 # Local application imports
@@ -41,8 +42,6 @@ class InfoView(GenericView):
 
         return response
 
-    get.is_public = True
-
 
 class ConfigView(GenericView):
     route_base = 'config'
@@ -59,13 +58,15 @@ class ConfigView(GenericView):
             200:
               description: Ok
         """
-        doc = {
-            'ver': f_version,
-            'show_vulns_by_price': DashboardSettings.settings.show_vulns_by_price,
-            'smtp_enabled': False
-        }
-
-        return flask.jsonify(doc)
+        if current_user.is_authenticated:
+            doc = {
+                'ver': f_version,
+                'show_vulns_by_price': DashboardSettings.settings.show_vulns_by_price,
+                'smtp_enabled': False,
+                'sso_enabled': False
+            }
+            return flask.jsonify(doc)
+        return flask.jsonify({'sso_enabled': False})
 
     get.is_public = True
 

@@ -4,15 +4,16 @@
 
 { beautifulsoup4, buildPythonPackage, click, colorama, dateutil, fetchPypi
 , html2text, lib, lxml, markdown, packaging, pytz, requests, simplejson
-, tabulate }:
+, tabulate, tldextract }:
 
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.19.1";
+  version = "1.24.0";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "0gvw21p67fqpjb7f4ljj0hisn6k320im0wbzrqlygr5zv97cfl3j";
+    inherit version;
+    pname = "faraday_plugins";
+    sha256 = "0mxy949g1763vh8090dmn8z8mdx8vp505x4vnfkzqhqr8c6yqpn5";
   };
 
   propagatedBuildInputs = [
@@ -28,6 +29,7 @@ buildPythonPackage rec {
     tabulate
     packaging
     markdown
+    tldextract
   ];
 
   # TODO FIXME

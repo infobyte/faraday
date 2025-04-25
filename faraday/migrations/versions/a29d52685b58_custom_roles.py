@@ -1,7 +1,7 @@
 """custom roles
 
 Revision ID: a29d52685b58
-Revises: 293724cb146d
+Revises: 39ddd3ca3a20
 Create Date: 2025-02-24 19:29:44.754248+00:00
 
 """
@@ -86,7 +86,7 @@ RUN = PermissionsUnitAction.RUN_ACTION
 
 # revision identifiers, used by Alembic.
 revision = 'a29d52685b58'
-down_revision = '293724cb146d'
+down_revision = '39ddd3ca3a20'
 branch_labels = None
 depends_on = None
 

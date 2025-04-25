@@ -28,10 +28,12 @@ from faraday.server.utils.permissions import (
     GROUP_WORKSPACES,
     UNIT_2FA,
     UNIT_ACTIVE_INTEGRATIONS,
+    UNIT_ADMIN,
     UNIT_AGENTS,
     UNIT_AGENTS_SCHEDULE,
     UNIT_AGENTS_TOKENS,
     UNIT_ANALYTICS,
+    UNIT_BASE,
     UNIT_BULK_CREATE,
     UNIT_CLOUD_AGENTS,
     UNIT_CLOUD_AGENTS_SCHEDULE,
@@ -144,7 +146,7 @@ def upgrade():
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (27, '{UNIT_BULK_CREATE}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3);"  # nosec B608
-        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1);"  # nosec B608
     )
 
     # Insert rows into the 'permissions_unit_action' table
@@ -185,7 +187,9 @@ def upgrade():
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (134, '{UPDATE}', 44), (135, '{DELETE}', 44), (136, '{READ}', 45), (137, '{CREATE}', 46);"  # nosec B608
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (138, '{READ}', 46), (139, '{CREATE}', 10), (140, '{UPDATE}', 10), (141, '{DELETE}', 10);"  # nosec B608
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (142, '{CREATE}', 9), (143, '{CREATE}', 47), (144, '{READ}', 47), (145, '{UPDATE}', 47);"  # nosec B608
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (146, '{DELETE}', 47);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (146, '{DELETE}', 47), (147, '{CREATE}', 48), (148, '{READ}', 48), (149, '{UPDATE}', 48);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (150, '{DELETE}', 48), (151, '{CREATE}', 49), (152, '{READ}', 49), (153, '{UPDATE}', 49);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (154, '{DELETE}', 49), (155, '{CREATE}', 41);"  # nosec B608
     )
 
     # Insert rows into the 'role_permission' table for the ADMIN role
@@ -226,7 +230,9 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (526, 133, 1, true), (527, 134, 1, true), (528, 135, 1, true), (541, 136, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (545, 137, 1, true), (549, 138, 1, true), (553, 139, 1, true), (554, 140, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (555, 141, 1, true), (565, 142, 1, true), (569, 143, 1, true), (570, 144, 1, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (571, 145, 1, true), (572, 146, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (571, 145, 1, true), (572, 146, 1, true), (585, 147, 1, true), (586, 148, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (587, 149, 1, true), (588, 150, 1, true), (601, 151, 1, true), (602, 152, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (603, 153, 1, true), (604, 154, 1, true), (617, 155, 1, true);"
     )
 
     # Insert rows into the 'role_permission' table for the ASSET OWNER role
@@ -267,7 +273,9 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (530, 133, 2, true), (531, 134, 2, true), (532, 135, 2, true), (542, 136, 2, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (546, 137, 2, true), (550, 138, 2, true), (556, 139, 2, true), (557, 140, 2, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (558, 141, 2, true), (566, 142, 2, false), (573, 143, 2, false), (574, 144, 2, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (575, 145, 2, false), (576, 146, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (575, 145, 2, false), (576, 146, 2, false), (589, 147, 2, false), (590, 148, 2, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (591, 149, 2, false), (592, 150, 2, false), (605, 151, 2, false), (606, 152, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (607, 153, 2, false), (608, 154, 2, false), (618, 155, 2, false);"
     )
 
     # Insert rows into the 'role_permission' table for the PENTESTER role
@@ -308,7 +316,9 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (534, 133, 3, true), (535, 134, 3, true), (536, 135, 3, true), (543, 136, 3, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (547, 137, 3, true), (551, 138, 3, true), (559, 139, 3, true), (560, 140, 3, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (561, 141, 3, true), (567, 142, 3, false), (577, 143, 3, true), (578, 144, 3, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (579, 145, 3, true), (580, 146, 3, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (579, 145, 3, true), (580, 146, 3, true), (593, 147, 3, true), (594, 148, 3, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (595, 149, 3, true), (596, 150, 3, true), (609, 151, 3, false), (610, 152, 3, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (611, 153, 3, false), (612, 154, 3, false), (619, 155, 3, false);"
     )
 
     # Insert rows into the 'role_permission' table for the CLIENT role
@@ -349,7 +359,9 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (538, 133, 4, true), (539, 134, 4, false), (540, 135, 4, false), (544, 136, 4, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (548, 137, 4, true), (552, 138, 4, true), (562, 139, 4, true), (563, 140, 4, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (564, 141, 4, true), (568, 142, 4, false), (581, 143, 4, false), (582, 144, 4, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (583, 145, 4, false), (584, 146, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (583, 145, 4, false), (584, 146, 4, false), (597, 147, 4, false), (598, 148, 4, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (599, 149, 4, false), (600, 150, 4, false), (613, 151, 4, false), (614, 152, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (615, 153, 4, false), (616, 154, 4, false), (620, 155, 4, false);"
     )
 
 

@@ -7,9 +7,6 @@ Create Date: 2025-02-06 16:13:43.952670+00:00
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
-from faraday.server.models import Host, Workspace
-from faraday.server.tasks import update_host_stats
 
 
 revision = 'f2435999bc54'
@@ -76,24 +73,6 @@ def upgrade():
     op.add_column('workspace', sa.Column('vulnerability_low_notclosed_confirmed_count', sa.Integer(), nullable=False, server_default='0'))
     op.add_column('workspace', sa.Column('vulnerability_informational_notclosed_confirmed_count', sa.Integer(), nullable=False, server_default='0'))
     op.add_column('workspace', sa.Column('vulnerability_unclassified_notclosed_confirmed_count', sa.Integer(), nullable=False, server_default='0'))
-
-    bind = op.get_bind()
-    session = Session(bind=bind)
-
-    try:
-        # Fetch all hosts and workspaces
-        all_hosts = [host.id for host in session.query(Host).all()]
-        all_workspaces = [workspace.id for workspace in session.query(Workspace).all()]
-
-        # Call the update_host_stats function
-        update_host_stats(
-            hosts=all_hosts,
-            services=[],
-            workspace_ids=all_workspaces,
-            sync=True,
-        )
-    finally:
-        session.close()
 
 
 def downgrade():

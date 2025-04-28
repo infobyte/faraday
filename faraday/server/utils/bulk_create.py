@@ -19,8 +19,6 @@ def add_creator(data, creator_user):
                 vuln["creator_id"] = creator_user.id
         for vuln in host["vulnerabilities"]:
             vuln["creator_id"] = creator_user.id
-        for cred in host["credentials"]:
-            cred["creator_id"] = creator_user.id
         hosts_.append(host)
 
     response = {'hosts': hosts_}

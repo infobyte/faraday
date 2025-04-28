@@ -4,6 +4,7 @@ Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 # Standard library imports
+from time import time
 import datetime
 import logging
 import os
@@ -243,6 +244,7 @@ def register_handlers(app):
                 password = flask.request.authorization.get('password', '')
                 user = User.query.filter_by(username=username).first()
                 if user and user.verify_and_update_password(password):
+                    session["last_access"] = time()
                     return user
             else:
                 logger.warning("Invalid authorization type")
@@ -263,6 +265,27 @@ def register_handlers(app):
     @app.before_request
     def load_g_custom_fields():  # pylint:disable=unused-variable
         g.custom_fields = {}
+
+    @app.before_request
+    def idle_session_timeout():
+        if session:
+            limit_timeout = faraday.server.config.faraday_server.idle_session_timeout
+            if not limit_timeout:
+                return
+
+            last_access = session.get("last_access", None)
+            if not last_access:
+                logger.warning("last_access session key not set or invalid")
+                return
+
+            delta = time() - last_access
+            if delta > limit_timeout:
+                logger.info("idle session timed out")
+                session.destroy()
+                KVSessionExtension(app=app).cleanup_sessions(app)
+                flask.abort(401, "Idle session timed out.")
+            else:
+                session["last_access"] = time()
 
     @app.after_request
     def log_queries_count(response):  # pylint:disable=unused-variable
@@ -342,6 +365,7 @@ def user_logged_in_successful(app, user):
     user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
     logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
+    session["last_access"] = time()
 
 
 def uia_username_mapper(identity):

@@ -154,6 +154,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.socketio_ping_interval = 60
         self.socketio_ping_timeout = 220
         self.socketio_logger = False
+        self.idle_session_timeout = 0  # Default to 0 seconds (disabled)
         self.celery_queue_prefix = None
 
 

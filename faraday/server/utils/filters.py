@@ -29,6 +29,7 @@ from faraday.server.models import (
     Agent,
     AgentExecution,
     AgentsSchedule,
+    Credential,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -248,9 +249,13 @@ class FlaskRestlessAgentSchema(FlaskRestlessFilterSchema):
 
 
 class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
-
     def _model_class(self):
         return AgentsSchedule
+
+
+class FlaskRestlessCredentialFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Credential
 
 
 class FlaskRestlessOperator(Schema):
@@ -266,6 +271,7 @@ class FlaskRestlessOperator(Schema):
         FlaskRestlessServiceFilterSchema,
         FlaskRestlessAgentExecutionSchema,
         FlaskRestlessAgentSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(
@@ -349,6 +355,7 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessAgentExecutionSchema,
         FlaskRestlessAgentSchema,
         FlaskRestlessAgentSchedulerSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(

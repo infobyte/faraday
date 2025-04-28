@@ -13,7 +13,7 @@ from tests.test_api_non_workspaced_base import ReadOnlyAPITests, BulkDeleteTests
 from faraday.server.models import (
     Service
 )
-from tests.factories import CredentialFactory, VulnerabilityFactory
+from tests.factories import VulnerabilityFactory
 
 
 @pytest.mark.skip_sql_dialect('sqlite')
@@ -47,7 +47,6 @@ class TestListServiceView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTest
                 '_rev',
                 'owned',
                 'owner',
-                'credentials',
                 'name',
                 'version',
                 '_id',
@@ -105,9 +104,7 @@ class TestListServiceView(ReadOnlyAPITests, BulkUpdateTestsMixin, BulkDeleteTest
         service_3 = self.factory.create(workspace=workspace)
 
         for _ in range(3):
-            CredentialFactory.create(service=service_1, workspace=workspace)
             VulnerabilityFactory.create(service=service_2, workspace=workspace)
-            CredentialFactory.create(service=service_3, workspace=workspace)
             VulnerabilityFactory.create(service=service_3, workspace=workspace)
         session.commit()
 

@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.12.0 API",
+        "title": "Faraday 5.13.0 API",
         "version": "v3"
     },
     "security": [
@@ -1078,6 +1078,55 @@
                     }
                 }
             }
+        },
+        "/_api/v3/ws/{workspace_name}/credential/filter": {
+            "get": {
+                "tags": [
+                    "Credential"
+                ],
+                "description": "Filter Credentials",
+                "responses": {
+                    "200": {
+                        "description": "Credentials filtered successfully"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/ws/{workspace_name}/credential/import_csv": {
+            "post": {
+                "tags": [
+                    "Credential"
+                ],
+                "description": "Import credentials from CSV",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/hosts": {
             "delete": {
@@ -2677,20 +2726,23 @@
                 "tags": [
                     "Vulnerability"
                 ],
-                "summary": "Group vulnerabilities by the field set in the group_by GET parameter.",
+                "summary": "Count of all vulnerabilities.",
                 "responses": {
                     "200": {
                         "description": "Ok",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/VulnerabilityWeb"
+                                    "type": "object",
+                                    "properties": {
+                                        "total_count": {
+                                            "type": "integer",
+                                            "description": "Total number of vulnerabilities"
+                                        }
+                                    }
                                 }
                             }
                         }
-                    },
-                    "404": {
-                        "description": "group_by is not specified"
                     }
                 }
             }
@@ -5658,6 +5710,37 @@
                 }
             }
         },
+        "/_api/v3/agents_schedule/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "AgentsSchedule"
+                ],
+                "description": "Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
         "/_api/v3/agents_schedule": {
             "get": {
                 "tags": [
@@ -7150,61 +7233,46 @@
             "Credential": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "integer"
+                    "owned": {
+                        "type": "boolean"
                     },
-                    "_id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "_rev": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "parent": {},
                     "username": {
-                        "type": "string",
-                        "minLength": 1
-                    },
-                    "description": {
                         "type": "string"
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true
                     },
                     "password": {
                         "type": "string"
                     },
-                    "owner": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "owned": {
-                        "type": "boolean",
-                        "readOnly": true
-                    },
-                    "couchdbid": {
+                    "endpoint": {
                         "type": "string"
                     },
-                    "parent_type": {},
+                    "leak_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "vulnerabilities": {},
+                    "workspace_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "metadata": {},
-                    "host_ip": {
+                    "create_date": {
                         "type": "string",
-                        "readOnly": true
+                        "format": "date-time",
+                        "nullable": true
                     },
-                    "service_name": {
+                    "update_date": {
                         "type": "string",
-                        "readOnly": true
+                        "format": "date-time",
+                        "nullable": true
                     },
-                    "target": {
-                        "type": "string",
-                        "readOnly": true
+                    "id": {
+                        "type": "integer"
                     }
                 },
                 "required": [
-                    "parent",
-                    "parent_type",
+                    "endpoint",
+                    "password",
                     "username"
                 ]
             },
@@ -7222,10 +7290,6 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
-                    },
-                    "credentials": {
-                        "type": "integer",
-                        "readOnly": true
                     },
                     "default_gateway": {
                         "type": "string",
@@ -7344,10 +7408,6 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
-                    },
-                    "credentials": {
-                        "type": "integer",
-                        "readOnly": true
                     },
                     "description": {
                         "type": "string",
@@ -8091,27 +8151,6 @@
                     "total_duration"
                 ]
             },
-            "BulkCredential": {
-                "type": "object",
-                "properties": {
-                    "username": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "password": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "description": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                }
-            },
             "BulkService": {
                 "type": "object",
                 "properties": {
@@ -8126,13 +8165,6 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
-                    },
-                    "credentials": {
-                        "default": [],
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/BulkCredential"
-                        }
                     },
                     "description": {
                         "type": "string",
@@ -8378,13 +8410,6 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
-                    },
-                    "credentials": {
-                        "default": [],
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/BulkCredential"
-                        }
                     },
                     "default_gateway": {
                         "type": "string",

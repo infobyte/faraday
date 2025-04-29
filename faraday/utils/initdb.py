@@ -107,7 +107,7 @@ def initdb_roles_and_permissions(db_engine):
             f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (27, '{UNIT_BULK_CREATE}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
             f"(36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
-            f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1);"  # nosec B608
+            f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), "  # nosec B608
             f"(50, '{UNIT_ROLES}', 1);"  # nosec B608
         )
 

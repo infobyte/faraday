@@ -57,6 +57,7 @@ from faraday.server.utils.permissions import (
     UNIT_PIPELINES,
     UNIT_PLANNERS,
     UNIT_PREFERENCES,
+    UNIT_ROLES,
     UNIT_SEARCH_FILTERS,
     UNIT_SERVICE_DESK,
     UNIT_SERVICE_NOW,
@@ -127,6 +128,12 @@ def upgrade():
     op.create_index(op.f('ix_role_permission_role_id'), 'role_permission', ['role_id'], unique=False)
     op.create_index(op.f('ix_role_permission_unit_action_id'), 'role_permission', ['unit_action_id'], unique=False)
     op.add_column('faraday_role', sa.Column('custom', sa.Boolean(), nullable=False, server_default='f'))
+    op.add_column('faraday_role', sa.Column('create_date', sa.DateTime(), nullable=True))
+    op.add_column('faraday_role', sa.Column('update_date', sa.DateTime(), nullable=True))
+    op.add_column('faraday_role', sa.Column('creator_id', sa.Integer(), nullable=True))
+    op.add_column('faraday_role', sa.Column('update_user_id', sa.Integer(), nullable=True))
+    op.create_foreign_key(None, 'faraday_role', 'faraday_user', ['creator_id'], ['id'], ondelete='SET NULL')
+    op.create_foreign_key(None, 'faraday_role', 'faraday_user', ['update_user_id'], ['id'], ondelete='SET NULL')
 
     # Insert rows into the 'permissions_group' table
     op.execute(
@@ -147,6 +154,7 @@ def upgrade():
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3);"  # nosec B608
         f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1);"  # nosec B608
+        f"INSERT INTO permissions_unit (id, name, permissions_group_id) VALUES (50, '{UNIT_ROLES}', 1);"  # nosec B608
     )
 
     # Insert rows into the 'permissions_unit_action' table
@@ -189,7 +197,8 @@ def upgrade():
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (142, '{CREATE}', 9), (143, '{CREATE}', 47), (144, '{READ}', 47), (145, '{UPDATE}', 47);"  # nosec B608
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (146, '{DELETE}', 47), (147, '{CREATE}', 48), (148, '{READ}', 48), (149, '{UPDATE}', 48);"  # nosec B608
         f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (150, '{DELETE}', 48), (151, '{CREATE}', 49), (152, '{READ}', 49), (153, '{UPDATE}', 49);"  # nosec B608
-        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (154, '{DELETE}', 49), (155, '{CREATE}', 41);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (154, '{DELETE}', 49), (155, '{CREATE}', 41), (156, '{CREATE}', 50), (157, '{READ}', 50);"  # nosec B608
+        f"INSERT INTO permissions_unit_action (id, action_type, permissions_unit_id) VALUES (158, '{UPDATE}', 50), (159, '{DELETE}', 50);"  # nosec B608
     )
 
     # Insert rows into the 'role_permission' table for the ADMIN role
@@ -232,7 +241,8 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (555, 141, 1, true), (565, 142, 1, true), (569, 143, 1, true), (570, 144, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (571, 145, 1, true), (572, 146, 1, true), (585, 147, 1, true), (586, 148, 1, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (587, 149, 1, true), (588, 150, 1, true), (601, 151, 1, true), (602, 152, 1, true);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (603, 153, 1, true), (604, 154, 1, true), (617, 155, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (603, 153, 1, true), (604, 154, 1, true), (617, 155, 1, true), (621, 156, 1, true);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (622, 157, 1, true), (623, 158, 1, true), (624, 159, 1, true);"
     )
 
     # Insert rows into the 'role_permission' table for the ASSET OWNER role
@@ -275,7 +285,8 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (558, 141, 2, true), (566, 142, 2, false), (573, 143, 2, false), (574, 144, 2, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (575, 145, 2, false), (576, 146, 2, false), (589, 147, 2, false), (590, 148, 2, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (591, 149, 2, false), (592, 150, 2, false), (605, 151, 2, false), (606, 152, 2, false);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (607, 153, 2, false), (608, 154, 2, false), (618, 155, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (607, 153, 2, false), (608, 154, 2, false), (618, 155, 2, false), (625, 156, 2, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (626, 157, 2, false), (627, 158, 2, false), (628, 159, 2, false);"
     )
 
     # Insert rows into the 'role_permission' table for the PENTESTER role
@@ -318,7 +329,8 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (561, 141, 3, true), (567, 142, 3, false), (577, 143, 3, true), (578, 144, 3, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (579, 145, 3, true), (580, 146, 3, true), (593, 147, 3, true), (594, 148, 3, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (595, 149, 3, true), (596, 150, 3, true), (609, 151, 3, false), (610, 152, 3, false);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (611, 153, 3, false), (612, 154, 3, false), (619, 155, 3, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (611, 153, 3, false), (612, 154, 3, false), (619, 155, 3, false), (629, 156, 3, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (630, 157, 3, false), (631, 158, 3, false), (632, 159, 3, false);"
     )
 
     # Insert rows into the 'role_permission' table for the CLIENT role
@@ -361,11 +373,24 @@ def upgrade():
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (564, 141, 4, true), (568, 142, 4, false), (581, 143, 4, false), (582, 144, 4, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (583, 145, 4, false), (584, 146, 4, false), (597, 147, 4, false), (598, 148, 4, true);"
         "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (599, 149, 4, false), (600, 150, 4, false), (613, 151, 4, false), (614, 152, 4, false);"
-        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (615, 153, 4, false), (616, 154, 4, false), (620, 155, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (615, 153, 4, false), (616, 154, 4, false), (620, 155, 4, false), (633, 156, 4, false);"
+        "INSERT INTO role_permission (id, unit_action_id, role_id, allowed) VALUES (634, 157, 4, false), (635, 158, 4, false), (636, 159, 4, false);"
+    )
+
+    op.execute(
+        "SELECT setval('role_permission_id_seq', (SELECT MAX(id) FROM role_permission));"
+    )
+
+    op.execute(
+        "SELECT setval('faraday_role_id_seq', (SELECT MAX(id) FROM faraday_role));"
     )
 
 
 def downgrade():
+    op.drop_column('faraday_role', 'update_user_id')
+    op.drop_column('faraday_role', 'creator_id')
+    op.drop_column('faraday_role', 'update_date')
+    op.drop_column('faraday_role', 'create_date')
     op.drop_column('faraday_role', 'custom')
     op.drop_index(op.f('ix_role_permission_unit_action_id'), table_name='role_permission')
     op.drop_index(op.f('ix_role_permission_role_id'), table_name='role_permission')
@@ -376,3 +401,4 @@ def downgrade():
     op.drop_index(op.f('ix_permissions_unit_permissions_group_id'), table_name='permissions_unit')
     op.drop_table('permissions_unit')
     op.drop_table('permissions_group')
+    op.execute("DELETE FROM faraday_role WHERE id > 4;")

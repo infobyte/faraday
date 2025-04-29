@@ -2587,11 +2587,11 @@ roles_users = db.Table('roles_users',
                        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
 
 
-class Role(db.Model, RoleMixin):
+class Role(Metadata, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    weight = db.Column(db.Integer(), nullable=False)
+    weight = db.Column(db.Integer(), nullable=False, default=100)
     custom = db.Column(db.Boolean(), nullable=False, default=True)
 
 

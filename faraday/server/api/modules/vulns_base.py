@@ -328,7 +328,7 @@ class VulnerabilitySchema(AutoSchema):
     host_os = fields.String(dump_only=True, attribute='target_host_os')
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date', dump_only=True)  # This is only used for sorting
-    u_date = fields.DateTime(attribute='update_date', dump_only=True)
+    update_date = fields.DateTime(attribute='update_date', dump_only=True)
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
     command_id = fields.Int(required=False, load_only=True)

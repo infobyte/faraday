@@ -101,6 +101,31 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     return memory_file
 
 
+def export_credentials_to_csv(credentials):
+    buffer = StringIO()
+
+    headers = [
+        "username", "password", "endpoint", "leak_date",
+    ]
+
+    writer = csv.DictWriter(buffer, fieldnames=headers)
+    writer.writeheader()
+
+    for credential in credentials:
+        row = {
+            'username': credential.get("username"),
+            'password': credential.get("password"),
+            'endpoint': credential.get("endpoint"),
+            'leak_date': credential.get("leak_date") if "leak_date" in credential else "",
+        }
+        writer.writerow(row)
+
+    memory_file = BytesIO()
+    memory_file.write(buffer.getvalue().encode('utf8'))
+    memory_file.seek(0)
+    return memory_file
+
+
 def export_vulns_to_csv_limited(vulns):
     buffer = StringIO()
 

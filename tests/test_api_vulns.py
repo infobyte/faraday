@@ -3667,6 +3667,7 @@ class TestVulnerabilitySearch:
     @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.parametrize("column", VALID_FILTER_VULN_COLUMNS)
     def test_custom_columns_with_filter(self, test_client, session, column):
+        # Test that each valid vulnerability column can be used in filter requests
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         med_vulns = VulnerabilityFactory.create_batch(10,
@@ -3677,6 +3678,7 @@ class TestVulnerabilitySearch:
         session.add(host)
         session.commit()
 
+        # Construct filter query that specifies which column to return
         query_filter = {
             "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
             "columns": [column],
@@ -3686,10 +3688,12 @@ class TestVulnerabilitySearch:
         )
         assert res.status_code == 200
         assert res.json['count'] == 10
+        # Verify that the requested column is included in the response
         assert column in res.json['vulnerabilities'][0]["value"]
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_custom_columns_with_filter_invalid_column(self, test_client, session):
+        # Test that using an invalid column name returns an error
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         med_vulns = VulnerabilityFactory.create_batch(10,
@@ -3700,6 +3704,7 @@ class TestVulnerabilitySearch:
         session.add(host)
         session.commit()
 
+        # Construct filter query with an invalid column name
         query_filter = {
             "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
             "columns": ["invalid"],
@@ -3707,6 +3712,7 @@ class TestVulnerabilitySearch:
         res = test_client.get(
             f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
         )
+        # Should return 400 Bad Request when an invalid column is specified
         assert res.status_code == 400
 
     @pytest.mark.usefixtures('ignore_nplusone')

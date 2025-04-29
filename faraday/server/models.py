@@ -2593,6 +2593,7 @@ class Role(Metadata, RoleMixin):
     name = db.Column(db.String(80), unique=True)
     weight = db.Column(db.Integer(), nullable=False, default=100)
     custom = db.Column(db.Boolean(), nullable=False, default=True)
+    description = db.Column(db.String(280))
 
 
 class UserToken(Metadata):

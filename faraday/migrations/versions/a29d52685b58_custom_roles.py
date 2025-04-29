@@ -128,12 +128,21 @@ def upgrade():
     op.create_index(op.f('ix_role_permission_role_id'), 'role_permission', ['role_id'], unique=False)
     op.create_index(op.f('ix_role_permission_unit_action_id'), 'role_permission', ['unit_action_id'], unique=False)
     op.add_column('faraday_role', sa.Column('custom', sa.Boolean(), nullable=False, server_default='f'))
+    op.add_column('faraday_role', sa.Column('description', sa.String(length=280), nullable=True))
     op.add_column('faraday_role', sa.Column('create_date', sa.DateTime(), nullable=True))
     op.add_column('faraday_role', sa.Column('update_date', sa.DateTime(), nullable=True))
     op.add_column('faraday_role', sa.Column('creator_id', sa.Integer(), nullable=True))
     op.add_column('faraday_role', sa.Column('update_user_id', sa.Integer(), nullable=True))
     op.create_foreign_key(None, 'faraday_role', 'faraday_user', ['creator_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key(None, 'faraday_role', 'faraday_user', ['update_user_id'], ['id'], ondelete='SET NULL')
+
+    # Create roles descriptions
+    op.execute(
+        "UPDATE faraday_role SET description = 'Full control over Faraday including user management, workspaces, vulnerabilities, reports, automation and system settings.' WHERE name = 'admin';"
+        "UPDATE faraday_role SET description = 'Can access assigned workspaces, review vulnerabilities, update their status, and add comments & tags.' WHERE name = 'asset_owner';"
+        "UPDATE faraday_role SET description = 'Can access assigned workspaces, create/edit vulnerabilities, execute agents, and generate executive reports.' WHERE name = 'pentester';"
+        "UPDATE faraday_role SET description = 'Read-only access to permitted workspaces; cannot make any modifications.' WHERE name = 'client';"
+    )
 
     # Insert rows into the 'permissions_group' table
     op.execute(
@@ -391,6 +400,7 @@ def downgrade():
     op.drop_column('faraday_role', 'creator_id')
     op.drop_column('faraday_role', 'update_date')
     op.drop_column('faraday_role', 'create_date')
+    op.drop_column('faraday_role', 'description')
     op.drop_column('faraday_role', 'custom')
     op.drop_index(op.f('ix_role_permission_unit_action_id'), table_name='role_permission')
     op.drop_index(op.f('ix_role_permission_role_id'), table_name='role_permission')

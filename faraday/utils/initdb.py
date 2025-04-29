@@ -83,9 +83,11 @@ def initdb_roles_and_permissions(db_engine):
     try:
         # Insert rows into the 'faraday_role' table
         db_engine.execute(
-            "INSERT "
-            "INTO faraday_role(name, weight, custom) "
-            "VALUES ('admin', 10, false),('asset_owner', 20, false),('pentester', 30, false),('client', 40, false);"
+            "INSERT INTO faraday_role(name, weight, custom, description) VALUES "
+            "('admin', 10, false, 'Full control over Faraday including user management, workspaces, vulnerabilities, reports, automation and system settings.'), "
+            "('asset_owner', 20, false, 'Can access assigned workspaces, review vulnerabilities, update their status, and add comments & tags.'), "
+            "('pentester', 30, false, 'Can access assigned workspaces, create/edit vulnerabilities, execute agents, and generate executive reports.'), "
+            "('client', 40, false, 'Read-only access to permitted workspaces; cannot make any modifications.');"
         )
 
         # Insert rows into the 'permissions_group' table

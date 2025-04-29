@@ -309,6 +309,7 @@ class FilterSchema(Schema):
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()
     offset = fields.Integer()
+    columns = fields.List(fields.String())
 
     @post_load
     def validate_order_and_group_by(self, data, **kwargs):

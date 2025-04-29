@@ -411,27 +411,8 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "custom_fields": stmt.excluded.custom_fields
         }
     ).returning(text('id'), text('_tmp_id'), text('status'))
-    result = db.session.execute(on_update_stmt).fetchall()
+    result = db.session.execute(on_update_stmt)
 
-    # Create status history entries for newly created vulnerabilities
-    # Since bulk insert bypasses the SQLAlchemy ORM events
-    user_id = None
-    try:
-        if hasattr(current_user, 'id'):
-            user_id = current_user.id
-    except AttributeError as e:
-        logger.debug("Current user not found", exc_info=e)
-
-    # Collect vulnerability IDs and their statuses
-    for row in result:
-        status_history = VulnerabilityStatusHistory(
-            vulnerability_id=row[0],
-            status=row[2],
-            user_id=user_id,
-        )
-        db.session.add(status_history)
-
-    db.session.commit()
     total_result = manage_relationships(
         processed_data,
         result,
@@ -485,7 +466,23 @@ def manage_relationships(processed_data, result, workspace_id=None):
 
     histogram = {'workspace_id': workspace_id, 'date': date.today(), 'high': 0, 'critical': 0, 'medium': 0, 'confirmed': 0}
 
+    user_id = None
+    try:
+        if hasattr(current_user, 'id'):
+            user_id = current_user.id
+    except AttributeError as e:
+        logger.debug("Current user not found", exc_info=e)
+
     for r in result:
+
+        # Create Status History
+        status_history = VulnerabilityStatusHistory(
+            vulnerability_id=r[0],
+            status=r[2],
+            user_id=user_id,
+        )
+        db.session.add(status_history)
+
         if r[1]:
             v_id = r[0]
             data = processed_data.get(r[1], None)

@@ -1005,28 +1005,27 @@ class VulnerabilityView(
             for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
                 custom_fields_columns.append(custom_field.field_name)
             memory_file = export_vulns_to_csv(filtered_vulns, custom_fields_columns)
+
             if workspace_name:
-                return send_file(memory_file,
-                                 attachment_filename=f"Faraday-SR-{workspace_name}.csv",
-                                 as_attachment=True,
-                                 cache_timeout=-1)
+                file_name = f"Faraday-SR-{workspace_name}.csv"
             else:
-                return send_file(memory_file,
-                                 attachment_filename="Faraday-SR-Context.csv",
-                                 as_attachment=True,
-                                 cache_timeout=-1)
+                file_name = "Faraday-SR-Context.csv"
+            return send_file(memory_file,
+                             attachment_filename=file_name,
+                             as_attachment=True,
+                             cache_timeout=-1)
+
         elif export_csv_limited.lower() == 'true':
             memory_file = export_vulns_to_csv_limited(filtered_vulns)
+
             if workspace_name:
-                return send_file(memory_file,
-                                 attachment_filename=f"Faraday-SR-{workspace_name}.csv",
-                                 as_attachment=True,
-                                 cache_timeout=-1)
+                file_name = f"Faraday-SR-{workspace_name}.csv"
             else:
-                return send_file(memory_file,
-                                 attachment_filename="Faraday-SR-Limited.csv",
-                                 as_attachment=True,
-                                 cache_timeout=-1)
+                file_name = "Faraday-SR-Limited.csv"
+            return send_file(memory_file,
+                             attachment_filename=file_name,
+                             as_attachment=True,
+                             cache_timeout=-1)
         else:
             return self._envelope_list(filtered_vulns, pagination_metadata)
 

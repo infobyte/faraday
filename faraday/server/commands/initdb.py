@@ -30,6 +30,7 @@ from sqlalchemy.sql import text
 import faraday.server.config
 from faraday.server.config import CONST_FARADAY_HOME_PATH, LOCAL_CONFIG_FILE, FARADAY_BASE
 from faraday.server.utils.database import is_unique_constraint_violation
+from faraday.utils.initdb import initdb_roles_and_permissions
 
 init()
 
@@ -103,13 +104,8 @@ class InitDB:
     def _create_roles(conn_string):
         engine = create_engine(conn_string)
         try:
-            statement = text(
-                "INSERT "
-                "INTO faraday_role(name, weight, custom) "
-                "VALUES ('admin', 10, false),('asset_owner', 20, false),('pentester', 30, false),('client', 40, false);"
-            )
             connection = engine.connect()
-            connection.execute(statement)
+            initdb_roles_and_permissions(connection)
         except IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously

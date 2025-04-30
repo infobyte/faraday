@@ -4,6 +4,7 @@ from io import BytesIO
 
 import pytest
 
+from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
 from tests.factories import (
     HostFactory,
     HostnameFactory,

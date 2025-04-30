@@ -126,6 +126,24 @@ def export_credentials_to_csv(credentials):
     return memory_file
 
 
+def export_vulns_to_csv_limited(vulns):
+    buffer = StringIO()
+
+    if not vulns:
+        raise ValueError("No vulnerabilities to export")
+
+    writer = csv.DictWriter(buffer, fieldnames=vulns[0].keys())
+    writer.writeheader()
+
+    for vuln in vulns:
+        writer.writerow(vuln)
+
+    memory_file = BytesIO()
+    memory_file.write(buffer.getvalue().encode('utf8'))
+    memory_file.seek(0)
+    return memory_file
+
+
 def _build_hosts_data(hosts_id):
     hosts = db.session.query(Host)\
                             .filter(Host.id.in_(hosts_id)).all()

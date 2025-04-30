@@ -1,6 +1,7 @@
+import csv
 import json
 import datetime
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import pytest
 
@@ -823,7 +824,7 @@ class TestVulnerabilitySearch:
         assert res.status_code == 400
 
     @pytest.mark.usefixtures('ignore_nplusone')
-    def test_filter_export_csv_limited(self, test_client, session, workspace):
+    def test_filter_export_csv_limited(self, test_client, session):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         med_vulns = VulnerabilityFactory.create_batch(10,

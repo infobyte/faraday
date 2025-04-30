@@ -104,9 +104,21 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def app(request):
-    db_user = os.getenv("POSTGRES_USER")
-    db_password = os.getenv("POSTGRES_PASSWORD")
-    db_host = os.getenv("POSTGRES_HOST")
+    db_user = os.getenv("POSTGRES_USER", None)
+    db_password = os.getenv("POSTGRES_PASSWORD", None)
+    db_host = os.getenv("POSTGRES_HOST", None)
+
+    if not db_user:
+        print(
+            "Please set environment variable POSTGRES_USER.")
+        exit("Please set environment variable POSTGRES_USER.")
+
+    if not db_password:
+        print("Please set environment variable POSTGRES_PASSWORD.")
+        exit("Please set environment variable POSTGRES_PASSWORD.")
+    if not db_host:
+        print("Please set environment variable POSTGRES_HOST.")
+        exit("Please set environment variable POSTGRES_HOST.")
 
     rand_db = create_random_db(db_user, db_password, db_host)
     logging.warning("\n creating db " + str(rand_db) + "\n")
@@ -121,7 +133,6 @@ def app(request):
     ctx.push()
 
     def teardown():
-        # TEMPORATY_SQLITE.close()
         ctx.pop()
         logging.warning("\n SHOULD dropping db " + str(rand_db) + "\n")
         drop_database(rand_db, db_user, db_password, db_host)
@@ -130,47 +141,6 @@ def app(request):
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
         '--ignore-nplusone')
     return app
-
-
-@pytest.fixture(scope='session')
-def app2(request):
-    app = get_app(db_connection_string=request.config.getoption(
-        '--connection-string'), testing=True)
-    app.test_client_class = CustomClient
-
-    # Establish an application context before running the tests.
-    ctx = app.app_context()
-    ctx.push()
-
-    def teardown():
-        TEMPORATY_SQLITE.close()
-        ctx.pop()
-
-    request.addfinalizer(teardown)
-    app.config['NPLUSONE_RAISE'] = not request.config.getoption(
-        '--ignore-nplusone')
-    return app
-
-# @pytest.fixture(scope='session')
-# def celery_config():
-#     return {
-#         'broker_url': 'redis://localhost:6379',
-#         'result_backend': 'redis://localhost:6379',
-#         # 'worker_log_color': False,
-#         # 'accept_content': {'json'},
-#         # 'enable_utc': True,
-#         # 'timezone': 'UTC',
-#         # 'broker_heartbeat': 0,
-#     }
-
-# @pytest.fixture(scope="session")
-# def celery_worker_parameters():
-#     return {
-#         "task_always_eager": True,
-#         "task_store_eager_result": True,
-#         "task_ignore_result": False,
-#         "without_heartbeat": False,
-#     }
 
 
 @pytest.fixture(scope='session')
@@ -186,19 +156,6 @@ def celery_app(app):
 def database(app, request):
     """Session-wide test database."""
     def teardown():
-        print("CLOSING ALL SESSIONS")
-        print("CLOSING ALL SESSIONS")
-        print("CLOSING ALL SESSIONS")
-        # db.close_all_sessions()
-        # print("Dropping database")
-        # try:
-        #     db.engine.execute('DROP TABLE vulnerability CASCADE')
-        # except Exception:
-        #     pass
-        # try:
-        #     db.engine.execute('DROP TABLE vulnerability_template CASCADE')
-        # except Exception:
-        #     pass
         db.drop_all()
         db.session.close()
         db.engine.dispose()
@@ -423,7 +380,7 @@ def create_random_db(db_user, db_password, db_host):
     random.seed()
     pref = random.randint(1111, 9999)
 
-    random_db = "project_test_" + "_".join([time_str, str(pref)])
+    random_db = "faraday_test_db_" + "_".join([time_str, str(pref)])
     create_database(random_db, db_user, db_password, db_host)
 
     return random_db

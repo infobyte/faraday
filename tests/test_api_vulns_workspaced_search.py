@@ -821,3 +821,40 @@ class TestVulnerabilitySearch:
         )
         # Should return 400 Bad Request when an invalid column is specified
         assert res.status_code == 400
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_export_csv_limited(self, test_client, session, workspace):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        med_vulns = VulnerabilityFactory.create_batch(10,
+                                                      workspace=workspace,
+                                                      severity='medium'
+                                                      )
+        session.add_all(med_vulns)
+        session.add(host)
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": VALID_FILTER_VULN_COLUMNS,
+        }
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv_limited=true&q={json.dumps(query_filter)}'
+        )
+        assert response.status_code == 200
+
+        # Check content type and filename
+        assert "text/csv" in response.content_type
+        assert "attachment" in response.headers["Content-Disposition"]
+        assert f"Faraday-SR-{workspace.name}.csv" in response.headers["Content-Disposition"]
+
+        # Parse and verify CSV content
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+
+        # Verify we have the expected number of rows
+        assert len(rows) == 10
+
+        # Verify headers are correct
+        assert set(rows[0].keys()) == set(VALID_FILTER_VULN_COLUMNS)

@@ -660,18 +660,16 @@ class TestHostAPI:
         assert delete_response.status_code == 400
 
     def test_bulk_delete_with_references(self, test_client, session, workspace, host_factory, vulnerability_factory,
-                                         service_factory, credential_factory):
+                                         service_factory):
         host_1 = host_factory.create(workspace=workspace)
         service_factory.create(host=host_1, workspace=workspace)
         vulnerability_factory.create(service=None, host=host_1, workspace=workspace)
         host_1.hostnames.append(HostnameFactory.create(name='pepe1', workspace=workspace, host=host_1))
-        credential_factory.create(workspace=workspace, host=host_1)
 
         host_2 = host_factory.create(workspace=workspace)
         service_factory.create(host=host_2, workspace=workspace)
         vulnerability_factory.create(service=None, host=host_2, workspace=workspace)
         host_1.hostnames.append(HostnameFactory.create(name='pepe2', workspace=workspace, host=host_2))
-        credential_factory.create(workspace=workspace, host=host_2)
 
         session.commit()
 
@@ -973,7 +971,6 @@ def host_json():
             "hostnames": st.lists(st.text()),
             "vulns": st.one_of(st.none(), st.integers()),
             "owner": st.one_of(st.none(), st.text()),
-            "credentials": st.one_of(st.none(), st.integers()),
             "_id": st.one_of(st.none(), st.integers()),
             "os": st.one_of(st.none(), st.text()),
             "id": st.one_of(st.none(), st.integers()),

@@ -27,6 +27,7 @@ from faraday.server.models import (
     User,
     CustomFieldsSchema,
     AgentsSchedule,
+    Credential,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -234,9 +235,13 @@ class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):
 
 
 class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
-
     def _model_class(self):
         return AgentsSchedule
+
+
+class FlaskRestlessCredentialFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Credential
 
 
 class FlaskRestlessOperator(Schema):
@@ -250,6 +255,7 @@ class FlaskRestlessOperator(Schema):
         FlaskRestlessUserFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
         FlaskRestlessServiceFilterSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(
@@ -303,6 +309,7 @@ class FilterSchema(Schema):
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()
     offset = fields.Integer()
+    columns = fields.List(fields.String())
 
     @post_load
     def validate_order_and_group_by(self, data, **kwargs):
@@ -331,6 +338,7 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessWorkspaceFilterSchema,
         FlaskRestlessUserFilterSchema,
         FlaskRestlessAgentSchedulerSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(

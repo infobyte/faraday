@@ -90,6 +90,8 @@ class VulnerabilityWorkspacedView(
             joinedload('refs'),
             joinedload('cve_instances'),
             joinedload('policy_violation_instances'),
+
+            joinedload(VulnerabilityGeneric.credentials),
         ]
 
         if request.args.get('get_evidence'):

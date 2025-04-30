@@ -61,6 +61,7 @@ def update_workspace_service_count(workspace_id=None, workspace_name=None):
 
 def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
     from faraday.server.app import get_app, logger
+    start_time = datetime.utcnow()
 
     def count_vulnerabilities(extra_query=None, type_=None, confirmed=None):
         query = db.session.query(func.count(VulnerabilityGeneric.id)).filter(
@@ -346,6 +347,8 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         }, synchronize_session='fetch')
 
         db.session.commit()
+    end_time = datetime.utcnow()
+    logger.info(f"workspace vulns count took {end_time - start_time}")
 
 
 def update_workspace_update_date(workspace_dates_dict):

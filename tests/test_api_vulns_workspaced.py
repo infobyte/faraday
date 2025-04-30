@@ -68,7 +68,8 @@ from tests.factories import (
     PolicyViolationFactory,
     HostnameFactory,
     WorkspaceFactory,
-    CustomFieldsSchemaFactory
+    CustomFieldsSchemaFactory,
+    CredentialFactory
 )
 
 
@@ -4026,6 +4027,43 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         assert res.status_code == 200
         assert self._verify_csv(res.data)
+
+    @pytest.mark.skip(reason="Not Implemented")
+    def test_patch_vulnerability_credentials(self, test_client, session, workspace):
+        """Test patching a vulnerability to add credentials"""
+        # Create a vulnerability
+        vuln = VulnerabilityFactory.create(workspace=workspace)
+        session.add(vuln)
+
+        # Create credentials
+        cred1 = CredentialFactory.create(workspace=workspace)
+        cred2 = CredentialFactory.create(workspace=workspace)
+        session.add(cred1)
+        session.add(cred2)
+        session.commit()
+
+        # Patch the vulnerability to add credentials
+        patch_data = {
+            'credentials': [cred1.id, cred2.id]
+        }
+
+        res = test_client.patch(
+            f'/v3/ws/{workspace.name}/vulns/{vuln.id}',
+            data=patch_data
+        )
+
+        assert res.status_code == 200
+
+        # Verify credentials were added
+        updated_vuln = session.query(VulnerabilityGeneric).get(vuln.id)
+        credential_ids = [c.id for c in updated_vuln.credentials]
+        assert len(credential_ids) == 2
+        assert cred1.id in credential_ids
+        assert cred2.id in credential_ids
+
+        # Check if the vulnerability is in the credentials
+        assert vuln in cred1.vulnerabilities
+        assert vuln in cred2.vulnerabilities
 
 
 @pytest.mark.usefixtures('logged_user')

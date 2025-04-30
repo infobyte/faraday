@@ -5,142 +5,296 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Related third party imports
-from flask import Blueprint
-from marshmallow import fields, post_load, ValidationError, validate
-from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
-from sqlalchemy.orm.exc import NoResultFound
+from flask import Blueprint, request, make_response, abort, send_file
+import csv
+from io import TextIOWrapper
+from marshmallow import fields
 
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
-    FilterSetMeta,
-    FilterAlchemyMixin,
-    InvalidUsage,
     BulkDeleteWorkspacedMixin,
     BulkUpdateWorkspacedMixin,
+    FilterWorkspacedMixin,
+    get_workspace,
+    route,
+    PaginatedMixin,
 )
-from faraday.server.models import Credential, Host, Service, Workspace, db
-from faraday.server.schemas import MutableField, SelfNestedField, MetadataSchema
+from faraday.server.models import Credential, db, VulnerabilityGeneric
+from faraday.server.api.modules.vulns_base import VulnerabilitySchema
+from faraday.server.schemas import SelfNestedField, MetadataSchema
+from faraday.server.utils.export import export_credentials_to_csv
+from http import HTTPStatus
+from sqlalchemy.exc import IntegrityError
 
 credentials_api = Blueprint('credentials_api', __name__)
 
 
 class CredentialSchema(AutoSchema):
-    _id = fields.Integer(dump_only=True, attribute='id')
-    _rev = fields.String(default='', dump_only=True)
-    owned = fields.Boolean(default=False, dump_only=True)
-    owner = fields.String(dump_only=True, attribute='creator.username',
-                          default='')
-    username = fields.String(default='', required=True,
-                             validate=validate.Length(min=1, error="Username must be defined"))
-    password = fields.String(default='')
-    description = fields.String(default='')
-    couchdbid = fields.String(default='')  # backwards compatibility
-    parent_type = MutableField(fields.Method('get_parent_type'),
-                               fields.String(),
-                               required=True)
-    parent = MutableField(fields.Method('get_parent'),
-                          fields.Integer(),
-                          required=True)
-    host_ip = fields.String(dump_only=True, attribute="host.ip",
-                            default=None)
-    service_name = fields.String(dump_only=True, attribute="service.name",
-                                 default=None)
-    target = fields.String(dump_only=True, attribute="target_ip")
+    owned = fields.Boolean(default=False)
+    username = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    password = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    endpoint = fields.String(required=True)
+    leak_date = fields.DateTime(allow_none=True)
 
-    # for filtering
-    host_id = fields.Integer(load_only=True)
-    service_id = fields.Integer(load_only=True)
+    vulnerabilities = fields.Function(
+        serialize=lambda obj: (
+            VulnerabilitySchema(many=True).dump(obj.vulnerabilities) if obj.vulnerabilities else []
+        ),
+        deserialize=lambda value: (
+            db.session.query(VulnerabilityGeneric).filter(
+                VulnerabilityGeneric.id.in_(value if isinstance(value, list) else [value])
+            ).all() if value else []
+        )
+    )
+
+    workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+
     metadata = SelfNestedField(MetadataSchema())
-
-    @staticmethod
-    def get_parent(obj):
-        return obj.host_id or obj.service_id
-
-    @staticmethod
-    def get_parent_type(obj):
-        assert obj.host_id is not None or obj.service_id is not None
-        return 'Service' if obj.service_id is not None else 'Host'
-
-    @staticmethod
-    def get_target(obj):
-        if obj.host is not None:
-            return obj.host.ip
-        else:
-            return obj.service.host.ip + '/' + obj.service.name
 
     class Meta:
         model = Credential
-        fields = ('id', '_id', "_rev", 'parent', 'username', 'description',
-                  'name', 'password', 'owner', 'owned', 'couchdbid', 'parent',
-                  'parent_type', 'metadata', 'host_ip', 'service_name',
-                  'target',
-                  )
-
-    @post_load
-    def set_parent(self, data, **kwargs):
-        parent_type = data.pop('parent_type', None)
-        parent_id = data.pop('parent', None)
-        if parent_type == 'Host':
-            parent_class = Host
-            parent_field = 'host_id'
-            not_parent_field = 'service_id'
-        elif parent_type == 'Service':
-            parent_class = Service
-            parent_field = 'service_id'
-            not_parent_field = 'host_id'
-        elif 'partial' in kwargs and kwargs['partial']:
-            return data
-        else:
-            raise ValidationError(
-                f'Unknown parent type: {parent_type}')
-        try:
-            parent = db.session.query(parent_class).join(Workspace).filter(
-                Workspace.name == self.context['workspace_name'],
-                parent_class.id == parent_id).one()
-        except NoResultFound as e:
-            raise InvalidUsage(f'Parent id not found: {parent_id}') from e
-        data[parent_field] = parent.id
-        data[not_parent_field] = None
-        return data
 
 
-class CredentialFilterSet(FilterSet):
-    class Meta(FilterSetMeta):
-        model = Credential
-        fields = (
-            'name',
-            'username',
-            'host_id',
-            'service_id',
-        )
-        default_operator = operators.Equal
-        operators = (operators.Equal, )
-
-
-class CredentialView(FilterAlchemyMixin,
-                     ReadWriteWorkspacedView,
+class CredentialView(ReadWriteWorkspacedView,
                      BulkDeleteWorkspacedMixin,
-                     BulkUpdateWorkspacedMixin):
+                     BulkUpdateWorkspacedMixin,
+                     FilterWorkspacedMixin,
+                     PaginatedMixin):
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
-    filterset_class = CredentialFilterSet
-    get_joinedloads = [Credential.host, Credential.service, Credential.update_user]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         credentials = []
         for credential in objects:
             credentials.append({
-                'id': credential['_id'],
-                '_id': credential['_id'],
-                'key': credential['_id'],
+                'id': credential['id'],
+                'key': credential['id'],
                 'value': credential
             })
         return {
             'rows': credentials,
+            'count': pagination_metadata.total if pagination_metadata is not None else len(credentials),
         }
+
+    def _pre_bulk_update(self, data, **kwargs):
+        vulns_to_add = []
+        if "vulnerabilities" in data:
+            vulns_to_add = data.pop("vulnerabilities")
+        return {"vulnerabilities": vulns_to_add}
+
+    def _post_bulk_update(self, ids, extracted_data, workspace_name=None, data=None, **kwargs):
+        if "vulnerabilities" in extracted_data:
+            vulns = extracted_data.pop("vulnerabilities")
+            workspace = get_workspace(workspace_name)
+
+            if vulns:
+                valid_vulns = []
+                for vuln in vulns:
+                    if vuln.workspace_id == workspace.id:
+                        valid_vulns.append(vuln)
+
+                vulns = valid_vulns
+
+            for credential_id in ids:
+                credential = db.session.query(Credential).get(credential_id)
+                if not credential:
+                    continue
+
+                if credential.workspace_id != workspace.id:
+                    continue
+
+                if vulns:
+                    credential.vulnerabilities = vulns
+                else:
+                    credential.vulnerabilities = []
+                db.session.add(credential)
+            db.session.commit()
+
+        return super()._post_bulk_update(ids, extracted_data, workspace_name, data, **kwargs)
+
+    def _perform_update(self, object_id, obj, data, workspace_name=None, partial=False, **kwargs):
+        vulns = None
+        if "vulnerabilities" in data:
+            vulns = data.pop("vulnerabilities")
+            workspace = get_workspace(workspace_name)
+
+            if vulns:
+                valid_vulns = []
+                for vuln in vulns:
+                    if vuln.workspace_id == workspace.id:
+                        valid_vulns.append(vuln)
+
+                vulns = valid_vulns
+
+        obj = super()._perform_update(object_id, obj, data, workspace_name, partial)
+
+        if vulns is not None:
+            obj.vulnerabilities = vulns
+            db.session.commit()
+
+        return obj
+
+    def _perform_create(self, data, workspace_name=None):
+        vulns = None
+        if "vulnerabilities" in data:
+            vulns = data.pop("vulnerabilities")
+            workspace = get_workspace(workspace_name)
+
+            if vulns:
+                valid_vulns = []
+                for vuln in vulns:
+                    if vuln.workspace_id == workspace.id:
+                        valid_vulns.append(vuln)
+
+                vulns = valid_vulns
+
+        obj = super()._perform_create(data, workspace_name)
+
+        if vulns is not None:
+            obj.vulnerabilities = vulns
+            db.session.commit()
+
+        return obj
+
+    @route('/import_csv', methods=['POST'])
+    def import_csv(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Credential"]
+          description: Import credentials from CSV
+          responses:
+            201:
+              description: Created
+        """
+        if 'file' not in request.files:
+            abort(make_response({"message": "No file provided."}, HTTPStatus.BAD_REQUEST))
+
+        credentials_file = request.files['file']
+
+        if request.form:
+            vulns_ids = request.form.get('vulns_ids', "")
+            # vulns need to come in string form, separated by commas
+            if vulns_ids:
+                vulns_ids = [int(vuln_id) for vuln_id in vulns_ids.split(',') if vuln_id.isdigit()]
+        else:
+            vulns_ids = []
+
+        try:
+            io_wrapper = TextIOWrapper(credentials_file, encoding=request.content_encoding or "utf8")
+            credentials_reader = csv.DictReader(io_wrapper, skipinitialspace=True)
+
+            required_headers = {'username', 'password', 'endpoint'}
+            missing_headers = required_headers.difference(set(credentials_reader.fieldnames))
+            if missing_headers:
+                abort(
+                    make_response(
+                        {"message": f"Missing required headers in CSV: {missing_headers}"}, HTTPStatus.BAD_REQUEST
+                    )
+                )
+
+            workspace = get_workspace(workspace_name)
+
+            vulns = db.session.query(VulnerabilityGeneric).filter(
+                VulnerabilityGeneric.id.in_(vulns_ids),
+                VulnerabilityGeneric.workspace_id == workspace.id
+            ).all() if vulns_ids else []
+
+            skipped_credentials = 0
+            created_credentials = 0
+            errors = []
+
+            for row in credentials_reader:
+                try:
+                    owned = False
+
+                    # Handle empty username and password
+                    username = row.get('username')
+                    password = row.get('password')
+                    if username is None or username.strip() == '':
+                        errors.append("Username cannot be empty")
+                        skipped_credentials += 1
+                        continue
+                    if password is None or password.strip() == '':
+                        errors.append(f"Password cannot be empty for username {username}")
+                        skipped_credentials += 1
+                        continue
+
+                    # Handle empty leak_date
+                    leak_date = row.get('leak_date')
+                    leak_date = None if leak_date is None or leak_date.strip() == '' else leak_date
+
+                    credential = Credential(
+                        username=row['username'],
+                        password=row['password'],
+                        endpoint=row['endpoint'],
+                        owned=owned,
+                        leak_date=leak_date,
+                        workspace=workspace
+                    )
+
+                    if vulns:
+                        for vuln in vulns:
+                            credential.vulnerabilities.append(vuln)
+
+                    db.session.add(credential)
+                    db.session.commit()
+                    created_credentials += 1
+                except IntegrityError as e:
+                    db.session.rollback()
+                    skipped_credentials += 1
+                    errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
+                except Exception as e:
+                    errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
+                    skipped_credentials += 1
+
+            return make_response({
+                "message": f"CSV imported successfully - Created: {created_credentials} credentials, Skipped: {skipped_credentials} credentials",
+                "errors": errors
+            }, HTTPStatus.CREATED)
+
+        except Exception as e:
+            db.session.rollback()
+            abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, HTTPStatus.BAD_REQUEST))
+
+    @route('/filter', methods=['GET'])
+    def filter(self, workspace_name, **kwargs):
+        """
+        ---
+        get:
+          tags: ["Credential"]
+          description: Filter Credentials
+          responses:
+            200:
+              description: Credentials filtered successfully
+            400:
+              description: Bad Request
+        """
+        filters = request.args.get('q', '{}')
+        export_csv = request.args.get('export_csv', '')
+        filtered_creds, count = self._filter(filters, workspace_name)
+
+        if export_csv.lower() == 'true':
+            memory_file = export_credentials_to_csv(filtered_creds)
+            return send_file(memory_file,
+                             attachment_filename=f"Faraday-{workspace_name}-Credentials.csv",
+                             as_attachment=True,
+                             cache_timeout=-1)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+
+        return self._envelope_list(filtered_creds, pagination_metadata)
+
+    def _get_base_query(self, workspace_name):
+        base_query = super()._get_base_query(workspace_name)
+        return base_query.options(db.joinedload('vulnerabilities'))
 
 
 CredentialView.register(credentials_api)

@@ -64,6 +64,7 @@ from tests.factories import (
     WorkspaceFactory,
     CustomFieldsSchemaFactory
 )
+from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
 
 
 def _create_post_data_vulnerability(name, vuln_type, parent_id,

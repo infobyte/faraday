@@ -109,13 +109,13 @@ def app(request):
     db_host = os.getenv("POSTGRES_HOST", None)
 
     if not db_user:
-        print(
-            "Please set environment variable POSTGRES_USER.")
+        print("Please set environment variable POSTGRES_USER.")
         exit("Please set environment variable POSTGRES_USER.")
 
     if not db_password:
         print("Please set environment variable POSTGRES_PASSWORD.")
         exit("Please set environment variable POSTGRES_PASSWORD.")
+
     if not db_host:
         print("Please set environment variable POSTGRES_HOST.")
         exit("Please set environment variable POSTGRES_HOST.")

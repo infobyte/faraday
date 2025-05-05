@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 import os
 from tempfile import NamedTemporaryFile
 from time import time
-import logging
 import random
 
 import json
@@ -121,7 +120,6 @@ def app(request):
         exit("Please set environment variable POSTGRES_HOST.")
 
     rand_db = create_random_db(db_user, db_password, db_host)
-    logging.warning("\n creating db " + str(rand_db) + "\n")
 
     connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{rand_db}"
 
@@ -134,7 +132,6 @@ def app(request):
 
     def teardown():
         ctx.pop()
-        logging.warning("\n SHOULD dropping db " + str(rand_db) + "\n")
         drop_database(rand_db, db_user, db_password, db_host)
 
     request.addfinalizer(teardown)

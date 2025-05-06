@@ -7,10 +7,9 @@ See the file 'doc/LICENSE' for the license information
 from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 from logging import getLogger
 
-import flask_login
 # Related third party imports
 from flask import Blueprint, abort, request
-from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload, selectinload
+from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
 
 # Local application imports
 from faraday.server.api.base import (
@@ -29,7 +28,6 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     VulnerabilityWeb,
     db,
-    VulnerabilityStatusHistory,
 )
 from faraday.server.utils.command import set_command_id
 from faraday.server.utils.cwe import create_cwe
@@ -87,7 +85,6 @@ class VulnerabilityWorkspacedView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-            selectinload(VulnerabilityGeneric.status_history),
             joinedload('refs'),
             joinedload('cve_instances'),
             joinedload('policy_violation_instances'),
@@ -180,20 +177,6 @@ class VulnerabilityWorkspacedView(
                 obj.tool = "Web UI"
         db.session.commit()
 
-        user_id = None
-        try:
-            if hasattr(flask_login.current_user, 'id'):
-                user_id = flask_login.current_user.id
-        except AttributeError as e:
-            logger.debug("Current user not found", exc_info=e)
-
-        status_history = VulnerabilityStatusHistory(
-            vulnerability_id=obj.id,
-            status=obj.status,
-            user_id=user_id,
-        )
-        db.session.add(status_history)
-
         # Update hosts stats
         host_to_update_stat = None
         if obj.host_id:
@@ -239,25 +222,6 @@ class VulnerabilityWorkspacedView(
 
         if 'cvss4_vector_string' in data:
             obj.cvss4_vector_string = data.pop('cvss4_vector_string')
-
-        new_status = data.pop('status', None)
-        if new_status is not None:
-            old_status = obj.status
-            setattr(obj, 'status', new_status)
-
-            user_id = None
-            try:
-                if hasattr(flask_login.current_user, 'id'):
-                    user_id = flask_login.current_user.id
-            except AttributeError as e:
-                logger.debug("Current user not found", exc_info=e)
-
-            status_history = VulnerabilityStatusHistory(
-                vulnerability_id=obj.id,
-                status=obj.status,
-                user_id=user_id,
-            )
-            db.session.add(status_history)
 
         return super()._update_object(obj, data)
 

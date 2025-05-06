@@ -59,7 +59,6 @@ from faraday.server.models import (
     cwe_vulnerability_association,
     db,
     owasp_vulnerability_association,
-    VulnerabilityStatusHistory,
 )
 from faraday.server.tasks import process_report_task
 from faraday.server.utils.cvss import (
@@ -410,9 +409,8 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             ),
             "custom_fields": stmt.excluded.custom_fields
         }
-    ).returning(text('id'), text('_tmp_id'), text('status'))
+    ).returning(text('id'), text('_tmp_id'))
     result = db.session.execute(on_update_stmt)
-
     total_result = manage_relationships(
         processed_data,
         result,
@@ -465,24 +463,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
         return
 
     histogram = {'workspace_id': workspace_id, 'date': date.today(), 'high': 0, 'critical': 0, 'medium': 0, 'confirmed': 0}
-
-    user_id = None
-    try:
-        if hasattr(current_user, 'id'):
-            user_id = current_user.id
-    except AttributeError as e:
-        logger.debug("Current user not found", exc_info=e)
-
     for r in result:
-
-        # Create Status History
-        status_history = VulnerabilityStatusHistory(
-            vulnerability_id=r[0],
-            status=r[2],
-            user_id=user_id,
-        )
-        db.session.add(status_history)
-
         if r[1]:
             v_id = r[0]
             data = processed_data.get(r[1], None)

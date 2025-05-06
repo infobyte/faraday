@@ -76,7 +76,6 @@ from faraday.server.models import (
     VulnerabilityWeb,
     Workspace,
     db,
-    VulnerabilityStatusHistory,
 )
 from faraday.server.schemas import (
     FaradayCustomField,
@@ -285,23 +284,6 @@ class ReferenceSchema(AutoSchema):
     type = fields.String()
 
 
-class VulnerabilityStatusHistorySchema(AutoSchema):
-    id = fields.Integer(dump_only=True)
-    status = fields.String()
-    change_date = fields.DateTime(dump_only=True)
-    user_id = fields.Integer(load_only=True)
-    user = fields.Method(serialize='get_user', dump_only=True)
-
-    class Meta:
-        model = VulnerabilityStatusHistory
-        fields = ('id', 'status', 'change_date', 'user')
-
-    @staticmethod
-    def get_user(obj):
-        if obj.user:
-            return obj.user.username
-
-
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(dump_only=True, default='')
@@ -350,7 +332,6 @@ class VulnerabilitySchema(AutoSchema):
     command_id = fields.Int(required=False, load_only=True)
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
-    status_history = fields.List(fields.Nested(VulnerabilityStatusHistorySchema), dump_only=True)
 
     class Meta:
         model = Vulnerability
@@ -741,38 +722,6 @@ class VulnerabilityView(
         if (len(data) > 0 and len(ids) > 0) and 'custom_fields' in data.keys():
             return bulk_update_custom_attributes(ids, data)
 
-        # Check if the status field is being updated
-        status_changed = 'status' in data
-
-        # Store the response before returning it
-        response = super()._perform_bulk_update(ids, data, **kwargs)
-
-        # If the status was changed in the bulk update, we need to create status history entries manually
-        # since the SQLAlchemy event listeners are not triggered by bulk operations
-        if status_changed and response.json.get('updated', 0) > 0:
-            user_id = None
-            try:
-                if hasattr(current_user, 'id'):
-                    user_id = current_user.id
-            except AttributeError as e:
-                logger.debug("Current user not found", exc_info=e)
-
-            # Get the new status from the data
-            new_status = data['status']
-
-            # Create history entries for each updated vulnerability
-            for vuln_id in ids:
-                status_history = VulnerabilityStatusHistory(
-                    vulnerability_id=vuln_id,
-                    status=new_status,
-                    user_id=user_id,
-                )
-                db.session.add(status_history)
-
-            db.session.commit()
-
-        return response
-
     def _get_eagerloaded_query(self, *args, **kwargs):
         """
         Eager hostnames loading.
@@ -802,7 +751,6 @@ class VulnerabilityView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
-            selectinload(VulnerabilityGeneric.status_history),
         ]
 
         if request.args.get('get_evidence'):

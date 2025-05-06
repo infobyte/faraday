@@ -411,6 +411,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
         }
     ).returning(text('id'), text('_tmp_id'))
     result = db.session.execute(on_update_stmt)
+    db.session.commit()
     total_result = manage_relationships(
         processed_data,
         result,
@@ -463,6 +464,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
         return
 
     histogram = {'workspace_id': workspace_id, 'date': date.today(), 'high': 0, 'critical': 0, 'medium': 0, 'confirmed': 0}
+
     for r in result:
         if r[1]:
             v_id = r[0]

@@ -3,6 +3,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+
 # Standard library imports
 from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 from logging import getLogger
@@ -85,6 +86,7 @@ class VulnerabilityWorkspacedView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+
             joinedload('refs'),
             joinedload('cve_instances'),
             joinedload('policy_violation_instances'),

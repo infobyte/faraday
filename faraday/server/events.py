@@ -28,6 +28,7 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     db,
 )
+
 logger = logging.getLogger(__name__)
 changes_queue = Queue()
 

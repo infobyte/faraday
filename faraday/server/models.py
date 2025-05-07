@@ -3576,6 +3576,7 @@ class CloudAgent(Metadata):
     parameters_data = Column(JSONType, nullable=False, default={})
     category = Column(JSONType, nullable=True)
     description = BlankColumn(Text)
+    tools_count = Column(Integer, nullable=False, default=1)
 
     @property
     def last_run(self):
@@ -3623,6 +3624,7 @@ class CloudAgentExecution(Metadata):
     last_run = Column(DateTime)
     triggered_by = Column(String, nullable=True)
     run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    tasks_completed = Column(Integer, nullable=False, default=0)
 
     @property
     def parent(self):

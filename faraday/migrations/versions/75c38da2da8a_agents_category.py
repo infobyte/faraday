@@ -28,6 +28,9 @@ def upgrade():
     op.add_column('cloud_agent', sa.Column('parameters_data', sa.JSON(), nullable=False, server_default='{}'))
     op.add_column('agent', sa.Column('description', sa.Text(), nullable=False, server_default=''))
     op.add_column('cloud_agent', sa.Column('description', sa.Text(), nullable=False, server_default=''))
+    op.add_column('cloud_agent', sa.Column('tools_count', sa.Integer, nullable=False, server_default='1'))
+    op.add_column('cloud_agent_execution', sa.Column('tasks_completed', sa.Integer, nullable=False, server_default='0'))
+
 
     # Adding indexes on run_uuid for better GROUP BY performance
     op.create_index('ix_agent_execution_run_uuid', 'agent_execution', ['run_uuid'])
@@ -49,3 +52,5 @@ def downgrade():
     op.drop_column('cloud_agent', 'parameters_data')
     op.drop_column('agent', 'description')
     op.drop_column('cloud_agent', 'description')
+    op.drop_column('cloud_agent', 'tools_count')
+    op.drop_column('cloud_agent_execution', 'tasks_completed')

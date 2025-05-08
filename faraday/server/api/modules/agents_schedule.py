@@ -6,8 +6,9 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 import http
 import logging
+from datetime import datetime
 import json
-import datetime
+from uuid import uuid4
 
 # Related third party imports
 import flask
@@ -232,21 +233,28 @@ class AgentsScheduleView(
         if not agents_schedule.executor.agent.active:
             message = f'Agent is paused. active flag: {agents_schedule.executor.agent.active}'
             abort(http.HTTPStatus.GONE, message)
-        agents_schedule.last_run = datetime.datetime.now()
-        db.session.add(agents_schedule)
         workspaces = agents_schedule.workspaces
         commands = []
         agent_executions = []
+        workspaces_commands = []
+        run_uuid = uuid4()
         for workspace in workspaces:
             command, agent_execution = get_command_and_agent_execution(
                 executor=agents_schedule.executor,
                 workspace=workspace,
                 parameters=agents_schedule.parameters,
                 username=username,
-                user_id=flask_login.current_user.id
+                user_id=flask_login.current_user.id,
+                run_uuid=run_uuid
             )
             commands.append(command)
             agent_executions.append(agent_execution)
+            db.session.add(agent_execution)
+            workspaces_commands.append({"workspace_name": workspace.name, "command_id": command.id})
+
+        agents_schedule.last_run = datetime.utcnow()
+        for agent_execution in agent_executions:
+            agent_execution.parameters_data = {"workspaces_commands": agents_schedule.parameters}
             db.session.add(agent_execution)
         db.session.commit()
         logger.info(f"Agent {agents_schedule.executor.agent.name} executed with executor {agents_schedule.executor.name}")

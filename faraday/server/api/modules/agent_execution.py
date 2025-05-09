@@ -74,7 +74,7 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
         return super()._filter(*args, **kwargs)
 
     def _paginate(self, query, hard_limit=0):
-        #  Same as _filter
+        # TODO: Duplicated code. Fix.
         subquery = (
             db.session.query(AgentExecution.run_uuid, func.min(AgentExecution.id).label("min_id"))
             .filter(AgentExecution.run_uuid.isnot(None))

@@ -3384,6 +3384,8 @@ class SchedulerGeneric(Metadata):
     host_tag = Column(String, default="")
     parameters = Column(JSONType, nullable=False, default={})
     type = Column(Enum(*SCHEDULER_TYPES, name='scheduler_types'), nullable=False)
+    min_severity = Column(String, nullable=True)
+    max_severity = Column(String, nullable=True)
 
     # N workspace <--> N schedules (base relationship)
     workspaces = relationship(

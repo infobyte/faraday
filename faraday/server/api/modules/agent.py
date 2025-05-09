@@ -120,6 +120,8 @@ class AgentRunSchema(Schema):
     vuln_tag = fields.List(fields.String, required=False)
     service_tag = fields.List(fields.String, required=False)
     host_tag = fields.List(fields.String, required=False)
+    min_severity = fields.String(required=False)
+    max_severity = fields.String(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -178,7 +180,9 @@ class AgentView(ReadWriteView):
             "vuln_tag": data.get('vuln_tag', None),
             "service_tag": data.get('service_tag', None),
             # this field should be named host_tag but in agents is named as hostname_tag
-            "hostname_tag": data.get('host_tag', None)
+            "hostname_tag": data.get('host_tag', None),
+            "min_severity": data.get('min_severity', None),
+            "max_severity": data.get('max_severity', None)
         }
         if agent.is_offline:
             abort(http.HTTPStatus.GONE, "Agent is offline")

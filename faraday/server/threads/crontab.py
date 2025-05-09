@@ -187,6 +187,10 @@ class AgentsCronItem(CronItem):
                 plugin_args["service_tag"] = schedule.service_tag.split(",")
             if schedule.host_tag:
                 plugin_args["host_tag"] = schedule.host_tag.split(",")
+            if schedule.min_severity is not None:
+                plugin_args["min_severity"] = schedule.min_severity
+            if schedule.max_severity is not None:
+                plugin_args["max_severity"] = schedule.max_severity
             message = {
                 "execution_ids": [agent_execution.id for agent_execution in agent_executions],
                 "agent_id": schedule.executor.agent.id,

@@ -380,6 +380,7 @@ def get_prefixed_url(app, url):
 
 def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, start_scheduler=False, remove_sids=False):
     logger.debug("Creating new faraday app instance")
+
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',

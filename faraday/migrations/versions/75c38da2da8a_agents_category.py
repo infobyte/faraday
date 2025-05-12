@@ -31,7 +31,6 @@ def upgrade():
     op.add_column('cloud_agent', sa.Column('tools_count', sa.Integer, nullable=False, server_default='1'))
     op.add_column('cloud_agent_execution', sa.Column('tasks_completed', sa.Integer, nullable=False, server_default='0'))
 
-
     # Adding indexes on run_uuid for better GROUP BY performance
     op.create_index('ix_agent_execution_run_uuid', 'agent_execution', ['run_uuid'])
     op.create_index('ix_cloud_agent_execution_run_uuid', 'cloud_agent_execution', ['run_uuid'])

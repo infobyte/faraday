@@ -994,13 +994,6 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _envelope_list(self, objects, pagination_metadata=None):
-        """Returns dict that contains 'rows' with the objects and 'total_count' with the count"""
-        return {
-            'rows': objects,
-            'count': pagination_metadata.total if pagination_metadata else len(objects)
-        }
-
     def _generate_filter_query(self, filters, severity_count=None):
 
         #  TODO: Refactor severity count usage, its only used on hosts,

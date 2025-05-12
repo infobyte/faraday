@@ -678,6 +678,9 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
     if run_date:
         vuln_data['create_date'] = run_date
 
+    if vuln_data.get('status') != 'closed':
+        vuln_data['last_detected'] = datetime.utcnow()
+
     tool = vuln_data.get('tool', '')
     # TODO: Check in professional
     if not tool:

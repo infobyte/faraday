@@ -1313,3 +1313,34 @@ class TestBulkCreateAPI:
         created = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.name == vulnerability['name'],
                                                     VulnerabilityGeneric.type == 'vulnerability').all()
         assert len(created) == 3
+
+    def test_vuln_sets_last_detected_if_not_closed(self, session, workspace, host):
+        vuln_data_copy = vuln_data.copy()
+        vuln_data_copy['status'] = 'open'  # any value != 'closed'
+        new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
+
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+        created_data, vuln_id = bc._create_hostvuln(workspace, host, new_vuln, command_dict)
+        vuln = created_data[vuln_id]['vuln_data']
+
+        assert 'last_detected' in vuln
+        assert isinstance(vuln['last_detected'], datetime)
+
+    def test_vuln_does_not_set_last_detected_if_closed(self, session, workspace, host):
+        vuln_data_copy = vuln_data.copy()
+        vuln_data_copy['status'] = 'closed'
+        new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
+
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+        created_data, vuln_id = bc._create_hostvuln(workspace, host, new_vuln, command_dict)
+        vuln = created_data[vuln_id]['vuln_data']
+
+        assert 'last_detected' not in vuln

@@ -49,7 +49,6 @@ pylint:
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir -p faraday/frontend/www && touch faraday/frontend/www/index.html
         - mkdir run_from
-        - nix-shell --command "cd run_from && pytest ../tests -n auto --dist loadfile -svx --capture=sys --cov=../faraday/server --color=yes --disable-warnings"
     artifacts:
         when: on_failure
         paths:
@@ -66,4 +65,6 @@ pylint:
 
 postgresql_test_nix:
     extends: .postgresql_test_nix_base
+    script:
+        - nix-shell --command "cd run_from && pytest ../tests -n auto --dist loadfile -svx --capture=sys --cov=../faraday/server --color=yes --disable-warnings"
     image: nixos/nix:2.16.0

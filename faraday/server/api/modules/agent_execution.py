@@ -86,5 +86,11 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
 
         return super()._paginate(query, hard_limit)
 
+    def _envelope_list(self, objects, pagination_metadata=None):
+        return {
+            'rows': objects,
+            'count': pagination_metadata.total if pagination_metadata else len(objects)
+        }
+
 
 AgentExecutionView.register(agent_execution_api)

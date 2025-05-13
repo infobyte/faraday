@@ -120,8 +120,8 @@ class AgentRunSchema(Schema):
     vuln_tag = fields.List(fields.String, required=False)
     service_tag = fields.List(fields.String, required=False)
     host_tag = fields.List(fields.String, required=False)
-    min_severity = fields.String(required=False)
-    max_severity = fields.String(required=False)
+    min_severity = fields.String(required=False, allow_none=True)
+    max_severity = fields.String(required=False, allow_none=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -442,8 +442,8 @@ class AgentView(ReadWriteView, FilterMixin):
     def filter(self, **kwargs):
         """
         ---
-        tags: ["Filter", {tag_name}]
-        description: Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.
+        tags: ["Filter", "Agent"]
+        description: Filters, sorts and groups Agents using a json with parameters. These parameters must be part of the model.
         parameters:
         - in: query
           name: q

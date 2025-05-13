@@ -6,6 +6,8 @@ See the file 'doc/LICENSE' for the license information
 import http
 import logging
 from datetime import datetime
+from urllib.parse import urlparse
+from uuid import uuid4
 
 import pyotp
 import flask
@@ -18,7 +20,9 @@ from faraday_agent_parameters_types.utils import type_validate, get_manifests
 
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView, get_workspace
+    ReadWriteView,
+    FilterMixin,
+    get_workspace
 )
 from faraday.server.extensions import socketio
 from faraday.server.models import (
@@ -35,6 +39,54 @@ agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+def is_valid_url(url):
+    """Check if a string is a valid URL."""
+    parsed = urlparse(url)
+    return bool(parsed.scheme) and bool(parsed.netloc)
+
+
+def validate_type(base, type_, value):
+    """Validate a value based on its base and type."""
+
+    if base == "string":
+        if type_ == "url":
+            # Check if it is a valid URL
+            if not is_valid_url(value):
+                return f"Expected {type_}, got {type(value).__name__}"
+        elif not isinstance(value, str):
+            return f"Expected {type_}, got {type(value).__name__}"
+
+    elif base == "integer":
+        if not isinstance(value, int):
+            return f"Expected {type_}, got {type(value).__name__}"
+
+    elif base == "boolean":
+        if not isinstance(value, bool):
+            return f"Expected {type_}, got {type(value).__name__}"
+
+    elif base == "list":
+        if not isinstance(value, list):
+            return f"Expected list, got {type(value).__name__}"
+
+    return None  # No error, value is valid
+
+
+def validate_executor_args(parameters_metadata, args):
+    """Validate executor arguments based on parameters metadata."""
+    errors = {}
+
+    # Iterate through the passed arguments (args)
+    for param_name, param_value in args.items():
+        # If this param exists in the metadata, validate it
+        if param_name in parameters_metadata:
+            param_metadata = parameters_metadata[param_name]
+            error = validate_type(param_metadata["base"], param_metadata["type"], param_value)
+            if error:
+                errors[param_name] = error
+
+    return errors
+
+
 class AgentsScheduleSchema(AutoSchema):
     id = fields.Integer(dump_only=True)
     description = fields.String(required=True)
@@ -45,11 +97,16 @@ class ExecutorSchema(AutoSchema):
     parameters_metadata = fields.Dict(
         dump_only=True
     )
+    parameters_data = fields.Dict(
+        dump_only=True
+    )
     id = fields.Integer(dump_only=True)
     name = fields.String(dump_only=True)
     agent_id = fields.Integer(dump_only=True, attribute='agent_id')
     last_run = fields.DateTime(dump_only=True)
     schedules = fields.Nested(AgentsScheduleSchema(), dump_only=True, many=True)
+    tool = fields.String(dump_only=True)
+    category = fields.List(fields.String(), dump_only=True)
 
     class Meta:
         model = Executor
@@ -59,7 +116,10 @@ class ExecutorSchema(AutoSchema):
             'agent_id',
             'last_run',
             'parameters_metadata',
-            'schedules'
+            'parameters_data',
+            'schedules',
+            'tool',
+            'category',
         )
 
 
@@ -73,12 +133,14 @@ class AgentSchema(AutoSchema):
     is_online = fields.Boolean(dump_only=True)
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
     last_run = fields.DateTime(dump_only=True)
+    description = fields.String(dump_only=True)
 
     class Meta:
         model = Agent
         fields = (
             'id',
             'name',
+            'description',
             'status',
             'active',
             'create_date',
@@ -95,12 +157,14 @@ class AgentCreationSchema(Schema):
     id = fields.Integer(dump_only=True)
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
+    description = fields.String(required=False)
 
     class Meta:
         fields = (
             'id',
             'name',
-            'token'
+            'token',
+            'description'
         )
 
 
@@ -126,7 +190,7 @@ class AgentRunSchema(Schema):
         self.unknown = EXCLUDE
 
 
-class AgentView(ReadWriteView):
+class AgentView(ReadWriteView, FilterMixin):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
@@ -170,7 +234,6 @@ class AgentView(ReadWriteView):
         user = flask_login.current_user
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id)
-        executor_data = data['executor_data']
         workspaces = [get_workspace(workspace_name=workspace) for workspace in data['workspaces_names']]
         plugins_args = {
             "ignore_info": data.get('ignore_info', False),
@@ -182,10 +245,11 @@ class AgentView(ReadWriteView):
         }
         if agent.is_offline:
             abort(http.HTTPStatus.GONE, "Agent is offline")
-        return self._run_agent(agent, executor_data, workspaces, plugins_args, user.username, user.id)
+        return self._run_agent(agent, data, workspaces, plugins_args, user.username, user.id)
 
     @staticmethod
-    def _run_agent(agent: Agent, executor_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
+    def _run_agent(agent: Agent, parameters_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
+        executor_data = parameters_data["executor_data"]
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                              Executor.agent_id == agent.id).one()
@@ -211,17 +275,28 @@ class AgentView(ReadWriteView):
 
             commands = []
             agent_executions = []
+            workspaces_commands = []
+            run_uuid = uuid4()
             for workspace in workspaces:
                 command, agent_execution = get_command_and_agent_execution(executor=executor,
                                                                            workspace=workspace,
                                                                            user_id=user_id,
-                                                                           parameters=executor_data["args"],
-                                                                           username=username)
+                                                                           parameters=parameters_data,
+                                                                           username=username,
+                                                                           triggered_by=username,
+                                                                           run_uuid=run_uuid)
                 commands.append(command)
+                db.session.add(command)
+                db.session.commit()
                 agent_executions.append(agent_execution)
+                workspaces_commands.append({"workspace_name": workspace.name, "command_id": command.id})
+
+            parameters_data["workspaces_commands"] = workspaces_commands
+            parameters_data.pop("workspaces_names", None)
 
             executor.last_run = datetime.utcnow()
             for agent_execution in agent_executions:
+                agent_execution.parameters_data = parameters_data
                 db.session.add(agent_execution)
             db.session.commit()
 
@@ -305,6 +380,96 @@ class AgentView(ReadWriteView):
             return flask.jsonify(manifest)
         except ValueError as e:
             flask.abort(400, e)
+
+    @route('/save_parameters', methods=['POST'])
+    def save_parameters_data(self):
+        """
+        ---
+        tags: ["Agent"]
+        description: Saves parameters data for an executor
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executor_id:
+                    type: integer
+                    description: The ID of the executor
+                  parameters_data:
+                    type: object
+                    description: Full parameters data to be saved
+        responses:
+          200:
+            description: Parameters saved successfully
+          400:
+            description: Validation error
+          404:
+            description: Executor not found
+        """
+        if flask.request.content_type != 'application/json':
+            abort(400, "Only application/json is a valid content-type")
+
+        data = request.get_json()
+        executor_id = data.get("executor_id")
+        parameters_data = data.get("parameters_data")
+
+        if not executor_id:
+            abort(400, "Missing 'executor_id' in request body")
+        if not parameters_data:
+            abort(400, "Missing 'parameters_data' in request body")
+
+        executor = Executor.query.get(executor_id)
+        if not executor:
+            abort(404, "Executor not found")
+
+        executor_data = parameters_data.get("executor_data", {})
+        args = executor_data.get("args", {})
+        parameters_metadata = executor.parameters_metadata
+
+        validation_errors = validate_executor_args(parameters_metadata, args)
+
+        if validation_errors:
+            return jsonify({"errors": validation_errors}), 400
+
+        # Proceed to save the parameters data if validation passes
+        executor.parameters_data = parameters_data
+        db.session.commit()
+
+        return jsonify({"message": "Parameters saved successfully"}), 200
+
+    @route('/filter')
+    def filter(self, **kwargs):
+        """
+        ---
+        tags: ["Filter", "Agent"]
+        description: Filters, sorts and groups Agents using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: Recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: Returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: Invalid q was sent to the server
+        """
+        filters = request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, **kwargs)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+
+        return {
+            'rows': filtered_objs,
+            'count': pagination_metadata.total if pagination_metadata else len(filtered_objs)
+        }
 
 
 AgentView.register(agent_api)

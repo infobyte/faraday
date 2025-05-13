@@ -523,7 +523,7 @@ class ListMixin:
         """Override this method to define how a list of objects is
         rendered.
 
-        See the example of :ref:`envelope-list-example` to learn
+        See the example of:ref:`envelope-list-example` to learn
         when and how it should be used.
         """
         return objects

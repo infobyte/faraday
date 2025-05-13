@@ -88,7 +88,7 @@ from faraday.server.schemas import (
 from faraday.server.utils.csrf import validate_file
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.database import get_or_create
-from faraday.server.utils.export import export_vulns_to_csv
+from faraday.server.utils.export import export_vulns_to_csv, export_vulns_to_csv_limited
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
@@ -98,6 +98,7 @@ from faraday.server.utils.vulns import (
     SCHEMA_FIELDS,
     WEB_SCHEMA_FIELDS,
     bulk_update_custom_attributes,
+    VALID_FILTER_VULN_COLUMNS,
 )
 from faraday.settings import get_settings
 
@@ -327,6 +328,7 @@ class VulnerabilitySchema(AutoSchema):
     host_os = fields.String(dump_only=True, attribute='target_host_os')
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date', dump_only=True)  # This is only used for sorting
+    update_date = fields.DateTime(attribute='update_date', dump_only=True)
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
     external_id = fields.String(allow_none=True)
     command_id = fields.Int(required=False, load_only=True)
@@ -988,6 +990,7 @@ class VulnerabilityView(
         workspace_name = kwargs.get('workspace_name')
         filters = request.args.get('q', '{}')
         export_csv = request.args.get('export_csv', '')
+        export_csv_limited = request.args.get('export_csv_limited', '')
         filtered_vulns, count = self._filter(
             filters, exclude_list=('_attachments', 'desc') if export_csv.lower() == 'true' else None, **kwargs
         )
@@ -1002,16 +1005,27 @@ class VulnerabilityView(
             for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
                 custom_fields_columns.append(custom_field.field_name)
             memory_file = export_vulns_to_csv(filtered_vulns, custom_fields_columns)
+
             if workspace_name:
-                return send_file(memory_file,
-                                 attachment_filename=f"Faraday-SR-{workspace_name}.csv",
-                                 as_attachment=True,
-                                 cache_timeout=-1)
+                file_name = f"Faraday-SR-{workspace_name}.csv"
             else:
-                return send_file(memory_file,
-                                 attachment_filename="Faraday-SR-Context.csv",
-                                 as_attachment=True,
-                                 cache_timeout=-1)
+                file_name = "Faraday-SR-Context.csv"
+            return send_file(memory_file,
+                             attachment_filename=file_name,
+                             as_attachment=True,
+                             cache_timeout=-1)
+
+        elif export_csv_limited.lower() == 'true':
+            memory_file = export_vulns_to_csv_limited(filtered_vulns)
+
+            if workspace_name:
+                file_name = f"Faraday-SR-{workspace_name}.csv"
+            else:
+                file_name = "Faraday-SR-Limited.csv"
+            return send_file(memory_file,
+                             attachment_filename=file_name,
+                             as_attachment=True,
+                             cache_timeout=-1)
         else:
             return self._envelope_list(filtered_vulns, pagination_metadata)
 
@@ -1135,6 +1149,13 @@ class VulnerabilityView(
             'policyviolations',
             'data',
         ) if not exclude_list else exclude_list}
+        if 'columns' in filters:
+            columns = filters.pop('columns')
+            if len(columns) > 0:
+                for column in columns:
+                    if column not in VALID_FILTER_VULN_COLUMNS:
+                        abort(400, f"Invalid column {column}")
+                    marshmallow_params.setdefault('only', []).append(column)
         if 'group_by' not in filters:
             offset = None
             if 'offset' in filters:

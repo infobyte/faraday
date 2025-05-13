@@ -3369,6 +3369,7 @@ agents_schedule_workspace_table = Table(
 class SchedulerGeneric(Metadata):
 
     SCHEDULER_TYPES = ['cloud_agent', 'agent']
+    SEVERITIES = ['UNCLASSIFIED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
 
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -3384,8 +3385,8 @@ class SchedulerGeneric(Metadata):
     host_tag = Column(String, default="")
     parameters = Column(JSONType, nullable=False, default={})
     type = Column(Enum(*SCHEDULER_TYPES, name='scheduler_types'), nullable=False)
-    min_severity = Column(String, nullable=True)
-    max_severity = Column(String, nullable=True)
+    min_severity = Column(Enum(*SEVERITIES, name='scheduler_severities'), nullable=True)
+    max_severity = Column(Enum(*SEVERITIES, name='scheduler_severities'), nullable=True)
 
     # N workspace <--> N schedules (base relationship)
     workspaces = relationship(

@@ -438,5 +438,11 @@ class AgentView(ReadWriteView, FilterMixin):
 
         return jsonify({"message": "Parameters saved successfully"}), 200
 
+    def _envelope_list(self, objects, pagination_metadata=None):
+        return {
+            'rows': objects,
+            'count': pagination_metadata.total if pagination_metadata else len(objects)
+        }
+
 
 AgentView.register(agent_api)

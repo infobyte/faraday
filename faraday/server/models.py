@@ -3369,7 +3369,7 @@ agents_schedule_workspace_table = Table(
 class SchedulerGeneric(Metadata):
 
     SCHEDULER_TYPES = ['cloud_agent', 'agent']
-    SEVERITIES = ['UNCLASSIFIED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+    SEVERITIES = ['UNCLASSIFIED', 'INFO', 'LOW', 'MED', 'HIGH', 'CRITICAL']
 
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)

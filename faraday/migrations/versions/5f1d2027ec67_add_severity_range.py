@@ -19,9 +19,9 @@ depends_on = None
 def upgrade():
     # Create enum type for severity levels
     conn = op.get_bind()
-    conn.execute("CREATE TYPE scheduler_severities AS ENUM ('UNCLASSIFIED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL')")
-    op.add_column('agent_schedule', sa.Column('min_severity', sa.Enum('UNCLASSIFIED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL', name='scheduler_severities', create_type=False), nullable=True))
-    op.add_column('agent_schedule', sa.Column('max_severity', sa.Enum('UNCLASSIFIED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL', name='scheduler_severities', create_type=False), nullable=True))
+    conn.execute("CREATE TYPE scheduler_severities AS ENUM ('UNCLASSIFIED', 'INFO', 'LOW', 'MED', 'HIGH', 'CRITICAL')")
+    op.add_column('agent_schedule', sa.Column('min_severity', sa.Enum('UNCLASSIFIED', 'INFO', 'LOW', 'MED', 'HIGH', 'CRITICAL', name='scheduler_severities', create_type=False), nullable=True))
+    op.add_column('agent_schedule', sa.Column('max_severity', sa.Enum('UNCLASSIFIED', 'INFO', 'LOW', 'MED', 'HIGH', 'CRITICAL', name='scheduler_severities', create_type=False), nullable=True))
 
 
 def downgrade():

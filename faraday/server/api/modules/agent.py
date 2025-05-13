@@ -120,6 +120,7 @@ class AgentRunSchema(Schema):
     vuln_tag = fields.List(fields.String, required=False)
     service_tag = fields.List(fields.String, required=False)
     host_tag = fields.List(fields.String, required=False)
+    # TODO: add validation for severity fields
     min_severity = fields.String(required=False, allow_none=True)
     max_severity = fields.String(required=False, allow_none=True)
 

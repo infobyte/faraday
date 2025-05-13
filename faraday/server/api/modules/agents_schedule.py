@@ -93,6 +93,8 @@ class AgentsScheduleSchema(AutoSchema):
     vuln_tag = fields.List(fields.String, required=False)
     service_tag = fields.List(fields.String, required=False)
     host_tag = fields.List(fields.String, required=False)
+    min_severity = fields.String(required=False, allow_none=True)
+    max_severity = fields.String(required=False, allow_none=True)
 
     class Meta:
         model = AgentsSchedule
@@ -115,7 +117,9 @@ class AgentsScheduleSchema(AutoSchema):
             "resolve_hostname",
             "vuln_tag",
             "service_tag",
-            "host_tag"
+            "host_tag",
+            "min_severity",
+            "max_severity",
         )
 
     @staticmethod
@@ -252,7 +256,9 @@ class AgentsScheduleView(
         logger.info(f"Agent {agents_schedule.executor.agent.name} executed with executor {agents_schedule.executor.name}")
         plugin_args = {
             "ignore_info": agents_schedule.ignore_info,
-            "resolve_hostname": agents_schedule.resolve_hostname
+            "resolve_hostname": agents_schedule.resolve_hostname,
+            "min_severity": agents_schedule.min_severity,
+            "max_severity": agents_schedule.max_severity,
         }
         if agents_schedule.vuln_tag:
             plugin_args["vuln_tag"] = agents_schedule.vuln_tag.split(",")

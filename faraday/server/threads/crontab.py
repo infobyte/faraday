@@ -179,7 +179,9 @@ class AgentsCronItem(CronItem):
             db.session.commit()
             plugin_args = {
                 "ignore_info": schedule.ignore_info,
-                "resolve_hostname": schedule.resolve_hostname
+                "resolve_hostname": schedule.resolve_hostname,
+                "min_severity": schedule.min_severity,
+                "max_severity": schedule.max_severity,
             }
             if schedule.vuln_tag:
                 plugin_args["vuln_tag"] = schedule.vuln_tag.split(",")

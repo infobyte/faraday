@@ -83,7 +83,8 @@ def send_report_data(workspace_name: str, command_id: int, report_json: dict,
 
 def process_report(workspace_name: str, command_id: int, file_path: Path,
                    plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool,
-                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None):
+                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None,
+                   min_severity: Optional[str] = None, max_severity: Optional[str] = None):
     from faraday.server.app import get_app  # pylint: disable=import-outside-toplevel
     with get_app().app_context():
         if plugin_id is not None:
@@ -92,7 +93,9 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
                                              hostname_resolution=dns_resolution,
                                              vuln_tag=vuln_tag,
                                              host_tag=host_tag,
-                                             service_tag=service_tag)
+                                             service_tag=service_tag,
+                                             min_severity=min_severity,
+                                             max_severity=max_severity)
             logger.info(f"Reports Manager: [Custom plugins folder: "
                         f"[{ReportsSettings.settings.custom_plugins_folder}]"
                         f"[Ignore info severity: {ignore_info}]"

@@ -438,10 +438,37 @@ class AgentView(ReadWriteView, FilterMixin):
 
         return jsonify({"message": "Parameters saved successfully"}), 200
 
-    def _envelope_list(self, objects, pagination_metadata=None):
+    @route('/filter')
+    def filter(self, **kwargs):
+        """
+        ---
+        tags: ["Filter", {tag_name}]
+        description: Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: Recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: Returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: Invalid q was sent to the server
+        """
+        filters = request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, **kwargs)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+
         return {
-            'rows': objects,
-            'count': pagination_metadata.total if pagination_metadata else len(objects)
+            'rows': filtered_objs,
+            'count': pagination_metadata.total if pagination_metadata else len(filtered_objs)
         }
 
 

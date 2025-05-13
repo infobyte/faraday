@@ -234,9 +234,6 @@ class AgentsScheduleView(
         if not agents_schedule.executor.agent.active:
             message = f'Agent is paused. active flag: {agents_schedule.executor.agent.active}'
             abort(http.HTTPStatus.GONE, message)
-        logger.info(
-            f"Agent {agent.name} executed with executor {agents_schedule.executor.name}"
-        )
         plugin_args = {
             "ignore_info": agents_schedule.ignore_info,
             "resolve_hostname": agents_schedule.resolve_hostname
@@ -249,7 +246,6 @@ class AgentsScheduleView(
             # this field should be named host_tag but in agents is named as hostname_tag
             plugin_args["hostname_tag"] = agents_schedule.host_tag.split(",")
 
-        agents_schedule.last_run = datetime.utcnow()
         workspaces = agents_schedule.workspaces
         commands = []
         agent_executions = []
@@ -280,6 +276,7 @@ class AgentsScheduleView(
         for agent_execution in agent_executions:
             agent_execution.parameters_data = parameters_data
             db.session.add(agent_execution)
+        agents_schedule.last_run = datetime.utcnow()
         db.session.commit()
 
         message = {

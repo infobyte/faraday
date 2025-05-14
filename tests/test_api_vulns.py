@@ -64,6 +64,7 @@ from tests.factories import (
     WorkspaceFactory,
     CustomFieldsSchemaFactory
 )
+from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
 
 
 def _create_post_data_vulnerability(name, vuln_type, parent_id,
@@ -3662,6 +3663,94 @@ class TestVulnerabilitySearch:
         )
         assert res.status_code == 200
         assert res.json['count'] == 100
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.parametrize("column", VALID_FILTER_VULN_COLUMNS)
+    def test_custom_columns_with_filter(self, test_client, session, column):
+        # Test that each valid vulnerability column can be used in filter requests
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        med_vulns = VulnerabilityFactory.create_batch(10,
+                                                      workspace=workspace,
+                                                      severity='medium'
+                                                      )
+        session.add_all(med_vulns)
+        session.add(host)
+        session.commit()
+
+        # Construct filter query that specifies which column to return
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": [column],
+        }
+        res = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+        )
+        assert res.status_code == 200
+        assert res.json['count'] == 10
+        # Verify that the requested column is included in the response
+        assert column in res.json['vulnerabilities'][0]["value"]
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_custom_columns_with_filter_invalid_column(self, test_client, session):
+        # Test that using an invalid column name returns an error
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        med_vulns = VulnerabilityFactory.create_batch(10,
+                                                      workspace=workspace,
+                                                      severity='medium'
+                                                      )
+        session.add_all(med_vulns)
+        session.add(host)
+        session.commit()
+
+        # Construct filter query with an invalid column name
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": ["invalid"],
+        }
+        res = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+        )
+        # Should return 400 Bad Request when an invalid column is specified
+        assert res.status_code == 400
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_export_csv_limited(self, test_client, session, workspace):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        med_vulns = VulnerabilityFactory.create_batch(10,
+                                                      workspace=workspace,
+                                                      severity='medium'
+                                                      )
+        session.add_all(med_vulns)
+        session.add(host)
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": VALID_FILTER_VULN_COLUMNS,
+        }
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv_limited=true&q={json.dumps(query_filter)}'
+        )
+        assert response.status_code == 200
+
+        # Check content type and filename
+        assert "text/csv" in response.content_type
+        assert "attachment" in response.headers["Content-Disposition"]
+        assert f"Faraday-SR-{workspace.name}.csv" in response.headers["Content-Disposition"]
+
+        # Parse and verify CSV content
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+
+        # Verify we have the expected number of rows
+        assert len(rows) == 10
+
+        # Verify headers are correct
+        assert set(rows[0].keys()) == set(VALID_FILTER_VULN_COLUMNS)
 
     def test_add_evidence_with_description(self, test_client, session, csrf_token):
         vuln = VulnerabilityFactory.create()

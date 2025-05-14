@@ -3,17 +3,19 @@ Faraday Penetration Test IDE
 Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+
 # Standard library imports
 import logging
+import json
 
 # Related third party imports
 import itsdangerous
 from flask import current_app, request
-
-from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
-from faraday.server.models import Workspace, db, Executor, Agent
 from flask_socketio import Namespace
 
+# Local imports
+from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
+from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution
 from faraday.server.utils.database import get_or_create
 
 logger = logging.getLogger(__name__)
@@ -34,6 +36,11 @@ def update_executors(agent, executors):
         )
 
         executor.parameters_metadata = raw_executor['args']
+        if raw_executor.get("category"):
+            category = raw_executor["category"]
+            executor.category = category
+        if raw_executor.get("tool"):
+            executor.tool = raw_executor["tool"]
         db.session.add(executor)
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])
@@ -68,12 +75,53 @@ class DispatcherNamespace(Namespace):
         if not agent:
             logger.warning("An agent disconnected but id could not be found. SID %s", request.sid)
             return
+
+        # Mark ongoing executions as failed due to disconnection
+        db.session.query(AgentExecution).filter(
+            AgentExecution.executor_id.in_(
+                db.session.query(Executor.id).filter(Executor.agent_id == agent.id)
+            ),
+            AgentExecution.running.is_(True)
+        ).update(
+            {
+                "running": False,
+                "successful": False,
+                "message": "Execution terminated due to agent disconnection."
+            },
+            synchronize_session=False
+        )
+
         agent.sid = None
         db.session.commit()
         logger.info("Disconnecting agent %s with id %s", agent.name, agent.id)
 
     def on_run_status(self, data):
         logger.info(data)
+        data = json.loads(data)
+        execution_ids = data.get("execution_ids", [])
+        if not execution_ids:
+            logger.error("No execution IDs provided")
+            return
+
+        # Prepare values, keeping None if keys are missing
+        update_values = {
+            "running": data.get("running"),
+            "successful": data.get("successful"),
+            "message": data.get("message"),
+        }
+
+        # Remove keys that are None to avoid updating them
+        update_values = {k: v for k, v in update_values.items() if v is not None}
+
+        if not update_values:
+            logger.warning("No valid fields to update for execution IDs: %s", execution_ids)
+            return
+
+        # Update AgentExecution in bulk
+        db.session.query(AgentExecution).filter(AgentExecution.id.in_(execution_ids)).update(
+            update_values, synchronize_session=False
+        )
+        db.session.commit()
 
     def on_join_agent(self, message):
         if 'token' not in message or 'executors' not in message:

@@ -26,6 +26,8 @@ from faraday.server.models import (
     Workspace,
     User,
     CustomFieldsSchema,
+    Agent,
+    AgentExecution,
     AgentsSchedule,
     Credential,
 )
@@ -234,6 +236,18 @@ class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):
         return Service
 
 
+class FlaskRestlessAgentExecutionSchema(FlaskRestlessFilterSchema):
+
+    def _model_class(self):
+        return AgentExecution
+
+
+class FlaskRestlessAgentSchema(FlaskRestlessFilterSchema):
+
+    def _model_class(self):
+        return Agent
+
+
 class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return AgentsSchedule
@@ -255,6 +269,8 @@ class FlaskRestlessOperator(Schema):
         FlaskRestlessUserFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
         FlaskRestlessServiceFilterSchema,
+        FlaskRestlessAgentExecutionSchema,
+        FlaskRestlessAgentSchema,
         FlaskRestlessCredentialFilterSchema,
     ]
 
@@ -309,6 +325,7 @@ class FilterSchema(Schema):
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()
     offset = fields.Integer()
+    columns = fields.List(fields.String())
 
     @post_load
     def validate_order_and_group_by(self, data, **kwargs):
@@ -336,6 +353,8 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessHostFilterSchema,
         FlaskRestlessWorkspaceFilterSchema,
         FlaskRestlessUserFilterSchema,
+        FlaskRestlessAgentExecutionSchema,
+        FlaskRestlessAgentSchema,
         FlaskRestlessAgentSchedulerSchema,
         FlaskRestlessCredentialFilterSchema,
     ]

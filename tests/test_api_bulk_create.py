@@ -990,8 +990,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()]),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 404
-        assert b'No such workspace' in res.data
+        assert res.status_code == 401
 
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):

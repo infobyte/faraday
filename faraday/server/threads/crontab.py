@@ -9,6 +9,7 @@ import logging
 import threading
 import time
 from time import sleep
+from uuid import uuid4
 
 # Related third party imports
 from croniter import croniter
@@ -163,30 +164,46 @@ class AgentsCronItem(CronItem):
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             agent_executions = []
             commands = []
+            workspaces_commands = []
+            parameters_data = {
+                "ignore_info": schedule.ignore_info,
+                "resolve_hostname": schedule.resolve_hostname,
+                "executor_data": {
+                    "args": schedule.parameters,
+                    "executor": schedule.executor.name
+                },
+                "workspaces_names": [workspace.name for workspace in schedule.workspaces]
+            }
+            run_uuid = uuid4()
             for workspace in schedule.workspaces:
                 try:
                     command, agent_execution = get_command_and_agent_execution(executor=schedule.executor,
                                                                                workspace=workspace,
                                                                                user_id=schedule.creator.id,
-                                                                               parameters=schedule.parameters,
-                                                                               username=schedule.creator.username)
+                                                                               parameters=parameters_data,
+                                                                               username=schedule.creator.username,
+                                                                               triggered_by=schedule.description,
+                                                                               run_uuid=run_uuid)
                 except Exception as e:
                     logger.exception(f"Scheduler with id {self.schedule_id} could not run.", exc_info=e)
                     continue
                 agent_executions.append(agent_execution)
                 commands.append(command)
+                db.session.add(command)
+                db.session.commit()
+                workspaces_commands.append({"workspace_name": workspace.name, "command_id": command.id})
+
+            parameters_data["workspaces_commands"] = workspaces_commands
+            parameters_data.pop("workspaces_names", None)
+            for agent_execution in agent_executions:
+                agent_execution.parameters_data = parameters_data
                 db.session.add(agent_execution)
+
             db.session.commit()
             plugin_args = {
                 "ignore_info": schedule.ignore_info,
                 "resolve_hostname": schedule.resolve_hostname
             }
-            if schedule.vuln_tag:
-                plugin_args["vuln_tag"] = schedule.vuln_tag.split(",")
-            if schedule.service_tag:
-                plugin_args["service_tag"] = schedule.service_tag.split(",")
-            if schedule.host_tag:
-                plugin_args["host_tag"] = schedule.host_tag.split(",")
             message = {
                 "execution_ids": [agent_execution.id for agent_execution in agent_executions],
                 "agent_id": schedule.executor.agent.id,

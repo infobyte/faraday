@@ -8,3 +8,4 @@ responses>=0.9.0
 hypothesis>=4.18.3
 Sphinx>=1.7.6
 twine
+pytest-xdist

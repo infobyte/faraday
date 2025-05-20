@@ -22,7 +22,7 @@ def upgrade():
     sa.Column('update_date', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('workspace_id', sa.Integer(), nullable=False),
-    sa.Column('recipients', JSONType(), nullable=True),
+    sa.Column('recipients', JSONType(), nullable=False),
     sa.Column('crontab', sa.Text(), nullable=False),
     sa.Column('creator_id', sa.Integer(), nullable=True),
     sa.Column('update_user_id', sa.Integer(), nullable=True),

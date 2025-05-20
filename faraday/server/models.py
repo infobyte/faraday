@@ -3862,7 +3862,7 @@ class WeeklyReport(Metadata):
         backref=backref('weekly_reports', cascade="all, delete-orphan", passive_deletes=True),
     )
 
-    recipients = Column(JSONType, nullable=True, default={})
+    recipients = Column(JSONType, nullable=False, default={})
     crontab = NonBlankColumn(Text, nullable=False, default="0 2 * * 1")  # By default, every Monday 2 AM
 
     @property

@@ -3855,14 +3855,14 @@ class PermissionsGroup(db.Model):
     __tablename__ = 'permissions_group'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
 
 
 class PermissionsUnit(db.Model):
     __tablename__ = 'permissions_unit'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     permissions_group_id = Column(Integer, ForeignKey('permissions_group.id'), index=True, nullable=False)
     permissions_group = relationship(
         'PermissionsGroup',

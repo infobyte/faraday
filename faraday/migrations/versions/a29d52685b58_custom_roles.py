@@ -98,6 +98,7 @@ def upgrade():
     sa.Column('name', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_unique_constraint(None, 'permissions_group', ['name'])
     op.create_table('permissions_unit',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -105,6 +106,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['permissions_group_id'], ['permissions_group.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_unique_constraint(None, 'permissions_unit', ['name'])
     op.create_index(op.f('ix_permissions_unit_permissions_group_id'), 'permissions_unit', ['permissions_group_id'], unique=False)
     op.create_table('permissions_unit_action',
     sa.Column('id', sa.Integer(), nullable=False),

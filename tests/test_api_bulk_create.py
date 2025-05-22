@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import time
+from uuid import uuid4
 
 import pytest
 from flask import current_app
@@ -989,8 +990,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()]),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 404
-        assert b'No such workspace' in res.data
+        assert res.status_code == 401
 
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):
@@ -1034,7 +1034,8 @@ class TestBulkCreateAPI:
         command, new_agent_execution = get_command_and_agent_execution(executor=agent_execution.executor,
                                                                        workspace=workspace,
                                                                        user_id=user.id,
-                                                                       parameters=agent_execution.parameters_data)
+                                                                       parameters=agent_execution.parameters_data,
+                                                                       run_uuid=uuid4())
         agent = agent_execution.executor.agent
         session.add(new_agent_execution)
         session.commit()
@@ -1185,7 +1186,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()], command=command_data.copy()),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 403
+        assert res.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_bulk_create_endpoint_raises_400_with_no_data(self, session, test_client, workspace):

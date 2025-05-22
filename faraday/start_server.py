@@ -22,7 +22,7 @@ from alembic.script import ScriptDirectory
 from alembic.config import Config
 
 import faraday.server.config
-from faraday.server.app import get_app
+from faraday.server.app import get_app, create_app
 from faraday.server.extensions import socketio
 from faraday.server.models import db, Workspace
 from faraday.server.utils import daemonize
@@ -34,8 +34,6 @@ import sh
 logger = logging.getLogger(__name__)
 
 init()
-
-app = get_app(remove_sids=True, start_scheduler=True)
 
 
 def setup_environment(check_deps=False):
@@ -53,6 +51,8 @@ def is_server_running(port):
 
 
 def run_server(args):
+    logger.debug("Starting Faraday Server")
+    app = create_app(register_extensions_flag=True, remove_sids=True, start_scheduler=True)
     daemonize.create_pid_file(args.port)
     try:
         if args.with_workers or args.with_workers_gevent:
@@ -90,6 +90,8 @@ def run_server(args):
 
 
 def check_postgresql():
+    print("Checking PostgreSQL connection...")
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         try:
             if not db.session.query(Workspace).count():
@@ -117,6 +119,8 @@ def check_postgresql():
 
 
 def check_alembic_version():
+    logger.debug("Checking database schema version...")
+    app = get_app(register_extensions_flag=False)
     config = Config()
     config.set_main_option("script_location", "migrations")
     script = ScriptDirectory.from_config(config)
@@ -164,7 +168,7 @@ def check_if_db_up():
 
 
 def main():
-    print("Initializing faraday server")
+    logger.debug("Initializing faraday server")
     os.chdir(faraday.server.config.FARADAY_BASE)
 
     parser = argparse.ArgumentParser()

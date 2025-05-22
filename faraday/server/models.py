@@ -3849,32 +3849,36 @@ class SlackNotification(db.Model):
     processed = Column(Boolean, default=False)
 
 
-class WeeklyReport(Metadata):
-    __tablename__ = 'weekly_report'
+class WorkspaceSummaryReport(Metadata):
+    DAILY_TYPE = 'daily'
+    WEEKLY_TYPE = 'weekly'
+    MONTHLY_TYPE = 'monthly'
+    YEARLY_TYPE = 'yearly'
+
+    SCHEDULE_TYPES = [
+        DAILY_TYPE,
+        WEEKLY_TYPE,
+        MONTHLY_TYPE,
+        YEARLY_TYPE,
+    ]
+
+    __tablename__ = 'workspace_summary_report'
     id = Column(Integer, primary_key=True)
 
-    # 1 workspace <--> N weekly reports
+    # 1 workspace <--> N workspace summary reports
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         foreign_keys=[workspace_id],
-        backref=backref('weekly_reports', cascade="all, delete-orphan", passive_deletes=True),
+        backref=backref('workspace_summary_reports', cascade="all, delete-orphan", passive_deletes=True),
     )
 
     recipients = Column(JSONType, nullable=False, default={})
-    crontab = NonBlankColumn(Text, nullable=False, default="0 2 * * 1")  # By default, every Monday 2 AM
-
-    @property
-    def next_report(self):
-        return croniter(
-            self.crontab,
-            datetime.now(tz=dateutil.tz.gettz(self.timezone)),
-            ret_type=datetime
-        ).get_next(datetime)
+    schedule_type = Column(Enum(*SCHEDULE_TYPES, name='report_schedule_types'), nullable=False, default='weekly')
 
     __table_args__ = (
-        UniqueConstraint('creator_id', 'workspace_id', name='uix_weekly_report_creator_workspace'),
+        UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),
     )
 
 

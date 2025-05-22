@@ -25,8 +25,8 @@ def upgrade():
     sa.Column('workspace_id', sa.Integer(), nullable=False),
     sa.Column('recipients', JSONType(), nullable=False),
     sa.Column(
-        'report_schedule_type',
-        sa.Enum('daily', 'weekly', 'monthly', 'yearly', name='schedule_types'),
+        'schedule_type',
+        sa.Enum('daily', 'weekly', 'monthly', 'yearly', name='report_schedule_types'),
         default='weekly',
         nullable=False,
     ),

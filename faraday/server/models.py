@@ -3855,7 +3855,7 @@ class WorkspaceSummaryReport(Metadata):
     MONTHLY_TYPE = 'monthly'
     YEARLY_TYPE = 'yearly'
 
-    SCHEDULE_TYPES = [
+    SUMMARY_PERIOD_TYPES = [
         DAILY_TYPE,
         WEEKLY_TYPE,
         MONTHLY_TYPE,
@@ -3864,6 +3864,13 @@ class WorkspaceSummaryReport(Metadata):
 
     __tablename__ = 'workspace_summary_report'
     id = Column(Integer, primary_key=True)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete='CASCADE'), index=True, nullable=False)
+    user = relationship(
+        'User',
+        backref=backref('workspace_summary_reports', cascade="all, delete-orphan", passive_deletes=True),
+        foreign_keys=[user_id],
+    )
 
     # 1 workspace <--> N workspace summary reports
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -3875,7 +3882,11 @@ class WorkspaceSummaryReport(Metadata):
     )
 
     recipients = Column(JSONType, nullable=False, default={})
-    schedule_type = Column(Enum(*SCHEDULE_TYPES, name='report_schedule_types'), nullable=False, default='weekly')
+    summary_period_type = Column(
+        Enum(*SUMMARY_PERIOD_TYPES, name='summary_period_types'),
+        nullable=False,
+        default='weekly',
+    )
 
     __table_args__ = (
         UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),

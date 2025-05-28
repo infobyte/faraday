@@ -49,20 +49,20 @@ def validate_type(base, type_, value):
     """Validate a value based on its base and type."""
 
     if base == "string":
+        if not isinstance(value, str):
+            return f"Expected string, got {type(value).__name__}"
         if type_ == "url":
             # Check if it is a valid URL
             if not is_valid_url(value):
-                return f"Expected {type_}, got {type(value).__name__}"
-        elif not isinstance(value, str):
-            return f"Expected {type_}, got {type(value).__name__}"
+                return f"Expected valid URL, got invalid URL: {value}"
 
     elif base == "integer":
         if not isinstance(value, int):
-            return f"Expected {type_}, got {type(value).__name__}"
+            return f"Expected integer, got {type(value).__name__}"
 
     elif base == "boolean":
         if not isinstance(value, bool):
-            return f"Expected {type_}, got {type(value).__name__}"
+            return f"Expected boolean, got {type(value).__name__}"
 
     elif base == "list":
         if not isinstance(value, list):

@@ -13,10 +13,12 @@ import itertools
 import unicodedata
 import uuid
 import time
+from uuid import uuid4
 
 import pytz
 from factory.fuzzy import (
     BaseFuzzyAttribute,
+    FuzzyAttribute,
     FuzzyChoice,
     FuzzyNaiveDateTime,
     FuzzyInteger,
@@ -622,6 +624,7 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
         workspace=factory.SelfAttribute("..workspace"),
         end_date=None
     )
+    run_uuid = FuzzyAttribute(lambda: uuid4())
 
     class Meta:
         model = AgentExecution

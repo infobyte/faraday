@@ -11,14 +11,14 @@
 , flask-socketio, flask-sqlalchemy, flask-wtf, flask_mail, gevent
 , gevent-websocket, hypothesis, kombu, lib, marshmallow, marshmallow-sqlalchemy
 , nplusone, pgcli, pillow, psycogreen, psycopg2, pyasn1, pyjwt, pylint
-, pyopenssl, pyotp, pytest, pytest-cov, pytest-factoryboy, pytest-runner, pyyaml
-, redis, requests, responses, service-identity, sh, simplekv, sphinx, sqlalchemy
-, syslog-rfc5424-formatter, tqdm, twine, validators, webargs, werkzeug, wtforms
-}:
+, pyopenssl, pyotp, pytest, pytest-cov, pytest-factoryboy, pytest-runner
+, pytest-xdist, pyyaml, redis, requests, responses, service-identity, sh
+, simplekv, sphinx, sqlalchemy, syslog-rfc5424-formatter, tqdm, twine
+, validators, webargs, werkzeug, wtforms }:
 
 buildPythonPackage rec {
   pname = "faradaysec";
-  version = "5.13.0";
+  version = "5.14.0";
 
   src = lib.cleanSource ../../..;
 
@@ -94,6 +94,7 @@ buildPythonPackage rec {
     hypothesis
     sphinx
     twine
+    pytest-xdist
   ];
 
   checkPhase = "true  # TODO fill with the real command for testing";

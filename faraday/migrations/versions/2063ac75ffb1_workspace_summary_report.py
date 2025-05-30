@@ -41,9 +41,11 @@ def upgrade():
     sa.UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace')
     )
     op.create_index(op.f('ix_workspace_summary_report_workspace_id'), 'workspace_summary_report', ['workspace_id'], unique=False)
+    op.create_index(op.f('ix_workspace_summary_report_user_id'), 'workspace_summary_report', ['user_id'], unique=False)
 
 
 def downgrade():
+    op.drop_index(op.f('ix_workspace_summary_report_user_id'), table_name='workspace_summary_report')
     op.drop_index(op.f('ix_workspace_summary_report_workspace_id'), table_name='workspace_summary_report')
     op.drop_table('workspace_summary_report')
     op.execute("DROP TYPE summary_period_types")

@@ -6,7 +6,6 @@ Create Date: 2025-05-30 16:22:47.068338+00:00
 
 """
 from alembic import op
-import sqlalchemy as sa
 
 from faraday.server.models import PermissionsUnitAction, Role
 from faraday.server.utils.permissions import GROUP_WS_SUM_REPORTS, UNIT_WS_SUM_REPORTS

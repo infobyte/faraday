@@ -6,7 +6,6 @@ See the file 'doc/LICENSE' for the license information
 import http
 import logging
 from datetime import datetime
-from urllib.parse import urlparse
 from uuid import uuid4
 
 import pyotp
@@ -39,22 +38,12 @@ agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-def is_valid_url(url):
-    """Check if a string is a valid URL."""
-    parsed = urlparse(url)
-    return bool(parsed.scheme) and bool(parsed.netloc)
-
-
 def validate_type(base, type_, value):
     """Validate a value based on its base and type."""
 
     if base == "string":
         if not isinstance(value, str):
             return f"Expected string, got {type(value).__name__}"
-        if type_ == "url":
-            # Check if it is a valid URL
-            if not is_valid_url(value):
-                return f"Expected valid URL, got invalid URL: {value}"
 
     elif base == "integer":
         if not isinstance(value, int):

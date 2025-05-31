@@ -263,3 +263,26 @@ class TestLogin:
 
             response = test_client.get('/v3/ws/wonderland', headers=headers)
             assert response.status_code == 200
+
+
+def test_login_with_wrong_password(self, test_client, session):
+    """
+    Attempt to login with a valid username but invalid password.
+    Should return 401 Unauthorized.
+    """
+    susan = factories.UserFactory.create(
+        active=True,
+        username='susan',
+        password=hash_password('correct-password'),
+        roles=['pentester']
+    )
+    session.add(susan)
+    session.commit()
+
+    login_payload = {
+        'email': 'susan',
+        'password': 'wrong-password'
+    }
+    res = test_client.post('/login', data=login_payload)
+    assert res.status_code == 401
+

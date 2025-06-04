@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Resolved an issue causing duplicate vulnerabilities to appear when uploading the same report multiple times. #7983"
+}

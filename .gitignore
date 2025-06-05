@@ -87,3 +87,6 @@ faraday/frontend/
 
 # nix build
 result
+
+# Pytest config for local testing
+pytest.ini

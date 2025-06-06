@@ -166,8 +166,8 @@ def database(app, request):
 
     db.app = app
     db.create_all()
-    db.engine.execute("INSERT INTO faraday_role(name, weight) "
-                      "VALUES ('admin', 10),('asset_owner', 20),('pentester', 30),('client', 40);"
+    db.engine.execute("INSERT INTO faraday_role(name, weight, custom) "
+                      "VALUES ('admin', 10, false),('asset_owner', 20, false),('pentester', 30, false),('client', 40, false);"
                       )
 
     request.addfinalizer(teardown)

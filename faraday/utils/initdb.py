@@ -28,7 +28,6 @@ from faraday.server.utils.permissions import (
     UNIT_AGENTS_TOKENS,
     UNIT_ANALYTICS,
     UNIT_BASE,
-    UNIT_BULK_CREATE,
     UNIT_CLOUD_AGENTS,
     UNIT_CLOUD_AGENTS_SCHEDULE,
     UNIT_COMMANDS,
@@ -104,7 +103,7 @@ def initdb_roles_and_permissions(db_engine):
             f"(9, '{UNIT_PREFERENCES}', 2), (10, '{UNIT_SEARCH_FILTERS}', 2), (11, '{UNIT_TAGS}', 2), (12, '{UNIT_SESSIONS}', 2), (13, '{UNIT_COMMANDS}', 2), (42, '{UNIT_2FA}', 2), (43, '{UNIT_FORGOT_PASSWORD}', 2), "  # nosec B608
             f"(14, '{UNIT_GITLAB}', 3), (15, '{UNIT_JIRA}', 3), (16, '{UNIT_SERVICE_DESK}', 3), (17, '{UNIT_SERVICE_NOW}', 3), (18, '{UNIT_WEB_HELP_DESK}', 3), (19, '{UNIT_ACTIVE_INTEGRATIONS}', 3), "  # nosec B608
             f"(20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4), "  # nosec B608
-            f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (27, '{UNIT_BULK_CREATE}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
+            f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
             f"(36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
             f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), "  # nosec B608
@@ -125,7 +124,7 @@ def initdb_roles_and_permissions(db_engine):
             f"(34, '{CREATE}', 16), (35, '{READ}', 16), (36, '{UPDATE}', 16), (37, '{DELETE}', 16), "  # nosec B608
             f"(38, '{CREATE}', 17), (39, '{READ}', 17), (40, '{UPDATE}', 17), (41, '{DELETE}', 17), "  # nosec B608
             f"(42, '{CREATE}', 18), (43, '{READ}', 18), (44, '{UPDATE}', 18), (45, '{DELETE}', 18), "  # nosec B608
-            f"(46, '{READ}', 19), (47, '{READ}', 24), (48, '{CREATE}', 27), (49, '{CREATE}', 31), "  # nosec B608
+            f"(46, '{READ}', 19), (47, '{READ}', 24), (49, '{CREATE}', 31), "  # nosec B608
             f"(50, '{CREATE}', 20), (51, '{READ}', 20), (52, '{UPDATE}', 20), (53, '{DELETE}', 20), "  # nosec B608
             f"(54, '{CREATE}', 21), (55, '{READ}', 21), (56, '{UPDATE}', 21), (57, '{DELETE}', 21), "  # nosec B608
             f"(58, '{CREATE}', 22), (59, '{READ}', 22), (60, '{UPDATE}', 22), (61, '{DELETE}', 22), "  # nosec B608
@@ -170,7 +169,7 @@ def initdb_roles_and_permissions(db_engine):
             "(33, 33, 1, true), (34, 34, 1, true), (35, 35, 1, true), (36, 36, 1, true), "
             "(37, 37, 1, true), (38, 38, 1, true), (39, 39, 1, true), (40, 40, 1, true), "
             "(41, 41, 1, true), (42, 42, 1, true), (43, 43, 1, true), (44, 44, 1, true), "
-            "(45, 45, 1, true), (46, 46, 1, true), (47, 47, 1, true), (48, 48, 1, true), "
+            "(45, 45, 1, true), (46, 46, 1, true), (47, 47, 1, true), "
             "(49, 49, 1, true), (50, 50, 1, true), (51, 51, 1, true), (52, 52, 1, true), "
             "(53, 53, 1, true), (54, 54, 1, true), (55, 55, 1, true), (56, 56, 1, true), "
             "(57, 57, 1, true), (58, 58, 1, true), (59, 59, 1, true), (60, 60, 1, true), "
@@ -215,7 +214,7 @@ def initdb_roles_and_permissions(db_engine):
             "(155, 33, 2, false), (156, 34, 2, false), (157, 35, 2, false), (158, 36, 2, false), "
             "(159, 37, 2, false), (160, 38, 2, false), (161, 39, 2, false), (162, 40, 2, false), "
             "(163, 41, 2, false), (164, 42, 2, false), (165, 43, 2, false), (166, 44, 2, true), "
-            "(167, 45, 2, false), (168, 46, 2, false), (169, 47, 2, false), (170, 48, 2, false), "
+            "(167, 45, 2, false), (168, 46, 2, false), (169, 47, 2, false), "
             "(171, 49, 2, true), (172, 50, 2, false), (173, 51, 2, false), (174, 52, 2, false), "
             "(175, 53, 2, false), (176, 54, 2, false), (177, 55, 2, false), (178, 56, 2, false), "
             "(179, 57, 2, false), (180, 58, 2, false), (181, 59, 2, false), (182, 60, 2, false), "
@@ -260,7 +259,7 @@ def initdb_roles_and_permissions(db_engine):
             "(277, 33, 3, false), (278, 34, 3, true), (279, 35, 3, true), (280, 36, 3, true), "
             "(281, 37, 3, false), (282, 38, 3, true), (283, 39, 3, true), (284, 40, 3, true), "
             "(285, 41, 3, false), (286, 42, 3, true), (287, 43, 3, true), (288, 44, 3, true), "
-            "(289, 45, 3, false), (290, 46, 3, true), (291, 47, 3, false), (292, 48, 3, true), "
+            "(289, 45, 3, false), (290, 46, 3, true), (291, 47, 3, false), "
             "(293, 49, 3, true), (294, 50, 3, true), (295, 51, 3, true), (296, 52, 3, true), "
             "(297, 53, 3, false), (298, 54, 3, false), (299, 55, 3, false), (300, 56, 3, false), "
             "(301, 57, 3, false), (302, 58, 3, true), (303, 59, 3, true), (304, 60, 3, true), "
@@ -305,7 +304,7 @@ def initdb_roles_and_permissions(db_engine):
             "(399, 33, 4, false), (400, 34, 4, false), (401, 35, 4, false), (402, 36, 4, false), "
             "(403, 37, 4, false), (404, 38, 4, false), (405, 39, 4, false), (406, 40, 4, false), "
             "(407, 41, 4, false), (408, 42, 4, false), (409, 43, 4, false), (410, 44, 4, false), "
-            "(411, 45, 4, false), (412, 46, 4, false), (413, 47, 4, false), (414, 48, 4, false), "
+            "(411, 45, 4, false), (412, 46, 4, false), (413, 47, 4, false), "
             "(415, 49, 4, true), (416, 50, 4, false), (417, 51, 4, false), (418, 52, 4, false), "
             "(419, 53, 4, false), (420, 54, 4, false), (421, 55, 4, false), (422, 56, 4, false), "
             "(423, 57, 4, false), (424, 58, 4, false), (425, 59, 4, false), (426, 60, 4, false), "

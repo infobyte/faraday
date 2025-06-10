@@ -17,7 +17,7 @@ depends_on = None
 
 def upgrade():
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit WHERE name = 'bulk_create';"
+        "SELECT id FROM permissions_unit WHERE name = 'bulk_create';"
     )
     unit_id = result.scalar()
 
@@ -31,7 +31,7 @@ def upgrade():
     )
 
     op.execute(
-        f"DELETE FROM permissions_unit_action WHERE permissions_unit_id = (SELECT id FROM permissions_unit WHERE name = 'bulk_create');"
+        "DELETE FROM permissions_unit_action WHERE permissions_unit_id = (SELECT id FROM permissions_unit WHERE name = 'bulk_create');"
     )
 
     op.execute(

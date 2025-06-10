@@ -90,3 +90,6 @@ result
 
 # Pytest config for local testing
 pytest.ini
+
+# venv
+venv

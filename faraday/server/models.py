@@ -3916,6 +3916,50 @@ class RolePermission(db.Model):
     __table_args__ = (UniqueConstraint(unit_action_id, role_id, name='uix_unit_action_role'),)
 
 
+class WorkspaceSummaryReport(Metadata):
+    DAILY_TYPE = 'daily'
+    WEEKLY_TYPE = 'weekly'
+    MONTHLY_TYPE = 'monthly'
+    YEARLY_TYPE = 'yearly'
+
+    SUMMARY_PERIOD_TYPES = [
+        DAILY_TYPE,
+        WEEKLY_TYPE,
+        MONTHLY_TYPE,
+        YEARLY_TYPE,
+    ]
+
+    __tablename__ = 'workspace_summary_report'
+    id = Column(Integer, primary_key=True)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete='CASCADE'), index=True, nullable=False)
+    user = relationship(
+        'User',
+        backref=backref('workspace_summary_reports', cascade="all, delete-orphan", passive_deletes=True),
+        foreign_keys=[user_id],
+    )
+
+    # 1 workspace <--> N workspace summary reports
+    # 1 to N (the FK is placed in the child) and bidirectional (backref)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('workspace_summary_reports', cascade="all, delete-orphan", passive_deletes=True),
+    )
+
+    recipients = Column(JSONType, nullable=False, default={})
+    summary_period_type = Column(
+        Enum(*SUMMARY_PERIOD_TYPES, name='summary_period_types'),
+        nullable=False,
+        default='weekly',
+    )
+
+    __table_args__ = (
+        UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),
+    )
+
+
 # Indexes to speed up queries
 Index("idx_vulnerability_severity_hostid_serviceid",
       VulnerabilityGeneric.__table__.c.severity,

@@ -3862,21 +3862,9 @@ class SlackNotification(db.Model):
 
 class VulnerabilityStatusHistory(db.Model):
 
-    STATUS_OPEN = 'open'
-    STATUS_RE_OPENED = 're-opened'
-    STATUS_CLOSED = 'closed'
-    STATUS_RISK_ACCEPTED = 'risk-accepted'
-
-    STATUSES = [
-        STATUS_OPEN,
-        STATUS_CLOSED,
-        STATUS_RE_OPENED,
-        STATUS_RISK_ACCEPTED
-    ]
-
     __tablename__ = 'vulnerability_status_history'
     id = Column(Integer, primary_key=True)
-    status = Column(Enum(*STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
     change_date = Column(DateTime, default=datetime.utcnow, index=True)
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), index=True, nullable=False)
 

@@ -3865,17 +3865,19 @@ class VulnerabilityStatusHistory(db.Model):
     __tablename__ = 'vulnerability_status_history'
     id = Column(Integer, primary_key=True)
     status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
-    change_date = Column(DateTime, default=datetime.utcnow, index=True)
-    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), index=True, nullable=False)
+    change_date = Column(DateTime, default=datetime.utcnow)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
 
-    # add a user relation that just returns the user that made the change
-    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), index=True, nullable=True)
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
     user = relationship(
         'User',
         foreign_keys=[user_id]
     )
 
     __table_args__ = (
+        Index('ix_vulnerability_status_history_vulnerability_id', vulnerability_id),
+        Index('ix_vulnerability_status_history_change_date', change_date),
+        Index('ix_user_id_vulnerability_status_history', user_id),
         Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
     )
 

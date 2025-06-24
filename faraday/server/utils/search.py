@@ -565,7 +565,13 @@ class QueryBuilder:
             opfunc = OPERATORS[operator]
             # In Python 3.0 or later, this should be `inspect.getfullargspec`
             # because `inspect.getargspec` is deprecated.
-            numargs = len(inspect.getfullargspec(opfunc).args)
+            # ╰─> Fixed that :)
+            try:
+                # For Python < 3.11
+                numargs = len(inspect.getargspec(opfunc).args)
+            except AttributeError:
+                # For Python >= 3.11
+                numargs = len(inspect.getfullargspec(opfunc).args)
             # raises AttributeError if `fieldname` or `relation` does not exist
             field = getattr(model, relation or fieldname)
             # each of these will raise a TypeError if the wrong number of arguments

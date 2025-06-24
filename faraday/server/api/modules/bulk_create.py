@@ -393,12 +393,12 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "_tmp_id": stmt.excluded.id,
             "status": case(
                 [
-                    # If incoming status is closed and existing is open/reopened, close it
+                    # If the incoming status is closed and existing is open/reopened, close it
                     (and_(
                         stmt.excluded.status == 'closed',
                         Vulnerability.status.in_(['open', 're-opened'])
                     ), 'closed'),
-                    # If incoming vuln exists and is open and current status is closed, reopen it
+                    # If incoming vuln exists and is open and the current status is closed, reopen it
                     (and_(
                         stmt.excluded.status.in_(['open', 're-opened']),
                         Vulnerability.status == 'closed'
@@ -406,6 +406,15 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
                 ],
                 # Keep existing status as default
                 else_=Vulnerability.status
+            ),
+            "last_detected": case(
+                [
+                    (and_(
+                        stmt.excluded.status.in_(['open', 're-opened']),
+                        Vulnerability.status == 'closed'
+                    ), datetime.utcnow())
+                ],
+                else_=Vulnerability.last_detected
             ),
             "custom_fields": stmt.excluded.custom_fields
         }

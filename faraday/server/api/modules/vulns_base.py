@@ -993,7 +993,10 @@ class VulnerabilityView(
         export_csv = request.args.get('export_csv', '')
         export_csv_limited = request.args.get('export_csv_limited', '')
         filtered_vulns, count = self._filter(
-            filters, exclude_list=('_attachments', 'desc') if export_csv.lower() == 'true' else None, **kwargs
+            filters, exclude_list=('_attachments', 'desc') if export_csv.lower() == 'true' else (
+            '_attachments', 'description', 'desc', 'refs', 'request',
+            'resolution', 'response', 'policyviolations', 'data'
+            ) if export_csv_limited.lower() == 'true' else None, **kwargs
         )
 
         class PageMeta:

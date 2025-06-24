@@ -18,6 +18,7 @@ import dateutil
 import cvss
 import jwt
 from croniter import croniter
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -1188,6 +1189,14 @@ class Host(Metadata):
     mac = BlankColumn(Text)
     net_segment = BlankColumn(Text)
 
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(Host.id == CommandObject.object_id, CommandObject.object_type == "host")',
+        collection_class=set,
+        passive_deletes=True
+    )
+
     services = relationship(
         'Service',
         order_by='Service.protocol,Service.port',
@@ -1324,6 +1333,15 @@ class Service(Metadata):
     banner = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
+
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(Service.id == CommandObject.object_id, CommandObject.object_type == "service")',
+        collection_class=set,
+        passive_deletes=True
+    )
+
     host = relationship(
         'Host',
         foreign_keys=[host_id],
@@ -2589,11 +2607,13 @@ roles_users = db.Table('roles_users',
                        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
 
 
-class Role(db.Model, RoleMixin):
+class Role(Metadata, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    weight = db.Column(db.Integer(), nullable=False)
+    weight = db.Column(db.Integer(), nullable=False, default=100)
+    custom = db.Column(db.Boolean(), nullable=False, default=True)
+    description = db.Column(db.String(280))
 
 
 class UserToken(Metadata):
@@ -3351,7 +3371,10 @@ class Executor(Metadata):
         backref=backref('executors', cascade="all, delete-orphan"),
     )
     parameters_metadata = Column(JSONType, nullable=False, default={})
+    parameters_data = Column(JSONType, nullable=False, default={})
     last_run = Column(DateTime)
+    category = Column(JSONType, nullable=True)
+    tool = Column(String(50), nullable=True)
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -3470,6 +3493,7 @@ class Agent(Metadata):
     token = Column(Text, unique=True, nullable=False, default=lambda: "".
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     name = NonBlankColumn(Text)
+    description = BlankColumn(Text)
     active = Column(Boolean, default=True)
     sid = Column(Text)  # socketio sid
 
@@ -3487,13 +3511,10 @@ class Agent(Metadata):
 
     @property
     def status(self):
-        if self.active:
-            if self.is_online:
-                return 'online'
-            else:
-                return 'offline'
+        if self.is_online:
+            return 'online'
         else:
-            return 'paused'
+            return 'offline'
 
     @property
     def last_run(self):
@@ -3534,6 +3555,8 @@ class AgentExecution(Metadata):
         foreign_keys=[command_id],
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
+    triggered_by = Column(String, nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True)
 
     @property
     def parent(self):
@@ -3554,6 +3577,10 @@ class CloudAgent(Metadata):
     slug = Column(String, nullable=False, unique=True)
     access_token = Column(Text, unique=True)
     params = Column(JSONType)
+    parameters_data = Column(JSONType, nullable=False, default={})
+    category = Column(JSONType, nullable=True)
+    description = BlankColumn(Text)
+    tools_count = Column(Integer, nullable=False, default=1)
 
     @property
     def last_run(self):
@@ -3599,6 +3626,9 @@ class CloudAgentExecution(Metadata):
         backref=backref('cloud_agent_execution_id', cascade="all, delete-orphan")
     )
     last_run = Column(DateTime)
+    triggered_by = Column(String, nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    tasks_completed = Column(Integer, nullable=False, default=0)
 
     @property
     def parent(self):
@@ -3821,6 +3851,71 @@ class SlackNotification(db.Model):
     slack_id = Column(String, nullable=False)
     message = Column(String, nullable=False)
     processed = Column(Boolean, default=False)
+
+
+class PermissionsGroup(db.Model):
+    __tablename__ = 'permissions_group'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+
+
+class PermissionsUnit(db.Model):
+    __tablename__ = 'permissions_unit'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    permissions_group_id = Column(Integer, ForeignKey('permissions_group.id'), index=True, nullable=False)
+    permissions_group = relationship(
+        'PermissionsGroup',
+        backref=backref('permissions_units', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_group_id],
+    )
+
+
+class PermissionsUnitAction(db.Model):
+    __tablename__ = 'permissions_unit_action'
+    CREATE_ACTION = 'create'
+    READ_ACTION = 'read'
+    UPDATE_ACTION = 'update'
+    DELETE_ACTION = 'delete'
+    RUN_ACTION = 'run'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION]
+
+    id = Column(Integer, primary_key=True)
+
+    permissions_unit_id = Column(Integer, ForeignKey('permissions_unit.id'), index=True, nullable=False)
+    permissions_unit = relationship(
+        'PermissionsUnit',
+        backref=backref('permissions_actions', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_unit_id],
+    )
+    action_type = Column(Enum(*ACTIONS, name='action_types'), nullable=False, default=READ_ACTION)
+
+    __table_args__ = (UniqueConstraint(permissions_unit_id, action_type, name='uix_permissions_unit_action'),)
+
+
+class RolePermission(db.Model):
+    __tablename__ = 'role_permission'
+
+    id = Column(Integer, primary_key=True)
+
+    unit_action_id = Column(Integer, ForeignKey('permissions_unit_action.id'), index=True, nullable=False)
+    unit_action = relationship(
+        'PermissionsUnitAction',
+        backref=backref('role_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[unit_action_id],
+    )
+    role_id = Column(Integer, ForeignKey('faraday_role.id'), index=True, nullable=False)
+    role = relationship(
+        'Role',
+        backref=backref('unit_action_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[role_id],
+    )
+
+    allowed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (UniqueConstraint(unit_action_id, role_id, name='uix_unit_action_role'),)
 
 
 # Indexes to speed up queries

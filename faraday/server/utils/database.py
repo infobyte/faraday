@@ -280,7 +280,7 @@ def get_conflict_object(session, obj, data, workspace=None, ids=None):
                 value = getattr(obj, unique_field)
                 if not value and column.default:
                     value = column.default.arg
-            if value:
+            if value is not None:
                 filter_data.append(column == value)
 
         if 'workspace_id' in relations_fields:

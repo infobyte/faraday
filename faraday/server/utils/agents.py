@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import logging
 from datetime import datetime
 from typing import Tuple
+from uuid import UUID
 
 # Local application imports
 from faraday.server.models import Command, AgentExecution, Executor, Workspace
@@ -19,9 +20,11 @@ def get_command_and_agent_execution(
         parameters: dict,
         workspace: Workspace,
         user_id: int,
+        run_uuid: UUID,
         username: str = '',
         hostname: str = '',
-        message: str = ''
+        message: str = '',
+        triggered_by: str = '',
 ) -> Tuple[Command, AgentExecution]:
     params = ', '.join([f'{key}={value}' for (key, value) in parameters.items()])
 
@@ -44,6 +47,8 @@ def get_command_and_agent_execution(
         executor=executor,
         workspace_id=workspace.id,
         parameters_data=parameters,
-        command=command
+        command=command,
+        triggered_by=triggered_by,
+        run_uuid=run_uuid
     )
     return command, agent_execution

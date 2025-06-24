@@ -1,6 +1,17 @@
 New features in the latest update
 =====================================
 
+5.14.1 [Jun 4th, 2025]:
+---
+ * [FIX] Memory issue with csv export. #7981
+ * [FIX] Resolved an issue causing duplicate vulnerabilities to appear when uploading the same report multiple times. #7983
+
+5.14.0 [May 19th, 2025]:
+---
+ * [ADD] Enhanced the UI and usability of agent and cloud agent views and introduced run status logs to track executions for both. #7895
+ * [ADD] Implemented a limited csv export option. #7893
+ * [ADD] Implemented filtering columns on vulns. #7670
+
 5.13.0 [Apr 24th, 2025]:
 ---
  * [ADD] Added support for vulnerability status changes on report upload. #7903

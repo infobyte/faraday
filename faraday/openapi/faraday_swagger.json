@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.13.0 API",
+        "title": "Faraday 5.14.1 API",
         "version": "v3"
     },
     "security": [
@@ -5085,6 +5085,37 @@
                 }
             }
         },
+        "/_api/v3/agents/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "Agent"
+                ],
+                "description": "Filters, sorts and groups Agents using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
         "/_api/v3/agents": {
             "get": {
                 "tags": [
@@ -5157,6 +5188,44 @@
                     "required": true
                 }
             ]
+        },
+        "/_api/v3/agents/save_parameters": {
+            "post": {
+                "tags": [
+                    "Agent"
+                ],
+                "description": "Saves parameters data for an executor",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "executor_id": {
+                                        "type": "integer",
+                                        "description": "The ID of the executor"
+                                    },
+                                    "parameters_data": {
+                                        "type": "object",
+                                        "description": "Full parameters data to be saved"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Parameters saved successfully"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "Executor not found"
+                    }
+                }
+            }
         },
         "/_api/v3/agent_token": {
             "get": {
@@ -7063,6 +7132,108 @@
                     }
                 }
             }
+        },
+        "/_api/v3/agent_executions": {
+            "delete": {
+                "tags": [
+                    "AgentExecution"
+                ],
+                "summary": "Delete a group of AgentExecution by ids.",
+                "responses": {
+                    "204": {
+                        "description": "Ok"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "AgentExecution"
+                ],
+                "summary": "Get a list of AgentExecution.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentExecution"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/agent_executions/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "AgentExecution"
+                ],
+                "description": "Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
+        "/_api/v3/agent_executions/{object_id}": {
+            "get": {
+                "tags": [
+                    "AgentExecution"
+                ],
+                "summary": "Retrieves AgentExecution",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentExecution"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         }
     },
     "openapi": "3.0.2",
@@ -7723,6 +7894,11 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
                     "method": {
                         "type": "string"
                     },
@@ -8068,6 +8244,11 @@
                         "readOnly": true,
                         "additionalProperties": {}
                     },
+                    "parameters_data": {
+                        "type": "object",
+                        "readOnly": true,
+                        "additionalProperties": {}
+                    },
                     "schedules": {
                         "readOnly": true,
                         "allOf": [
@@ -8075,6 +8256,17 @@
                                 "$ref": "#/components/schemas/AgentsSchedule"
                             }
                         ]
+                    },
+                    "tool": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "category": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 }
             },
@@ -8088,6 +8280,10 @@
                         "type": "string",
                         "minLength": 1,
                         "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "readOnly": true
                     },
                     "status": {
                         "type": "string",
@@ -8386,6 +8582,11 @@
                     "type": {},
                     "workspace_name": {
                         "type": "string",
+                        "readOnly": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
                         "readOnly": true
                     },
                     "run_date": {}
@@ -9009,6 +9210,59 @@
                         "nullable": true
                     }
                 }
+            },
+            "AgentExecution": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "agent_name": {
+                        "readOnly": true
+                    },
+                    "agent_id": {
+                        "readOnly": true
+                    },
+                    "tool": {
+                        "readOnly": true
+                    },
+                    "create_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "running": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "successful": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "category": {
+                        "readOnly": true
+                    },
+                    "parameters_data": {
+                        "readOnly": true
+                    },
+                    "triggered_by": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "executor": {
+                        "readOnly": true
+                    },
+                    "update_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                }
             }
         },
         "responses": {
@@ -9032,6 +9286,9 @@
         },
         {
             "name": "Agent Schedule"
+        },
+        {
+            "name": "AgentExecution"
         },
         {
             "name": "AgentsSchedule"

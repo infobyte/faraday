@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import time
+from uuid import uuid4
 
 import pytest
 from flask import current_app
@@ -540,6 +541,52 @@ def test_create_existing_host_vuln(session, host, vulnerability_factory):
     assert 'old' in vuln.references  # it must preserve the old references
 
 
+def test_create_with_port_0(session, workspace):
+    host_data_copy = host_data.copy()
+    command = new_empty_command(workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_host(workspace, host_data_copy, command_dict)
+
+    service_data_copy = service_data.copy()
+    service_data_copy['name'] = '0'
+    service_data_copy['port'] = 443
+    command = new_empty_command(workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+    bc._create_service(workspace, workspace.hosts[0], service_data_copy, command_dict)
+
+    service_data_copy_port_0 = service_data.copy()
+    service_data_copy_port_0['name'] = '0'
+    service_data_copy_port_0['port'] = 0
+
+    vuln_data_copy = vuln_data.copy()
+    new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
+    service_data_copy_port_0['vulnerabilities'] = [new_vuln]
+
+    new_command = new_empty_command(workspace)
+    db.session.add(new_command)
+    db.session.commit()
+    new_command_dict = {'id': new_command.id, 'tool': new_command.tool, 'user': new_command.user}
+
+    bc._create_service(workspace, workspace.hosts[0], service_data_copy_port_0, new_command_dict)
+
+    assert count(Service, workspace) == 2
+    assert count(Vulnerability, workspace) == 1
+
+    third_command = new_empty_command(workspace)
+    db.session.add(third_command)
+    db.session.commit()
+    third_command_dict = {'id': third_command.id, 'tool': third_command.tool, 'user': third_command.user}
+
+    bc._create_service(workspace, workspace.hosts[0], service_data_copy_port_0, third_command_dict)
+
+    assert count(Service, workspace) == 2
+    assert count(Vulnerability, workspace) == 1
+
+
 def test_bulk_create_on_closed_vuln(session, host, vulnerability_factory):
     vuln = vulnerability_factory.create(workspace=host.workspace, host=host, service=None, status="closed")
     session.add(vuln)
@@ -989,8 +1036,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()]),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 404
-        assert b'No such workspace' in res.data
+        assert res.status_code == 401
 
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):
@@ -1034,7 +1080,8 @@ class TestBulkCreateAPI:
         command, new_agent_execution = get_command_and_agent_execution(executor=agent_execution.executor,
                                                                        workspace=workspace,
                                                                        user_id=user.id,
-                                                                       parameters=agent_execution.parameters_data)
+                                                                       parameters=agent_execution.parameters_data,
+                                                                       run_uuid=uuid4())
         agent = agent_execution.executor.agent
         session.add(new_agent_execution)
         session.commit()
@@ -1185,7 +1232,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()], command=command_data.copy()),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 403
+        assert res.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_bulk_create_endpoint_raises_400_with_no_data(self, session, test_client, workspace):

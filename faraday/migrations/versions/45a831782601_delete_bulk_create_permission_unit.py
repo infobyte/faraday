@@ -19,11 +19,11 @@ def upgrade():
     result = op.get_bind().execute(
         "SELECT id FROM permissions_unit WHERE name = 'bulk_create';"
     )
-    unit_id = result.scalar()
+    bulk_create_unit_id = result.scalar()
 
-    if unit_id:
+    if bulk_create_unit_id:
         result = op.get_bind().execute(
-            f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {unit_id};"  # nosec B608
+            f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {bulk_create_unit_id};"  # nosec B608
         )
         action_id = result.scalar()
 
@@ -36,7 +36,90 @@ def upgrade():
         )
 
         op.execute(
-            f"DELETE FROM permissions_unit WHERE id = {unit_id};"  # nosec B608
+            f"DELETE FROM permissions_unit WHERE id = {bulk_create_unit_id};"  # nosec B608
+        )
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'licenses';"
+    )
+    licenses_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_group WHERE name = 'licenses';"
+    )
+    licenses_group_id = result.scalar()
+
+    if licenses_unit_id and licenses_group_id:
+        result = op.get_bind().execute(
+            f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {licenses_unit_id};"  # nosec B608
+        )
+        create_action_id = result.scalar()
+
+        result = op.get_bind().execute(
+            f"SELECT id FROM permissions_unit_action WHERE action_type = 'read' AND permissions_unit_id = {licenses_unit_id};"  # nosec B608
+        )
+        read_action_id = result.scalar()
+
+        result = op.get_bind().execute(
+            f"SELECT id FROM permissions_unit_action WHERE action_type = 'update' AND permissions_unit_id = {licenses_unit_id};"  # nosec B608
+        )
+        update_action_id = result.scalar()
+
+        result = op.get_bind().execute(
+            f"SELECT id FROM permissions_unit_action WHERE action_type = 'delete' AND permissions_unit_id = {licenses_unit_id};"  # nosec B608
+        )
+        delete_action_id = result.scalar()
+
+        op.execute(
+            f"DELETE FROM role_permission WHERE unit_action_id = {create_action_id};"  # nosec B608
+        )
+
+        op.execute(
+            f"DELETE FROM role_permission WHERE unit_action_id = {read_action_id};"  # nosec B608
+        )
+
+        op.execute(
+            f"DELETE FROM role_permission WHERE unit_action_id = {update_action_id};"  # nosec B608
+        )
+
+        op.execute(
+            f"DELETE FROM role_permission WHERE unit_action_id = {delete_action_id};"  # nosec B608
+        )
+
+        op.execute(
+            "DELETE FROM permissions_unit_action WHERE permissions_unit_id = (SELECT id FROM permissions_unit WHERE name = 'licenses');"
+        )
+
+        op.execute(
+            f"DELETE FROM permissions_unit WHERE id = {licenses_unit_id};"  # nosec B608
+        )
+
+        op.execute(
+            f"DELETE FROM permissions_group WHERE id = {licenses_group_id};"  # nosec B608
+        )
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'workspaces';"
+    )
+    workspaces_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_group WHERE name = 'workspaces';"
+    )
+    workspaces_group_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_group WHERE name = 'admin';"
+    )
+    admin_group_id = result.scalar()
+
+    if workspaces_group_id:
+        op.execute(
+            f"UPDATE permissions_unit SET permissions_group_id = {admin_group_id} WHERE id = {workspaces_unit_id};"  # nosec B608
+        )
+
+        op.execute(
+            f"DELETE FROM permissions_group WHERE id = {workspaces_group_id};"  # nosec B608
         )
 
 

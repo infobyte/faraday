@@ -13,13 +13,11 @@ from faraday.server.utils.permissions import (
     GROUP_CREDENTIALS,
     GROUP_EXECUTIVE_REPORTS,
     GROUP_INTEGRATIONS,
-    GROUP_LICENSES,
     GROUP_PIPELINES,
     GROUP_PLANNERS,
     GROUP_SETTINGS,
     GROUP_USER_TOKENS,
     GROUP_VULNERABILITIES,
-    GROUP_WORKSPACES,
     UNIT_2FA,
     UNIT_ACTIVE_INTEGRATIONS,
     UNIT_ADMIN,
@@ -44,7 +42,6 @@ from faraday.server.utils.permissions import (
     UNIT_INTEGRATIONS_AUTH,
     UNIT_JIRA,
     UNIT_JOBS,
-    UNIT_LICENSES,
     UNIT_LOGS,
     UNIT_NOTIFICATIONS,
     UNIT_PIPELINES,
@@ -93,7 +90,7 @@ def initdb_roles_and_permissions(db_engine):
         db_engine.execute(
             f"INSERT INTO permissions_group (id, name) VALUES (1, '{GROUP_ADMIN}'), (2, '{GROUP_ALL}'), (3, '{GROUP_INTEGRATIONS}'), (4, '{GROUP_AGENTS}'), (5, '{GROUP_ANALYTICS}'), "  # nosec B608
             f"(6, '{GROUP_VULNERABILITIES}'), (7, '{GROUP_COMMENTS}'), (8, '{GROUP_ASSETS}'), (9, '{GROUP_PLANNERS}'), (10, '{GROUP_EXECUTIVE_REPORTS}'), "  # nosec B608
-            f"(11, '{GROUP_SETTINGS}'), (12, '{GROUP_USER_TOKENS}'), (13, '{GROUP_PIPELINES}'), (14, '{GROUP_WORKSPACES}'), (15, '{GROUP_CREDENTIALS}'), (16, '{GROUP_LICENSES}');"  # nosec B608
+            f"(11, '{GROUP_SETTINGS}'), (12, '{GROUP_USER_TOKENS}'), (13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}');"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit' table
@@ -105,9 +102,8 @@ def initdb_roles_and_permissions(db_engine):
             f"(20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4), "  # nosec B608
             f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
-            f"(36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 14), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
-            f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (47, '{UNIT_LICENSES}', 16), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), "  # nosec B608
-            f"(50, '{UNIT_ROLES}', 1);"  # nosec B608
+            f"(36, '{UNIT_SETTINGS}', 11), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
+            f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), (50, '{UNIT_ROLES}', 1);"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit_action' table
@@ -148,8 +144,7 @@ def initdb_roles_and_permissions(db_engine):
             f"(130, '{DELETE}', 42), (131, '{CREATE}', 43), (132, '{CREATE}', 44), (133, '{READ}', 44), "  # nosec B608
             f"(134, '{UPDATE}', 44), (135, '{DELETE}', 44), (136, '{READ}', 45), (137, '{CREATE}', 46), "  # nosec B608
             f"(138, '{READ}', 46), (139, '{CREATE}', 10), (140, '{UPDATE}', 10), (141, '{DELETE}', 10), "  # nosec B608
-            f"(142, '{CREATE}', 9), (143, '{CREATE}', 47), (144, '{READ}', 47), (145, '{UPDATE}', 47), "  # nosec B608
-            f"(146, '{DELETE}', 47), (147, '{CREATE}', 48), (148, '{READ}', 48), (149, '{UPDATE}', 48), "  # nosec B608
+            f"(142, '{CREATE}', 9), (147, '{CREATE}', 48), (148, '{READ}', 48), (149, '{UPDATE}', 48), "  # nosec B608
             f"(150, '{DELETE}', 48), (151, '{CREATE}', 49), (152, '{READ}', 49), (153, '{UPDATE}', 49), "  # nosec B608
             f"(154, '{DELETE}', 49), (155, '{CREATE}', 41), (156, '{CREATE}', 50), (157, '{READ}', 50), "  # nosec B608
             f"(158, '{UPDATE}', 50), (159, '{DELETE}', 50);"  # nosec B608
@@ -193,8 +188,7 @@ def initdb_roles_and_permissions(db_engine):
             "(510, 129, 1, true), (511, 130, 1, true), (521, 131, 1, true), (525, 132, 1, true), "
             "(526, 133, 1, true), (527, 134, 1, true), (528, 135, 1, true), (541, 136, 1, true), "
             "(545, 137, 1, true), (549, 138, 1, true), (553, 139, 1, true), (554, 140, 1, true), "
-            "(555, 141, 1, true), (565, 142, 1, true), (569, 143, 1, true), (570, 144, 1, true), "
-            "(571, 145, 1, true), (572, 146, 1, true), (585, 147, 1, true), (586, 148, 1, true), "
+            "(555, 141, 1, true), (565, 142, 1, true), (585, 147, 1, true), (586, 148, 1, true), "
             "(587, 149, 1, true), (588, 150, 1, true), (601, 151, 1, true), (602, 152, 1, true), "
             "(603, 153, 1, true), (604, 154, 1, true), (617, 155, 1, true), (621, 156, 1, true), "
             "(622, 157, 1, true), (623, 158, 1, true), (624, 159, 1, true);"
@@ -238,8 +232,7 @@ def initdb_roles_and_permissions(db_engine):
             "(513, 129, 2, true), (514, 130, 2, true), (522, 131, 2, true), (529, 132, 2, true), "
             "(530, 133, 2, true), (531, 134, 2, true), (532, 135, 2, true), (542, 136, 2, true), "
             "(546, 137, 2, true), (550, 138, 2, true), (556, 139, 2, true), (557, 140, 2, true), "
-            "(558, 141, 2, true), (566, 142, 2, false), (573, 143, 2, false), (574, 144, 2, true), "
-            "(575, 145, 2, false), (576, 146, 2, false), (589, 147, 2, false), (590, 148, 2, true), "
+            "(558, 141, 2, true), (566, 142, 2, false), (589, 147, 2, false), (590, 148, 2, true), "
             "(591, 149, 2, false), (592, 150, 2, false), (605, 151, 2, false), (606, 152, 2, false), "
             "(607, 153, 2, false), (608, 154, 2, false), (618, 155, 2, false), (625, 156, 2, false), "
             "(626, 157, 2, false), (627, 158, 2, false), (628, 159, 2, false);"
@@ -283,8 +276,7 @@ def initdb_roles_and_permissions(db_engine):
             "(516, 129, 3, true), (517, 130, 3, true), (523, 131, 3, true), (533, 132, 3, true), "
             "(534, 133, 3, true), (535, 134, 3, true), (536, 135, 3, true), (543, 136, 3, true), "
             "(547, 137, 3, true), (551, 138, 3, true), (559, 139, 3, true), (560, 140, 3, true), "
-            "(561, 141, 3, true), (567, 142, 3, false), (577, 143, 3, true), (578, 144, 3, true), "
-            "(579, 145, 3, true), (580, 146, 3, true), (593, 147, 3, true), (594, 148, 3, true), "
+            "(561, 141, 3, true), (567, 142, 3, false), (593, 147, 3, true), (594, 148, 3, true), "
             "(595, 149, 3, true), (596, 150, 3, true), (609, 151, 3, false), (610, 152, 3, false), "
             "(611, 153, 3, false), (612, 154, 3, false), (619, 155, 3, false), (629, 156, 3, false), "
             "(630, 157, 3, false), (631, 158, 3, false), (632, 159, 3, false);"
@@ -328,8 +320,7 @@ def initdb_roles_and_permissions(db_engine):
             "(519, 129, 4, true), (520, 130, 4, true), (524, 131, 4, true), (537, 132, 4, false), "
             "(538, 133, 4, true), (539, 134, 4, false), (540, 135, 4, false), (544, 136, 4, true), "
             "(548, 137, 4, true), (552, 138, 4, true), (562, 139, 4, true), (563, 140, 4, true), "
-            "(564, 141, 4, true), (568, 142, 4, false), (581, 143, 4, false), (582, 144, 4, true), "
-            "(583, 145, 4, false), (584, 146, 4, false), (597, 147, 4, false), (598, 148, 4, true), "
+            "(564, 141, 4, true), (568, 142, 4, false), (597, 147, 4, false), (598, 148, 4, true), "
             "(599, 149, 4, false), (600, 150, 4, false), (613, 151, 4, false), (614, 152, 4, false), "
             "(615, 153, 4, false), (616, 154, 4, false), (620, 155, 4, false), (633, 156, 4, false), "
             "(634, 157, 4, false), (635, 158, 4, false), (636, 159, 4, false);"

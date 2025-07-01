@@ -122,6 +122,25 @@ def upgrade():
             f"DELETE FROM permissions_group WHERE id = {workspaces_group_id};"  # nosec B608
         )
 
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'settings';"
+    )
+    settings_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_group WHERE name = 'settings';"
+    )
+    settings_group_id = result.scalar()
+
+    if settings_group_id:
+        op.execute(
+            f"UPDATE permissions_unit SET permissions_group_id = {admin_group_id} WHERE id = {settings_unit_id};"  # nosec B608
+        )
+
+        op.execute(
+            f"DELETE FROM permissions_group WHERE id = {settings_group_id};"  # nosec B608
+        )
+
 
 def downgrade():
     pass

@@ -1,7 +1,7 @@
 """delete bulk_create permission unit
 
 Revision ID: 45a831782601
-Revises: a29d52685b58
+Revises: eb9b98d0b4d0
 Create Date: 2025-06-10 12:36:14.871788+00:00
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '45a831782601'
-down_revision = 'a29d52685b58'
+down_revision = 'eb9b98d0b4d0'
 branch_labels = None
 depends_on = None
 

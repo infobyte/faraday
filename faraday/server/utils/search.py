@@ -35,6 +35,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.schema import Table as SQLAlchemySchemaTableType
 
 # Local application imports
 from faraday.server.models import (
@@ -725,16 +726,16 @@ class QueryBuilder:
 
         filters = [filt for filt in filters_generator if filt is not None]
 
-        # explicit join with users table, only if required
-        for filter in filters:
-            if isinstance(filter, BinaryExpression):
-                try:
+        # Check if it is necessary to join the user's table
+        if model.__tablename__ != User.__tablename__:
+            for filter in filters:
+                if isinstance(filter, BinaryExpression):
                     table = getattr(filter.left, "table", None)
+                    if not isinstance(table, SQLAlchemySchemaTableType):
+                        continue
                     if table.name == User.__tablename__ and User not in joined_models:
                         query = query.join(User, model.creator_id == User.id)
                         joined_models.add(User)
-                except Exception as e:
-                    continue
 
         # Multiple filter criteria at the top level of the provided search
         # parameters are interpreted as a conjunction (AND).

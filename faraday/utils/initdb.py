@@ -15,7 +15,6 @@ from faraday.server.utils.permissions import (
     GROUP_INTEGRATIONS,
     GROUP_PIPELINES,
     GROUP_PLANNERS,
-    GROUP_SETTINGS,
     GROUP_USER_TOKENS,
     GROUP_VULNERABILITIES,
     UNIT_2FA,

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Removed URL type validation and updated agent parameter type validation logic.. #7955"
+}

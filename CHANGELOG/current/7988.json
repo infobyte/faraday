@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Corrected index creation on agent execution. #7988"
+}

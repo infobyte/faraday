@@ -153,8 +153,7 @@ def upgrade():
 
     if user_tokens_group_id:
         op.execute(
-            f"UPDATE permissions_unit SET permissions_group_id = {admin_group_id} WHERE id = {user_tokens_unit_id};"
-            # nosec B608
+            f"UPDATE permissions_unit SET permissions_group_id = {admin_group_id} WHERE id = {user_tokens_unit_id};"  # nosec B608
         )
 
         op.execute(

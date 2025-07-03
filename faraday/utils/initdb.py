@@ -15,7 +15,6 @@ from faraday.server.utils.permissions import (
     GROUP_INTEGRATIONS,
     GROUP_PIPELINES,
     GROUP_PLANNERS,
-    GROUP_USER_TOKENS,
     GROUP_VULNERABILITIES,
     UNIT_2FA,
     UNIT_ACTIVE_INTEGRATIONS,
@@ -89,7 +88,7 @@ def initdb_roles_and_permissions(db_engine):
         db_engine.execute(
             f"INSERT INTO permissions_group (id, name) VALUES (1, '{GROUP_ADMIN}'), (2, '{GROUP_ALL}'), (3, '{GROUP_INTEGRATIONS}'), (4, '{GROUP_AGENTS}'), (5, '{GROUP_ANALYTICS}'), "  # nosec B608
             f"(6, '{GROUP_VULNERABILITIES}'), (7, '{GROUP_COMMENTS}'), (8, '{GROUP_ASSETS}'), (9, '{GROUP_PLANNERS}'), (10, '{GROUP_EXECUTIVE_REPORTS}'), "  # nosec B608
-            f"(12, '{GROUP_USER_TOKENS}'), (13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}');"  # nosec B608
+            f"(13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}');"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit' table
@@ -101,7 +100,7 @@ def initdb_roles_and_permissions(db_engine):
             f"(20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4), "  # nosec B608
             f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
-            f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 12), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
+            f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 1), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
             f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), (50, '{UNIT_ROLES}', 1);"  # nosec B608
         )
 

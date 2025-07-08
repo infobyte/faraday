@@ -100,7 +100,7 @@ def initdb_roles_and_permissions(db_engine):
             f"(20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4), "  # nosec B608
             f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
-            f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 1), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
+            f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 2), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
             f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), (50, '{UNIT_ROLES}', 1);"  # nosec B608
         )
 
@@ -221,8 +221,8 @@ def initdb_roles_and_permissions(db_engine):
             "(215, 93, 2, true), (216, 94, 2, false), (217, 95, 2, true), (218, 96, 2, true), "
             "(219, 97, 2, false), (220, 98, 2, false), (221, 99, 2, true), (222, 100, 2, false), "
             "(223, 101, 2, false), (224, 102, 2, false), (225, 103, 2, false), (226, 104, 2, false), "
-            "(227, 105, 2, false), (228, 106, 2, false), (229, 107, 2, false), (230, 108, 2, false), "
-            "(231, 109, 2, false), (232, 110, 2, false), (233, 111, 2, false), (234, 112, 2, false), "
+            "(227, 105, 2, false), (228, 106, 2, true), (229, 107, 2, true), (230, 108, 2, true), "
+            "(231, 109, 2, true), (232, 110, 2, false), (233, 111, 2, false), (234, 112, 2, false), "
             "(235, 113, 2, false), (236, 114, 2, false), (237, 115, 2, false), (238, 116, 2, false), "
             "(239, 117, 2, false), (240, 118, 2, false), (241, 119, 2, true), (242, 120, 2, true), "
             "(243, 121, 2, false), (244, 122, 2, false), (494, 123, 2, false), (495, 124, 2, false), "
@@ -265,8 +265,8 @@ def initdb_roles_and_permissions(db_engine):
             "(337, 93, 3, true), (338, 94, 3, false), (339, 95, 3, true), (340, 96, 3, true), "
             "(341, 97, 3, false), (342, 98, 3, true), (343, 99, 3, true), (344, 100, 3, true), "
             "(345, 101, 3, false), (346, 102, 3, false), (347, 103, 3, false), (348, 104, 3, false), "
-            "(349, 105, 3, false), (350, 106, 3, false), (351, 107, 3, false), (352, 108, 3, false), "
-            "(353, 109, 3, false), (354, 110, 3, false), (355, 111, 3, false), (356, 112, 3, false), "
+            "(349, 105, 3, false), (350, 106, 3, true), (351, 107, 3, true), (352, 108, 3, true), "
+            "(353, 109, 3, true), (354, 110, 3, false), (355, 111, 3, false), (356, 112, 3, false), "
             "(357, 113, 3, false), (358, 114, 3, false), (359, 115, 3, false), (360, 116, 3, false), "
             "(361, 117, 3, false), (362, 118, 3, false), (363, 119, 3, true), (364, 120, 3, true), "
             "(365, 121, 3, false), (366, 122, 3, false), (499, 123, 3, true), (500, 124, 3, false), "
@@ -309,8 +309,8 @@ def initdb_roles_and_permissions(db_engine):
             "(459, 93, 4, false), (460, 94, 4, false), (461, 95, 4, true), (462, 96, 4, true), "
             "(463, 97, 4, false), (464, 98, 4, false), (465, 99, 4, true), (466, 100, 4, false), "
             "(467, 101, 4, false), (468, 102, 4, false), (469, 103, 4, false), (470, 104, 4, false), "
-            "(471, 105, 4, false), (472, 106, 4, false), (473, 107, 4, false), (474, 108, 4, false), "
-            "(475, 109, 4, false), (476, 110, 4, false), (477, 111, 4, false), (478, 112, 4, false), "
+            "(471, 105, 4, false), (472, 106, 4, true), (473, 107, 4, true), (474, 108, 4, true), "
+            "(475, 109, 4, true), (476, 110, 4, false), (477, 111, 4, false), (478, 112, 4, false), "
             "(479, 113, 4, false), (480, 114, 4, false), (481, 115, 4, false), (482, 116, 4, false), "
             "(483, 117, 4, false), (484, 118, 4, false), (485, 119, 4, true), (486, 120, 4, false), "
             "(487, 121, 4, false), (488, 122, 4, false), (504, 123, 4, false), (505, 124, 4, false), "

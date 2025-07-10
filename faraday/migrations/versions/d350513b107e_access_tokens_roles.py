@@ -9,6 +9,10 @@ from alembic import op
 
 from faraday.server.models import PermissionsUnitAction
 
+CREATE = PermissionsUnitAction.CREATE_ACTION
+READ = PermissionsUnitAction.READ_ACTION
+UPDATE = PermissionsUnitAction.UPDATE_ACTION
+DELETE = PermissionsUnitAction.DELETE_ACTION
 TAG = PermissionsUnitAction.TAG_ACTION
 
 
@@ -125,6 +129,70 @@ def upgrade():
             op.execute(
                 f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({id}, {role_id}, false);"  # nosec B608
             )
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{workspaces_unit_id}' AND action_type = '{UPDATE}';"  # nosec B608
+    )
+    ws_update_id = result.scalar()
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {ws_update_id} AND (role_id = 2 OR role_id = 3);"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{CREATE}';"  # nosec B608
+    )
+    sv_create_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{UPDATE}';"  # nosec B608
+    )
+    sv_update_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{DELETE}';"  # nosec B608
+    )
+    sv_delete_id = result.scalar()
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {sv_create_id} AND role_id = 2;"  # nosec B608
+    )
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {sv_update_id} AND role_id = 2;"  # nosec B608
+    )
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {sv_delete_id} AND role_id = 2;"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{CREATE}';"  # nosec B608
+    )
+    ht_create_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{UPDATE}';"  # nosec B608
+    )
+    ht_update_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{DELETE}';"  # nosec B608
+    )
+    ht_delete_id = result.scalar()
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {ht_create_id} AND role_id = 2;"  # nosec B608
+    )
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {ht_update_id} AND role_id = 2;"  # nosec B608
+    )
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {ht_delete_id} AND role_id = 2;"  # nosec B608
+    )
+
 
 
 def downgrade():

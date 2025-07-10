@@ -71,6 +71,7 @@ READ = PermissionsUnitAction.READ_ACTION
 UPDATE = PermissionsUnitAction.UPDATE_ACTION
 DELETE = PermissionsUnitAction.DELETE_ACTION
 RUN = PermissionsUnitAction.RUN_ACTION
+TAG = PermissionsUnitAction.TAG_ACTION
 
 
 def initdb_roles_and_permissions(db_engine):
@@ -145,7 +146,8 @@ def initdb_roles_and_permissions(db_engine):
             f"(142, '{CREATE}', 9), (147, '{CREATE}', 48), (148, '{READ}', 48), (149, '{UPDATE}', 48), "  # nosec B608
             f"(150, '{DELETE}', 48), (151, '{CREATE}', 49), (152, '{READ}', 49), (153, '{UPDATE}', 49), "  # nosec B608
             f"(154, '{DELETE}', 49), (155, '{CREATE}', 41), (156, '{CREATE}', 50), (157, '{READ}', 50), "  # nosec B608
-            f"(158, '{UPDATE}', 50), (159, '{DELETE}', 50);"  # nosec B608
+            f"(158, '{UPDATE}', 50), (159, '{DELETE}', 50), (160, '{TAG}', 40), (161, '{TAG}', 32), "  # nosec B608
+            f"(162, '{TAG}', 33), (163, '{TAG}', 26);"  # nosec B608
         )
 
         # Insert rows into the 'role_permission' table for the ADMIN role
@@ -189,7 +191,8 @@ def initdb_roles_and_permissions(db_engine):
             "(555, 141, 1, true), (565, 142, 1, true), (585, 147, 1, true), (586, 148, 1, true), "
             "(587, 149, 1, true), (588, 150, 1, true), (601, 151, 1, true), (602, 152, 1, true), "
             "(603, 153, 1, true), (604, 154, 1, true), (617, 155, 1, true), (621, 156, 1, true), "
-            "(622, 157, 1, true), (623, 158, 1, true), (624, 159, 1, true);"
+            "(622, 157, 1, true), (623, 158, 1, true), (624, 159, 1, true), (637, 160, 1, true), "
+            "(638, 161, 1, true), (639, 162, 1, true), (640, 163, 1, true);"
         )
 
         # Insert rows into the 'role_permission' table for the ASSET OWNER role
@@ -216,15 +219,15 @@ def initdb_roles_and_permissions(db_engine):
             "(195, 73, 2, true), (196, 74, 2, false), (197, 75, 2, true), (198, 76, 2, false), "
             "(199, 77, 2, false), (200, 78, 2, false), (201, 79, 2, true), (202, 80, 2, false), "
             "(203, 81, 2, false), (204, 82, 2, true), (205, 83, 2, true), (206, 84, 2, true), "
-            "(207, 85, 2, false), (208, 86, 2, true), (209, 87, 2, true), (210, 88, 2, true), "
-            "(211, 89, 2, true), (212, 90, 2, true), (213, 91, 2, true), (214, 92, 2, true), "
-            "(215, 93, 2, true), (216, 94, 2, false), (217, 95, 2, true), (218, 96, 2, true), "
+            "(207, 85, 2, false), (208, 86, 2, false), (209, 87, 2, true), (210, 88, 2, false), "
+            "(211, 89, 2, false), (212, 90, 2, false), (213, 91, 2, true), (214, 92, 2, false), "
+            "(215, 93, 2, false), (216, 94, 2, false), (217, 95, 2, true), (218, 96, 2, true), "
             "(219, 97, 2, false), (220, 98, 2, false), (221, 99, 2, true), (222, 100, 2, false), "
             "(223, 101, 2, false), (224, 102, 2, false), (225, 103, 2, false), (226, 104, 2, false), "
             "(227, 105, 2, false), (228, 106, 2, true), (229, 107, 2, true), (230, 108, 2, true), "
             "(231, 109, 2, true), (232, 110, 2, false), (233, 111, 2, false), (234, 112, 2, false), "
             "(235, 113, 2, false), (236, 114, 2, false), (237, 115, 2, false), (238, 116, 2, false), "
-            "(239, 117, 2, false), (240, 118, 2, false), (241, 119, 2, true), (242, 120, 2, true), "
+            "(239, 117, 2, false), (240, 118, 2, false), (241, 119, 2, true), (242, 120, 2, false), "
             "(243, 121, 2, false), (244, 122, 2, false), (494, 123, 2, false), (495, 124, 2, false), "
             "(496, 125, 2, false), (497, 126, 2, false), (498, 127, 2, false), (512, 128, 2, true), "
             "(513, 129, 2, true), (514, 130, 2, true), (522, 131, 2, true), (529, 132, 2, true), "
@@ -233,7 +236,8 @@ def initdb_roles_and_permissions(db_engine):
             "(558, 141, 2, true), (566, 142, 2, false), (589, 147, 2, false), (590, 148, 2, true), "
             "(591, 149, 2, false), (592, 150, 2, false), (605, 151, 2, false), (606, 152, 2, false), "
             "(607, 153, 2, false), (608, 154, 2, false), (618, 155, 2, false), (625, 156, 2, false), "
-            "(626, 157, 2, false), (627, 158, 2, false), (628, 159, 2, false);"
+            "(626, 157, 2, false), (627, 158, 2, false), (628, 159, 2, false), (641, 160, 2, true), "
+            "(642, 161, 2, true), (643, 162, 2, true), (644, 163, 2, true);"
         )
 
         # Insert rows into the 'role_permission' table for the PENTESTER role
@@ -268,7 +272,7 @@ def initdb_roles_and_permissions(db_engine):
             "(349, 105, 3, false), (350, 106, 3, true), (351, 107, 3, true), (352, 108, 3, true), "
             "(353, 109, 3, true), (354, 110, 3, false), (355, 111, 3, false), (356, 112, 3, false), "
             "(357, 113, 3, false), (358, 114, 3, false), (359, 115, 3, false), (360, 116, 3, false), "
-            "(361, 117, 3, false), (362, 118, 3, false), (363, 119, 3, true), (364, 120, 3, true), "
+            "(361, 117, 3, false), (362, 118, 3, false), (363, 119, 3, true), (364, 120, 3, false), "
             "(365, 121, 3, false), (366, 122, 3, false), (499, 123, 3, true), (500, 124, 3, false), "
             "(501, 125, 3, true), (502, 126, 3, false), (503, 127, 3, false), (515, 128, 3, true), "
             "(516, 129, 3, true), (517, 130, 3, true), (523, 131, 3, true), (533, 132, 3, true), "
@@ -277,7 +281,8 @@ def initdb_roles_and_permissions(db_engine):
             "(561, 141, 3, true), (567, 142, 3, false), (593, 147, 3, true), (594, 148, 3, true), "
             "(595, 149, 3, true), (596, 150, 3, true), (609, 151, 3, false), (610, 152, 3, false), "
             "(611, 153, 3, false), (612, 154, 3, false), (619, 155, 3, false), (629, 156, 3, false), "
-            "(630, 157, 3, false), (631, 158, 3, false), (632, 159, 3, false);"
+            "(630, 157, 3, false), (631, 158, 3, false), (632, 159, 3, false), (645, 160, 3, true), "
+            "(646, 161, 3, true), (647, 162, 3, true), (648, 163, 3, true);"
         )
 
         # Insert rows into the 'role_permission' table for the CLIENT role
@@ -321,7 +326,8 @@ def initdb_roles_and_permissions(db_engine):
             "(564, 141, 4, true), (568, 142, 4, false), (597, 147, 4, false), (598, 148, 4, true), "
             "(599, 149, 4, false), (600, 150, 4, false), (613, 151, 4, false), (614, 152, 4, false), "
             "(615, 153, 4, false), (616, 154, 4, false), (620, 155, 4, false), (633, 156, 4, false), "
-            "(634, 157, 4, false), (635, 158, 4, false), (636, 159, 4, false);"
+            "(634, 157, 4, false), (635, 158, 4, false), (636, 159, 4, false), (649, 160, 4, false), "
+            "(650, 161, 4, false), (651, 162, 4, false), (652, 163, 4, false);"
         )
 
         db_engine.execute(
@@ -330,6 +336,18 @@ def initdb_roles_and_permissions(db_engine):
 
         db_engine.execute(
             "SELECT setval('faraday_role_id_seq', (SELECT MAX(id) FROM faraday_role));"
+        )
+
+        db_engine.execute(
+            "SELECT setval('permissions_unit_action_id_seq', (SELECT MAX(id) FROM permissions_unit_action));"
+        )
+
+        db_engine.execute(
+            "SELECT setval('permissions_unit_id_seq', (SELECT MAX(id) FROM permissions_unit));"
+        )
+
+        db_engine.execute(
+            "SELECT setval('permissions_group_id_seq', (SELECT MAX(id) FROM permissions_group));"
         )
     except IntegrityError as e:
         pass

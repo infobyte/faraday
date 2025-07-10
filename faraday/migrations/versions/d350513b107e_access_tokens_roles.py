@@ -7,6 +7,10 @@ Create Date: 2025-07-08 17:35:08.550183+00:00
 """
 from alembic import op
 
+from faraday.server.models import PermissionsUnitAction
+
+TAG = PermissionsUnitAction.TAG_ACTION
+
 
 # revision identifiers, used by Alembic.
 revision = 'd350513b107e'
@@ -66,8 +70,20 @@ def upgrade():
         f"UPDATE role_permission SET allowed = true WHERE unit_action_id = {delete_action_id};"  # nosec B608
     )
 
+    with op.get_context().autocommit_block():
+        op.execute(f"ALTER TYPE action_types ADD VALUE IF NOT EXISTS '{TAG}'")  # nosec B608
+
+
+
 
 def downgrade():
+    actions = [action for action in PermissionsUnitAction.ACTIONS if action != TAG]
+    actions_str = ', '.join(f"'{action}'" for action in actions)
+    op.execute(f"CREATE TYPE action_types_tmp AS ENUM({actions_str})")
+    op.execute("ALTER TABLE permissions_unit_action ALTER COLUMN action_type SET DATA TYPE action_types_tmp USING action_type::text::action_types_tmp")
+    op.execute("DROP TYPE action_types")
+    op.execute("ALTER TYPE action_types_tmp RENAME TO action_types")
+
     result = op.get_bind().execute(
         "SELECT id FROM permissions_group WHERE name = 'admin';"
     )

@@ -20,6 +20,18 @@ depends_on = None
 
 
 def upgrade():
+    op.execute(
+        "SELECT setval('permissions_unit_action_id_seq', (SELECT MAX(id) FROM permissions_unit_action));"
+    )
+
+    op.execute(
+        "SELECT setval('permissions_unit_id_seq', (SELECT MAX(id) FROM permissions_unit));"
+    )
+
+    op.execute(
+        "SELECT setval('permissions_group_id_seq', (SELECT MAX(id) FROM permissions_group));"
+    )
+
     result = op.get_bind().execute(
         "SELECT id FROM permissions_group WHERE name = 'all';"
     )
@@ -73,10 +85,64 @@ def upgrade():
     with op.get_context().autocommit_block():
         op.execute(f"ALTER TYPE action_types ADD VALUE IF NOT EXISTS '{TAG}'")  # nosec B608
 
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'vulnerabilities';"
+    )
+    vulns_unit_id = result.scalar()
 
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'hosts';"
+    )
+    hosts_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'services';"
+    )
+    services_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'workspaces';"
+    )
+    workspaces_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{TAG}', {vulns_unit_id}), ('{TAG}', {hosts_unit_id}), ('{TAG}', {services_unit_id}), ('{TAG}', {workspaces_unit_id}) RETURNING id;" # nosec B608
+    )
+
+    inserted_ids = [row[0] for row in result.fetchall()]
+
+    result = op.get_bind().execute(
+        "SELECT id FROM faraday_role WHERE id > 4;"
+    )
+
+    roles_ids = [row[0] for row in result.fetchall()]
+
+    for id in inserted_ids:
+        op.execute(
+            f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({id}, 1, true), ({id}, 2, true), ({id}, 3, true), ({id}, 4, false);"  # nosec B608
+        )
+        for role_id in roles_ids:
+            op.execute(
+                f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({id}, {role_id}, false);"  # nosec B608
+            )
 
 
 def downgrade():
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{TAG}';"  # nosec B608
+    )
+
+    tag_actions_ids = [row[0] for row in result.fetchall()]
+
+    for tag_action_id in tag_actions_ids:
+        op.execute(
+            f"DELETE FROM role_permission WHERE unit_action_id = {tag_action_id};"
+        )
+
+    op.execute(
+        f"DELETE FROM permissions_unit_action WHERE action_type = '{TAG}';"
+    )
+
     actions = [action for action in PermissionsUnitAction.ACTIONS if action != TAG]
     actions_str = ', '.join(f"'{action}'" for action in actions)
     op.execute(f"CREATE TYPE action_types_tmp AS ENUM({actions_str})")

@@ -110,7 +110,7 @@ def upgrade():
     workspaces_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{TAG}', {vulns_unit_id}), ('{TAG}', {hosts_unit_id}), ('{TAG}', {services_unit_id}), ('{TAG}', {workspaces_unit_id}) RETURNING id;" # nosec B608
+        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{TAG}', {vulns_unit_id}), ('{TAG}', {hosts_unit_id}), ('{TAG}', {services_unit_id}), ('{TAG}', {workspaces_unit_id}) RETURNING id;"  # nosec B608
     )
 
     inserted_ids = [row[0] for row in result.fetchall()]
@@ -192,7 +192,6 @@ def upgrade():
     op.execute(
         f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {ht_delete_id} AND role_id = 2;"  # nosec B608
     )
-
 
 
 def downgrade():

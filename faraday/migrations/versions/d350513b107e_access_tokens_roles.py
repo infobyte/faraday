@@ -203,11 +203,11 @@ def downgrade():
 
     for tag_action_id in tag_actions_ids:
         op.execute(
-            f"DELETE FROM role_permission WHERE unit_action_id = {tag_action_id};"
+            f"DELETE FROM role_permission WHERE unit_action_id = {tag_action_id};"  # nosec B608
         )
 
     op.execute(
-        f"DELETE FROM permissions_unit_action WHERE action_type = '{TAG}';"
+        f"DELETE FROM permissions_unit_action WHERE action_type = '{TAG}';"  # nosec B608
     )
 
     actions = [action for action in PermissionsUnitAction.ACTIONS if action != TAG]

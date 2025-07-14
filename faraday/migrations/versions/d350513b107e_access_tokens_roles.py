@@ -193,6 +193,20 @@ def upgrade():
         f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {ht_delete_id} AND role_id = 2;"  # nosec B608
     )
 
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'preferences';"
+    )
+    preferences_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {preferences_unit_id};"  # nosec B608
+    )
+    create_action_id = result.scalar()
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = true WHERE unit_action_id = {create_action_id};"  # nosec B608
+    )
+
 
 def downgrade():
     result = op.get_bind().execute(

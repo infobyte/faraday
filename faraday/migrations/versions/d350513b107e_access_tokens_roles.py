@@ -283,16 +283,6 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = {UPDATE} AND permissions_unit_id = {vulns_unit_id};"  # nosec B608
-    )
-
-    update_action_id = result.scalar()
-
-    op.execute(
-        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {update_action_id};"  # nosec B608
-    )
-
-    result = op.get_bind().execute(
         f"SELECT id FROM permissions_unit_action WHERE action_type = {DELETE} AND permissions_unit_id = {vulns_unit_id};"  # nosec B608
     )
 

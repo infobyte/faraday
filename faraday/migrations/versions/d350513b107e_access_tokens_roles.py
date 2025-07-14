@@ -51,22 +51,22 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
     )
     create_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'read' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{READ}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
     )
     read_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'update' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
     )
     update_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'delete' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
     )
     delete_action_id = result.scalar()
 
@@ -199,12 +199,77 @@ def upgrade():
     preferences_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {preferences_unit_id};"  # nosec B608
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {preferences_unit_id};"  # nosec B608
     )
     create_action_id = result.scalar()
 
     op.execute(
         f"UPDATE role_permission SET allowed = true WHERE unit_action_id = {create_action_id};"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_group WHERE name = 'planners';"
+    )
+    planners_group_id = result.scalar()
+
+    result = op.get_bind().execute(
+        "SELECT id FROM permissions_unit WHERE name = 'planners';"
+    )
+    planners_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {planners_unit_id};"  # nosec B608
+    )
+    update_action_id = result.scalar()
+
+    op.execute(
+        f"UPDATE role_permission SET allowed = false WHERE unit_action_id = {update_action_id} AND role_id != 1;"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        f"INSERT INTO permissions_unit (name, permissions_group_id) VALUES ('tasks', {planners_group_id}) RETURNING id;"  # nosec B608
+    )
+
+    tasks_unit_id = result.scalar()
+
+    result = op.get_bind().execute(
+        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{CREATE}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+    )
+
+    create_action_id = result.scalar()
+
+    op.execute(
+        f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({create_action_id}, 1, true), ({create_action_id}, 2, false), ({create_action_id}, 3, false), ({create_action_id}, 4, false);"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{READ}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+    )
+
+    read_action_id = result.scalar()
+
+    op.execute(
+        f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({read_action_id}, 1, true), ({read_action_id}, 2, true), ({read_action_id}, 3, true), ({read_action_id}, 4, true);"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{UPDATE}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+    )
+
+    update_action_id = result.scalar()
+
+    op.execute(
+        f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({update_action_id}, 1, true), ({update_action_id}, 2, true), ({update_action_id}, 3, true), ({update_action_id}, 4, true);"  # nosec B608
+    )
+
+    result = op.get_bind().execute(
+        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{DELETE}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+    )
+
+    delete_action_id = result.scalar()
+
+    op.execute(
+        f"INSERT INTO role_permission (unit_action_id, role_id, allowed) VALUES ({delete_action_id}, 1, true), ({delete_action_id}, 2, false), ({delete_action_id}, 3, false), ({delete_action_id}, 4, false);"  # nosec B608
     )
 
 

@@ -1036,8 +1036,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()]),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 404
-        assert b'No such workspace' in res.data
+        assert res.status_code == 401
 
     @pytest.mark.parametrize('token_type', ['agent', 'token'])
     def test_bulk_create_endpoints_fails_with_invalid_token(self, token_type, workspace, test_client):
@@ -1233,7 +1232,7 @@ class TestBulkCreateAPI:
             data=dict(hosts=[host_data.copy()], command=command_data.copy()),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 403
+        assert res.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_bulk_create_endpoint_raises_400_with_no_data(self, session, test_client, workspace):

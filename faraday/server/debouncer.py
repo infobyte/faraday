@@ -1,5 +1,4 @@
 # pylint: disable=R1719,C0415
-
 import time
 from threading import Timer
 from datetime import datetime
@@ -451,7 +450,6 @@ class Debouncer:
         As updates dates will always be different, it saves the workspaces and their update dates
         in a dict, so if the same workspace calls the update function, the previous update date will
         be overwritten. Then it uses a timer to execute the functions saved in the set."""
-
         if action == update_workspace_update_date_with_name:
             self.update_dates['workspaces'][parameters['workspace_name']] = parameters['update_date']
             self.actions.add(tuple({'action': action}.items()))

@@ -4,8 +4,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+import os
 from tempfile import NamedTemporaryFile
+from time import time
+import random
 
 import json
 import inspect
@@ -16,6 +18,9 @@ from flask_principal import Identity, identity_changed
 from pathlib import Path
 from pytest_factoryboy import register
 from sqlalchemy import event
+
+import psycopg2
+from psycopg2.sql import SQL
 
 from faraday.server.app import get_app
 from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
@@ -98,8 +103,27 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def app(request):
-    app = get_app(db_connection_string=request.config.getoption(
-        '--connection-string'), testing=True)
+    db_user = os.getenv("POSTGRES_USER", None)
+    db_password = os.getenv("POSTGRES_PASSWORD", None)
+    db_host = os.getenv("POSTGRES_HOST", None)
+
+    if not db_user:
+        print("Please set environment variable POSTGRES_USER.")
+        exit("Please set environment variable POSTGRES_USER.")
+
+    if not db_password:
+        print("Please set environment variable POSTGRES_PASSWORD.")
+        exit("Please set environment variable POSTGRES_PASSWORD.")
+
+    if not db_host:
+        print("Please set environment variable POSTGRES_HOST.")
+        exit("Please set environment variable POSTGRES_HOST.")
+
+    rand_db = create_random_db(db_user, db_password, db_host)
+
+    connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{rand_db}"
+
+    app = get_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
@@ -107,54 +131,13 @@ def app(request):
     ctx.push()
 
     def teardown():
-        TEMPORATY_SQLITE.close()
         ctx.pop()
+        drop_database(rand_db, db_user, db_password, db_host)
 
     request.addfinalizer(teardown)
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
         '--ignore-nplusone')
     return app
-
-
-@pytest.fixture(scope='session')
-def app2(request):
-    app = get_app(db_connection_string=request.config.getoption(
-        '--connection-string'), testing=True)
-    app.test_client_class = CustomClient
-
-    # Establish an application context before running the tests.
-    ctx = app.app_context()
-    ctx.push()
-
-    def teardown():
-        TEMPORATY_SQLITE.close()
-        ctx.pop()
-
-    request.addfinalizer(teardown)
-    app.config['NPLUSONE_RAISE'] = not request.config.getoption(
-        '--ignore-nplusone')
-    return app
-
-# @pytest.fixture(scope='session')
-# def celery_config():
-#     return {
-#         'broker_url': 'redis://localhost:6379',
-#         'result_backend': 'redis://localhost:6379',
-#         # 'worker_log_color': False,
-#         # 'accept_content': {'json'},
-#         # 'enable_utc': True,
-#         # 'timezone': 'UTC',
-#         # 'broker_heartbeat': 0,
-#     }
-
-# @pytest.fixture(scope="session")
-# def celery_worker_parameters():
-#     return {
-#         "task_always_eager": True,
-#         "task_store_eager_result": True,
-#         "task_ignore_result": False,
-#         "without_heartbeat": False,
-#     }
 
 
 @pytest.fixture(scope='session')
@@ -169,17 +152,10 @@ def celery_app(app):
 @pytest.fixture(scope='session')
 def database(app, request):
     """Session-wide test database."""
-
     def teardown():
-        try:
-            db.engine.execute('DROP TABLE vulnerability CASCADE')
-        except Exception:
-            pass
-        try:
-            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
-        except Exception:
-            pass
         db.drop_all()
+        db.session.close()
+        db.engine.dispose()
 
     # Disable check_vulnerability_host_service_source_code constraint because
     # it doesn't work in sqlite
@@ -190,8 +166,8 @@ def database(app, request):
 
     db.app = app
     db.create_all()
-    db.engine.execute("INSERT INTO faraday_role(name, weight) "
-                      "VALUES ('admin', 10),('asset_owner', 20),('pentester', 30),('client', 40);"
+    db.engine.execute("INSERT INTO faraday_role(name, weight, custom) "
+                      "VALUES ('admin', 10, false),('asset_owner', 20, false),('pentester', 30, false),('client', 40, false);"
                       )
 
     request.addfinalizer(teardown)
@@ -351,3 +327,57 @@ def skip_by_sql_dialect(app, request):
 def csrf_token(logged_user, test_client):
     session_response = test_client.get('/session')
     return session_response.json.get('csrf_token')
+
+
+def get_cursor(db_user: str, db_password: str, db_host: str):
+    """
+    Gets a psycopg2 cursor for the parent Database
+    """
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user=db_user,
+        password=db_password,
+        host=db_host
+    )
+
+    conn.set_isolation_level(0)
+
+    return conn.cursor()
+
+
+def create_database(db_name: str, db_user: str, db_password: str, db_host: str):
+    cur = get_cursor(db_user, db_password, db_host)
+
+    cur.execute(
+        SQL(
+            f"create database {db_name};"
+        )
+    )
+    cur.execute(
+        SQL(
+            f"grant all privileges on database {db_name} to {db_user};"
+        )
+    )
+    cur.close()
+
+
+def drop_database(db_name: str, db_user: str, db_password: str, db_host: str):
+    cur = get_cursor(db_user, db_password, db_host)
+
+    cur.execute(
+        SQL(
+            f"drop database {db_name};"
+        )
+    )
+    cur.close()
+
+
+def create_random_db(db_user, db_password, db_host):
+    time_str = "".join(str(time()).split("."))
+    random.seed()
+    pref = random.randint(1111, 9999)
+
+    random_db = "faraday_test_db_" + "_".join([time_str, str(pref)])
+    create_database(random_db, db_user, db_password, db_host)
+
+    return random_db

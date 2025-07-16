@@ -1460,6 +1460,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
+    status_history = relationship(
+        'VulnerabilityStatusHistory',
+        backref='vulnerability',
+        cascade="all, delete-orphan",
+        foreign_keys="VulnerabilityStatusHistory.vulnerability_id",
+        primaryjoin="VulnerabilityGeneric.id == VulnerabilityStatusHistory.vulnerability_id",
+        order_by="desc(VulnerabilityStatusHistory.change_date)"
+    )
+
     # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
@@ -2605,11 +2614,13 @@ roles_users = db.Table('roles_users',
                        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
 
 
-class Role(db.Model, RoleMixin):
+class Role(Metadata, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    weight = db.Column(db.Integer(), nullable=False)
+    weight = db.Column(db.Integer(), nullable=False, default=100)
+    custom = db.Column(db.Boolean(), nullable=False, default=True)
+    description = db.Column(db.String(280))
 
 
 class UserToken(Metadata):
@@ -3552,7 +3563,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
     triggered_by = Column(String, nullable=True)
-    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
 
     @property
     def parent(self):
@@ -3623,7 +3634,7 @@ class CloudAgentExecution(Metadata):
     )
     last_run = Column(DateTime)
     triggered_by = Column(String, nullable=True)
-    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
     tasks_completed = Column(Integer, nullable=False, default=0)
 
     @property
@@ -3847,6 +3858,94 @@ class SlackNotification(db.Model):
     slack_id = Column(String, nullable=False)
     message = Column(String, nullable=False)
     processed = Column(Boolean, default=False)
+
+
+class VulnerabilityStatusHistory(db.Model):
+
+    __tablename__ = 'vulnerability_status_history'
+    id = Column(Integer, primary_key=True)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    change_date = Column(DateTime, default=datetime.utcnow)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
+    user = relationship(
+        'User',
+        foreign_keys=[user_id]
+    )
+
+    __table_args__ = (
+        Index('ix_vulnerability_status_history_vulnerability_id', vulnerability_id),
+        Index('ix_vulnerability_status_history_change_date', change_date),
+        Index('ix_user_id_vulnerability_status_history', user_id),
+        Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
+    )
+
+
+class PermissionsGroup(db.Model):
+    __tablename__ = 'permissions_group'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+
+
+class PermissionsUnit(db.Model):
+    __tablename__ = 'permissions_unit'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    permissions_group_id = Column(Integer, ForeignKey('permissions_group.id'), index=True, nullable=False)
+    permissions_group = relationship(
+        'PermissionsGroup',
+        backref=backref('permissions_units', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_group_id],
+    )
+
+
+class PermissionsUnitAction(db.Model):
+    __tablename__ = 'permissions_unit_action'
+    CREATE_ACTION = 'create'
+    READ_ACTION = 'read'
+    UPDATE_ACTION = 'update'
+    DELETE_ACTION = 'delete'
+    RUN_ACTION = 'run'
+    TAG_ACTION = 'tag'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION, TAG_ACTION]
+
+    id = Column(Integer, primary_key=True)
+
+    permissions_unit_id = Column(Integer, ForeignKey('permissions_unit.id'), index=True, nullable=False)
+    permissions_unit = relationship(
+        'PermissionsUnit',
+        backref=backref('permissions_actions', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_unit_id],
+    )
+    action_type = Column(Enum(*ACTIONS, name='action_types'), nullable=False, default=READ_ACTION)
+
+    __table_args__ = (UniqueConstraint(permissions_unit_id, action_type, name='uix_permissions_unit_action'),)
+
+
+class RolePermission(db.Model):
+    __tablename__ = 'role_permission'
+
+    id = Column(Integer, primary_key=True)
+
+    unit_action_id = Column(Integer, ForeignKey('permissions_unit_action.id'), index=True, nullable=False)
+    unit_action = relationship(
+        'PermissionsUnitAction',
+        backref=backref('role_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[unit_action_id],
+    )
+    role_id = Column(Integer, ForeignKey('faraday_role.id'), index=True, nullable=False)
+    role = relationship(
+        'Role',
+        backref=backref('unit_action_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[role_id],
+    )
+
+    allowed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (UniqueConstraint(unit_action_id, role_id, name='uix_unit_action_role'),)
 
 
 # Indexes to speed up queries

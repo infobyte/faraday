@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="4px" viewBox="0 0 16 4" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group</title>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-More/icon_more" transform="translate(-11.000000, -16.000000)" fill="#1C4566" fill-rule="nonzero">
+            <g id="Group" transform="translate(11.000000, 16.000000)">
+                <circle id="Oval" cx="2" cy="2" r="2"></circle>
+                <circle id="Oval" cx="8" cy="2" r="2"></circle>
+                <circle id="Oval" cx="14" cy="2" r="2"></circle>
+            </g>
+        </g>
+    </g>
+</svg>

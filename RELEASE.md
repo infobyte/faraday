@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.15.1 [Jul 17th, 2025]:
+---
+ * [FIX] Fixed migrations. #7997
+
 5.15.0 [Jul 16th, 2025]:
 ---
  * [ADD] Implemented Vulnerability status history. #7929

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[MOD] BREAKING CHANGE: Simplified vulnerability template filter response by removing 'id', 'key', 'value', 'doc' keys and delivering template data directly within the 'rows' key. #7967"
-}

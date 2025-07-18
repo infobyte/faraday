@@ -3909,7 +3909,8 @@ class PermissionsUnitAction(db.Model):
     UPDATE_ACTION = 'update'
     DELETE_ACTION = 'delete'
     RUN_ACTION = 'run'
-    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION]
+    TAG_ACTION = 'tag'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION, TAG_ACTION]
 
     id = Column(Integer, primary_key=True)
 

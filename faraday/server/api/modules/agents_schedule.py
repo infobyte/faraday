@@ -6,8 +6,9 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 import http
 import logging
+from datetime import datetime
 import json
-import datetime
+from uuid import uuid4
 
 # Related third party imports
 import flask
@@ -30,6 +31,7 @@ import dateutil
 # Local application imports
 from faraday.server.api.base import (
     AutoSchema,
+    FilterMixin,
     InvalidUsage,
     PaginatedMixin,
     ReadWriteView,
@@ -171,7 +173,8 @@ class AgentsScheduleSchema(AutoSchema):
 
 class AgentsScheduleView(
         PaginatedMixin,
-        ReadWriteView):
+        ReadWriteView,
+        FilterMixin,):
     route_base = 'agents_schedule'
     model_class = AgentsSchedule
     order_field = AgentsSchedule.id.asc()
@@ -221,33 +224,16 @@ class AgentsScheduleView(
         username = flask_login.current_user.username
         agents_schedule = self._get_object(schedule_id)
         if not agents_schedule:
-            message = f"Schedule with ID {self.schedule_id} not found!, skipping agent execution"
+            message = f"Schedule with ID {schedule_id} not found!, skipping agent execution"
             logger.warning(message)
             flask.abort(400, message)
+        agent = agents_schedule.executor.agent
         if agents_schedule.executor.agent.is_offline:
             message = 'Agent is offline'
             abort(http.HTTPStatus.GONE, message)
         if not agents_schedule.executor.agent.active:
             message = f'Agent is paused. active flag: {agents_schedule.executor.agent.active}'
             abort(http.HTTPStatus.GONE, message)
-        agents_schedule.last_run = datetime.datetime.now()
-        db.session.add(agents_schedule)
-        workspaces = agents_schedule.workspaces
-        commands = []
-        agent_executions = []
-        for workspace in workspaces:
-            command, agent_execution = get_command_and_agent_execution(
-                executor=agents_schedule.executor,
-                workspace=workspace,
-                parameters=agents_schedule.parameters,
-                username=username,
-                user_id=flask_login.current_user.id
-            )
-            commands.append(command)
-            agent_executions.append(agent_execution)
-            db.session.add(agent_execution)
-        db.session.commit()
-        logger.info(f"Agent {agents_schedule.executor.agent.name} executed with executor {agents_schedule.executor.name}")
         plugin_args = {
             "ignore_info": agents_schedule.ignore_info,
             "resolve_hostname": agents_schedule.resolve_hostname
@@ -259,10 +245,44 @@ class AgentsScheduleView(
         if agents_schedule.host_tag:
             # this field should be named host_tag but in agents is named as hostname_tag
             plugin_args["hostname_tag"] = agents_schedule.host_tag.split(",")
+
+        workspaces = agents_schedule.workspaces
+        commands = []
+        agent_executions = []
+        workspaces_commands = []
+        parameters_data = {
+            "executor_data": {"args": agents_schedule.parameters},
+            "workspaces_commands": []
+        }
+        run_uuid = uuid4()
+        for workspace in workspaces:
+            command, agent_execution = get_command_and_agent_execution(
+                executor=agents_schedule.executor,
+                workspace=workspace,
+                parameters=parameters_data,
+                username=username,
+                user_id=flask_login.current_user.id,
+                run_uuid=run_uuid
+            )
+            commands.append(command)
+            db.session.add(command)
+            db.session.commit()
+            agent_executions.append(agent_execution)
+            workspaces_commands.append({"workspace_name": workspace.name, "command_id": command.id})
+
+        parameters_data["workspaces_commands"] = workspaces_commands
+        parameters_data.update(**plugin_args)
+
+        for agent_execution in agent_executions:
+            agent_execution.parameters_data = parameters_data
+            db.session.add(agent_execution)
+        agents_schedule.last_run = datetime.utcnow()
+        db.session.commit()
+
         message = {
-            "execution_ids": [agent_execution.id for agent_execution in agent_executions],
-            "agent_id": agents_schedule.executor.agent.id,
-            "workspaces": [workspace.name for workspace in workspaces],
+            "execution_ids": [ae.id for ae in agent_executions],
+            "agent_id": agent.id,
+            "workspaces": [ws.name for ws in workspaces],
             "action": 'RUN',
             "executor": agents_schedule.executor.name,
             "args": agents_schedule.parameters,
@@ -275,6 +295,43 @@ class AgentsScheduleView(
         return flask.jsonify({
             'commands_id': [command.id for command in commands],
         })
+
+    @route('/count_schedulers', methods=['GET'])
+    def count_schedulers(self):
+        """
+        ---
+        get:
+          tags: ["Scheduler"]
+          summary: Counts schedulers by type
+          responses:
+            200:
+              description: Counts of schedulers by type
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      agent_schedulers:
+                        type: integer
+                        description: Count of Agent Schedulers
+        """
+        #  ONLY FOR COMMUNITY
+        counts = db.session.query(
+            AgentsSchedule.type,
+            db.func.count(AgentsSchedule.id).label('count')
+        ).group_by(AgentsSchedule.type).all()
+
+        result = {
+            'agent_schedulers': 0,
+        }
+
+        for scheduler_type, count in counts:
+            if scheduler_type == 'cloud_agent':
+                continue
+            if scheduler_type == 'agent':
+                result['agent_schedulers'] = count
+
+        return flask.jsonify(result)
 
 
 AgentsScheduleView.register(agents_schedule_api)

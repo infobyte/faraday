@@ -2,20 +2,21 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ buildPythonPackage, fetchPypi, lib, marshmallow, packaging, pytest-runner }:
+{ buildPythonPackage, fetchPypi, lib, marshmallow, packaging, pytest-runner
+, validators }:
 
 buildPythonPackage rec {
   pname = "faraday-agent-parameters-types";
-  version = "1.7.2";
+  version = "1.8.1";
 
   src = fetchPypi {
     inherit version;
     pname = "faraday_agent_parameters_types";
-    sha256 = "1zh9zn4qdhy5fms61rmld3jz4gry6g1k4kmjbjwssk28nhcirszp";
+    sha256 = "0kdsndaz50zckj6ii8h34glnvw9mjq0p3bb1s06flycvkyi7b0x3";
   };
 
   buildInputs = [ pytest-runner ];
-  propagatedBuildInputs = [ marshmallow packaging ];
+  propagatedBuildInputs = [ marshmallow packaging validators ];
 
   # TODO FIXME
   doCheck = false;

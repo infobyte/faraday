@@ -18,6 +18,7 @@ import dateutil
 import cvss
 import jwt
 from croniter import croniter
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -33,7 +34,6 @@ from sqlalchemy import (
     Table,
     Date,
     event,
-    literal,
     func,
     Index,
 )
@@ -1189,6 +1189,14 @@ class Host(Metadata):
     mac = BlankColumn(Text)
     net_segment = BlankColumn(Text)
 
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(Host.id == CommandObject.object_id, CommandObject.object_type == "host")',
+        collection_class=set,
+        passive_deletes=True
+    )
+
     services = relationship(
         'Service',
         order_by='Service.protocol,Service.port',
@@ -1224,8 +1232,6 @@ class Host(Metadata):
         __host_vulnerabilities + __service_vulnerabilities,
         deferred=True)
 
-    credentials_count = _make_generic_count_property('host', 'credential')
-
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
@@ -1247,7 +1253,6 @@ class Host(Metadata):
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
         return query.options(
-            undefer(cls.credentials_count),
             undefer(cls.open_service_count),
             joinedload(cls.hostnames),
             joinedload(cls.services),
@@ -1328,6 +1333,15 @@ class Service(Metadata):
     banner = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey('host.id', ondelete='CASCADE'), index=True, nullable=False)
+
+    commands = relationship(
+        'Command',
+        secondary='command_object',
+        primaryjoin='and_(Service.id == CommandObject.object_id, CommandObject.object_type == "service")',
+        collection_class=set,
+        passive_deletes=True
+    )
+
     host = relationship(
         'Host',
         foreign_keys=[host_id],
@@ -1344,7 +1358,6 @@ class Service(Metadata):
 
     vulnerability_count = _make_generic_count_property('service',
                                                        'vulnerability')
-    credentials_count = _make_generic_count_property('service', 'credential')
 
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
@@ -1377,6 +1390,15 @@ owasp_vulnerability_association = Table('owasp_vulnerability_association',
                                         Column('vulnerability_id', Integer, ForeignKey('vulnerability.id',
                                                                                        ondelete='CASCADE'))
                                         )
+
+association_table_vulnerabilities_credentials = Table(
+    'association_table_vulnerabilities_credentials',
+    db.Model.metadata,
+    Column('vulnerability_id', Integer, ForeignKey('vulnerability.id', ondelete='CASCADE')),
+    Column('credential_id', Integer, ForeignKey('credential.id', ondelete='CASCADE')),
+    Index('ix_association_vuln_creds_vuln_id', 'vulnerability_id'),
+    Index('ix_association_vuln_creds_cred_id', 'credential_id')
+)
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1417,6 +1439,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
     epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
+    is_main = Column(Boolean, nullable=True, default=None)
 
     vulnerability_duplicate_id = Column(
         Integer,
@@ -1436,6 +1459,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
+
+    status_history = relationship(
+        'VulnerabilityStatusHistory',
+        backref='vulnerability',
+        cascade="all, delete-orphan",
+        foreign_keys="VulnerabilityStatusHistory.vulnerability_id",
+        primaryjoin="VulnerabilityGeneric.id == VulnerabilityStatusHistory.vulnerability_id",
+        order_by="desc(VulnerabilityStatusHistory.change_date)"
+    )
 
     # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -1467,6 +1499,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
         collection_class=set,
         passive_deletes=True,
     )
+
+    credentials = relationship("Credential",
+                               secondary='association_table_vulnerabilities_credentials',
+                               back_populates='vulnerabilities')
 
     _cvss2_vector_string = Column(Text, nullable=True)
     cvss2_base_score = Column(Float)
@@ -2209,63 +2245,30 @@ class PolicyViolation(Metadata):
 class Credential(Metadata):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
-    username = BlankColumn(Text)
-    password = BlankColumn(Text)
-    description = BlankColumn(Text)
-    name = BlankColumn(Text)
+    password = NonBlankColumn(Text, nullable=False)
+    username = NonBlankColumn(Text, nullable=False)
+    endpoint = Column(Text, default='')
+    leak_date = Column(DateTime)
+    owned = Column(Boolean, default=False)
 
-    host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True, nullable=True)
-    host = relationship('Host',
-                        backref=backref("credentials", cascade="all, delete-orphan"),
-                        foreign_keys=[host_id])
+    vulnerabilities = relationship("VulnerabilityGeneric",
+                                   secondary='association_table_vulnerabilities_credentials',
+                                   back_populates='credentials',
+                                   lazy='selectin')
 
-    service_id = Column(Integer, ForeignKey(Service.id, ondelete='CASCADE'), index=True, nullable=True)
-    service = relationship('Service',
-                           backref=backref('credentials', cascade="all, delete-orphan"),
-                           foreign_keys=[service_id])
-
-    # 1 workspace <--> N credentials
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
-    workspace = relationship('Workspace',
-                             backref=backref('credentials', cascade="all, delete-orphan", passive_deletes=True),
-                             foreign_keys=[workspace_id])
-
-    _host_ip_query = (
-        select([Host.ip]).
-        where(text('credential.host_id = host.id'))
-    )
-
-    _service_ip_query = (
-        select([text('host_inner.ip || \'/\' || service.name')]).
-        select_from(text('host as host_inner, service')).
-        where(text('credential.service_id = service.id and host_inner.id = service.host_id'))
-    )
-
-    target_ip = column_property(
-        case([
-            (text('credential.host_id IS NOT null'), _host_ip_query.as_scalar()),
-            (text('credential.service_id IS NOT null'), _service_ip_query.as_scalar())
-        ]),
-        deferred=True
-    )
+    workspace = relationship('Workspace', backref='credentials', foreign_keys='Credential.workspace_id')
 
     __table_args__ = (
-        CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
-                        '(host_id IS NOT NULL AND service_id IS NULL)',
-                        name='check_credential_host_service'),
-        UniqueConstraint(
-            'username',
-            'host_id',
-            'service_id',
-            'workspace_id',
-            name='uix_credential_username_host_service_workspace'
-        ),
+        UniqueConstraint('username', 'password', 'endpoint', 'workspace_id',
+                         name='uix_credential_username_password_endpoint_workspace'),
+        Index('ix_credential_leak_date_workspace_id', leak_date, workspace_id),
+        Index('ix_credential_leak_date', leak_date),
     )
 
     @property
     def parent(self):
-        return self.host or self.service
+        return
 
 
 association_workspace_and_users_table = Table(
@@ -2279,8 +2282,8 @@ association_workspace_and_users_table = Table(
 executive_report_workspace_table = Table(
     "executive_report_workspace_table",
     db.Model.metadata,
-    Column("workspace_id", Integer, ForeignKey("workspace.id")),
-    Column("executive_report_id", Integer, ForeignKey("executive_report.id")),
+    Column("workspace_id", Integer, ForeignKey("workspace.id", ondelete="CASCADE")),
+    Column("executive_report_id", Integer, ForeignKey("executive_report.id", ondelete="CASCADE")),
 )
 
 
@@ -2306,31 +2309,100 @@ class Workspace(Metadata):
     risk_history_avg = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
 
     credential_count = _make_generic_count_property('workspace', 'credential')
-    host_count = _make_generic_count_property('workspace', 'host')
-    open_service_count = _make_generic_count_property('workspace', 'service', where=text("service.status = 'open'"))
-    total_service_count = _make_generic_count_property('workspace', 'service')
+    last_run_agent_date = query_expression()
 
     # Stats
-    # By vuln type
-    vulnerability_web_count = query_expression(literal(0))
-    vulnerability_code_count = query_expression(literal(0))
-    vulnerability_standard_count = query_expression(literal(0))
-    # By vuln status
-    vulnerability_open_count = query_expression(literal(0))
-    vulnerability_re_opened_count = query_expression(literal(0))
-    vulnerability_risk_accepted_count = query_expression(literal(0))
-    vulnerability_closed_count = query_expression(literal(0))
-    # By other
-    vulnerability_confirmed_count = query_expression(literal(0))
-    last_run_agent_date = query_expression()
-    vulnerability_total_count = query_expression(literal(0))
 
-    vulnerability_high_count = query_expression(literal(0))
-    vulnerability_critical_count = query_expression(literal(0))
-    vulnerability_medium_count = query_expression(literal(0))
-    vulnerability_low_count = query_expression(literal(0))
-    vulnerability_informational_count = query_expression(literal(0))
-    vulnerability_unclassified_count = query_expression(literal(0))
+    host_count = Column(Integer, nullable=False, default=0)
+    host_confirmed_count = Column(Integer, nullable=False, default=0)
+    host_notclosed_count = Column(Integer, nullable=False, default=0)
+    host_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    open_service_count = Column(Integer, nullable=False, default=0)
+    total_service_count = Column(Integer, nullable=False, default=0)
+    service_confirmed_count = Column(Integer, nullable=False, default=0)
+    service_notclosed_count = Column(Integer, nullable=False, default=0)
+    service_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by vuln type
+
+    vulnerability_web_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by vuln status
+
+    vulnerability_open_count = Column(Integer, nullable=False, default=0)
+    vulnerability_re_opened_count = Column(Integer, nullable=False, default=0)
+    vulnerability_risk_accepted_count = Column(Integer, nullable=False, default=0)
+    vulnerability_closed_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by dashboard filters
+
+    vulnerability_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_total_count = Column(Integer, nullable=False, default=0)
+
+    #  Total by severity
+
+    vulnerability_high_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed by vuln type
+
+    vulnerability_web_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed by status
+
+    vulnerability_open_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_re_opened_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_risk_accepted_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_closed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed by severity
+
+    vulnerability_high_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    #  Not closed by vuln type
+
+    vulnerability_web_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_notclosed_count = Column(Integer, nullable=False, default=0)
+
+    #  Not closed by severity
+
+    vulnerability_high_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_notclosed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_notclosed_count = Column(Integer, nullable=False, default=0)
+
+    #  Confirmed and not closed by vuln type:
+
+    vulnerability_web_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    # Confirmed and not closed by severity:
+
+    vulnerability_high_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
 
     importance = Column(Integer, default=0)
 
@@ -2542,11 +2614,13 @@ roles_users = db.Table('roles_users',
                        db.Column('role_id', db.Integer(), db.ForeignKey('faraday_role.id')))
 
 
-class Role(db.Model, RoleMixin):
+class Role(Metadata, RoleMixin):
     __tablename__ = 'faraday_role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    weight = db.Column(db.Integer(), nullable=False)
+    weight = db.Column(db.Integer(), nullable=False, default=100)
+    custom = db.Column(db.Boolean(), nullable=False, default=True)
+    description = db.Column(db.String(280))
 
 
 class UserToken(Metadata):
@@ -3304,7 +3378,10 @@ class Executor(Metadata):
         backref=backref('executors', cascade="all, delete-orphan"),
     )
     parameters_metadata = Column(JSONType, nullable=False, default={})
+    parameters_data = Column(JSONType, nullable=False, default={})
     last_run = Column(DateTime)
+    category = Column(JSONType, nullable=True)
+    tool = Column(String(50), nullable=True)
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -3423,6 +3500,7 @@ class Agent(Metadata):
     token = Column(Text, unique=True, nullable=False, default=lambda: "".
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
     name = NonBlankColumn(Text)
+    description = BlankColumn(Text)
     active = Column(Boolean, default=True)
     sid = Column(Text)  # socketio sid
 
@@ -3440,13 +3518,10 @@ class Agent(Metadata):
 
     @property
     def status(self):
-        if self.active:
-            if self.is_online:
-                return 'online'
-            else:
-                return 'offline'
+        if self.is_online:
+            return 'online'
         else:
-            return 'paused'
+            return 'offline'
 
     @property
     def last_run(self):
@@ -3487,6 +3562,8 @@ class AgentExecution(Metadata):
         foreign_keys=[command_id],
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
+    triggered_by = Column(String, nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
 
     @property
     def parent(self):
@@ -3507,6 +3584,10 @@ class CloudAgent(Metadata):
     slug = Column(String, nullable=False, unique=True)
     access_token = Column(Text, unique=True)
     params = Column(JSONType)
+    parameters_data = Column(JSONType, nullable=False, default={})
+    category = Column(JSONType, nullable=True)
+    description = BlankColumn(Text)
+    tools_count = Column(Integer, nullable=False, default=1)
 
     @property
     def last_run(self):
@@ -3552,6 +3633,9 @@ class CloudAgentExecution(Metadata):
         backref=backref('cloud_agent_execution_id', cascade="all, delete-orphan")
     )
     last_run = Column(DateTime)
+    triggered_by = Column(String, nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
+    tasks_completed = Column(Integer, nullable=False, default=0)
 
     @property
     def parent(self):
@@ -3659,6 +3743,11 @@ class UserNotificationSettings(Metadata):
     agents_app = Column(Boolean, default=True)
     agents_email = Column(Boolean, default=False)
     agents_slack = Column(Boolean, default=False)
+
+    analytics_enabled = Column(Boolean, default=True)
+    analytics_app = Column(Boolean, default=True)
+    analytics_email = Column(Boolean, default=False)
+    analytics_slack = Column(Boolean, default=False)
 
     cli_enabled = Column(Boolean, default=True)
     cli_app = Column(Boolean, default=True)
@@ -3769,6 +3858,94 @@ class SlackNotification(db.Model):
     slack_id = Column(String, nullable=False)
     message = Column(String, nullable=False)
     processed = Column(Boolean, default=False)
+
+
+class VulnerabilityStatusHistory(db.Model):
+
+    __tablename__ = 'vulnerability_status_history'
+    id = Column(Integer, primary_key=True)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    change_date = Column(DateTime, default=datetime.utcnow)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
+    user = relationship(
+        'User',
+        foreign_keys=[user_id]
+    )
+
+    __table_args__ = (
+        Index('ix_vulnerability_status_history_vulnerability_id', vulnerability_id),
+        Index('ix_vulnerability_status_history_change_date', change_date),
+        Index('ix_user_id_vulnerability_status_history', user_id),
+        Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
+    )
+
+
+class PermissionsGroup(db.Model):
+    __tablename__ = 'permissions_group'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+
+
+class PermissionsUnit(db.Model):
+    __tablename__ = 'permissions_unit'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    permissions_group_id = Column(Integer, ForeignKey('permissions_group.id'), index=True, nullable=False)
+    permissions_group = relationship(
+        'PermissionsGroup',
+        backref=backref('permissions_units', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_group_id],
+    )
+
+
+class PermissionsUnitAction(db.Model):
+    __tablename__ = 'permissions_unit_action'
+    CREATE_ACTION = 'create'
+    READ_ACTION = 'read'
+    UPDATE_ACTION = 'update'
+    DELETE_ACTION = 'delete'
+    RUN_ACTION = 'run'
+    TAG_ACTION = 'tag'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION, TAG_ACTION]
+
+    id = Column(Integer, primary_key=True)
+
+    permissions_unit_id = Column(Integer, ForeignKey('permissions_unit.id'), index=True, nullable=False)
+    permissions_unit = relationship(
+        'PermissionsUnit',
+        backref=backref('permissions_actions', cascade="all, delete-orphan"),
+        foreign_keys=[permissions_unit_id],
+    )
+    action_type = Column(Enum(*ACTIONS, name='action_types'), nullable=False, default=READ_ACTION)
+
+    __table_args__ = (UniqueConstraint(permissions_unit_id, action_type, name='uix_permissions_unit_action'),)
+
+
+class RolePermission(db.Model):
+    __tablename__ = 'role_permission'
+
+    id = Column(Integer, primary_key=True)
+
+    unit_action_id = Column(Integer, ForeignKey('permissions_unit_action.id'), index=True, nullable=False)
+    unit_action = relationship(
+        'PermissionsUnitAction',
+        backref=backref('role_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[unit_action_id],
+    )
+    role_id = Column(Integer, ForeignKey('faraday_role.id'), index=True, nullable=False)
+    role = relationship(
+        'Role',
+        backref=backref('unit_action_permissions', cascade="all, delete-orphan"),
+        foreign_keys=[role_id],
+    )
+
+    allowed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (UniqueConstraint(unit_action_id, role_id, name='uix_unit_action_role'),)
 
 
 # Indexes to speed up queries

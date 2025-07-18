@@ -16,7 +16,7 @@ import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from sqlalchemy.orm import with_expression
+from sqlalchemy.orm import with_expression, joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
@@ -25,8 +25,6 @@ from faraday.server.models import (
     Workspace,
     SeveritiesHistogram,
     Vulnerability,
-    _make_vuln_count_property,
-    count_vulnerability_severities,
     _last_run_agent_date,
     _make_generic_count_property,
 )
@@ -42,6 +40,7 @@ from faraday.server.api.base import (
     FilterMixin,
     BulkDeleteMixin,
     PaginatedMixin,
+    BulkUpdateMixin
 )
 
 logger = logging.getLogger(__name__)
@@ -51,22 +50,96 @@ workspace_api = Blueprint('workspace_api', __name__)
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
+    host_confirmed = fields.Integer(dump_only=True, attribute='host_confirmed_count')
+    host_notclosed = fields.Integer(dump_only=True, attribute='host_notclosed_count')
+    host_notclosed_confirmed = fields.Integer(dump_only=True, attribute='host_notclosed_confirmed_count')
     services = fields.Integer(dump_only=True, attribute='total_service_count')
-    web_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_web_count')
-    code_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_code_count')
-    std_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_standard_count')
-    opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_open_count')
-    re_opened_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_re_opened_count')
-    risk_accepted_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_risk_accepted_count')
-    closed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_closed_count')
-    confirmed_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_confirmed_count')
-    critical_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_critical_count')
-    info_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_informational_count')
-    high_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_high_count')
-    medium_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_medium_count')
-    low_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_low_count')
-    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_unclassified_count')
-    total_vulns = fields.Integer(dump_only=True, allow_none=False, attribute='vulnerability_total_count')
+    open_services = fields.Integer(dump_only=True, attribute='open_service_count')
+    service_confirmed = fields.Integer(dump_only=True, attribute='service_confirmed_count')
+    service_notclosed = fields.Integer(dump_only=True, attribute='service_notclosed_count')
+    service_notclosed_confirmed = fields.Integer(dump_only=True, attribute='service_notclosed_confirmed_count')
+
+    #  Total by vulnerability type
+    web_vulns = fields.Integer(dump_only=True, attribute='vulnerability_web_count')
+    code_vulns = fields.Integer(dump_only=True, attribute='vulnerability_code_count')
+    std_vulns = fields.Integer(dump_only=True, attribute='vulnerability_standard_count')
+
+    #  Total by vulnerability status
+    opened_vulns = fields.Integer(dump_only=True, attribute='vulnerability_open_count')
+    re_opened_vulns = fields.Integer(dump_only=True, attribute='vulnerability_re_opened_count')
+    risk_accepted_vulns = fields.Integer(dump_only=True, attribute='vulnerability_risk_accepted_count')
+    closed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_closed_count')
+
+    #  Total by other
+    confirmed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_confirmed_count')
+    notclosed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_notclosed_count')
+    notclosed_confirmed_vulns = fields.Integer(dump_only=True, attribute='vulnerability_notclosed_confirmed_count')
+    total_vulns = fields.Integer(dump_only=True, attribute='vulnerability_total_count')
+
+    # Total by severity
+    critical_vulns = fields.Integer(dump_only=True, attribute='vulnerability_critical_count')
+    high_vulns = fields.Integer(dump_only=True, attribute='vulnerability_high_count')
+    medium_vulns = fields.Integer(dump_only=True, attribute='vulnerability_medium_count')
+    low_vulns = fields.Integer(dump_only=True, attribute='vulnerability_low_count')
+    info_vulns = fields.Integer(dump_only=True, attribute='vulnerability_informational_count')
+    unclassified_vulns = fields.Integer(dump_only=True, attribute='vulnerability_unclassified_count')
+
+    # Confirmed by vulnerability type
+    web_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_web_confirmed_count')
+    code_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_code_confirmed_count')
+    std_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_standard_confirmed_count')
+
+    # Confirmed by vulnerability status
+    opened_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_open_confirmed_count')
+    re_opened_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_re_opened_confirmed_count')
+    risk_accepted_vulns_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_risk_accepted_confirmed_count')
+    closed_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_closed_confirmed_count')
+
+    # Confirmed by severity
+    critical_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_critical_confirmed_count')
+    high_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_high_confirmed_count')
+    medium_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_medium_confirmed_count')
+    low_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_low_confirmed_count')
+    info_vulns_confirmed = fields.Integer(dump_only=True, attribute='vulnerability_informational_confirmed_count')
+    unclassified_vulns_confirmed = fields.Integer(dump_only=True,
+                                                  attribute='vulnerability_unclassified_confirmed_count')
+
+    # Not closed by vulnerability type
+    web_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_web_notclosed_count')
+    code_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_code_notclosed_count')
+    std_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_standard_notclosed_count')
+
+    # Not closed by severity
+    critical_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_critical_notclosed_count')
+    high_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_high_notclosed_count')
+    medium_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_medium_notclosed_count')
+    low_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_low_notclosed_count')
+    info_vulns_notclosed = fields.Integer(dump_only=True, attribute='vulnerability_informational_notclosed_count')
+    unclassified_vulns_notclosed = fields.Integer(dump_only=True,
+                                                  attribute='vulnerability_unclassified_notclosed_count')
+
+    # Confirmed and not closed by vulnerability type
+    web_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_web_notclosed_confirmed_count')
+    code_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                    attribute='vulnerability_code_notclosed_confirmed_count')
+    std_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_standard_notclosed_confirmed_count')
+
+    # Confirmed and not closed by severity
+    critical_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                        attribute='vulnerability_critical_notclosed_confirmed_count')
+    high_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                    attribute='vulnerability_high_notclosed_confirmed_count')
+    medium_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                      attribute='vulnerability_medium_notclosed_confirmed_count')
+    low_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_low_notclosed_confirmed_count')
+    info_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                    attribute='vulnerability_informational_notclosed_confirmed_count')
+    unclassified_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
+                                                            attribute='vulnerability_unclassified_notclosed_confirmed_count')
 
 
 class HistogramSchema(Schema):
@@ -201,7 +274,7 @@ def request_histogram():
     return histogram_days, histogram_dict
 
 
-class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin):
+class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin, BulkUpdateMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str
@@ -277,19 +350,15 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
 
         """
         exclude = []
-        stats = True
-        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
         exclude_stats = flask.request.args.get('exclude_stats', type=lambda v: v.lower() == 'true')
+        histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
         if exclude_stats:
             exclude = ['stats']
-            stats = False
-
         histogram_days, histogram_dict = None, None
         if histogram:
             histogram_days, histogram_dict = request_histogram()
         filters = flask.request.args.get('q', '{"filters": []}')
-        filtered_objs, count = self._filter(filters, severity_count=stats, host_vulns=False,
-                                            exclude=exclude)
+        filtered_objs, count = self._filter(filters, exclude=exclude)
         objects = []
 
         for workspace_stat in filtered_objs:
@@ -314,6 +383,18 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
+
+    def _generate_filter_query(self, filters, severity_count=None):
+        filter_query = super()._generate_filter_query(filters)
+        filter_query.options(
+                    with_expression(
+                     Workspace.credential_count,
+                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
+                    ),
+                    joinedload(Workspace.scope),
+                    joinedload(Workspace.allowed_users),
+        )
+        return filter_query
 
     def _envelope_list(self, objects, pagination_metadata=None):
         return {
@@ -355,100 +436,15 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
-        obj = None
-        confirmed = self._get_querystring_boolean_field('confirmed')
-        only_opened = self._get_querystring_boolean_field('only_opened')
-
-        extra_query = ""
-        if only_opened:
-            extra_query = "status!='closed'"
 
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
 
-        # Vulnerability Types
-        query = query.options(
-            with_expression(
-                Workspace.vulnerability_web_count,
-                _make_vuln_count_property('vulnerability_web',
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False),
-            ),
-            with_expression(
-                Workspace.vulnerability_standard_count,
-                _make_vuln_count_property('vulnerability',
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False)
-            ),
-            with_expression(
-                Workspace.vulnerability_code_count,
-                _make_vuln_count_property('vulnerability_code',
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False),
-            ),
-            with_expression(
-                Workspace.vulnerability_total_count,
-                _make_vuln_count_property(type_=None,
-                                          confirmed=confirmed,
-                                          extra_query=extra_query,
-                                          use_column_property=False)
-            ),
-        )
-
-        # Vulnerability by status
-        if not only_opened:
-            query = query.options(
-                with_expression(Workspace.vulnerability_closed_count,
-                                _make_vuln_count_property(None,
-                                                          confirmed=confirmed,
-                                                          extra_query=" status='closed' ",
-                                                          use_column_property=False),
-                                )
-            )
-
-        query = query.options(
-            with_expression(Workspace.vulnerability_open_count,
-                            _make_vuln_count_property(None,
-                                                      confirmed=confirmed,
-                                                      extra_query=" status='open' ",
-                                                      use_column_property=False),
-                            ),
-            with_expression(Workspace.vulnerability_re_opened_count,
-                            _make_vuln_count_property(None,
-                                                      confirmed=confirmed,
-                                                      extra_query=" status='re-opened' ",
-                                                      use_column_property=False),
-                            ),
-            with_expression(Workspace.vulnerability_risk_accepted_count,
-                            _make_vuln_count_property(None,
-                                                      confirmed=confirmed,
-                                                      extra_query=" status='risk-accepted' ",
-                                                      use_column_property=False),
-                            ),
-        )
-
-        # Vulnerabilities by severities
-        query = count_vulnerability_severities(query,
-                                               Workspace,
-                                               confirmed=confirmed,
-                                               all_severities=True,
-                                               only_opened=only_opened)
         query = query.options(
             with_expression(
                 Workspace.credential_count,
                 _make_generic_count_property('workspace', 'credential', use_column_property=False)
-            ),
-            with_expression(
-                Workspace.host_count,
-                _make_generic_count_property('workspace', 'host', use_column_property=False)
-            ),
-            with_expression(
-                Workspace.total_service_count,
-                _make_generic_count_property('workspace', 'service', use_column_property=False)
-            ),
+            )
         )
         try:
             obj = query.one()
@@ -545,6 +541,25 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin)
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
         return self.model_class.query.filter(self.model_class.name.in_(ids))
+
+    @route('/bulk_update', methods=["PATCH"])
+    def bulk_update(self, **kwargs):
+        """
+          ---
+          tags: [Workspace]
+          summary: "Update a group of Workspace records by ids."
+          responses:
+            204:
+              description: Ok
+        """
+
+        return super().bulk_update(**kwargs)
+
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+
+        # Lookup field is set to 'name', so this is a patch to use bulk_update and send the right ids
+        real_ids = [id_[0] for id_ in db.session.query(Workspace.id).filter(Workspace.name.in_(ids)).all()]
+        return super()._perform_bulk_update(real_ids, data, workspace_name, **kwargs)
 
 
 WorkspaceView.register(workspace_api)

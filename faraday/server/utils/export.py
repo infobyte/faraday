@@ -101,6 +101,81 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     return memory_file
 
 
+def export_credentials_to_csv(credentials):
+    buffer = StringIO()
+
+    headers = [
+        "username", "password", "endpoint", "leak_date",
+    ]
+
+    writer = csv.DictWriter(buffer, fieldnames=headers)
+    writer.writeheader()
+
+    for credential in credentials:
+        row = {
+            'username': credential.get("username"),
+            'password': credential.get("password"),
+            'endpoint': credential.get("endpoint"),
+            'leak_date': credential.get("leak_date") if "leak_date" in credential else "",
+        }
+        writer.writerow(row)
+
+    memory_file = BytesIO()
+    memory_file.write(buffer.getvalue().encode('utf8'))
+    memory_file.seek(0)
+    return memory_file
+
+
+def export_vulns_to_csv_limited(vulns):
+    buffer = StringIO()
+
+    if not vulns:
+        raise ValueError("No vulnerabilities to export")
+
+    # Limit fields to essential ones to reduce memory usage
+    essential_fields = [
+        'id', '_id', 'name', 'severity', 'status', 'confirmed', 'target',
+        'hostnames', 'service', 'type', 'owner', 'tags', 'metadata',
+        'external_id', 'cve', 'cwe', 'cvss2', 'cvss3', 'cvss4', 'risk',
+        'impact', 'easeofresolution', 'custom_fields'
+    ]
+
+    # Get intersection of available fields and essential fields to avoid KeyError
+    first_vuln_keys = vulns[0].keys()
+    fieldnames = []
+
+    for field in essential_fields:
+        if field in first_vuln_keys:
+            fieldnames.append(field)
+
+    large_fields = {
+        'description', 'desc', 'request', 'response', 'data',
+        'resolution', 'refs', 'policyviolations', '_attachments'
+    }
+
+    for field in first_vuln_keys:
+        if field not in essential_fields and field not in large_fields:
+            fieldnames.append(field)
+
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+    writer.writeheader()
+
+    fieldnames_set = set(fieldnames)
+
+    for vuln in vulns:
+        filtered_row = {}
+        for field in fieldnames_set:
+            filtered_row[field] = vuln.get(field, '')
+
+        filtered_row = csv_escape(filtered_row)
+        writer.writerow(filtered_row)
+
+    memory_file = BytesIO()
+    memory_file.write(buffer.getvalue().encode('utf8'))
+    memory_file.seek(0)
+    return memory_file
+
+
 def _build_hosts_data(hosts_id):
     hosts = db.session.query(Host)\
                             .filter(Host.id.in_(hosts_id)).all()

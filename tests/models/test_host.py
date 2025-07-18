@@ -11,7 +11,7 @@ from functools import partial
 from posixpath import join as urljoin
 
 from faraday.server.models import Hostname, Host
-from faraday.server.api.modules.hosts import HostsView
+from faraday.server.api.modules.hosts_base import HostView
 from faraday.server.tasks import update_host_stats
 
 from tests.test_api_workspaced_base import (
@@ -142,7 +142,7 @@ class TestHostAPI(ReadOnlyAPITests):
     model = Host
     factory = factories.HostFactory
     api_endpoint = 'hosts'
-    view_class = HostsView
+    view_class = HostView
 
     # This test the api endpoint for some of the host in the ws, with existing other host with vulns in the same and
     # other ws

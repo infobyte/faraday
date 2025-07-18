@@ -26,6 +26,10 @@ from faraday.server.models import (
     Workspace,
     User,
     CustomFieldsSchema,
+    Agent,
+    AgentExecution,
+    AgentsSchedule,
+    Credential,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -232,6 +236,28 @@ class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):
         return Service
 
 
+class FlaskRestlessAgentExecutionSchema(FlaskRestlessFilterSchema):
+
+    def _model_class(self):
+        return AgentExecution
+
+
+class FlaskRestlessAgentSchema(FlaskRestlessFilterSchema):
+
+    def _model_class(self):
+        return Agent
+
+
+class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return AgentsSchedule
+
+
+class FlaskRestlessCredentialFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Credential
+
+
 class FlaskRestlessOperator(Schema):
     _or = fields.Nested("self", attribute='or', data_key='or')
     _and = fields.Nested("self", attribute='and', data_key='and')
@@ -243,6 +269,9 @@ class FlaskRestlessOperator(Schema):
         FlaskRestlessUserFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
         FlaskRestlessServiceFilterSchema,
+        FlaskRestlessAgentExecutionSchema,
+        FlaskRestlessAgentSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(
@@ -296,6 +325,7 @@ class FilterSchema(Schema):
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()
     offset = fields.Integer()
+    columns = fields.List(fields.String())
 
     @post_load
     def validate_order_and_group_by(self, data, **kwargs):
@@ -323,6 +353,10 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessHostFilterSchema,
         FlaskRestlessWorkspaceFilterSchema,
         FlaskRestlessUserFilterSchema,
+        FlaskRestlessAgentExecutionSchema,
+        FlaskRestlessAgentSchema,
+        FlaskRestlessAgentSchedulerSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(

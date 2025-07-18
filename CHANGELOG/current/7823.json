@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed an issue where workspace names could be disclosed when unauthorized users attempted to access non-existent workspaces. #7823"
-}

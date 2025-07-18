@@ -1,4 +1,4 @@
-FROM python:3.8.15-slim-buster
+FROM python:3.11-slim-bookworm
 
 WORKDIR /src
 
@@ -7,8 +7,8 @@ COPY ./docker/entrypoint.sh /entrypoint.sh
 COPY ./docker/server.ini /docker_server.ini
 # deploy scripts
 
-RUN apt-get update && apt-get install -y --no-install-recommends  build-essential libgdk-pixbuf2.0-0 \
-    libpq-dev libsasl2-dev libldap2-dev libssl-dev libmagic1 redis-tools netcat\
+RUN apt-get update && apt-get install -y --no-install-recommends python3-dev build-essential libgdk-pixbuf2.0-0 \
+    libpq-dev libsasl2-dev libldap2-dev libssl-dev libmagic1 redis-tools netcat-traditional\
     && pip install -U pip --no-cache-dir \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
     && pip install . --no-cache-dir \

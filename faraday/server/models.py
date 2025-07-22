@@ -979,7 +979,9 @@ class VulnerabilityTemplate(VulnerabilityABC):
     custom_fields = Column(JSONType)
     shipped = Column(Boolean, nullable=False, default=False)
 
-    # CVSS
+    # CVSS #
+
+    # CVSS2
     _cvss2_vector_string = Column(Text, nullable=True)
 
     @hybrid_property
@@ -1000,6 +1002,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
     def init_cvss2_attrs(self):
         self._cvss2_vector_string = None
 
+    # CVSS3
     _cvss3_vector_string = Column(Text, nullable=True)
 
     @hybrid_property
@@ -1019,6 +1022,27 @@ class VulnerabilityTemplate(VulnerabilityABC):
 
     def init_cvss3_attrs(self):
         self._cvss3_vector_string = None
+
+    # CVSS4
+    _cvss4_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss4_vector_string(self):
+        return self._cvss4_vector_string
+
+    @cvss4_vector_string.setter
+    def cvss4_vector_string(self, vector_string):
+        self._cvss4_vector_string = vector_string
+        if not self._cvss4_vector_string:
+            self.init_cvss4_attrs()
+            return None
+        try:
+            cvss4 = cvss.CVSS4(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS4 vector string: {self._cvss4_vector_string}. Error: {e}")
+
+    def init_cvss4_attrs(self):
+        self._cvss4_vector_string = None
 
     # CVE
 

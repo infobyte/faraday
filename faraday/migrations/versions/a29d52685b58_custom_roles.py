@@ -413,4 +413,5 @@ def downgrade():
     op.drop_index(op.f('ix_permissions_unit_permissions_group_id'), table_name='permissions_unit')
     op.drop_table('permissions_unit')
     op.drop_table('permissions_group')
+    op.execute("UPDATE roles_users SET role_id = 4 WHERE role_id > 4;")
     op.execute("DELETE FROM faraday_role WHERE id > 4;")

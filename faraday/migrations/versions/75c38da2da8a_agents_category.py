@@ -32,13 +32,13 @@ def upgrade():
     op.add_column('cloud_agent_execution', sa.Column('tasks_completed', sa.Integer, nullable=False, server_default='0'))
 
     # Adding indexes on run_uuid for better GROUP BY performance
-    op.create_index('ix_agent_execution_run_uuid', 'agent_execution', ['run_uuid'])
-    op.create_index('ix_cloud_agent_execution_run_uuid', 'cloud_agent_execution', ['run_uuid'])
+    op.execute("CREATE INDEX IF NOT EXISTS ix_agent_execution_run_uuid ON agent_execution (run_uuid)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_cloud_agent_execution_run_uuid ON cloud_agent_execution (run_uuid)")
 
 
 def downgrade():
-    op.drop_index('ix_agent_execution_run_uuid', table_name='agent_execution')
-    op.drop_index('ix_cloud_agent_execution_run_uuid', table_name='cloud_agent_execution')
+    op.execute("DROP INDEX IF EXISTS ix_agent_execution_run_uuid")
+    op.execute("DROP INDEX IF EXISTS ix_cloud_agent_execution_run_uuid")
 
     op.drop_column('executor', 'tool')
     op.drop_column('executor', 'category')

@@ -1460,6 +1460,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
+    status_history = relationship(
+        'VulnerabilityStatusHistory',
+        backref='vulnerability',
+        cascade="all, delete-orphan",
+        foreign_keys="VulnerabilityStatusHistory.vulnerability_id",
+        primaryjoin="VulnerabilityGeneric.id == VulnerabilityStatusHistory.vulnerability_id",
+        order_by="desc(VulnerabilityStatusHistory.change_date)"
+    )
+
     # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
@@ -3557,7 +3566,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
     triggered_by = Column(String, nullable=True)
-    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
 
     @property
     def parent(self):
@@ -3628,7 +3637,7 @@ class CloudAgentExecution(Metadata):
     )
     last_run = Column(DateTime)
     triggered_by = Column(String, nullable=True)
-    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
     tasks_completed = Column(Integer, nullable=False, default=0)
 
     @property
@@ -3854,6 +3863,28 @@ class SlackNotification(db.Model):
     processed = Column(Boolean, default=False)
 
 
+class VulnerabilityStatusHistory(db.Model):
+
+    __tablename__ = 'vulnerability_status_history'
+    id = Column(Integer, primary_key=True)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    change_date = Column(DateTime, default=datetime.utcnow)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
+    user = relationship(
+        'User',
+        foreign_keys=[user_id]
+    )
+
+    __table_args__ = (
+        Index('ix_vulnerability_status_history_vulnerability_id', vulnerability_id),
+        Index('ix_vulnerability_status_history_change_date', change_date),
+        Index('ix_user_id_vulnerability_status_history', user_id),
+        Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
+    )
+
+
 class PermissionsGroup(db.Model):
     __tablename__ = 'permissions_group'
 
@@ -3881,7 +3912,8 @@ class PermissionsUnitAction(db.Model):
     UPDATE_ACTION = 'update'
     DELETE_ACTION = 'delete'
     RUN_ACTION = 'run'
-    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION]
+    TAG_ACTION = 'tag'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION, TAG_ACTION]
 
     id = Column(Integer, primary_key=True)
 

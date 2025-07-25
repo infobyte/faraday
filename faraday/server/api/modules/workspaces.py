@@ -368,6 +368,9 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
                     new_key = key.replace('workspace_', '')
                     workspace_stat_dict[new_key] = workspace_stat_dict[key]
             workspace_stat_dict['scope'] = []
+            if workspace_stat.get("scope", None) and workspace_stat["scope"]:
+                for scope in workspace_stat["scope"]:
+                    workspace_stat_dict['scope'].append({'name': scope})
 
             if histogram_dict:
                 if workspace_stat_dict['name'] in histogram_dict:
@@ -467,8 +470,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         return workspace
 
     def _update_object(self, obj, data, **kwargs):
-        scope = data.pop('scope', [])
-        obj.set_scope(scope)
+        partial = kwargs.get('partial', False)
+        scope = data.pop('scope', None if partial else [])
+        if scope is not None:
+            obj.set_scope(scope)
         return super()._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):

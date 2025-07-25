@@ -249,3 +249,36 @@ class TestFilters:
         filters = {'filters': [{'name': 'target', 'op': '==', 'val': '1'}]}
         res = FilterSchema().load(filters)
         assert isinstance(res["filters"][0]['val'], str)
+
+    def test_range_operator_with_date_values(self):
+        """Test range operator with date values"""
+        filters = {'filters': [{'name': 'create_date', 'op': 'range', 'val': '2020-01-01,2020-12-31'}]}
+        res = FilterSchema().load(filters)
+        # The range should be parsed into date objects
+        assert len(res["filters"]) == 2
+        assert res["filters"][0]['op'] == '>='
+        assert res["filters"][1]['op'] == '<='
+
+    def test_range_operator_invalid_format(self):
+        """Test range operator with invalid format should raise ValidationError"""
+        filters = {'filters': [{'name': 'id', 'op': 'range', 'val': '2'}]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_range_operator_non_numeric_values(self):
+        """Test range operator with non-numeric values should raise ValidationError"""
+        filters = {'filters': [{'name': 'id', 'op': 'range', 'val': 'abc,def'}]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_range_operator_with_one_date(self):
+        """Test range operator with one date value"""
+        filters = {'filters': [{'name': 'create_date', 'op': 'range', 'val': '2020-01-01'}]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_range_operator_with_date_on_non_date_name(self):
+        """Test range operator with date values"""
+        filters = {'filters': [{'name': 'id', 'op': 'range', 'val': '2020-01-01,2020-12-31'}]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)

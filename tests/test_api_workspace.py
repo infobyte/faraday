@@ -1256,3 +1256,41 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         # Extract scope names from the response
         returned_scope_names = [scope['name'] for scope in workspace_data['scope']]
         assert set(returned_scope_names) == set(scope_items)
+
+    def test_patch_without_scope_preserves_existing_scope(self, session, test_client, workspace):
+        # Add initial scope to workspace
+        session.add(Scope(name='test.com', workspace=workspace))
+        session.add(Scope(name='www.google.com', workspace=workspace))
+        session.commit()
+
+        # Verify initial scope is set
+        initial_scope = {s.name for s in workspace.scope}
+        assert initial_scope == {'test.com', 'www.google.com'}
+
+        # PATCH without scope field - should preserve existing scope
+        raw_data = {'description': 'updated description'}
+        res = test_client.patch(self.url(obj=workspace), data=raw_data)
+        assert res.status_code == 200
+
+        # Verify scope is preserved
+        session.refresh(workspace)
+        final_scope = {s.name for s in workspace.scope}
+        assert final_scope == initial_scope
+
+    def test_patch_with_scope_updates_scope(self, session, test_client, workspace):
+        # Add initial scope to workspace
+        session.add(Scope(name='test.com', workspace=workspace))
+        session.add(Scope(name='www.google.com', workspace=workspace))
+        session.commit()
+
+        # PATCH with scope field - should update scope
+        new_scope = ['new.example.com', '192.168.1.1']
+        raw_data = {'description': 'updated description', 'scope': new_scope}
+        res = test_client.patch(self.url(obj=workspace), data=raw_data)
+        assert res.status_code == 200
+        assert set(res.json['scope']) == set(new_scope)
+
+        # Verify scope is updated
+        session.refresh(workspace)
+        final_scope = {s.name for s in workspace.scope}
+        assert final_scope == set(new_scope)

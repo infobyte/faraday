@@ -470,8 +470,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         return workspace
 
     def _update_object(self, obj, data, **kwargs):
-        scope = data.pop('scope', [])
-        obj.set_scope(scope)
+        partial = kwargs.get('partial', False)
+        scope = data.pop('scope', None if partial else [])
+        if scope is not None:
+            obj.set_scope(scope)
         return super()._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):

@@ -29,7 +29,7 @@ def upgrade():
     )
 
     op.add_column('vulnerability_status_history',
-        sa.Column('status', postgresql.ENUM('open', 'closed', 're-opened', 'risk-accepted', name='vulnerability_statuses'), nullable=False, create_type=False)
+        sa.Column('status', postgresql.ENUM('open', 'closed', 're-opened', 'risk-accepted', name='vulnerability_statuses'), nullable=False)
     )
 
     op.create_index(op.f('ix_vulnerability_status_history_vulnerability_id'), 'vulnerability_status_history', ['vulnerability_id'], unique=False)

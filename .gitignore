@@ -58,8 +58,10 @@ typings/
 jsconfig.json
 .vscode/
 
+
 # PyCharm project files
 .idea
+.junie
 
 # vFeed DB
 data/vfeed.db

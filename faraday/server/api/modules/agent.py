@@ -6,7 +6,6 @@ See the file 'doc/LICENSE' for the license information
 import http
 import logging
 from datetime import datetime
-from urllib.parse import urlparse
 from uuid import uuid4
 
 import pyotp
@@ -39,34 +38,22 @@ agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-def is_valid_url(url):
-    """Check if a string is a valid URL."""
-    parsed = urlparse(url)
-    return bool(parsed.scheme) and bool(parsed.netloc)
-
-
 def validate_type(base, type_, value):
     """Validate a value based on its base and type."""
 
-    if base == "string":
-        if type_ == "url":
-            # Check if it is a valid URL
-            if not is_valid_url(value):
-                return f"Expected {type_}, got {type(value).__name__}"
-        elif not isinstance(value, str):
-            return f"Expected {type_}, got {type(value).__name__}"
+    type_mapping = {
+        "string": str,
+        "integer": int,
+        "boolean": bool,
+        "list": list
+    }
 
-    elif base == "integer":
-        if not isinstance(value, int):
-            return f"Expected {type_}, got {type(value).__name__}"
+    expected_type = type_mapping.get(base)
+    if expected_type is None:
+        return f"Unknown base type: {base}"
 
-    elif base == "boolean":
-        if not isinstance(value, bool):
-            return f"Expected {type_}, got {type(value).__name__}"
-
-    elif base == "list":
-        if not isinstance(value, list):
-            return f"Expected list, got {type(value).__name__}"
+    if not isinstance(value, expected_type):
+        return f"Expected {base}, got {type(value).__name__}"
 
     return None  # No error, value is valid
 

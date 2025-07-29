@@ -979,7 +979,9 @@ class VulnerabilityTemplate(VulnerabilityABC):
     custom_fields = Column(JSONType)
     shipped = Column(Boolean, nullable=False, default=False)
 
-    # CVSS
+    # CVSS #
+
+    # CVSS2
     _cvss2_vector_string = Column(Text, nullable=True)
 
     @hybrid_property
@@ -1000,6 +1002,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
     def init_cvss2_attrs(self):
         self._cvss2_vector_string = None
 
+    # CVSS3
     _cvss3_vector_string = Column(Text, nullable=True)
 
     @hybrid_property
@@ -1019,6 +1022,27 @@ class VulnerabilityTemplate(VulnerabilityABC):
 
     def init_cvss3_attrs(self):
         self._cvss3_vector_string = None
+
+    # CVSS4
+    _cvss4_vector_string = Column(Text, nullable=True)
+
+    @hybrid_property
+    def cvss4_vector_string(self):
+        return self._cvss4_vector_string
+
+    @cvss4_vector_string.setter
+    def cvss4_vector_string(self, vector_string):
+        self._cvss4_vector_string = vector_string
+        if not self._cvss4_vector_string:
+            self.init_cvss4_attrs()
+            return None
+        try:
+            cvss4 = cvss.CVSS4(vector_string)
+        except Exception as e:
+            logger.error(f"Error parsing CVSS4 vector string: {self._cvss4_vector_string}. Error: {e}")
+
+    def init_cvss4_attrs(self):
+        self._cvss4_vector_string = None
 
     # CVE
 
@@ -1459,6 +1483,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     vulnerability_template = relationship('VulnerabilityTemplate',
                                           backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
+
+    status_history = relationship(
+        'VulnerabilityStatusHistory',
+        backref='vulnerability',
+        cascade="all, delete-orphan",
+        foreign_keys="VulnerabilityStatusHistory.vulnerability_id",
+        primaryjoin="VulnerabilityGeneric.id == VulnerabilityStatusHistory.vulnerability_id",
+        order_by="desc(VulnerabilityStatusHistory.change_date)"
+    )
 
     # 1 workspace <--> N vulnerabilities
     # 1 to N (the FK is placed in the child) and bidirectional (backref)
@@ -3554,7 +3587,7 @@ class AgentExecution(Metadata):
         backref=backref('agent_execution_id', cascade="all, delete-orphan")
     )
     triggered_by = Column(String, nullable=True)
-    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
 
     @property
     def parent(self):
@@ -3625,7 +3658,7 @@ class CloudAgentExecution(Metadata):
     )
     last_run = Column(DateTime)
     triggered_by = Column(String, nullable=True)
-    run_uuid = Column(UUID(as_uuid=True), nullable=True)
+    run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
     tasks_completed = Column(Integer, nullable=False, default=0)
 
     @property
@@ -3851,6 +3884,28 @@ class SlackNotification(db.Model):
     processed = Column(Boolean, default=False)
 
 
+class VulnerabilityStatusHistory(db.Model):
+
+    __tablename__ = 'vulnerability_status_history'
+    id = Column(Integer, primary_key=True)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    change_date = Column(DateTime, default=datetime.utcnow)
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
+    user = relationship(
+        'User',
+        foreign_keys=[user_id]
+    )
+
+    __table_args__ = (
+        Index('ix_vulnerability_status_history_vulnerability_id', vulnerability_id),
+        Index('ix_vulnerability_status_history_change_date', change_date),
+        Index('ix_user_id_vulnerability_status_history', user_id),
+        Index('ix_vulnerability_status_history_vuln_status', vulnerability_id, status),
+    )
+
+
 class PermissionsGroup(db.Model):
     __tablename__ = 'permissions_group'
 
@@ -3878,7 +3933,8 @@ class PermissionsUnitAction(db.Model):
     UPDATE_ACTION = 'update'
     DELETE_ACTION = 'delete'
     RUN_ACTION = 'run'
-    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION]
+    TAG_ACTION = 'tag'
+    ACTIONS = [CREATE_ACTION, READ_ACTION, UPDATE_ACTION, DELETE_ACTION, RUN_ACTION, TAG_ACTION]
 
     id = Column(Integer, primary_key=True)
 

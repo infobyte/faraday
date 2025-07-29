@@ -19,6 +19,7 @@ import inspect
 import logging
 from datetime import date
 
+import sqlalchemy
 # Related third party imports
 from sqlalchemy import (
     and_,
@@ -26,12 +27,15 @@ from sqlalchemy import (
     func,
     nullsfirst,
     nullslast,
-    inspect as sqlalchemy_inspect, text,
+    inspect as sqlalchemy_inspect,
+    text,
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.schema import Table as SQLAlchemySchemaTableType
 
 # Local application imports
 from faraday.server.models import (
@@ -97,10 +101,18 @@ def get_related_association_proxy_model(attr):
 
 def primary_key_names(model):
     """Returns all the primary keys for a model."""
-    return [key for key, field in inspect.getmembers(model)
-            if isinstance(field, QueryableAttribute)
-            and isinstance(field.property, ColumnProperty)
-            and field.property.columns[0].primary_key]
+    return [
+        key for key, field in inspect.getmembers(model)
+        if isinstance(field, QueryableAttribute)
+        and (
+            isinstance(field.property, ColumnProperty) if hasattr(field, 'property') else False
+        )
+        and (
+            isinstance(field.property, ColumnProperty) if hasattr(field.property, 'columns') else False
+        )
+        and field.property.columns[0].primary_key
+        or isinstance(getattr(model, key, None), hybrid_property)
+    ]
 
 
 def _sub_operator(model, argument, fieldname):
@@ -182,6 +194,8 @@ OPERATORS = {
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
     'not_any': lambda f, a, fn: ~f.any(_sub_operator(f, a, fn)),
+    # Range operator for numeric and date ranges
+    'range': lambda f, a: f.between(a[0], a[1]) if isinstance(a, (list, tuple)) and len(a) == 2 else f == a,
     # Custom operator for json fields
     'json': lambda f: f,
 }
@@ -216,6 +230,7 @@ def get_json_operator(operator):
         'not_any': ('@>', 'not_any'),
         'is_null': ('IS NULL', 'exists'),
         'is_not_null': ('IS NOT NULL', 'exists'),
+        'range': ('BETWEEN', 'range'),
     }
 
     return operator_mapping.get(operator, None)
@@ -236,6 +251,8 @@ def get_json_query(table, field, op, op_type, counter):
         return f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})"  # nosec
     elif op_type == 'date':
         return f"({table}.{field} ->> :key_{counter})::DATE {op} :value_{counter}"  # nosec
+    elif op_type == 'range':
+        return f"({table}.{field} ->> :key_{counter})::numeric BETWEEN :value1_{counter} AND :value2_{counter}"  # nosec
     else:
         raise TypeError('Invalid filters')
 
@@ -423,7 +440,7 @@ class SearchParameters:
     def __repr__(self):
         """Returns a string representation of the search parameters."""
         template = ('<SearchParameters filters={0}, order_by={1}, limit={2},'
-                    ' group_by={3}, offset={4}, junction={5}>')
+                    ' group_by={3}, offset={4}>')
         return template.format(self.filters, self.order_by, self.limit,
                                self.group_by, self.offset)
 
@@ -479,6 +496,7 @@ class QueryBuilder:
     a given model.
 
     """
+
     @staticmethod
     def _create_operation(model, fieldname, operator, argument, relation=None):
         """Translates an operation described as a string to a valid SQLAlchemy
@@ -549,6 +567,24 @@ class QueryBuilder:
                 if op_type == 'compare':
                     if custom_field.field_type == 'int':
                         op_type = 'compare_int'
+
+                # Handle range operator
+                if op_type == 'range':
+                    # For JSON fields, argument should be a list [min, max]
+                    if not isinstance(argument, (list, tuple)) or len(argument) != 2:
+                        raise TypeError('Range operator requires a list or tuple with exactly two values')
+
+                    increment_bind_counter()
+
+                    bindparams = {
+                        f'key_{get_bind_counter()}': key,
+                        f'value1_{get_bind_counter()}': argument[0],
+                        f'value2_{get_bind_counter()}': argument[1],
+                    }
+
+                    query = get_json_query(table, field, op, op_type, get_bind_counter())
+
+                    return OPERATORS['json'](text(f"{query}").bindparams(**bindparams))
 
                 increment_bind_counter()
 
@@ -719,6 +755,17 @@ class QueryBuilder:
 
         filters = [filt for filt in filters_generator if filt is not None]
 
+        # Check if it is necessary to join the user's table
+        if model.__tablename__ != User.__tablename__:
+            for filter in filters:
+                if isinstance(filter, BinaryExpression):
+                    table = getattr(filter.left, "table", None)
+                    if not isinstance(table, SQLAlchemySchemaTableType):
+                        continue
+                    if table.name == User.__tablename__ and User not in joined_models:
+                        query = query.join(User, model.creator_id == User.id)
+                        joined_models.add(User)
+
         # Multiple filter criteria at the top level of the provided search
         # parameters are interpreted as a conjunction (AND).
         query = query.filter(*filters)
@@ -775,6 +822,66 @@ class QueryBuilder:
                 else:
                     field = getattr(model, group_by.field)
                 query = query.group_by(field)
+
+        # Apply limit and offset to the query.
+        if search_params.limit:
+            query = query.limit(search_params.limit)
+        if search_params.offset:
+            query = query.offset(search_params.offset)
+
+        return query
+
+    @staticmethod
+    def create_query_delete_returning_only_ids(session, model, search_params, _ignore_order_by=False):
+
+        query = sqlalchemy.delete(model)
+
+        # This function call may raise an exception.
+        valid_model_fields = []
+        for orm_descriptor in sqlalchemy_inspect(model).all_orm_descriptors:
+            if isinstance(orm_descriptor, InstrumentedAttribute):
+                valid_model_fields.append(str(orm_descriptor).split('.')[1])
+            if isinstance(orm_descriptor, hybrid_property):
+                valid_model_fields.append(orm_descriptor.__name__)
+        valid_model_fields += [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).relationships]
+
+        filters_generator = map(  # pylint: disable=W1636
+            QueryBuilder.create_filters_func(model, valid_model_fields),
+            search_params.filters
+        )
+
+        filters = [filt for filt in filters_generator if filt is not None]
+
+        # Multiple filter criteria at the top level of the provided search
+        # parameters are interpreted as a conjunction (AND).
+        query = query.where(*filters)
+
+        return query
+
+    @staticmethod
+    def create_query_only_ids(session, model, search_params, _ignore_order_by=False):
+
+        query = session.query(model.id)
+
+        # This function call may raise an exception.
+        valid_model_fields = []
+        for orm_descriptor in sqlalchemy_inspect(model).all_orm_descriptors:
+            if isinstance(orm_descriptor, InstrumentedAttribute):
+                valid_model_fields.append(str(orm_descriptor).split('.')[1])
+            if isinstance(orm_descriptor, hybrid_property):
+                valid_model_fields.append(orm_descriptor.__name__)
+        valid_model_fields += [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).relationships]
+
+        filters_generator = map(  # pylint: disable=W1636
+            QueryBuilder.create_filters_func(model, valid_model_fields),
+            search_params.filters
+        )
+
+        filters = [filt for filt in filters_generator if filt is not None]
+
+        # Multiple filter criteria at the top level of the provided search
+        # parameters are interpreted as a conjunction (AND).
+        query = query.filter(*filters)
 
         # Apply limit and offset to the query.
         if search_params.limit:
@@ -853,4 +960,34 @@ def search(session, model, search_params, _ignore_order_by=False):
         # may raise NoResultFound or MultipleResultsFound
         return query.one()
     reset_bind_counter()
+    return query
+
+
+def create_query_retrieve_only_ids(session, model, search_params):
+    if isinstance(search_params, dict):
+        search_params = SearchParameters.from_dictionary(search_params)
+    return QueryBuilder.create_query_only_ids(session, model, search_params)
+
+
+def search_retrieve_only_ids(session, model, search_params):
+    is_single = search_params.get('single')
+    query = create_query_retrieve_only_ids(session, model, search_params)
+    if is_single:
+        # may raise NoResultFound or MultipleResultsFound
+        return query.one()
+    return query
+
+
+def create_query_delete_returning_only_ids(session, model, search_params):
+    if isinstance(search_params, dict):
+        search_params = SearchParameters.from_dictionary(search_params)
+    return QueryBuilder.create_query_delete_returning_only_ids(session, model, search_params)
+
+
+def delete_returning_only_ids(session, model, search_params):
+    is_single = search_params.get('single')
+    query = create_query_delete_returning_only_ids(session, model, search_params)
+    if is_single:
+        # may raise NoResultFound or MultipleResultsFound
+        return query.one()
     return query

@@ -3,17 +3,17 @@
 # deleted, and you will lose the changes you made to it.
 
 { beautifulsoup4, buildPythonPackage, click, colorama, dateutil, fetchPypi
-, html2text, lib, lxml, markdown, packaging, pytz, requests, simplejson
+, html2text, lib, lxml, markdown, packaging, pandas, pytz, requests, simplejson
 , tabulate, tldextract }:
 
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.24.1";
+  version = "1.25.0";
 
   src = fetchPypi {
     inherit version;
     pname = "faraday_plugins";
-    sha256 = "1zjj2k87cf2zqgkwwnwm2jlplpb7wyrdh02xn3iw8g0vqxalrrpx";
+    sha256 = "0zv5rv35rvwqm0g56hx0lw87d6xwz8ih6qx8csyci7j0dah765q1";
   };
 
   propagatedBuildInputs = [
@@ -30,6 +30,7 @@ buildPythonPackage rec {
     packaging
     markdown
     tldextract
+    pandas
   ];
 
   # TODO FIXME

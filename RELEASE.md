@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.15.3 [Jul 30th, 2025]:
+---
+ * [FIX] Fixed roles permissions. #8004
+
 5.15.2 [Jul 21st, 2025]:
 ---
  * [FIX] Fixed vulnerabilities permissions for `admin` and `pentester` roles. #7999

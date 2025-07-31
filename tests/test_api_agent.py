@@ -183,6 +183,35 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         res = test_client.put(self.url(agent.id), data=update_data)
         assert res.status_code == 200, (res.json, update_data)
 
+    def test_filter_agents(self, test_client, session):
+        initial_agent_count = len(session.query(Agent).all())
+
+        agent_names = {
+            "FilterTest": 3,
+            "FilterTest2": 2,
+            "FilterTest3": 1
+        }
+        agent_list = []
+
+        for agent_name, agent_count in agent_names.items():
+            for i in range(agent_count):
+                agent = AgentFactory.create()
+                agent.name = agent_name
+                agent_list.append(agent)
+                session.add(agent)
+                session.commit()
+
+        final_agent_count = len(session.query(Agent).all())
+        assert final_agent_count == initial_agent_count + sum(agent_names.values())
+
+        query_base = '/v3/agents/filter?q={"filters":[{"name":"name","op":"eq","val":">>FILTER<<"}]}'
+
+        for filter_name in agent_names.keys():
+            query = query_base.replace(">>FILTER<<", filter_name)
+            res = test_client.get(query)
+            assert res.status_code == 200
+            assert res.json.get("count", 0) == agent_names[filter_name]
+
     def test_delete_agent(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
         agent = AgentFactory.create()

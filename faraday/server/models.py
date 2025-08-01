@@ -2652,7 +2652,8 @@ class UserToken(Metadata):
     GITLAB_SCOPE = 'gitlab'
     SCHEDULER_SCOPE = 'scheduler'
     SERVICE_DESK_SCOPE = 'service_desk'
-    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE]
+    JIRA_SCOPE = 'jira'
+    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE, JIRA_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 

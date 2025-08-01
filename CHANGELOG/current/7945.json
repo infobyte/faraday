@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed scope of a workspace being deleted on patch. #7945"
+}

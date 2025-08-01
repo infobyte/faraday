@@ -1,7 +1,7 @@
 """workspace summary report
 
 Revision ID: 2063ac75ffb1
-Revises: e0c9670228b9
+Revises: e4c1903496cb
 Create Date: 2025-05-22 19:58:33.565693+00:00
 
 """
@@ -11,7 +11,7 @@ from faraday.server.fields import JSONType
 
 # revision identifiers, used by Alembic.
 revision = '2063ac75ffb1'
-down_revision = 'e0c9670228b9'
+down_revision = 'e4c1903496cb'
 branch_labels = None
 depends_on = None
 

@@ -124,7 +124,6 @@ def register_blueprints(app):
     from faraday.server.api.modules.comments import comment_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.upload_reports import upload_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.websocket_auth import websocket_auth_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.get_exploits import exploits_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.custom_fields import \
         custom_fields_schema_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agents_schedule import agents_schedule_api  # pylint:disable=import-outside-toplevel
@@ -167,7 +166,6 @@ def register_blueprints(app):
     app.register_blueprint(comment_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(upload_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(websocket_auth_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(exploits_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(custom_fields_schema_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(agent_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(agent_auth_token_api, url_prefix=app.config['APPLICATION_PREFIX'])

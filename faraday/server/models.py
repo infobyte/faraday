@@ -3995,8 +3995,6 @@ class WorkspaceSummaryReport(Metadata):
         foreign_keys=[user_id],
     )
 
-    # 1 workspace <--> N workspace summary reports
-    # 1 to N (the FK is placed in the child) and bidirectional (backref)
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',

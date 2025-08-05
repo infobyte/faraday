@@ -85,6 +85,8 @@ class UploadReportView(GenericWorkspacedView):
         report_file = request.files['file']
 
         ignore_info = True if request.form.get('ignore_info') in ("True", "true") else False  # pylint: disable=R1719
+        min_severity = request.form.get('min_severity', None)
+        max_severity = request.form.get('max_severity', None)
 
         resolve_hostname = True if request.form.get('resolve_hostname') in ("True", "true")\
             else False  # pylint: disable=R1719
@@ -132,7 +134,9 @@ class UploadReportView(GenericWorkspacedView):
                             resolve_hostname,
                             None,
                             None,
-                            None
+                            None,
+                            min_severity,
+                            max_severity
                         )
                     except Exception as e:
                         logger.exception("An error occurred while process report was running %s", exc_info=e)
@@ -160,7 +164,9 @@ class UploadReportView(GenericWorkspacedView):
                                 resolve_hostname,
                                 None,
                                 None,
-                                None
+                                None,
+                                min_severity,
+                                max_severity
                             )
                         )
                 return make_response(

@@ -1390,4 +1390,5 @@ class TestBulkCreateAPI:
         created_data, vuln_id = bc._create_hostvuln(workspace, host, new_vuln, command_dict)
         vuln = created_data[vuln_id]['vuln_data']
 
-        assert 'last_detected' not in vuln
+        assert 'last_detected' in vuln
+        assert vuln['last_detected'] is None

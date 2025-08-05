@@ -23,7 +23,12 @@ from marshmallow import (
     validates_schema,
 )
 from marshmallow.validate import Range
-from sqlalchemy import func, text, case, and_
+from sqlalchemy import (
+    and_,
+    case,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -687,6 +692,7 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
     if run_date:
         vuln_data['create_date'] = run_date
 
+    vuln_data['last_detected'] = None
     if vuln_data.get('status') != 'closed':
         vuln_data['last_detected'] = datetime.utcnow()
 

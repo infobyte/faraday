@@ -3272,28 +3272,15 @@ class Workflow(Metadata):
     description = Column(String, nullable=False, default='')
     model = Column(Enum(*VALID_MODELS, name='valid_workflow_models'), nullable=False)
     enabled = Column(Boolean, nullable=False, default=True)
-    # run_on_updates = Column(Boolean, nullable=False, default=True)
-    # actions_order = Column(String, nullable=False, default='')
-    # actions = relationship(
-    #     'Action',
-    #     secondary=association_workflows_and_actions_table,
-    #     back_populates="workflows"
-    # )
 
     pipelines = relationship(
         'Pipeline',
         secondary=association_pipelines_and_jobs_table,
         back_populates="jobs"
     )
-    # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    # workspace = relationship('Workspace', backref=backref('workflows', cascade="all, delete-orphan"))
     conditions = relationship('Condition', back_populates='workflow', cascade="all, delete-orphan")
     actions = relationship('Action', back_populates='workflow', cascade="all, delete-orphan")
     executions = relationship('WorkflowExecution', back_populates='workflow', cascade="all, delete-orphan")
-
-    # __table_args__ = (
-    #     UniqueConstraint('name', 'workspace_id', name='uix_name_workspaceid'),
-    # )
 
     @property
     def parent(self):

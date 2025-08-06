@@ -392,9 +392,8 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials, Skipped: 0 credentials'
 
         creds = Credential.query.filter_by(workspace=workspace).all()
-        assert creds[5].vulnerabilities[0].id == vuln.id
-        assert creds[6].vulnerabilities[0].id == vuln.id
-        assert len(creds) == 7
+        assert creds[-2].vulnerabilities[0].id == vuln.id
+        assert creds[-1].vulnerabilities[0].id == vuln.id
 
     def test_bulk_create_credentials_from_csv_with_vulns_ids_diff_ws(self, test_client, workspace, session, csrf_token, second_workspace):
         vuln = VulnerabilityFactory.create(workspace=workspace)

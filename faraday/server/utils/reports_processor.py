@@ -36,10 +36,10 @@ stop_reports_event = Event()
 def reports_manager_background_task():
     while not stop_reports_event.is_set():
         try:
-            tpl: Tuple[str, int, Path, int, int, bool, bool, list, list, list] = REPORTS_QUEUE.get(False, timeout=0.1)
+            tpl: Tuple[str, int, Path, int, int, bool, bool, list, list, list, str, str] = REPORTS_QUEUE.get(False, timeout=0.1)
 
             workspace_name, command_id, file_path, plugin_id, user_id, ignore_info_bool, dns_resolution, vuln_tag, \
-            host_tag, service_tag = tpl
+            host_tag, service_tag, min_severity, max_severity = tpl
 
             logger.info(f"Processing raw report {file_path} with background task ")
             if file_path.is_file():
@@ -52,7 +52,9 @@ def reports_manager_background_task():
                                dns_resolution,
                                vuln_tag,
                                host_tag,
-                               service_tag)
+                               service_tag,
+                               min_severity,
+                               max_severity)
             else:
                 logger.warning(f"Report file [{file_path}] does not exist",
                                file_path)
@@ -83,7 +85,8 @@ def send_report_data(workspace_name: str, command_id: int, report_json: dict,
 
 def process_report(workspace_name: str, command_id: int, file_path: Path,
                    plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool, dns_resolution: bool,
-                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None):
+                   vuln_tag: Optional[list] = None, host_tag: Optional[list] = None, service_tag: Optional[list] = None,
+                   min_severity: Optional[str] = None, max_severity: Optional[str] = None):
     from faraday.server.app import get_app  # pylint: disable=import-outside-toplevel
     with get_app().app_context():
         if plugin_id is not None:
@@ -92,14 +95,18 @@ def process_report(workspace_name: str, command_id: int, file_path: Path,
                                              hostname_resolution=dns_resolution,
                                              vuln_tag=vuln_tag,
                                              host_tag=host_tag,
-                                             service_tag=service_tag)
+                                             service_tag=service_tag,
+                                             min_severity=min_severity,
+                                             max_severity=max_severity)
             logger.info(f"Reports Manager: [Custom plugins folder: "
                         f"[{ReportsSettings.settings.custom_plugins_folder}]"
                         f"[Ignore info severity: {ignore_info}]"
                         f"[Hostname resolution: {dns_resolution}]"
                         f"[Vuln tag: {vuln_tag}]"
                         f"[Host tag: {host_tag}]"
-                        f"[Service tag: {service_tag}]")
+                        f"[Service tag: {service_tag}]"
+                        f"[Min severity: {min_severity}]"
+                        f"[Max severity: {max_severity}]]")
             plugin = plugins_manager.get_plugin(plugin_id)
             if plugin:
                 try:

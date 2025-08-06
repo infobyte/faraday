@@ -133,7 +133,8 @@ def create_host_task(workspace_id, command: dict, host):
 def pre_process_report_task(workspace_name: str, command_id: int, file_path: str,
                             plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool,
                             dns_resolution: bool, vuln_tag: Optional[list] = None,
-                            host_tag: Optional[list] = None, service_tag: Optional[list] = None):
+                            host_tag: Optional[list] = None, service_tag: Optional[list] = None, min_severity: Optional[str] = None,
+                            max_severity: Optional[str] = None) -> None:
     from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
     from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer  # pylint: disable=import-outside-toplevel
     from faraday.settings.reports import ReportsSettings  # pylint: disable=import-outside-toplevel
@@ -167,7 +168,9 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
         dns_resolution,
         vuln_tag,
         host_tag,
-        service_tag
+        service_tag,
+        min_severity,
+        max_severity
     )
 
 

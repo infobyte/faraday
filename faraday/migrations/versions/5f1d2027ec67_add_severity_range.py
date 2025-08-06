@@ -1,7 +1,7 @@
 """add severity range
 
 Revision ID: 5f1d2027ec67
-Revises: 39ddd3ca3a20
+Revises: e4c1903496cb
 Create Date: 2025-05-13 15:45:25.683218+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '5f1d2027ec67'
-down_revision = 'e0c9670228b9'
+down_revision = 'e4c1903496cb'
 branch_labels = None
 depends_on = None
 

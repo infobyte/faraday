@@ -23,7 +23,12 @@ from marshmallow import (
     validates_schema,
 )
 from marshmallow.validate import Range
-from sqlalchemy import func, text, case, and_
+from sqlalchemy import (
+    and_,
+    case,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -393,12 +398,12 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "_tmp_id": stmt.excluded.id,
             "status": case(
                 [
-                    # If incoming status is closed and existing is open/reopened, close it
+                    # If the incoming status is closed and existing is open/reopened, close it
                     (and_(
                         stmt.excluded.status == 'closed',
                         Vulnerability.status.in_(['open', 're-opened'])
                     ), 'closed'),
-                    # If incoming vuln exists and is open and current status is closed, reopen it
+                    # If incoming vuln exists and is open and the current status is closed, reopen it
                     (and_(
                         stmt.excluded.status.in_(['open', 're-opened']),
                         Vulnerability.status == 'closed'
@@ -406,6 +411,15 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
                 ],
                 # Keep existing status as default
                 else_=Vulnerability.status
+            ),
+            "last_detected": case(
+                [
+                    (and_(
+                        stmt.excluded.status.in_(['open', 're-opened']),
+                        Vulnerability.status == 'closed'
+                    ), datetime.utcnow())
+                ],
+                else_=Vulnerability.last_detected
             ),
             "custom_fields": stmt.excluded.custom_fields
         }
@@ -677,6 +691,10 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
 
     if run_date:
         vuln_data['create_date'] = run_date
+
+    vuln_data['last_detected'] = None
+    if vuln_data.get('status') != 'closed':
+        vuln_data['last_detected'] = datetime.utcnow()
 
     tool = vuln_data.get('tool', '')
     # TODO: Check in professional

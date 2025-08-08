@@ -45,7 +45,7 @@ def on_success_process_report_task(results, command_id=None):
     db.session.commit()
     host_ids = []
     for result in results:
-        if result['created']:
+        if result.get('created'):
             calc_vulnerability_stats.delay(result['host_id'])
             host_ids.append(result["host_id"])
     no_debounce = False

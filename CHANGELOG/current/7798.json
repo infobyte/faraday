@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed Agents endpoint not supporting filters. #7798"
+}

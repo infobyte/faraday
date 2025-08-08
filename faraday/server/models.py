@@ -12,10 +12,16 @@ from functools import partial
 from random import SystemRandom
 from typing import Callable
 
-import dateutil
 import cvss
+import dateutil
 import jwt
 from croniter import croniter
+from depot.fields.sqlalchemy import UploadedFileField
+from flask import (
+    current_app as app,
+)
+from flask_security import UserMixin, RoleMixin
+from flask_security.utils import hash_data
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
     Boolean,
@@ -51,16 +57,10 @@ from sqlalchemy.orm import (
     joinedload,
 )
 from sqlalchemy.schema import DDL
-from flask import (
-    current_app as app,
-)
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector,
 )
-from flask_security import UserMixin, RoleMixin
-from flask_security.utils import hash_data
-from depot.fields.sqlalchemy import UploadedFileField
 
 from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile

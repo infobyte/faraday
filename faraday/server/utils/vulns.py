@@ -26,6 +26,7 @@ BASE_FIELDS = (
     "confirmed",
     "data",
     "description",
+    "last_detected",
     "id",
     "name",
     "resolution",

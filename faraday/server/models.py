@@ -1526,6 +1526,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     owasp = relationship('OWASP', secondary=owasp_vulnerability_association)
 
+    last_detected = Column(DateTime, nullable=True)
+
     @hybrid_property
     def cvss2_vector_string(self):
         return self._cvss2_vector_string

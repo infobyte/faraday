@@ -391,7 +391,7 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.status_code == 201
         assert res.json['message'] == 'CSV imported successfully - Created: 2 credentials, Skipped: 0 credentials'
 
-        creds = Credential.query.filter_by(workspace=workspace).all()
+        creds = Credential.query.filter_by(workspace=workspace).order_by(Credential.id).all()
         assert creds[-2].vulnerabilities[0].id == vuln.id
         assert creds[-1].vulnerabilities[0].id == vuln.id
 

@@ -2307,6 +2307,8 @@ class Workspace(Metadata):
     credential_count = _make_generic_count_property('workspace', 'credential')
     last_run_agent_date = query_expression()
 
+    force_lowercase_assets = Column(Boolean, nullable=False, default=False)
+
     # Stats
 
     host_count = Column(Integer, nullable=False, default=0)

@@ -17,7 +17,6 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("CREATE TYPE summary_period_types AS ENUM  ('daily', 'weekly', 'monthly', 'yearly')")
     op.create_table('workspace_summary_report',
     sa.Column('create_date', sa.DateTime(), nullable=True),
     sa.Column('update_date', sa.DateTime(), nullable=True),

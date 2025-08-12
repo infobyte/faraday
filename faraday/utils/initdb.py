@@ -16,6 +16,7 @@ from faraday.server.utils.permissions import (
     GROUP_PIPELINES,
     GROUP_PLANNERS,
     GROUP_VULNERABILITIES,
+    GROUP_WS_SUM_REPORTS,
     UNIT_2FA,
     UNIT_ACTIVE_INTEGRATIONS,
     UNIT_ADMIN,
@@ -65,6 +66,7 @@ from faraday.server.utils.permissions import (
     UNIT_WEBSOCKETS,
     UNIT_WHOAMI,
     UNIT_WORKSPACES,
+    UNIT_WS_SUM_REPORTS,
 )
 
 CREATE = PermissionsUnitAction.CREATE_ACTION
@@ -79,18 +81,18 @@ def initdb_roles_and_permissions(db_engine):
     try:
         # Insert rows into the 'faraday_role' table
         db_engine.execute(
-            "INSERT INTO faraday_role(name, weight, custom, description) VALUES "
-            "('admin', 10, false, 'Full control over Faraday including user management, workspaces, vulnerabilities, reports, automation and system settings.'), "
-            "('asset_owner', 20, false, 'Can access assigned workspaces, review vulnerabilities, update their status, and add comments & tags.'), "
-            "('pentester', 30, false, 'Can access assigned workspaces, create/edit vulnerabilities, execute agents, and generate executive reports.'), "
-            "('client', 40, false, 'Read-only access to permitted workspaces; cannot make any modifications.');"
+            "INSERT INTO faraday_role(id, name, weight, custom, description) VALUES "
+            "(1, 'admin', 10, false, 'Full control over Faraday including user management, workspaces, vulnerabilities, reports, automation and system settings.'), "
+            "(2, 'asset_owner', 20, false, 'Can access assigned workspaces, review vulnerabilities, update their status, and add comments & tags.'), "
+            "(3, 'pentester', 30, false, 'Can access assigned workspaces, create/edit vulnerabilities, execute agents, and generate executive reports.'), "
+            "(4, 'client', 40, false, 'Read-only access to permitted workspaces; cannot make any modifications.');"
         )
 
         # Insert rows into the 'permissions_group' table
         db_engine.execute(
             f"INSERT INTO permissions_group (id, name) VALUES (1, '{GROUP_ADMIN}'), (2, '{GROUP_ALL}'), (3, '{GROUP_INTEGRATIONS}'), (4, '{GROUP_AGENTS}'), (5, '{GROUP_ANALYTICS}'), "  # nosec B608
             f"(6, '{GROUP_VULNERABILITIES}'), (7, '{GROUP_COMMENTS}'), (8, '{GROUP_ASSETS}'), (9, '{GROUP_PLANNERS}'), (10, '{GROUP_EXECUTIVE_REPORTS}'), "  # nosec B608
-            f"(13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}');"  # nosec B608
+            f"(13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}'), (17, '{GROUP_WS_SUM_REPORTS}');"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit' table
@@ -103,7 +105,8 @@ def initdb_roles_and_permissions(db_engine):
             f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
             f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 2), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
-            f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), (50, '{UNIT_ROLES}', 1), (51, '{UNIT_TASKS}', 9);"  # nosec B608
+            f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), (50, '{UNIT_ROLES}', 1), (51, '{UNIT_TASKS}', 9), "  # nosec B608
+            f"(52, '{UNIT_WS_SUM_REPORTS}', 17);"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit_action' table
@@ -149,7 +152,8 @@ def initdb_roles_and_permissions(db_engine):
             f"(154, '{DELETE}', 49), (155, '{CREATE}', 41), (156, '{CREATE}', 50), (157, '{READ}', 50), "  # nosec B608
             f"(158, '{UPDATE}', 50), (159, '{DELETE}', 50), (160, '{TAG}', 40), (161, '{TAG}', 32), "  # nosec B608
             f"(162, '{TAG}', 33), (163, '{TAG}', 26), (164, '{CREATE}', 51), (165, '{READ}', 51), "  # nosec B608
-            f"(166, '{UPDATE}', 51), (167, '{DELETE}', 51);"  # nosec B608
+            f"(166, '{UPDATE}', 51), (167, '{DELETE}', 51), (168, '{CREATE}', 52), (169, '{READ}', 52), "  # nosec B608
+            f"(170, '{UPDATE}', 52), (171, '{DELETE}', 52);"  # nosec B608
         )
 
         # Insert rows into the 'role_permission' table for the ADMIN role
@@ -195,7 +199,8 @@ def initdb_roles_and_permissions(db_engine):
             "(603, 153, 1, true), (604, 154, 1, true), (617, 155, 1, true), (621, 156, 1, true), "
             "(622, 157, 1, true), (623, 158, 1, true), (624, 159, 1, true), (637, 160, 1, true), "
             "(638, 161, 1, true), (639, 162, 1, true), (640, 163, 1, true), (653, 164, 1, true), "
-            "(654, 165, 1, true), (655, 166, 1, true), (656, 167, 1, true);"
+            "(654, 165, 1, true), (655, 166, 1, true), (656, 167, 1, true), (669, 168, 1, true), "
+            "(670, 169, 1, true), (671, 170, 1, true), (672, 171, 1, true);"
         )
 
         # Insert rows into the 'role_permission' table for the ASSET OWNER role
@@ -241,7 +246,8 @@ def initdb_roles_and_permissions(db_engine):
             "(607, 153, 2, false), (608, 154, 2, false), (618, 155, 2, false), (625, 156, 2, false), "
             "(626, 157, 2, false), (627, 158, 2, false), (628, 159, 2, false), (641, 160, 2, true), "
             "(642, 161, 2, true), (643, 162, 2, true), (644, 163, 2, true), (657, 164, 2, false), "
-            "(658, 165, 2, true), (659, 166, 2, true), (660, 167, 2, false);"
+            "(658, 165, 2, true), (659, 166, 2, true), (660, 167, 2, false), (673, 168, 2, true), "
+            "(674, 169, 2, true), (675, 170, 2, true), (676, 171, 2, true);"
         )
 
         # Insert rows into the 'role_permission' table for the PENTESTER role
@@ -287,7 +293,8 @@ def initdb_roles_and_permissions(db_engine):
             "(611, 153, 3, false), (612, 154, 3, false), (619, 155, 3, false), (629, 156, 3, false), "
             "(630, 157, 3, false), (631, 158, 3, false), (632, 159, 3, false), (645, 160, 3, true), "
             "(646, 161, 3, true), (647, 162, 3, true), (648, 163, 3, true), (661, 164, 3, false), "
-            "(662, 165, 3, true), (663, 166, 3, true), (664, 167, 3, false);"
+            "(662, 165, 3, true), (663, 166, 3, true), (664, 167, 3, false), (677, 168, 3, true), "
+            "(678, 169, 3, true), (679, 170, 3, true), (680, 171, 3, true);"
         )
 
         # Insert rows into the 'role_permission' table for the CLIENT role
@@ -333,7 +340,8 @@ def initdb_roles_and_permissions(db_engine):
             "(615, 153, 4, false), (616, 154, 4, false), (620, 155, 4, false), (633, 156, 4, false), "
             "(634, 157, 4, false), (635, 158, 4, false), (636, 159, 4, false), (649, 160, 4, false), "
             "(650, 161, 4, false), (651, 162, 4, false), (652, 163, 4, false), (665, 164, 4, false), "
-            "(666, 165, 4, true), (667, 166, 4, true), (668, 167, 4, false);"
+            "(666, 165, 4, true), (667, 166, 4, true), (668, 167, 4, false), (681, 168, 4, true), "
+            "(682, 169, 4, true), (683, 170, 4, true), (684, 171, 4, true);"
         )
 
         db_engine.execute(

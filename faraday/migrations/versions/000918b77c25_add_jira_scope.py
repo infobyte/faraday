@@ -1,7 +1,7 @@
 """add jira scope
 
 Revision ID: 000918b77c25
-Revises: 2063ac75ffb1
+Revises: 2ee8b7eb119f
 Create Date: 2025-03-27 13:08:56.838630+00:00
 
 """
@@ -10,7 +10,7 @@ from faraday.server.models import UserToken
 
 # revision identifiers, used by Alembic.
 revision = '000918b77c25'
-down_revision = '2063ac75ffb1'
+down_revision = '2ee8b7eb119f'
 branch_labels = None
 depends_on = None
 

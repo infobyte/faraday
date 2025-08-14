@@ -12,10 +12,16 @@ from functools import partial
 from random import SystemRandom
 from typing import Callable
 
-import dateutil
 import cvss
+import dateutil
 import jwt
 from croniter import croniter
+from depot.fields.sqlalchemy import UploadedFileField
+from flask import (
+    current_app as app,
+)
+from flask_security import UserMixin, RoleMixin
+from flask_security.utils import hash_data
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
     Boolean,
@@ -51,16 +57,10 @@ from sqlalchemy.orm import (
     joinedload,
 )
 from sqlalchemy.schema import DDL
-from flask import (
-    current_app as app,
-)
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector,
 )
-from flask_security import UserMixin, RoleMixin
-from flask_security.utils import hash_data
-from depot.fields.sqlalchemy import UploadedFileField
 
 from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile
@@ -3919,6 +3919,49 @@ class RolePermission(db.Model):
     __table_args__ = (UniqueConstraint(unit_action_id, role_id, name='uix_unit_action_role'),)
 
 
+class WorkspaceSummaryReport(Metadata):
+    DAILY_TYPE = 'daily'
+    WEEKLY_TYPE = 'weekly'
+    MONTHLY_TYPE = 'monthly'
+    YEARLY_TYPE = 'yearly'
+
+    SUMMARY_PERIOD_TYPES = [
+        DAILY_TYPE,
+        WEEKLY_TYPE,
+        MONTHLY_TYPE,
+        YEARLY_TYPE,
+    ]
+
+    __tablename__ = 'workspace_summary_report'
+    id = Column(Integer, primary_key=True)
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id', ondelete='CASCADE'), index=True, nullable=False)
+    user = relationship(
+        'User',
+        backref=backref('workspace_summary_reports', cascade="all, delete-orphan", passive_deletes=True),
+        foreign_keys=[user_id],
+    )
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('workspace_summary_reports', cascade="all, delete-orphan", passive_deletes=True),
+    )
+
+    recipients = Column(JSONType, nullable=False, default={})
+    summary_period_type = Column(
+        Enum(*SUMMARY_PERIOD_TYPES, name='summary_period_types'),
+        nullable=False,
+        default='weekly',
+    )
+
+    __table_args__ = (
+        UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),
+    )
+
+
+# Indexes to speed up queries
 Index("idx_vulnerability_severity_hostid_serviceid",
       VulnerabilityGeneric.__table__.c.severity,
       VulnerabilityGeneric.__table__.c.host_id,

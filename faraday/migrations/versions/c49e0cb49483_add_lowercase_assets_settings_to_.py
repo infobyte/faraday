@@ -1,7 +1,7 @@
 """add lowercase assets settings to workspace
 
 Revision ID: c49e0cb49483
-Revises: 2ee8b7eb119f
+Revises: 000918b77c25
 Create Date: 2025-06-09 19:19:46.281730+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'c49e0cb49483'
-down_revision = '2ee8b7eb119f'
+down_revision = '000918b77c25'
 branch_labels = None
 depends_on = None
 

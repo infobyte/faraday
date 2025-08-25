@@ -44,7 +44,7 @@ bandit:
         - faradaytests
     extends:
         - .get-secrets
-    image: python:3.11
+    image: python:3.11-ubuntu
     stage: pre_testing
     script:
       - pip3 install virtualenv

@@ -253,47 +253,49 @@ def update_failed_command_stats(debouncer=None):
         now = datetime.utcnow()
         seven_days_ago = now - timedelta(days=7)
 
-        failed_command_ids = db.session.query(Command.id).filter(Command.end_date.is_(None), Command.create_date > seven_days_ago).all()
+        failed_commands_ids = [
+            command for (command,) in db.session.query(Command.id)
+            .filter(Command.end_date.is_(None), Command.create_date > seven_days_ago)
+            .all()
+        ]
 
-        failed_command_ids = [c[0] for c in failed_command_ids]
+        if not failed_commands_ids:
+            logger.info("No failed commands found, skipping stats update")
+            return
 
-        host_ids = (
-            db.session.query(CommandObject.object_id)
-            .filter(
-                CommandObject.command_id.in_(failed_command_ids),
-                CommandObject.object_type == 'host',
-                CommandObject.created_persistent.is_(True),
-            )
+        hosts_ids = [
+            host for (host,) in db.session.query(CommandObject.object_id)
+            .filter(CommandObject.command_id.in_(failed_commands_ids),
+                    CommandObject.object_type == 'host',
+                    CommandObject.created_persistent.is_(True))
             .distinct()
             .all()
-        )
-        host_ids = [h[0] for h in host_ids]
+        ]
 
-        workspace_ids = (
-            db.session.query(Host.workspace_id)
-            .filter(Host.id.in_(host_ids))
+        if not hosts_ids:
+            logger.info("No hosts created by failed commands, skipping stats update")
+            return
+
+        workspaces_ids = [
+            workspace for (workspace,) in db.session.query(Host.workspace_id)
+            .filter(Host.id.in_(hosts_ids))
             .distinct()
             .all()
-        )
-        workspace_ids = [w[0] for w in workspace_ids]
+        ]
 
-        logger.info(f"Found {len(host_ids)} hosts created by failed commands")
-        if host_ids:
-            if faraday_server.celery_enabled:
-                update_host_stats.delay(
-                    hosts=host_ids,
-                    services=[],
-                    workspace_ids=workspace_ids,
-                    sync=True,
-                )
-            else:
-                update_host_stats(
-                    hosts=host_ids,
-                    services=[],
-                    workspace_ids=workspace_ids,
-                    sync=True,
-                    debouncer=debouncer
-                )
+        logger.info(f"Found {len(hosts_ids)} hosts created by failed commands")
+        kwargs = {
+            'hosts': hosts_ids,
+            'services': [],
+            'workspace_ids': workspaces_ids,
+            'sync': True,
+        }
+
+        if faraday_server.celery_enabled:
+            update_host_stats.delay(**kwargs)
+        else:
+            kwargs["debouncer"] = debouncer
+            update_host_stats(**kwargs)
     except Exception as e:
         logger.error(f"Failed to update command stats: {e}")
     else:

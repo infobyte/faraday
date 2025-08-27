@@ -334,6 +334,7 @@ class VulnerabilitySchema(AutoSchema):
     command_id = fields.Int(required=False, load_only=True)
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
+    last_detected = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Vulnerability

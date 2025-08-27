@@ -194,6 +194,8 @@ OPERATORS = {
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
     'not_any': lambda f, a, fn: ~f.any(_sub_operator(f, a, fn)),
+    # Range operator for numeric and date ranges
+    'range': lambda f, a: f.between(a[0], a[1]) if isinstance(a, (list, tuple)) and len(a) == 2 else f == a,
     # Custom operator for json fields
     'json': lambda f: f,
 }
@@ -228,6 +230,7 @@ def get_json_operator(operator):
         'not_any': ('@>', 'not_any'),
         'is_null': ('IS NULL', 'exists'),
         'is_not_null': ('IS NOT NULL', 'exists'),
+        'range': ('BETWEEN', 'range'),
     }
 
     return operator_mapping.get(operator, None)
@@ -248,6 +251,8 @@ def get_json_query(table, field, op, op_type, counter):
         return f"EXISTS (SELECT 1 FROM jsonb_array_elements_text({table}.{field} -> :key_{counter}) AS element WHERE element {op} :value_{counter})"  # nosec
     elif op_type == 'date':
         return f"({table}.{field} ->> :key_{counter})::DATE {op} :value_{counter}"  # nosec
+    elif op_type == 'range':
+        return f"({table}.{field} ->> :key_{counter})::numeric BETWEEN :value1_{counter} AND :value2_{counter}"  # nosec
     else:
         raise TypeError('Invalid filters')
 
@@ -563,6 +568,24 @@ class QueryBuilder:
                     if custom_field.field_type == 'int':
                         op_type = 'compare_int'
 
+                # Handle range operator
+                if op_type == 'range':
+                    # For JSON fields, argument should be a list [min, max]
+                    if not isinstance(argument, (list, tuple)) or len(argument) != 2:
+                        raise TypeError('Range operator requires a list or tuple with exactly two values')
+
+                    increment_bind_counter()
+
+                    bindparams = {
+                        f'key_{get_bind_counter()}': key,
+                        f'value1_{get_bind_counter()}': argument[0],
+                        f'value2_{get_bind_counter()}': argument[1],
+                    }
+
+                    query = get_json_query(table, field, op, op_type, get_bind_counter())
+
+                    return OPERATORS['json'](text(f"{query}").bindparams(**bindparams))
+
                 increment_bind_counter()
 
                 bindparams = {
@@ -578,7 +601,13 @@ class QueryBuilder:
             opfunc = OPERATORS[operator]
             # In Python 3.0 or later, this should be `inspect.getfullargspec`
             # because `inspect.getargspec` is deprecated.
-            numargs = len(inspect.getfullargspec(opfunc).args)
+            # ╰─> Fixed that :)
+            try:
+                # For Python < 3.11
+                numargs = len(inspect.getargspec(opfunc).args)
+            except AttributeError:
+                # For Python >= 3.11
+                numargs = len(inspect.getfullargspec(opfunc).args)
             # raises AttributeError if `fieldname` or `relation` does not exist
             field = getattr(model, relation or fieldname)
             # each of these will raise a TypeError if the wrong number of arguments

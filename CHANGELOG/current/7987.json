@@ -1,4 +1,0 @@
-{
-    "level": "community",
-    "md": "[FIX] Fixed issue with workspace scope not being correctly populated in the filter endpoint. #7987"
-}

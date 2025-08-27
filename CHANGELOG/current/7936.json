@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[ADD] Added `last_detected` field to the Vulnerability model to track the most recent detection timestamp. #7936"
-}

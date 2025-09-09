@@ -58,8 +58,10 @@ typings/
 jsconfig.json
 .vscode/
 
+
 # PyCharm project files
 .idea
+.junie
 
 # vFeed DB
 data/vfeed.db
@@ -87,3 +89,9 @@ faraday/frontend/
 
 # nix build
 result
+
+# Pytest config for local testing
+pytest.ini
+
+# venv
+venv

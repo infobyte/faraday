@@ -13,10 +13,12 @@ import itertools
 import unicodedata
 import uuid
 import time
+from uuid import uuid4
 
 import pytz
 from factory.fuzzy import (
     BaseFuzzyAttribute,
+    FuzzyAttribute,
     FuzzyChoice,
     FuzzyNaiveDateTime,
     FuzzyInteger,
@@ -410,15 +412,11 @@ class VulnerabilityTemplateFactory(FaradayFactory):
         return ret
 
 
-class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
-    host = factory.SubFactory(
-        HostFactory, workspace=factory.SelfAttribute('..workspace')
-    )
-    service = factory.SubFactory(
-        ServiceFactory, workspace=factory.SelfAttribute('..workspace')
-    )
+class CredentialFactory(WorkspaceObjectFactory):
     username = FuzzyText()
     password = FuzzyText()
+    endpoint = FuzzyText()
+    leak_date = factory.LazyFunction(lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
     class Meta:
         model = Credential
@@ -626,6 +624,7 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
         workspace=factory.SelfAttribute("..workspace"),
         end_date=None
     )
+    run_uuid = FuzzyAttribute(lambda: uuid4())
 
     class Meta:
         model = AgentExecution

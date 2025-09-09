@@ -26,6 +26,7 @@ BASE_FIELDS = (
     "confirmed",
     "data",
     "description",
+    "last_detected",
     "id",
     "name",
     "resolution",
@@ -77,6 +78,7 @@ SCHEMA_FIELDS = BASE_FIELDS + (
     "tags",
     "type",
     "workspace_name",
+    "update_date",
 )
 
 # Meta fields exclusive for VulnerabilityWebSchema
@@ -108,6 +110,39 @@ FILTER_SET_STRICT_FIELDS = (
 )
 
 WORKSPACED_SCHEMA_EXCLUDE_FIELDS = ("workspace.name",)
+
+VALID_FILTER_VULN_COLUMNS = [
+    'id',
+    'confirmed',
+    'name',
+    'severity',
+    'tags',
+    'risk',
+    'cvss2',
+    'cvss3',
+    'cvss4',
+    'hostnames',
+    'date',
+    'cve',
+    'cwe',
+    'path',
+    'owasp',
+    'service',
+    'tool',
+    'status',
+    'issuetracker',
+    'target',
+    'easeofresolution',
+    'external_id',
+    'method',
+    'query',
+    'status_code',
+    'website',
+    'host_os',
+    'impact',
+    'update_date',
+    'type',
+]
 
 
 def parse_cve_references_and_policyviolations(vuln, references, policyviolations, cve_list):

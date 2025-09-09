@@ -1,6 +1,63 @@
 New features in the latest update
 =====================================
 
+5.16.0 [Aug 27th, 2025]:
+---
+ * [ADD] Implemented `range` operator for date fields in filters. #7990
+ * [ADD] Added severity range filtering for agent execution, scheduling and import. #7928
+ * [ADD] Added CVSS4 support for vuln template. #8000
+ * [ADD] Added `last_detected` field to the Vulnerability model to track the most recent detection timestamp. #7936
+ * [MOD] Removed obsolete `vulners` endpoint. #7864
+ * [FIX] Fixed randomly failing test in credentials. #8010
+ * [FIX] Fixed `Agents` endpoint not supporting filters. #7798
+ * [FIX] Fixed issue with workspace scope not being correctly populated in the filter endpoint. #7987
+ * [FIX] Fixed scope of a workspace being deleted on patch. #7945
+
+5.15.3 [Jul 30th, 2025]:
+---
+ * [FIX] Fixed roles permissions. #8004
+
+5.15.2 [Jul 21st, 2025]:
+---
+ * [FIX] Fixed vulnerabilities permissions for `admin` and `pentester` roles. #7999
+
+5.15.1 [Jul 17th, 2025]:
+---
+ * [FIX] Fixed migrations. #7997
+
+5.15.0 [Jul 16th, 2025]:
+---
+ * [ADD] Implemented Vulnerability status history. #7929
+ * [MOD] BREAKING CHANGE: Simplified vulnerability template filter response by removing 'id', 'key', 'value', 'doc' keys and delivering template data directly within the 'rows' key. #7967
+ * [FIX] Removed URL type validation and updated agent parameter type validation logic. #7955
+ * [FIX] Fixed an issue where workspace names could be disclosed when unauthorized users attempted to access non-existent workspaces. #7823
+ * [FIX] Code duplication issue in export csv logic. #7946
+ * [FIX] Corrected index creation on agent execution. #7988
+
+5.14.1 [Jun 4th, 2025]:
+---
+ * [FIX] Memory issue with csv export. #7981
+ * [FIX] Resolved an issue causing duplicate vulnerabilities to appear when uploading the same report multiple times. #7983
+
+5.14.0 [May 19th, 2025]:
+---
+ * [ADD] Enhanced the UI and usability of agent and cloud agent views and introduced run status logs to track executions for both. #7895
+ * [ADD] Implemented a limited csv export option. #7893
+ * [ADD] Implemented filtering columns on vulns. #7670
+
+5.13.0 [Apr 24th, 2025]:
+---
+ * [ADD] Added support for vulnerability status changes on report upload. #7903
+ * [ADD] Introduced support for RabbitMQ as a task processing broker. #7866
+ * [ADD] Added filtering to schedulers view. #7857
+ * [ADD] Added Idle Session Timeout feature. #7876
+ * [MOD] Rework the Credential API. #7912
+ * [MOD] Redesigned the Credential Model to work more closely with vulnerabilities. #7911
+ * [FIX] Fixed sync host stats command to update workspaces statistics. #7943
+ * [FIX] Enhanced workspace performance by pre-calculating statistics, reducing the overhead of on-demand calculations during data retrieval. #7780
+ * [FIX] Improved vulnerability count on contextual view. #7901
+ * [FIX] Stats are now calculated automatically upon file report upload. #7937
+
 5.12.0 [Mar 13th, 2025]:
 ---
  * [ADD] Added update in bulk mode for workspaces. #7830

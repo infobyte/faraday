@@ -4,6 +4,7 @@ Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 # Standard library imports
+from time import time
 import datetime
 import logging
 import os
@@ -123,7 +124,6 @@ def register_blueprints(app):
     from faraday.server.api.modules.comments import comment_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.upload_reports import upload_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.websocket_auth import websocket_auth_api  # pylint:disable=import-outside-toplevel
-    from faraday.server.api.modules.get_exploits import exploits_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.custom_fields import \
         custom_fields_schema_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agents_schedule import agents_schedule_api  # pylint:disable=import-outside-toplevel
@@ -144,6 +144,7 @@ def register_blueprints(app):
         elk_settings_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.settings_query_limits import \
         query_limits_settings_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent_execution import agent_execution_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(ui)
     app.register_blueprint(commandsrun_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -165,7 +166,6 @@ def register_blueprints(app):
     app.register_blueprint(comment_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(upload_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(websocket_auth_api, url_prefix=app.config['APPLICATION_PREFIX'])
-    app.register_blueprint(exploits_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(custom_fields_schema_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(agent_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(agent_auth_token_api, url_prefix=app.config['APPLICATION_PREFIX'])
@@ -181,6 +181,7 @@ def register_blueprints(app):
     app.register_blueprint(elk_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(swagger_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(query_limits_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(agent_execution_api, url_prefix=app.config['APPLICATION_PREFIX'])
 
 
 def check_testing_configuration(testing, app):
@@ -241,6 +242,7 @@ def register_handlers(app):
                 password = flask.request.authorization.get('password', '')
                 user = User.query.filter_by(username=username).first()
                 if user and user.verify_and_update_password(password):
+                    session["last_access"] = time()
                     return user
             else:
                 logger.warning("Invalid authorization type")
@@ -261,6 +263,27 @@ def register_handlers(app):
     @app.before_request
     def load_g_custom_fields():  # pylint:disable=unused-variable
         g.custom_fields = {}
+
+    @app.before_request
+    def idle_session_timeout():
+        if session:
+            limit_timeout = faraday.server.config.faraday_server.idle_session_timeout
+            if not limit_timeout:
+                return
+
+            last_access = session.get("last_access", None)
+            if not last_access:
+                logger.warning("last_access session key not set or invalid")
+                return
+
+            delta = time() - last_access
+            if delta > limit_timeout:
+                logger.info("idle session timed out")
+                session.destroy()
+                KVSessionExtension(app=app).cleanup_sessions(app)
+                flask.abort(401, "Idle session timed out.")
+            else:
+                session["last_access"] = time()
 
     @app.after_request
     def log_queries_count(response):  # pylint:disable=unused-variable
@@ -340,6 +363,7 @@ def user_logged_in_successful(app, user):
     user_login_at = datetime.datetime.utcnow()
     audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
     logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_login_at}]")
+    session["last_access"] = time()
 
 
 def uia_username_mapper(identity):
@@ -353,6 +377,8 @@ def get_prefixed_url(app, url):
 
 
 def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, start_scheduler=False, remove_sids=False):
+    logger.debug("Creating new faraday app instance")
+
     class CustomFlask(Flask):
         SKIP_RULES = [  # These endpoints will be removed for v3
             '/v3/ws/<workspace_name>/hosts/bulk_delete/',

@@ -26,7 +26,10 @@ from faraday.server.models import (
     Workspace,
     User,
     CustomFieldsSchema,
+    Agent,
+    AgentExecution,
     AgentsSchedule,
+    Credential,
 )
 from faraday.server.utils.search import OPERATORS
 
@@ -53,6 +56,20 @@ def generate_datetime_filter(filter_: dict = "") -> typing.List:
         ]
     elif filter_['op'].lower() in ['>=', 'gte', '<', 'lt']:
         filter_['val'] = parse(filter_['val']).isoformat()
+
+    elif filter_['op'].lower() in ['range']:
+        min_date = filter_['val'][0]
+        max_date = filter_['val'][1]
+
+        if not min_date or not max_date:
+            raise ValidationError('Range operator requires two values separated by a comma')
+
+        min_date = parse(min_date).strftime(DATETIME_FORMAT)
+        max_date = (parse(max_date) + datetime.timedelta(hours=23, minutes=59, seconds=59)).strftime(DATETIME_FORMAT)
+        return [
+            {'name': filter_['name'], 'op': '>=', 'val': min_date},
+            {'name': filter_['name'], 'op': '<=', 'val': max_date},
+        ]
 
     return [filter_]
 
@@ -159,11 +176,25 @@ class FlaskRestlessFilterSchema(Schema):
             logger.warning(f"Column {column_name} could not be converted. {e}")
             return [filter_]
 
+        # Assert "range" can only be used with dates
+        if filter_['op'].lower() == "range" and not isinstance(field, (fields.Date, fields.DateTime)):
+            raise ValidationError('Range operator can only be used with dates or numbers')
+
         # Dates
         if isinstance(field, (fields.Date, fields.DateTime)):
             try:
-                datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
-                return generate_datetime_filter(filter_)
+                if filter_['op'].lower() in ['range']:
+                    # range operator must be used with two values separated by a comma
+                    if isinstance(filter_['val'], str):
+                        filter_['val'] = filter_['val'].split(',')
+                    if len(filter_['val']) != 2:
+                        raise ValidationError('Range value must contain exactly two values')
+                    for val in filter_['val']:
+                        datetime.datetime.strptime(val, '%Y-%m-%d')
+                    return generate_datetime_filter(filter_)
+                else:
+                    datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
+                    return generate_datetime_filter(filter_)
             except ValueError as e:
                 raise ValidationError('Invalid date format. Dates should be in "%Y-%m-%d" format') from e
 
@@ -233,10 +264,26 @@ class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):
         return Service
 
 
-class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
+class FlaskRestlessAgentExecutionSchema(FlaskRestlessFilterSchema):
 
     def _model_class(self):
+        return AgentExecution
+
+
+class FlaskRestlessAgentSchema(FlaskRestlessFilterSchema):
+
+    def _model_class(self):
+        return Agent
+
+
+class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
         return AgentsSchedule
+
+
+class FlaskRestlessCredentialFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Credential
 
 
 class FlaskRestlessOperator(Schema):
@@ -250,6 +297,9 @@ class FlaskRestlessOperator(Schema):
         FlaskRestlessUserFilterSchema,
         FlaskRestlessVulnerabilityTemplateFilterSchema,
         FlaskRestlessServiceFilterSchema,
+        FlaskRestlessAgentExecutionSchema,
+        FlaskRestlessAgentSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(
@@ -303,6 +353,7 @@ class FilterSchema(Schema):
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()
     offset = fields.Integer()
+    columns = fields.List(fields.String())
 
     @post_load
     def validate_order_and_group_by(self, data, **kwargs):
@@ -330,7 +381,10 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessHostFilterSchema,
         FlaskRestlessWorkspaceFilterSchema,
         FlaskRestlessUserFilterSchema,
+        FlaskRestlessAgentExecutionSchema,
+        FlaskRestlessAgentSchema,
         FlaskRestlessAgentSchedulerSchema,
+        FlaskRestlessCredentialFilterSchema,
     ]
 
     def load(

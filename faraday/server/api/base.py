@@ -16,6 +16,7 @@ from http.client import (
     NO_CONTENT as HTTP_NO_CONTENT,
     NOT_FOUND as HTTP_NOT_FOUND,
     OK as HTTP_OK,
+    UNAUTHORIZED as HTTP_UNAUTHORIZED,
     UNPROCESSABLE_ENTITY as HTTP_UNPROCESSABLE_ENTITY,
 )
 from json import JSONDecodeError, dumps as json_dumps, loads as json_loads
@@ -104,13 +105,23 @@ def get_group_by_and_sort_dir(model_class):
 
 
 def get_workspace(workspace_name):
-    try:
-        ws = Workspace.query.filter_by(name=workspace_name).one()
-        if not ws.active:
-            abort(HTTP_FORBIDDEN, f"Disabled workspace: {workspace_name}")
-        return ws
-    except NoResultFound:
-        abort(HTTP_NOT_FOUND, f"No such workspace: {workspace_name}")
+    ws = None
+    if not current_user.is_anonymous:
+        try:
+            ws = Workspace.query.filter_by(name=workspace_name).one()
+            if not ws.active:
+                abort(HTTP_FORBIDDEN, f"Disabled workspace: {workspace_name}")
+        except NoResultFound:
+            abort(HTTP_NOT_FOUND, f"No such workspace: {workspace_name}")
+    else:
+        # For anonymous users, check if the workspace exists
+        try:
+            ws = Workspace.query.filter_by(name=workspace_name).one()
+            if not ws.active:
+                abort(HTTP_UNAUTHORIZED)
+        except NoResultFound:
+            abort(HTTP_UNAUTHORIZED)
+    return ws
 
 
 class InvalidUsage(Exception):
@@ -523,7 +534,7 @@ class ListMixin:
         """Override this method to define how a list of objects is
         rendered.
 
-        See the example of :ref:`envelope-list-example` to learn
+        See the example of:ref:`envelope-list-example` to learn
         when and how it should be used.
         """
         return objects
@@ -2064,9 +2075,8 @@ def get_user_permissions(user):
         'licences', 'methodology_templates', 'task_templates', 'users',
         'vulnerability_template', 'workspaces',
         'agents', 'agents_schedules', 'commands', 'comments', 'hosts',
-        'executive_reports', 'services', 'methodologies', 'tasks', 'vulns',
-        'credentials',
-    }
+        'executive_reports', 'services', 'methodologies', 'tasks', 'vulns'
+        }
 
     for entity in generic_entities:
         permissions[entity]['view'] = ALLOWED

@@ -23,7 +23,12 @@ from marshmallow import (
     validates_schema,
 )
 from marshmallow.validate import Range
-from sqlalchemy import func, text, case, and_
+from sqlalchemy import (
+    and_,
+    case,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -45,7 +50,6 @@ from faraday.server.models import (
     AgentExecution,
     Command,
     CommandObject,
-    Credential,
     CVE,
     Host,
     Hostname,
@@ -136,12 +140,6 @@ class PolymorphicVulnerabilityField(fields.Field):
         return schema.load(value)
 
 
-class BulkCredentialSchema(AutoSchema):
-    class Meta:
-        model = Credential
-        fields = ('username', 'password', 'description', 'name')
-
-
 class BulkServiceSchema(services_base.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
@@ -149,11 +147,6 @@ class BulkServiceSchema(services_base.ServiceSchema):
     port = fields.Integer(required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
-        many=True,
-        missing=[],
-    )
-    credentials = fields.Nested(
-        BulkCredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -178,11 +171,6 @@ class HostBulkSchema(hosts_base.HostSchema):
     )
     vulnerabilities = fields.Nested(
         VulnerabilitySchema(many=True),
-        many=True,
-        missing=[],
-    )
-    credentials = fields.Nested(
-        BulkCredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -321,16 +309,22 @@ def _create_host(ws, host_data, command: dict):
     start_time = time()
     hostnames = host_data.pop('hostnames', [])
     _services = host_data.pop('services', [])
-    credentials = host_data.pop('credentials', [])
     _vulns = host_data.pop('vulnerabilities', [])
+    # Remove credentials if any
+    host_data.pop('credentials', [])
 
     created_updated_count = {'created': 0, 'updated': 0, 'host_id': None}
 
+    host = None
     try:
         created, host = get_or_create(ws, Host, host_data)
         created_updated_count['host_id'] = host.id
     except Exception as e:
         logger.exception("Could not create host %s", host_data['ip'], exc_info=e)
+
+    if not host:
+        logger.error("Failed host creation/retrieval")
+        abort(400)
 
     for name in set(hostnames).difference(set(map(lambda x: x.name, host.hostnames))):
         db.session.add(Hostname(name=name, host=host, workspace=ws))
@@ -380,11 +374,6 @@ def _create_host(ws, host_data, command: dict):
                  f" Updated: {created_updated_count['updated']}"
                  )
 
-    total_credentials = len(credentials)
-    if total_credentials > 0:
-        logger.debug(f"Needs to create {total_credentials} credentials...")
-        for cred_data in credentials:
-            _create_credential(ws, cred_data, command, host=host)
     logger.debug(f"Create host took {time() - start_time}")
 
     return created_updated_count
@@ -409,12 +398,12 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "_tmp_id": stmt.excluded.id,
             "status": case(
                 [
-                    # If incoming status is closed and existing is open/reopened, close it
+                    # If the incoming status is closed and existing is open/reopened, close it
                     (and_(
                         stmt.excluded.status == 'closed',
                         Vulnerability.status.in_(['open', 're-opened'])
                     ), 'closed'),
-                    # If incoming vuln exists and is open and current status is closed, reopen it
+                    # If incoming vuln exists and is open and the current status is closed, reopen it
                     (and_(
                         stmt.excluded.status.in_(['open', 're-opened']),
                         Vulnerability.status == 'closed'
@@ -422,6 +411,15 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
                 ],
                 # Keep existing status as default
                 else_=Vulnerability.status
+            ),
+            "last_detected": case(
+                [
+                    (and_(
+                        stmt.excluded.status.in_(['open', 're-opened']),
+                        Vulnerability.status == 'closed'
+                    ), datetime.utcnow())
+                ],
+                else_=Vulnerability.last_detected
             ),
             "custom_fields": stmt.excluded.custom_fields
         }
@@ -602,9 +600,10 @@ def _update_service(service: Service, service_data: dict) -> Service:
 def _create_service(ws, host, service_data, command: dict):
     service_data = service_data.copy()
     _vulns = service_data.pop('vulnerabilities', [])
-    creds = service_data.pop('credentials', [])
     service_data['host'] = host
     created_updated_count = {'created': 0, 'updated': 0}
+    # Remove credentials if any
+    service_data.pop('credentials', [])
 
     created, service = get_or_create(ws, Service, service_data)
 
@@ -641,12 +640,6 @@ def _create_service(ws, host, service_data, command: dict):
         created_updated_count = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
 
     logger.debug(f"Service vulnerabilities creation took {time() - start_time_vulns}")
-
-    total_service_creds = len(creds)
-    if total_service_creds > 0:
-        logger.debug(f"Needs to create {total_service_creds} service credentials...")
-        for cred_data in creds:
-            _create_credential(ws, cred_data, command, service=service)
 
     return created_updated_count
 
@@ -698,6 +691,10 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
 
     if run_date:
         vuln_data['create_date'] = run_date
+
+    vuln_data['last_detected'] = None
+    if vuln_data.get('status') != 'closed':
+        vuln_data['last_detected'] = datetime.utcnow()
 
     tool = vuln_data.get('tool', '')
     # TODO: Check in professional
@@ -1066,16 +1063,6 @@ def _create_hostvuln(ws, host, vuln_data, command: dict):
 
 def _create_servicevuln(ws, service, vuln_data, command: dict):
     return _create_vuln(ws, vuln_data, command, service=service)
-
-
-def _create_credential(ws, cred_data, command: dict, **kwargs):
-    cred_data = cred_data.copy()
-    cred_data.update(kwargs)
-    created, cred = get_or_create(ws, Credential, cred_data)
-    db.session.commit()
-
-    if command is not None:
-        _create_command_object_for(ws, created, cred, command)
 
 
 class BulkCreateView(GenericWorkspacedView):

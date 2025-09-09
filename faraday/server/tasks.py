@@ -27,15 +27,14 @@ from faraday.server.utils.workflows import _process_entry
 from faraday.server.debouncer import (debounce_workspace_update,
                                       debounce_workspace_vulns_count_update,
                                       debounce_workspace_host_count,
-                                      debounce_workspace_service_count)
+                                      debounce_workspace_service_count, update_workspace_vulns_count,
+                                      update_workspace_host_count, update_workspace_service_count)
 
 logger = get_task_logger(__name__)
 
 
 @celery.task
 def on_success_process_report_task(results, command_id=None):
-    command_end_date = datetime.utcnow()
-    start_time = time.time()
     command = db.session.query(Command).filter(Command.id == command_id).first()
     if not command:
         logger.error("File imported but command id %s was not found", command_id)
@@ -44,10 +43,16 @@ def on_success_process_report_task(results, command_id=None):
         workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
         if workspace.name:
             debounce_workspace_update(workspace.name)
-    logger.debug(f"Fetching command took {time.time() - start_time}")
-    command.end_date = command_end_date
-    logger.error("File for command id %s successfully imported", command_id)
     db.session.commit()
+    host_ids = []
+    for result in results:
+        if result.get('created'):
+            calc_vulnerability_stats.delay(result['host_id'])
+            host_ids.append(result["host_id"])
+    no_debounce = False
+    if command.import_source == "report":
+        no_debounce = True
+    update_host_stats.delay(host_ids, [], workspace_id=workspace.id, no_debounce=no_debounce, command_id=command_id)
 
     # Apply Workflow
     pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
@@ -69,13 +74,6 @@ def on_success_process_report_task(results, command_id=None):
             workflow_task.delay("host", host_object_ids, command.workspace.id, update_hosts=False)
 
     logger.debug("No pipelines found in ws %s", command.workspace.name)
-
-    host_ids = []
-    for result in results:
-        if result['created']:
-            calc_vulnerability_stats.delay(result['host_id'])
-            host_ids.append(result["host_id"])
-    update_host_stats.delay(host_ids, [], workspace_id=workspace.id)
 
 
 @celery.task()
@@ -136,7 +134,8 @@ def create_host_task(workspace_id, command: dict, host):
 def pre_process_report_task(workspace_name: str, command_id: int, file_path: str,
                             plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool,
                             dns_resolution: bool, vuln_tag: Optional[list] = None,
-                            host_tag: Optional[list] = None, service_tag: Optional[list] = None):
+                            host_tag: Optional[list] = None, service_tag: Optional[list] = None, min_severity: Optional[str] = None,
+                            max_severity: Optional[str] = None) -> None:
     from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
     from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer  # pylint: disable=import-outside-toplevel
     from faraday.settings.reports import ReportsSettings  # pylint: disable=import-outside-toplevel
@@ -170,12 +169,28 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
         dns_resolution,
         vuln_tag,
         host_tag,
-        service_tag
+        service_tag,
+        min_severity,
+        max_severity
     )
 
 
 @celery.task()
-def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False) -> None:
+def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False, no_debounce: bool = None, command_id: int = None) -> None:
+    start_time = datetime.utcnow()
+    if no_debounce:  # For reports, we don't need to calculate host stats because they are already calculated.
+        update_workspace_vulns_count(workspace_id=workspace_id)
+        update_workspace_host_count(workspace_id=workspace_id)
+        update_workspace_service_count(workspace_id=workspace_id)
+        end_time = datetime.utcnow()
+        logger.info(f"all calcs took {end_time - start_time}")
+        if command_id:
+            db.session.query(Command).filter(Command.id == command_id).update({
+                Command.end_date: datetime.utcnow()
+            })
+            db.session.commit()
+        return
+
     all_hosts = set(hosts)
     services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
     for host_id in services_host_id:
@@ -199,6 +214,11 @@ def update_host_stats(hosts: List, services: List, workspace_name: str = None, w
             debounce_workspace_vulns_count_update(workspace_id=workspace_id, debouncer=debouncer)
             debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)
             debounce_workspace_service_count(workspace_id=workspace_id, debouncer=debouncer)
+    if command_id:
+        db.session.query(Command).filter(Command.id == command_id).update({
+            Command.end_date: datetime.utcnow()
+        })
+        db.session.commit()
 
 
 @celery.task()

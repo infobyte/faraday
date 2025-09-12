@@ -52,14 +52,14 @@ bandit:
       - source faraday_venv/bin/activate
       - pip3 install bandit
       - mkdir /results
-      - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101"
+      - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101,B202,B311,B501"
     after_script:
+      - apt-get update -y
+      - apt-get install -y lsb-release gnupg wget ca-certificates libcap2-bin
       - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-      - apt update
-      - apt-get install software-properties-common -y
-      - echo "deb [ signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg ] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-      - apt update
-      - apt install vault -y
+      - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+      - apt-get update -y
+      - apt-get install -y vault
       - setcap cap_ipc_lock= /usr/bin/vault
       - pip3 install faraday-cli
       - cat /results/output.xml

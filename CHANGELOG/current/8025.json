@@ -1,0 +1,4 @@
+{
+  "md": "[MOD] Fixed vulnerability filtering by range on status history. #8025",
+  "level": "community"
+}

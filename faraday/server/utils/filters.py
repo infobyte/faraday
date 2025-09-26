@@ -191,7 +191,20 @@ class FlaskRestlessFilterSchema(Schema):
                         raise ValidationError('Range value must contain exactly two values')
                     for val in filter_['val']:
                         datetime.datetime.strptime(val, '%Y-%m-%d')
-                    return generate_datetime_filter(filter_)
+                    # For relationship fields (containing '__'), don't convert range to separate filters
+                    # to avoid multiple joins that can cause incorrect results
+                    if '__' in filter_['name']:
+                        # Convert date strings to proper format but keep as range
+                        # Use same logic as generate_datetime_filter for consistency
+                        min_date = filter_['val'][0]
+                        max_date = filter_['val'][1]
+
+                        min_date = parse(min_date).strftime(DATETIME_FORMAT)
+                        max_date = (parse(max_date) + datetime.timedelta(hours=23, minutes=59, seconds=59)).strftime(DATETIME_FORMAT)
+                        filter_['val'] = [min_date, max_date]
+                        return [filter_]
+                    else:
+                        return generate_datetime_filter(filter_)
                 else:
                     datetime.datetime.strptime(filter_['val'], '%Y-%m-%d')
                     return generate_datetime_filter(filter_)
@@ -235,6 +248,13 @@ class FlaskRestlessFilterSchema(Schema):
 
 
 class FlaskRestlessVulnerabilityFilterSchema(FlaskRestlessFilterSchema):
+    valid_relationship = {
+        'host': Host,
+        'services': Service,
+        'workspace': Workspace,
+        'creator': User
+    }
+
     def _model_class(self):
         return VulnerabilityWeb
 

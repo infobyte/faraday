@@ -476,3 +476,28 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
 
         creds = Credential.query.filter_by(workspace=workspace).all()
         assert len(creds) == 7
+
+    def test_delete_workspace_cascades_credentials(self, test_client, session):
+        """When a workspace is deleted, credentials in that workspace must be deleted as well."""
+        from tests.factories import WorkspaceFactory
+        # Create a workspace and some credentials inside it
+        ws = WorkspaceFactory.create()
+        session.add(ws)
+        session.commit()
+
+        cred1 = CredentialFactory.create(workspace=ws)
+        cred2 = CredentialFactory.create(workspace=ws)
+        session.add_all([cred1, cred2])
+        session.commit()
+
+        # Ensure credentials exist
+        creds_before = Credential.query.filter_by(workspace=ws).all()
+        assert len(creds_before) == 2
+
+        # Delete the workspace via API
+        res = test_client.delete(f'/v3/ws/{ws.name}')
+        assert res.status_code in (200, 204)
+
+        # Credentials must be deleted from DB
+        creds_after = Credential.query.filter_by(workspace=ws).all()
+        assert len(creds_after) == 0

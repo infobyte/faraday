@@ -2256,7 +2256,6 @@ class Credential(Metadata):
     workspace = relationship('Workspace', backref=backref('credentials', passive_deletes=True),
                             foreign_keys=[workspace_id], )
 
-
     __table_args__ = (
         UniqueConstraint('username', 'password', 'endpoint', 'workspace_id',
                          name='uix_credential_username_password_endpoint_workspace'),

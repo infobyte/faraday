@@ -609,7 +609,11 @@ class QueryBuilder:
                 # For Python >= 3.11
                 numargs = len(inspect.getfullargspec(opfunc).args)
             # raises AttributeError if `fieldname` or `relation` does not exist
-            field = getattr(model, relation or fieldname)
+            if relation:
+                # For relationship queries, get the relationship field first
+                field = getattr(model, relation)
+            else:
+                field = getattr(model, fieldname)
             # each of these will raise a TypeError if the wrong number of arguments
             # is supplied to `opfunc`.
             if numargs == 1:
@@ -623,7 +627,11 @@ class QueryBuilder:
                     'creator': 'username',
                 }
                 if hasattr(field, 'prop') and hasattr(getattr(field, 'prop'), 'entity'):
-                    field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
+                    # For relationship fields, get the field from the related entity
+                    if relation:
+                        field = getattr(field.comparator.entity.class_, map_attr.get(fieldname, fieldname))
+                    else:
+                        field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
 
                 return opfunc(field, argument)
             return opfunc(field, argument, fieldname)
@@ -755,7 +763,7 @@ class QueryBuilder:
 
         filters = [filt for filt in filters_generator if filt is not None]
 
-        # Check if it is necessary to join the user's table
+        # Check if it is necessary to join relationship tables for filters
         if model.__tablename__ != User.__tablename__:
             for filter in filters:
                 if isinstance(filter, BinaryExpression):

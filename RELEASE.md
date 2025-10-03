@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+5.17.0 [Oct 3rd, 2025]:
+---
+ * [ADD] Update stats for hosts and workspaces from failed commands on server start, ensuring data consistency. #7935
+ * [MOD] Fixed vulnerability filtering by range on status history. #8025
+
 5.16.0 [Aug 27th, 2025]:
 ---
  * [ADD] Implemented `range` operator for date fields in filters. #7990

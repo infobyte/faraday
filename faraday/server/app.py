@@ -9,7 +9,6 @@ import datetime
 import logging
 import os
 import re
-
 import string
 import sys
 from configparser import (
@@ -51,8 +50,9 @@ from sqlalchemy.pool import QueuePool
 
 # Local application imports
 import faraday.server.config
-from faraday.server.config import faraday_server
 import faraday.server.events
+from faraday.server.api.modules.swagger import swagger_api
+from faraday.server.config import faraday_server
 from faraday.server.config import (
     CONST_FARADAY_HOME_PATH,
     LOCAL_CONFIG_FILE,
@@ -66,7 +66,7 @@ from faraday.server.models import (
 from faraday.server.utils.ping import ping_home_background_task
 
 from faraday.server.utils.reports_processor import reports_manager_background_task
-from faraday.server.api.modules.swagger import swagger_api
+from faraday.server.utils.command import schedule_update_failed_command_stats
 from faraday.server.utils.invalid_chars import remove_null_characters
 from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.websockets.dispatcher import remove_sid
@@ -603,6 +603,8 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         from faraday.server.threads.crontab import CronTab  # pylint: disable=import-outside-toplevel
         agents_crontab = CronTab(app=app)
         agents_crontab.start()
+
+        schedule_update_failed_command_stats()
     return app
 
 

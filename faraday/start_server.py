@@ -28,6 +28,7 @@ from faraday.server.models import db, Workspace
 from faraday.server.utils import daemonize
 from faraday.server.config import faraday_server as server_config
 from faraday.server.utils.ping import stop_ping_event
+from faraday.server.tasks import update_failed_command_stats
 from faraday.server.utils.reports_processor import stop_reports_event
 import sh
 
@@ -175,6 +176,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--update_stats', action='store_true', help='Updates host and workspace stats of failed commands')
     parser.add_argument('--port', type=int, help='Overides server.ini port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
     parser.add_argument('-v', '--version', action='version', version=f'Faraday v{faraday.__version__}')
@@ -190,10 +192,11 @@ def main():
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
     args.port = faraday.server.config.faraday_server.port = args.port or \
-            faraday.server.config.faraday_server.port or 5985
+                                                            faraday.server.config.faraday_server.port or 5985
     if args.bind_address:
         faraday.server.config.faraday_server.bind_address = args.bind_address
-
+    if args.update_stats:
+        update_failed_command_stats.delay()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or faraday.server.config.faraday_server.bind_address,
                               int(args.port or faraday.server.config.faraday_server.port)))

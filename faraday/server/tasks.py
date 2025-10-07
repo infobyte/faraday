@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List
 
 from celery import group, chord
@@ -16,6 +16,7 @@ from faraday.server.models import (
     db,
     Workspace,
     Command,
+    CommandObject,
     Service,
     Host,
     VulnerabilityGeneric,
@@ -252,8 +253,70 @@ def calc_vulnerability_stats(host_id: int) -> None:
 
     for severity in severities:
         severities_dict[severity_model_names[severity[1]]] = severity[0]
-
     logger.debug(f"Host vulns stats {severities_dict}")
 
     db.session.query(Host).filter(Host.id == host_id).update(severities_dict)
     db.session.commit()
+
+
+@celery.task()
+def update_failed_command_stats(debouncer=None):
+    """
+    Updates host stats for commands that have no end date and were created
+    within the last 7 days. Skips old unfinished commands.
+    It finds all persistent hosts created by these failed commands and
+    triggers a stats update for their workspaces.
+    """
+    try:
+        logger.info("Updating failed command stats")
+
+        now = datetime.utcnow()
+        seven_days_ago = now - timedelta(days=7)
+
+        failed_commands_ids = [
+            command for (command,) in db.session.query(Command.id)
+            .filter(Command.end_date.is_(None), Command.create_date > seven_days_ago)
+            .all()
+        ]
+
+        if not failed_commands_ids:
+            logger.info("No failed commands found, skipping stats update")
+            return
+
+        hosts_ids = [
+            host for (host,) in db.session.query(CommandObject.object_id)
+            .filter(CommandObject.command_id.in_(failed_commands_ids),
+                    CommandObject.object_type == 'host',
+                    CommandObject.created_persistent.is_(True))
+            .distinct()
+            .all()
+        ]
+
+        if not hosts_ids:
+            logger.info("No hosts created by failed commands, skipping stats update")
+            return
+
+        workspaces_ids = [
+            workspace for (workspace,) in db.session.query(Host.workspace_id)
+            .filter(Host.id.in_(hosts_ids))
+            .distinct()
+            .all()
+        ]
+
+        logger.info(f"Found {len(hosts_ids)} hosts created by failed commands")
+        kwargs = {
+            'hosts': hosts_ids,
+            'services': [],
+            'workspace_ids': workspaces_ids,
+            'sync': True,
+        }
+
+        if faraday_server.celery_enabled:
+            update_host_stats.delay(**kwargs)
+        else:
+            kwargs["debouncer"] = debouncer
+            update_host_stats(**kwargs)
+    except Exception as e:
+        logger.error(f"Failed to update command stats: {e}")
+    else:
+        logger.info("Stats update complete")

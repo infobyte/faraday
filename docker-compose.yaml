@@ -11,7 +11,7 @@ services:
     ports:
       - '5432'
     volumes:
-      - "db:/var/lib/postgresql/data:rw"
+      - "db:/var/lib/postgresql/data:rw,z"
   redis:
     image: 'redis:6.2-alpine'
     container_name: faraday_redis
@@ -23,7 +23,7 @@ services:
     container_name: faraday_app
     entrypoint: "/entrypoint.sh"
     volumes:
-     - "$HOME/.faraday:/home/faraday/.faraday:rw"
+     - "$HOME/.faraday:/home/faraday/.faraday:rw,z"
     environment:
       - PGSQL_USER=postgres
       - PGSQL_PASSWD=postgres

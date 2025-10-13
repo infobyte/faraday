@@ -2253,7 +2253,8 @@ class Credential(Metadata):
                                    lazy='selectin')
 
     workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
-    workspace = relationship('Workspace', backref='credentials', foreign_keys='Credential.workspace_id')
+    workspace = relationship('Workspace', backref=backref('credentials', passive_deletes=True),
+                            foreign_keys=[workspace_id], )
 
     __table_args__ = (
         UniqueConstraint('username', 'password', 'endpoint', 'workspace_id',

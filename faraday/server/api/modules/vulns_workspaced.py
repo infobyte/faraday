@@ -10,7 +10,7 @@ from logging import getLogger
 
 # Related third party imports
 from flask import Blueprint, abort, request
-from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
+from sqlalchemy.orm import joinedload, selectin_polymorphic, selectinload, undefer, noload
 
 # Local application imports
 from faraday.server.api.base import (

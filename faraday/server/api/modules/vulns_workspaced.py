@@ -61,11 +61,6 @@ class VulnerabilityWorkspacedView(
         """
         Eager hostnames loading.
         This is too complex to get_joinedloads, so I have to override the function.
-        
-        Performance optimization: Use selectinload for many-to-many relationships
-        with potentially large collections (CVEs, tags, references, etc.) to avoid
-        massive Cartesian products in JOINs. Tested improvement: 18.5x faster for 
-        vulnerabilities with 150 CVEs (3.7s -> 0.2s)
         """
         query = super()._get_eagerloaded_query(*args, **kwargs)
         options = [

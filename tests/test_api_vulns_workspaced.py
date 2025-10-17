@@ -4067,11 +4067,11 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
     def test_vulnerability_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
-        
+
         host = HostFactory.create(workspace=workspace)
         session.add(host)
         session.commit()
-        
+
         vuln = VulnerabilityFactory.create(
             workspace=workspace,
             host=host,
@@ -4080,33 +4080,33 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         )
         session.add(vuln)
         session.commit()
-        
+
         for i in range(150):
             cve = CVE(name=f'CVE-2024-{10000 + i}')
             vuln.cve_instances.add(cve)
         session.commit()
-        
+
         session.expire_all()
-        
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
-        
+
         assert res.status_code == 200
         queries = get_debug_queries()
         total_time = sum(q.duration for q in queries)
-        
+
         assert len(queries) <= 22, f"Too many queries: {len(queries)}"
         assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-        
+
         slow_queries = [q for q in queries if q.duration > 0.5]
         assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
 
     def test_vulnerability_list_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
-        
+
         host = HostFactory.create(workspace=workspace)
         session.add(host)
         session.commit()
-        
+
         for vuln_idx in range(5):
             vuln = VulnerabilityFactory.create(
                 workspace=workspace,
@@ -4116,33 +4116,33 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             )
             session.add(vuln)
             session.commit()
-            
+
             for i in range(20):
                 cve = CVE(name=f'CVE-2024-{vuln_idx * 1000 + i}')
                 vuln.cve_instances.add(cve)
-        
+
         session.commit()
         session.expire_all()
-        
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
-        
+
         assert res.status_code == 200
         queries = get_debug_queries()
         total_time = sum(q.duration for q in queries)
-        
+
         assert len(queries) <= 25, f"Too many queries: {len(queries)}"
         assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-        
+
         slow_queries = [q for q in queries if q.duration > 0.5]
         assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
 
     def test_vulnerability_without_cves_baseline_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
-        
+
         host = HostFactory.create(workspace=workspace)
         session.add(host)
         session.commit()
-        
+
         vuln = VulnerabilityFactory.create(
             workspace=workspace,
             host=host,
@@ -4152,13 +4152,13 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.add(vuln)
         session.commit()
         session.expire_all()
-        
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
-        
+
         assert res.status_code == 200
         queries = get_debug_queries()
         total_time = sum(q.duration for q in queries)
-        
+
         assert len(queries) <= 15, f"Too many queries: {len(queries)}"
         assert total_time < 0.5, f"Baseline query time too slow: {total_time:.3f}s"
 

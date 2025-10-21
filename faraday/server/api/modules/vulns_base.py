@@ -1091,10 +1091,10 @@ class VulnerabilityView(
 
         if 'group_by' not in filters:
             options = [
-                joinedload('cve_instances'),
-                joinedload('owasp'),
-                joinedload('cwe'),
-                joinedload(VulnerabilityGeneric.tags),
+                selectinload('cve_instances'),
+                selectinload('owasp'),
+                selectinload('cwe'),
+                selectinload(VulnerabilityGeneric.tags),
                 joinedload('host'),
                 joinedload('service'),
                 joinedload('creator'),
@@ -1108,7 +1108,7 @@ class VulnerabilityView(
             ]
             if is_csv:
                 options = options + [
-                    joinedload('policy_violation_instances'),
+                    selectinload('policy_violation_instances'),
                     selectinload('refs')
                 ]
 

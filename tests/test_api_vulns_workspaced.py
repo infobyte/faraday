@@ -4090,8 +4090,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
-        assert res.status_code == 200
         queries = get_debug_queries()
+        assert res.status_code == 200
         total_time = sum(q.duration for q in queries)
 
         assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
@@ -4125,8 +4125,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
 
-        assert res.status_code == 200
         queries = get_debug_queries()
+        assert res.status_code == 200
         total_time = sum(q.duration for q in queries)
 
         assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
@@ -4153,8 +4153,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
-        assert res.status_code == 200
         queries = get_debug_queries()
+        assert res.status_code == 200
         total_time = sum(q.duration for q in queries)
 
         assert total_time < 0.5, f"Baseline query time too slow: {total_time:.3f}s"

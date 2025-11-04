@@ -8,7 +8,7 @@ from random import choice
 from re import findall
 from string import ascii_uppercase, digits
 from time import time
-from typing import Type
+from typing import Type, list
 
 # Related third party imports
 from cvss import CVSS2, CVSS3, CVSS4
@@ -247,7 +247,7 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
 
 
 def bulk_create(ws: Workspace,
-                command: [Command],
+                command: list[Command],
                 data: dict,
                 data_already_deserialized: bool = False,
                 set_end_date: bool = True):

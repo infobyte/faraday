@@ -8,7 +8,7 @@ from random import choice
 from re import findall
 from string import ascii_uppercase, digits
 from time import time
-from typing import Type
+from typing import Type, list
 
 # Related third party imports
 from cvss import CVSS2, CVSS3, CVSS4
@@ -247,7 +247,7 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
 
 
 def bulk_create(ws: Workspace,
-                command: [Command],
+                command: list[Command],
                 data: dict,
                 data_already_deserialized: bool = False,
                 set_end_date: bool = True):
@@ -342,32 +342,73 @@ def _create_host(ws, host_data, command: dict):
 
     start_time_vulns = time()
     total_vulns = len(_vulns)
-    host_vulns_created = []
+
     if total_vulns > 0:
         logger.debug(f"Needs to create {total_vulns} vulns...")
-        processed_data = {}
-        for vuln_data in _vulns:
-            logger.debug("Creating vulnerability ")
-            logger.debug(vuln_data)
-            host_vuln_dict, vuln_id = _create_hostvuln(ws, host, vuln_data, command)
 
-            updated_processed_data = host_vuln_dict.get(vuln_id, None)
-            if not updated_processed_data:
-                logger.error(f"Vuln data for {vuln_id} not found")
-            logger.debug("UPDATED PROC DATA")
-            logger.debug(updated_processed_data)
-            processed_data.update(host_vuln_dict)
+        if faraday_server.celery_enabled:
+            # Process vulnerabilities in chunks of 100
+            from faraday.server.tasks import create_vulnerabilities_task
 
-            updated_vuln_data = updated_processed_data.get('vuln_data', None)
-            if not updated_vuln_data:
-                logger.error(f"Vuln data for {vuln_id} not found")
-            logger.debug("UPDATED VULN DATA")
-            logger.debug(updated_vuln_data)
-            host_vulns_created.append(updated_vuln_data)
+            # Use generator expression to avoid loading all vulnerabilities into memory at once
+            chunk_size = 100
+            results = []
 
-        _result = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
-        created_updated_count['created'] += _result['created']
-        created_updated_count['updated'] += _result['updated']
+            # Process vulnerabilities in chunks
+            for i in range(0, total_vulns, chunk_size):
+                chunk = _vulns[i:i + chunk_size]
+                logger.debug(f"Processing vulnerability chunk {i//chunk_size + 1} with {len(chunk)} vulnerabilities")
+
+                # Send chunk to celery task
+                result = create_vulnerabilities_task.delay(
+                    ws.id,
+                    command,
+                    host.id,
+                    chunk
+                )
+                results.append(result)
+
+            # Wait for all tasks to complete and collect results
+            for result in results:
+                task_result = result.get()  # This blocks until the task is complete
+                created_updated_count['created'] += task_result.get('created', 0)
+                created_updated_count['updated'] += task_result.get('updated', 0)
+
+            # Clear references to free memory
+            del results
+            del _vulns
+        else:
+            # Process vulnerabilities in the original way for non-celery mode
+            host_vulns_created = []
+            processed_data = {}
+
+            for vuln_data in _vulns:
+                logger.debug("Creating vulnerability ")
+                logger.debug(vuln_data)
+                host_vuln_dict, vuln_id = _create_hostvuln(ws, host, vuln_data, command)
+
+                updated_processed_data = host_vuln_dict.get(vuln_id, None)
+                if not updated_processed_data:
+                    logger.error(f"Vuln data for {vuln_id} not found")
+                logger.debug("UPDATED PROC DATA")
+                logger.debug(updated_processed_data)
+                processed_data.update(host_vuln_dict)
+
+                updated_vuln_data = updated_processed_data.get('vuln_data', None)
+                if not updated_vuln_data:
+                    logger.error(f"Vuln data for {vuln_id} not found")
+                logger.debug("UPDATED VULN DATA")
+                logger.debug(updated_vuln_data)
+                host_vulns_created.append(updated_vuln_data)
+
+            _result = insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=ws.id)
+            created_updated_count['created'] += _result['created']
+            created_updated_count['updated'] += _result['updated']
+
+            # Clear references to free memory
+            del host_vulns_created
+            del processed_data
+            del _vulns
 
     logger.debug(f"Host vulnerabilities creation took {time() - start_time_vulns}."
                  f" Created: {created_updated_count['created']}."
@@ -380,7 +421,23 @@ def _create_host(ws, host_data, command: dict):
 
 
 def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None):
+    """Insert vulnerabilities into the database with memory optimization
+
+    This function inserts vulnerabilities into the database and manages their relationships.
+    It's optimized for memory usage by using generator expressions and explicit memory cleanup.
+
+    Args:
+        host_vulns_created: List of vulnerability data dictionaries
+        processed_data: Dictionary of processed vulnerability data
+        workspace_id: ID of the workspace
+
+    Returns:
+        Dictionary with created and updated counts
+    """
+    # Create the insert statement
     stmt = insert(Vulnerability).values(host_vulns_created)
+
+    # Create the on_conflict_do_update statement
     on_update_stmt = stmt.on_conflict_do_update(
         index_elements=[func.md5(text('name')),
                         func.md5(text('description')),
@@ -424,13 +481,21 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "custom_fields": stmt.excluded.custom_fields
         }
     ).returning(text('id'), text('_tmp_id'))
+
+    # Execute the statement and get the result
     result = db.session.execute(on_update_stmt)
     db.session.commit()
+
+    # Manage relationships and get the total result
     total_result = manage_relationships(
         processed_data,
         result,
         workspace_id=workspace_id
     )
+
+    # Clear references to free memory
+    del host_vulns_created
+
     return total_result
 
 
@@ -464,28 +529,49 @@ def _create_or_update_histogram(histogram: dict = None) -> None:
 
 
 def manage_relationships(processed_data, result, workspace_id=None):
-    references_created = []
-    command_objects_created = []
-    cve_association_created = []
-    owasp_object_created = []
-    cwe_object_created = []
-    policy_object_created = []
+    """Manage relationships between vulnerabilities and other entities with memory optimization
+
+    This function processes relationships between vulnerabilities and other entities,
+    such as references, CVEs, OWASPs, CWEs, and policy violations. It's optimized for
+    memory usage by processing relationships in batches and using explicit memory cleanup.
+
+    Args:
+        processed_data: Dictionary of processed vulnerability data
+        result: Result of the vulnerability insertion
+        workspace_id: ID of the workspace
+
+    Returns:
+        Dictionary with created and updated counts
+    """
+    # Initialize counters and lists
     created = 0
     updated = 0
 
+    # Check if workspace_id is provided
     if not workspace_id:
         logger.error('Workspace id not provided')
-        return
+        return {'created': 0, 'updated': 0}
 
+    # Initialize histogram
     histogram = {'workspace_id': workspace_id, 'date': date.today(), 'high': 0, 'critical': 0, 'medium': 0, 'confirmed': 0}
 
+    # Process relationships in batches to save memory
+    batch_size = 100
+    references_batch = []
+    cve_associations_batch = []
+    command_objects_batch = []
+    owasp_objects_batch = []
+    cwe_objects_batch = []
+    policy_objects_batch = []
+
+    # Process each result
     for r in result:
-        if r[1]:
+        if r[1]:  # Update case
             v_id = r[0]
             data = processed_data.get(r[1], None)
             logger.debug(f"Found conflict {r[0]}/{r[1]}")
-            # Delete from lists
-            logger.debug(f"Data On conflict {data}")
+
+            # Process references
             if data['references']:
                 for reference in data['references']:
                     reference_sequence_id = db.session.execute(
@@ -493,62 +579,134 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     logger.debug(f"Found reference {reference} for vulnerability {v_id}")
                     reference['id'] = reference_sequence_id
                     reference['vulnerability_id'] = v_id
-                    references_created.append(reference)
-            logger.debug(f"Data vulnerability On conflict {data['vuln_data']}")
+                    references_batch.append(reference)
+
+                    # Insert batch if it reaches the batch size
+                    if len(references_batch) >= batch_size:
+                        stmt = insert(VulnerabilityReference).values(references_batch).on_conflict_do_nothing()
+                        db.session.execute(stmt)
+                        references_batch = []
+
             updated += 1
             set_histogram(histogram, data['vuln_data'])
-        else:
+        else:  # Create case
             created += 1
             v_id = r[0]
             data = processed_data.get(v_id, None)
             set_histogram(histogram, data['vuln_data'])
-            logger.debug(f"{data.keys()} all data *************")
-            logger.debug(f"{data['vuln_data'].keys()} all data *************")
+
+            # Process CVE associations
             if data['cve_associations']:
                 for cve_association in data['cve_associations']:
                     logger.debug(f"Found cve_association {cve_association} for vulnerability {r[0]}")
-                    cve_association_created.append(cve_association)
-            logger.debug(f"Processing references for {v_id}")
+                    cve_associations_batch.append(cve_association)
+
+                    # Insert batch if it reaches the batch size
+                    if len(cve_associations_batch) >= batch_size:
+                        stmt = cve_vulnerability_association.insert().values(cve_associations_batch)
+                        db.session.execute(stmt)
+                        cve_associations_batch = []
+
+            # Process references
             if data['references']:
                 for reference in data['references']:
                     reference_sequence_id = db.session.execute(
                         "SELECT nextval('vulnerability_reference_id_seq');").scalar()
                     logger.debug(f"Found reference {reference} for vulnerability {r[0]}")
                     reference['id'] = reference_sequence_id
-                    references_created.append(reference)
-            logger.debug(f"Processing command for {v_id}")
+                    references_batch.append(reference)
+
+                    # Insert batch if it reaches the batch size
+                    if len(references_batch) >= batch_size:
+                        stmt = insert(VulnerabilityReference).values(references_batch).on_conflict_do_nothing()
+                        db.session.execute(stmt)
+                        references_batch = []
+
+            # Process command
             if data['command']:
                 command_object_sequence_id = db.session.execute(
                     "SELECT nextval('command_object_id_seq');").scalar()
                 data['command']['id'] = command_object_sequence_id
-                command_objects_created.append(data['command'])
+                command_objects_batch.append(data['command'])
+
+                # Insert batch if it reaches the batch size
+                if len(command_objects_batch) >= batch_size:
+                    stmt = insert(CommandObject).values(command_objects_batch).on_conflict_do_nothing()
+                    db.session.execute(stmt)
+                    command_objects_batch = []
+
+            # Process OWASP objects
             for owasp_object in data['owasp_objects']:
-                owasp_object_created.append(owasp_object)
+                owasp_objects_batch.append(owasp_object)
+
+                # Insert batch if it reaches the batch size
+                if len(owasp_objects_batch) >= batch_size:
+                    stmt = insert(owasp_vulnerability_association).values(owasp_objects_batch).on_conflict_do_nothing()
+                    db.session.execute(stmt)
+                    owasp_objects_batch = []
+
+            # Process CWE associations
             for cwe_association in data['cwe_associations']:
-                cwe_object_created.append(cwe_association)
+                cwe_objects_batch.append(cwe_association)
+
+                # Insert batch if it reaches the batch size
+                if len(cwe_objects_batch) >= batch_size:
+                    stmt = insert(cwe_vulnerability_association).values(cwe_objects_batch).on_conflict_do_nothing()
+                    db.session.execute(stmt)
+                    cwe_objects_batch = []
+
+            # Process policy violations
             for policy in data['policy_violations_associations']:
-                policy_object_created.append(policy)
-    # TODO: Improve with an iterator
-    if references_created:
-        stmt = insert(VulnerabilityReference).values(references_created).on_conflict_do_nothing()
+                policy_objects_batch.append(policy)
+
+                # Insert batch if it reaches the batch size
+                if len(policy_objects_batch) >= batch_size:
+                    stmt = insert(PolicyViolationVulnerabilityAssociation).values(policy_objects_batch).on_conflict_do_nothing()
+                    db.session.execute(stmt)
+                    policy_objects_batch = []
+
+        # Clear data reference to free memory
+        if r[1]:
+            processed_data.pop(r[1], None)
+        else:
+            processed_data.pop(v_id, None)
+
+    # Insert any remaining batches
+    if references_batch:
+        stmt = insert(VulnerabilityReference).values(references_batch).on_conflict_do_nothing()
         db.session.execute(stmt)
-    if cve_association_created:
-        stmt = cve_vulnerability_association.insert().values(cve_association_created)
+
+    if cve_associations_batch:
+        stmt = cve_vulnerability_association.insert().values(cve_associations_batch)
         db.session.execute(stmt)
-    if command_objects_created:
-        stmt = insert(CommandObject).values(command_objects_created).on_conflict_do_nothing()
+
+    if command_objects_batch:
+        stmt = insert(CommandObject).values(command_objects_batch).on_conflict_do_nothing()
         db.session.execute(stmt)
-    if owasp_object_created:
-        stmt = insert(owasp_vulnerability_association).values(owasp_object_created).on_conflict_do_nothing()
+
+    if owasp_objects_batch:
+        stmt = insert(owasp_vulnerability_association).values(owasp_objects_batch).on_conflict_do_nothing()
         db.session.execute(stmt)
-    if cwe_object_created:
-        stmt = insert(cwe_vulnerability_association).values(cwe_object_created).on_conflict_do_nothing()
+
+    if cwe_objects_batch:
+        stmt = insert(cwe_vulnerability_association).values(cwe_objects_batch).on_conflict_do_nothing()
         db.session.execute(stmt)
-    if policy_object_created:
-        stmt = insert(PolicyViolationVulnerabilityAssociation).values(policy_object_created).on_conflict_do_nothing()
+
+    if policy_objects_batch:
+        stmt = insert(PolicyViolationVulnerabilityAssociation).values(policy_objects_batch).on_conflict_do_nothing()
         db.session.execute(stmt)
+
+    # Update histogram and commit
     _create_or_update_histogram(histogram)
     db.session.commit()
+
+    # Clear references to free memory
+    del references_batch
+    del cve_associations_batch
+    del command_objects_batch
+    del owasp_objects_batch
+    del cwe_objects_batch
+    del policy_objects_batch
 
     return {'created': created, 'updated': updated}
 

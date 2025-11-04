@@ -130,6 +130,74 @@ def create_host_task(workspace_id, command: dict, host):
     return created_objects
 
 
+@celery.task(ignore_result=False, acks_late=True)
+def create_vulnerabilities_task(workspace_id, command: dict, host_id: int, vulnerabilities: list):
+    """Process a chunk of vulnerabilities for a specific host
+
+    This task processes a chunk of vulnerabilities (max 100) for a specific host.
+    It's designed to be memory efficient by processing vulnerabilities in smaller batches.
+
+    Args:
+        workspace_id: ID of the workspace
+        command: Command dictionary with id, tool, and user
+        host_id: ID of the host these vulnerabilities belong to
+        vulnerabilities: List of vulnerability data dictionaries (max 100)
+
+    Returns:
+        Dictionary with created and updated counts
+    """
+    from faraday.server.api.modules.bulk_create import _create_hostvuln  # pylint: disable=import-outside-toplevel
+
+    created_updated_count = {'created': 0, 'updated': 0}
+    db.engine.dispose()
+
+    workspace = Workspace.query.filter_by(id=workspace_id).first()
+    if not workspace:
+        logger.error("Workspace %s not found", workspace_id)
+        return created_updated_count
+
+    host = Host.query.filter_by(id=host_id, workspace_id=workspace_id).first()
+    if not host:
+        logger.error(f"Host with ID {host_id} not found in workspace {workspace_id}")
+        return created_updated_count
+
+    try:
+        logger.debug(f"Processing {len(vulnerabilities)} vulnerabilities for host {host.ip}")
+
+        processed_data = {}
+        for vuln_data in vulnerabilities:
+            host_vuln_dict, vuln_id = _create_hostvuln(workspace, host, vuln_data, command)
+
+            updated_processed_data = host_vuln_dict.get(vuln_id, None)
+            if not updated_processed_data:
+                logger.error(f"Vuln data for {vuln_id} not found")
+
+            processed_data.update(host_vuln_dict)
+
+        # Insert vulnerabilities in a single batch
+        from faraday.server.api.modules.bulk_create import insert_vulnerabilities  # pylint: disable=import-outside-toplevel
+
+        host_vulns = []
+        for vuln_id, data in processed_data.items():
+            vuln_data = data.get('vuln_data')
+            if vuln_data:
+                host_vulns.append(vuln_data)
+
+        if host_vulns:
+            result = insert_vulnerabilities(host_vulns, processed_data, workspace_id=workspace_id)
+            created_updated_count['created'] += result.get('created', 0)
+            created_updated_count['updated'] += result.get('updated', 0)
+
+        # Clear memory
+        del processed_data
+        del host_vulns
+
+    except Exception as e:
+        logger.error(f"Could not process vulnerabilities for host {host.ip}: {e}")
+
+    return created_updated_count
+
+
 @celery.task(ignore_result=False)
 def pre_process_report_task(workspace_name: str, command_id: int, file_path: str,
                             plugin_id: Optional[int], user_id: Optional[int], ignore_info: bool,

@@ -1171,6 +1171,8 @@ class Command(Metadata):
         back_populates="command"
     )
 
+    tasks = Column(JSONType, nullable=True, default=[])
+
     @property
     def parent(self):
         return

@@ -1,10 +1,10 @@
 # Standard library imports
+import json
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from http.client import BAD_REQUEST as HTTP_BAD_REQUEST, CREATED as HTTP_CREATED, NOT_FOUND as HTTP_NOT_FOUND
 from json import dump as json_dump
 from logging import getLogger
-from math import ceil
 from random import choice
 from re import findall
 from string import ascii_uppercase, digits
@@ -247,6 +247,10 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
     return True, obj
 
 
+def get_host_size(host: list) -> int:
+    return len(json.dumps(host).encode('utf-8'))
+
+
 def bulk_create(ws: Workspace,
                 command: [Command],
                 data: dict,
@@ -269,18 +273,27 @@ def bulk_create(ws: Workspace,
         logger.debug(f"Needs to create {hosts_to_create} hosts...")
 
         if faraday_server.celery_enabled:
-            # This will fix redis broken pipe
-            loops = ceil(hosts_to_create / 100)
+            _hosts_to_create = []
+            _current_size = 0
             tasks = []
-            from_host = 0
-            to_host = 0
-            for loop in range(loops):
-                to_host += 300
-                task = process_report_task.delay(workspace_id, command_dict, data['hosts'][from_host:to_host])
-                from_host = loop * 300
-                tasks.append(task)
+            for host in data['hosts']:
+                logger.info(f"Current size of Message: {_current_size}")
+                _host_size = get_host_size(host)
+                if (_current_size + _host_size) < faraday_server.max_task_message_size:
+                    logger.debug(f"Appending host {host['ip']}")
+                    _hosts_to_create.append(host)
+                    _current_size += _host_size
+                else:
+                    logger.debug("Sending task to celery")
+                    task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create)
+                    tasks.append(task.id)
+                    _current_size = _host_size
+                    _hosts_to_create = [host]
+            # Processing the tail of hosts
+            if _hosts_to_create:
+                task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create)
+                tasks.append(task.id)
             return tasks
-            # return process_report_task.delay(workspace_id, command_dict, data['hosts'])
 
         # just in case celery is not configured
         for host in data['hosts']:

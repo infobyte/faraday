@@ -47,6 +47,7 @@ class CommandSchema(AutoSchema):
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
+    tasks = fields.List(fields.String(), attribute='tasks')
 
     @staticmethod
     def load_itime(value):
@@ -82,7 +83,8 @@ class CommandSchema(AutoSchema):
     class Meta:
         model = Command
         fields = ('_id', 'command', 'duration', 'itime', 'ip', 'hostname',
-                  'params', 'user', 'creator', 'workspace', 'tool', 'import_source', 'metadata')
+                  'params', 'user', 'creator', 'workspace', 'tool', 'import_source',
+                  'metadata', 'tasks')
 
 
 class CommandView(PaginatedMixin, ReadWriteWorkspacedView):

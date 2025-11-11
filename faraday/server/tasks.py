@@ -9,6 +9,7 @@ from sqlalchemy import (
     or_,
     and_,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
 from faraday.server.config import faraday_server
 from faraday.server.extensions import celery
@@ -94,6 +95,21 @@ def process_report_task(workspace_id: int, command: dict, hosts):
     logger.info("Task to execute %s", len(g))
     group_of_tasks = group(g)
     ret = chord(group_of_tasks)(callback)
+
+    if ret.id:
+        #  We save the task id to check the status later through the command's API
+        db.session.query(Command).filter(Command.id == command['id']).update(
+            {
+                Command.tasks: func.coalesce(
+                    func.cast(Command.tasks, JSONB),
+                    func.cast('[]', JSONB)
+                ).op('||')(
+                    func.cast(func.concat('["', ret.id, '"]'), JSONB)
+                )
+            },
+            synchronize_session=False
+        )
+        db.session.commit()
 
     return ret
 

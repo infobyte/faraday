@@ -59,7 +59,8 @@ class TestListGlobalCommandView(ReadOnlyAPITests):
                 'tool',
                 'import_source',
                 'creator',
-                'metadata'
+                'metadata',
+                'tasks'
             ]
             assert set(object_properties) == set(command['value'].keys())
 

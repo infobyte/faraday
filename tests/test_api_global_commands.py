@@ -71,7 +71,6 @@ class TestListGlobalCommandView(ReadOnlyAPITests):
             end_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 690839)
         )
         res = test_client.get(self.url())
-        print(res.json['commands'][0])
         assert res.status_code == 200
         assert res.json['commands'][-1]['value']['duration'] == 0.442406
 

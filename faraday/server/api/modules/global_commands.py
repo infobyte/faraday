@@ -50,26 +50,13 @@ class GlobalCommandView(ReadOnlyView, PaginatedMixin):
     order_field = Command.start_date.desc()
 
     def get(self, object_id, **kwargs):
-        """
-        Fetches and processes a command by its unique identifier.
-
-        This method retrieves the specified command using its `object_id`, checks
-        if it exists, and enriches it with task status information. If the command
-        does not exist, it will return None.
-
-        Args:
-            object_id: Identifier of the command to be fetched.
-            **kwargs: Additional keyword arguments to be passed to the parent `get` method.
-
-        Returns:
-            dict: A dictionary containing the command's information with task status
-            appended, or None if the command does not exist.
-        """
         command = super().get(object_id, **kwargs)
         if not command:
             return None
         command['tasks'] = get_command_task_status(command)
         return command
+
+    get.__doc__ = ReadOnlyView.get.__doc__
 
     def _envelope_list(self, objects, pagination_metadata=None):
         commands = []

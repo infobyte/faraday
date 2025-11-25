@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[ADD] Added the max_task_message_size config option to prevent oversized messages from being enqueued for later processing. #8046"
+  "md": "[ADD] Added the max_task_message_size config option to prevent oversized messages from being enqueued for later processing. #8061"
 }

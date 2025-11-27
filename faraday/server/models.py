@@ -2988,6 +2988,7 @@ class ExecutiveReport(Metadata):
     border_size = Column(Integer, default=3, nullable=True)
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
+    is_preview = Column(Boolean, default=False, nullable=False)
 
     workspaces = relationship(
         'Workspace',

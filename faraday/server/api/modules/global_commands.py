@@ -3,8 +3,10 @@
 # See the file 'doc/LICENSE' for the license information
 import logging
 
+from celery.result import AsyncResult
 from flask import Blueprint
 
+from faraday.server.extensions import celery
 from faraday.server.api.base import (
     ReadOnlyView,
     PaginatedMixin
@@ -16,11 +18,45 @@ globalcommands_api = Blueprint('globalcommands_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+def get_command_task_status(command: dict) -> list:
+    """
+    Retrieves the status of tasks associated with the given command.
+
+    This function extracts tasks from the provided command dictionary and retrieves
+    their respective statuses using asynchronous operations. The resulting list
+    contains the status of each task, structured as dictionaries.
+
+    Arguments:
+        command (dict): A dictionary representing the command. Expects a 'tasks'
+            key containing a list of task identifiers.
+
+    Returns:
+        list: A list of dictionaries where each dictionary maps a task identifier to
+        its status. Returns an empty list if no tasks are found in the command.
+    """
+    _tasks = command.get('tasks', [])
+    if not _tasks:
+        return []
+    task_status = []
+    for task in _tasks:
+        task_status.append({task: AsyncResult(task, app=celery).status})
+    return task_status
+
+
 class GlobalCommandView(ReadOnlyView, PaginatedMixin):
     route_base = 'global_commands'
     model_class = Command
     schema_class = CommandSchema
     order_field = Command.start_date.desc()
+
+    def get(self, object_id, **kwargs):
+        command = super().get(object_id, **kwargs)
+        if not command:
+            return None
+        command['tasks'] = get_command_task_status(command)
+        return command
+
+    get.__doc__ = ReadOnlyView.get.__doc__
 
     def _envelope_list(self, objects, pagination_metadata=None):
         commands = []

@@ -10,7 +10,13 @@ from logging import getLogger
 
 # Related third party imports
 from flask import Blueprint, abort, request
-from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer, noload
+from sqlalchemy.orm import (
+    joinedload,
+    selectin_polymorphic,
+    selectinload,
+    undefer,
+    noload
+)
 
 # Local application imports
 from faraday.server.api.base import (
@@ -81,17 +87,17 @@ class VulnerabilityWorkspacedView(
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
             undefer(VulnerabilityGeneric.target_host_os),
-            joinedload(VulnerabilityGeneric.tags),
-            joinedload(VulnerabilityGeneric.cwe),
-            joinedload(VulnerabilityGeneric.owasp),
-            joinedload(Vulnerability.owasp),
-            joinedload(VulnerabilityWeb.owasp),
+            selectinload(VulnerabilityGeneric.tags),
+            selectinload(VulnerabilityGeneric.cwe),
+            selectinload(VulnerabilityGeneric.owasp),
+            selectinload(Vulnerability.owasp),
+            selectinload(VulnerabilityWeb.owasp),
 
-            joinedload('refs'),
-            joinedload('cve_instances'),
-            joinedload('policy_violation_instances'),
+            selectinload('refs'),
+            selectinload('cve_instances'),
+            selectinload('policy_violation_instances'),
 
-            joinedload(VulnerabilityGeneric.credentials),
+            selectinload(VulnerabilityGeneric.credentials),
         ]
 
         if request.args.get('get_evidence'):

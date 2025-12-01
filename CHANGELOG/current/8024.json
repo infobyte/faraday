@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed the issue with credentials cascade during a workspace deletion. #8024"
+}

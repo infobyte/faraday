@@ -43,6 +43,7 @@ LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config' / 'server.ini'
 LOCAL_REPORTS_FOLDER = CONST_FARADAY_HOME_PATH / 'uploaded_reports'
 LOCAL_OPENAPI_FILE = CONST_FARADAY_HOME_PATH / 'openapi' / 'faraday_swagger.json'
 CELERY_LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'celery.log'
+DEFAULT_MAX_QUEUE_MESSAGE_SIZE = 5 * 1024 * 1024  # 5MB
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 
@@ -151,6 +152,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.celery_enabled = True
         self.celery_broker_url = "redis://127.0.0.1:6379/0"
         self.celery_backend_url = "redis://127.0.0.1:6379/0"
+        self.max_task_message_size = DEFAULT_MAX_QUEUE_MESSAGE_SIZE
         self.socketio_ping_interval = 60
         self.socketio_ping_timeout = 220
         self.socketio_logger = False

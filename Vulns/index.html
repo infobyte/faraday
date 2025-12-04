@@ -1,0 +1,2276 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Faraday" name="description"/>
+<meta content="Faradaysec" name="author"/>
+<link href="https://faradaysec.com/Vulns/" rel="canonical"/>
+<link href="../Activity-Dashboard/" rel="prev"/>
+<link href="../Vulnerability-Templates-KB/" rel="next"/>
+<link href="../images/favicon.svg" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.0" name="generator"/>
+<title>Vulnerability Management - Faraday</title>
+<link href="../assets/stylesheets/main.618322db.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../stylesheets/faraday_doc.css" rel="stylesheet"/>
+<link href="../stylesheets/hover.css" rel="stylesheet"/>
+<link href="https://unpkg.com/mermaid@8.5.1/dist/mermaid.css" rel="stylesheet"/>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-BEQW65R59H"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-BEQW65R59H",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-BEQW65R59H",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#import-scan-reports">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Faraday" class="md-header__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Faraday
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Vulnerability Management
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Light" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Light">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="dark" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="dark">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Faraday" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+    Faraday
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_1_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../First-Steps/">
+<span class="md-ellipsis">
+    
+  
+    First Steps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Using Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Using Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Workspaces/">
+<span class="md-ellipsis">
+    
+  
+    Workspaces
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Activity-Dashboard/">
+<span class="md-ellipsis">
+    
+  
+    Activity Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Management
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Management
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#import-scan-reports">
+<span class="md-ellipsis">
+      
+        Import Scan Reports
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#create-a-vulnerability">
+<span class="md-ellipsis">
+      
+        Create a Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#edit-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Edit Vulnerabilities
+      
+    </span>
+</a>
+<nav aria-label="Edit Vulnerabilities" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#from-vuln-preview">
+<span class="md-ellipsis">
+      
+        From Vuln Preview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#edit-button">
+<span class="md-ellipsis">
+      
+        Edit Button
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#edit-multiple-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Edit Multiple Vulnerabilities
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#delete-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Delete Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#confirmed-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Confirmed Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tags">
+<span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+</a>
+<nav aria-label="Tags" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-tag-vulnerabilities">
+<span class="md-ellipsis">
+      
+        How to Tag Vulnerabilities
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#search-and-filter-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Search and Filter Vulnerabilities
+      
+    </span>
+</a>
+<nav aria-label="Search and Filter Vulnerabilities" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-filter">
+<span class="md-ellipsis">
+      
+        How To Filter
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#filter-fields">
+<span class="md-ellipsis">
+      
+        Filter Fields
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#saved-filters-and-quick-filters">
+<span class="md-ellipsis">
+      
+        Saved Filters and Quick Filters
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#download-a-filtered-workspace">
+<span class="md-ellipsis">
+      
+        Download a Filtered Workspace
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#context-menu">
+<span class="md-ellipsis">
+      
+        Context Menu
+      
+    </span>
+</a>
+<nav aria-label="Context Menu" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#single-selection-context-menu">
+<span class="md-ellipsis">
+      
+        Single selection context menu
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#multiple-selection-context-menu">
+<span class="md-ellipsis">
+      
+        Multiple selection context menu
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulnerability-Templates-KB/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability KB
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Assets-and-Services-v4/">
+<span class="md-ellipsis">
+    
+  
+    Assets and Services
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reports
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Report-v4/">
+<span class="md-ellipsis">
+    
+  
+    What is Report
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../How-to-build-your-template/">
+<span class="md-ellipsis">
+    
+  
+    How to Build Your Own Template
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Jinja2-context/">
+<span class="md-ellipsis">
+    
+  
+    Jinja2 Context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../import/">
+<span class="md-ellipsis">
+    
+  
+    Importing
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Dashboard-v4/">
+<span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Custom-Fields-v4/">
+<span class="md-ellipsis">
+    
+  
+    Custom Attributes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_9" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_9_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Notifications
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications/">
+<span class="md-ellipsis">
+    
+  
+    Notifications Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Slack/">
+<span class="md-ellipsis">
+    
+  
+    Configure Slack Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Planner/">
+<span class="md-ellipsis">
+    
+  
+    Planner
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_11_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-gitlab/">
+<span class="md-ellipsis">
+    
+  
+    GitLab
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-jira/">
+<span class="md-ellipsis">
+    
+  
+    Jira
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-solarwinds/">
+<span class="md-ellipsis">
+    
+  
+    SolarWinds
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicenow/">
+<span class="md-ellipsis">
+    
+  
+    ServiceNow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicedesk/">
+<span class="md-ellipsis">
+    
+  
+    ServiceDesk
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_12" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_12" id="__nav_3_12_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_12_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_12">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP/">
+<span class="md-ellipsis">
+    
+  
+    LDAP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP-OKTA/">
+<span class="md-ellipsis">
+    
+  
+    LDAP with OKTA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_12_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_12_3" id="__nav_3_12_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    SSO
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_12_3_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_3_12_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    SSO
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML/">
+<span class="md-ellipsis">
+    
+  
+    Faraday configuration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Auth0/">
+<span class="md-ellipsis">
+    
+  
+    Auth0 integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Google/">
+<span class="md-ellipsis">
+    
+  
+    Google integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Okta/">
+<span class="md-ellipsis">
+    
+  
+    Okta integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Azure/">
+<span class="md-ellipsis">
+    
+  
+    Azure integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../2-Factor-Authentication/">
+<span class="md-ellipsis">
+    
+  
+    2nd Factor
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Architecture/">
+<span class="md-ellipsis">
+    
+  
+    Arch
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_14">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../api-swagger/">
+<span class="md-ellipsis">
+    
+  
+    Openapi
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Server/">
+<span class="md-ellipsis">
+    
+  
+    API Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Token/">
+<span class="md-ellipsis">
+    
+  
+    API Token
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_15" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_15" id="__nav_3_15_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_15_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_15">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday Manage
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage-Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage Settings
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_16" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_16" id="__nav_3_16_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Extras
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_16_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_16">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Extras
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Burp-proxy-extender/">
+<span class="md-ellipsis">
+    
+  
+    Burp
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../beef/">
+<span class="md-ellipsis">
+    
+  
+    Beef
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Automation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../agents-v4/">
+<span class="md-ellipsis">
+    
+  
+    About Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1_2" id="__nav_4_1_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agent List
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_2_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_4_1_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agent List
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-appscan/">
+<span class="md-ellipsis">
+    
+  
+    AppScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-arachni/">
+<span class="md-ellipsis">
+    
+  
+    Arachni
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-burp/">
+<span class="md-ellipsis">
+    
+  
+    Burp Suite
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-cybervision/">
+<span class="md-ellipsis">
+    
+  
+    Cyber Vision
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-codeql/">
+<span class="md-ellipsis">
+    
+  
+    Code QL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-crackmapexec/">
+<span class="md-ellipsis">
+    
+  
+    CrackMapExec
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-dependabot/">
+<span class="md-ellipsis">
+    
+  
+    Dependabot
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gitgub-secrets/">
+<span class="md-ellipsis">
+    
+  
+    Github Secrets
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gvm-openvas/">
+<span class="md-ellipsis">
+    
+  
+    GVM OpenVAS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-insightvm/">
+<span class="md-ellipsis">
+    
+  
+    InsightVM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nessus/">
+<span class="md-ellipsis">
+    
+  
+    Nessus
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nikto2/">
+<span class="md-ellipsis">
+    
+  
+    Nikto 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nmap/">
+<span class="md-ellipsis">
+    
+  
+    NMap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nuclei/">
+<span class="md-ellipsis">
+    
+  
+    Nuclei
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-openvas-legacy/">
+<span class="md-ellipsis">
+    
+  
+    OpenVAS Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-qualys/">
+<span class="md-ellipsis">
+    
+  
+    Qualys
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-report-processor/">
+<span class="md-ellipsis">
+    
+  
+    Report Processor
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-shodan2/">
+<span class="md-ellipsis">
+    
+  
+    Shodan 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sonarqube/">
+<span class="md-ellipsis">
+    
+  
+    SonarQube
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sublist3r/">
+<span class="md-ellipsis">
+    
+  
+    Sublist3r
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenableio/">
+<span class="md-ellipsis">
+    
+  
+    TenableIO
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenablesc/">
+<span class="md-ellipsis">
+    
+  
+    TenableSC
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-w3af/">
+<span class="md-ellipsis">
+    
+  
+    W3af
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan/">
+<span class="md-ellipsis">
+    
+  
+    WPScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan-legacy/">
+<span class="md-ellipsis">
+    
+  
+    WPScan Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-zap/">
+<span class="md-ellipsis">
+    
+  
+    Zap
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Scheduling/">
+<span class="md-ellipsis">
+    
+  
+    Scheduler
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Pipelines/">
+<span class="md-ellipsis">
+    
+  
+    Pipelines and jobs
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Installing Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Installing Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Linux/">
+<span class="md-ellipsis">
+    
+  
+    Linux
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Redhat-8/">
+<span class="md-ellipsis">
+    
+  
+    RedHat 8/Centos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Docker/">
+<span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-community/">
+<span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Update/">
+<span class="md-ellipsis">
+    
+  
+    Update
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Install
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Remote-PostgreSQL/">
+<span class="md-ellipsis">
+    
+  
+    Remote PostgreSQL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../NGINX-Setup/">
+<span class="md-ellipsis">
+    
+  
+    NGINX (SSL Config)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Backup-v4/">
+<span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Changelog
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../RELEASE/">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../faraday-cli/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Cli
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_9" type="checkbox"/>
+<label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    For Developers
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_9_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    For Developers
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Basic-plugin-development/">
+<span class="md-ellipsis">
+    
+  
+    Plugin Development
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    FAQs
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Contact-us/">
+<span class="md-ellipsis">
+    
+  
+    Contact Us
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../FAQ/">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Plugin-List-v4/">
+<span class="md-ellipsis">
+    
+  
+    Supported-Plugins
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#import-scan-reports">
+<span class="md-ellipsis">
+      
+        Import Scan Reports
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#create-a-vulnerability">
+<span class="md-ellipsis">
+      
+        Create a Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#edit-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Edit Vulnerabilities
+      
+    </span>
+</a>
+<nav aria-label="Edit Vulnerabilities" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#from-vuln-preview">
+<span class="md-ellipsis">
+      
+        From Vuln Preview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#edit-button">
+<span class="md-ellipsis">
+      
+        Edit Button
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#edit-multiple-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Edit Multiple Vulnerabilities
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#delete-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Delete Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#confirmed-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Confirmed Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tags">
+<span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+</a>
+<nav aria-label="Tags" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-tag-vulnerabilities">
+<span class="md-ellipsis">
+      
+        How to Tag Vulnerabilities
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#search-and-filter-vulnerabilities">
+<span class="md-ellipsis">
+      
+        Search and Filter Vulnerabilities
+      
+    </span>
+</a>
+<nav aria-label="Search and Filter Vulnerabilities" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-filter">
+<span class="md-ellipsis">
+      
+        How To Filter
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#filter-fields">
+<span class="md-ellipsis">
+      
+        Filter Fields
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#saved-filters-and-quick-filters">
+<span class="md-ellipsis">
+      
+        Saved Filters and Quick Filters
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#download-a-filtered-workspace">
+<span class="md-ellipsis">
+      
+        Download a Filtered Workspace
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#context-menu">
+<span class="md-ellipsis">
+      
+        Context Menu
+      
+    </span>
+</a>
+<nav aria-label="Context Menu" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#single-selection-context-menu">
+<span class="md-ellipsis">
+      
+        Single selection context menu
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#multiple-selection-context-menu">
+<span class="md-ellipsis">
+      
+        Multiple selection context menu
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1>Vulnerability Management</h1>
+<p>To view a full list of yours findings you can access the <strong>Vulns</strong> view by clicking the <strong>Vulnerabilities</strong> button <img alt="" src="../images/status_report/vulns_button.png"> on the left menu.</img></p>
+<p><img alt="" src="../images/status_report/status_report-v4.png"/></p>
+<p>The Vulns View provides several options including vulnerability search, filtering and management.</p>
+<p>Personalize this view by adding or removing columns in the <code>Edit Column Order</code> view, where you can select or deselect them from their checkboxes. You can access this view by clicking this button <img alt="" src="../images/status_report/edit_column_button.png"/> in the top right corner.</p>
+<p>Also, you can drag &amp; drop some labels of columns and change their order on the table.</p>
+<p><img alt="" src="../images/status_report/columns-v4.png"/></p>
+<p>These changes will be persisted in your browser from session to session, so you only have to apply them once.</p>
+<p>There are many ways to add vulnerabilities into Faraday, create them manually, import scan reports, with supported tools, Faraday Agents or using Faraday API.</p>
+<h3 id="import-scan-reports">Import Scan Reports<a class="headerlink" href="#import-scan-reports" title="Permanent link">¶</a></h3>
+<p>You can upload a scan report of your favorite tool to Faraday and have a nice look at your findings through the Vulns View. You can see a list of the tools that Faraday supports by clicking on this <a href="../Plugin-List-v4/">link</a></p>
+<p><img alt="" src="../images/status_report/upload_options-v4.png"/></p>
+<p>In order to upload a report to Faraday, follow these instructions:</p>
+<ul>
+<li>Click on the button <strong>+ Add Vulnerability</strong>. </li>
+<li>Click on the button <strong>Import from file</strong> and a prompt will be displayed. </li>
+<li>Click on <strong>Browse</strong> in order to select the report that you are going to upload, or just drag and drop the file into the box.</li>
+<li>Once you have selected the report, click on <strong>Upload</strong> and your file will be uploaded.</li>
+<li>Refresh the view with the top bar refresh icon.</li>
+</ul>
+<h3 id="create-a-vulnerability">Create a Vulnerability<a class="headerlink" href="#create-a-vulnerability" title="Permanent link">¶</a></h3>
+<p>To create vulnerabilities manually, you can go to the Vulns View page and click the <strong>+ Add Vulnerability</strong> button and then click on <strong>Manual Creation</strong>. You should see a dialog similar to this:</p>
+<p><img alt="" src="../images/status_report/new_vuln-v4.png"/></p>
+<p>The image above shows the tab <strong>General</strong> that allows you to specify the name, description and severity of your vulnerability. Also, you can specify the ease of resolution, an external ID, its impact, a resolution, its policy violations and references.</p>
+<p>You also have another tabs in order to add more information to your vulnerability:</p>
+<ul>
+<li>
+<p><strong>Technical Details</strong>: allows you to add the field <em>data</em> to your vulnerability. If you're creating a web vulnerability, you add information about request and response.</p>
+</li>
+<li>
+<p><strong>Custom Fields</strong>: allows you to add information to a field that you have created. For more information about Custom Fields, you can check it <a href="../Custom-Fields-v4/">here</a>.</p>
+</li>
+<li>
+<p><strong>Assets</strong>: when you fill at least the three mandatory fields of the <strong>General</strong> tab (name, description and severity), the <strong>Assets</strong> tab becomes available. Here you can select from a select box 1 to N targets (in order to create 1 to N vulnerabilities), or type a new target if it's not yet in the list.</p>
+</li>
+<li>
+<p><strong>Evidence</strong>: allows you to add an evidence to the vulnerability. It can be a PNG or JPG image.</p>
+</li>
+</ul>
+<p>Make sure you select a host (and a service if the vulnerability applies to it), a name and a description. <strong>These fields are mandatory to create a vulnerability</strong></p>
+<h3 id="edit-vulnerabilities">Edit Vulnerabilities<a class="headerlink" href="#edit-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>You can edit the vulnerabilities that you have created or imported. You have multiple ways to edit them.</p>
+<h4 id="from-vuln-preview">From Vuln Preview<a class="headerlink" href="#from-vuln-preview" title="Permanent link">¶</a></h4>
+<p>You can see a preview of the vulnerability by click on the vuln's name. From here you can edit your vulnerability, and it will be saved automatically.</p>
+<p><img alt="" src="../images/status_report/vuln_preview-v4.png"/></p>
+<p>As you can see in the image above, there is a new tab named <strong>Comments</strong> where you can leave comments and mention other users to notify them about important events in real time. For more information about Comments, you can check it <a href="../Comments/">here</a></p>
+<h4 id="edit-button">Edit Button<a class="headerlink" href="#edit-button" title="Permanent link">¶</a></h4>
+<p>If you click on the <strong>Edit</strong> icon, the vulnerability edit mode will open</p>
+<p><img alt="" src="../images/status_report/edit_vuln-v4.png"/></p>
+<p>Once you finish updating click on <strong>SAVE</strong> at the end of the section you are changing.</p>
+<h4 id="edit-multiple-vulnerabilities">Edit Multiple Vulnerabilities<a class="headerlink" href="#edit-multiple-vulnerabilities" title="Permanent link">¶</a></h4>
+<p>You can select and edit multiple vulnerabilities with just one click. Next to the edit button, you will find a three dotted button that will show a dropdown with the multiple values that you can edit at once or actions like, Create vulnerability templates (KB)</p>
+<h2 id="delete-vulnerabilities">Delete Vulnerabilities<a class="headerlink" href="#delete-vulnerabilities" title="Permanent link">¶</a></h2>
+<p>Select one or more vulnerabilities and click <strong>Delete</strong> icon</p>
+<p><img alt="" src="../images/status_report/delete_vuln-v4.png"/></p>
+<h2 id="confirmed-vulnerabilities">Confirmed Vulnerabilities<a class="headerlink" href="#confirmed-vulnerabilities" title="Permanent link">¶</a></h2>
+<p>You can filter your vulnerabilities by confirmed, unconfirmed by clicking on the <strong>Flag</strong> icon button:</p>
+<p><img alt="" src="../images/status_report/confirmed_vulns-v4.png"/></p>
+<h2 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">¶</a></h2>
+<p>Tags allow you to organize your vulnerabilities by letting you make and edit categories: environment, technology, state, language, projects, etc.
+You can also use Tags for <strong>Reports</strong>, allowing you to filter which vulnerabilities you want to generate a report for.</p>
+<h3 id="how-to-tag-vulnerabilities">How to Tag Vulnerabilities<a class="headerlink" href="#how-to-tag-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>Select the vulnerabilities that you want to tag.</p>
+<p><img alt="" src="../images/status_report/vulns_selected-v4.png"/></p>
+<p>Click on the "Tags" icon and select if you have a preset tag or <strong>Create tag</strong> button if you need a new one.</p>
+<p><img alt="" src="../images/status_report/select_tag-v4.png"/></p>
+<p>If you are going to create one just put a relevant name and a dialogue will be displayed.</p>
+<p><img alt="" src="../images/status_report/create_tag-v4.png"/></p>
+<p>Now the vulnerability has tags that you can use for filtering, searching or reporting</p>
+<p><img alt="" src="../images/status_report/vulns_tagged-v4.png"/></p>
+<h2 id="search-and-filter-vulnerabilities">Search and Filter Vulnerabilities<a class="headerlink" href="#search-and-filter-vulnerabilities" title="Permanent link">¶</a></h2>
+<p>Vulns View allows you to filter vulnerabilities, so you can have a better workflow.</p>
+<p>You can search or filter your data by specifying a keyword or multiple keywords.</p>
+<p><strong>Field values are not case-sensitive</strong></p>
+<h3 id="how-to-filter">How To Filter<a class="headerlink" href="#how-to-filter" title="Permanent link">¶</a></h3>
+<p>In order to perform a search, first click on the search bar and follow these steps:</p>
+<ol>
+<li>Select if you want to filter by <em>Vulnerabilities</em> or <em>Assets</em>.</li>
+<li>Enter the name of the field  (e.g. <strong>severity</strong>) and select from the list displayed.</li>
+<li>Select the connector type that you need to perform the wanted filter (these connectors vary according to the field selected).</li>
+<li>Finally, type your query or select an option from the list displayed, according to the field and connector selected.</li>
+<li>Repeat steps <strong>2</strong> to <strong>4</strong> if you want to filter by more than one field.</li>
+</ol>
+<p>Examples:</p>
+<p><img alt="" src="../images/status_report/search-v4.png"/></p>
+<p>You can also click on blue fields of the vulnerability like Service, Hostnames, Target, Owner, etc. to trigger a search on the specific field</p>
+<h3 id="filter-fields">Filter Fields<a class="headerlink" href="#filter-fields" title="Permanent link">¶</a></h3>
+<p>Now, let's take a look at which fields are available for filtering with an example. All of them are searched through the search field</p>
+<ul>
+<li>Name | = | TCP timestamps</li>
+<li>Description | contains | Vulnerability testing</li>
+<li>Severity | = | Medium</li>
+<li>Target | = | 127.0.0.1</li>
+<li>Service name | contains | https</li>
+<li>Service port | &gt;= | 5000</li>
+<li>Ease of Resolution | = | Moderate</li>
+<li>Status | != | Closed</li>
+<li>Resolution | contains | Resolution for testing vuln</li>
+<li>Data | contains | Search and filter</li>
+<li>Request | contains | json</li>
+<li>Response | = | OK</li>
+<li>Method | = | POST</li>
+<li>Path | = | Vulnerability Path</li>
+<li>Creator command id | != | 1</li>
+<li>Type | = | Vulnerability Web</li>
+<li>Confirmed | = | True</li>
+<li>ID | = | 57448</li>
+<li>Tag | = | my_tag</li>
+</ul>
+<p>From the Vulns view you will be able to find the information using the <code>tags</code> parameter<br/>
+For example: <strong>tags:"MY TAG"</strong> as shown in the image below</p>
+<p><img alt="" src="../images/status_report/search_tags-v4.png"/></p>
+<h3 id="saved-filters-and-quick-filters">Saved Filters and Quick Filters<a class="headerlink" href="#saved-filters-and-quick-filters" title="Permanent link">¶</a></h3>
+<p>The filters that you create from the search bar, you can save them in order to use them in other opportunities.</p>
+<p>You can access to these saved filters from the filters button <img alt="" src="../images/status_report/filters_button.png"/> in the top right corner.</p>
+<p>When you click that button, a dialog opens, in addition to selecting a saved filter, you will be able to select from a varied list of quick filters, as shown in the image below.</p>
+<p><img alt="" src="../images/status_report/filters_dialog.png"/></p>
+<h3 id="download-a-filtered-workspace">Download a Filtered Workspace<a class="headerlink" href="#download-a-filtered-workspace" title="Permanent link">¶</a></h3>
+<p>You can download a csv file of the filtered workspace (or the full workspace if no filters applied). In order to do so, you have to click on the <code>Download Filtered Workspace</code> button <img alt="" src="../images/status_report/download_button.png"/> located next to the filters button in the top right corner.</p>
+<h2 id="context-menu">Context Menu<a class="headerlink" href="#context-menu" title="Permanent link">¶</a></h2>
+<p>A new feature in Faraday is the <strong>Context Menu</strong>, which you can access by right-clicking on the Vulns view.</p>
+<h3 id="single-selection-context-menu">Single selection context menu<a class="headerlink" href="#single-selection-context-menu" title="Permanent link">¶</a></h3>
+<p>If you have a single vulnerability selected you will access to the single selection context menu. It should be noted that if you don't have any vulnerability selected yet, the vulnerability of the row where you perform the right click will be selected in order to be used by the context menu.</p>
+<p>This menu allows the user to execute some actions in a faster manner, such as:</p>
+<p><img alt="" src="../images/status_report/single_context_menu.png"/></p>
+<ul>
+<li>Filter By</li>
+<li>Name: creates and executes a filter of the form <code>Name | contains | {name_of_selected_vuln}</code>.</li>
+<li>Service name: creates and executes a filter of the form <code>Service name | = | {service_name_of_selected_vuln}</code>.</li>
+<li>Target: creates and executes a filter of the form <code>Target | = | {target_of_selected_vuln}</code>.</li>
+<li>Date: creates and executes a filter of the form <code>Creation Date | = | {creation_date_of_selected_vuln}</code>.</li>
+<li>Status: creates and executes a filter of the form <code>Status | = | {status_of_selected_vuln}</code>.</li>
+<li>Tags: creates and executes a filter for each tag the selected vulnerability has, of the form <code>Tag | = | {tag_of_selected_vuln}</code>.</li>
+<li>Copy Link: copies to the clipboard the link of the detailed view of the selected vulnerability.</li>
+<li>Copy Api Call Link: copies to the clipboard the path of the selected vulnerability in order to be managed through Faraday API.</li>
+<li>Edit: enables the edition of some fields of the selected vulnerability:</li>
+<li>Name</li>
+<li>Data</li>
+<li>Description</li>
+<li>Resolution</li>
+<li>References</li>
+<li>Impact</li>
+<li>Policy violation</li>
+<li>Ease of resolution</li>
+<li>Tag: enables the addition of a created tag to the selected vulnerability and the creation of a new tag.</li>
+<li>Severity: allows you to select a new severity for the selected vulnerability.</li>
+<li>Status: allows you to select a new status for the selected vulnerability.</li>
+<li>Add Comment: allows you to add a comment on the selected vulnerability.</li>
+<li>Add Evidence: allows you to add an evidence on the selected vulnerability.</li>
+<li>Create Template: allows you to create a vulnerability template from the selected vulnerability.</li>
+<li>Delete: deletes the selected vulnerability.</li>
+</ul>
+<h3 id="multiple-selection-context-menu">Multiple selection context menu<a class="headerlink" href="#multiple-selection-context-menu" title="Permanent link">¶</a></h3>
+<p>If you selected more than one vulnerability, you will access to the multiple selection context menu. It's a shortened version of the regular context menu:</p>
+<p><img alt="" src="../images/status_report/multiple_context_menu.png"/></p>
+<ul>
+<li>Edit: enables the bulk edition of some fields of the selected vulnerabilities:</li>
+<li>Name</li>
+<li>Data</li>
+<li>Description</li>
+<li>Resolution</li>
+<li>References</li>
+<li>Impact</li>
+<li>Policy violation</li>
+<li>Confirm/False positive</li>
+<li>Ease of resolution</li>
+<li>Tag: enables the addition of a created tag to the selected vulnerabilities and the creation of a new tag.</li>
+<li>Severity: allows you to select a new severity for the selected vulnerabilities.</li>
+<li>Status: allows you to select a new status for the selected vulnerabilities.</li>
+<li>Create Template: allows you to create a vulnerability template from each of the selected vulnerabilities.</li>
+<li>Bulk Delete: performs a bulk delete of the selected vulnerabilities.</li>
+</ul>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/infobyte/faraday/" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</a>
+<a class="md-social__link" href="https://twitter.com/faradaysec" rel="noopener" target="_blank" title="twitter.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"></path></svg>
+</a>
+<a class="md-social__link" href="https://www.linkedin.com/company/faradaysec/" rel="noopener" target="_blank" title="www.linkedin.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/faradaysec" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+<script src="https://unpkg.com/mermaid@8.5.1/dist/mermaid.min.js"></script>
+</body>
+</html>

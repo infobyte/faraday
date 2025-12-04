@@ -1,0 +1,2501 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Faraday" name="description"/>
+<meta content="Faradaysec" name="author"/>
+<link href="https://faradaysec.com/Basic-plugin-development/" rel="canonical"/>
+<link href="../Settings-v4/" rel="prev"/>
+<link href="../Contact-us/" rel="next"/>
+<link href="../images/favicon.svg" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.0" name="generator"/>
+<title>Plugin Development - Faraday</title>
+<link href="../assets/stylesheets/main.618322db.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../stylesheets/faraday_doc.css" rel="stylesheet"/>
+<link href="../stylesheets/hover.css" rel="stylesheet"/>
+<link href="https://unpkg.com/mermaid@8.5.1/dist/mermaid.css" rel="stylesheet"/>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-BEQW65R59H"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-BEQW65R59H",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-BEQW65R59H",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#configure-custom-plugins">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Faraday" class="md-header__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Faraday
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Plugin Development
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Light" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Light">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="dark" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="dark">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Faraday" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+    Faraday
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_1_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../First-Steps/">
+<span class="md-ellipsis">
+    
+  
+    First Steps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Using Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Using Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Workspaces/">
+<span class="md-ellipsis">
+    
+  
+    Workspaces
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Activity-Dashboard/">
+<span class="md-ellipsis">
+    
+  
+    Activity Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulns/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulnerability-Templates-KB/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability KB
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Assets-and-Services-v4/">
+<span class="md-ellipsis">
+    
+  
+    Assets and Services
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reports
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Report-v4/">
+<span class="md-ellipsis">
+    
+  
+    What is Report
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../How-to-build-your-template/">
+<span class="md-ellipsis">
+    
+  
+    How to Build Your Own Template
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Jinja2-context/">
+<span class="md-ellipsis">
+    
+  
+    Jinja2 Context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../import/">
+<span class="md-ellipsis">
+    
+  
+    Importing
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Dashboard-v4/">
+<span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Custom-Fields-v4/">
+<span class="md-ellipsis">
+    
+  
+    Custom Attributes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_9" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_9_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Notifications
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications/">
+<span class="md-ellipsis">
+    
+  
+    Notifications Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Slack/">
+<span class="md-ellipsis">
+    
+  
+    Configure Slack Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Planner/">
+<span class="md-ellipsis">
+    
+  
+    Planner
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_11_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-gitlab/">
+<span class="md-ellipsis">
+    
+  
+    GitLab
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-jira/">
+<span class="md-ellipsis">
+    
+  
+    Jira
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-solarwinds/">
+<span class="md-ellipsis">
+    
+  
+    SolarWinds
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicenow/">
+<span class="md-ellipsis">
+    
+  
+    ServiceNow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicedesk/">
+<span class="md-ellipsis">
+    
+  
+    ServiceDesk
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_12" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_12" id="__nav_3_12_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_12_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_12">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP/">
+<span class="md-ellipsis">
+    
+  
+    LDAP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP-OKTA/">
+<span class="md-ellipsis">
+    
+  
+    LDAP with OKTA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_12_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_12_3" id="__nav_3_12_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    SSO
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_12_3_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_3_12_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    SSO
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML/">
+<span class="md-ellipsis">
+    
+  
+    Faraday configuration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Auth0/">
+<span class="md-ellipsis">
+    
+  
+    Auth0 integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Google/">
+<span class="md-ellipsis">
+    
+  
+    Google integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Okta/">
+<span class="md-ellipsis">
+    
+  
+    Okta integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Azure/">
+<span class="md-ellipsis">
+    
+  
+    Azure integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../2-Factor-Authentication/">
+<span class="md-ellipsis">
+    
+  
+    2nd Factor
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Architecture/">
+<span class="md-ellipsis">
+    
+  
+    Arch
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_14">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../api-swagger/">
+<span class="md-ellipsis">
+    
+  
+    Openapi
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Server/">
+<span class="md-ellipsis">
+    
+  
+    API Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Token/">
+<span class="md-ellipsis">
+    
+  
+    API Token
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_15" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_15" id="__nav_3_15_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_15_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_15">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday Manage
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage-Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage Settings
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_16" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_16" id="__nav_3_16_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Extras
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_16_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_16">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Extras
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Burp-proxy-extender/">
+<span class="md-ellipsis">
+    
+  
+    Burp
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../beef/">
+<span class="md-ellipsis">
+    
+  
+    Beef
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Automation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../agents-v4/">
+<span class="md-ellipsis">
+    
+  
+    About Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1_2" id="__nav_4_1_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agent List
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_2_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_4_1_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agent List
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-appscan/">
+<span class="md-ellipsis">
+    
+  
+    AppScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-arachni/">
+<span class="md-ellipsis">
+    
+  
+    Arachni
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-burp/">
+<span class="md-ellipsis">
+    
+  
+    Burp Suite
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-cybervision/">
+<span class="md-ellipsis">
+    
+  
+    Cyber Vision
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-codeql/">
+<span class="md-ellipsis">
+    
+  
+    Code QL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-crackmapexec/">
+<span class="md-ellipsis">
+    
+  
+    CrackMapExec
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-dependabot/">
+<span class="md-ellipsis">
+    
+  
+    Dependabot
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gitgub-secrets/">
+<span class="md-ellipsis">
+    
+  
+    Github Secrets
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gvm-openvas/">
+<span class="md-ellipsis">
+    
+  
+    GVM OpenVAS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-insightvm/">
+<span class="md-ellipsis">
+    
+  
+    InsightVM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nessus/">
+<span class="md-ellipsis">
+    
+  
+    Nessus
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nikto2/">
+<span class="md-ellipsis">
+    
+  
+    Nikto 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nmap/">
+<span class="md-ellipsis">
+    
+  
+    NMap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nuclei/">
+<span class="md-ellipsis">
+    
+  
+    Nuclei
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-openvas-legacy/">
+<span class="md-ellipsis">
+    
+  
+    OpenVAS Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-qualys/">
+<span class="md-ellipsis">
+    
+  
+    Qualys
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-report-processor/">
+<span class="md-ellipsis">
+    
+  
+    Report Processor
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-shodan2/">
+<span class="md-ellipsis">
+    
+  
+    Shodan 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sonarqube/">
+<span class="md-ellipsis">
+    
+  
+    SonarQube
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sublist3r/">
+<span class="md-ellipsis">
+    
+  
+    Sublist3r
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenableio/">
+<span class="md-ellipsis">
+    
+  
+    TenableIO
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenablesc/">
+<span class="md-ellipsis">
+    
+  
+    TenableSC
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-w3af/">
+<span class="md-ellipsis">
+    
+  
+    W3af
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan/">
+<span class="md-ellipsis">
+    
+  
+    WPScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan-legacy/">
+<span class="md-ellipsis">
+    
+  
+    WPScan Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-zap/">
+<span class="md-ellipsis">
+    
+  
+    Zap
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Scheduling/">
+<span class="md-ellipsis">
+    
+  
+    Scheduler
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Pipelines/">
+<span class="md-ellipsis">
+    
+  
+    Pipelines and jobs
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Installing Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Installing Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Linux/">
+<span class="md-ellipsis">
+    
+  
+    Linux
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Redhat-8/">
+<span class="md-ellipsis">
+    
+  
+    RedHat 8/Centos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Docker/">
+<span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-community/">
+<span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Update/">
+<span class="md-ellipsis">
+    
+  
+    Update
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Install
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Remote-PostgreSQL/">
+<span class="md-ellipsis">
+    
+  
+    Remote PostgreSQL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../NGINX-Setup/">
+<span class="md-ellipsis">
+    
+  
+    NGINX (SSL Config)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Backup-v4/">
+<span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Changelog
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../RELEASE/">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../faraday-cli/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Cli
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_9" type="checkbox"/>
+<label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    For Developers
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_9_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    For Developers
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Plugin Development
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Plugin Development
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#configure-custom-plugins">
+<span class="md-ellipsis">
+      
+        Configure Custom Plugins
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#create-plugin-structure">
+<span class="md-ellipsis">
+      
+        Create Plugin structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#plugin-code">
+<span class="md-ellipsis">
+      
+        Plugin code
+      
+    </span>
+</a>
+<nav aria-label="Plugin code" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#plugin-classes">
+<span class="md-ellipsis">
+      
+        Plugin classes
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#file-plugins">
+<span class="md-ellipsis">
+      
+        File Plugins
+      
+    </span>
+</a>
+<nav aria-label="File Plugins" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginbyextension">
+<span class="md-ellipsis">
+      
+        PluginByExtension:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginxmlformat">
+<span class="md-ellipsis">
+      
+        PluginXMLFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginjsonformat">
+<span class="md-ellipsis">
+      
+        PluginJsonFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginmultilinejsonformat">
+<span class="md-ellipsis">
+      
+        PluginMultiLineJsonFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#plugincsvformat">
+<span class="md-ellipsis">
+      
+        PluginCSVFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginzipformat">
+<span class="md-ellipsis">
+      
+        PluginZipFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#generating-data">
+<span class="md-ellipsis">
+      
+        Generating data
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#command-plugins">
+<span class="md-ellipsis">
+      
+        Command Plugins
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#full-example">
+<span class="md-ellipsis">
+      
+        Full Example
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#test-and-debug">
+<span class="md-ellipsis">
+      
+        Test and Debug
+      
+    </span>
+</a>
+<nav aria-label="Test and Debug" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#test-plugins">
+<span class="md-ellipsis">
+      
+        Test Plugins
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#logging">
+<span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    FAQs
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Contact-us/">
+<span class="md-ellipsis">
+    
+  
+    Contact Us
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../FAQ/">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Plugin-List-v4/">
+<span class="md-ellipsis">
+    
+  
+    Supported-Plugins
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#configure-custom-plugins">
+<span class="md-ellipsis">
+      
+        Configure Custom Plugins
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#create-plugin-structure">
+<span class="md-ellipsis">
+      
+        Create Plugin structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#plugin-code">
+<span class="md-ellipsis">
+      
+        Plugin code
+      
+    </span>
+</a>
+<nav aria-label="Plugin code" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#plugin-classes">
+<span class="md-ellipsis">
+      
+        Plugin classes
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#file-plugins">
+<span class="md-ellipsis">
+      
+        File Plugins
+      
+    </span>
+</a>
+<nav aria-label="File Plugins" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginbyextension">
+<span class="md-ellipsis">
+      
+        PluginByExtension:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginxmlformat">
+<span class="md-ellipsis">
+      
+        PluginXMLFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginjsonformat">
+<span class="md-ellipsis">
+      
+        PluginJsonFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginmultilinejsonformat">
+<span class="md-ellipsis">
+      
+        PluginMultiLineJsonFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#plugincsvformat">
+<span class="md-ellipsis">
+      
+        PluginCSVFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pluginzipformat">
+<span class="md-ellipsis">
+      
+        PluginZipFormat:
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#generating-data">
+<span class="md-ellipsis">
+      
+        Generating data
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#command-plugins">
+<span class="md-ellipsis">
+      
+        Command Plugins
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#full-example">
+<span class="md-ellipsis">
+      
+        Full Example
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#test-and-debug">
+<span class="md-ellipsis">
+      
+        Test and Debug
+      
+    </span>
+</a>
+<nav aria-label="Test and Debug" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#test-plugins">
+<span class="md-ellipsis">
+      
+        Test Plugins
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#logging">
+<span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1>Plugin Development</h1>
+<p>In this guide we are going to learn how to develop a new plugin for Faraday.</p>
+<h2 id="configure-custom-plugins">Configure Custom Plugins<a class="headerlink" href="#configure-custom-plugins" title="Permanent link">¶</a></h2>
+<p>To add custom plugins in faraday, you first need to run this command:</p>
+<div class="highlight"><pre><span></span><code>faraday-manage settings -a update reports
+</code></pre></div>
+<hr/>
+<h2 id="create-plugin-structure">Create Plugin structure<a class="headerlink" href="#create-plugin-structure" title="Permanent link">¶</a></h2>
+<p>Create the folder <code>new_plugin</code> inside the <code>custom_plugins</code> folder and add the following files inside the <code>new_plugin</code> folder:</p>
+<p>Plugin Structure:</p>
+<div class="highlight"><pre><span></span><code>new_plugin/
+    __init__.py # leave this file empty
+    plugin.py
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Please respect both file names:
+<code>__init__.py</code> and <code>plugin.py</code></p>
+</div>
+<hr/>
+<h2 id="plugin-code">Plugin code<a class="headerlink" href="#plugin-code" title="Permanent link">¶</a></h2>
+<p>There are two types of plugins:</p>
+<ul>
+<li>File plugins (plugins that process the contents of a file)</li>
+<li>Command plugins (plugins that process the execution of a command)</li>
+</ul>
+<p>A faraday plugin can be either or both of these types.
+For example the ping plugin only process the execution of the command, but the nmap command supports both the xml generated by nmap or process the execution of nmap.</p>
+<p>In your <code>plugin.py</code> file you must provide a function called <code>createPlugin</code> for the plugin manager to instantiate the plugin</p>
+<div class="highlight"><pre><span></span><code>def createPlugin(ignore_info=False, hostname_resolution=True):
+    return YourPluginClass(ignore_info=ignore_info)
+</code></pre></div>
+<h4 id="plugin-classes">Plugin classes<a class="headerlink" href="#plugin-classes" title="Permanent link">¶</a></h4>
+<p><code>PluginBase</code> is the base class. </p>
+<p>For File plugins we provide all this classes.
+But you can add other by creating a subclass of <code>PluginByExtension</code></p>
+<ul>
+<li>PluginBase</li>
+<li>PluginByExtension<ul>
+<li>PluginXMLFormat</li>
+<li>PluginJsonFormat</li>
+<li>PluginMultiLineJsonFormat</li>
+<li>PluginCSVFormat</li>
+<li>PluginZipFormat</li>
+</ul>
+</li>
+</ul>
+<p>For Command plugins only you must inherit from PluginBase</p>
+<p>Your plugin class <code>__init__</code> method must define the <code>id</code>, that will be the identifier of your plugin.</p>
+<p>Here's an example of the Ping tool plugin:
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CmdPingPlugin</span><span class="p">(</span><span class="n">PluginBase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="hll">            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s2">"ping"</span>
+</span>            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"Ping"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plugin_version</span> <span class="o">=</span> <span class="s2">"0.0.1"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s2">"1.0.0"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_command_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^(sudo ping|ping|sudo ping6|ping6)\s+.*?'</span><span class="p">)</span>
+</code></pre></div></p>
+<p>Beware that it must be unique, you can list all the plugins identifiers with this command: <code>faraday-plugins list-plugins</code></p>
+<h4 id="file-plugins">File Plugins<a class="headerlink" href="#file-plugins" title="Permanent link">¶</a></h4>
+<p>Each of the subclasses for File plugins provide a different way for the plugin to detect if it can process the file</p>
+<h5 id="pluginbyextension">PluginByExtension:<a class="headerlink" href="#pluginbyextension" title="Permanent link">¶</a></h5>
+<p>This class adds the functionality for identify a file by its extension by setting the attribute <code>extension</code>.</p>
+<p>It can be one extension (<code>".xml"</code>) or a list (<code>['.xml', '.xxx']</code>) if your file can have multiple extensions.</p>
+<p>You never inherit directly from this class in a plugin but from some of its subclasses that are more specific.</p>
+<div class="highlight"><pre><span></span><code>class ExampleXMLTool(PluginByExtension):
+
+        def __init__(self):
+            super().__init__()
+            self.extension = ".xml"
+</code></pre></div>
+<h5 id="pluginxmlformat">PluginXMLFormat:<a class="headerlink" href="#pluginxmlformat" title="Permanent link">¶</a></h5>
+<p>Use this class if the plugin generates vulnerabilities from a xml file.</p>
+<p>If your report has xml format but a different extension (like nessus), remember to define the <code>extension</code> attribute</p>
+<p>To identify the file set in the <code>identifier_tag</code> attribute the main tag of the xml (ScanGroup in the example), it also can be one tag or a list of tags.</p>
+<p>You can also set the <code>identifier_tag_attributes</code> attribute, it is a set of attributes that the main tag must have.</p>
+<p>This is used to be more specific for example if the main tag is too generic and the xml of other plugin has the same one. </p>
+<p>Example XML
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="nt">&lt;ScanGroup</span><span class="w"> </span><span class="na">ExportedOn=</span><span class="s">"2021-11-05T11:18:57.673843"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Scan&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/Scan&gt;</span>
+<span class="nt">&lt;/ScanGroup&gt;</span>
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">faraday_plugins.plugins.plugin</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginXMLFormat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xml.etree.ElementTree</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ET</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ExampleToolXmlParser</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_output</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vulns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_xml</span><span class="p">(</span><span class="n">xml_output</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_xml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_output</span><span class="p">):</span>
+        <span class="n">vulns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">xml_output</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">iterfind</span><span class="p">(</span><span class="s1">'details/item'</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ip'</span><span class="p">)</span>
+            <span class="n">os</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'os'</span><span class="p">)</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">'uri'</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+            <span class="n">hostname</span> <span class="o">=</span> <span class="p">[</span><span class="n">url</span><span class="o">.</span><span class="n">netloc</span><span class="p">]</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">path</span>
+            <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s1">'https'</span><span class="p">:</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="mi">443</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="mi">80</span>
+            <span class="n">issue</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">'issue'</span><span class="p">)</span>
+            <span class="n">severity</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'severity'</span><span class="p">)</span>
+            <span class="n">issue_text</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">vuln</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'ip'</span><span class="p">:</span> <span class="n">ip</span><span class="p">,</span> <span class="s1">'uri'</span><span class="p">:</span> <span class="n">uri</span><span class="p">,</span> <span class="s1">'os'</span><span class="p">:</span> <span class="n">os</span><span class="p">,</span>
+                    <span class="s1">'hostname'</span><span class="p">:</span> <span class="n">hostname</span><span class="p">,</span> <span class="s1">'port'</span><span class="p">:</span> <span class="n">port</span><span class="p">,</span> <span class="s1">'path'</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+                    <span class="s1">'issue_text'</span><span class="p">:</span> <span class="n">issue_text</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="n">severity</span><span class="p">}</span>
+            <span class="n">vulns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vuln</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vulns</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ExampleToolPlugin</span><span class="p">(</span><span class="n">PluginXMLFormat</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier_tag</span> <span class="o">=</span> <span class="s2">"example_tool"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s2">"example_tool"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"Name of the tool"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_version</span> <span class="o">=</span> <span class="s2">"0.0.1"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">parseOutputString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">ExampleToolXmlParser</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">vuln</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">vulns</span><span class="p">:</span>
+            <span class="n">h_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddHost</span><span class="p">(</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'ip'</span><span class="p">],</span> <span class="n">vuln</span><span class="p">[</span><span class="s1">'os'</span><span class="p">],</span> <span class="n">hostnames</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'hostname'</span><span class="p">])</span>
+            <span class="n">s_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddServiceToHost</span><span class="p">(</span><span class="n">h_id</span><span class="p">,</span> <span class="s1">'webserver'</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s1">'tcp'</span><span class="p">,</span> <span class="n">ports</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'port'</span><span class="p">])</span>
+            <span class="n">v_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddVulnWebToService</span><span class="p">(</span><span class="n">h_id</span><span class="p">,</span> <span class="n">s_id</span><span class="p">,</span> <span class="n">vuln</span><span class="p">[</span><span class="s1">'issue_text'</span><span class="p">],</span> <span class="n">severity</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'severity'</span><span class="p">],</span>
+                                                    <span class="n">path</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'path'</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">createPlugin</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ExampleToolPlugin</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+<h5 id="pluginjsonformat">PluginJsonFormat:<a class="headerlink" href="#pluginjsonformat" title="Permanent link">¶</a></h5>
+<p>Use this class if the plugin generates vulnerabilities from a json file.</p>
+<p>If yor report has json format but a different extension (not .json), remember to define the <code>extension</code> attribute</p>
+<p>To identify the file set in the <code>json_keys</code> attribute a set with some identifiers keys of the json object</p>
+<p>Example JSON
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"some name"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"hosts"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"host1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"host2"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"other_field"</span><span class="p">:</span><span class="w"> </span><span class="s2">"some value"</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExampleJsonTool</span><span class="p">(</span><span class="n">PluginJsonFormat</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore_info</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ignore_info</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">json_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'hosts'</span><span class="p">}</span>
+</code></pre></div>
+<h5 id="pluginmultilinejsonformat">PluginMultiLineJsonFormat:<a class="headerlink" href="#pluginmultilinejsonformat" title="Permanent link">¶</a></h5>
+<p>Is the same as <code>PluginJsonFormat</code> but use it when the file has multiple lines and every line is a json.</p>
+<p>Example JSON
+<div class="highlight"><pre><span></span><code>{ "name": "some name", "hosts": ["host1", "host2"],"other_field": "some value"}
+{ "name": "other name", "hosts": ["host3", "host4"],"other_field": "other value"}
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExampleMultipleJsonTool</span><span class="p">(</span><span class="n">PluginMultiLineJsonFormat</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore_info</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ignore_info</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">json_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'hosts'</span><span class="p">}</span>
+</code></pre></div>
+<h5 id="plugincsvformat">PluginCSVFormat:<a class="headerlink" href="#plugincsvformat" title="Permanent link">¶</a></h5>
+<p>Use this class if the plugin generates vulnerabilities from a csv file.</p>
+<p>If yor report has csv format but a different extension (not .csv), remember to define the <code>extension</code> attribute</p>
+<p>To identify the file set in the <code>csv_headers</code> attribute a set with some identifiers headers of the csv object</p>
+<p>Example CSV
+<div class="highlight"><pre><span></span><code>name,ip,os
+host1,10.10.10.10,windows
+host2,10.10.10.11,linux
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExampleCSVTool</span><span class="p">(</span><span class="n">PluginCSVFormat</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore_info</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ignore_info</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">json_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'ip'</span><span class="p">}</span>
+</code></pre></div>
+<h5 id="pluginzipformat">PluginZipFormat:<a class="headerlink" href="#pluginzipformat" title="Permanent link">¶</a></h5>
+<p>Use this class if the plugin generates vulnerabilities from a zip file.</p>
+<p>If yor report has csv format but a different extension (not .zip), remember to define the <code>extension</code> attribute</p>
+<p>To identify the file set in the <code>files_list</code> attribute a set with some file names inside the zip file.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExampleJsonTool</span><span class="p">(</span><span class="n">PluginZipFormat</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore_info</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ignore_info</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files_list</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'file1.txt'</span><span class="p">,</span> <span class="s1">'file2.txt'</span><span class="p">}</span>
+</code></pre></div>
+<h5 id="generating-data">Generating data<a class="headerlink" href="#generating-data" title="Permanent link">¶</a></h5>
+<p>The <code>PluginBase</code> class give you all the main methods to create hosts, services and vulnerabilities</p>
+<p>After you parse the data you will need to create the objects with the information to send to faraday.
+This are the main methods</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">createAndAddHost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">os</span><span class="o">=</span><span class="s2">"unknown"</span><span class="p">,</span> <span class="n">hostnames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scan_template</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">site_name</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+                    <span class="n">site_importance</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">risk_score</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">fingerprints</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">fingerprints_software</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">createAndAddServiceToHost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">"tcp?"</span><span class="p">,</span> <span class="n">ports</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"open"</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">"unknown"</span><span class="p">,</span>
+                            <span class="n">description</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">createAndAddVulnToHost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">vulnerable_since</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> 
+                            <span class="n">scan_id</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">pci</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">external_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_date</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">createAndAddVulnToService</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">,</span> <span class="n">service_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> 
+                            <span class="n">risk</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">external_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_date</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">createAndAddVulnWebToService</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">,</span> <span class="n">service_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+                                <span class="n">website</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">pname</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+                                <span class="n">params</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">external_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_date</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</code></pre></div>
+<p><code>createAndAddHost</code> and <code>createAndAddServiceToHost</code> will give you a host ID and a service ID.
+You need to send those to the create vulnerabilities methods</p>
+<p>The main method to parse data and create the vulnerabilities objects is <code>parseOutputString</code>, no mather if is a File or a Command plugin.</p>
+<h4 id="command-plugins">Command Plugins<a class="headerlink" href="#command-plugins" title="Permanent link">¶</a></h4>
+<p>For command plugins the detection is done via regex.</p>
+<p>If the plugin is only for command you inherit from <code>PluginBase</code> if it also will support file detection inherit from the appropriate class for that type of file.</p>
+<p>In both cases to detect a command you will need to set the <code>_command_regex</code> attribute with the regex to match the command</p>
+<p>Here's an example of the Ping tool plugin:
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CmdPingPlugin</span><span class="p">(</span><span class="n">PluginBase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s2">"ping"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"Ping"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plugin_version</span> <span class="o">=</span> <span class="s2">"0.0.1"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s2">"1.0.0"</span>
+<span class="hll">            <span class="bp">self</span><span class="o">.</span><span class="n">_command_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^(sudo ping|ping|sudo ping6|ping6)\s+.*?'</span><span class="p">)</span>
+</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parseOutputString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="n">reg</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"PING ([\w\.-:]+)( |)\(([\w\.:]+)\)"</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">"0 received|unknown host"</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">reg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ip_address</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">hostname</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddHost</span><span class="p">(</span><span class="n">ip_address</span><span class="p">,</span> <span class="n">hostnames</span><span class="o">=</span><span class="p">[</span><span class="n">hostname</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_isIPV4</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ip</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+</code></pre></div></p>
+<p>In this case the plugin manager will run the command and send the output to the <code>parseOutputString</code> method.</p>
+<p>But if the tool generate an ouput file instead of send the data to stdout you will need to check that the command has the required parameters to do that.</p>
+<p>To do that you will need to implement the <code>processCommandString</code> method, by default it will return the command without modifications.</p>
+<p>To use output files you will need to set 2 attributes in you plugin: <code>_use_temp_file</code> and <code>_temp_file_extension</code></p>
+<p>If <code>_use_temp_file</code> is set the plugin will create a temp file and assign its path to the attribute <code>self._output_file_path</code> of the plugin.</p>
+<p>If you need that the temp file has and specific extension use the <code>_temp_file_extension</code> attribute like in the example.</p>
+<p>If the <code>_use_temp_file</code> attribute is set the plugin will send te content of that file to <code>parseOutputString()</code>instead of the output of the command.</p>
+<p>Here is and extract of the nmap plugin to see how <code>processCommandString</code> will modify the original command and return a new command with the required parameters.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">NmapPlugin</span><span class="p">(</span><span class="n">PluginXMLFormat</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Example plugin to parse nmap output.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier_tag</span> <span class="o">=</span> <span class="s2">"nmaprun"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s2">"Nmap"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"Nmap XML Output Plugin"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_version</span> <span class="o">=</span> <span class="s2">"0.0.3"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s2">"6.40"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">framework_version</span> <span class="o">=</span> <span class="s2">"1.0.0"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_output</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_command_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^(sudo nmap|nmap|\.\/nmap)\s+.*?'</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_use_temp_file</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_temp_file_extension</span> <span class="o">=</span> <span class="s2">"xml"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xml_arg_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^.*(-oX\s*[^\s]+).*$"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addSetting</span><span class="p">(</span><span class="s2">"Scan Technique"</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="s2">"-sS"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">parseOutputString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">processCommandString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">current_path</span><span class="p">,</span> <span class="n">command_string</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Adds the -oX parameter to get xml output to the command string that the</span>
+<span class="sd">        user has set.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">processCommandString</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">current_path</span><span class="p">,</span> <span class="n">command_string</span><span class="p">)</span>
+        <span class="n">arg_match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml_arg_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">command_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arg_match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(^.*?nmap)"</span><span class="p">,</span>
+                          <span class="sa">r</span><span class="s2">"\1 -oX </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_file_path</span><span class="p">,</span>
+                          <span class="n">command_string</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">arg_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                          <span class="sa">r</span><span class="s2">"-oX </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_file_path</span><span class="p">,</span>
+                          <span class="n">command_string</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="full-example">Full Example<a class="headerlink" href="#full-example" title="Permanent link">¶</a></h4>
+<div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio"><label for="__tabbed_1_1">File Plugin from XML</label><div class="tabbed-content"></div>
+</input></div>
+<p>This is an example of a Faraday Plugin that process a xml report.</p>
+<p>In this example we will create a plugin to analyze this XML provided by the output of a tool.</p>
+<p><strong>example.xml</strong>
+<div class="highlight"><pre><span></span><code><span class="w"> </span><span class="cp">&lt;?xml version="1.0" ?&gt;</span>
+<span class="cp">&lt;!DOCTYPE example_tool&gt;</span>
+<span class="nt">&lt;example_tool</span><span class="w"> </span><span class="na">scanstart=</span><span class="s">"Thu Nov  9 15:59:13 2017"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;details&gt;</span>
+<span class="w">    </span><span class="nt">&lt;item</span><span class="w"> </span><span class="na">id=</span><span class="s">"999979"</span><span class="w"> </span><span class="na">ip=</span><span class="s">"10.23.49.232"</span><span class="w"> </span><span class="na">os=</span><span class="s">"linux"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;uri&gt;</span>http://test.com/example.php<span class="nt">&lt;/uri&gt;</span>
+<span class="w">    </span><span class="nt">&lt;issue</span><span class="w"> </span><span class="na">severity=</span><span class="s">"low"</span><span class="nt">&gt;</span>Some<span class="w"> </span>vuln<span class="w"> </span>text<span class="nt">&lt;/issue&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/item&gt;</span>
+<span class="w">    </span><span class="nt">&lt;item</span><span class="w"> </span><span class="na">id=</span><span class="s">"39023023"</span><span class="w"> </span><span class="na">ip=</span><span class="s">"10.232.62.20"</span><span class="w"> </span><span class="na">os=</span><span class="s">"linux"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;uri&gt;</span>http://test.com/login.php<span class="nt">&lt;/uri&gt;</span>
+<span class="w">    </span><span class="nt">&lt;issue</span><span class="w"> </span><span class="na">severity=</span><span class="s">"low"</span><span class="nt">&gt;</span>Some<span class="w"> </span>other<span class="w"> </span>text<span class="nt">&lt;/issue&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/item&gt;</span>
+<span class="w">    </span><span class="nt">&lt;item</span><span class="w"> </span><span class="na">id=</span><span class="s">"8348343"</span><span class="w"> </span><span class="na">ip=</span><span class="s">"10.12.37.24"</span><span class="w"> </span><span class="na">os=</span><span class="s">"linux"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;uri&gt;</span>http://test.com/example.php<span class="nt">&lt;/uri&gt;</span>
+<span class="w">    </span><span class="nt">&lt;issue</span><span class="w"> </span><span class="na">severity=</span><span class="s">"low"</span><span class="nt">&gt;</span>Yet<span class="w"> </span>another<span class="w"> </span>vuln<span class="w"> </span>text<span class="nt">&lt;/issue&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/item&gt;</span>
+<span class="w">    </span><span class="nt">&lt;statistics</span><span class="w"> </span><span class="na">elapsed=</span><span class="s">"402"</span><span class="w"> </span><span class="na">itemsfound=</span><span class="s">"3"</span><span class="w"> </span><span class="na">itemstested=</span><span class="s">"10"</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/details&gt;</span>
+<span class="nt">&lt;/example_tool&gt;</span>
+</code></pre></div></p>
+<p><strong>plugin.py</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">faraday_plugins.plugins.plugin</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginXMLFormat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xml.etree.ElementTree</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ET</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ExampleToolXmlParser</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_output</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vulns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_xml</span><span class="p">(</span><span class="n">xml_output</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_xml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_output</span><span class="p">):</span>
+        <span class="n">vulns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">xml_output</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">iterfind</span><span class="p">(</span><span class="s1">'details/item'</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ip'</span><span class="p">)</span>
+            <span class="n">os</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'os'</span><span class="p">)</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">'uri'</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+            <span class="n">hostname</span> <span class="o">=</span> <span class="p">[</span><span class="n">url</span><span class="o">.</span><span class="n">netloc</span><span class="p">]</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">path</span>
+            <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s1">'https'</span><span class="p">:</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="mi">443</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="mi">80</span>
+            <span class="n">issue</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">'issue'</span><span class="p">)</span>
+            <span class="n">severity</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'severity'</span><span class="p">)</span>
+            <span class="n">issue_text</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">vuln</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'ip'</span><span class="p">:</span> <span class="n">ip</span><span class="p">,</span> <span class="s1">'uri'</span><span class="p">:</span> <span class="n">uri</span><span class="p">,</span> <span class="s1">'os'</span><span class="p">:</span> <span class="n">os</span><span class="p">,</span>
+                    <span class="s1">'hostname'</span><span class="p">:</span> <span class="n">hostname</span><span class="p">,</span> <span class="s1">'port'</span><span class="p">:</span> <span class="n">port</span><span class="p">,</span> <span class="s1">'path'</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+                    <span class="s1">'issue_text'</span><span class="p">:</span> <span class="n">issue_text</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="n">severity</span><span class="p">}</span>
+            <span class="n">vulns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vuln</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vulns</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ExampleToolPlugin</span><span class="p">(</span><span class="n">PluginXMLFormat</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier_tag</span> <span class="o">=</span> <span class="s2">"example_tool"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s2">"example_tool"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"Name of the tool"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin_version</span> <span class="o">=</span> <span class="s2">"0.0.1"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">parseOutputString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">ExampleToolXmlParser</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">vuln</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">vulns</span><span class="p">:</span>
+            <span class="n">h_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddHost</span><span class="p">(</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'ip'</span><span class="p">],</span> <span class="n">vuln</span><span class="p">[</span><span class="s1">'os'</span><span class="p">],</span> <span class="n">hostnames</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'hostname'</span><span class="p">])</span>
+            <span class="n">s_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddServiceToHost</span><span class="p">(</span><span class="n">h_id</span><span class="p">,</span> <span class="s1">'webserver'</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s1">'tcp'</span><span class="p">,</span> <span class="n">ports</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'port'</span><span class="p">])</span>
+            <span class="n">v_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">createAndAddVulnWebToService</span><span class="p">(</span><span class="n">h_id</span><span class="p">,</span> <span class="n">s_id</span><span class="p">,</span> <span class="n">vuln</span><span class="p">[</span><span class="s1">'issue_text'</span><span class="p">],</span> <span class="n">severity</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'severity'</span><span class="p">],</span>
+                                                    <span class="n">path</span><span class="o">=</span><span class="n">vuln</span><span class="p">[</span><span class="s1">'path'</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">createPlugin</span><span class="p">(</span><span class="n">ignore_info</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">hostname_resolution</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ExampleToolXmlParser</span><span class="p">(</span><span class="n">ignore_info</span><span class="o">=</span><span class="n">ignore_info</span><span class="p">)</span>
+</code></pre></div>
+<hr/>
+<h4 id="test-and-debug">Test and Debug<a class="headerlink" href="#test-and-debug" title="Permanent link">¶</a></h4>
+<p>You can test your plugin by enabling the custom_plugins_folder setting, and try it with faraday.</p>
+<p>You can also test your plugin from the command line.</p>
+<h5 id="test-plugins">Test Plugins<a class="headerlink" href="#test-plugins" title="Permanent link">¶</a></h5>
+<p><strong>List all available plugins</strong></p>
+<p>Verify that the plugins is loaded by the plugin manager</p>
+<div class="highlight"><pre><span></span><code>faraday-plugins list-plugins
+
+Available Plugins:
+...
+...
+...
+example_tool - Name of the tool
+Loaded Plugins: 84
+</code></pre></div>
+<p><strong>Test plugin report detection</strong></p>
+<p>Verify that your file is detected by your plugin</p>
+<div class="highlight"><pre><span></span><code>faraday-plugins detect-report /path/to/report.xml
+
+Plugin: example_tool
+</code></pre></div>
+<p><strong>Test plugin process report</strong></p>
+<p>Verify that your plugin parses the file ok and generate the json structure that will be loaded into faraday</p>
+<div class="highlight"><pre><span></span><code>faraday-plugins process-report /path/to/report.xml
+
+
+{"hosts": [{"ip": "10.23.49.232", "os": "linux", "hostnames": ["test.com"], "description": "", "mac": null, "credentials": [], "services": [{"name": "webserver", "protocol": "tcp", "port": 80, "status": "open", "version": "unknown", "description": "", "credentials": [], "vulnerabilities": [{"name": "Some vuln text", "desc": "", "severity": "low", "refs": [], "external_id": null, "type": "VulnerabilityWeb", "resolution": "", "data": "", "website": "", "path": "/example.php", "request": "", "response": "", "method": "", "pname": "", "params": "", "query": "", "category": ""}]}], "vulnerabilities": [], "scan_template": "", "site_name": "", "site_importance": "", "risk_score": "", "fingerprints": "", "fingerprints_software": ""}, {"ip": "10.232.62.20", "os": "linux", "hostnames": ["test.com"], "description": "", "mac": null, "credentials": [], "services": [{"name": "webserver", "protocol": "tcp", "port": 80, "status": "open", "version": "unknown", "description": "", "credentials": [], "vulnerabilities": [{"name": "Some other text", "desc": "", "severity": "low", "refs": [], "external_id": null, "type": "VulnerabilityWeb", "resolution": "", "data": "", "website": "", "path": "/login.php", "request": "", "response": "", "method": "", "pname": "", "params": "", "query": "", "category": ""}]}], "vulnerabilities": [], "scan_template": "", "site_name": "", "site_importance": "", "risk_score": "", "fingerprints": "", "fingerprints_software": ""}, {"ip": "10.12.37.24", "os": "linux", "hostnames": ["test.com"], "description": "", "mac": null, "credentials": [], "services": [{"name": "webserver", "protocol": "tcp", "port": 80, "status": "open", "version": "unknown", "description": "", "credentials": [], "vulnerabilities": [{"name": "Yet another vuln text", "desc": "", "severity": "low", "refs": [], "external_id": null, "type": "VulnerabilityWeb", "resolution": "", "data": "", "website": "", "path": "/example.php", "request": "", "response": "", "method": "", "pname": "", "params": "", "query": "", "category": ""}]}], "vulnerabilities": [], "scan_template": "", "site_name": "", "site_importance": "", "risk_score": "", "fingerprints": "", "fingerprints_software": ""}], "command": {"tool": "example_tool", "command": "example_tool", "params": "/path/to/report.xml", "user": "faraday", "hostname": "", "start_date": "2020-04-01T18:43:34.552623", "duration": 2650, "import_source": "report"}}
+</code></pre></div>
+<p>You can optionally specify the plugin id to not do the detection step and force to process it with the specific plugin</p>
+<div class="highlight"><pre><span></span><code>faraday-plugins process-report --plugin_id YourPluginId /path/to/report.xml
+
+
+{"hosts": [{"ip": "10.23.49.232", "os": "linux", "hostnames": ["test.com"], "description": "", "mac": null, "credentials": [], "services": [{"name": "webserver", "protocol": "tcp", "port": 80, "status": "open", "version": "unknown", "description": "", "credentials": [], "vulnerabilities": [{"name": "Some vuln text", "desc": "", "severity": "low", "refs": [], "external_id": null, "type": "VulnerabilityWeb", "resolution": "", "data": "", "website": "", "path": "/example.php", "request": "", "response": "", "method": "", "pname": "", "params": "", "query": "", "category": ""}]}], "vulnerabilities": [], "scan_template": "", "site_name": "", "site_importance": "", "risk_score": "", "fingerprints": "", "fingerprints_software": ""}, {"ip": "10.232.62.20", "os": "linux", "hostnames": ["test.com"], "description": "", "mac": null, "credentials": [], "services": [{"name": "webserver", "protocol": "tcp", "port": 80, "status": "open", "version": "unknown", "description": "", "credentials": [], "vulnerabilities": [{"name": "Some other text", "desc": "", "severity": "low", "refs": [], "external_id": null, "type": "VulnerabilityWeb", "resolution": "", "data": "", "website": "", "path": "/login.php", "request": "", "response": "", "method": "", "pname": "", "params": "", "query": "", "category": ""}]}], "vulnerabilities": [], "scan_template": "", "site_name": "", "site_importance": "", "risk_score": "", "fingerprints": "", "fingerprints_software": ""}, {"ip": "10.12.37.24", "os": "linux", "hostnames": ["test.com"], "description": "", "mac": null, "credentials": [], "services": [{"name": "webserver", "protocol": "tcp", "port": 80, "status": "open", "version": "unknown", "description": "", "credentials": [], "vulnerabilities": [{"name": "Yet another vuln text", "desc": "", "severity": "low", "refs": [], "external_id": null, "type": "VulnerabilityWeb", "resolution": "", "data": "", "website": "", "path": "/example.php", "request": "", "response": "", "method": "", "pname": "", "params": "", "query": "", "category": ""}]}], "vulnerabilities": [], "scan_template": "", "site_name": "", "site_importance": "", "risk_score": "", "fingerprints": "", "fingerprints_software": ""}], "command": {"tool": "example_tool", "command": "example_tool", "params": "/path/to/report.xml", "user": "faraday", "hostname": "", "start_date": "2020-04-01T18:43:34.552623", "duration": 2650, "import_source": "report"}}
+</code></pre></div>
+<p>If you do not have faraday-server installed or don't have the custom_plugins_folder setting, you can use the <code>--custom_plugins_folder</code> parameter with any if the commands (list, detect and process)</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>faraday-plugins list-plugins --custom-plugins-folder /home/user/.faraday/plugins/
+</code></pre></div>
+<h5 id="logging">Logging<a class="headerlink" href="#logging" title="Permanent link">¶</a></h5>
+<p>In the <code>PluginBase</code> there is a logger defined in <code>self.logger</code> that you can use.</p>
+<p>If you need to debug for plugins with the command line set this variable:</p>
+<div class="highlight"><pre><span></span><code>export PLUGIN_DEBUG=1
+faraday-plugins process-report appscan /path/to/report.xml
+2019-11-15 20:37:03,355 - faraday.faraday_plugins.plugins.manager - INFO [manager.py:113 - _load_plugins()]  Loading Native Plugins...
+2019-11-15 20:37:03,465 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [acunetix]
+2019-11-15 20:37:03,495 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [amap]
+2019-11-15 20:37:03,549 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [appscan]
+2019-11-15 20:37:03,580 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [arachni]
+2019-11-15 20:37:03,613 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [arp_scan]
+2019-11-15 20:37:03,684 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [beef]
+2019-11-15 20:37:03,714 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [brutexss]
+2019-11-15 20:37:03,917 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [burp]
+2019-11-15 20:37:03,940 - faraday.faraday_plugins.plugins.manager - DEBUG [manager.py:123 - _load_plugins()]  Load Plugin [dig]
+...
+</code></pre></div>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/infobyte/faraday/" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</a>
+<a class="md-social__link" href="https://twitter.com/faradaysec" rel="noopener" target="_blank" title="twitter.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"></path></svg>
+</a>
+<a class="md-social__link" href="https://www.linkedin.com/company/faradaysec/" rel="noopener" target="_blank" title="www.linkedin.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/faradaysec" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+<script src="https://unpkg.com/mermaid@8.5.1/dist/mermaid.min.js"></script>
+</body>
+</html>

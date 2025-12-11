@@ -55,4 +55,11 @@ echo "$(date) Running migrations ..."
 faraday-manage migrate
 
 echo "$(date) Starting Faraday server with workers..."
-faraday-server --with-workers --bind 0.0.0.0
+ARCH=$(uname -m)
+
+if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+    echo "Running on ARM — disabling Celery workers because they break under emulation"
+    faraday-server --bind 0.0.0.0
+else
+    faraday-server --with-workers --bind 0.0.0.0
+fi

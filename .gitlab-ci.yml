@@ -29,6 +29,7 @@ before_script:
     - mkdir -pv $APT_CACHE_DIR
 
 include:
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
   - local: .gitlab/ci/get-secrets.yml
   - local: .gitlab/ci/.rules-conditions.yml
 

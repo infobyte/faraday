@@ -1,6 +1,13 @@
 New features in the latest update
 =====================================
 
+5.18.0 [Dec 11th, 2025]:
+---
+ * [ADD] Added the max_task_message_size config option to prevent oversized messages from being enqueued for later processing. #8061
+ * [FIX] Fixed the issue with credentials cascade during a workspace deletion. #8024
+ * [FIX] Fixed performance problems when loading related entities on a vulnerability. #8046
+
+
 5.17.0 [Oct 3rd, 2025]:
 ---
  * [ADD] Update stats for hosts and workspaces from failed commands on server start, ensuring data consistency. #7935

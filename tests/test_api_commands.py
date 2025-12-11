@@ -64,7 +64,8 @@ class TestListCommandView(ReadWriteAPITests):
                 'tool',
                 'import_source',
                 'creator',
-                'metadata'
+                'metadata',
+                'tasks'
             ]
             assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())

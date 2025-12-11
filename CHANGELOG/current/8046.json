@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed performance problems when loading related entities on a vulnerability. #8046"
-}

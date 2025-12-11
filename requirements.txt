@@ -36,7 +36,7 @@ syslog-rfc5424-formatter>=1.1.1
 simplekv>=0.13.0
 Flask-KVSession-fork>=0.6.4
 distro>=1.4.0
-faraday-plugins>=1.27.0,<2.0.0
+faraday-plugins>=1.27.1,<2.0.0
 apispec>=6.3.0
 apispec-webframeworks<=0.5.2
 pyyaml

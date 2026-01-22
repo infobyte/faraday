@@ -51,6 +51,7 @@ from faraday.server.models import (
     AgentExecution,
     Command,
     CommandObject,
+    Credential,
     CVE,
     Host,
     Hostname,
@@ -209,6 +210,27 @@ class BulkCommandSchema(AutoSchema):
         return data
 
 
+class BulkCredentialSchema(AutoSchema):
+    """Schema for credentials in bulk_create."""
+
+    username = fields.String(required=True)
+    password = fields.String(required=True)
+    endpoint = fields.String(load_default='')
+    leak_date = fields.DateTime(allow_none=True, load_default=None)
+    owned = fields.Boolean(load_default=False)
+
+    class Meta:
+        model = Credential
+        fields = ('username', 'password', 'endpoint', 'leak_date', 'owned')
+
+    @validates_schema
+    def validate_not_empty(self, data, **kwargs):
+        if not data.get('username', '').strip():
+            raise ValidationError('Username cannot be empty')
+        if not data.get('password', '').strip():
+            raise ValidationError('Password cannot be empty')
+
+
 class BulkCreateSchema(Schema):
     hosts = fields.Nested(
         HostBulkSchema(many=True),
@@ -218,6 +240,11 @@ class BulkCreateSchema(Schema):
     command = fields.Nested(
         BulkCommandSchema(),
         required=True,
+    )
+    credentials = fields.Nested(
+        BulkCredentialSchema(many=True),
+        many=True,
+        load_default=[],
     )
     execution_id = fields.Integer(attribute='execution_id')
 
@@ -268,6 +295,36 @@ def bulk_create(ws: Workspace,
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
     workspace_id = ws.id
 
+    # Process credentials FIRST (before hosts processing that might return early)
+    # Store credential IDs and external_id for later linking
+    credential_ids_to_link = []
+    external_id_for_linking = None
+    
+    credentials_to_create = data.get('credentials', [])
+    if credentials_to_create:
+        logger.debug(f"Needs to create {len(credentials_to_create)} credentials...")
+        credentials_created = 0
+        credentials_updated = 0
+        for credential_data in credentials_to_create:
+            result = _create_credential(ws, credential_data, return_id=True)
+            if result.get('credential_id'):
+                credential_ids_to_link.append(result['credential_id'])
+            credentials_created += result['created']
+            credentials_updated += result['updated']
+        # Commit credentials to ensure they are saved before processing hosts
+        db.session.commit()
+        logger.info(f"Credentials processed: {credentials_created} created, {credentials_updated} already existed")
+        
+        # Extract external_id from vulnerabilities for later linking
+        if data.get('hosts'):
+            for host in data['hosts']:
+                for vuln in host.get('vulnerabilities', []):
+                    if vuln.get('external_id') and vuln['external_id'].startswith('BAGRE-'):
+                        external_id_for_linking = vuln['external_id']
+                        break
+                if external_id_for_linking:
+                    break
+
     hosts_to_create = len(data['hosts'])
     if hosts_to_create > 0:
         logger.debug(f"Needs to create {hosts_to_create} hosts...")
@@ -276,6 +333,12 @@ def bulk_create(ws: Workspace,
             _hosts_to_create = []
             _current_size = 0
             tasks = []
+            # Prepare linking info for Celery callback
+            linking_info = {
+                'credential_ids': credential_ids_to_link,
+                'external_id': external_id_for_linking
+            } if (credential_ids_to_link and external_id_for_linking) else None
+            
             for host in data['hosts']:
                 logger.info(f"Current size of Message: {_current_size}")
                 _host_size = get_host_size(host)
@@ -285,19 +348,23 @@ def bulk_create(ws: Workspace,
                     _current_size += _host_size
                 else:
                     logger.debug("Sending task to celery")
-                    task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create)
+                    task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create, linking_info)
                     tasks.append(task.id)
                     _current_size = _host_size
                     _hosts_to_create = [host]
             # Processing the tail of hosts
             if _hosts_to_create:
-                task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create)
+                task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create, linking_info)
                 tasks.append(task.id)
             return tasks
 
         # just in case celery is not configured
         for host in data['hosts']:
             _create_host(ws, host, command_dict)
+        
+        # Link credentials to vulnerabilities after they're created (non-Celery path)
+        if credential_ids_to_link and external_id_for_linking:
+            _link_credentials_to_vulnerabilities(ws, credential_ids_to_link, external_id_for_linking)
     else:
         logger.info("No hosts to create")
 
@@ -316,6 +383,82 @@ def _update_command(command_id: int, command_data: dict):
 
 def get_created_tuple(obj: object) -> tuple:
     return deepcopy(obj.__class__.__name__), deepcopy(obj.id), deepcopy(obj.workspace.id)
+
+
+def _create_credential(ws: Workspace, credential_data: dict, return_id: bool = False) -> dict:
+    """Create or get existing credential.
+
+    Args:
+        ws: Workspace object
+        credential_data: Dictionary with credential data (username, password, endpoint, etc.)
+        return_id: If True, include credential_id in result
+
+    Returns:
+        dict: {'created': int, 'updated': int, 'credential_id': int (optional)} count of created/updated credentials
+    """
+    logger.debug("Trying to create credential...")
+    credential_data = credential_data.copy()
+    result = {'created': 0, 'updated': 0}
+
+    try:
+        created, credential = get_or_create(ws, Credential, credential_data)
+        if created:
+            result['created'] = 1
+            logger.debug(f"Created credential for user {credential_data.get('username')}")
+        else:
+            result['updated'] = 1
+            logger.debug(f"Credential already exists for user {credential_data.get('username')}")
+        
+        if return_id and credential:
+            result['credential_id'] = credential.id
+    except Exception as e:
+        logger.exception("Could not create credential for user %s", credential_data.get('username'), exc_info=e)
+
+    return result
+
+
+def _link_credentials_to_vulnerabilities(ws: Workspace, credential_ids: list, external_id: str) -> None:
+    """Link credentials to vulnerabilities by external_id.
+    
+    Args:
+        ws: Workspace object
+        credential_ids: List of credential IDs to link
+        external_id: External ID to find vulnerabilities
+    """
+    if not credential_ids or not external_id:
+        return
+    
+    try:
+        # Find vulnerabilities by external_id
+        vulns = Vulnerability.query.filter(
+            Vulnerability.workspace == ws,
+            Vulnerability.external_id == external_id
+        ).all()
+        
+        if not vulns:
+            logger.debug(f"No vulnerabilities found with external_id {external_id}")
+            return
+        
+        logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
+        
+        # Link credentials to vulnerabilities
+        for cred_id in credential_ids:
+            credential = Credential.query.filter(
+                Credential.id == cred_id,
+                Credential.workspace == ws
+            ).first()
+            
+            if credential:
+                # Add vulnerabilities to credential (many-to-many relationship)
+                for vuln in vulns:
+                    if vuln not in credential.vulnerabilities:
+                        credential.vulnerabilities.append(vuln)
+        
+        db.session.commit()
+        logger.info(f"Linked {len(credential_ids)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
+    except Exception as e:
+        logger.exception("Error linking credentials to vulnerabilities", exc_info=e)
+        db.session.rollback()
 
 
 def _create_host(ws, host_data, command: dict):
@@ -1153,6 +1296,9 @@ class BulkCreateView(GenericWorkspacedView):
             db.session.add(command)
             db.session.commit()
 
+        # Store command_id before bulk_create might close the session
+        command_id = command.id
+        
         if data['hosts']:
             # Create random file
             chars = ascii_uppercase + digits
@@ -1166,7 +1312,7 @@ class BulkCreateView(GenericWorkspacedView):
             if faraday_server.celery_enabled:
                 from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
                 process_report(workspace.name,
-                               command.id,
+                               command_id,
                                file_path,
                                None,
                                user_id,
@@ -1181,7 +1327,7 @@ class BulkCreateView(GenericWorkspacedView):
                 REPORTS_QUEUE.put(
                     (
                         workspace.name,
-                        command.id,
+                        command_id,
                         file_path,
                         None,
                         user_id,
@@ -1197,11 +1343,11 @@ class BulkCreateView(GenericWorkspacedView):
             logger.warning("No hosts parsed in data...")
             logger.warning(data)
             logger.warning(json_data)
-            _update_command(command.id, data['command'])
+            _update_command(command_id, data['command'])
         return jsonify(
             {
                 "message": "Created",
-                "command_id": command.id
+                "command_id": command_id
             }
         ), HTTP_CREATED
 

@@ -23,6 +23,7 @@ from faraday.server.models import (
     VulnerabilityGeneric,
     VulnerabilityWeb,
     Vulnerability,
+    Credential,
 )
 from faraday.server.utils.workflows import _process_entry
 from faraday.server.debouncer import (debounce_workspace_update,
@@ -35,7 +36,7 @@ logger = get_task_logger(__name__)
 
 
 @celery.task
-def on_success_process_report_task(results, command_id=None):
+def on_success_process_report_task(results, command_id=None, linking_info=None):
     command = db.session.query(Command).filter(Command.id == command_id).first()
     if not command:
         logger.error("File imported but command id %s was not found", command_id)
@@ -54,6 +55,10 @@ def on_success_process_report_task(results, command_id=None):
     if command.import_source == "report":
         no_debounce = True
     update_host_stats.delay(host_ids, [], workspace_id=workspace.id, no_debounce=no_debounce, command_id=command_id)
+    
+    # Link credentials to vulnerabilities if linking_info is provided
+    if linking_info and linking_info.get('credential_ids') and linking_info.get('external_id'):
+        _link_credentials_to_vulnerabilities_async(workspace, linking_info['credential_ids'], linking_info['external_id'])
 
     # Apply Workflow
     pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
@@ -77,6 +82,52 @@ def on_success_process_report_task(results, command_id=None):
     logger.debug("No pipelines found in ws %s", command.workspace.name)
 
 
+def _link_credentials_to_vulnerabilities_async(workspace: Workspace, credential_ids: list, external_id: str) -> None:
+    """Link credentials to vulnerabilities by external_id (for Celery async processing).
+    
+    Args:
+        workspace: Workspace object
+        credential_ids: List of credential IDs to link
+        external_id: External ID to find vulnerabilities
+    """
+    if not credential_ids or not external_id:
+        return
+    
+    try:
+        from faraday.server.app import get_app  # pylint: disable=import-outside-toplevel
+        with get_app().app_context():
+            # Find vulnerabilities by external_id
+            vulns = Vulnerability.query.filter(
+                Vulnerability.workspace == workspace,
+                Vulnerability.external_id == external_id
+            ).all()
+            
+            if not vulns:
+                logger.debug(f"No vulnerabilities found with external_id {external_id}")
+                return
+            
+            logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
+            
+            # Link credentials to vulnerabilities
+            for cred_id in credential_ids:
+                credential = Credential.query.filter(
+                    Credential.id == cred_id,
+                    Credential.workspace == workspace
+                ).first()
+                
+                if credential:
+                    # Add vulnerabilities to credential (many-to-many relationship)
+                    for vuln in vulns:
+                        if vuln not in credential.vulnerabilities:
+                            credential.vulnerabilities.append(vuln)
+            
+            db.session.commit()
+            logger.info(f"Linked {len(credential_ids)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
+    except Exception as e:
+        logger.exception("Error linking credentials to vulnerabilities in Celery task", exc_info=e)
+        db.session.rollback()
+
+
 @celery.task()
 def on_chord_error(request, exc, *args, **kwargs):
     command_id = kwargs.get("command_id", None)
@@ -89,8 +140,11 @@ def on_chord_error(request, exc, *args, **kwargs):
 
 
 @celery.task(acks_late=True)
-def process_report_task(workspace_id: int, command: dict, hosts):
-    callback = on_success_process_report_task.subtask(kwargs={'command_id': command['id']}).on_error(on_chord_error.subtask(kwargs={'command_id': command['id']}))
+def process_report_task(workspace_id: int, command: dict, hosts, linking_info=None):
+    callback_kwargs = {'command_id': command['id']}
+    if linking_info:
+        callback_kwargs['linking_info'] = linking_info
+    callback = on_success_process_report_task.subtask(kwargs=callback_kwargs).on_error(on_chord_error.subtask(kwargs={'command_id': command['id']}))
     g = [create_host_task.s(workspace_id, command, host) for host in hosts]
     logger.info("Task to execute %s", len(g))
     group_of_tasks = group(g)

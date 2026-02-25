@@ -16,6 +16,7 @@ from cvss import CVSS2, CVSS3, CVSS4
 from flask import Blueprint, abort, jsonify, request
 from flask_login import current_user
 from marshmallow import (
+    EXCLUDE,
     Schema,
     ValidationError,
     fields,
@@ -53,6 +54,7 @@ from faraday.server.models import (
     CommandObject,
     Credential,
     CVE,
+    Credential,
     Host,
     Hostname,
     Metadata,
@@ -62,6 +64,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityReference,
     Workspace,
+    association_table_vulnerabilities_credentials,
     cve_vulnerability_association,
     cwe_vulnerability_association,
     db,
@@ -93,9 +96,28 @@ bulk_create_api = Blueprint('bulk_create_api', __name__)
 logger = getLogger(__name__)
 
 
+class BulkCredentialSchema(Schema):
+    """Credentials embedded in bulk_create payloads.
+
+    This schema is intentionally permissive (unknown fields excluded) because
+    different report formats may include extra attributes like name/description.
+    """
+
+    username = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    password = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    endpoint = fields.String(missing='')
+    owned = fields.Boolean(missing=False)
+    leak_date = fields.DateTime(allow_none=True)
+
+    class Meta:
+        unknown = EXCLUDE
+
+
 class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
+    credentials = fields.Nested(BulkCredentialSchema(many=True), many=True, missing=[])
+
     class Meta(vulns_base.VulnerabilitySchema.Meta):
-        extra_fields = ('run_date',)
+        extra_fields = ('run_date', 'credentials')
         fields = tuple(
             field_name for field_name in (vulns_base.VulnerabilitySchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
@@ -103,8 +125,10 @@ class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
 
 
 class BulkVulnerabilityWebSchema(vulns_base.VulnerabilityWebSchema):
+    credentials = fields.Nested(BulkCredentialSchema(many=True), many=True, missing=[])
+
     class Meta(vulns_base.VulnerabilityWebSchema.Meta):
-        extra_fields = ('run_date',)
+        extra_fields = ('run_date', 'credentials')
         fields = tuple(
             field_name for field_name in (vulns_base.VulnerabilityWebSchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
@@ -627,6 +651,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
     owasp_object_created = []
     cwe_object_created = []
     policy_object_created = []
+    credential_association_created = []
     created = 0
     updated = 0
 
@@ -651,6 +676,11 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     reference['id'] = reference_sequence_id
                     reference['vulnerability_id'] = v_id
                     references_created.append(reference)
+            if data.get('credential_ids'):
+                for cred_id in set(data['credential_ids']):
+                    credential_association_created.append(
+                        {'vulnerability_id': v_id, 'credential_id': cred_id}
+                    )
             logger.debug(f"Data vulnerability On conflict {data['vuln_data']}")
             updated += 1
             set_histogram(histogram, data['vuln_data'])
@@ -685,6 +715,11 @@ def manage_relationships(processed_data, result, workspace_id=None):
                 cwe_object_created.append(cwe_association)
             for policy in data['policy_violations_associations']:
                 policy_object_created.append(policy)
+            if data.get('credential_ids'):
+                for cred_id in set(data['credential_ids']):
+                    credential_association_created.append(
+                        {'vulnerability_id': v_id, 'credential_id': cred_id}
+                    )
     # TODO: Improve with an iterator
     if references_created:
         stmt = insert(VulnerabilityReference).values(references_created).on_conflict_do_nothing()
@@ -703,6 +738,14 @@ def manage_relationships(processed_data, result, workspace_id=None):
         db.session.execute(stmt)
     if policy_object_created:
         stmt = insert(PolicyViolationVulnerabilityAssociation).values(policy_object_created).on_conflict_do_nothing()
+        db.session.execute(stmt)
+    if credential_association_created:
+        unique_pairs = {
+            (a['vulnerability_id'], a['credential_id']) for a in credential_association_created
+        }
+        stmt = insert(association_table_vulnerabilities_credentials).values(
+            [{'vulnerability_id': v_id, 'credential_id': c_id} for v_id, c_id in unique_pairs]
+        )
         db.session.execute(stmt)
     _create_or_update_histogram(histogram)
     db.session.commit()
@@ -869,7 +912,7 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
         raise
 
     vuln_data['workspace_id'] = ws.id
-    processed_data = set_relationships_data(vuln_data, command)
+    processed_data = set_relationships_data(ws, vuln_data, command)
 
     if 'host' in vuln_data:
         vuln_data['host_id'] = vuln_data['host'].id
@@ -1133,7 +1176,7 @@ def set_cvss4_data(vuln_data):
             logger.exception("Could not create cvss4", exc_info=e)
 
 
-def set_relationships_data(vulnerability, command):
+def set_relationships_data(ws: Workspace, vulnerability, command):
 
     vulnerability.pop('_attachments', {})
     references = vulnerability.pop('refs', [])
@@ -1141,8 +1184,24 @@ def set_relationships_data(vulnerability, command):
     cwe_list = vulnerability.pop('cwe', [])
     policyviolations = vulnerability.pop('policy_violations', [])
     owasp_list = vulnerability.pop('owasp', [])
+    credentials_list = vulnerability.pop('credentials', [])
 
     vuln_sequence_id = vulnerability['id']
+
+    credential_ids = []
+    for credential in credentials_list or []:
+        credential_data = {
+            'username': credential.get('username', ''),
+            'password': credential.get('password', ''),
+            'endpoint': credential.get('endpoint', '') or '',
+            'owned': credential.get('owned', False),
+            'leak_date': credential.get('leak_date', None),
+        }
+        # The schema should validate these, but keep a defensive check.
+        if not credential_data['username'] or not credential_data['password']:
+            continue
+        _, cred_obj = get_or_create(ws, Credential, credential_data)
+        credential_ids.append(cred_obj.id)
 
     processed_data = {
         vuln_sequence_id: {
@@ -1152,6 +1211,7 @@ def set_relationships_data(vulnerability, command):
             'owasp_objects': [],
             'cwe_associations': [],
             'policy_violations_associations': [],
+            'credential_ids': credential_ids,
             'vuln_data': None
         }
     }

@@ -12,6 +12,7 @@ from faraday.server.models import (
     db,
     Command,
     CommandObject,
+    Credential,
     Host,
     Service,
     Vulnerability,
@@ -675,6 +676,29 @@ def test_create_host_ignores_cred(session, workspace):
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
     bc._create_host(workspace, host_data_loaded, command_dict)
     assert count(Host, workspace) == 1
+
+
+def test_create_host_vuln_with_credentials_creates_association(session, workspace, host):
+    vuln_data_copy = vuln_data.copy()
+    vuln_data_copy['credentials'] = [credential_data]
+    new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
+    host_data_copy = host_data.copy()
+    host_data_copy['vulnerabilities'] = [new_vuln]
+
+    command = new_empty_command(workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+    bc._create_host(workspace, host_data_copy, command_dict)
+
+    vuln = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.workspace == workspace).one()
+    cred = Credential.query.filter(Credential.workspace == workspace).one()
+    assert cred.username == credential_data['username']
+    assert cred.password == credential_data['password']
+    assert cred.endpoint == ''
+    assert len(vuln.credentials) == 1
+    assert vuln.credentials[0].id == cred.id
 
 
 def test_create_service_with_vuln(session, host):

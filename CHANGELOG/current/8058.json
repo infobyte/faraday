@@ -1,0 +1,4 @@
+{
+    "level": "community",
+    "md": "[ADD] Added support for credentials in bulk_create endpoint. Credentials can now be included in the bulk_create JSON payload and will be processed before hosts to ensure they are created even when Celery is enabled. Added automatic linking of credentials to vulnerabilities by external_id after vulns are created, supporting both synchronous and asynchronous (Celery) processing paths."
+  }

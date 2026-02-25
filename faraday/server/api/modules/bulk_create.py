@@ -54,7 +54,6 @@ from faraday.server.models import (
     CommandObject,
     Credential,
     CVE,
-    Credential,
     Host,
     Hostname,
     Metadata,
@@ -323,7 +322,7 @@ def bulk_create(ws: Workspace,
     # Store credential IDs and external_id for later linking
     credential_ids_to_link = []
     external_id_for_linking = None
-    
+
     credentials_to_create = data.get('credentials', [])
     if credentials_to_create:
         logger.debug(f"Needs to create {len(credentials_to_create)} credentials...")
@@ -338,7 +337,7 @@ def bulk_create(ws: Workspace,
         # Commit credentials to ensure they are saved before processing hosts
         db.session.commit()
         logger.info(f"Credentials processed: {credentials_created} created, {credentials_updated} already existed")
-        
+
         # Extract external_id from vulnerabilities for later linking
         if data.get('hosts'):
             for host in data['hosts']:
@@ -362,7 +361,7 @@ def bulk_create(ws: Workspace,
                 'credential_ids': credential_ids_to_link,
                 'external_id': external_id_for_linking
             } if (credential_ids_to_link and external_id_for_linking) else None
-            
+
             for host in data['hosts']:
                 logger.info(f"Current size of Message: {_current_size}")
                 _host_size = get_host_size(host)
@@ -385,7 +384,7 @@ def bulk_create(ws: Workspace,
         # just in case celery is not configured
         for host in data['hosts']:
             _create_host(ws, host, command_dict)
-        
+
         # Link credentials to vulnerabilities after they're created (non-Celery path)
         if credential_ids_to_link and external_id_for_linking:
             _link_credentials_to_vulnerabilities(ws, credential_ids_to_link, external_id_for_linking)
@@ -432,7 +431,7 @@ def _create_credential(ws: Workspace, credential_data: dict, return_id: bool = F
         else:
             result['updated'] = 1
             logger.debug(f"Credential already exists for user {credential_data.get('username')}")
-        
+
         if return_id and credential:
             result['credential_id'] = credential.id
     except Exception as e:
@@ -443,7 +442,7 @@ def _create_credential(ws: Workspace, credential_data: dict, return_id: bool = F
 
 def _link_credentials_to_vulnerabilities(ws: Workspace, credential_ids: list, external_id: str) -> None:
     """Link credentials to vulnerabilities by external_id.
-    
+
     Args:
         ws: Workspace object
         credential_ids: List of credential IDs to link
@@ -451,33 +450,33 @@ def _link_credentials_to_vulnerabilities(ws: Workspace, credential_ids: list, ex
     """
     if not credential_ids or not external_id:
         return
-    
+
     try:
         # Find vulnerabilities by external_id
         vulns = Vulnerability.query.filter(
             Vulnerability.workspace == ws,
             Vulnerability.external_id == external_id
         ).all()
-        
+
         if not vulns:
             logger.debug(f"No vulnerabilities found with external_id {external_id}")
             return
-        
+
         logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
-        
+
         # Link credentials to vulnerabilities
         for cred_id in credential_ids:
             credential = Credential.query.filter(
                 Credential.id == cred_id,
                 Credential.workspace == ws
             ).first()
-            
+
             if credential:
                 # Add vulnerabilities to credential (many-to-many relationship)
                 for vuln in vulns:
                     if vuln not in credential.vulnerabilities:
                         credential.vulnerabilities.append(vuln)
-        
+
         db.session.commit()
         logger.info(f"Linked {len(credential_ids)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
     except Exception as e:
@@ -1358,7 +1357,7 @@ class BulkCreateView(GenericWorkspacedView):
 
         # Store command_id before bulk_create might close the session
         command_id = command.id
-        
+
         if data['hosts']:
             # Create random file
             chars = ascii_uppercase + digits

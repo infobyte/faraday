@@ -55,7 +55,7 @@ def on_success_process_report_task(results, command_id=None, linking_info=None):
     if command.import_source == "report":
         no_debounce = True
     update_host_stats.delay(host_ids, [], workspace_id=workspace.id, no_debounce=no_debounce, command_id=command_id)
-    
+
     # Link credentials to vulnerabilities if linking_info is provided
     if linking_info and linking_info.get('credential_ids') and linking_info.get('external_id'):
         _link_credentials_to_vulnerabilities_async(workspace, linking_info['credential_ids'], linking_info['external_id'])
@@ -84,7 +84,7 @@ def on_success_process_report_task(results, command_id=None, linking_info=None):
 
 def _link_credentials_to_vulnerabilities_async(workspace: Workspace, credential_ids: list, external_id: str) -> None:
     """Link credentials to vulnerabilities by external_id (for Celery async processing).
-    
+
     Args:
         workspace: Workspace object
         credential_ids: List of credential IDs to link
@@ -92,7 +92,7 @@ def _link_credentials_to_vulnerabilities_async(workspace: Workspace, credential_
     """
     if not credential_ids or not external_id:
         return
-    
+
     try:
         from faraday.server.app import get_app  # pylint: disable=import-outside-toplevel
         with get_app().app_context():
@@ -101,26 +101,26 @@ def _link_credentials_to_vulnerabilities_async(workspace: Workspace, credential_
                 Vulnerability.workspace == workspace,
                 Vulnerability.external_id == external_id
             ).all()
-            
+
             if not vulns:
                 logger.debug(f"No vulnerabilities found with external_id {external_id}")
                 return
-            
+
             logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
-            
+
             # Link credentials to vulnerabilities
             for cred_id in credential_ids:
                 credential = Credential.query.filter(
                     Credential.id == cred_id,
                     Credential.workspace == workspace
                 ).first()
-                
+
                 if credential:
                     # Add vulnerabilities to credential (many-to-many relationship)
                     for vuln in vulns:
                         if vuln not in credential.vulnerabilities:
                             credential.vulnerabilities.append(vuln)
-            
+
             db.session.commit()
             logger.info(f"Linked {len(credential_ids)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
     except Exception as e:

@@ -666,6 +666,11 @@ def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=
     elif run_all is True:
         logger.info(f"Running all objects with pipeline id {pipeline_id}")
 
+        workspace = db.session.query(Workspace).get(ws_id)
+        if workspace and workspace.readonly:
+            logger.warning(f"Skipping pipeline {pipeline_id}: workspace {ws_id} is read-only")
+            return []
+
         _change_pipeline_running_status(pipeline_id, True)
 
         try:

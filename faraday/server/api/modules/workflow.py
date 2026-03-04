@@ -994,6 +994,9 @@ class PipelineView(ReadWriteView):
         if pipeline.running is True:
             flask.abort(400, "Pipeline already running")
 
+        if pipeline.workspace.readonly:
+            flask.abort(403, "Cannot run pipelines on read-only workspaces")
+
         from faraday.server.tasks import workflow_task  # pylint: disable=import-outside-toplevel
         # TODO: Check if there is an active workflow
         # TODO: Implement bulk

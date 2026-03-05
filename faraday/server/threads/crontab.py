@@ -56,7 +56,7 @@ class FaradayCronTab(threading.Thread):
         logger.info("Crontab Thread [Stop]")
 
     def tick(self):
-        for value in self.run_pending(now=datetime.datetime.now()):
+        for value in self.run_pending(now=datetime.datetime.now(datetime.timezone.utc)):
             logger.debug(f'Running cron job {value}')
         sleep(0.1)
 
@@ -127,12 +127,21 @@ class CronItem:
 
     def run_pending(self, now=None):
         if not now:
-            now = datetime.datetime.now()
-        now = now.replace(second=0, microsecond=0, tzinfo=self.timezone)
+            now = datetime.datetime.now(tz=self.timezone)
+        else:
+            if now.tzinfo is None:
+                logger.warning(f"Timezone not set for schedule {self.schedule_id}. This will be deprecated soon.")
+                now = now.replace(tzinfo=self.timezone)
+            else:
+                now = now.astimezone(self.timezone)
+        now = now.replace(second=0, microsecond=0)
         if self.active:
             next_time = self.schedule(self.last_run).get_next(datetime.datetime)
             if not next_time.tzinfo:
+                logger.warning(f"Timezone not set for schedule {self.schedule_id}. This will be deprecated soon.")
                 next_time = next_time.replace(tzinfo=self.timezone)
+            logger.debug(f"Next run for {self.schedule_id}: {next_time}")
+            logger.debug(f"Now: {now}")
             if next_time <= now:
                 logger.info(f"Running Job {self.schedule_id} [{self.crontab}]")
                 self.last_run = next_time

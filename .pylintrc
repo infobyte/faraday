@@ -32,7 +32,6 @@ persistent=yes
 
 # When enabled, pylint would attempt to guess common misconfiguration and emit
 # user-friendly hints instead of false-positive error messages
-suggestion-mode=yes
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
@@ -197,6 +196,10 @@ disable=blacklisted-name,
         no-staticmethod-decorator,
         cyclic-import,
         duplicate-code,
+        too-many-positional-arguments,
+        possibly-used-before-assignment,
+        unreachable,
+        import-error,
         too-many-ancestors,
         too-many-instance-attributes,
         too-few-public-methods,

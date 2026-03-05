@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Several indexes were added to improve workspace's delete performance. #8075"
-}

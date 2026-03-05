@@ -1,0 +1,184 @@
+[project]
+name = "faradaysec"
+dynamic = ["version"]
+description = "Open Source Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Faradaysec", email = "devel@faradaysec.com" }
+]
+keywords = ["security", "tools"]
+license = { text = "GPL-3.0-only" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: System :: Networking :: Monitoring",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "alembic>=0.9.9",
+    "apispec>=6.3.0",
+    "apispec-webframeworks<=0.5.2",
+    "autobahn>=22.7.1",
+    "bcrypt>=3.1.4,<5.0.0",
+    "bidict==0.22.0",
+    "bleach>=4.1.0,<5.0.0",
+    "celery==5.4.0",
+    "click>=8.0.1",
+    "colorama>=0.3.9",
+    "croniter>=0.3.30",
+    "cryptography>=40.0.1",
+    "cvss>=3.1",
+    "deprecation>=1.0.1",
+    "distro>=1.4.0",
+    "elasticsearch>=7.16.3,<8",
+    "email-validator>=2.3.0",
+    "faraday-agent-parameters-types>=1.9.1",
+    "faraday-plugins>=1.27.0,<2.0.0",
+    "filedepot>=0.5.0,<0.11.0",
+    "filetype>=1.0.5",
+    "filteralchemy-fork>=0.1.0",
+    "flask>=1.1,<=2.1.3",
+    "flask-celery-helper>=1.1.0",
+    "flask-classful>=0.14,<0.16",
+    "flask-kvsession-fork>=0.6.4",
+    "flask-limiter>=1.3.1,<1.4.0",
+    "flask-login>=0.5.0,<0.6.0",
+    "flask-mail>=0.10.0",
+    "flask-security-too>=4.0.0,<5.0.0",
+    "flask-socketio>=5.0.1",
+    "flask-sqlalchemy>=2.3.1,<=2.5.1",
+    "flask-wtf>=0.15.1,<=1.0.1",
+    "gevent==22.10.2",
+    "gevent-websocket>=0.10.1",
+    "jinja2>=2.9.6",
+    "kombu==5.4.2",
+    "marshmallow>=3.19.0,<4.0.0",
+    "marshmallow-sqlalchemy>=0.26.1,<0.28.1",
+    "matplotlib>=3.1.1",
+    "networkx>=3.4.2",
+    "nplusone>=0.8.1",
+    "pgcli<=4.3.0",
+    "pillow>=10.2.0",
+    "psycogreen>=1.0.2",
+    "psycopg2>=2.9.0",
+    "pyasn1>=0.6.1",
+    "pyjwt>=2.3.0",
+    "pylibmagic>=0.5.0 ; sys_platform == 'darwin'",
+    "pyopenssl>=23.1.1,<24.0.0",
+    "pyotp>=2.6.0",
+    "python-dateutil>=2.6.0",
+    "python-magic>=0.4.27 ; sys_platform != 'darwin'",
+    "pyyaml>=6.0.3",
+    "redis>=4.3.4",
+    "requests>=2.18.4",
+    "service-identity>=17.0.0",
+    "sh>=2.2.2",
+    "simplekv>=0.13.0",
+    "sqlalchemy>=1.2.0,<1.4.0",
+    "syslog-rfc5424-formatter>=1.1.1",
+    "tqdm>=4.15.0",
+    "validators>=0.20.0",
+    "webargs>=8.0.0",
+    "werkzeug>=1.0.0,<2.1.0",
+    "wtforms>=2.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/infobyte/faraday"
+"Bug Reports" = "https://github.com/infobyte/faraday/issues"
+Source = "https://github.com/infobyte/faraday/"
+
+[project.scripts]
+faraday-server = "faraday.start_server:main"
+faraday-manage = "faraday.manage:cli"
+faraday-worker = "faraday.server.celery_worker:main"
+faraday-worker-gevent = "faraday.server.celery_worker_gevent:main"
+faraday-start-all = "faraday.start_all:main"
+
+[project.optional-dependencies]
+extras = [
+    "beautifulsoup4>=4.6.0",
+    "selenium>=3.9.0",
+]
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "factory-boy>=2.10.0",
+    "hypothesis>=4.18.3",
+    "pylint>=4.0.0",
+    "pytest>=6",
+    "pytest-cov>=7.0.0",
+    "pytest-env>=1.2.0",
+    "pytest-factoryboy>=2.7.0",
+    "pytest-mock>=3.15.1",
+    "pytest-xdist>=3.8.0",
+    "responses>=0.9.0",
+    "ruff>=0.9.0",
+    "sphinx>=1.7.6",
+    "twine>=6.2.0",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "faraday.__version__"}
+
+[tool.setuptools]
+# Automatically discover all packages and subpackages (excluding tests)
+packages = { find = { where = ["."], include = ["faraday", "faraday.*"], exclude = ["tests", "tests.*"] } }
+include-package-data = true
+
+[tool.setuptools.package-data]
+faraday = [
+    "py.typed",
+    "migrations/**/*",
+    "server/www/**/*",
+    "server/statics/**/*",
+    "server/templates/**/*",
+    "server/utils/notification_messages/**/*",
+    "alembic.ini",
+    "server/default.ini",
+    "server/commands/templates/nginx_config.j2",
+    "utils/data/feature_flags.json",
+    "openapi/faraday_swagger.json",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    "CHANGELOG",
+    "doc",
+    "scripts",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "UP031", "UP032"]
+
+ignore = [
+    # Spacing (E203, E211, E221, E271 not in ruff)
+    # Blank lines
+    "E306",
+    # Imports
+    "E402",
+    # Line length
+    "E501",
+    # Comparisons
+    "E711", "E712", "E713", "E714", "E722", "E741",
+    # Pyflakes
+    "F401", "F632", "F811", "F841", "F901",
+    # Warnings
+    "W605",
+    # Notes: E12x (continuation line/indentation), E502, E203, E211, E221, E271,
+    # W503/W504 (line breaks around binary operators) not implemented in ruff
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]

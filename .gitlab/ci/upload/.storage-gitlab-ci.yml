@@ -1,12 +1,12 @@
 .google_storage_deb_rpm_base: &google_storage_deb_rpm_base
 - check_not_skipped(){ grep -v 'Skipping'; }
 - gcloud auth activate-service-account --key-file auth_file.json
-- "gsutil cp faraday-server_amd64.deb ${GCLOUD_FILE_PATH}_amd64.deb 2>&1 | check_not_skipped"
-- "gsutil cp faraday-server_amd64.rpm ${GCLOUD_FILE_PATH}_amd64.rpm 2>&1 | check_not_skipped"
+- "gsutil cp faraday-server_ubuntu24_amd64.deb ${GCLOUD_FILE_PATH}_amd64.deb 2>&1 | check_not_skipped"
+- "gsutil cp faraday-server_rockylinux8_amd64.rpm ${GCLOUD_FILE_PATH}_amd64.rpm 2>&1 | check_not_skipped"
 - "gsutil cp faraday-server-docker.tar.gz ${GCLOUD_FILE_PATH}-docker.tar.gz 2>&1 | check_not_skipped"
 - "gsutil setmeta -h x-goog-meta-commit:${CI_COMMIT_SHA} ${GCLOUD_FILE_PATH}*.*"
-- export DEB_HASH=$(sha256sum faraday-server_amd64.deb | awk '{print $1}')
-- export RPM_HASH=$(sha256sum faraday-server_amd64.rpm | awk '{print $1}')
+- export DEB_HASH=$(sha256sum faraday-server_ubuntu24_amd64.deb | awk '{print $1}')
+- export RPM_HASH=$(sha256sum faraday-server_rockylinux8_amd64.rpm | awk '{print $1}')
 - export DOCKER_HASH=$(sha256sum faraday-server-docker.tar.gz| awk '{print $1}')
 - "gsutil setmeta -h x-goog-meta-sha256_hash:${DEB_HASH} ${GCLOUD_FILE_PATH}_amd64.deb 2>&1 | check_not_skipped"
 - "gsutil setmeta -h x-goog-meta-sha256_hash:${RPM_HASH} ${GCLOUD_FILE_PATH}_amd64.rpm 2>&1 | check_not_skipped"
@@ -29,10 +29,9 @@ google_storage_deb_rpm_dev_dev:
   tags:
     - digitalocean-dev
   script:
-    - apt-get update && apt-get install -y software-properties-common curl
-    - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-    - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-    - apt update && apt install jq vault -y --fix-missing
+    - apt-get update && apt-get install -y curl ca-certificates libcap2-bin unzip
+    - curl -fsSL https://releases.hashicorp.com/vault/1.15.6/vault_1.15.6_linux_amd64.zip -o vault.zip
+    - unzip vault.zip && mv vault /usr/bin/vault && chmod +x /usr/bin/vault
     - setcap cap_ipc_lock= /usr/bin/vault
     - cat $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
@@ -44,9 +43,9 @@ google_storage_deb_rpm_dev_dev:
     - !reference [ .ignore-on-master, rules ]
     - when: never
   needs:
-    - job: generate_deb_dev
+    - job: generate_deb_ubuntu24_dev
       artifacts: true
-    - job: generate_rpm_dev
+    - job: generate_rpm_rockylinux8_dev
       artifacts: true
     - job: generate_docker_tar_gz_dev
       artifacts: true
@@ -60,10 +59,9 @@ google_storage_deb_rpm_dev_staging:
   tags:
     - digitalocean-dev
   script:
-    - apt-get update && apt-get install -y software-properties-common curl
-    - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-    - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-    - apt update && apt install jq vault -y --fix-missing
+    - apt-get update && apt-get install -y curl ca-certificates libcap2-bin unzip
+    - curl -fsSL https://releases.hashicorp.com/vault/1.15.6/vault_1.15.6_linux_amd64.zip -o vault.zip
+    - unzip vault.zip && mv vault /usr/bin/vault && chmod +x /usr/bin/vault
     - setcap cap_ipc_lock= /usr/bin/vault
     - cat $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
@@ -72,9 +70,9 @@ google_storage_deb_rpm_dev_staging:
     - !reference [ .on-staging, rules ]
     - when: never
   needs:
-    - job: generate_deb_staging
+    - job: generate_deb_ubuntu24_staging
       artifacts: true
-    - job: generate_rpm_staging
+    - job: generate_rpm_rockylinux8_staging
       artifacts: true
     - job: generate_docker_tar_gz_staging
       artifacts: true
@@ -88,10 +86,9 @@ google_storage_deb_rpm_dev_master:
   tags:
     - digitalocean-dev
   script:
-    - apt-get update && apt-get install -y software-properties-common curl
-    - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-    - apt-add-repository "deb [ arch=amd64 ] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-    - apt update && apt install jq vault -y --fix-missing
+    - apt-get update && apt-get install -y curl ca-certificates libcap2-bin unzip
+    - curl -fsSL https://releases.hashicorp.com/vault/1.15.6/vault_1.15.6_linux_amd64.zip -o vault.zip
+    - unzip vault.zip && mv vault /usr/bin/vault && chmod +x /usr/bin/vault
     - setcap cap_ipc_lock= /usr/bin/vault
     - cat $GCLOUD_STORAGE_KEY_FILE > auth_file.json
     - *google_storage_deb_rpm_base
@@ -100,9 +97,9 @@ google_storage_deb_rpm_dev_master:
     - !reference [ .on-master, rules ]
     - when: never
   needs:
-    - job: generate_deb_master
+    - job: generate_deb_ubuntu24_master
       artifacts: true
-    - job: generate_rpm_master
+    - job: generate_rpm_rockylinux8_master
       artifacts: true
     - job: generate_docker_tar_gz_master
       artifacts: true

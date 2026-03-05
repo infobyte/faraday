@@ -3,22 +3,25 @@ smoke_test_deb:
     stage: build_testing  # TODO improve
     tags:
         - digitalocean-dev
-    image: ubuntu:18.04
+    image: ubuntu:24.04
     needs:
-      - job: generate_deb_dev
+      - job: generate_deb_ubuntu24_dev
         artifacts: true
     extends:
       - .get-secrets
+    services:
+      - postgres:latest
     script:
         - apt-get update -y
         - apt install -y sudo curl
-        - apt-get install -y ./faraday-server_amd64.deb
+        - apt-get install -y ./faraday-server_ubuntu24_amd64.deb
         - which faraday-manage
         - faraday-manage show-urls
         - export FARADAY_HOME=/home/faraday
         - /opt/faraday/bin/faraday-server || true  # create .faraday
         - "echo '[database]' >>~faraday/.faraday/config/server.ini"
         - echo "connection_string = postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB" >>~faraday/.faraday/config/server.ini
+        - sed -i '/^\[faraday_server\]/a celery_enabled = false' ~faraday/.faraday/config/server.ini
         - cat ~faraday/.faraday/config/server.ini
         - faraday-manage create-tables
         - /opt/faraday/bin/faraday-server &

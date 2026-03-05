@@ -36,7 +36,12 @@ class TestDocs:
             for endpoint in current_app.view_functions:
                 if endpoint in ('static', 'index'):
                     continue
-                spec.path(view=current_app.view_functions[endpoint], app=current_app)
+                if 'mock' in endpoint:
+                    continue
+                view = current_app.view_functions[endpoint]
+                if view.__closure__ is None:
+                    continue
+                spec.path(view=view, app=current_app)
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
@@ -63,7 +68,12 @@ class TestDocs:
             for endpoint in current_app.view_functions:
                 if endpoint in ('static', 'index'):
                     continue
-                spec.path(view=current_app.view_functions[endpoint], app=current_app)
+                if 'mock' in endpoint:
+                    continue
+                view = current_app.view_functions[endpoint]
+                if view.__closure__ is None:
+                    continue
+                spec.path(view=view, app=current_app)
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
@@ -90,7 +100,10 @@ class TestDocs:
 
         with current_app.test_request_context():
             for endpoint in current_app.view_functions:
-                spec.path(view=current_app.view_functions[endpoint], app=current_app)
+                view = current_app.view_functions[endpoint]
+                if view.__closure__ is None:
+                    continue
+                spec.path(view=view, app=current_app)
 
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 

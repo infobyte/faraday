@@ -14,17 +14,11 @@ repos:
         args: [ --unsafe ]
     -   id: debug-statements
         exclude: '^faraday/server/www/'
--   repo: https://github.com/pycqa/flake8
-    rev: 3.9.2
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
     hooks:
-    -   id: flake8
+    -   id: ruff
         exclude: '^faraday/server/www/'
-        additional_dependencies: [flake8-typing-imports==1.9.0]
--   repo: https://github.com/ikamensh/flynt/
-    rev: '0.76'
-    hooks:
-    -   id: flynt
-        args: [ -df ]
 -   repo: local
     hooks:
     -   id: sanity-check

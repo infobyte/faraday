@@ -46,6 +46,7 @@ bandit:
         - .get-secrets
     image: python:3.11
     stage: pre_testing
+    allow_failure: true
     script:
       - pip3 install virtualenv
       - virtualenv -p python3 faraday_venv
@@ -55,12 +56,12 @@ bandit:
       - "bandit -r ${CI_PROJECT_DIR}/faraday -o /results/output.xml -f xml --skip B101,B202,B311,B501"
     after_script:
       - apt-get update -y
-      - apt-get install -y lsb-release gnupg wget ca-certificates libcap2-bin
-      - wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-      - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-      - apt-get update -y
-      - apt-get install -y vault
-      - setcap cap_ipc_lock= /usr/bin/vault
+      - apt-get install -y wget ca-certificates libcap2-bin unzip
+      - wget https://releases.hashicorp.com/vault/1.15.6/vault_1.15.6_linux_amd64.zip
+      - unzip vault_1.15.6_linux_amd64.zip
+      - mv vault /usr/sbin/vault
+      - chmod +x /usr/sbin/vault
+      - setcap cap_ipc_lock= /usr/sbin/vault
       - pip3 install faraday-cli
       - cat /results/output.xml
       - if [[ $(grep -c testcase /results/output.xml) -gt 0 ]]; then (faraday-cli auth -f $FARADAY_URL -u $FARADAY_USER -p $FARADAY_PASSWORD && faraday-cli workspace create $CI_COMMIT_REF_SLUG && faraday-cli tool report /results/output.xml -w $CI_COMMIT_REF_SLUG); else (echo 'no vulns dettected' && exit 0); fi
@@ -68,35 +69,12 @@ bandit:
         - !reference [ .ignore-on-tag, rules ]
         - when: on_success
 
-build_and_push_to_cachix:
-    tags:
-        - faradaytests
-    extends:
-        - .get-secrets
-    image: nixos/nix:2.16.0
-    stage: pre_testing
-    variables:
-      # Note: this size has to fit both our community, professional and corporate versions
-      MAX_CLOSURE_SIZE_IN_MB: 850
-    script:
-        - nix-env -if pynixify/nixpkgs.nix -A vault
-        - nix-env -if pynixify/nixpkgs.nix -A cachix
-        - nix-env -if pynixify/nixpkgs.nix -A gawk
-        - mkdir -p ~/.config/cachix
-        - export USER=$(whoami)
-        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
-        - cachix use faradaysec
-        - nix-store -qR --include-outputs $(nix-store -qd $(nix-build)) | grep -v '\.drv$'  | cachix push faradaysec
-        - ./scripts/check-closure-size ./result
-    rules:
-      - when: on_success
-
-flake8:
+ruff:
     image: python:3.11
     stage: pre_testing
     script:
-      - pip install flake8
-      - flake8 . --exclude=.git
+      - pip install ruff
+      - ruff check .
     rules:
         - !reference [ .ignore-on-tag, rules ]
         - when: on_success

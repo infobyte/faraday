@@ -94,7 +94,7 @@ class TestAuthenticationPytest(BaseAPITestCase):
 
     @pytest.mark.usefixtures('logged_user')
     def test_200_when_logged_in(self, test_client):
-        res = test_client.get('/')
+        res = test_client.get('/_api/v3/ws/')
         assert res.status_code == 200
 
 

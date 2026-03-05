@@ -1,4 +1,4 @@
-generate_deb_dev:
+generate_deb_ubuntu24_dev:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
@@ -14,8 +14,8 @@ generate_deb_dev:
         - cd faraday-linux-installers-builder
         - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
         - cd ..
-        - mv py3.tar /
-        - cd /; tar xf py3.tar; cd -
+        # Extract UV bundle for Ubuntu 24.04
+        - tar xzf faraday-bundle-ubuntu24.tar.gz -C /opt
 
     script:
         - mkdir build_installer
@@ -23,14 +23,13 @@ generate_deb_dev:
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
-        - cp -r /nix .
+        # /opt/faraday already extracted from faraday-bundle.tar.gz
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
@@ -38,17 +37,17 @@ generate_deb_dev:
         - gem install --no-document rexml
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
-        - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white ubuntu24
+        - mv faraday-server_ubuntu24_amd64.deb ../../faraday-server_ubuntu24_amd64.deb
     needs:
       - job: generate_build_file_dev
         artifacts: true
-      - job: build_nix_python3_dev
+      - job: build_uv_venv_deb_ubuntu24_dev
         artifacts: true
     artifacts:
-        name: 'faraday_$CI_COMMIT_REF_NAME.deb'
+        name: 'faraday_ubuntu24_$CI_COMMIT_REF_NAME.deb'
         paths:
-            - "faraday-server_amd64.deb"
+            - "faraday-server_ubuntu24_amd64.deb"
         expire_in: 15 days
     rules:
         - !reference [ .be-uploaded, rules ]
@@ -57,7 +56,7 @@ generate_deb_dev:
         - !reference [ .ignore-on-master, rules ]
         - when: never
 
-generate_deb_staging:
+generate_deb_ubuntu24_staging:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
@@ -73,8 +72,8 @@ generate_deb_staging:
         - cd faraday-linux-installers-builder
         - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
         - cd ..
-        - mv py3.tar /
-        - cd /; tar xf py3.tar; cd -
+        # Extract UV bundle for Ubuntu 24.04
+        - tar xzf faraday-bundle-ubuntu24.tar.gz -C /opt
 
     script:
         - mkdir build_installer
@@ -82,14 +81,13 @@ generate_deb_staging:
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
-        - cp -r /nix .
+        # /opt/faraday already extracted from faraday-bundle.tar.gz
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
@@ -97,23 +95,23 @@ generate_deb_staging:
         - gem install --no-document rexml
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
-        - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white ubuntu24
+        - mv faraday-server_ubuntu24_amd64.deb ../../faraday-server_ubuntu24_amd64.deb
     needs:
       - job: generate_build_file_staging
         artifacts: true
-      - job: build_nix_python3_staging
+      - job: build_uv_venv_deb_ubuntu24_staging
         artifacts: true
     artifacts:
-        name: 'faraday_$CI_COMMIT_REF_NAME.deb'
+        name: 'faraday_ubuntu24_$CI_COMMIT_REF_NAME.deb'
         paths:
-            - "faraday-server_amd64.deb"
+            - "faraday-server_ubuntu24_amd64.deb"
         expire_in: 15 days
     rules:
         - !reference [ .on-staging, rules ]
         - when: never
 
-generate_deb_master:
+generate_deb_ubuntu24_master:
     image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
@@ -129,8 +127,8 @@ generate_deb_master:
         - cd faraday-linux-installers-builder
         - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
         - cd ..
-        - mv py3.tar /
-        - cd /; tar xf py3.tar; cd -
+        # Extract UV bundle for Ubuntu 24.04
+        - tar xzf faraday-bundle-ubuntu24.tar.gz -C /opt
 
     script:
         - mkdir build_installer
@@ -138,14 +136,13 @@ generate_deb_master:
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
-        - cp -r /nix .
+        # /opt/faraday already extracted from faraday-bundle.tar.gz
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
@@ -153,24 +150,24 @@ generate_deb_master:
         - gem install --no-document rexml
         - cd ../../
         - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white
-        - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb white ubuntu24
+        - mv faraday-server_ubuntu24_amd64.deb ../../faraday-server_ubuntu24_amd64.deb
     needs:
       - job: generate_build_file_master
         artifacts: true
-      - job: build_nix_python3_master
+      - job: build_uv_venv_deb_ubuntu24_master
         artifacts: true
     artifacts:
-        name: 'faraday_$CI_COMMIT_REF_NAME.deb'
+        name: 'faraday_ubuntu24_$CI_COMMIT_REF_NAME.deb'
         paths:
-            - "faraday-server_amd64.deb"
+            - "faraday-server_ubuntu24_amd64.deb"
         expire_in: 15 days
     rules:
         - !reference [.on-master, rules]
         - !reference [.on-community-tag, rules]
         - when: never
 
-generate_rpm_dev:
+generate_rpm_rockylinux8_dev:
     stage: build
     image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
@@ -178,39 +175,38 @@ generate_rpm_dev:
       - cd faraday-linux-installers-builder
       - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
       - cd ..
-      - mv py3.tar /
-      - cd /; tar xf py3.tar; cd -
+      # Extract UV bundle for Rocky Linux 8
+      - tar xzf faraday-bundle-rockylinux8.tar.gz -C /opt
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
-        - cp -r /nix .
+        # /opt/faraday already extracted from faraday-bundle-rockylinux8.tar.gz
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
-        - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white rockylinux8
+        - mv faraday-server_rockylinux8_amd64.rpm ../../faraday-server_rockylinux8_amd64.rpm
     needs:
       - job: generate_build_file_dev
         artifacts: true
-      - job: build_nix_python3_dev
+      - job: build_uv_venv_rpm_rockylinux8_dev
         artifacts: true
     artifacts:
-        name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
+        name: 'faraday_rockylinux8_$CI_COMMIT_REF_NAME.rpm'
         paths:
-            - "faraday-server_amd64.rpm"
+            - "faraday-server_rockylinux8_amd64.rpm"
         expire_in: 15 days
     rules:
         - !reference [.be-uploaded, rules]
@@ -219,7 +215,7 @@ generate_rpm_dev:
         - !reference [.ignore-on-master, rules]
         - when: never
 
-generate_rpm_staging:
+generate_rpm_rockylinux8_staging:
     stage: build
     image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
@@ -227,45 +223,44 @@ generate_rpm_staging:
       - cd faraday-linux-installers-builder
       - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
       - cd ..
-      - mv py3.tar /
-      - cd /; tar xf py3.tar; cd -
+      # Extract UV bundle for Rocky Linux 8
+      - tar xzf faraday-bundle-rockylinux8.tar.gz -C /opt
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
-        - cp -r /nix .
+        # /opt/faraday already extracted from faraday-bundle-rockylinux8.tar.gz
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
-        - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white rockylinux8
+        - mv faraday-server_rockylinux8_amd64.rpm ../../faraday-server_rockylinux8_amd64.rpm
     needs:
       - job: generate_build_file_staging
         artifacts: true
-      - job: build_nix_python3_staging
+      - job: build_uv_venv_rpm_rockylinux8_staging
         artifacts: true
     artifacts:
-        name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
+        name: 'faraday_rockylinux8_$CI_COMMIT_REF_NAME.rpm'
         paths:
-            - "faraday-server_amd64.rpm"
+            - "faraday-server_rockylinux8_amd64.rpm"
         expire_in: 15 days
     rules:
         - !reference [.on-staging, rules]
         - when: never
 
-generate_rpm_master:
+generate_rpm_rockylinux8_master:
     stage: build
     image: registry.gitlab.com/faradaysec/devops/docker-rpm-builder
     before_script:
@@ -273,39 +268,38 @@ generate_rpm_master:
       - cd faraday-linux-installers-builder
       - "if ! [ -z $INSTALLER_BRANCH ]; then git checkout $INSTALLER_BRANCH; fi"
       - cd ..
-      - mv py3.tar /
-      - cd /; tar xf py3.tar; cd -
+      # Extract UV bundle for Rocky Linux 8
+      - tar xzf faraday-bundle-rockylinux8.tar.gz -C /opt
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
-        - cp -r /nix .
+        # /opt/faraday already extracted from faraday-bundle-rockylinux8.tar.gz
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-document dotenv -v 2.7
         - gem install --no-document public_suffix -v 4.0.7
         - gem install --no-document fpm-1.11.0.gem
         - gem install --no-document rexml
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white
-        - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm white rockylinux8
+        - mv faraday-server_rockylinux8_amd64.rpm ../../faraday-server_rockylinux8_amd64.rpm
     needs:
       - job: generate_build_file_master
         artifacts: true
-      - job: build_nix_python3_master
+      - job: build_uv_venv_rpm_rockylinux8_master
         artifacts: true
     artifacts:
-        name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
+        name: 'faraday_rockylinux8_$CI_COMMIT_REF_NAME.rpm'
         paths:
-            - "faraday-server_amd64.rpm"
+            - "faraday-server_rockylinux8_amd64.rpm"
         expire_in: 15 days
     rules:
         - !reference [.on-master, rules]

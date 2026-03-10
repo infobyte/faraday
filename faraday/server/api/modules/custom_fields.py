@@ -78,11 +78,11 @@ class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
         self._clear_custom_field_values(obj.table_name, obj.field_name)
         super()._perform_delete(obj, workspace_name)
 
-    def _perform_bulk_delete(self, ids, **kwargs):
-        objs = self.model_class.query.filter(self.model_class.id.in_(ids)).all()
+    def _perform_bulk_delete(self, values, **kwargs):
+        objs = self.model_class.query.filter(self.model_class.id.in_(values)).all()
         for obj in objs:
             self._clear_custom_field_values(obj.table_name, obj.field_name)
-        return super()._perform_bulk_delete(ids, **kwargs)
+        return super()._perform_bulk_delete(values, **kwargs)
 
 
 CustomFieldsSchemaView.register(custom_fields_schema_api)

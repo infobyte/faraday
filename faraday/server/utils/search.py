@@ -789,11 +789,12 @@ class QueryBuilder:
                         relation = getattr(model, field_name)
                         # Check if this is a plain column (e.g. JSONType) vs a relationship
                         if hasattr(relation, 'property') and isinstance(relation.property, ColumnProperty):
-                            field = relation[field_name_in_relation].astext
+                            table_name = model.__tablename__
+                            json_field = f"{table_name}.{field_name} ->> '{field_name_in_relation}'"
                             if val.direction == 'desc':
-                                query = query.order_by(nullslast(field.desc()))
+                                query = query.order_by(text(f"{json_field} DESC NULLS LAST"))
                             else:
-                                query = query.order_by(nullsfirst(field.asc()))
+                                query = query.order_by(text(f"{json_field} ASC NULLS FIRST"))
                         else:
                             relation_model = relation.mapper.class_
                             if relation_model not in joined_models:

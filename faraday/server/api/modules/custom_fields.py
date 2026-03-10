@@ -7,9 +7,10 @@ See the file 'doc/LICENSE' for the license information
 # Related third party imports
 from flask import Blueprint
 from marshmallow import fields
+from sqlalchemy import text
 
 # Local application imports
-from faraday.server.models import CustomFieldsSchema
+from faraday.server.models import CustomFieldsSchema, db
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
@@ -58,6 +59,30 @@ class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
         """
         data = self._check_post_only_data(data)
         return super()._update_object(obj, data)
+
+    @staticmethod
+    def _clear_custom_field_values(table_name: str, field_name: str):
+        """Remove field_name key from custom_fields JSON in the affected table."""
+        allowed_tables = {'vulnerability', 'vulnerability_template'}
+        if table_name not in allowed_tables:
+            return
+        db.session.execute(
+            text(
+                f"UPDATE {table_name} SET custom_fields = custom_fields - :key"  # noqa: S608
+                f" WHERE custom_fields ? :key"
+            ),
+            {'key': field_name},
+        )
+
+    def _perform_delete(self, obj, workspace_name=None):
+        self._clear_custom_field_values(obj.table_name, obj.field_name)
+        super()._perform_delete(obj, workspace_name)
+
+    def _perform_bulk_delete(self, ids, **kwargs):
+        objs = self.model_class.query.filter(self.model_class.id.in_(ids)).all()
+        for obj in objs:
+            self._clear_custom_field_values(obj.table_name, obj.field_name)
+        return super()._perform_bulk_delete(ids, **kwargs)
 
 
 CustomFieldsSchemaView.register(custom_fields_schema_api)

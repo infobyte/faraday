@@ -787,24 +787,32 @@ class QueryBuilder:
                     if '__' in field_name:
                         field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
-                        relation_model = relation.mapper.class_
-                        if relation_model not in joined_models:
-                            # TODO: is it possible to guess if relationship is a many to many
-                            if relation_model == Role:
-                                query = query.join(relation_model, User.roles)
-                            elif relation_model == User:
-                                query = query.join(relation_model, model.creator_id == relation_model.id)
-                            elif relation_model == CVE:
-                                query = query.join(relation_model, model.cve_instances)
+                        # Check if this is a plain column (e.g. JSONType) vs a relationship
+                        if hasattr(relation, 'property') and isinstance(relation.property, ColumnProperty):
+                            field = relation[field_name_in_relation].astext
+                            if val.direction == 'desc':
+                                query = query.order_by(nullslast(field.desc()))
                             else:
-                                query = query.join(relation_model, isouter=True)
-                        joined_models.add(relation_model)
-                        field = getattr(relation_model, field_name_in_relation)
-                        direction = getattr(field, val.direction)
-                        if val.direction == 'desc':
-                            query = query.order_by(nullslast(direction()))
+                                query = query.order_by(nullsfirst(field.asc()))
                         else:
-                            query = query.order_by(nullsfirst(direction()))
+                            relation_model = relation.mapper.class_
+                            if relation_model not in joined_models:
+                                # TODO: is it possible to guess if relationship is a many to many
+                                if relation_model == Role:
+                                    query = query.join(relation_model, User.roles)
+                                elif relation_model == User:
+                                    query = query.join(relation_model, model.creator_id == relation_model.id)
+                                elif relation_model == CVE:
+                                    query = query.join(relation_model, model.cve_instances)
+                                else:
+                                    query = query.join(relation_model, isouter=True)
+                            joined_models.add(relation_model)
+                            field = getattr(relation_model, field_name_in_relation)
+                            direction = getattr(field, val.direction)
+                            if val.direction == 'desc':
+                                query = query.order_by(nullslast(direction()))
+                            else:
+                                query = query.order_by(nullsfirst(direction()))
                     else:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)

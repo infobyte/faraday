@@ -57,8 +57,10 @@ def on_success_process_report_task(results, command_id=None, linking_info=None):
     update_host_stats.delay(host_ids, [], workspace_id=workspace.id, no_debounce=no_debounce, command_id=command_id)
 
     # Link credentials to vulnerabilities if linking_info is provided
-    if linking_info and linking_info.get('credential_ids') and linking_info.get('external_id'):
-        _link_credentials_to_vulnerabilities_async(workspace, linking_info['credential_ids'], linking_info['external_id'])
+    credential_ids = linking_info.get("credential_ids") if linking_info else None
+    external_id = linking_info.get("external_id") if linking_info else None
+    if credential_ids and external_id:
+        _link_credentials_to_vulnerabilities_async(workspace, credential_ids, external_id)
 
     # Apply Workflow
     pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
@@ -108,23 +110,21 @@ def _link_credentials_to_vulnerabilities_async(workspace: Workspace, credential_
 
             logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
 
-            # Link credentials to vulnerabilities
-            for cred_id in credential_ids:
-                credential = Credential.query.filter(
-                    Credential.id == cred_id,
-                    Credential.workspace == workspace
-                ).first()
+            # Link credentials to vulnerabilities (batch query to avoid N+1)
+            credentials = Credential.query.filter(
+                Credential.workspace == workspace,
+                Credential.id.in_(credential_ids),
+            ).all()
 
-                if credential:
-                    # Add vulnerabilities to credential (many-to-many relationship)
-                    for vuln in vulns:
-                        if vuln not in credential.vulnerabilities:
-                            credential.vulnerabilities.append(vuln)
+            for credential in credentials:
+                for vuln in vulns:
+                    if vuln not in credential.vulnerabilities:
+                        credential.vulnerabilities.append(vuln)
 
             db.session.commit()
-            logger.info(f"Linked {len(credential_ids)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
-    except Exception as e:
-        logger.exception("Error linking credentials to vulnerabilities in Celery task", exc_info=e)
+            logger.info(f"Linked {len(credentials)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
+    except Exception:
+        logger.exception("Error linking credentials to vulnerabilities in Celery task")
         db.session.rollback()
 
 

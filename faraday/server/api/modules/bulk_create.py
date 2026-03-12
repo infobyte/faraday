@@ -16,7 +16,6 @@ from cvss import CVSS2, CVSS3, CVSS4
 from flask import Blueprint, abort, jsonify, request
 from flask_login import current_user
 from marshmallow import (
-    EXCLUDE,
     Schema,
     ValidationError,
     fields,
@@ -95,25 +94,8 @@ bulk_create_api = Blueprint('bulk_create_api', __name__)
 logger = getLogger(__name__)
 
 
-class BulkCredentialSchema(Schema):
-    """Credentials embedded in bulk_create payloads.
-
-    This schema is intentionally permissive (unknown fields excluded) because
-    different report formats may include extra attributes like name/description.
-    """
-
-    username = fields.String(required=True, validate=lambda s: bool(s.strip()))
-    password = fields.String(required=True, validate=lambda s: bool(s.strip()))
-    endpoint = fields.String(missing='')
-    owned = fields.Boolean(missing=False)
-    leak_date = fields.DateTime(allow_none=True)
-
-    class Meta:
-        unknown = EXCLUDE
-
-
 class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
-    credentials = fields.Nested(BulkCredentialSchema(many=True), many=True, missing=[])
+    credentials = fields.Nested('BulkCredentialSchema', many=True, missing=[])
 
     class Meta(vulns_base.VulnerabilitySchema.Meta):
         extra_fields = ('run_date', 'credentials')
@@ -124,7 +106,7 @@ class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
 
 
 class BulkVulnerabilityWebSchema(vulns_base.VulnerabilityWebSchema):
-    credentials = fields.Nested(BulkCredentialSchema(many=True), many=True, missing=[])
+    credentials = fields.Nested('BulkCredentialSchema', many=True, missing=[])
 
     class Meta(vulns_base.VulnerabilityWebSchema.Meta):
         extra_fields = ('run_date', 'credentials')
@@ -239,7 +221,7 @@ class BulkCredentialSchema(AutoSchema):
     username = fields.String(required=True)
     password = fields.String(required=True)
     endpoint = fields.String(load_default='')
-    leak_date = fields.DateTime(allow_none=True, load_default=None)
+    leak_date = fields.DateTime(allow_none=True)
     owned = fields.Boolean(load_default=False)
 
     class Meta:
@@ -330,8 +312,9 @@ def bulk_create(ws: Workspace,
         credentials_updated = 0
         for credential_data in credentials_to_create:
             result = _create_credential(ws, credential_data, return_id=True)
-            if result.get('credential_id'):
-                credential_ids_to_link.append(result['credential_id'])
+            credential_id = result.get('credential_id')
+            if credential_id:
+                credential_ids_to_link.append(credential_id)
             credentials_created += result['created']
             credentials_updated += result['updated']
         # Commit credentials to ensure they are saved before processing hosts
@@ -339,14 +322,14 @@ def bulk_create(ws: Workspace,
         logger.info(f"Credentials processed: {credentials_created} created, {credentials_updated} already existed")
 
         # Extract external_id from vulnerabilities for later linking
-        if data.get('hosts'):
-            for host in data['hosts']:
-                for vuln in host.get('vulnerabilities', []):
-                    if vuln.get('external_id') and vuln['external_id'].startswith('BAGRE-'):
-                        external_id_for_linking = vuln['external_id']
-                        break
-                if external_id_for_linking:
+        for host in data.get('hosts', []):
+            for vuln in host.get('vulnerabilities', []):
+                external_id = vuln.get('external_id')
+                if external_id and external_id.startswith('BAGRE-'):
+                    external_id_for_linking = external_id
                     break
+            if external_id_for_linking:
+                break
 
     hosts_to_create = len(data['hosts'])
     if hosts_to_create > 0:
@@ -357,10 +340,12 @@ def bulk_create(ws: Workspace,
             _current_size = 0
             tasks = []
             # Prepare linking info for Celery callback
-            linking_info = {
-                'credential_ids': credential_ids_to_link,
-                'external_id': external_id_for_linking
-            } if (credential_ids_to_link and external_id_for_linking) else None
+            linking_info = None
+            if credential_ids_to_link and external_id_for_linking:
+                linking_info = {
+                    'credential_ids': credential_ids_to_link,
+                    'external_id': external_id_for_linking,
+                }
 
             for host in data['hosts']:
                 logger.info(f"Current size of Message: {_current_size}")
@@ -423,19 +408,20 @@ def _create_credential(ws: Workspace, credential_data: dict, return_id: bool = F
     credential_data = credential_data.copy()
     result = {'created': 0, 'updated': 0}
 
+    username = credential_data.get('username')
     try:
         created, credential = get_or_create(ws, Credential, credential_data)
         if created:
             result['created'] = 1
-            logger.debug(f"Created credential for user {credential_data.get('username')}")
+            logger.debug(f"Created credential for user {username}")
         else:
             result['updated'] = 1
-            logger.debug(f"Credential already exists for user {credential_data.get('username')}")
+            logger.debug(f"Credential already exists for user {username}")
 
         if return_id and credential:
             result['credential_id'] = credential.id
-    except Exception as e:
-        logger.exception("Could not create credential for user %s", credential_data.get('username'), exc_info=e)
+    except Exception:
+        logger.exception("Could not create credential for user %s", username)
 
     return result
 
@@ -464,23 +450,21 @@ def _link_credentials_to_vulnerabilities(ws: Workspace, credential_ids: list, ex
 
         logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
 
-        # Link credentials to vulnerabilities
-        for cred_id in credential_ids:
-            credential = Credential.query.filter(
-                Credential.id == cred_id,
-                Credential.workspace == ws
-            ).first()
+        # Link credentials to vulnerabilities (batch query to avoid N+1)
+        credentials = Credential.query.filter(
+            Credential.workspace == ws,
+            Credential.id.in_(credential_ids)
+        ).all()
 
-            if credential:
-                # Add vulnerabilities to credential (many-to-many relationship)
-                for vuln in vulns:
-                    if vuln not in credential.vulnerabilities:
-                        credential.vulnerabilities.append(vuln)
+        for credential in credentials:
+            for vuln in vulns:
+                if vuln not in credential.vulnerabilities:
+                    credential.vulnerabilities.append(vuln)
 
         db.session.commit()
-        logger.info(f"Linked {len(credential_ids)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
-    except Exception as e:
-        logger.exception("Error linking credentials to vulnerabilities", exc_info=e)
+        logger.info(f"Linked {len(credentials)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
+    except Exception:
+        logger.exception("Error linking credentials to vulnerabilities")
         db.session.rollback()
 
 
@@ -675,8 +659,9 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     reference['id'] = reference_sequence_id
                     reference['vulnerability_id'] = v_id
                     references_created.append(reference)
-            if data.get('credential_ids'):
-                for cred_id in set(data['credential_ids']):
+            credentials_ids = data.get('credential_ids')
+            if credentials_ids:
+                for cred_id in set(credentials_ids):
                     credential_association_created.append(
                         {'vulnerability_id': v_id, 'credential_id': cred_id}
                     )
@@ -714,8 +699,9 @@ def manage_relationships(processed_data, result, workspace_id=None):
                 cwe_object_created.append(cwe_association)
             for policy in data['policy_violations_associations']:
                 policy_object_created.append(policy)
-            if data.get('credential_ids'):
-                for cred_id in set(data['credential_ids']):
+            credentials_ids = data.get('credential_ids')
+            if credentials_ids:
+                for cred_id in set(credentials_ids):
                     credential_association_created.append(
                         {'vulnerability_id': v_id, 'credential_id': cred_id}
                     )
@@ -1194,7 +1180,7 @@ def set_relationships_data(ws: Workspace, vulnerability, command):
             'password': credential.get('password', ''),
             'endpoint': credential.get('endpoint', '') or '',
             'owned': credential.get('owned', False),
-            'leak_date': credential.get('leak_date', None),
+            'leak_date': credential.get('leak_date'),
         }
         # The schema should validate these, but keep a defensive check.
         if not credential_data['username'] or not credential_data['password']:

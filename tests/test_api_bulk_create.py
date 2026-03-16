@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
+import calendar
 import time
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -619,7 +620,7 @@ def test_bulk_create_endpoint_with_vuln_run_date(session, workspace):
     run_date = datetime.utcnow() - timedelta(days=30)
     host_data_copy = host_data.copy()
     vuln_data_copy = vuln_data.copy()
-    vuln_data_copy['run_date'] = run_date.timestamp()
+    vuln_data_copy['run_date'] = calendar.timegm(run_date.timetuple())
     new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
     host_data_copy['vulnerabilities'] = [new_vuln]
     command = new_empty_command(workspace)
@@ -630,14 +631,14 @@ def test_bulk_create_endpoint_with_vuln_run_date(session, workspace):
     assert count(Host, workspace) == 1
     assert count(VulnerabilityGeneric, workspace) == 1
     vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
-    assert vuln.create_date.date() == run_date.date()
+    assert vuln.create_date.replace(microsecond=0) == run_date.replace(microsecond=0)
 
 
 def test_bulk_create_endpoint_with_future_vuln_run_date(session, workspace):
     run_date = datetime.utcnow() + timedelta(days=30)
     host_data_copy = host_data.copy()
     vuln_data_copy = vuln_data.copy()
-    vuln_data_copy['run_date'] = run_date.timestamp()
+    vuln_data_copy['run_date'] = calendar.timegm(run_date.timetuple())
     new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
     host_data_copy['vulnerabilities'] = [new_vuln]
     command = new_empty_command(workspace)

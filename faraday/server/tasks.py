@@ -6,6 +6,8 @@ from celery import group, chord
 from celery.utils.log import get_task_logger
 from sqlalchemy import (
     func,
+    insert as sqlalchemy_insert,
+    literal,
     or_,
     and_,
 )
@@ -336,3 +338,56 @@ def update_failed_command_stats(debouncer=None):
         logger.error(f"Failed to update command stats: {e}")
     else:
         logger.info("Stats update complete")
+
+
+@celery.task(ignore_result=True)
+def create_bulk_update_commands_task(
+    ids: list,
+    workspace_ids: list,
+    user_id,
+    start_date: datetime,
+):
+    """Async task: create Command and CommandObject audit records for a bulk vuln update.
+
+    Runs after the main UPDATE transaction commits. INSERT...SELECT filters by
+    VulnerabilityGeneric.workspace_id + id, so deleted vulns are silently skipped.
+    One Command per workspace, one CommandObject per vuln.
+    """
+    if not ids or not workspace_ids:
+        return
+
+    for workspace_id in workspace_ids:
+        command = Command()
+        command.workspace_id = workspace_id
+        command.user_id = user_id
+        command.start_date = start_date
+        command.tool = 'web_ui'
+        command.command = 'bulk_update'
+        db.session.add(command)
+        db.session.flush()  # get command.id
+
+        select_stmt = (
+            db.session.query(
+                VulnerabilityGeneric.id,
+                literal('vulnerability'),
+                literal(command.id),
+                literal(workspace_id),
+                literal(start_date),
+                literal(False),
+            ).filter(
+                VulnerabilityGeneric.workspace_id == workspace_id,
+                VulnerabilityGeneric.id.in_(ids),
+            )
+        )
+        db.session.execute(
+            sqlalchemy_insert(CommandObject).from_select(
+                ['object_id', 'object_type', 'command_id', 'workspace_id', 'create_date', 'created_persistent'],
+                select_stmt,
+            )
+        )
+        db.session.commit()
+
+    logger.debug(
+        f"[bulk_update_commands] async INSERT commands for "
+        f"{len(workspace_ids)} workspaces, {len(ids)} vulns"
+    )

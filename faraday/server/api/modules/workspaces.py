@@ -285,19 +285,14 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
     def index(self, **kwargs):
         """
           ---
-          get:
-            summary: "Get a list of workspaces."
-            tags: ["Workspace"]
-            responses:
-              200:
-                description: Ok
-                content:
-                  application/json:
-                    schema: WorkspaceSchema
           tags: ["Workspace"]
+          summary: "Get a list of workspaces."
           responses:
             200:
               description: Ok
+              content:
+                application/json:
+                  schema: WorkspaceSchema
         """
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
         histogram_days, histogram_dict = None, None

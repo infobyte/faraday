@@ -105,13 +105,10 @@ def check_postgresql():
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n'
-                    '{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n'
-                    '{WHITE}For first time installations execute{WHITE}: \n\n'
-                    ' {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN,
-                                                                YELLOW=Fore.YELLOW,
-                                                                WHITE=Fore.WHITE,
-                                                                RED=Fore.RED))
+                    f'\n\n{Fore.RED}Could not connect to PostgreSQL.\n{Fore.WHITE}Please check: \n'
+                    f'{Fore.YELLOW}  * if database is running \n  * configuration settings are correct. \n\n'
+                    f'{Fore.WHITE}For first time installations execute{Fore.WHITE}: \n\n'
+                    f' {Fore.GREEN} faraday-manage initdb\n\n')
             sys.exit(1)
         except sqlalchemy.exc.ProgrammingError:
             logger.error(

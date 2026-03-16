@@ -1,0 +1,91 @@
+.setup_test_environment: &setup_test_environment
+  - .gitlab/ci/scripts/install-system-deps.sh
+  - apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates || true
+  - curl -LsSf https://astral.sh/uv/install.sh | sh
+  - export PATH="$HOME/.local/bin:$PATH"
+  - export LC_ALL=C.UTF-8
+  - export LANG=C.UTF-8
+  - export POSTGRES_HOST=postgres
+  # Faraday directories
+  - mkdir -p ~/.faraday/config ~/.faraday/logs ~/.faraday/session ~/.faraday/storage
+  - cp tests/data/server.ini ~/.faraday/config
+  # Frontend placeholder
+  - mkdir -p faraday/server/www && touch faraday/server/www/index.html
+  # Test execution directory
+  - mkdir run_from
+
+pylint_uv:
+  tags:
+    - faradaytests
+  extends:
+    - .get-secrets
+  image: python:3.11-slim-bookworm
+  stage: test
+  cache:
+    key:
+      files:
+        - uv.lock
+    paths:
+      - .cache/uv
+      - .venv
+    policy: pull-push
+  variables:
+    UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  before_script:
+    - .gitlab/ci/scripts/install-system-deps.sh
+    - |
+      if [ ! -x "$HOME/.local/bin/uv" ] && ! command -v uv >/dev/null 2>&1; then
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+      fi
+    - export PATH="$HOME/.local/bin:$PATH"
+    - uv sync --frozen
+  script:
+    - uv run pylint --rcfile=.pylintrc faraday | tee pylint.txt
+  artifacts:
+    paths:
+      - pylint.txt
+  rules:
+    - !reference [ .ignore-on-build, rules ]
+    - !reference [ .ignore-on-tag, rules ]
+    - !reference [ .ignore-on-master, rules ]
+    - !reference [ .pipeline-control-test, rules ]
+    - when: on_success
+
+.postgresql_test_uv_base:
+  tags:
+    - faradaytests
+  extends:
+    - .get-secrets
+  image: python:3.11-slim-bookworm
+  stage: test
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+  cache:
+    key:
+      files:
+        - uv.lock
+    paths:
+      - .cache/uv
+      - .venv
+    policy: pull-push
+  variables:
+    UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  before_script:
+    - *setup_test_environment
+    - uv sync --frozen
+  script:
+    - cd run_from
+    - uv run pytest ../tests -n auto --dist loadscope -sv
+        --capture=sys --cov=../faraday/server --color=yes
+        --disable-warnings --exitfirst
+  artifacts:
+    when: on_failure
+    paths:
+      - ~/.faraday/logs/faraday-server.log
+  rules:
+    - !reference [ .ignore-on-build, rules ]
+    - !reference [ .ignore-on-tag, rules ]
+    - !reference [ .pipeline-control-test, rules ]
+    - when: on_success
+
+postgresql_test_uv:
+  extends: .postgresql_test_uv_base

@@ -13,6 +13,9 @@ variables:
   VAULT_AUTH_ROLE: faraday-env-readonly
   VAULT_AUTH_PATH: jwt
   FOLDER: dev
+  # UV configuration
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  UV_PROJECT_ENVIRONMENT: "$CI_PROJECT_DIR/.venv"
 
 workflow:
   rules:
@@ -21,9 +24,16 @@ workflow:
     - when: always
 
 cache:
+  key:
+    files:
+      - uv.lock
+      - .python-version
   paths:
     - "$CI_PROJECT_DIR/.cache/pip"
     - "$CI_PROJECT_DIR/apt-cache"
+    - "$CI_PROJECT_DIR/.cache/uv"
+    - "$CI_PROJECT_DIR/.venv"
+  policy: pull-push
 
 before_script:
     - mkdir -pv $APT_CACHE_DIR
@@ -34,12 +44,10 @@ include:
   - local: .gitlab/ci/.rules-conditions.yml
 
   - local: .gitlab/ci/testing/.pretesting-gitlab-ci.yml
-  - local: .gitlab/ci/testing/.nix-testing-gitlab-ci.yml
+  - local: .gitlab/ci/testing/.uv-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml
-  - local: .gitlab/ci/testing/.hypothesis-nix-gitlab-ci.yml
-  # - local: .gitlab/ci/testing/.posttesting-gitlab-ci.yml
 
-  - local: .gitlab/ci/build-ci/.prebuild-gitlab-ci.yml
+  - local: .gitlab/ci/build-ci/.uv-prebuild-gitlab-ci.yml
   - local: .gitlab/ci/build-ci/.build-gitlab-ci.yml
   - local: .gitlab/ci/build-ci/.testing-gitlab-ci.yml
 

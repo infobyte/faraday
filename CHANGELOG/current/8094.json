@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed vulnerability bulk update endpoint to improve memory usage and performance. #8094"
+}

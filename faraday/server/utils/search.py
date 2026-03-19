@@ -610,8 +610,25 @@ class QueryBuilder:
                 numargs = len(inspect.getfullargspec(opfunc).args)
             # raises AttributeError if `fieldname` or `relation` does not exist
             if relation:
+                rel_attr = getattr(model, relation)
+                # Check if this is a JSON/plain column (not a relationship)
+                if hasattr(rel_attr, 'property') and isinstance(rel_attr.property, ColumnProperty):
+                    table = model.__tablename__
+                    # Map 'has'/'any' to '==' for JSON subfields
+                    json_operator = operator if operator not in ('has', 'any') else '=='
+                    try:
+                        op, op_type = get_json_operator(json_operator)
+                    except TypeError as e:
+                        raise TypeError('Invalid filters') from e
+                    increment_bind_counter()
+                    bindparams = {
+                        f'key_{get_bind_counter()}': fieldname,
+                        f'value_{get_bind_counter()}': argument,
+                    }
+                    query = get_json_query(table, relation, op, op_type, get_bind_counter())
+                    return OPERATORS['json'](text(f"{query}").bindparams(**bindparams))
                 # For relationship queries, get the relationship field first
-                field = getattr(model, relation)
+                field = rel_attr
             else:
                 field = getattr(model, fieldname)
             # each of these will raise a TypeError if the wrong number of arguments

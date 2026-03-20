@@ -626,56 +626,6 @@ class JobView(ReadWriteView):
 
         return jsonify(workflow.enabled)
 
-    # @api_method_validation
-    # @route('/order', methods=['POST'])
-    # def set_wf_order(self, workspace_name):
-    #     """
-    #     ---
-    #     post:
-    #       tags: ["Job", "Workspace"]
-    #       summary: "Sets the order of execution of jobs"
-    #       responses:
-    #         200:
-    #           description: Ok
-    #     tags: ["Job", "Workspace"]
-    #     responses:
-    #       200:
-    #         description: Ok
-    #     """
-    #     workspace = db.session.query(Workspace).filter(Workspace.name == workspace_name).first()
-    #     if not workspace:
-    #         abort(404)
-    #
-    #     if request.json.get("wf_order") is not None:
-    #         ids = request.json.get("wf_order")
-    #
-    #         if isinstance(ids, str):
-    #             match = re.match(order_regex, ids)
-    #             if match is not None:
-    #                 workspace.workflows_order = match.group(0)
-    #                 db.session.add(workspace)
-    #                 db.session.commit()
-    #                 return 200
-    #             else:
-    #                 abort(400)
-    #         else:
-    #             # Check for repeated entries
-    #             if len(ids) != len(set(ids)):
-    #                 abort(400)
-    #
-    #             wfs_ids_str = [str(x) for x in ids]
-    #             order_string = "-".join(wfs_ids_str)
-    #             match = re.match(order_regex, order_string)
-    #             if match is not None:
-    #                 workspace.workflows_order = match.group(0)
-    #                 db.session.add(workspace)
-    #                 db.session.commit()
-    #                 return 200
-    #             else:
-    #                 abort(400)
-    #     else:
-    #         abort(400)
-
     @route('/<int:job_id>/export_job', methods=['GET'])
     def export_wf(self, job_id):
         """

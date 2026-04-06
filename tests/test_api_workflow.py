@@ -863,3 +863,75 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
             assert value in hostname_names
         else:
             assert value in getattr(obj, field_name)
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestTaskFieldsCustomAttributes:
+
+    def test_get_fields_includes_custom_attributes(self, session, test_client):
+        from tests.factories import CustomFieldsSchemaFactory
+
+        CustomFieldsSchemaFactory.create(
+            table_name='vulnerability', field_name='my_string',
+            field_type='str', field_order=1, field_display_name='My String',
+        )
+        CustomFieldsSchemaFactory.create(
+            table_name='vulnerability', field_name='my_choice',
+            field_type='choice', field_order=2, field_display_name='My Choice',
+            field_metadata='["a", "b", "c"]',
+        )
+        CustomFieldsSchemaFactory.create(
+            table_name='vulnerability', field_name='my_list',
+            field_type='list', field_order=3, field_display_name='My List',
+        )
+        CustomFieldsSchemaFactory.create(
+            table_name='vulnerability', field_name='my_date',
+            field_type='date', field_order=4, field_display_name='My Date',
+        )
+        CustomFieldsSchemaFactory.create(
+            table_name='vulnerability', field_name='my_int',
+            field_type='int', field_order=5, field_display_name='My Int',
+        )
+        CustomFieldsSchemaFactory.create(
+            table_name='vulnerability', field_name='my_markdown',
+            field_type='markdown', field_order=6, field_display_name='My Markdown',
+        )
+        # Non-vulnerability custom field should NOT appear
+        CustomFieldsSchemaFactory.create(
+            table_name='host', field_name='host_field',
+            field_type='str', field_order=1, field_display_name='Host Field',
+        )
+        session.commit()
+
+        res = test_client.get('/v3/tasks/fields')
+        assert res.status_code == 200
+        data = res.json
+
+        # String
+        assert data['vulnerability']['my_string'] == {'type': 'string', 'replace': True, 'append': True}
+        assert data['vulnerability_web']['my_string'] == {'type': 'string', 'replace': True, 'append': True}
+
+        # Choice with valid values
+        assert data['vulnerability']['my_choice'] == {
+            'type': 'string', 'replace': True, 'append': False, 'valid': ['a', 'b', 'c']
+        }
+
+        # List
+        assert data['vulnerability']['my_list'] == {'type': 'list', 'replace': False, 'append': True}
+
+        # Date
+        assert data['vulnerability']['my_date'] == {'type': 'date', 'replace': True, 'append': False}
+
+        # Int
+        assert data['vulnerability']['my_int'] == {'type': 'int', 'replace': True, 'append': False}
+
+        # Markdown
+        assert data['vulnerability']['my_markdown'] == {'type': 'string', 'replace': True, 'append': True}
+
+        # Host custom field should not be in vulnerability fields
+        assert 'host_field' not in data['vulnerability']
+        assert 'host_field' not in data['vulnerability_web']
+
+        # Standard fields should still be present
+        assert 'severity' in data['vulnerability']
+        assert 'ip' in data['host']

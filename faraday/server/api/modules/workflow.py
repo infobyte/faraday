@@ -843,7 +843,39 @@ class TaskView(ReadWriteView):
           200:
             description: Ok
         """
-        return flask.jsonify(fields_lookup)
+        result = deepcopy(fields_lookup)
+
+        custom_fields = (
+            db.session.query(
+                CustomFieldsSchema.field_name,
+                CustomFieldsSchema.field_type,
+                CustomFieldsSchema.field_metadata,
+            )
+            .filter(CustomFieldsSchema.table_name == "vulnerability")
+            .all()
+        )
+
+        type_mapping = {
+            "str": ("string", True, True),
+            "markdown": ("string", True, True),
+            "int": ("int", True, False),
+            "list": ("list", False, True),
+            "choice": ("string", True, False),
+            "date": ("date", True, False),
+        }
+
+        for field in custom_fields:
+            mapped = type_mapping.get(field.field_type)
+            if mapped is None:
+                continue
+            output_type, replace, append = mapped
+            field_def = {"type": output_type, "replace": replace, "append": append}
+            if field.field_type == "choice" and field.field_metadata:
+                field_def["valid"] = json.loads(field.field_metadata)
+            result["vulnerability"][field.field_name] = field_def
+            result["vulnerability_web"][field.field_name] = field_def
+
+        return flask.jsonify(result)
 
 
 class PipelineView(ReadWriteView):

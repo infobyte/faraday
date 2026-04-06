@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[MOD] Debouncer now uses Redis to ensure distributed, single execution of workspace updates across Celery workers. #8076"
+}

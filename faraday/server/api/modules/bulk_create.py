@@ -47,6 +47,7 @@ from faraday.server.api.modules import (
 )
 from faraday.server.api.modules.websocket_auth import require_agent_token
 from faraday.server.config import CONST_FARADAY_HOME_PATH, faraday_server
+from faraday.server.debouncer import update_workspace_vulns_count
 from faraday.server.models import (
     AgentExecution,
     Command,
@@ -304,6 +305,7 @@ def bulk_create(ws: Workspace,
     # TODO: Add this in professional
     if 'command' in data and set_end_date:
         command.end_date = datetime.utcnow() if command.end_date is None else command.end_date
+        update_workspace_vulns_count(workspace_id=workspace_id)
         db.session.commit()
 
 

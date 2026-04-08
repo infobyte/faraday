@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 from unittest import mock
 
 import pytest
@@ -246,6 +247,61 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         assert pipeline2.name == f"{pipeline.name} - Copy 1"
         assert pipeline.jobs == pipeline2.jobs
         assert pipeline2.enabled is False
+
+    @mock.patch('faraday.server.tasks.workflow_task')
+    def test_pipeline_stuck_auto_resets_after_timeout(self, mock_task, test_client):
+        ws, actions, workflow, pipeline = create_pipeline(test_client)
+        pipeline.running = True
+        pipeline.running_since = datetime.utcnow() - timedelta(hours=7)
+        db.session.commit()
+
+        res = test_client.post(self.url(obj=pipeline) + "/run")
+        assert res.status_code == 200
+        mock_task.delay.assert_called_once()
+
+    @mock.patch('faraday.server.tasks.workflow_task')
+    def test_pipeline_running_recently_blocks_rerun(self, mock_task, test_client):
+        ws, actions, workflow, pipeline = create_pipeline(test_client)
+        pipeline.running = True
+        pipeline.running_since = datetime.utcnow() - timedelta(minutes=1)
+        db.session.commit()
+
+        res = test_client.post(self.url(obj=pipeline) + "/run")
+        assert res.status_code == 400
+        mock_task.delay.assert_not_called()
+
+    def test_cleanup_stuck_pipelines_task(self, test_client):
+        from faraday.server.tasks import cleanup_stuck_pipelines
+
+        ws, actions, workflow, pipeline = create_pipeline(test_client)
+        pipeline_id = pipeline.id
+        pipeline.running = True
+        pipeline.running_since = datetime.utcnow() - timedelta(hours=7)
+        db.session.commit()
+
+        with mock.patch('faraday.server.tasks.schedule_cleanup_stuck_pipelines'):
+            cleanup_stuck_pipelines()
+
+        updated = db.session.query(Pipeline).get(pipeline_id)
+        assert updated.running is False
+        assert updated.running_since is None
+
+    def test_pipeline_running_since_null_treated_as_stuck(self, test_client):
+        from faraday.server.tasks import cleanup_stuck_pipelines
+
+        ws, actions, workflow, pipeline = create_pipeline(test_client)
+        pipeline_id = pipeline.id
+        pipeline.running = True
+        pipeline.running_since = None
+        db.session.commit()
+
+        with mock.patch('faraday.server.tasks.schedule_cleanup_stuck_pipelines'):
+            cleanup_stuck_pipelines()
+
+        updated = db.session.query(Pipeline).get(pipeline_id)
+        assert updated.running is False
+        assert updated.running_since is None
+
 
 
 class TestActionMixinsView(ReadWriteAPITests):

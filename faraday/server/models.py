@@ -3319,6 +3319,7 @@ class Pipeline(Metadata):
 
     enabled = Column(Boolean, nullable=False, default=False)
     running = Column(Boolean, nullable=False, default=False)
+    running_since = Column(DateTime, nullable=True)
 
     @property
     def parent(self):

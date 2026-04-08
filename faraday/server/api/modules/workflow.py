@@ -270,6 +270,7 @@ class PipelineSchema(AutoSchema):
 
     class Meta:
         model = Pipeline
+        exclude = ('running_since',)
 
 
 class JobSchema(AutoSchema):
@@ -992,7 +993,15 @@ class PipelineView(ReadWriteView):
             flask.abort(400, "Pipeline doesn't have an assigned Workspace")
 
         if pipeline.running is True:
-            flask.abort(400, "Pipeline already running")
+            from faraday.server.config import faraday_server as server_config  # pylint: disable=import-outside-toplevel
+            timeout = server_config.pipeline_running_timeout
+            if pipeline.running_since and (datetime.datetime.utcnow() - pipeline.running_since).total_seconds() > timeout:
+                logger.warning(f"Pipeline {pipeline_id} stuck since {pipeline.running_since}, auto-resetting")
+                pipeline.running = False
+                pipeline.running_since = None
+                db.session.commit()
+            else:
+                flask.abort(400, "Pipeline already running")
 
         from faraday.server.tasks import workflow_task  # pylint: disable=import-outside-toplevel
         # TODO: Check if there is an active workflow

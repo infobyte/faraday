@@ -654,6 +654,7 @@ def _change_pipeline_running_status(id, status):
     if pipeline is None:
         raise ValueError("Invalid Pipeline id")
     pipeline.running = status
+    pipeline.running_since = datetime.utcnow() if status else None
     db.session.add(pipeline)
     db.session.commit()
 
@@ -683,9 +684,8 @@ def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=
                     update_host_stats += update_host_list
         except Exception as e:
             logger.error(f"Error while running pipeline\n{e}")
+        finally:
             _change_pipeline_running_status(pipeline_id, False)
-
-        _change_pipeline_running_status(pipeline_id, False)
 
         logger.debug(f"Hosts to update stats {update_host_stats}")
         return update_host_stats

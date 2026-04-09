@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 WORKFLOW_QUEUE = Queue()
 INTERVAL = 0.1
+PIPELINE_CHUNK_SIZE = 5000
 
 valid_object_types = ("vulnerability", "host", "vulnerability_web")
 valid_classes = (Host, VulnerabilityGeneric)
@@ -659,6 +660,135 @@ def _change_pipeline_running_status(id, status):
     db.session.commit()
 
 
+def _iter_id_chunks(ws_id, obj_model, chunk_size=PIPELINE_CHUNK_SIZE):
+    """Yield lists of object IDs from the workspace in chunks.
+
+    Uses yield_per to stream IDs without loading all at once.
+    """
+    query = (db.session.query(obj_model.id)
+             .filter(obj_model.workspace_id == ws_id)
+             .order_by(obj_model.id)
+             .yield_per(chunk_size))
+
+    chunk = []
+    for (obj_id,) in query:
+        chunk.append(obj_id)
+        if len(chunk) >= chunk_size:
+            yield chunk
+            chunk = []
+    if chunk:
+        yield chunk
+
+
+def _get_query_options_for_job(workflow, obj_key):
+    """Determine SQLAlchemy query options (joinedloads) needed for a specific job."""
+    options = set()
+
+    if obj_key == "host":
+        for act in workflow.actions:
+            if act.field == "hostnames" and act.command == "APPEND":
+                options.add(joinedload(Host.hostnames))
+
+    elif obj_key in ("vulnerability", "vulnerability_web"):
+        for act in workflow.actions:
+            if act.target == "asset":
+                if act.field == "hostnames":
+                    options.add(joinedload(VulnerabilityGeneric.host).subqueryload(Host.hostnames))
+                else:
+                    options.add(joinedload(VulnerabilityGeneric.host))
+
+    return list(options)
+
+
+def _run_pipeline_chunked(ws_id, pipeline_id):
+    """Run pipeline jobs in order, each job processing all objects in chunks.
+
+    For each job, iterates through all object chunks. This preserves
+    the semantic ordering (Job1 finishes all objects before Job2 starts) and
+    keeps memory bounded by PIPELINE_CHUNK_SIZE objects at a time.
+    """
+    update_host_stats = []
+
+    workspace = _get_workspace(ws_id)
+    if workspace is None:
+        return update_host_stats
+
+    pipeline = _get_pipeline(pipeline_id, workspace=workspace, ws_id=ws_id)
+    if pipeline is None:
+        return update_host_stats
+
+    workflows = pipeline.jobs
+    if not any(workflows):
+        logger.debug("No workflows found")
+        return update_host_stats
+
+    if pipeline.jobs_order == "":
+        workflows_ids = [x.id for x in workflows]
+    else:
+        workflows_ids = pipeline.jobs_order.split('-')
+    workflows_ids = [int(x) for x in workflows_ids if int(x) in [x.id for x in workflows]]
+
+    logger.debug(f"Executing pipeline jobs in order: {workflows_ids}")
+
+    for obj_key, obj_model in run_all_obj_table.items():
+        for workflow_id in workflows_ids:
+            workflow = next((x for x in workflows if x.id == workflow_id), None)
+            if workflow is None:
+                continue
+
+            obj_type_cond = "vulnerability" if obj_key == "vulnerability_web" else obj_key
+            if workflow.model != obj_type_cond:
+                continue
+
+            logger.info(f"Running job {workflow.id} ({workflow.name}) on {obj_key} "
+                        f"in chunks of {PIPELINE_CHUNK_SIZE}")
+
+            query_options = _get_query_options_for_job(workflow, obj_key)
+
+            chunk_num = 0
+            for id_chunk in _iter_id_chunks(ws_id, obj_model):
+                chunk_num += 1
+                logger.debug(f"Job {workflow.id}: processing chunk {chunk_num} "
+                             f"({len(id_chunk)} objects)")
+
+                query = db.session.query(obj_table[obj_key])
+                if query_options:
+                    query = query.options(*query_options)
+
+                if obj_key in ("vulnerability", "vulnerability_web"):
+                    objs = query.filter(
+                        VulnerabilityGeneric.workspace_id == ws_id,
+                        VulnerabilityGeneric.id.in_(id_chunk)
+                    ).all()
+                elif obj_key == "host":
+                    objs = query.filter(
+                        Host.workspace_id == ws_id,
+                        Host.id.in_(id_chunk)
+                    ).all()
+                else:
+                    continue
+
+                if not objs:
+                    continue
+
+                try:
+                    result, log, host_to_update = _run_workflow(workflow, objs)
+                    if host_to_update:
+                        update_host_stats += host_to_update
+                except Exception as e:
+                    logger.error(f"Error running job {workflow.id} on chunk {chunk_num}: {e}")
+
+                # Free memory: expire chunk objects so cached attributes can be GC'd.
+                # Avoid expire_all() which would also expire pipeline/workflow metadata.
+                for o in objs:
+                    db.session.expire(o)
+                del objs
+
+            logger.info(f"Job {workflow.id}: completed ({chunk_num} chunks)")
+
+    return update_host_stats
+
+
 def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=None):
     update_host_stats = []
     if obj and obj_ids and ws_id:
@@ -670,18 +800,7 @@ def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=
         _change_pipeline_running_status(pipeline_id, True)
 
         try:
-            for obj_key, obj_model in run_all_obj_table.items():
-                ids = db.session.query(obj_model.id).filter(obj_model.workspace_id == ws_id).all()
-                update_host_list = _process_entry(
-                    obj_key,
-                    ids,
-                    ws_id,
-                    None,
-                    False,
-                    pipeline_id if pipeline_id is not None else None
-                   )
-                if update_host_list:
-                    update_host_stats += update_host_list
+            update_host_stats = _run_pipeline_chunked(ws_id, pipeline_id)
         except Exception as e:
             logger.error(f"Error while running pipeline\n{e}")
         finally:

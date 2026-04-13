@@ -79,6 +79,11 @@ from faraday.server.debouncer import Debouncer
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 
 logger = logging.getLogger(__name__)
+
+# gevent logging is very verbose, so we mute it
+logging.getLogger('geventwebsocket').setLevel(logging.WARNING)
+logging.getLogger('geventwebsocket.handler').setLevel(logging.WARNING)
+
 audit_logger = logging.getLogger('audit')
 
 FARADAY_APP = None

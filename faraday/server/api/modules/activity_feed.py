@@ -78,6 +78,9 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
     get_joinedloads = [Command.workspace]
     order_field = Command.start_date.desc()
 
+    def _get_base_query(self, *args, **kwargs):
+        return Command.with_severity_counts(super()._get_base_query(*args, **kwargs))
+
     def _envelope_list(self, objects, pagination_metadata=None):
         commands = []
         for command in objects:

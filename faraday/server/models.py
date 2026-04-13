@@ -1439,6 +1439,20 @@ association_table_vulnerabilities_credentials = Table(
 )
 
 
+class VulnerabilityGroup(db.Model):
+    __tablename__ = 'vulnerability_group'
+    id = Column(Integer, primary_key=True)
+    title = NonBlankColumn(Text)
+    is_automatic = Column(Boolean, nullable=True)
+    count = Column(Integer, nullable=False, default=0)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
+    workspace = relationship('Workspace', backref=backref('vulnerability_groups', passive_deletes=True))
+
+    @property
+    def parent(self):
+        return
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUS_OPEN = 'open'
     STATUS_RE_OPENED = 're-opened'
@@ -1458,6 +1472,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
+    __table_args__ = (
+        Index('ix_vulnerability_workspace_id_risk', 'workspace_id'),
+    )
+
     id = Column(Integer, primary_key=True)
     _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
@@ -1478,16 +1496,40 @@ class VulnerabilityGeneric(VulnerabilityABC):
     status_code = Column(Integer, nullable=True)
     epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
     is_main = Column(Boolean, nullable=True, default=None)
-
-    vulnerability_duplicate_id = Column(
+    vulnerability_duplicate_id = Column(Integer, nullable=True)
+    group_id = Column(
         Integer,
-        ForeignKey('vulnerability.id', ondelete='SET NULL'),
+        ForeignKey('vulnerability_group.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
+        default=None,
     )
-    duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                         backref=backref('duplicates_main', remote_side=[id])
-                                         )
+    is_automatic = Column(Boolean, nullable=True, default=None)
+    group_title = BlankColumn(Text, nullable=True)
+
+    @hybrid_property
+    def group_count(self):
+        if not self.is_main or self.group_id is None:
+            return None
+        if self.group:
+            return self.group.count
+        return None
+
+    @group_count.expression
+    def group_count(cls):
+        inner = (
+            select([func.count(text('v.id'))])
+            .select_from(text('vulnerability as v'))
+            .where(text('v.group_id = vulnerability.group_id'))
+            .where(cls.group_id.isnot(None))
+            .as_scalar()
+        )
+        return case(
+            [(cls.is_main.is_(True), inner)],
+            else_=None
+        )
+
+    group = relationship("VulnerabilityGroup", backref=backref('vulnerabilities', passive_deletes=True))
     vulnerability_template_id = Column(
         Integer,
         ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
@@ -2339,6 +2381,15 @@ def _return_last_30_days() -> list:
 
 class Workspace(Metadata):
     __tablename__ = 'workspace'
+
+    NAME = "name"
+    CVE = "cve"
+    GROUP_BY = [NAME, CVE]
+
+    LEVENSHTEIN = "levenshtein"
+    SENTENCE_TRANSFORMER = "sentence_transformer"
+    GROUP_ALGORITHM = [LEVENSHTEIN, SENTENCE_TRANSFORMER]
+
     id = Column(Integer, primary_key=True)
     customer = BlankColumn(String(250))  # TBI
     description = BlankColumn(Text)
@@ -2355,6 +2406,10 @@ class Workspace(Metadata):
     last_run_agent_date = query_expression()
 
     force_lowercase_assets = Column(Boolean, nullable=False, default=False)
+
+    group_by = Column(Enum(*GROUP_BY, name='group_by'), nullable=True)
+    group_algorithm = Column(Enum(*GROUP_ALGORITHM, name='group_algorithm'), nullable=True)
+    group_threshold = Column(Integer, nullable=True)
 
     # Stats
 

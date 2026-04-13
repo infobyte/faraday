@@ -1099,6 +1099,7 @@ class VulnerabilityView(
                 joinedload('service').joinedload(Service.host).selectinload(Host.hostnames),
                 joinedload('creator'),
                 joinedload('update_user'),
+                joinedload(VulnerabilityGeneric.group),
                 undefer('target'),
                 undefer('target_host_os'),
                 undefer('target_host_ip'),

@@ -1,7 +1,7 @@
 """add running_since to pipeline
 
 Revision ID: 22321da63ce6
-Revises: 6d0972a186c8
+Revises: a9b75b0ddc01
 Create Date: 2026-04-07 12:00:00.000000+00:00
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '22321da63ce6'
-down_revision = '6d0972a186c8'
+down_revision = 'a9b75b0ddc01'
 branch_labels = None
 depends_on = None
 

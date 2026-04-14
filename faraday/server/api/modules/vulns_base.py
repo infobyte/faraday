@@ -29,6 +29,7 @@ from flask_login import current_user
 from marshmallow import Schema, ValidationError, fields, post_load
 from marshmallow.validate import OneOf
 from sqlalchemy import desc, func
+from sqlalchemy.exc import DataError
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import (
@@ -734,15 +735,15 @@ class VulnerabilityView(
         options = [
             joinedload(Vulnerability.host).
             load_only(Host.id).  # Only hostnames are needed
-            joinedload(Host.hostnames),
+            selectinload(Host.hostnames),
 
             joinedload(Vulnerability.service).
             joinedload(Service.host).
-            joinedload(Host.hostnames),
+            selectinload(Host.hostnames),
 
             joinedload(VulnerabilityWeb.service).
             joinedload(Service.host).
-            joinedload(Host.hostnames),
+            selectinload(Host.hostnames),
 
             joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
@@ -1094,10 +1095,11 @@ class VulnerabilityView(
                 selectinload('owasp'),
                 selectinload('cwe'),
                 selectinload(VulnerabilityGeneric.tags),
-                joinedload('host'),
-                joinedload('service'),
+                joinedload('host').selectinload(Host.hostnames),
+                joinedload('service').joinedload(Service.host).selectinload(Host.hostnames),
                 joinedload('creator'),
                 joinedload('update_user'),
+                joinedload(VulnerabilityGeneric.group),
                 undefer('target'),
                 undefer('target_host_os'),
                 undefer('target_host_ip'),
@@ -1178,15 +1180,18 @@ class VulnerabilityView(
             except AttributeError as e:
                 abort(HTTP_BAD_REQUEST, e)
 
-            # In vulns count we do not need order
-            total_vulns = vulns.order_by(None)
+            try:
+                total_count = vulns.order_by(None).with_entities(func.count(VulnerabilityGeneric.id)).scalar()
+            except DataError as e:
+                logger.warning("DataError on vuln count query: %s", e)
+                abort(HTTP_BAD_REQUEST, "Invalid filters")
             if limit:
                 vulns = vulns.limit(limit)
             if offset:
                 vulns = vulns.offset(offset)
 
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
-            return vulns, total_vulns.count()
+            return vulns, total_count
 
         else:
             try:

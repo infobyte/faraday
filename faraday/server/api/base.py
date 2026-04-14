@@ -994,14 +994,14 @@ class FilterMixin(ListMixin):
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
-            count = filter_query.order_by(None).count()
+            count = filter_query.order_by(None).with_entities(func.count(self.model_class.id)).scalar()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
             filter_query = self._add_to_filter(filter_query)
             if return_objects:
-                return filter_query.all(), filter_query.count()
+                return filter_query.all(), count
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json_loads(objs), count
         else:

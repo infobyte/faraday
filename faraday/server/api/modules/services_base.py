@@ -9,6 +9,7 @@ from filteralchemy import FilterSet, operators
 from flask import Blueprint
 from marshmallow import ValidationError, fields, post_load
 from marshmallow.validate import OneOf, Range
+from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
@@ -199,6 +200,11 @@ class ServiceView(
 
         filter_query = (self._apply_filter_context(filter_query).
                         filter(Service.workspace.has(active=True)))  # only services from active workspaces
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(
+                joinedload(Service.update_user),
+                undefer(Service.vulnerability_count),
+            )
         return filter_query
 
 

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed user password not being validated on create and edit actions. #8059"
-}

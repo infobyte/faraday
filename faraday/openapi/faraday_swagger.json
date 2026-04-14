@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.17.0 API",
+        "title": "Faraday 5.20.0 API",
         "version": "v3"
     },
     "security": [
@@ -3912,10 +3912,10 @@
                 }
             },
             "get": {
-                "summary": "Get a list of workspaces.",
                 "tags": [
                     "Workspace"
                 ],
+                "summary": "Get a list of workspaces.",
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -7273,7 +7273,13 @@
                         "maxLength": 11,
                         "nullable": true
                     },
-                    "metadata": {}
+                    "metadata": {},
+                    "tasks": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
                 },
                 "required": [
                     "command",
@@ -7536,11 +7542,13 @@
                     "total": {
                         "readOnly": true
                     }
-                }
+                },
+                "additionalProperties": false
             },
             "FlaskRestless": {
                 "type": "object",
-                "properties": {}
+                "properties": {},
+                "additionalProperties": false
             },
             "Service": {
                 "type": "object",
@@ -8061,7 +8069,8 @@
                         "type": "integer",
                         "readOnly": true
                     }
-                }
+                },
+                "additionalProperties": false
             },
             "Workspace": {
                 "type": "object",
@@ -8330,7 +8339,8 @@
                     "expires_in",
                     "token",
                     "total_duration"
-                ]
+                ],
+                "additionalProperties": false
             },
             "BulkService": {
                 "type": "object",
@@ -8754,7 +8764,8 @@
                 "required": [
                     "command",
                     "hosts"
-                ]
+                ],
+                "additionalProperties": false
             },
             "SearchFilter": {
                 "type": "object",

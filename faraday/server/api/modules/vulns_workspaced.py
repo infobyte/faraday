@@ -83,6 +83,7 @@ class VulnerabilityWorkspacedView(
             joinedload(Host.hostnames),
 
             joinedload(VulnerabilityGeneric.update_user),
+            joinedload(VulnerabilityGeneric.group),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),

@@ -8,7 +8,7 @@ authors = [
     { name = "Faradaysec", email = "devel@faradaysec.com" }
 ]
 keywords = ["security", "tools"]
-license = { text = "GPL-3.0-only" }
+license = "GPL-3.0-only"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Information Technology",
@@ -107,7 +107,7 @@ extras = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61,<82", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [dependency-groups]
@@ -124,7 +124,6 @@ dev = [
     "responses>=0.9.0",
     "ruff>=0.9.0",
     "sphinx>=1.7.6",
-    "twine>=6.2.0",
 ]
 
 [tool.setuptools.dynamic]

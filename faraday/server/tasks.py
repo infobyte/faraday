@@ -1,11 +1,15 @@
+import json
 import time
 from datetime import datetime, timedelta
 from typing import Optional, List
 
+import redis
 from celery import group, chord
 from celery.utils.log import get_task_logger
 from sqlalchemy import (
     func,
+    insert as sqlalchemy_insert,
+    literal,
     or_,
     and_,
 )
@@ -26,11 +30,17 @@ from faraday.server.models import (
     Credential,
 )
 from faraday.server.utils.workflows import _process_entry
-from faraday.server.debouncer import (debounce_workspace_update,
-                                      debounce_workspace_vulns_count_update,
-                                      debounce_workspace_host_count,
-                                      debounce_workspace_service_count, update_workspace_vulns_count,
-                                      update_workspace_host_count, update_workspace_service_count)
+from faraday.server.debouncer import (
+    debounce_workspace_update,
+    debounce_workspace_vulns_count_update,
+    debounce_workspace_host_count,
+    debounce_workspace_service_count,
+    get_redis_client,
+    update_workspace_vulns_count,
+    update_workspace_host_count,
+    update_workspace_service_count,
+    update_workspace_update_date,
+)
 
 logger = get_task_logger(__name__)
 
@@ -44,7 +54,7 @@ def on_success_process_report_task(results, command_id=None, linking_info=None):
     else:
         workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
         if workspace.name:
-            debounce_workspace_update(workspace.name)
+            debounce_workspace_update(workspace.name, workspace_id=workspace.id)
     db.session.commit()
     host_ids = []
     for result in results:
@@ -218,7 +228,7 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
         if not plugin:
             from faraday.server.utils.reports_processor import command_status_error  # pylint: disable=import-outside-toplevel
-            logger.info("Could not get plugin for file")
+            logger.error("Could not get plugin for file")
             logger.info("Plugin analyzer took %s", time.time() - start_time)
             command_status_error(command_id)
             return
@@ -246,10 +256,19 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
 
 @celery.task()
-def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False, no_debounce: bool = None, command_id: int = None) -> None:
+def update_host_stats(
+        hosts: List,
+        services: List,
+        workspace_name: str = None,
+        workspace_id: int = None,
+        workspace_ids: List = None,
+        debouncer=None, sync=False,
+        no_debounce: bool = None,
+        command_id: int = None,
+) -> None:
     start_time = datetime.utcnow()
     if no_debounce:  # For reports, we don't need to calculate host stats because they are already calculated.
-        update_workspace_vulns_count(workspace_id=workspace_id)
+        debounce_workspace_vulns_count_update(workspace_id=workspace_id)
         update_workspace_host_count(workspace_id=workspace_id)
         update_workspace_service_count(workspace_id=workspace_id)
         end_time = datetime.utcnow()
@@ -390,3 +409,155 @@ def update_failed_command_stats(debouncer=None):
         logger.error(f"Failed to update command stats: {e}")
     else:
         logger.info("Stats update complete")
+
+
+@celery.task(ignore_result=True)
+def create_bulk_update_commands_task(
+    ids: list,
+    workspace_ids: list,
+    user_id,
+    start_date: datetime,
+):
+    """Async task: create Command and CommandObject audit records for a bulk vuln update.
+
+    Runs after the main UPDATE transaction commits. INSERT...SELECT filters by
+    VulnerabilityGeneric.workspace_id + id, so deleted vulns are silently skipped.
+    One Command per workspace, one CommandObject per vuln.
+    """
+    if not ids or not workspace_ids:
+        return
+
+    for workspace_id in workspace_ids:
+        command = Command()
+        command.workspace_id = workspace_id
+        command.user_id = user_id
+        command.start_date = start_date
+        command.tool = 'web_ui'
+        command.command = 'bulk_update'
+        db.session.add(command)
+        db.session.flush()  # get command.id
+
+        select_stmt = (
+            db.session.query(
+                VulnerabilityGeneric.id,
+                literal('vulnerability'),
+                literal(command.id),
+                literal(workspace_id),
+                literal(start_date),
+                literal(False),
+            ).filter(
+                VulnerabilityGeneric.workspace_id == workspace_id,
+                VulnerabilityGeneric.id.in_(ids),
+            )
+        )
+        db.session.execute(
+            sqlalchemy_insert(CommandObject).from_select(
+                ['object_id', 'object_type', 'command_id', 'workspace_id', 'create_date', 'created_persistent'],
+                select_stmt,
+            )
+        )
+        db.session.commit()
+
+    logger.debug(
+        f"[bulk_update_commands] async INSERT commands for "
+        f"{len(workspace_ids)} workspaces, {len(ids)} vulns"
+    )
+
+
+@celery.task(ignore_result=True)
+def execute_debounced_action(debounce_key: str, expected_token: int) -> None:
+    """
+    Executes a debounced action ONLY if it is still the latest for debounce_key.
+    Uses Redis WATCH/MULTI/EXEC to atomically claim execution rights BEFORE running
+    the action, preventing duplicate execution when parallel Celery workers race.
+    """
+    _redis = get_redis_client()
+
+    token_key = f"{debounce_key}:token"
+    meta_key = f"{debounce_key}:meta"
+    payload_key = f"{debounce_key}:payload"
+
+    current_token_raw = _redis.get(token_key)
+    if not current_token_raw:
+        return
+
+    try:
+        current_token = int(current_token_raw)
+    except ValueError:
+        return
+
+    if current_token != expected_token:
+        # A newer event arrived for the same workspace + action; this task is obsolete.
+        logger.debug(
+            f"Debouncer(redis): skip stale token (key={debounce_key} expected={expected_token} current={current_token})"
+        )
+        return
+
+    meta = _redis.hgetall(meta_key) or {}
+    action_name = meta.get("action")
+    if not action_name:
+        return
+
+    payload_raw = _redis.get(payload_key)
+    if not payload_raw:
+        return
+
+    try:
+        payload = json.loads(payload_raw)
+    except json.JSONDecodeError:
+        return
+
+    parameters = payload.get("parameters") or {}
+
+    # Explicit allowlist (prevents executing arbitrary things)
+    action_map = {
+        "update_workspace_host_count": update_workspace_host_count,
+        "update_workspace_service_count": update_workspace_service_count,
+        "update_workspace_vulns_count": update_workspace_vulns_count,
+        "update_workspace_update_date": None,  # handled separately below
+    }
+
+    if action_name not in action_map:
+        logger.warning(f"Debouncer: unsupported action (action={action_name} key={debounce_key})")
+        return
+
+    # Atomically claim execution rights BEFORE running the action.
+    # WATCH token_key so that if another worker already claimed or a newer debounce
+    # arrived between our initial read and now, we get a WatchError and skip.
+    pipe = _redis.pipeline()
+    try:
+        pipe.watch(token_key)
+        token_now = pipe.get(token_key)  # immediate execution in WATCH mode
+        if not token_now or int(token_now) != expected_token:
+            pipe.unwatch()
+            logger.debug(f"Debouncer(redis): skip, token changed before claim (key={debounce_key})")
+            return
+        pipe.multi()
+        pipe.delete(token_key)
+        pipe.delete(meta_key)
+        pipe.delete(payload_key)
+        pipe.execute()  # raises WatchError if token_key was modified between WATCH and EXEC
+    except redis.WatchError:
+        logger.info(f"Debouncer(redis): skip, lost race to another worker (key={debounce_key})")
+        return
+    finally:
+        pipe.reset()
+
+    # We hold exclusive execution rights — run the action exactly once.
+    logger.info(
+        f"Debouncer(redis): executing (action={action_name} key={debounce_key} token={expected_token} "
+        f"params={list(parameters.keys())})"
+    )
+    if action_name == "update_workspace_update_date":
+        workspace_id = parameters.get("workspace_id")
+        update_date = parameters.get("update_date") or datetime.utcnow().isoformat()
+        if workspace_id is None:
+            return
+        update_workspace_update_date({int(workspace_id): update_date})
+    else:
+        action = action_map[action_name]
+        action(**parameters)
+
+    logger.info(
+        f"Debouncer(redis): completed (action={action_name} key={debounce_key} token={expected_token})"
+    )

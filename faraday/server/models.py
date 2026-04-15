@@ -37,7 +37,10 @@ from sqlalchemy import (
     UniqueConstraint,
     Table,
     Date,
+    and_,
+    case as alchemy_case,
     event,
+    literal,
     func,
     Index,
 )
@@ -1061,6 +1064,7 @@ class CommandObject(db.Model):
     created_persistent = Column(Boolean, nullable=False)
 
     __table_args__ = (
+        Index('ix_command_object_command_id_type', 'command_id', 'object_type'),
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
                          name='uix_command_object_objid_objtype_command_id_ws'),
     )
@@ -1156,14 +1160,45 @@ class Command(Metadata):
                                                                        {'type': '\'vulnerability_web\''})
     sum_created_hosts = _make_created_objects_sum('host')
     sum_created_services = _make_created_objects_sum('service')
-    sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
-    sum_created_vulnerability_high = _make_created_objects_sum_joined('vulnerability', {'severity': '\'high\''})
-    sum_created_vulnerability_medium = _make_created_objects_sum_joined('vulnerability', {'severity': '\'medium\''})
-    sum_created_vulnerability_low = _make_created_objects_sum_joined('vulnerability', {'severity': '\'low\''})
-    sum_created_vulnerability_info = _make_created_objects_sum_joined('vulnerability',
-                                                                      {'severity': '\'informational\''})
-    sum_created_vulnerability_unclassified = _make_created_objects_sum_joined('vulnerability',
-                                                                              {'severity': '\'unclassified\''})
+    sum_created_vulnerability_critical = query_expression(literal(0))
+    sum_created_vulnerability_high = query_expression(literal(0))
+    sum_created_vulnerability_medium = query_expression(literal(0))
+    sum_created_vulnerability_low = query_expression(literal(0))
+    sum_created_vulnerability_info = query_expression(literal(0))
+    sum_created_vulnerability_unclassified = query_expression(literal(0))
+
+    @classmethod
+    def with_severity_counts(cls, query):
+        """Augment a Command ORM query with per-severity vulnerability creation counts.
+
+        Uses correlated scalar subqueries so the main query structure (joins, eager
+        loads, GROUP BY) is not altered. The attributes default to 0 when this method
+        is not called, avoiding overhead on Command queries that don't need counts.
+        """
+        def _sev_expr(severity):
+            where_conditions = [
+                "command_object.object_type = 'vulnerability'",
+                "command_object.command_id = command.id",
+                "vulnerability.id = command_object.object_id",
+                "command_object.workspace_id = vulnerability.workspace_id",
+                f"vulnerability.severity = '{severity}'",
+            ]
+            return (
+                select([func.sum(CommandObject.created)])
+                .select_from(table('command_object'))
+                .select_from(table('vulnerability'))
+                .where(text(' and '.join(where_conditions)))
+                .as_scalar()
+            )
+
+        return query.options(
+            with_expression(cls.sum_created_vulnerability_critical, _sev_expr('critical')),
+            with_expression(cls.sum_created_vulnerability_high, _sev_expr('high')),
+            with_expression(cls.sum_created_vulnerability_medium, _sev_expr('medium')),
+            with_expression(cls.sum_created_vulnerability_low, _sev_expr('low')),
+            with_expression(cls.sum_created_vulnerability_info, _sev_expr('informational')),
+            with_expression(cls.sum_created_vulnerability_unclassified, _sev_expr('unclassified')),
+        )
 
     agent_execution = relationship(
         'AgentExecution',
@@ -1404,6 +1439,20 @@ association_table_vulnerabilities_credentials = Table(
 )
 
 
+class VulnerabilityGroup(db.Model):
+    __tablename__ = 'vulnerability_group'
+    id = Column(Integer, primary_key=True)
+    title = NonBlankColumn(Text)
+    is_automatic = Column(Boolean, nullable=True)
+    count = Column(Integer, nullable=False, default=0)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
+    workspace = relationship('Workspace', backref=backref('vulnerability_groups', passive_deletes=True))
+
+    @property
+    def parent(self):
+        return
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUS_OPEN = 'open'
     STATUS_RE_OPENED = 're-opened'
@@ -1423,6 +1472,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
+    __table_args__ = (
+        Index('ix_vulnerability_workspace_id_risk', 'workspace_id'),
+    )
+
     id = Column(Integer, primary_key=True)
     _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
@@ -1443,16 +1496,40 @@ class VulnerabilityGeneric(VulnerabilityABC):
     status_code = Column(Integer, nullable=True)
     epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
     is_main = Column(Boolean, nullable=True, default=None)
-
-    vulnerability_duplicate_id = Column(
+    vulnerability_duplicate_id = Column(Integer, nullable=True)
+    group_id = Column(
         Integer,
-        ForeignKey('vulnerability.id', ondelete='SET NULL'),
+        ForeignKey('vulnerability_group.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
+        default=None,
     )
-    duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                         backref=backref('duplicates_main', remote_side=[id])
-                                         )
+    is_automatic = Column(Boolean, nullable=True, default=None)
+    group_title = BlankColumn(Text, nullable=True)
+
+    @hybrid_property
+    def group_count(self):
+        if not self.is_main or self.group_id is None:
+            return None
+        if self.group:
+            return self.group.count
+        return None
+
+    @group_count.expression
+    def group_count(cls):
+        inner = (
+            select([func.count(text('v.id'))])
+            .select_from(text('vulnerability as v'))
+            .where(text('v.group_id = vulnerability.group_id'))
+            .where(cls.group_id.isnot(None))
+            .as_scalar()
+        )
+        return case(
+            [(cls.is_main.is_(True), inner)],
+            else_=None
+        )
+
+    group = relationship("VulnerabilityGroup", backref=backref('vulnerabilities', passive_deletes=True))
     vulnerability_template_id = Column(
         Integer,
         ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
@@ -2304,6 +2381,15 @@ def _return_last_30_days() -> list:
 
 class Workspace(Metadata):
     __tablename__ = 'workspace'
+
+    NAME = "name"
+    CVE = "cve"
+    GROUP_BY = [NAME, CVE]
+
+    LEVENSHTEIN = "levenshtein"
+    SENTENCE_TRANSFORMER = "sentence_transformer"
+    GROUP_ALGORITHM = [LEVENSHTEIN, SENTENCE_TRANSFORMER]
+
     id = Column(Integer, primary_key=True)
     customer = BlankColumn(String(250))  # TBI
     description = BlankColumn(Text)
@@ -2320,6 +2406,10 @@ class Workspace(Metadata):
     last_run_agent_date = query_expression()
 
     force_lowercase_assets = Column(Boolean, nullable=False, default=False)
+
+    group_by = Column(Enum(*GROUP_BY, name='group_by'), nullable=True)
+    group_algorithm = Column(Enum(*GROUP_ALGORITHM, name='group_algorithm'), nullable=True)
+    group_threshold = Column(Integer, nullable=True)
 
     # Stats
 
@@ -2639,7 +2729,8 @@ class UserToken(Metadata):
     SCHEDULER_SCOPE = 'scheduler'
     SERVICE_DESK_SCOPE = 'service_desk'
     JIRA_SCOPE = 'jira'
-    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE, JIRA_SCOPE]
+    GLOBAL_SCOPE = 'global'
+    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE, JIRA_SCOPE, GLOBAL_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 
@@ -2935,6 +3026,11 @@ class TagObject(db.Model):
 
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
+
+    __table_args__ = (
+        # Enables fast lookup: "all tags for objects of type X with id IN (...)"
+        Index('ix_tag_object_type_object_id', 'object_type', 'object_id'),
+    )
 
 
 class CWE(Metadata):

@@ -29,14 +29,14 @@ class TestDocs:
 
     def test_yaml_docs_with_no_doc(self):
 
-        exc = {'/login', '/logout', '/change', '/reset', '/reset/{token}', '/verify', '/'}
+        exc = {'/_api/login', '/login', '/logout', '/change', '/reset', '/reset/{token}', '/verify', '/'}
         failing = []
 
         with current_app.test_request_context():
             for endpoint in current_app.view_functions:
                 if endpoint in ('static', 'index'):
                     continue
-                if 'mock' in endpoint:
+                if 'mock' in endpoint.lower():
                     continue
                 view = current_app.view_functions[endpoint]
                 if view.__closure__ is None:
@@ -55,9 +55,6 @@ class TestDocs:
             if not any(path_value):
                 failing.append(path_temp)
 
-        if any(failing):
-            print("Endpoints with no docs\n")
-            print(json.dumps(failing, indent=1))
         assert not any(failing)
 
     def test_yaml_docs_with_defaults(self):
@@ -68,7 +65,7 @@ class TestDocs:
             for endpoint in current_app.view_functions:
                 if endpoint in ('static', 'index'):
                     continue
-                if 'mock' in endpoint:
+                if 'mock' in endpoint.lower():
                     continue
                 view = current_app.view_functions[endpoint]
                 if view.__closure__ is None:
@@ -78,6 +75,8 @@ class TestDocs:
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
         for path_key, path_value in spec_yaml["paths"].items():
+            if 'mock' in path_key.lower():
+                continue
 
             path_temp = {path_key: {}}
 
@@ -88,9 +87,6 @@ class TestDocs:
             if any(path_temp[path_key]):
                 failing.append(path_temp)
 
-        if any(failing):
-            print("Endpoints with default docs:\n")
-            print(json.dumps(failing, indent=1))
         assert not any(failing)
 
     @pytest.mark.skip(reason="Changed logic")

@@ -1,6 +1,16 @@
 New features in the latest update
 =====================================
 
+5.20.0 [Apr 10th, 2026]:
+---
+ * [MOD] Debouncer now uses Redis to ensure distributed, single execution of workspace updates across Celery workers. #8076
+ * [MOD] Changed the packaging and build process to use uv. #8083
+ * [FIX] Fixed user password not being validated on create and edit actions. #8059
+ * [FIX] Fixed flaky tests. #8185
+ * [FIX] Fixed vulnerability bulk update endpoint to improve memory usage and performance. #8094
+ * [FIX] Optimized some internal queries. #8201
+
+
 5.19.0 [Jan 26th, 2026]:
 ---
  * [MOD] Refined Docker configuration with health checks, service dependencies, and optimized image handling. #8081

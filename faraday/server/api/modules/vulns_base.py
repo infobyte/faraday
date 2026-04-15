@@ -28,7 +28,9 @@ from flask_classful import route
 from flask_login import current_user
 from marshmallow import Schema, ValidationError, fields, post_load
 from marshmallow.validate import OneOf
-from sqlalchemy import desc, func, insert as sqlalchemy_insert
+from sqlalchemy import desc, func
+from sqlalchemy.exc import DataError
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import (
     aliased,
@@ -62,8 +64,6 @@ from faraday.server.config import faraday_server
 from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
-    Command,
-    CommandObject,
     CustomFieldsSchema,
     File,
     Host,
@@ -73,6 +73,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityABC,
     VulnerabilityGeneric,
+    VulnerabilityReference,
     VulnerabilityWeb,
     Workspace,
     db,
@@ -90,7 +91,6 @@ from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv, export_vulns_to_csv_limited
 from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.utils.reference import create_reference
 from faraday.server.utils.search import search
 from faraday.server.utils.vulns import (
     FILTER_SET_FIELDS,
@@ -735,15 +735,15 @@ class VulnerabilityView(
         options = [
             joinedload(Vulnerability.host).
             load_only(Host.id).  # Only hostnames are needed
-            joinedload(Host.hostnames),
+            selectinload(Host.hostnames),
 
             joinedload(Vulnerability.service).
             joinedload(Service.host).
-            joinedload(Host.hostnames),
+            selectinload(Host.hostnames),
 
             joinedload(VulnerabilityWeb.service).
             joinedload(Service.host).
-            joinedload(Host.hostnames),
+            selectinload(Host.hostnames),
 
             joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
@@ -1095,10 +1095,11 @@ class VulnerabilityView(
                 selectinload('owasp'),
                 selectinload('cwe'),
                 selectinload(VulnerabilityGeneric.tags),
-                joinedload('host'),
-                joinedload('service'),
+                joinedload('host').selectinload(Host.hostnames),
+                joinedload('service').joinedload(Service.host).selectinload(Host.hostnames),
                 joinedload('creator'),
                 joinedload('update_user'),
+                joinedload(VulnerabilityGeneric.group),
                 undefer('target'),
                 undefer('target_host_os'),
                 undefer('target_host_ip'),
@@ -1179,15 +1180,18 @@ class VulnerabilityView(
             except AttributeError as e:
                 abort(HTTP_BAD_REQUEST, e)
 
-            # In vulns count we do not need order
-            total_vulns = vulns.order_by(None)
+            try:
+                total_count = vulns.order_by(None).with_entities(func.count(VulnerabilityGeneric.id)).scalar()
+            except DataError as e:
+                logger.warning("DataError on vuln count query: %s", e)
+                abort(HTTP_BAD_REQUEST, "Invalid filters")
             if limit:
                 vulns = vulns.limit(limit)
             if offset:
                 vulns = vulns.offset(offset)
 
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dump(vulns)
-            return vulns, total_vulns.count()
+            return vulns, total_count
 
         else:
             try:
@@ -1436,6 +1440,11 @@ class VulnerabilityView(
             if field.extension_type.name == "ASSOCIATION_PROXY"
         ]
 
+    def _get_bulk_update_objects(self, ids, **kwargs):
+        # The vulns schema never reads context['objects'], so we only need IDs.
+        # Fetch just the id column instead of loading full ORM instances.
+        return self._bulk_update_query(ids, **kwargs).with_entities(self.model_class.id).all()
+
     def _pre_bulk_update(self, data, **kwargs):
         data.pop('type', '')  # It's forbidden to change vuln type!
         data.pop('tool', '')
@@ -1474,59 +1483,73 @@ class VulnerabilityView(
         return custom_behaviour_fields
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
-        workspaces_and_ids = (db.session.query(Workspace, func.array_agg(VulnerabilityGeneric.id))
-                              .join(VulnerabilityGeneric).filter(VulnerabilityGeneric.id.in_(ids))
-                              .group_by(Workspace.id).all())
+        workspaces = (db.session.query(Workspace)
+                      .join(VulnerabilityGeneric)
+                      .filter(VulnerabilityGeneric.id.in_(ids))
+                      .distinct().all())
 
         if extracted_data:
-            queryset = self._bulk_update_query(ids, **kwargs)
-            for obj in queryset.all():
-                for (key, value) in extracted_data.items():
-                    if key == 'refs':
-                        value = create_reference(value, obj.id)
-                    setattr(obj, key, value)
-                    db.session.add(obj)
+            # refs: bulk INSERT ON CONFLICT DO NOTHING — no ORM objects needed
+            if 'refs' in extracted_data:
+                refs_data = extracted_data.pop('refs')
+                if refs_data:
+                    now = datetime.utcnow()
+                    rows = [
+                        {
+                            'name': ref['name'],
+                            'type': ref['type'],
+                            'vulnerability_id': vuln_id,
+                            'create_date': now,
+                            'update_date': now,
+                        }
+                        for vuln_id in ids
+                        for ref in refs_data
+                    ]
+                    stmt = pg_insert(VulnerabilityReference).values(rows)
+                    db.session.execute(stmt.on_conflict_do_nothing(
+                        constraint='uix_vulnerability_reference_table_vuln_id_name_type'
+                    ))
 
-        if workspaces_and_ids:
-            for ws_vulns in workspaces_and_ids:
-                ws_id = ws_vulns[0].id
+            # remaining fields (cvss*, cwe) require ORM setters — process in chunks
+            if extracted_data:
+                CHUNK_SIZE = 500
+                queryset = self._bulk_update_query(ids, **kwargs)
+                for obj in queryset.yield_per(CHUNK_SIZE):
+                    for (key, value) in extracted_data.items():
+                        setattr(obj, key, value)
+                    db.session.flush()
+                    db.session.expire(obj)
 
-                command = Command()
-                command.workspace_id = ws_id
-                command.user_id = current_user.id
-                command.start_date = datetime.utcnow()
-                command.tool = 'web_ui'
-                command.command = 'bulk_update'
-                db.session.add(command)
-                db.session.commit()
-                cobjects_list = []
-
-                for id in ws_vulns[1]:
-                    cobject_dict = {
-                        "object_id": id,
-                        "object_type": "vulnerability",
-                        "command_id": command.id,
-                        "workspace_id": ws_id,
-                        "create_date": datetime.utcnow(),
-                        "created_persistent": False
-                    }
-                    cobjects_list.append(cobject_dict)
-                db.session.execute(sqlalchemy_insert(CommandObject).values(cobjects_list))
-                db.session.commit()
+        if workspaces:
+            # Commit UPDATE + extracted_data changes before dispatching the async task.
+            # Values are captured now to preserve request context (current_user, timestamp).
+            db.session.commit()
+            user_id = None
+            try:
+                if hasattr(current_user, 'id'):
+                    user_id = current_user.id
+            except AttributeError as e:
+                logger.debug("Current user not found", exc_info=e)
+            from faraday.server.tasks import create_bulk_update_commands_task  # pylint: disable=import-outside-toplevel
+            args = (list(ids), [ws.id for ws in workspaces], user_id, datetime.utcnow())
+            if faraday_server.celery_enabled:
+                create_bulk_update_commands_task.delay(*args)
+            else:
+                create_bulk_update_commands_task(*args)
 
         if 'returning' in kwargs and kwargs['returning']:
             # update host stats
             from faraday.server.tasks import update_host_stats  # pylint:disable=import-outside-toplevel
             host_id_list = [data[4] for data in kwargs['returning'] if data[4]]
             service_id_list = [data[5] for data in kwargs['returning'] if data[5]]
-            workspace_ids = [workspace.id for workspace in [x[0] for x in workspaces_and_ids]]
+            workspace_ids = [ws.id for ws in workspaces]
             if faraday_server.celery_enabled:
                 update_host_stats.delay(host_id_list, service_id_list, workspace_ids=workspace_ids)
             else:
                 update_host_stats(host_id_list, service_id_list, workspace_ids=workspace_ids)
 
-        for workspace in [x[0] for x in workspaces_and_ids]:
-            debounce_workspace_update(workspace.name)
+        for ws in workspaces:
+            debounce_workspace_update(ws.name)
 
     def _perform_bulk_delete(self, values, **kwargs):
         # Get host and service ids in order to update host stats

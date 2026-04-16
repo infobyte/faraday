@@ -17,6 +17,7 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
 )
+from faraday.server.config import faraday_server as server_config
 from faraday.server.models import (
     db,
     Workflow,
@@ -993,7 +994,6 @@ class PipelineView(ReadWriteView):
             flask.abort(400, "Pipeline doesn't have an assigned Workspace")
 
         if pipeline.running is True:
-            from faraday.server.config import faraday_server as server_config  # pylint: disable=import-outside-toplevel
             timeout = server_config.pipeline_running_timeout
             if pipeline.running_since and (datetime.datetime.utcnow() - pipeline.running_since).total_seconds() > timeout:
                 logger.warning(f"Pipeline {pipeline_id} stuck since {pipeline.running_since}, auto-resetting")

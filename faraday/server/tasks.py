@@ -144,14 +144,23 @@ def cleanup_stuck_pipelines():
             db.or_(Pipeline.running_since < threshold, Pipeline.running_since.is_(None))
         ).all()
         for pipeline in stuck:
-            logger.warning(f"Resetting stuck pipeline {pipeline.id} (running since {pipeline.running_since})")
+            if pipeline.running_since is None:
+                logger.error(
+                    f"Pipeline {pipeline.id} in inconsistent state: running=True with running_since=NULL. "
+                    f"This indicates corrupted data (likely a crash before running_since was set). Resetting."
+                )
+            else:
+                logger.warning(
+                    f"Resetting stuck pipeline {pipeline.id} (running since {pipeline.running_since})"
+                )
             pipeline.running = False
             pipeline.running_since = None
         if stuck:
             db.session.commit()
             logger.info(f"Reset {len(stuck)} stuck pipeline(s)")
     except Exception as e:
-        logger.error(f"Failed to cleanup stuck pipelines: {e}")
+        db.session.rollback()
+        logger.exception(f"Failed to cleanup stuck pipelines: {e}")
     schedule_cleanup_stuck_pipelines()
 
 
@@ -164,7 +173,7 @@ def schedule_cleanup_stuck_pipelines():
             cleanup_stuck_pipelines.apply_async(eta=run_time)
             logger.info(f"Scheduled cleanup_stuck_pipelines at {run_time}")
     except Exception as e:
-        logger.error(f"Failed to schedule cleanup_stuck_pipelines: {e}")
+        logger.exception(f"Failed to schedule cleanup_stuck_pipelines: {e}")
 
 
 @celery.task(ignore_result=False, acks_late=True)

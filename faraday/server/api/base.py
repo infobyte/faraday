@@ -1528,7 +1528,18 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
+            # Hydrate sample_obj from the first id so get_conflict_object can
+            # fall back to real column values (not BlankColumn defaults) for
+            # unique-index fields absent from `data`. Empty model instances
+            # synthesize a filter that never matches the real conflicting row.
+            sample_obj = self.model_class()
+            if ids:
+                sample_obj = (
+                    db.session.query(self.model_class)
+                    .filter(self.model_class.id == ids[0])
+                    .first()
+                ) or sample_obj
+            conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
                     {
@@ -2211,7 +2222,17 @@ class ContextMixin(GenericView):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
+            # See BulkUpdateMixin._perform_bulk_update for rationale: empty
+            # model instances produce a ghost filter that never matches the
+            # real conflicting row, turning 409s into 500s.
+            sample_obj = self.model_class()
+            if ids:
+                sample_obj = (
+                    db.session.query(self.model_class)
+                    .filter(self.model_class.id == ids[0])
+                    .first()
+                ) or sample_obj
+            conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
                     {

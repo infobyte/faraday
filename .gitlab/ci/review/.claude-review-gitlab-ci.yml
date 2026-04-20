@@ -1,0 +1,26 @@
+claude_review:
+  tags:
+    - faradaytests
+  extends:
+    - .get-secrets
+  image: python:3.11-slim-bookworm
+  stage: review
+  allow_failure: true
+  interruptible: true
+  timeout: 15m
+  variables:
+    GIT_DEPTH: 0
+    GIT_STRATEGY: fetch
+    CLAUDE_MODEL: "claude-sonnet-4-6"
+  rules:
+    # Fork MRs can't access vault secrets — skip cleanly
+    - if: '$CI_MERGE_REQUEST_PROJECT_ID != $CI_MERGE_REQUEST_SOURCE_PROJECT_ID'
+      when: never
+    - !reference [.on-mr-ready, rules]
+    - when: never
+  before_script:
+    - apt-get update -qq && apt-get install -y --no-install-recommends git ca-certificates >/dev/null
+    - pip install --quiet "anthropic>=0.40" requests
+  script:
+    - git fetch --no-tags origin "+refs/heads/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}:refs/remotes/origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+    - python3 .gitlab/ci/scripts/claude_review.py

@@ -19,6 +19,9 @@ variables:
 
 workflow:
   rules:
+    # Allow MR pipelines ONLY when the MR is Ready (not Draft) — for claude_review
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_DRAFT == "false" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
+      when: always
     - if: $CI_MERGE_REQUEST_ID
       when: never
     - when: always
@@ -43,6 +46,8 @@ include:
   - local: .gitlab/ci/get-secrets.yml
   - local: .gitlab/ci/.rules-conditions.yml
 
+  - local: .gitlab/ci/review/.claude-review-gitlab-ci.yml
+
   - local: .gitlab/ci/testing/.pretesting-gitlab-ci.yml
   - local: .gitlab/ci/testing/.uv-testing-gitlab-ci.yml
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml
@@ -62,6 +67,7 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
 
 stages:
+    - review
     - pre_testing
     - test
     # - post_testing

@@ -42,29 +42,60 @@ before_script:
     - mkdir -pv $APT_CACHE_DIR
 
 include:
-  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  # Always-available config (anchors, vault secrets, review job itself)
   - local: .gitlab/ci/get-secrets.yml
   - local: .gitlab/ci/.rules-conditions.yml
-
   - local: .gitlab/ci/review/.claude-review-gitlab-ci.yml
 
+  # Everything below is skipped when RUN_CLAUDE_REVIEW=1 so a webhook-triggered
+  # review pipeline contains only the claude_review job. Gated at load time
+  # here in addition to per-anchor `*skip-claude`, so naked jobs and external
+  # templates (Secret-Detection) are also excluded.
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
+
   - local: .gitlab/ci/testing/.pretesting-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
   - local: .gitlab/ci/testing/.uv-testing-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
   - local: .gitlab/ci/testing/.venv-testing-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
 
   - local: .gitlab/ci/build-ci/.uv-prebuild-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
   - local: .gitlab/ci/build-ci/.build-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
   - local: .gitlab/ci/build-ci/.testing-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
 
   - local: .gitlab/ci/upload/.storage-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
 
   - local: .gitlab/ci/deploy/deploy-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
 
   - local: .gitlab/ci/publish/.set-tag-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
   - local: .gitlab/ci/publish/.mirror-to-github-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
   - local: .gitlab/ci/publish/.docker-publish-gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
 
   - template: Security/Secret-Detection.gitlab-ci.yml
+    rules:
+      - if: $RUN_CLAUDE_REVIEW != "1"
 
 stages:
     - review

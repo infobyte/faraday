@@ -25,7 +25,6 @@ Optional:
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import subprocess
 import sys
@@ -153,16 +152,45 @@ def should_skip_path(path: str) -> bool:
     return False
 
 
+def _parse_numstat_z(raw: str) -> list[tuple[str, str, str]]:
+    """Parse `git diff --numstat -z` output into (added, removed, new_path) tuples.
+
+    Format per git: normal entries are ``added\\tremoved\\tpath\\0``;
+    rename/copy entries are ``added\\tremoved\\t\\0oldpath\\0newpath\\0``.
+    NUL terminates each logical entry.
+    """
+    entries: list[tuple[str, str, str]] = []
+    parts = raw.split("\0")
+    i = 0
+    while i < len(parts):
+        piece = parts[i]
+        if not piece:
+            i += 1
+            continue
+        fields = piece.split("\t", 2)
+        if len(fields) < 3:
+            i += 1
+            continue
+        added, removed, path = fields
+        if path == "":
+            # rename/copy: next two NUL-separated parts are oldpath, newpath
+            if i + 2 >= len(parts):
+                break
+            newpath = parts[i + 2]
+            entries.append((added, removed, newpath))
+            i += 3
+        else:
+            entries.append((added, removed, path))
+            i += 1
+    return entries
+
+
 def collect_diff(env: Env) -> list[tuple[str, str]]:
     """Return list of (file_path, unified_diff_text) for reviewable files."""
-    numstat = git("diff", "--numstat", f"{env.base_sha}..{env.head_sha}")
+    numstat = git("diff", "--numstat", "-z", f"{env.base_sha}..{env.head_sha}")
     reviewable: list[str] = []
     skipped_notes: list[str] = []
-    for line in numstat.splitlines():
-        parts = line.split("\t")
-        if len(parts) < 3:
-            continue
-        added, removed, path = parts[0], parts[1], parts[2]
+    for added, removed, path in _parse_numstat_z(numstat):
         if added == "-" and removed == "-":
             skipped_notes.append(f"{path} (binary)")
             continue
@@ -233,7 +261,7 @@ def call_claude(client: Anthropic, model: str, chunk: str) -> dict[str, Any]:
             )
         except (RateLimitError, APIStatusError) as exc:
             status = getattr(exc, "status_code", None)
-            if attempt >= 3 or (status and status < 500 and status != 429):
+            if attempt >= 3 or (status and status < 500 and status not in (408, 429)):
                 raise
             time.sleep(2 ** attempt)
             continue
@@ -291,7 +319,18 @@ def comment_fingerprint(c: dict[str, Any]) -> str:
     return hashlib.sha1(raw.encode()).hexdigest()[:10]
 
 
-def post_inline(env: Env, comment: dict[str, Any]) -> bool:
+def _valid_comment(c: Any) -> bool:
+    return (
+        isinstance(c, dict)
+        and isinstance(c.get("file"), str)
+        and isinstance(c.get("line"), int)
+        and isinstance(c.get("body"), str)
+        and c.get("severity") in ("low", "medium", "high")
+    )
+
+
+def post_inline(env: Env, comment: dict[str, Any]) -> str:
+    """Post a review comment. Returns 'inline', 'fallback', or 'failed'."""
     url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}/discussions"
     body = (
         f"{marker(env.head_sha)} `{comment_fingerprint(comment)}`\n"
@@ -308,12 +347,16 @@ def post_inline(env: Env, comment: dict[str, Any]) -> bool:
     }
     r = requests.post(url, headers=gitlab_headers(env), data=data, timeout=30)
     if r.status_code in (200, 201):
-        return True
+        return "inline"
     print(f"[claude-review] inline post failed ({r.status_code}) for "
           f"{comment['file']}:{comment['line']} — falling back to note")
-    post_note(env, f"`{comment['file']}:{comment['line']}` — "
-                   f"**[claude · {comment['severity']}]** {comment['body']}")
-    return False
+    try:
+        post_note(env, f"`{comment['file']}:{comment['line']}` — "
+                       f"**[claude · {comment['severity']}]** {comment['body']}")
+        return "fallback"
+    except requests.RequestException as exc:
+        print(f"[claude-review] fallback note failed: {exc}", file=sys.stderr)
+        return "failed"
 
 
 def post_note(env: Env, body: str) -> None:
@@ -366,33 +409,49 @@ def main() -> int:
             if s:
                 summaries.append(s)
 
+        # drop malformed entries from the model
+        valid_comments: list[dict[str, Any]] = []
+        for c in all_comments:
+            if _valid_comment(c):
+                valid_comments.append(c)
+            else:
+                print(f"[claude-review] dropping malformed comment: {c!r}",
+                      file=sys.stderr)
+
         # dedupe within this run
         seen: set[str] = set()
         unique: list[dict[str, Any]] = []
-        for c in all_comments:
+        for c in valid_comments:
             fp = comment_fingerprint(c)
             if fp in seen:
                 continue
             seen.add(fp)
             unique.append(c)
 
-        inline = [c for c in unique if c.get("severity") in ("medium", "high")]
-        low_notes = [c for c in unique if c.get("severity") == "low"]
+        inline = [c for c in unique if c["severity"] in ("medium", "high")]
+        low_notes = [c for c in unique if c["severity"] == "low"]
 
-        posted = 0
+        inline_count = 0
+        fallback_count = 0
         for c in inline:
             try:
-                if post_inline(env, c):
-                    posted += 1
+                result = post_inline(env, c)
             except requests.RequestException as exc:
                 print(f"[claude-review] post error: {exc}", file=sys.stderr)
+                continue
+            if result == "inline":
+                inline_count += 1
+            elif result == "fallback":
+                fallback_count += 1
 
         summary_lines = [
             f"**Claude review** (model `{env.model}`, commit `{env.head_sha[:12]}`)",
             "",
-            f"- Inline comments: {posted}",
-            f"- Low-severity notes: {len(low_notes)}",
+            f"- Inline comments: {inline_count}",
         ]
+        if fallback_count:
+            summary_lines.append(f"- Fallback notes: {fallback_count}")
+        summary_lines.append(f"- Low-severity notes: {len(low_notes)}")
         if summaries:
             summary_lines += ["", "### Summary", *summaries]
         if low_notes:

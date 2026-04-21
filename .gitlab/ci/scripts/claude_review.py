@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import subprocess
 import sys
 import time
@@ -49,6 +50,14 @@ SKIP_PATH_CONTAINS = ("vendor/", "node_modules/", "dist/", "build/")
 SYSTEM_PROMPT = """You are a senior code reviewer for Faraday, a Python-based
 security platform. You are reviewing a GitLab merge request diff.
 
+Diff format note: every diff line is prefixed with the NEW-file line number
+like "  123: + added line" or "  123:   context line". Removed lines have
+the prefix "     : - removed line" (no new-file number). When you emit an
+inline comment, the `line` field MUST be the number taken directly from
+that prefix — nothing else. Never estimate or count. If the line you want
+to flag has no prefix number (it was removed), do not emit an inline
+comment on it; put the observation in the summary instead.
+
 Rules:
 - Only flag real, actionable issues. Do not comment on style preferences or
   restate what the code does.
@@ -58,9 +67,9 @@ Rules:
 - Use severity: "high" for bugs/security risks, "medium" for likely issues,
   "low" for polish/nits. Only high/medium will be posted inline; low goes
   into the summary.
-- For each inline comment, give the file path exactly as shown in the diff
-  and the NEW file line number (the line as it appears in the added/modified
-  version). Only comment on lines present in the diff.
+- For each inline comment, give the file path exactly as shown in the
+  "===== FILE: <path> =====" header, and the exact new-file line number
+  from the line's prefix.
 - Keep each comment body short: the problem in one sentence, the fix in one
   sentence, optional one line of code.
 - If the MR looks clean, emit zero comments and a short summary saying so.
@@ -161,6 +170,46 @@ def should_skip_path(path: str) -> bool:
     return False
 
 
+HUNK_HEADER_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+
+
+def annotate_patch(patch: str) -> str:
+    """Prepend each diff line with its NEW-file line number so the model
+    cannot confuse diff-local offsets with file line numbers.
+
+    Added / context lines: "  123: + added" / "  123:   context"
+    Removed lines:         "     : - removed"
+    Headers are left unchanged.
+    """
+    out: list[str] = []
+    new_line: int | None = None
+    for line in patch.splitlines():
+        if line.startswith("@@"):
+            m = HUNK_HEADER_RE.match(line)
+            new_line = int(m.group(1)) if m else None
+            out.append(line)
+            continue
+        if line.startswith(("diff ", "index ", "--- ", "+++ ", "new file ",
+                            "deleted file ", "rename ", "similarity ",
+                            "Binary ")):
+            out.append(line)
+            continue
+        if new_line is None:
+            out.append(line)
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            out.append(f"{new_line:5d}: {line}")
+            new_line += 1
+        elif line.startswith("-") and not line.startswith("---"):
+            out.append(f"     : {line}")
+        elif line.startswith(" ") or line == "":
+            out.append(f"{new_line:5d}: {line}")
+            new_line += 1
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
 def _parse_numstat_z(raw: str) -> list[tuple[str, str, str]]:
     """Parse `git diff --numstat -z` output into (added, removed, new_path) tuples.
 
@@ -230,7 +279,7 @@ def collect_diff(env: Env) -> list[tuple[str, str]]:
             path,
         )
         if patch.strip():
-            diffs.append((path, patch))
+            diffs.append((path, annotate_patch(patch)))
     return diffs
 
 
@@ -280,8 +329,23 @@ def call_claude(client: Anthropic, model: str, chunk: str) -> dict[str, Any]:
         return {"comments": [], "summary": "(model returned no structured output)"}
 
 
+SEVERITY_BADGE = {
+    "high": "High severity",
+    "medium": "Medium severity",
+    "low": "Low severity",
+}
+
+
 def marker(head_sha: str) -> str:
     return f"<!-- claude-review:{head_sha[:12]} -->"
+
+
+def hidden_meta(env: Env, fingerprint: str | None = None) -> str:
+    """Invisible HTML-comment footer carrying the markers used for dedupe."""
+    parts = [marker(env.head_sha)]
+    if fingerprint:
+        parts.append(f"<!-- fp:{fingerprint} -->")
+    return "\n\n" + " ".join(parts)
 
 
 def gitlab_headers(env: Env) -> dict[str, str]:
@@ -341,9 +405,11 @@ def _valid_comment(c: Any) -> bool:
 def post_inline(env: Env, comment: dict[str, Any]) -> str:
     """Post a review comment. Returns 'inline', 'fallback', or 'failed'."""
     url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}/discussions"
+    badge = SEVERITY_BADGE.get(comment["severity"], comment["severity"].title())
     body = (
-        f"{marker(env.head_sha)} `{comment_fingerprint(comment)}`\n"
-        f"**[claude · {comment['severity']}]** {comment['body']}"
+        f"**Claude review** · {badge}\n\n"
+        f"{comment['body']}"
+        f"{hidden_meta(env, comment_fingerprint(comment))}"
     )
     data = {
         "body": body,
@@ -359,9 +425,13 @@ def post_inline(env: Env, comment: dict[str, Any]) -> str:
         return "inline"
     print(f"[claude-review] inline post failed ({r.status_code}) for "
           f"{comment['file']}:{comment['line']} — falling back to note")
+    badge = SEVERITY_BADGE.get(comment["severity"], comment["severity"].title())
     try:
-        post_note(env, f"`{comment['file']}:{comment['line']}` — "
-                       f"**[claude · {comment['severity']}]** {comment['body']}")
+        post_note(
+            env,
+            f"**Claude review** · {badge} · `{comment['file']}:{comment['line']}`\n\n"
+            f"{comment['body']}",
+        )
         return "fallback"
     except requests.RequestException as exc:
         print(f"[claude-review] fallback note failed: {exc}", file=sys.stderr)
@@ -370,7 +440,7 @@ def post_inline(env: Env, comment: dict[str, Any]) -> str:
 
 def post_note(env: Env, body: str) -> None:
     url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}/notes"
-    full = f"{marker(env.head_sha)}\n{body}"
+    full = f"{body}{hidden_meta(env)}"
     r = requests.post(
         url, headers=gitlab_headers(env), data={"body": full}, timeout=30,
     )
@@ -454,15 +524,16 @@ def main() -> int:
                 fallback_count += 1
 
         summary_lines = [
-            f"**Claude review** (model `{env.model}`, commit `{env.head_sha[:12]}`)",
+            "## Claude review",
             "",
-            f"- Inline comments: {inline_count}",
+            f"**Model** `{env.model}` · **Commit** `{env.head_sha[:12]}`",
+            "",
+            f"| Inline | Fallback | Nits |",
+            f"| ---: | ---: | ---: |",
+            f"| {inline_count} | {fallback_count} | {len(low_notes)} |",
         ]
-        if fallback_count:
-            summary_lines.append(f"- Fallback notes: {fallback_count}")
-        summary_lines.append(f"- Low-severity notes: {len(low_notes)}")
         if summaries:
-            summary_lines += ["", "### Summary", *summaries]
+            summary_lines += ["", "### Overview", *summaries]
         if low_notes:
             summary_lines += ["", "### Nits"]
             for c in low_notes:

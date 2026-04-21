@@ -91,5 +91,5 @@
 
 .on-mr-ready:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_DRAFT == "false" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
       when: on_success

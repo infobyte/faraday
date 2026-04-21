@@ -20,7 +20,7 @@ variables:
 workflow:
   rules:
     # Allow MR pipelines ONLY when the MR is Ready (not Draft) — for claude_review
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_DRAFT == "false" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
       when: always
     - if: $CI_MERGE_REQUEST_ID
       when: never

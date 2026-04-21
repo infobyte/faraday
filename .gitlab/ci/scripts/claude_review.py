@@ -107,6 +107,15 @@ class Env:
     model: str
 
 
+def _resolve_secret(value: str) -> str:
+    """GitLab Vault secrets default to file-based since 15.7 — the env var
+    holds a path to a file containing the actual value. Handle both forms."""
+    if value and os.path.isfile(value):
+        with open(value) as f:
+            return f.read().strip()
+    return value.strip() if value else value
+
+
 def load_env() -> Env:
     required = [
         "ANTHROPIC_API_KEY",
@@ -122,8 +131,8 @@ def load_env() -> Env:
     if missing:
         raise RuntimeError(f"missing env vars: {', '.join(missing)}")
     return Env(
-        anthropic_key=os.environ["ANTHROPIC_API_KEY"],
-        gitlab_token=os.environ["GITLAB_REVIEW_TOKEN"],
+        anthropic_key=_resolve_secret(os.environ["ANTHROPIC_API_KEY"]),
+        gitlab_token=_resolve_secret(os.environ["GITLAB_REVIEW_TOKEN"]),
         api_url=os.environ["CI_API_V4_URL"].rstrip("/"),
         project_id=os.environ["CI_PROJECT_ID"],
         mr_iid=os.environ["CI_MERGE_REQUEST_IID"],

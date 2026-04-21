@@ -87,8 +87,3 @@
 .ignore-on-mr:
   rules:
     - *mr-never
-
-.on-mr-ready:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
-      when: on_success

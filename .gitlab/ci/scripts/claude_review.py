@@ -326,6 +326,11 @@ def post_note(env: Env, body: str) -> None:
 
 
 def main() -> int:
+    title = os.environ.get("CI_MERGE_REQUEST_TITLE", "")
+    if title.lower().startswith(("draft:", "wip:")):
+        print(f"[claude-review] MR is Draft ({title!r}), skipping review")
+        return 0
+
     try:
         env = load_env()
     except Exception as exc:

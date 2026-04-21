@@ -19,8 +19,8 @@ variables:
 
 workflow:
   rules:
-    # Allow MR pipelines ONLY when the MR is Ready (not Draft) — for claude_review
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE !~ /^(Draft|WIP):/i'
+    # MR pipeline triggered by webhook with RUN_CLAUDE_REVIEW=1 → only claude_review runs
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $RUN_CLAUDE_REVIEW == "1"'
       when: always
     - if: $CI_MERGE_REQUEST_ID
       when: never

@@ -16,7 +16,9 @@ claude_review:
     # Fork MRs can't access vault secrets — skip cleanly
     - if: '$CI_MERGE_REQUEST_PROJECT_ID != $CI_MERGE_REQUEST_SOURCE_PROJECT_ID'
       when: never
-    - !reference [.on-mr-ready, rules]
+    # Only run when webhook triggered this pipeline with RUN_CLAUDE_REVIEW=1
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $RUN_CLAUDE_REVIEW == "1"'
+      when: on_success
     - when: never
   before_script:
     - apt-get update -qq && apt-get install -y --no-install-recommends git ca-certificates >/dev/null

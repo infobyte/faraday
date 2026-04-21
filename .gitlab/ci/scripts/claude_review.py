@@ -37,7 +37,8 @@ import requests
 from anthropic import Anthropic, APIStatusError, RateLimitError
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
-MAX_TOKENS_PER_CALL = 8000
+RESPONSE_TOKEN_BUDGET = 8000
+DEFAULT_THINKING_BUDGET = 8000
 MAX_INPUT_CHARS_PER_CHUNK = 280_000  # rough proxy for ~80k input tokens
 MAX_FILE_DIFF_LINES = 1500
 SKIP_PATH_SUFFIXES = (
@@ -58,21 +59,40 @@ that prefix — nothing else. Never estimate or count. If the line you want
 to flag has no prefix number (it was removed), do not emit an inline
 comment on it; put the observation in the summary instead.
 
-Rules:
-- Only flag real, actionable issues. Do not comment on style preferences or
-  restate what the code does.
-- Prioritize: security (auth, injection, secrets, SSRF, deserialization),
-  correctness (logic bugs, race conditions, missing error handling at
-  boundaries), and data integrity (DB migrations, schema changes).
-- Use severity: "high" for bugs/security risks, "medium" for likely issues,
-  "low" for polish/nits. Only high/medium will be posted inline; low goes
-  into the summary.
-- For each inline comment, give the file path exactly as shown in the
-  "===== FILE: <path> =====" header, and the exact new-file line number
+Your review must be comprehensive and consistent, not a sample. Work in
+two phases before emitting the tool call:
+
+Phase 1 — Scan. Read every hunk carefully. Enumerate every potential
+concern, no matter how minor, across these categories:
+  - Correctness: logic bugs, off-by-one, wrong operator, unreachable code,
+    state machine issues, broken invariants, silently-swallowed errors,
+    missing error handling at system boundaries.
+  - Security: auth bypass, injection (SQL/shell/template), deserialization,
+    SSRF, path traversal, secrets in code/logs, unsafe crypto, race
+    conditions that affect auth or data integrity.
+  - Data integrity: DB migrations, schema drift, missing indexes that
+    change query behavior, breaking API/contract changes.
+  - Maintainability: duplication, dead code, misleading names, broken
+    abstractions — only when the diff clearly shows them.
+
+Phase 2 — Filter. For each phase-1 item, decide:
+  - Is it actually present in the diff (not speculative)? Drop if speculative.
+  - Is it actionable by the author? Drop if not.
+  - Severity: "high" (bug/security risk), "medium" (likely issue),
+    "low" (nit/polish).
+
+Emit EVERY remaining high and medium finding via emit_review — do not
+cherry-pick. A reviewer running this same check on the same diff should
+converge on the same list. Low-severity items go into the summary.
+
+Other rules:
+- For each inline comment, use the file path exactly as shown in the
+  "===== FILE: <path> =====" header and the exact new-file line number
   from the line's prefix.
-- Keep each comment body short: the problem in one sentence, the fix in one
-  sentence, optional one line of code.
-- If the MR looks clean, emit zero comments and a short summary saying so.
+- Body format: one-sentence problem, one-sentence fix, optional one line of
+  code. No preamble, no restating the code.
+- If the MR truly has no high or medium findings, emit zero comments and
+  a short summary saying so.
 - Never hallucinate. If unsure, skip it.
 
 Return your review by calling the emit_review tool exactly once."""
@@ -302,21 +322,33 @@ def chunk_diffs(diffs: list[tuple[str, str]]) -> list[str]:
 
 def call_claude(client: Anthropic, model: str, chunk: str) -> dict[str, Any]:
     user_msg = (
-        "Review the following MR diff. Focus on bugs, security, and "
-        "correctness. Respond only via the emit_review tool.\n" + chunk
+        "Review the following MR diff. Do a Phase 1 scan and Phase 2 filter "
+        "as specified in your instructions, then respond via the emit_review "
+        "tool.\n" + chunk
     )
+    thinking_budget = int(os.environ.get(
+        "CLAUDE_THINKING_BUDGET", DEFAULT_THINKING_BUDGET
+    ))
+    kwargs: dict[str, Any] = dict(
+        model=model,
+        max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
+        system=SYSTEM_PROMPT,
+        tools=[EMIT_REVIEW_TOOL],
+        # `any` is required when extended thinking is enabled; with a single
+        # tool it's equivalent to forcing emit_review.
+        tool_choice={"type": "any"},
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    if thinking_budget > 0:
+        kwargs["thinking"] = {
+            "type": "enabled",
+            "budget_tokens": thinking_budget,
+        }
     attempt = 0
     while True:
         attempt += 1
         try:
-            resp = client.messages.create(
-                model=model,
-                max_tokens=MAX_TOKENS_PER_CALL,
-                system=SYSTEM_PROMPT,
-                tools=[EMIT_REVIEW_TOOL],
-                tool_choice={"type": "tool", "name": "emit_review"},
-                messages=[{"role": "user", "content": user_msg}],
-            )
+            resp = client.messages.create(**kwargs)
         except (RateLimitError, APIStatusError) as exc:
             status = getattr(exc, "status_code", None)
             if attempt >= 3 or (status and status < 500 and status not in (408, 429)):

@@ -1,5 +1,4 @@
 # Block MR pipelines from every anchor so existing jobs stay branch-only
-# once the workflow:rules carve-out lets MR pipelines start (for claude_review).
 .mr-never: &mr-never
   if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   when: never

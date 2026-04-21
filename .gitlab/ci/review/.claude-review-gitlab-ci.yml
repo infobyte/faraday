@@ -13,11 +13,7 @@ claude_review:
     GIT_STRATEGY: fetch
     CLAUDE_MODEL: "claude-sonnet-4-6"
   rules:
-    # Fork MRs can't access vault secrets — skip cleanly
-    - if: '$CI_MERGE_REQUEST_PROJECT_ID != $CI_MERGE_REQUEST_SOURCE_PROJECT_ID'
-      when: never
-    # Only run when webhook triggered this pipeline with RUN_CLAUDE_REVIEW=1
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $RUN_CLAUDE_REVIEW == "1"'
+    - if: $RUN_CLAUDE_REVIEW == "1"
       when: on_success
     - when: never
   before_script:

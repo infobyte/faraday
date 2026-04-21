@@ -19,8 +19,8 @@ variables:
 
 workflow:
   rules:
-    # MR pipeline triggered by webhook with RUN_CLAUDE_REVIEW=1 → only claude_review runs
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $RUN_CLAUDE_REVIEW == "1"'
+    # Webhook-triggered Claude review pipeline
+    - if: $RUN_CLAUDE_REVIEW == "1"
       when: always
     - if: $CI_MERGE_REQUEST_ID
       when: never

@@ -334,9 +334,10 @@ def call_claude(client: Anthropic, model: str, chunk: str) -> dict[str, Any]:
         max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
         system=SYSTEM_PROMPT,
         tools=[EMIT_REVIEW_TOOL],
-        # `any` is required when extended thinking is enabled; with a single
-        # tool it's equivalent to forcing emit_review.
-        tool_choice={"type": "any"},
+        # Extended thinking disallows any form of forced tool use. `auto`
+        # lets Claude choose — with one tool defined and the system prompt
+        # explicitly instructing to call it, this reliably triggers it.
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": user_msg}],
     )
     if thinking_budget > 0:

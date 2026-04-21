@@ -1,0 +1,5 @@
+"name","description"
+"11.2", "Run internal and external network vulnerability scans at least quarterly and after any significant change in the network (such as new system component installations, changes in network topology, firewall rule modifications, product upgrades)."
+"11.2.1", "Perform quarterly internal vulnerability scans. Address vulnerabilities and perform rescans to verify all "high risk" vulnerabilities are resolved in accordance with the entity's vulnerability ranking (per Requirement 6.1). Scans must be performed by qualified personnel."
+"11.2.2", "Perform quarterly external vulnerability scans, via an Approved Scanning Vendor (ASV) approved by the Payment Card Industry Security Standards Council (PCI SSC). Perform rescans as needed, until passing scans are achieved."
+"11.2.3", "Perform internal and external scans, and rescans as needed, after any significant change. Scans must be performed by qualified personnel."

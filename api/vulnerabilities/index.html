@@ -1,0 +1,5656 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Faraday" name="description"/>
+<meta content="Faradaysec" name="author"/>
+<link href="https://faradaysec.com/api/vulnerabilities/" rel="canonical"/>
+<link href="../../images/favicon.svg" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>Vulnerabilities API - Faraday</title>
+<link href="../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../../stylesheets/faraday_doc.css" rel="stylesheet"/>
+<link href="../../stylesheets/hover.css" rel="stylesheet"/>
+<link href="https://unpkg.com/mermaid@8.5.1/dist/mermaid.css" rel="stylesheet"/>
+<script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-BEQW65R59H"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-BEQW65R59H",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-BEQW65R59H",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#vulnerabilities-api">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Faraday" class="md-header__button md-logo" data-md-component="logo" href="../.." title="Faraday">
+<img alt="logo" src="../../images/favicon.svg"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Faraday
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Vulnerabilities API
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Light" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Light">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="dark" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="dark">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Faraday" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="Faraday">
+<img alt="logo" src="../../images/favicon.svg"/>
+</a>
+    Faraday
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_1_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../First-Steps/">
+<span class="md-ellipsis">
+    
+  
+    First Steps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Using Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Using Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Users/">
+<span class="md-ellipsis">
+    
+  
+    Users and Roles
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Workspaces/">
+<span class="md-ellipsis">
+    
+  
+    Workspaces
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Activity-Dashboard/">
+<span class="md-ellipsis">
+    
+  
+    Activity Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Vulns/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Grouping/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Grouping
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Vulnerability-Templates-KB/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability KB
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Assets-and-Services-v4/">
+<span class="md-ellipsis">
+    
+  
+    Assets and Services
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_8" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_8_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reports
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Report-v4/">
+<span class="md-ellipsis">
+    
+  
+    What is Report
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../How-to-build-your-template/">
+<span class="md-ellipsis">
+    
+  
+    How to Build Your Own Template
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Jinja2-context/">
+<span class="md-ellipsis">
+    
+  
+    Jinja2 Context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../import/">
+<span class="md-ellipsis">
+    
+  
+    Importing
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Dashboard-v4/">
+<span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Custom-Fields-v4/">
+<span class="md-ellipsis">
+    
+  
+    Custom Attributes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_11_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Notifications
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Notifications/">
+<span class="md-ellipsis">
+    
+  
+    Notifications Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Notifications-Slack/">
+<span class="md-ellipsis">
+    
+  
+    Configure Slack Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Notifications-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Planner/">
+<span class="md-ellipsis">
+    
+  
+    Planner
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_13" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_13_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_13">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../integration-gitlab/">
+<span class="md-ellipsis">
+    
+  
+    GitLab
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../integration-jira/">
+<span class="md-ellipsis">
+    
+  
+    Jira
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../integration-solarwinds/">
+<span class="md-ellipsis">
+    
+  
+    SolarWinds
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../integration-servicenow/">
+<span class="md-ellipsis">
+    
+  
+    ServiceNow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../integration-servicedesk/">
+<span class="md-ellipsis">
+    
+  
+    ServiceDesk
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_14">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../faraday-server-settings/">
+<span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../LDAP/">
+<span class="md-ellipsis">
+    
+  
+    LDAP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../LDAP-OKTA/">
+<span class="md-ellipsis">
+    
+  
+    LDAP with OKTA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14_4" id="__nav_3_14_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    SSO
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_4_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_3_14_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    SSO
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../SAML/">
+<span class="md-ellipsis">
+    
+  
+    Faraday configuration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../SAML-Auth0/">
+<span class="md-ellipsis">
+    
+  
+    Auth0 integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../SAML-Google/">
+<span class="md-ellipsis">
+    
+  
+    Google integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../SAML-Okta/">
+<span class="md-ellipsis">
+    
+  
+    Okta integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../SAML-Azure/">
+<span class="md-ellipsis">
+    
+  
+    Azure integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../2-Factor-Authentication/">
+<span class="md-ellipsis">
+    
+  
+    2nd Factor
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Architecture/">
+<span class="md-ellipsis">
+    
+  
+    Arch
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_16" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_16" id="__nav_3_16_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_16_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_16">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api-swagger/">
+<span class="md-ellipsis">
+    
+  
+    Openapi
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../API-Server/">
+<span class="md-ellipsis">
+    
+  
+    API Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../API-Token/">
+<span class="md-ellipsis">
+    
+  
+    API Token
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_17" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_17" id="__nav_3_17_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_17_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_17">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday Manage
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Faraday-Manage/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Faraday-Manage-Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Deduplicated-Assets/">
+<span class="md-ellipsis">
+    
+  
+    Deduplicated Assets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_18" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_18" id="__nav_3_18_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Extras
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_18_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_18">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Extras
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Burp-proxy-extender/">
+<span class="md-ellipsis">
+    
+  
+    Burp
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../beef/">
+<span class="md-ellipsis">
+    
+  
+    Beef
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Automation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../agents-v4/">
+<span class="md-ellipsis">
+    
+  
+    About Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1_2" id="__nav_4_1_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agent List
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_2_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_4_1_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agent List
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-appscan/">
+<span class="md-ellipsis">
+    
+  
+    AppScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-arachni/">
+<span class="md-ellipsis">
+    
+  
+    Arachni
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-burp/">
+<span class="md-ellipsis">
+    
+  
+    Burp Suite
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-cybervision/">
+<span class="md-ellipsis">
+    
+  
+    Cyber Vision
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-codeql/">
+<span class="md-ellipsis">
+    
+  
+    Code QL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-crackmapexec/">
+<span class="md-ellipsis">
+    
+  
+    CrackMapExec
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-dependabot/">
+<span class="md-ellipsis">
+    
+  
+    Dependabot
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-gitgub-secrets/">
+<span class="md-ellipsis">
+    
+  
+    Github Secrets
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-gvm-openvas/">
+<span class="md-ellipsis">
+    
+  
+    GVM OpenVAS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-insightvm/">
+<span class="md-ellipsis">
+    
+  
+    InsightVM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-nessus/">
+<span class="md-ellipsis">
+    
+  
+    Nessus
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-nikto2/">
+<span class="md-ellipsis">
+    
+  
+    Nikto 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-nmap/">
+<span class="md-ellipsis">
+    
+  
+    NMap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-nuclei/">
+<span class="md-ellipsis">
+    
+  
+    Nuclei
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-openvas-legacy/">
+<span class="md-ellipsis">
+    
+  
+    OpenVAS Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-qualys/">
+<span class="md-ellipsis">
+    
+  
+    Qualys
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-report-processor/">
+<span class="md-ellipsis">
+    
+  
+    Report Processor
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-shodan2/">
+<span class="md-ellipsis">
+    
+  
+    Shodan 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-sonarqube/">
+<span class="md-ellipsis">
+    
+  
+    SonarQube
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-sublist3r/">
+<span class="md-ellipsis">
+    
+  
+    Sublist3r
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-tenableio/">
+<span class="md-ellipsis">
+    
+  
+    TenableIO
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-tenablesc/">
+<span class="md-ellipsis">
+    
+  
+    TenableSC
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-w3af/">
+<span class="md-ellipsis">
+    
+  
+    W3af
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-wpscan/">
+<span class="md-ellipsis">
+    
+  
+    WPScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-wpscan-legacy/">
+<span class="md-ellipsis">
+    
+  
+    WPScan Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../executors/executor-zap/">
+<span class="md-ellipsis">
+    
+  
+    Zap
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Scheduling/">
+<span class="md-ellipsis">
+    
+  
+    Scheduler, Pipelines and Jobs
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Installing Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Installing Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Install-guide-Linux/">
+<span class="md-ellipsis">
+    
+  
+    Linux
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Install-guide-Redhat-8/">
+<span class="md-ellipsis">
+    
+  
+    RedHat 8/Centos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Install-guide-Docker/">
+<span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Install-guide-community/">
+<span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Update/">
+<span class="md-ellipsis">
+    
+  
+    Update
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Install-guide-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Install
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Remote-PostgreSQL/">
+<span class="md-ellipsis">
+    
+  
+    Remote PostgreSQL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../NGINX-Setup/">
+<span class="md-ellipsis">
+    
+  
+    NGINX (SSL Config)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Install-guide-Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Backup-v4/">
+<span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Changelog
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../RELEASE/">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Faraday-MCP/">
+<span class="md-ellipsis">
+    
+  
+    Faraday MCP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../faraday-cli/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Cli
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    For Developers
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    For Developers
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Development-setup/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Developer Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Basic-plugin-development/">
+<span class="md-ellipsis">
+    
+  
+    Plugin Development
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    FAQs
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Contact-us/">
+<span class="md-ellipsis">
+    
+  
+    Contact Us
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../FAQ/">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Plugin-List-v4/">
+<span class="md-ellipsis">
+    
+  
+    Supported-Plugins
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#table-of-contents">
+<span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#vulnerability-schema">
+<span class="md-ellipsis">
+      
+        Vulnerability Schema
+      
+    </span>
+</a>
+<nav aria-label="Vulnerability Schema" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#embedded-service-object">
+<span class="md-ellipsis">
+      
+        Embedded Service Object
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#vulnerabilityweb-schema">
+<span class="md-ellipsis">
+      
+        VulnerabilityWeb Schema
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#evidence-schema">
+<span class="md-ellipsis">
+      
+        Evidence Schema
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#reference-schema">
+<span class="md-ellipsis">
+      
+        Reference Schema
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#workspaced-endpoints">
+<span class="md-ellipsis">
+      
+        Workspaced Endpoints
+      
+    </span>
+</a>
+<nav aria-label="Workspaced Endpoints" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-list-vulnerabilities">
+<span class="md-ellipsis">
+      
+        1. List Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-create-vulnerability">
+<span class="md-ellipsis">
+      
+        2. Create Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-get-vulnerability">
+<span class="md-ellipsis">
+      
+        3. Get Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-full-update-vulnerability">
+<span class="md-ellipsis">
+      
+        4. Full Update Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-partial-update-vulnerability">
+<span class="md-ellipsis">
+      
+        5. Partial Update Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#6-delete-vulnerability">
+<span class="md-ellipsis">
+      
+        6. Delete Vulnerability
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#7-bulk-delete-vulnerabilities">
+<span class="md-ellipsis">
+      
+        7. Bulk Delete Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#8-bulk-update-vulnerabilities">
+<span class="md-ellipsis">
+      
+        8. Bulk Update Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#9-count-vulnerabilities">
+<span class="md-ellipsis">
+      
+        9. Count Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#10-multi-workspace-count">
+<span class="md-ellipsis">
+      
+        10. Multi-Workspace Count
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#11-filter-vulnerabilities">
+<span class="md-ellipsis">
+      
+        11. Filter Vulnerabilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#12-upload-attachment">
+<span class="md-ellipsis">
+      
+        12. Upload Attachment
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#13-list-attachments">
+<span class="md-ellipsis">
+      
+        13. List Attachments
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#14-download-attachment">
+<span class="md-ellipsis">
+      
+        14. Download Attachment
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#15-update-attachment-metadata">
+<span class="md-ellipsis">
+      
+        15. Update Attachment Metadata
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#16-delete-attachment">
+<span class="md-ellipsis">
+      
+        16. Delete Attachment
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#17-export-csv">
+<span class="md-ellipsis">
+      
+        17. Export CSV
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#18-top-users">
+<span class="md-ellipsis">
+      
+        18. Top Users
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#global-endpoints">
+<span class="md-ellipsis">
+      
+        Global Endpoints
+      
+    </span>
+</a>
+<nav aria-label="Global Endpoints" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g1-list-vulnerabilities-global">
+<span class="md-ellipsis">
+      
+        G1. List Vulnerabilities (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g2-get-vulnerability-global">
+<span class="md-ellipsis">
+      
+        G2. Get Vulnerability (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g3-bulk-delete-global">
+<span class="md-ellipsis">
+      
+        G3. Bulk Delete (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g4-bulk-update-global">
+<span class="md-ellipsis">
+      
+        G4. Bulk Update (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g5-count-global">
+<span class="md-ellipsis">
+      
+        G5. Count (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g6-multi-workspace-count-global">
+<span class="md-ellipsis">
+      
+        G6. Multi-Workspace Count (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g7-filter-global">
+<span class="md-ellipsis">
+      
+        G7. Filter (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g8-upload-attachment-global">
+<span class="md-ellipsis">
+      
+        G8. Upload Attachment (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g9-list-attachments-global">
+<span class="md-ellipsis">
+      
+        G9. List Attachments (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g10-download-attachment-global">
+<span class="md-ellipsis">
+      
+        G10. Download Attachment (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g11-update-attachment-metadata-global">
+<span class="md-ellipsis">
+      
+        G11. Update Attachment Metadata (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g12-delete-attachment-global">
+<span class="md-ellipsis">
+      
+        G12. Delete Attachment (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g13-export-csv-global">
+<span class="md-ellipsis">
+      
+        G13. Export CSV (Global)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#g14-top-users-global">
+<span class="md-ellipsis">
+      
+        G14. Top Users (Global)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#deprecated-endpoints">
+<span class="md-ellipsis">
+      
+        Deprecated Endpoints
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#common-patterns">
+<span class="md-ellipsis">
+      
+        Common Patterns
+      
+    </span>
+</a>
+<nav aria-label="Common Patterns" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#authentication">
+<span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pagination">
+<span class="md-ellipsis">
+      
+        Pagination
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#severity-values">
+<span class="md-ellipsis">
+      
+        Severity Values
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#status-values">
+<span class="md-ellipsis">
+      
+        Status Values
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ease-of-resolution-values">
+<span class="md-ellipsis">
+      
+        Ease of Resolution Values
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#vulnerability-type-differences">
+<span class="md-ellipsis">
+      
+        Vulnerability Type Differences
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#standard-error-response">
+<span class="md-ellipsis">
+      
+        Standard Error Response
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#standard-http-response-codes">
+<span class="md-ellipsis">
+      
+        Standard HTTP Response Codes
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#endpoint-summary-table">
+<span class="md-ellipsis">
+      
+        Endpoint Summary Table
+      
+    </span>
+</a>
+<nav aria-label="Endpoint Summary Table" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#workspaced-18-endpoints">
+<span class="md-ellipsis">
+      
+        Workspaced (18 endpoints)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#global-14-endpoints">
+<span class="md-ellipsis">
+      
+        Global (14 endpoints)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#see-also">
+<span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="vulnerabilities-api">Vulnerabilities API<a class="headerlink" href="#vulnerabilities-api" title="Permanent link">¶</a></h1>
+<p><strong>Base URL:</strong> <code>https://&lt;faraday-server&gt;/_api</code>
+<strong>API Version:</strong> v3
+<strong>Authentication:</strong> Cookie-based session or API token (<code>Authorization: Token &lt;token&gt;</code>)
+<strong>Content-Type:</strong> <code>application/json</code> (unless noted otherwise)</p>
+<p>The Vulnerabilities API is the largest endpoint group in Faraday, providing full lifecycle management for both standard infrastructure vulnerabilities and web application vulnerabilities. It exposes two scopes: <strong>workspaced</strong> (full CRUD within a workspace) and <strong>global</strong> (cross-workspace read-only access plus attachments and export).</p>
+<hr/>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">¶</a></h2>
+<ul>
+<li><a href="#vulnerability-schema">Vulnerability Schema</a></li>
+<li><a href="#vulnerabilityweb-schema">VulnerabilityWeb Schema</a></li>
+<li><a href="#evidence-schema">Evidence Schema</a></li>
+<li><a href="#reference-schema">Reference Schema</a></li>
+<li><a href="#workspaced-endpoints">Workspaced Endpoints</a></li>
+<li><a href="#1-list-vulnerabilities">List Vulnerabilities</a></li>
+<li><a href="#2-create-vulnerability">Create Vulnerability</a></li>
+<li><a href="#3-get-vulnerability">Get Vulnerability</a></li>
+<li><a href="#4-full-update-vulnerability">Full Update Vulnerability</a></li>
+<li><a href="#5-partial-update-vulnerability">Partial Update Vulnerability</a></li>
+<li><a href="#6-delete-vulnerability">Delete Vulnerability</a></li>
+<li><a href="#7-bulk-delete-vulnerabilities">Bulk Delete Vulnerabilities</a></li>
+<li><a href="#8-bulk-update-vulnerabilities">Bulk Update Vulnerabilities</a></li>
+<li><a href="#9-count-vulnerabilities">Count Vulnerabilities</a></li>
+<li><a href="#10-multi-workspace-count">Multi-Workspace Count</a></li>
+<li><a href="#11-filter-vulnerabilities">Filter Vulnerabilities</a></li>
+<li><a href="#12-upload-attachment">Upload Attachment</a></li>
+<li><a href="#13-list-attachments">List Attachments</a></li>
+<li><a href="#14-download-attachment">Download Attachment</a></li>
+<li><a href="#15-update-attachment-metadata">Update Attachment Metadata</a></li>
+<li><a href="#16-delete-attachment">Delete Attachment</a></li>
+<li><a href="#17-export-csv">Export CSV</a></li>
+<li><a href="#18-top-users">Top Users</a></li>
+<li><a href="#global-endpoints">Global Endpoints</a></li>
+<li><a href="#g1-list-vulnerabilities-global">List Vulnerabilities (Global)</a></li>
+<li><a href="#g2-get-vulnerability-global">Get Vulnerability (Global)</a></li>
+<li><a href="#g3-bulk-delete-global">Bulk Delete (Global)</a></li>
+<li><a href="#g4-bulk-update-global">Bulk Update (Global)</a></li>
+<li><a href="#g5-count-global">Count (Global)</a></li>
+<li><a href="#g6-multi-workspace-count-global">Multi-Workspace Count (Global)</a></li>
+<li><a href="#g7-filter-global">Filter (Global)</a></li>
+<li><a href="#g8-upload-attachment-global">Upload Attachment (Global)</a></li>
+<li><a href="#g9-list-attachments-global">List Attachments (Global)</a></li>
+<li><a href="#g10-download-attachment-global">Download Attachment (Global)</a></li>
+<li><a href="#g11-update-attachment-metadata-global">Update Attachment Metadata (Global)</a></li>
+<li><a href="#g12-delete-attachment-global">Delete Attachment (Global)</a></li>
+<li><a href="#g13-export-csv-global">Export CSV (Global)</a></li>
+<li><a href="#g14-top-users-global">Top Users (Global)</a></li>
+<li><a href="#deprecated-endpoints">Deprecated Endpoints</a></li>
+<li><a href="#common-patterns">Common Patterns</a></li>
+</ul>
+<hr/>
+<h2 id="vulnerability-schema">Vulnerability Schema<a class="headerlink" href="#vulnerability-schema" title="Permanent link">¶</a></h2>
+<p>The <code>Vulnerability</code> schema represents a standard infrastructure vulnerability finding.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Read-Only</th>
+<th>Write-Only</th>
+<th>Nullable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>integer</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Unique vulnerability identifier</td>
+</tr>
+<tr>
+<td><code>_id</code></td>
+<td>integer</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Alias for <code>id</code> (legacy CouchDB compatibility)</td>
+</tr>
+<tr>
+<td><code>_rev</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Revision string (legacy CouchDB compatibility)</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td><strong>yes</strong></td>
+<td>--</td>
+<td>--</td>
+<td>yes</td>
+<td>Vulnerability name (min 1 character)</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td>string</td>
+<td><strong>yes</strong></td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>One of: <code>"critical"</code>, <code>"high"</code>, <code>"medium"</code>, <code>"low"</code>, <code>"informational"</code>, <code>"unclassified"</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>string</td>
+<td><strong>yes</strong></td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Must be <code>"vulnerability"</code> for standard vulns or <code>"vulnerability_web"</code> for web vulns</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>One of: <code>"open"</code>, <code>"opened"</code>, <code>"closed"</code>, <code>"re-opened"</code>, <code>"risk-accepted"</code></td>
+</tr>
+<tr>
+<td><code>confirmed</code></td>
+<td>boolean</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Whether the vulnerability has been confirmed</td>
+</tr>
+<tr>
+<td><code>desc</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Detailed description (used for create/update)</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Description (read-only alias for <code>desc</code> in responses)</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>yes</td>
+<td>Additional technical details or proof data</td>
+</tr>
+<tr>
+<td><code>resolution</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>yes</td>
+<td>Recommended remediation steps</td>
+</tr>
+<tr>
+<td><code>tool</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Name of the tool/scanner that found this vulnerability</td>
+</tr>
+<tr>
+<td><code>command_id</code></td>
+<td>integer</td>
+<td>--</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>ID of the command that created this vulnerability</td>
+</tr>
+<tr>
+<td><code>service</code></td>
+<td>object</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Nested <a href="#embedded-service-object">Service</a> object (read-only in responses)</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Target host/IP</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>datetime</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Creation date</td>
+</tr>
+<tr>
+<td><code>update_user</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Username that last modified this vulnerability</td>
+</tr>
+<tr>
+<td><code>run_date</code></td>
+<td>datetime</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Scanner run date</td>
+</tr>
+<tr>
+<td><code>easeofresolution</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>yes</td>
+<td>One of: <code>"trivial"</code>, <code>"simple"</code>, <code>"moderate"</code>, <code>"difficult"</code>, <code>"infeasible"</code>, or <code>null</code></td>
+</tr>
+<tr>
+<td><code>external_id</code></td>
+<td>string</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>yes</td>
+<td>External reference ID (e.g., from a scanner)</td>
+</tr>
+<tr>
+<td><code>cve</code></td>
+<td>array[string]</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>List of CVE identifiers (e.g., <code>["CVE-2021-44228"]</code>)</td>
+</tr>
+<tr>
+<td><code>cwe</code></td>
+<td>array[string]</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>List of CWE identifiers (e.g., <code>["CWE-89"]</code>)</td>
+</tr>
+<tr>
+<td><code>cvss2</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>CVSS v2 scoring object</td>
+</tr>
+<tr>
+<td><code>cvss3</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>CVSS v3 scoring object</td>
+</tr>
+<tr>
+<td><code>vulnerability_duplicate_id</code></td>
+<td>integer</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>yes</td>
+<td>ID of the duplicate vulnerability</td>
+</tr>
+<tr>
+<td><code>vulnerability_template_id</code></td>
+<td>integer</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>yes</td>
+<td>ID of the vulnerability template</td>
+</tr>
+<tr>
+<td><code>duplicates_associated</code></td>
+<td>array</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Associated duplicate vulnerability references</td>
+</tr>
+<tr>
+<td><code>duplicates_main</code></td>
+<td>array</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Main duplicate vulnerability references</td>
+</tr>
+<tr>
+<td><code>refs</code></td>
+<td>array[<a href="#reference-schema">Reference</a>]</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>External references</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>array[string]</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>User-assigned tags</td>
+</tr>
+<tr>
+<td><code>impact</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Impact assessment object</td>
+</tr>
+<tr>
+<td><code>custom_fields</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Custom field values (keys match custom field schema)</td>
+</tr>
+<tr>
+<td><code>policyviolations</code></td>
+<td>array[string]</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Policy violation identifiers</td>
+</tr>
+<tr>
+<td><code>owned</code></td>
+<td>boolean</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Whether the vulnerability has been exploited</td>
+</tr>
+<tr>
+<td><code>owner</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Username of the creator</td>
+</tr>
+<tr>
+<td><code>issuetracker</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Issue tracker integration data</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Additional metadata</td>
+</tr>
+<tr>
+<td><code>obj_id</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Object identifier string</td>
+</tr>
+<tr>
+<td><code>risk</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Calculated risk score</td>
+</tr>
+<tr>
+<td><code>host_os</code></td>
+<td>string</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Operating system of the affected host</td>
+</tr>
+<tr>
+<td><code>hostnames</code></td>
+<td>array</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Hostnames associated with the affected host</td>
+</tr>
+<tr>
+<td><code>reference_instances</code></td>
+<td>array</td>
+<td>--</td>
+<td>yes</td>
+<td>--</td>
+<td>--</td>
+<td>Expanded reference objects</td>
+</tr>
+<tr>
+<td><code>_attachments</code></td>
+<td>object</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>Attachment metadata</td>
+</tr>
+</tbody>
+</table>
+<h3 id="embedded-service-object">Embedded Service Object<a class="headerlink" href="#embedded-service-object" title="Permanent link">¶</a></h3>
+<p>When a vulnerability is associated with a service, the <code>service</code> field in responses contains:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_id</code></td>
+<td>integer</td>
+<td>Service ID</td>
+</tr>
+<tr>
+<td><code>ports</code></td>
+<td>integer/array</td>
+<td>Port number(s)</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>string</td>
+<td><code>"open"</code>, <code>"closed"</code>, or <code>"filtered"</code></td>
+</tr>
+<tr>
+<td><code>protocol</code></td>
+<td>string</td>
+<td>Protocol (e.g., <code>"tcp"</code>, <code>"udp"</code>)</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Service name (e.g., <code>"http"</code>, <code>"ssh"</code>)</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>string</td>
+<td>Service version</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>string</td>
+<td>Human-readable summary</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="vulnerabilityweb-schema">VulnerabilityWeb Schema<a class="headerlink" href="#vulnerabilityweb-schema" title="Permanent link">¶</a></h2>
+<p>The <code>VulnerabilityWeb</code> schema extends the base <code>Vulnerability</code> schema with web-application-specific fields.</p>
+<p><strong>Required fields:</strong> <code>name</code>, <code>severity</code>, <code>type</code> (must be <code>"vulnerability_web"</code>), <code>parent</code>, <code>parent_type</code></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>method</code></td>
+<td>string</td>
+<td>--</td>
+<td>HTTP method (e.g., <code>"GET"</code>, <code>"POST"</code>)</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>string</td>
+<td>--</td>
+<td>URL path where the vulnerability was found</td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>string</td>
+<td>--</td>
+<td>Target website/hostname</td>
+</tr>
+<tr>
+<td><code>request</code></td>
+<td>string</td>
+<td>--</td>
+<td>Full HTTP request that triggered the vulnerability</td>
+</tr>
+<tr>
+<td><code>response</code></td>
+<td>string</td>
+<td>--</td>
+<td>Full HTTP response received</td>
+</tr>
+<tr>
+<td><code>status_code</code></td>
+<td>integer</td>
+<td>--</td>
+<td>HTTP response status code (nullable)</td>
+</tr>
+<tr>
+<td><code>params</code></td>
+<td>string</td>
+<td>--</td>
+<td>Affected parameters</td>
+</tr>
+<tr>
+<td><code>pname</code></td>
+<td>string</td>
+<td>--</td>
+<td>Primary parameter name</td>
+</tr>
+<tr>
+<td><code>query</code></td>
+<td>string</td>
+<td>--</td>
+<td>Query string</td>
+</tr>
+<tr>
+<td><code>owasp</code></td>
+<td>string</td>
+<td>--</td>
+<td>OWASP classification</td>
+</tr>
+<tr>
+<td><code>parent</code></td>
+<td>integer</td>
+<td><strong>yes</strong></td>
+<td>Parent host or service ID</td>
+</tr>
+<tr>
+<td><code>parent_type</code></td>
+<td>string</td>
+<td><strong>yes</strong></td>
+<td>Parent object type (e.g., <code>"Host"</code>, <code>"Service"</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>All fields from the base <a href="#vulnerability-schema">Vulnerability Schema</a> are also present.</p>
+<hr/>
+<h2 id="evidence-schema">Evidence Schema<a class="headerlink" href="#evidence-schema" title="Permanent link">¶</a></h2>
+<p>Attachments (evidence files) associated with vulnerabilities use this schema.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Read-Only</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>content_type</code></td>
+<td>string</td>
+<td>yes</td>
+<td>MIME type of the attachment</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td>binary</td>
+<td>yes</td>
+<td>File content (returned on download)</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>--</td>
+<td>Description of the evidence file</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="reference-schema">Reference Schema<a class="headerlink" href="#reference-schema" title="Permanent link">¶</a></h2>
+<p>External references attached to a vulnerability.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Reference identifier or URL (e.g., <code>"https://nvd.nist.gov/vuln/detail/CVE-2021-44228"</code>)</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>string</td>
+<td>Reference type (e.g., <code>"url"</code>, <code>"cve"</code>, <code>"other"</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="workspaced-endpoints">Workspaced Endpoints<a class="headerlink" href="#workspaced-endpoints" title="Permanent link">¶</a></h2>
+<p>All workspaced endpoints require a <code>{workspace_name}</code> path parameter and operate within the scope of that workspace. There are <strong>18 endpoints</strong> in total.</p>
+<p><strong>Base path:</strong> <code>/_api/v3/ws/{workspace_name}/vulns</code></p>
+<hr/>
+<h3 id="1-list-vulnerabilities">1. List Vulnerabilities<a class="headerlink" href="#1-list-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>Retrieve a paginated list of all vulnerabilities in a workspace.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required (session cookie or API token)</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Query Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>page</code></td>
+<td>integer</td>
+<td>0</td>
+<td>Page number (0-indexed)</td>
+</tr>
+<tr>
+<td><code>page_size</code></td>
+<td>integer</td>
+<td>20</td>
+<td>Items per page</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>string</td>
+<td>--</td>
+<td>Field to sort by (e.g., <code>severity</code>, <code>name</code>, <code>date</code>)</td>
+</tr>
+<tr>
+<td><code>sort_dir</code></td>
+<td>string</td>
+<td><code>asc</code></td>
+<td>Sort direction: <code>asc</code> or <code>desc</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"vulnerabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL Injection"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vulnerability"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"open"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"confirmed"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"desc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL injection in login form parameter 'username'"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL injection in login form parameter 'username'"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"resolution"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Use parameterized queries"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"192.168.1.10"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sqlmap"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-02-20T14:30:00Z"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"update_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-02-25T10:00:00Z"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"cve"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"CVE-2024-12345"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"cwe"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"CWE-89"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"tags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sqli"</span><span class="p">,</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"refs"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://owasp.org/www-community/attacks/SQL_Injection"</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"url"</span><span class="p">}</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"workspace_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pentest-2026"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"owner"</span><span class="p">:</span><span class="w"> </span><span class="s2">"admin"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"service"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"ports"</span><span class="p">:</span><span class="w"> </span><span class="mi">443</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"open"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"protocol"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tcp"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Apache 2.4.51"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="s2">"443/tcp (https)"</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">"custom_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nt">"_attachments"</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nt">"_rev"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># List all vulnerabilities in workspace "pentest-2026"</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns?page=0&amp;page_size=50&amp;sort=severity&amp;sort_dir=desc"</span>
+
+<span class="c1"># With API token</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized -- not authenticated</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden -- insufficient permissions for this workspace</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="2-create-vulnerability">2. Create Vulnerability<a class="headerlink" href="#2-create-vulnerability" title="Permanent link">¶</a></h3>
+<p>Create a new vulnerability (standard or web) in a workspace.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>POST</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code> -- <a href="#vulnerability-schema">Vulnerability</a> or <a href="#vulnerabilityweb-schema">VulnerabilityWeb</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request Body -- Standard Vulnerability:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL Injection"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vulnerability"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"desc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL injection vulnerability found in login form parameter 'username'. An attacker can extract database contents."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resolution"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Use parameterized queries or prepared statements for all database queries."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"confirmed"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"data"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sqlmap identified the following injection point:\n  Parameter: username (POST)\n  Type: boolean-based blind"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sqli"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"cve"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"CVE-2024-12345"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"cwe"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"CWE-89"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"refs"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://owasp.org/www-community/attacks/SQL_Injection"</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"url"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"easeofresolution"</span><span class="p">:</span><span class="w"> </span><span class="s2">"simple"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"impact"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"accountability"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"availability"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"confidentiality"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"integrity"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"policyviolations"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"custom_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Request Body -- Web Vulnerability:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cross-Site Scripting (XSS)"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vulnerability_web"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"desc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Reflected XSS in search parameter allows script injection."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resolution"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sanitize and encode all user-supplied output."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"confirmed"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GET"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/search"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"website"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://target.example.com"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"request"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GET /search?q=&lt;script&gt;alert(1)&lt;/script&gt; HTTP/1.1\nHost: target.example.com"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"response"</span><span class="p">:</span><span class="w"> </span><span class="s2">"HTTP/1.1 200 OK\n\n&lt;html&gt;...&lt;script&gt;alert(1)&lt;/script&gt;...&lt;/html&gt;"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status_code"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="s2">"q"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"pname"</span><span class="p">:</span><span class="w"> </span><span class="s2">"q"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"query"</span><span class="p">:</span><span class="w"> </span><span class="s2">"q=&lt;script&gt;alert(1)&lt;/script&gt;"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"parent"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"parent_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Host"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"cve"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"cwe"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"CWE-79"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"owasp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A7:2017-Cross-Site Scripting (XSS)"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"xss"</span><span class="p">,</span><span class="w"> </span><span class="s2">"reflected"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>201 Created</code></p>
+<p>Returns the created vulnerability object with all fields populated (including <code>id</code>, <code>date</code>, <code>owner</code>, etc.).</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a standard vulnerability</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "name": "SQL Injection",</span>
+<span class="s1">    "severity": "critical",</span>
+<span class="s1">    "type": "vulnerability",</span>
+<span class="s1">    "desc": "SQL injection in login form",</span>
+<span class="s1">    "resolution": "Use parameterized queries",</span>
+<span class="s1">    "confirmed": true,</span>
+<span class="s1">    "tags": ["sqli"]</span>
+<span class="s1">  }'</span>
+
+<span class="c1"># Create a web vulnerability</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "name": "Reflected XSS",</span>
+<span class="s1">    "severity": "high",</span>
+<span class="s1">    "type": "vulnerability_web",</span>
+<span class="s1">    "desc": "Reflected XSS in search parameter",</span>
+<span class="s1">    "method": "GET",</span>
+<span class="s1">    "path": "/search",</span>
+<span class="s1">    "website": "https://target.example.com",</span>
+<span class="s1">    "parent": 42,</span>
+<span class="s1">    "parent_type": "Host"</span>
+<span class="s1">  }'</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Validation error (missing required fields, invalid severity, etc.)</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Conflict (duplicate vulnerability)</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="3-get-vulnerability">3. Get Vulnerability<a class="headerlink" href="#3-get-vulnerability" title="Permanent link">¶</a></h3>
+<p>Retrieve a single vulnerability by its ID.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{object_id}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns the full vulnerability object (same structure as list items).</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Vulnerability or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="4-full-update-vulnerability">4. Full Update Vulnerability<a class="headerlink" href="#4-full-update-vulnerability" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>Note:</strong> The <code>PUT</code> method on this path is <strong>not declared</strong> in the published 5.10.0 OpenAPI spec (only <code>GET</code>, <code>PATCH</code>, and <code>DELETE</code> are defined). It may exist at runtime via the standard Flask mixin but should be used with caution. Prefer <code>PATCH</code> for updates.</p>
+</blockquote>
+<p>Replace all fields of an existing vulnerability. All required fields must be provided.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>PUT</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{object_id}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code> -- full <a href="#vulnerability-schema">Vulnerability</a> object</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request Body:</strong></p>
+<p>All required fields (<code>name</code>, <code>severity</code>, <code>type</code>) must be included. Any omitted optional fields will be reset to their defaults.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL Injection (Updated)"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vulnerability"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"desc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Updated description with additional findings."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resolution"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Use parameterized queries. Apply input validation."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"risk-accepted"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"confirmed"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sqli"</span><span class="p">,</span><span class="w"> </span><span class="s2">"accepted-risk"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns the updated vulnerability object.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "name": "SQL Injection (Updated)",</span>
+<span class="s1">    "severity": "high",</span>
+<span class="s1">    "type": "vulnerability",</span>
+<span class="s1">    "desc": "Updated description.",</span>
+<span class="s1">    "status": "risk-accepted"</span>
+<span class="s1">  }'</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Vulnerability or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="5-partial-update-vulnerability">5. Partial Update Vulnerability<a class="headerlink" href="#5-partial-update-vulnerability" title="Permanent link">¶</a></h3>
+<p>Update specific fields of an existing vulnerability without providing the full object.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>PATCH</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{object_id}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code> -- partial <a href="#vulnerability-schema">Vulnerability</a> or <a href="#vulnerabilityweb-schema">VulnerabilityWeb</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request Body:</strong></p>
+<p>Only include the fields you want to change.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"medium"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"closed"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resolution"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Patched in version 2.1.0"</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns the updated vulnerability object.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Close a vulnerability</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"status": "closed"}'</span>
+
+<span class="c1"># Update severity and add a tag</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"severity": "medium", "tags": ["reviewed"]}'</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Validation error</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Vulnerability or workspace not found</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Conflict</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="6-delete-vulnerability">6. Delete Vulnerability<a class="headerlink" href="#6-delete-vulnerability" title="Permanent link">¶</a></h3>
+<p>Delete a single vulnerability by ID.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>DELETE</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{object_id}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<p>No response body.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Vulnerability or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="7-bulk-delete-vulnerabilities">7. Bulk Delete Vulnerabilities<a class="headerlink" href="#7-bulk-delete-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>Delete multiple vulnerabilities by their IDs in a single request.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>DELETE</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request Body:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"ids"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"ids": [1, 2, 3, 15, 42]}'</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Invalid request body</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="8-bulk-update-vulnerabilities">8. Bulk Update Vulnerabilities<a class="headerlink" href="#8-bulk-update-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>Update one or more fields on multiple vulnerabilities in a single request.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>PATCH</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request Body:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"ids"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"update"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"closed"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>update</code> object supports any writable field from the vulnerability schema.</p>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Mark multiple vulnerabilities as closed</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"ids": [1, 2, 3], "update": {"status": "closed"}}'</span>
+
+<span class="c1"># Bulk change severity</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"ids": [10, 11, 12], "update": {"severity": "high", "confirmed": true}}'</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Invalid request body or update fields</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="9-count-vulnerabilities">9. Count Vulnerabilities<a class="headerlink" href="#9-count-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>Get a count of vulnerabilities, optionally grouped by a field.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/count</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Query Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>group_by</code></td>
+<td>string</td>
+<td>Field to group counts by (e.g., <code>severity</code>, <code>status</code>, <code>confirmed</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"total_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">142</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"groups"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">23</span><span class="p">,</span><span class="w"> </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"high"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">67</span><span class="p">,</span><span class="w"> </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"medium"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">35</span><span class="p">,</span><span class="w"> </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"low"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"informational"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Total count</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/count"</span>
+
+<span class="c1"># Grouped by severity</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/count?group_by=severity"</span>
+
+<span class="c1"># Grouped by status</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/count?group_by=status"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="10-multi-workspace-count">10. Multi-Workspace Count<a class="headerlink" href="#10-multi-workspace-count" title="Permanent link">¶</a></h3>
+<p>Count vulnerabilities across multiple workspaces.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/count_multi_workspace</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>VulnerabilityGeneric</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns vulnerability counts broken down by workspace.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/count_multi_workspace"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Bad request</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="11-filter-vulnerabilities">11. Filter Vulnerabilities<a class="headerlink" href="#11-filter-vulnerabilities" title="Permanent link">¶</a></h3>
+<p>Retrieve vulnerabilities matching complex filter expressions.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/filter</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Filter, Vulnerability</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Query Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>q</code></td>
+<td>string</td>
+<td>yes</td>
+<td>JSON-encoded filter expression</td>
+</tr>
+</tbody>
+</table>
+<p>The filter expression uses the Faraday filter query language. See <a href="https://docs.faradaysec.com/Filters/">Faraday Filters documentation</a> for full syntax.</p>
+<p><strong>Common filter operators:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>==</code></td>
+<td>Equals</td>
+<td><code>{"name": "severity", "op": "==", "val": "critical"}</code></td>
+</tr>
+<tr>
+<td><code>!=</code></td>
+<td>Not equals</td>
+<td><code>{"name": "status", "op": "!=", "val": "closed"}</code></td>
+</tr>
+<tr>
+<td><code>has</code></td>
+<td>Contains (arrays)</td>
+<td><code>{"name": "tags", "op": "has", "val": "sqli"}</code></td>
+</tr>
+<tr>
+<td><code>like</code></td>
+<td>Pattern match</td>
+<td><code>{"name": "name", "op": "like", "val": "%injection%"}</code></td>
+</tr>
+<tr>
+<td><code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code></td>
+<td>Comparison</td>
+<td><code>{"name": "id", "op": "&gt;", "val": 100}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Filter expression structure:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"filters"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"severity"</span><span class="p">,</span><span class="w"> </span><span class="nt">"op"</span><span class="p">:</span><span class="w"> </span><span class="s2">"=="</span><span class="p">,</span><span class="w"> </span><span class="nt">"val"</span><span class="p">:</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Compound filter (AND):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"filters"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"severity"</span><span class="p">,</span><span class="w"> </span><span class="nt">"op"</span><span class="p">:</span><span class="w"> </span><span class="s2">"=="</span><span class="p">,</span><span class="w"> </span><span class="nt">"val"</span><span class="p">:</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"status"</span><span class="p">,</span><span class="w"> </span><span class="nt">"op"</span><span class="p">:</span><span class="w"> </span><span class="s2">"=="</span><span class="p">,</span><span class="w"> </span><span class="nt">"val"</span><span class="p">:</span><span class="w"> </span><span class="s2">"open"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"confirmed"</span><span class="p">,</span><span class="w"> </span><span class="nt">"op"</span><span class="p">:</span><span class="w"> </span><span class="s2">"=="</span><span class="p">,</span><span class="w"> </span><span class="nt">"val"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns a paginated list of matching vulnerabilities (same structure as <a href="#1-list-vulnerabilities">List Vulnerabilities</a>).</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Find all critical, open, confirmed vulnerabilities</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/filter?q=%7B%22filters%22%3A%5B%7B%22name%22%3A%22severity%22%2C%22op%22%3A%22%3D%3D%22%2C%22val%22%3A%22critical%22%7D%2C%7B%22name%22%3A%22status%22%2C%22op%22%3A%22%3D%3D%22%2C%22val%22%3A%22open%22%7D%5D%7D"</span>
+
+<span class="c1"># Same query (URL-decoded for readability):</span>
+<span class="c1"># ?q={"filters":[{"name":"severity","op":"==","val":"critical"},{"name":"status","op":"==","val":"open"}]}</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Invalid filter expression</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="12-upload-attachment">12. Upload Attachment<a class="headerlink" href="#12-upload-attachment" title="Permanent link">¶</a></h3>
+<p>Upload a file attachment (evidence) to a vulnerability.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>POST</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability, File</td>
+</tr>
+<tr>
+<td><strong>Content-Type</strong></td>
+<td><code>multipart/form-data</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>vuln_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Form Fields:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td>file</td>
+<td>yes</td>
+<td>The file to upload</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>--</td>
+<td>Description of the evidence</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>201 Created</code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Upload a screenshot as evidence</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1/attachment"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">"file=@screenshot.png"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">"description=SQL injection proof of concept"</span>
+
+<span class="c1"># Upload a text file</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1/attachment"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">"file=@exploit-output.txt"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>No file provided or invalid upload</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Vulnerability or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="13-list-attachments">13. List Attachments<a class="headerlink" href="#13-list-attachments" title="Permanent link">¶</a></h3>
+<p>List all attachments for a specific vulnerability.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability, File</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>vuln_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns a list of attachment metadata objects.</p>
+<div class="highlight"><pre><span></span><code><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"content_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"image/png"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SQL injection proof of concept"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"filename"</span><span class="p">:</span><span class="w"> </span><span class="s2">"screenshot.png"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"content_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"text/plain"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"filename"</span><span class="p">:</span><span class="w"> </span><span class="s2">"exploit-output.txt"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1/attachment"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Vulnerability or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="14-download-attachment">14. Download Attachment<a class="headerlink" href="#14-download-attachment" title="Permanent link">¶</a></h3>
+<p>Download a specific attachment file by filename.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment/{attachment_filename}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability, File</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>vuln_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+<tr>
+<td><code>filename</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Attachment filename (URL-encoded if it contains special characters)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns the raw file content with the appropriate <code>Content-Type</code> header.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Download an attachment</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-o<span class="w"> </span>screenshot.png<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1/attachment/screenshot.png"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Attachment, vulnerability, or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="15-update-attachment-metadata">15. Update Attachment Metadata<a class="headerlink" href="#15-update-attachment-metadata" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>Note:</strong> This endpoint (<code>PATCH</code> on individual attachment) is <strong>not declared</strong> in the published 5.10.0 OpenAPI spec. Only <code>GET</code> and <code>DELETE</code> are defined for individual attachments.</p>
+</blockquote>
+<p>Update the metadata (e.g., description) of an existing attachment.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>PATCH</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment/{attachment_filename}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability, File</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>vuln_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+<tr>
+<td><code>filename</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Attachment filename</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request Body:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Updated description for this evidence file"</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1/attachment/screenshot.png"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"description": "Proof of concept - SQL injection in login form"}'</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Invalid request body</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Attachment, vulnerability, or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="16-delete-attachment">16. Delete Attachment<a class="headerlink" href="#16-delete-attachment" title="Permanent link">¶</a></h3>
+<p>Delete an attachment from a vulnerability.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>DELETE</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/attachment/{attachment_filename}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability, File</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+<tr>
+<td><code>vuln_id</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Vulnerability ID</td>
+</tr>
+<tr>
+<td><code>filename</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Attachment filename</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/1/attachment/screenshot.png"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Attachment, vulnerability, or workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="17-export-csv">17. Export CSV<a class="headerlink" href="#17-export-csv" title="Permanent link">¶</a></h3>
+<p>Export all vulnerabilities in a workspace as a CSV file.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/export_csv</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability, File</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<p>Returns a CSV file download with <code>Content-Type: text/csv</code>.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-o<span class="w"> </span>vulns-export.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/export_csv"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h3 id="18-top-users">18. Top Users<a class="headerlink" href="#18-top-users" title="Permanent link">¶</a></h3>
+<p>Get a ranking of users by the number of vulnerabilities they have created.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/ws/{workspace_name}/vulns/top_users</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Tags</strong></td>
+<td>Vulnerability</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Workspace name</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code>200 OK</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"admin"</span><span class="p">,</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">85</span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pentester1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"scanner_bot"</span><span class="p">,</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/ws/pentest-2026/vulns/top_users"</span>
+</code></pre></div>
+<p><strong>Error Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Workspace not found</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="global-endpoints">Global Endpoints<a class="headerlink" href="#global-endpoints" title="Permanent link">¶</a></h2>
+<blockquote>
+<p><strong>Important:</strong> These global vulnerability endpoints are <strong>not declared</strong> in the published 5.10.0 OpenAPI specification (<code>faraday_swagger.json</code>). They exist in the codebase spec for version 5.17.0+. The paths and behaviors described below are derived from the codebase and may not be available in all Faraday deployments.</p>
+</blockquote>
+<p>Global endpoints provide cross-workspace access to vulnerabilities. They share the same request/response formats as their workspaced counterparts but operate without a workspace scope.</p>
+<p><strong>Base path:</strong> <code>/_api/v3/vulns</code></p>
+<hr/>
+<h3 id="g1-list-vulnerabilities-global">G1. List Vulnerabilities (Global)<a class="headerlink" href="#g1-list-vulnerabilities-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Retrieve vulnerabilities across all workspaces the authenticated user has access to. Supports the same pagination and sort parameters as the <a href="#1-list-vulnerabilities">workspaced list endpoint</a>.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns?page=0&amp;page_size=100"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g2-get-vulnerability-global">G2. Get Vulnerability (Global)<a class="headerlink" href="#g2-get-vulnerability-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/{object_id}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Retrieve a single vulnerability by ID without specifying a workspace.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/1"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g3-bulk-delete-global">G3. Bulk Delete (Global)<a class="headerlink" href="#g3-bulk-delete-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>DELETE</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code> -- <code>{"ids": [...]}</code></td>
+</tr>
+</tbody>
+</table>
+<p>Delete multiple vulnerabilities by IDs across workspaces.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"ids": [1, 2, 3]}'</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<hr/>
+<h3 id="g4-bulk-update-global">G4. Bulk Update (Global)<a class="headerlink" href="#g4-bulk-update-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>PATCH</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code> -- <code>{"ids": [...], "update": {...}}</code></td>
+</tr>
+</tbody>
+</table>
+<p>Update fields on multiple vulnerabilities across workspaces.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"ids": [1, 2, 3], "update": {"severity": "high"}}'</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>204 No Content</code></p>
+<hr/>
+<h3 id="g5-count-global">G5. Count (Global)<a class="headerlink" href="#g5-count-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/count</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Count all vulnerabilities across all workspaces.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/count"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g6-multi-workspace-count-global">G6. Multi-Workspace Count (Global)<a class="headerlink" href="#g6-multi-workspace-count-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/count_multi_workspace</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Count vulnerabilities grouped by workspace.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/count_multi_workspace"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g7-filter-global">G7. Filter (Global)<a class="headerlink" href="#g7-filter-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/filter</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Filter vulnerabilities across all workspaces. Uses the same <code>q</code> query parameter and filter expression syntax as the <a href="#11-filter-vulnerabilities">workspaced filter endpoint</a>.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/filter?q=%7B%22filters%22%3A%5B%7B%22name%22%3A%22severity%22%2C%22op%22%3A%22%3D%3D%22%2C%22val%22%3A%22critical%22%7D%5D%7D"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g8-upload-attachment-global">G8. Upload Attachment (Global)<a class="headerlink" href="#g8-upload-attachment-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>POST</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/{vuln_id}/attachment</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Content-Type</strong></td>
+<td><code>multipart/form-data</code></td>
+</tr>
+</tbody>
+</table>
+<p>Upload an attachment to a vulnerability without specifying a workspace. See <a href="#12-upload-attachment">Upload Attachment</a> for details.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/1/attachment"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">"file=@evidence.png"</span>
+</code></pre></div>
+<p><strong>Response:</strong> <code>201 Created</code></p>
+<hr/>
+<h3 id="g9-list-attachments-global">G9. List Attachments (Global)<a class="headerlink" href="#g9-list-attachments-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/{vuln_id}/attachment</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>List all attachments for a vulnerability. See <a href="#13-list-attachments">List Attachments</a> for response format.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/1/attachment"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g10-download-attachment-global">G10. Download Attachment (Global)<a class="headerlink" href="#g10-download-attachment-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/{vuln_id}/attachment/{attachment_filename}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Download a specific attachment file.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-o<span class="w"> </span>evidence.png<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/1/attachment/evidence.png"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g11-update-attachment-metadata-global">G11. Update Attachment Metadata (Global)<a class="headerlink" href="#g11-update-attachment-metadata-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>PATCH</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/{vuln_id}/attachment/{attachment_filename}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Request Body</strong></td>
+<td><code>application/json</code></td>
+</tr>
+</tbody>
+</table>
+<p>Update metadata on an attachment. See <a href="#15-update-attachment-metadata">Update Attachment Metadata</a> for details.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/1/attachment/evidence.png"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"description": "Updated description"}'</span>
+</code></pre></div>
+<hr/>
+<h3 id="g12-delete-attachment-global">G12. Delete Attachment (Global)<a class="headerlink" href="#g12-delete-attachment-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>DELETE</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/{vuln_id}/attachment/{attachment_filename}</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Delete an attachment from a vulnerability.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/1/attachment/evidence.png"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g13-export-csv-global">G13. Export CSV (Global)<a class="headerlink" href="#g13-export-csv-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/export_csv</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Export all vulnerabilities (across all accessible workspaces) as a CSV file.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>-o<span class="w"> </span>all-vulns.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/export_csv"</span>
+</code></pre></div>
+<hr/>
+<h3 id="g14-top-users-global">G14. Top Users (Global)<a class="headerlink" href="#g14-top-users-global" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>/_api/v3/vulns/top_users</code></td>
+</tr>
+<tr>
+<td><strong>Auth</strong></td>
+<td>Required</td>
+</tr>
+</tbody>
+</table>
+<p>Get a ranking of users by vulnerability creation count across all workspaces.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://localhost:5985/_api/v3/vulns/top_users"</span>
+</code></pre></div>
+<hr/>
+<h2 id="deprecated-endpoints">Deprecated Endpoints<a class="headerlink" href="#deprecated-endpoints" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Status</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">¶</a></h2>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">¶</a></h3>
+<p>All endpoints require authentication. Include one of the following with every request:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Cookie-based session (obtain via POST /_api/login)</span>
+curl<span class="w"> </span>-b<span class="w"> </span>cookies.txt<span class="w"> </span>...
+
+<span class="c1"># Option 2: API token</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token &lt;base64-token&gt;"</span><span class="w"> </span>...
+</code></pre></div>
+<h3 id="pagination">Pagination<a class="headerlink" href="#pagination" title="Permanent link">¶</a></h3>
+<p>All list endpoints support pagination:</p>
+<div class="highlight"><pre><span></span><code>?page=0&amp;page_size=50&amp;sort=severity&amp;sort_dir=desc
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>page</code></td>
+<td>integer</td>
+<td>0</td>
+<td>Page number (0-indexed)</td>
+</tr>
+<tr>
+<td><code>page_size</code></td>
+<td>integer</td>
+<td>20</td>
+<td>Results per page</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>string</td>
+<td>--</td>
+<td>Sort field</td>
+</tr>
+<tr>
+<td><code>sort_dir</code></td>
+<td>string</td>
+<td><code>asc</code></td>
+<td><code>asc</code> or <code>desc</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="severity-values">Severity Values<a class="headerlink" href="#severity-values" title="Permanent link">¶</a></h3>
+<p>Severity is a required field and must be one of:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>critical</code></td>
+<td>Critical severity</td>
+</tr>
+<tr>
+<td><code>high</code></td>
+<td>High severity</td>
+</tr>
+<tr>
+<td><code>medium</code></td>
+<td>Medium severity</td>
+</tr>
+<tr>
+<td><code>low</code></td>
+<td>Low severity</td>
+</tr>
+<tr>
+<td><code>informational</code></td>
+<td>Informational finding</td>
+</tr>
+<tr>
+<td><code>unclassified</code></td>
+<td>Not yet classified</td>
+</tr>
+</tbody>
+</table>
+<h3 id="status-values">Status Values<a class="headerlink" href="#status-values" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>open</code></td>
+<td>Vulnerability is open and unresolved</td>
+</tr>
+<tr>
+<td><code>closed</code></td>
+<td>Vulnerability has been resolved</td>
+</tr>
+<tr>
+<td><code>re-opened</code></td>
+<td>Vulnerability was closed but detected again</td>
+</tr>
+<tr>
+<td><code>risk-accepted</code></td>
+<td>Vulnerability acknowledged but accepted as a risk</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ease-of-resolution-values">Ease of Resolution Values<a class="headerlink" href="#ease-of-resolution-values" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trivial</code></td>
+<td>Can be fixed in minutes with no risk</td>
+</tr>
+<tr>
+<td><code>simple</code></td>
+<td>Straightforward fix, low risk</td>
+</tr>
+<tr>
+<td><code>moderate</code></td>
+<td>Requires planning, moderate effort</td>
+</tr>
+<tr>
+<td><code>difficult</code></td>
+<td>Significant effort, may involve architectural changes</td>
+</tr>
+<tr>
+<td><code>infeasible</code></td>
+<td>Cannot be practically fixed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vulnerability-type-differences">Vulnerability Type Differences<a class="headerlink" href="#vulnerability-type-differences" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th><code>vulnerability</code></th>
+<th><code>vulnerability_web</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Required fields</td>
+<td><code>name</code>, <code>severity</code>, <code>type</code></td>
+<td><code>name</code>, <code>severity</code>, <code>type</code>, <code>parent</code>, <code>parent_type</code></td>
+</tr>
+<tr>
+<td>Web-specific fields</td>
+<td>N/A</td>
+<td><code>method</code>, <code>path</code>, <code>website</code>, <code>request</code>, <code>response</code>, <code>status_code</code>, <code>params</code>, <code>pname</code>, <code>query</code>, <code>owasp</code></td>
+</tr>
+<tr>
+<td>Use case</td>
+<td>Infrastructure, network, OS-level findings</td>
+<td>Web application vulnerabilities (XSS, SQLi, CSRF, etc.)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="standard-error-response">Standard Error Response<a class="headerlink" href="#standard-error-response" title="Permanent link">¶</a></h3>
+<p>All error responses follow this format:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Error description here"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="standard-http-response-codes">Standard HTTP Response Codes<a class="headerlink" href="#standard-http-response-codes" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+<th>Used By</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>200</code></td>
+<td>Success</td>
+<td>GET, PUT, PATCH (single), attachment operations</td>
+</tr>
+<tr>
+<td><code>201</code></td>
+<td>Created</td>
+<td>POST (create vuln, upload attachment)</td>
+</tr>
+<tr>
+<td><code>204</code></td>
+<td>No Content</td>
+<td>DELETE, PATCH (bulk operations)</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td>Bad Request</td>
+<td>Validation errors, invalid filter expressions</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>Unauthorized</td>
+<td>Missing or invalid authentication</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>Forbidden</td>
+<td>Insufficient permissions</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td>Not Found</td>
+<td>Workspace, vulnerability, or attachment not found</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td>Conflict</td>
+<td>Duplicate vulnerability</td>
+</tr>
+<tr>
+<td><code>500</code></td>
+<td>Server Error</td>
+<td>Internal server error</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="endpoint-summary-table">Endpoint Summary Table<a class="headerlink" href="#endpoint-summary-table" title="Permanent link">¶</a></h2>
+<h3 id="workspaced-18-endpoints">Workspaced (18 endpoints)<a class="headerlink" href="#workspaced-18-endpoints" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns</code></td>
+<td>List vulnerabilities</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>POST</code></td>
+<td><code>/ws/{ws}/vulns</code></td>
+<td>Create vulnerability</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/{id}</code></td>
+<td>Get vulnerability</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>PUT</code></td>
+<td><code>/ws/{ws}/vulns/{id}</code></td>
+<td>Full update</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>PATCH</code></td>
+<td><code>/ws/{ws}/vulns/{id}</code></td>
+<td>Partial update</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>DELETE</code></td>
+<td><code>/ws/{ws}/vulns/{id}</code></td>
+<td>Delete vulnerability</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>DELETE</code></td>
+<td><code>/ws/{ws}/vulns</code></td>
+<td>Bulk delete</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>PATCH</code></td>
+<td><code>/ws/{ws}/vulns</code></td>
+<td>Bulk update</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/count</code></td>
+<td>Count (with group_by)</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/count_multi_workspace</code></td>
+<td>Multi-workspace count</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/filter</code></td>
+<td>Filter vulnerabilities</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>POST</code></td>
+<td><code>/ws/{ws}/vulns/{id}/attachment</code></td>
+<td>Upload attachment</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/{id}/attachment</code></td>
+<td>List attachments</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/{id}/attachment/{file}</code></td>
+<td>Download attachment</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>PATCH</code></td>
+<td><code>/ws/{ws}/vulns/{id}/attachment/{file}</code></td>
+<td>Update attachment metadata</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>DELETE</code></td>
+<td><code>/ws/{ws}/vulns/{id}/attachment/{file}</code></td>
+<td>Delete attachment</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/export_csv</code></td>
+<td>Export as CSV</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>GET</code></td>
+<td><code>/ws/{ws}/vulns/top_users</code></td>
+<td>Top users by vuln count</td>
+</tr>
+</tbody>
+</table>
+<h3 id="global-14-endpoints">Global (14 endpoints)<a class="headerlink" href="#global-14-endpoints" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td><code>GET</code></td>
+<td><code>/vulns</code></td>
+<td>List vulnerabilities (all workspaces)</td>
+</tr>
+<tr>
+<td>G2</td>
+<td><code>GET</code></td>
+<td><code>/vulns/{id}</code></td>
+<td>Get vulnerability</td>
+</tr>
+<tr>
+<td>G3</td>
+<td><code>DELETE</code></td>
+<td><code>/vulns</code></td>
+<td>Bulk delete</td>
+</tr>
+<tr>
+<td>G4</td>
+<td><code>PATCH</code></td>
+<td><code>/vulns</code></td>
+<td>Bulk update</td>
+</tr>
+<tr>
+<td>G5</td>
+<td><code>GET</code></td>
+<td><code>/vulns/count</code></td>
+<td>Count all</td>
+</tr>
+<tr>
+<td>G6</td>
+<td><code>GET</code></td>
+<td><code>/vulns/count_multi_workspace</code></td>
+<td>Multi-workspace count</td>
+</tr>
+<tr>
+<td>G7</td>
+<td><code>GET</code></td>
+<td><code>/vulns/filter</code></td>
+<td>Filter all</td>
+</tr>
+<tr>
+<td>G8</td>
+<td><code>POST</code></td>
+<td><code>/vulns/{id}/attachment</code></td>
+<td>Upload attachment</td>
+</tr>
+<tr>
+<td>G9</td>
+<td><code>GET</code></td>
+<td><code>/vulns/{id}/attachment</code></td>
+<td>List attachments</td>
+</tr>
+<tr>
+<td>G10</td>
+<td><code>GET</code></td>
+<td><code>/vulns/{id}/attachment/{file}</code></td>
+<td>Download attachment</td>
+</tr>
+<tr>
+<td>G11</td>
+<td><code>PATCH</code></td>
+<td><code>/vulns/{id}/attachment/{file}</code></td>
+<td>Update attachment metadata</td>
+</tr>
+<tr>
+<td>G12</td>
+<td><code>DELETE</code></td>
+<td><code>/vulns/{id}/attachment/{file}</code></td>
+<td>Delete attachment</td>
+</tr>
+<tr>
+<td>G13</td>
+<td><code>GET</code></td>
+<td><code>/vulns/export_csv</code></td>
+<td>Export as CSV</td>
+</tr>
+<tr>
+<td>G14</td>
+<td><code>GET</code></td>
+<td><code>/vulns/top_users</code></td>
+<td>Top users</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>All paths above are relative to <code>/_api/v3</code>. Full paths include the <code>/_api/v3</code> prefix.</p>
+</blockquote>
+<hr/>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">¶</a></h2>
+<ul>
+<li>[[README]] -- API Endpoint Reference index</li>
+<li>[[hosts]] -- Hosts API (vulnerabilities are linked to hosts)</li>
+<li>[[services]] -- Services API (vulnerabilities can be linked to services)</li>
+<li>[[vulnerability-templates]] -- Vulnerability Templates API (reusable vulnerability definitions)</li>
+<li><a href="https://docs.faradaysec.com/Filters/">Faraday Filters documentation</a> -- Filter query syntax</li>
+<li><a href="../openapi-spec-audit.md">OpenAPI Spec Audit</a> -- Full comparison of codebase vs published specs</li>
+</ul>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/infobyte/faraday/" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</a>
+<a class="md-social__link" href="https://twitter.com/faradaysec" rel="noopener" target="_blank" title="twitter.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"></path></svg>
+</a>
+<a class="md-social__link" href="https://www.linkedin.com/company/faradaysec/" rel="noopener" target="_blank" title="www.linkedin.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/faradaysec" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script src="https://unpkg.com/mermaid@8.5.1/dist/mermaid.min.js"></script>
+</body>
+</html>

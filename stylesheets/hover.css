@@ -1,0 +1,60 @@
+.professional {
+    display: inline;
+    position: relative;
+    overflow: hidden;
+    color: pink;
+    font-size: 15px;
+    font-family: var(--md-text-font-family,_),-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    font-weight: bold;
+  }
+
+.professional:after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    right: 0;
+    width: 0;
+    bottom: -2px;
+    background: pink;
+    height: 2px;
+    transition-property: width;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out;
+  }
+.professional:hover:after,
+.professional:focus:after,
+.professional:active:after {
+    left: 0;
+    right: auto;
+    width: 100%;
+}
+
+.corporate {
+    display: inline;
+    position: relative;
+    overflow: hidden;
+    color: black;
+    font-size: 15px;
+    font-family: var(--md-text-font-family,_),-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    font-weight: bold;
+  }
+.corporate:after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    right: 0;
+    width: 0;
+    bottom: -2px;
+    background: black;
+    height: 2px;
+    transition-property: width;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out;
+  }
+.corporate:hover:after,
+.corporate:focus:after,
+.corporate:active:after {
+    left: 0;
+    right: auto;
+    width: 100%;
+  }

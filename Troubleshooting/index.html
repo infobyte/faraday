@@ -1,0 +1,3339 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Faraday" name="description"/>
+<meta content="Faradaysec" name="author"/>
+<link href="https://faradaysec.com/Troubleshooting/" rel="canonical"/>
+<link href="../Plugin-List-v4/" rel="prev"/>
+<link href="../images/favicon.svg" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>Troubleshooting Guide - Faraday</title>
+<link href="../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../stylesheets/faraday_doc.css" rel="stylesheet"/>
+<link href="../stylesheets/hover.css" rel="stylesheet"/>
+<link href="https://unpkg.com/mermaid@8.5.1/dist/mermaid.css" rel="stylesheet"/>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-BEQW65R59H"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-BEQW65R59H",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-BEQW65R59H",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#troubleshooting">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Faraday" class="md-header__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Faraday
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Troubleshooting Guide
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Light" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Light">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="dark" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="dark">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Faraday" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+    Faraday
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_1_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../First-Steps/">
+<span class="md-ellipsis">
+    
+  
+    First Steps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Using Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Using Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Users/">
+<span class="md-ellipsis">
+    
+  
+    Users and Roles
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Workspaces/">
+<span class="md-ellipsis">
+    
+  
+    Workspaces
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Activity-Dashboard/">
+<span class="md-ellipsis">
+    
+  
+    Activity Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulns/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Grouping/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Grouping
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulnerability-Templates-KB/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability KB
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Assets-and-Services-v4/">
+<span class="md-ellipsis">
+    
+  
+    Assets and Services
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_8" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_8_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reports
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Report-v4/">
+<span class="md-ellipsis">
+    
+  
+    What is Report
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../How-to-build-your-template/">
+<span class="md-ellipsis">
+    
+  
+    How to Build Your Own Template
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Jinja2-context/">
+<span class="md-ellipsis">
+    
+  
+    Jinja2 Context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../import/">
+<span class="md-ellipsis">
+    
+  
+    Importing
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Dashboard-v4/">
+<span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Custom-Fields-v4/">
+<span class="md-ellipsis">
+    
+  
+    Custom Attributes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_11_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Notifications
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications/">
+<span class="md-ellipsis">
+    
+  
+    Notifications Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Slack/">
+<span class="md-ellipsis">
+    
+  
+    Configure Slack Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Planner/">
+<span class="md-ellipsis">
+    
+  
+    Planner
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_13" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_13_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_13">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-gitlab/">
+<span class="md-ellipsis">
+    
+  
+    GitLab
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-jira/">
+<span class="md-ellipsis">
+    
+  
+    Jira
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-solarwinds/">
+<span class="md-ellipsis">
+    
+  
+    SolarWinds
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicenow/">
+<span class="md-ellipsis">
+    
+  
+    ServiceNow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicedesk/">
+<span class="md-ellipsis">
+    
+  
+    ServiceDesk
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_14">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../faraday-server-settings/">
+<span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP/">
+<span class="md-ellipsis">
+    
+  
+    LDAP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP-OKTA/">
+<span class="md-ellipsis">
+    
+  
+    LDAP with OKTA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14_4" id="__nav_3_14_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    SSO
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_4_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_3_14_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    SSO
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML/">
+<span class="md-ellipsis">
+    
+  
+    Faraday configuration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Auth0/">
+<span class="md-ellipsis">
+    
+  
+    Auth0 integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Google/">
+<span class="md-ellipsis">
+    
+  
+    Google integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Okta/">
+<span class="md-ellipsis">
+    
+  
+    Okta integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Azure/">
+<span class="md-ellipsis">
+    
+  
+    Azure integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../2-Factor-Authentication/">
+<span class="md-ellipsis">
+    
+  
+    2nd Factor
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Architecture/">
+<span class="md-ellipsis">
+    
+  
+    Arch
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_16" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_16" id="__nav_3_16_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_16_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_16">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../api-swagger/">
+<span class="md-ellipsis">
+    
+  
+    Openapi
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Server/">
+<span class="md-ellipsis">
+    
+  
+    API Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Token/">
+<span class="md-ellipsis">
+    
+  
+    API Token
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_17" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_17" id="__nav_3_17_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_17_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_17">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday Manage
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage-Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Deduplicated-Assets/">
+<span class="md-ellipsis">
+    
+  
+    Deduplicated Assets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_18" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_18" id="__nav_3_18_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Extras
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_18_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_18">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Extras
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Burp-proxy-extender/">
+<span class="md-ellipsis">
+    
+  
+    Burp
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../beef/">
+<span class="md-ellipsis">
+    
+  
+    Beef
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Automation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../agents-v4/">
+<span class="md-ellipsis">
+    
+  
+    About Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1_2" id="__nav_4_1_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agent List
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_2_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_4_1_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agent List
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-appscan/">
+<span class="md-ellipsis">
+    
+  
+    AppScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-arachni/">
+<span class="md-ellipsis">
+    
+  
+    Arachni
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-burp/">
+<span class="md-ellipsis">
+    
+  
+    Burp Suite
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-cybervision/">
+<span class="md-ellipsis">
+    
+  
+    Cyber Vision
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-codeql/">
+<span class="md-ellipsis">
+    
+  
+    Code QL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-crackmapexec/">
+<span class="md-ellipsis">
+    
+  
+    CrackMapExec
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-dependabot/">
+<span class="md-ellipsis">
+    
+  
+    Dependabot
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gitgub-secrets/">
+<span class="md-ellipsis">
+    
+  
+    Github Secrets
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gvm-openvas/">
+<span class="md-ellipsis">
+    
+  
+    GVM OpenVAS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-insightvm/">
+<span class="md-ellipsis">
+    
+  
+    InsightVM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nessus/">
+<span class="md-ellipsis">
+    
+  
+    Nessus
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nikto2/">
+<span class="md-ellipsis">
+    
+  
+    Nikto 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nmap/">
+<span class="md-ellipsis">
+    
+  
+    NMap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nuclei/">
+<span class="md-ellipsis">
+    
+  
+    Nuclei
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-openvas-legacy/">
+<span class="md-ellipsis">
+    
+  
+    OpenVAS Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-qualys/">
+<span class="md-ellipsis">
+    
+  
+    Qualys
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-report-processor/">
+<span class="md-ellipsis">
+    
+  
+    Report Processor
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-shodan2/">
+<span class="md-ellipsis">
+    
+  
+    Shodan 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sonarqube/">
+<span class="md-ellipsis">
+    
+  
+    SonarQube
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sublist3r/">
+<span class="md-ellipsis">
+    
+  
+    Sublist3r
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenableio/">
+<span class="md-ellipsis">
+    
+  
+    TenableIO
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenablesc/">
+<span class="md-ellipsis">
+    
+  
+    TenableSC
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-w3af/">
+<span class="md-ellipsis">
+    
+  
+    W3af
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan/">
+<span class="md-ellipsis">
+    
+  
+    WPScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan-legacy/">
+<span class="md-ellipsis">
+    
+  
+    WPScan Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-zap/">
+<span class="md-ellipsis">
+    
+  
+    Zap
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Scheduling/">
+<span class="md-ellipsis">
+    
+  
+    Scheduler, Pipelines and Jobs
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Installing Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Installing Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Linux/">
+<span class="md-ellipsis">
+    
+  
+    Linux
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Redhat-8/">
+<span class="md-ellipsis">
+    
+  
+    RedHat 8/Centos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Docker/">
+<span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-community/">
+<span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Update/">
+<span class="md-ellipsis">
+    
+  
+    Update
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Install
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Remote-PostgreSQL/">
+<span class="md-ellipsis">
+    
+  
+    Remote PostgreSQL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../NGINX-Setup/">
+<span class="md-ellipsis">
+    
+  
+    NGINX (SSL Config)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Backup-v4/">
+<span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Changelog
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../RELEASE/">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-MCP/">
+<span class="md-ellipsis">
+    
+  
+    Faraday MCP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../faraday-cli/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Cli
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    For Developers
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    For Developers
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Development-setup/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Developer Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Basic-plugin-development/">
+<span class="md-ellipsis">
+    
+  
+    Plugin Development
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    FAQs
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Contact-us/">
+<span class="md-ellipsis">
+    
+  
+    Contact Us
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../FAQ/">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Plugin-List-v4/">
+<span class="md-ellipsis">
+    
+  
+    Supported-Plugins
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#troubleshooting">
+<span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+</a>
+<nav aria-label="Troubleshooting" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#before-you-begin">
+<span class="md-ellipsis">
+      
+        Before You Begin
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#docker-issues">
+<span class="md-ellipsis">
+      
+        Docker Issues
+      
+    </span>
+</a>
+<nav aria-label="Docker Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#docker-compose-fails-to-start">
+<span class="md-ellipsis">
+      
+        Docker Compose fails to start
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#port-9000-unreachable-websocket-service">
+<span class="md-ellipsis">
+      
+        Port 9000 unreachable (WebSocket service)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cannot-find-initial-password-in-docker">
+<span class="md-ellipsis">
+      
+        Cannot find initial password in Docker
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#database-initialization-fails-in-docker">
+<span class="md-ellipsis">
+      
+        Database initialization fails in Docker
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#authentication-login">
+<span class="md-ellipsis">
+      
+        Authentication &amp; Login
+      
+    </span>
+</a>
+<nav aria-label="Authentication &amp; Login" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cannot-access-the-web-gui">
+<span class="md-ellipsis">
+      
+        Cannot access the Web GUI
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-reset-the-password">
+<span class="md-ellipsis">
+      
+        How to reset the password
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2fa-field-does-not-accept-paste">
+<span class="md-ellipsis">
+      
+        2FA field does not accept paste
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#flask_login-flask_security-compatibility-errors">
+<span class="md-ellipsis">
+      
+        flask_login / flask_security compatibility errors
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#database-issues">
+<span class="md-ellipsis">
+      
+        Database Issues
+      
+    </span>
+</a>
+<nav aria-label="Database Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#database-migration-failures-during-upgrade">
+<span class="md-ellipsis">
+      
+        Database migration failures during upgrade
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#faraday-manage-initdb-fails">
+<span class="md-ellipsis">
+      
+        faraday-manage initdb fails
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#error-while-backing-up-the-database">
+<span class="md-ellipsis">
+      
+        Error while backing up the database
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#changing-the-database-password-breaks-faraday">
+<span class="md-ellipsis">
+      
+        Changing the database password breaks Faraday
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#report-import-plugins">
+<span class="md-ellipsis">
+      
+        Report Import &amp; Plugins
+      
+    </span>
+</a>
+<nav aria-label="Report Import &amp; Plugins" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#report-is-not-being-imported">
+<span class="md-ellipsis">
+      
+        Report is not being imported
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nuclei-reports-fail-to-import">
+<span class="md-ellipsis">
+      
+        Nuclei reports fail to import
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nessus-import-issues">
+<span class="md-ellipsis">
+      
+        Nessus import issues
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nmap-xml-report-upload-fails">
+<span class="md-ellipsis">
+      
+        Nmap XML report upload fails
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#large-reports-cause-errors-or-timeouts">
+<span class="md-ellipsis">
+      
+        Large reports cause errors or timeouts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#a-plugin-added-too-much-information">
+<span class="md-ellipsis">
+      
+        A plugin added too much information
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agents-dispatcher">
+<span class="md-ellipsis">
+      
+        Agents &amp; Dispatcher
+      
+    </span>
+</a>
+<nav aria-label="Agents &amp; Dispatcher" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agent-cannot-connect-to-faraday-server">
+<span class="md-ellipsis">
+      
+        Agent cannot connect to Faraday server
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agent-dispatcher-docker-image-is-outdated">
+<span class="md-ellipsis">
+      
+        Agent dispatcher Docker image is outdated
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executor-errors-nmap-nuclei-nessus-openvas">
+<span class="md-ellipsis">
+      
+        Executor errors (Nmap, Nuclei, Nessus, OpenVAS)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#run-button-is-greyed-out">
+<span class="md-ellipsis">
+      
+        "Run" button is greyed out
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-delete-an-agent">
+<span class="md-ellipsis">
+      
+        How to delete an agent
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-issues">
+<span class="md-ellipsis">
+      
+        CLI Issues
+      
+    </span>
+</a>
+<nav aria-label="CLI Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-cannot-connect-to-faraday-server">
+<span class="md-ellipsis">
+      
+        CLI cannot connect to Faraday server
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-returns-500-errors-when-sending-data">
+<span class="md-ellipsis">
+      
+        CLI returns 500 errors when sending data
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-fails-to-detect-report-format">
+<span class="md-ellipsis">
+      
+        CLI fails to detect report format
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-configuration">
+<span class="md-ellipsis">
+      
+        Server Configuration
+      
+    </span>
+</a>
+<nav aria-label="Server Configuration" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cant-access-faraday-server-remotely">
+<span class="md-ellipsis">
+      
+        Can't access Faraday Server remotely
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nginx-reverse-proxy-configuration">
+<span class="md-ellipsis">
+      
+        NGINX reverse proxy configuration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#smtp-is-not-being-saved-from-the-ui">
+<span class="md-ellipsis">
+      
+        SMTP is not being saved from the UI
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ldap-reconfiguration-after-faraday-v315">
+<span class="md-ellipsis">
+      
+        LDAP reconfiguration (after Faraday v3.15)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executive-reports-disappeared-after-enabling-markdown">
+<span class="md-ellipsis">
+      
+        Executive reports disappeared after enabling markdown
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#python-dependency-issues">
+<span class="md-ellipsis">
+      
+        Python Dependency Issues
+      
+    </span>
+</a>
+<nav aria-label="Python Dependency Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#importerror-cannot-import-name-jsonencoder-from-flaskjson">
+<span class="md-ellipsis">
+      
+        ImportError: cannot import name 'JSONEncoder' from 'flask.json'
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#attributeerror-greensocket-has-no-attribute-sendmsg">
+<span class="md-ellipsis">
+      
+        AttributeError: 'GreenSocket' has no attribute 'sendmsg'
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#unicodeencodeerror-ascii-codec-cant-encode-character">
+<span class="md-ellipsis">
+      
+        UnicodeEncodeError: 'ascii' codec can't encode character
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#startup-performance">
+<span class="md-ellipsis">
+      
+        Startup &amp; Performance
+      
+    </span>
+</a>
+<nav aria-label="Startup &amp; Performance" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-fails-to-start-on-kali-linux">
+<span class="md-ellipsis">
+      
+        Server fails to start on Kali Linux
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#redis-connection-refused">
+<span class="md-ellipsis">
+      
+        Redis connection refused
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#port-5985-already-in-use">
+<span class="md-ellipsis">
+      
+        Port 5985 already in use
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#still-need-help">
+<span class="md-ellipsis">
+      
+        Still need help?
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#troubleshooting">
+<span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+</a>
+<nav aria-label="Troubleshooting" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#before-you-begin">
+<span class="md-ellipsis">
+      
+        Before You Begin
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#docker-issues">
+<span class="md-ellipsis">
+      
+        Docker Issues
+      
+    </span>
+</a>
+<nav aria-label="Docker Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#docker-compose-fails-to-start">
+<span class="md-ellipsis">
+      
+        Docker Compose fails to start
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#port-9000-unreachable-websocket-service">
+<span class="md-ellipsis">
+      
+        Port 9000 unreachable (WebSocket service)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cannot-find-initial-password-in-docker">
+<span class="md-ellipsis">
+      
+        Cannot find initial password in Docker
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#database-initialization-fails-in-docker">
+<span class="md-ellipsis">
+      
+        Database initialization fails in Docker
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#authentication-login">
+<span class="md-ellipsis">
+      
+        Authentication &amp; Login
+      
+    </span>
+</a>
+<nav aria-label="Authentication &amp; Login" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cannot-access-the-web-gui">
+<span class="md-ellipsis">
+      
+        Cannot access the Web GUI
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-reset-the-password">
+<span class="md-ellipsis">
+      
+        How to reset the password
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2fa-field-does-not-accept-paste">
+<span class="md-ellipsis">
+      
+        2FA field does not accept paste
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#flask_login-flask_security-compatibility-errors">
+<span class="md-ellipsis">
+      
+        flask_login / flask_security compatibility errors
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#database-issues">
+<span class="md-ellipsis">
+      
+        Database Issues
+      
+    </span>
+</a>
+<nav aria-label="Database Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#database-migration-failures-during-upgrade">
+<span class="md-ellipsis">
+      
+        Database migration failures during upgrade
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#faraday-manage-initdb-fails">
+<span class="md-ellipsis">
+      
+        faraday-manage initdb fails
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#error-while-backing-up-the-database">
+<span class="md-ellipsis">
+      
+        Error while backing up the database
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#changing-the-database-password-breaks-faraday">
+<span class="md-ellipsis">
+      
+        Changing the database password breaks Faraday
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#report-import-plugins">
+<span class="md-ellipsis">
+      
+        Report Import &amp; Plugins
+      
+    </span>
+</a>
+<nav aria-label="Report Import &amp; Plugins" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#report-is-not-being-imported">
+<span class="md-ellipsis">
+      
+        Report is not being imported
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nuclei-reports-fail-to-import">
+<span class="md-ellipsis">
+      
+        Nuclei reports fail to import
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nessus-import-issues">
+<span class="md-ellipsis">
+      
+        Nessus import issues
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nmap-xml-report-upload-fails">
+<span class="md-ellipsis">
+      
+        Nmap XML report upload fails
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#large-reports-cause-errors-or-timeouts">
+<span class="md-ellipsis">
+      
+        Large reports cause errors or timeouts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#a-plugin-added-too-much-information">
+<span class="md-ellipsis">
+      
+        A plugin added too much information
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agents-dispatcher">
+<span class="md-ellipsis">
+      
+        Agents &amp; Dispatcher
+      
+    </span>
+</a>
+<nav aria-label="Agents &amp; Dispatcher" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agent-cannot-connect-to-faraday-server">
+<span class="md-ellipsis">
+      
+        Agent cannot connect to Faraday server
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agent-dispatcher-docker-image-is-outdated">
+<span class="md-ellipsis">
+      
+        Agent dispatcher Docker image is outdated
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executor-errors-nmap-nuclei-nessus-openvas">
+<span class="md-ellipsis">
+      
+        Executor errors (Nmap, Nuclei, Nessus, OpenVAS)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#run-button-is-greyed-out">
+<span class="md-ellipsis">
+      
+        "Run" button is greyed out
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-to-delete-an-agent">
+<span class="md-ellipsis">
+      
+        How to delete an agent
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-issues">
+<span class="md-ellipsis">
+      
+        CLI Issues
+      
+    </span>
+</a>
+<nav aria-label="CLI Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-cannot-connect-to-faraday-server">
+<span class="md-ellipsis">
+      
+        CLI cannot connect to Faraday server
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-returns-500-errors-when-sending-data">
+<span class="md-ellipsis">
+      
+        CLI returns 500 errors when sending data
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-fails-to-detect-report-format">
+<span class="md-ellipsis">
+      
+        CLI fails to detect report format
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-configuration">
+<span class="md-ellipsis">
+      
+        Server Configuration
+      
+    </span>
+</a>
+<nav aria-label="Server Configuration" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cant-access-faraday-server-remotely">
+<span class="md-ellipsis">
+      
+        Can't access Faraday Server remotely
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nginx-reverse-proxy-configuration">
+<span class="md-ellipsis">
+      
+        NGINX reverse proxy configuration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#smtp-is-not-being-saved-from-the-ui">
+<span class="md-ellipsis">
+      
+        SMTP is not being saved from the UI
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ldap-reconfiguration-after-faraday-v315">
+<span class="md-ellipsis">
+      
+        LDAP reconfiguration (after Faraday v3.15)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executive-reports-disappeared-after-enabling-markdown">
+<span class="md-ellipsis">
+      
+        Executive reports disappeared after enabling markdown
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#python-dependency-issues">
+<span class="md-ellipsis">
+      
+        Python Dependency Issues
+      
+    </span>
+</a>
+<nav aria-label="Python Dependency Issues" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#importerror-cannot-import-name-jsonencoder-from-flaskjson">
+<span class="md-ellipsis">
+      
+        ImportError: cannot import name 'JSONEncoder' from 'flask.json'
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#attributeerror-greensocket-has-no-attribute-sendmsg">
+<span class="md-ellipsis">
+      
+        AttributeError: 'GreenSocket' has no attribute 'sendmsg'
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#unicodeencodeerror-ascii-codec-cant-encode-character">
+<span class="md-ellipsis">
+      
+        UnicodeEncodeError: 'ascii' codec can't encode character
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#startup-performance">
+<span class="md-ellipsis">
+      
+        Startup &amp; Performance
+      
+    </span>
+</a>
+<nav aria-label="Startup &amp; Performance" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-fails-to-start-on-kali-linux">
+<span class="md-ellipsis">
+      
+        Server fails to start on Kali Linux
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#redis-connection-refused">
+<span class="md-ellipsis">
+      
+        Redis connection refused
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#port-5985-already-in-use">
+<span class="md-ellipsis">
+      
+        Port 5985 already in use
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#still-need-help">
+<span class="md-ellipsis">
+      
+        Still need help?
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1>Troubleshooting</h1>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">¶</a></h2>
+<p>This guide provides solutions for common problems with Faraday. If your problem is not listed below, <a href="https://github.com/infobyte/faraday/issues">open an issue on GitHub</a>.</p>
+<h3 id="before-you-begin">Before You Begin<a class="headerlink" href="#before-you-begin" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Check your version</strong> — Run <code>faraday-server --version</code> and verify you are on the latest release at <a href="https://github.com/infobyte/faraday/releases/latest">GitHub Releases</a>. Upgrading often resolves known issues.</li>
+<li><strong>Enable debug logging</strong> — Set <code>debug=true</code> in <code>~/.faraday/config/server.ini</code> under <code>[faraday_server]</code> and restart.</li>
+<li><strong>Check the logs</strong> — Logs are at <code>~/.faraday/logs/</code> (bare-metal) or accessible via <code>docker compose logs &lt;service&gt;</code> (Docker).</li>
+<li><strong>Run the status check</strong> — <code>faraday-manage status-check</code> provides a quick health report.</li>
+</ol>
+<hr/>
+<h2 id="docker-issues">Docker Issues<a class="headerlink" href="#docker-issues" title="Permanent link">¶</a></h2>
+<h3 id="docker-compose-fails-to-start">Docker Compose fails to start<a class="headerlink" href="#docker-compose-fails-to-start" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> <code>docker compose up</code> exits with errors, services fail to become healthy, or containers restart in a loop.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Ensure you are using <strong>Docker Compose v2</strong> (the <code>docker compose</code> plugin, not the legacy <code>docker-compose</code> v1):
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>version
+<span class="c1"># Should show: Docker Compose version v2.x.x</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>Pull the latest images:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>pull
+</code></pre></div></p>
+</li>
+<li>
+<p>Verify the <code>docker-compose.yaml</code> syntax matches the version you downloaded. If you modified the file, compare with the original from the release.</p>
+</li>
+<li>
+<p>Check that no other service is using the required ports (5985, 9000):
+   <div class="highlight"><pre><span></span><code>ss<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">'5985|9000'</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>If you see database errors, the PostgreSQL data volume may be corrupted. Try recreating from scratch:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v<span class="w">   </span><span class="c1"># WARNING: This deletes all data</span>
+docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="port-9000-unreachable-websocket-service">Port 9000 unreachable (WebSocket service)<a class="headerlink" href="#port-9000-unreachable-websocket-service" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> The WebSocket service on port 9000 does not respond. Real-time updates in the UI stop working. Agents cannot connect.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Check that the WebSocket service is running:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>ps
+</code></pre></div>
+   All services should show <code>Up (healthy)</code>.</p>
+</li>
+<li>
+<p>If the WebSocket service is not starting, check its logs:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>faraday-server
+</code></pre></div></p>
+</li>
+<li>
+<p>Verify that port 9000 is mapped in your <code>docker-compose.yaml</code>:
+   <div class="highlight"><pre><span></span><code><span class="nt">ports</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"5985:5985"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"9000:9000"</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>If behind a reverse proxy (NGINX), ensure WebSocket upgrade headers are configured:
+   <div class="highlight"><pre><span></span><code><span class="k">location</span><span class="w"> </span><span class="s">/dispatcher</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://localhost:9000</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">proxy_http_version</span><span class="w"> </span><span class="mi">1</span><span class="s">.1</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Upgrade</span><span class="w"> </span><span class="nv">$http_upgrade</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Connection</span><span class="w"> </span><span class="s">"upgrade"</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="cannot-find-initial-password-in-docker">Cannot find initial password in Docker<a class="headerlink" href="#cannot-find-initial-password-in-docker" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> After <code>docker compose up</code>, you cannot log in to the web UI because the password is unknown.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Check the <code>change-password</code> service logs:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>change-password
+</code></pre></div></p>
+</li>
+<li>
+<p>If no password was printed, reset it manually:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>faraday-manage<span class="w"> </span>change-password
+</code></pre></div></p>
+</li>
+<li>
+<p>If the <code>faraday-manage</code> service is not available, exec into the server container:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>faraday-server<span class="w"> </span>faraday-manage<span class="w"> </span>change-password
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="database-initialization-fails-in-docker">Database initialization fails in Docker<a class="headerlink" href="#database-initialization-fails-in-docker" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> The server container exits with database errors on first startup.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Ensure the <code>db</code> (PostgreSQL) service is fully started before the server:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>db
+</code></pre></div>
+   Look for: <code>database system is ready to accept connections</code></p>
+</li>
+<li>
+<p>If you see permission errors, check that the PostgreSQL data volume has correct ownership:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>down
+docker<span class="w"> </span>volume<span class="w"> </span>rm<span class="w"> </span>&lt;project&gt;_faraday_postgres
+docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div></p>
+</li>
+<li>
+<p>For custom PostgreSQL configurations (external DB, cloud-managed), set the connection string in your environment or <code>server.ini</code>:
+   <div class="highlight"><pre><span></span><code><span class="nv">POSTGRES_USER</span><span class="o">=</span>faraday
+<span class="nv">POSTGRES_PASSWORD</span><span class="o">=</span>yourpassword
+<span class="nv">POSTGRES_HOST</span><span class="o">=</span>your-db-host
+<span class="nv">POSTGRES_DB</span><span class="o">=</span>faraday
+</code></pre></div></p>
+</li>
+</ol>
+<hr/>
+<h2 id="authentication-login">Authentication &amp; Login<a class="headerlink" href="#authentication-login" title="Permanent link">¶</a></h2>
+<h3 id="cannot-access-the-web-gui">Cannot access the Web GUI<a class="headerlink" href="#cannot-access-the-web-gui" title="Permanent link">¶</a></h3>
+<ol>
+<li>
+<p>Verify the server is running:
+   <div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>status-check
+</code></pre></div></p>
+</li>
+<li>
+<p>If the server is not running, start it:
+   <div class="highlight"><pre><span></span><code>faraday-server
+</code></pre></div>
+   Or in Docker:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div></p>
+</li>
+<li>
+<p>Access the UI at <code>http://localhost:5985</code> (or your configured address). If you changed <code>bind_address</code>, use that address instead.</p>
+</li>
+</ol>
+<h3 id="how-to-reset-the-password">How to reset the password<a class="headerlink" href="#how-to-reset-the-password" title="Permanent link">¶</a></h3>
+<div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>change-password
+</code></pre></div>
+<p>Enter the username (default: <code>faraday</code>) and the new password when prompted.</p>
+<p>In Docker:
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>faraday-manage<span class="w"> </span>change-password
+</code></pre></div></p>
+<h3 id="2fa-field-does-not-accept-paste">2FA field does not accept paste<a class="headerlink" href="#2fa-field-does-not-accept-paste" title="Permanent link">¶</a></h3>
+<p>If the two-factor authentication input field does not accept Ctrl+V paste, type the code manually or use your browser's autofill functionality.</p>
+<h3 id="flask_login-flask_security-compatibility-errors">flask_login / flask_security compatibility errors<a class="headerlink" href="#flask_login-flask_security-compatibility-errors" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> Login fails with errors about <code>fs_uniquifier</code> or <code>flask_login</code> version mismatches.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Ensure you have compatible versions installed. Check <code>requirements.txt</code> in the release:
+   <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>show<span class="w"> </span>flask-login<span class="w"> </span>flask-security-too
+</code></pre></div></p>
+</li>
+<li>
+<p>If using pip, install the exact versions specified:
+   <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div></p>
+</li>
+<li>
+<p>After upgrading flask-security, run database migrations:
+   <div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>migrate
+</code></pre></div></p>
+</li>
+</ol>
+<hr/>
+<h2 id="database-issues">Database Issues<a class="headerlink" href="#database-issues" title="Permanent link">¶</a></h2>
+<h3 id="database-migration-failures-during-upgrade">Database migration failures during upgrade<a class="headerlink" href="#database-migration-failures-during-upgrade" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> After upgrading Faraday, you see errors like:
+<div class="highlight"><pre><span></span><code>ERROR: relation 'vulnerability' does not exist
+</code></pre></div>
+or Alembic migration errors.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Always back up before upgrading:</strong>
+<div class="highlight"><pre><span></span><code>pg_dump<span class="w"> </span>-U<span class="w"> </span>faraday<span class="w"> </span>faraday<span class="w"> </span>&gt;<span class="w"> </span>faraday_backup_<span class="k">$(</span>date<span class="w"> </span>+%F<span class="k">)</span>.sql
+</code></pre></div></p>
+</li>
+<li>
+<p>Check current migration status:
+   <div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>migrate<span class="w"> </span>--revision<span class="w"> </span>heads
+</code></pre></div></p>
+</li>
+<li>
+<p>If a migration failed partway, try running it again:
+   <div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>migrate
+</code></pre></div></p>
+</li>
+<li>
+<p>If the database is in an inconsistent state, restore from backup and try the upgrade again:
+   <div class="highlight"><pre><span></span><code>psql<span class="w"> </span>-U<span class="w"> </span>faraday<span class="w"> </span>-d<span class="w"> </span>faraday<span class="w"> </span>&lt;<span class="w"> </span>faraday_backup.sql
+</code></pre></div></p>
+</li>
+<li>
+<p>For persistent migration issues, check <a href="https://github.com/infobyte/faraday/issues">GitHub Issues</a> for your specific error message.</p>
+</li>
+</ol>
+<h3 id="faraday-manage-initdb-fails"><code>faraday-manage initdb</code> fails<a class="headerlink" href="#faraday-manage-initdb-fails" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> Database initialization errors during first setup.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Ensure PostgreSQL is running and accessible:
+   <div class="highlight"><pre><span></span><code>pg_isready
+</code></pre></div></p>
+</li>
+<li>
+<p>Verify the PostgreSQL user has <code>CREATEDB</code> permission:
+   <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>psql<span class="w"> </span>-c<span class="w"> </span><span class="s2">"ALTER USER faraday CREATEDB;"</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>If you see encoding errors:
+   <div class="highlight"><pre><span></span><code>ERROR: new encoding (UTF8) is incompatible with the encoding of the template database (SQL_ASCII)
+</code></pre></div>
+   Fix the template database encoding:
+   <div class="highlight"><pre><span></span><code><span class="k">UPDATE</span><span class="w"> </span><span class="n">pg_database</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">datistemplate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">FALSE</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">datname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'template1'</span><span class="p">;</span>
+<span class="k">DROP</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">template1</span><span class="p">;</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">template1</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="k">TEMPLATE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">template0</span><span class="w"> </span><span class="k">ENCODING</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'UTF8'</span><span class="w"> </span><span class="n">LC_COLLATE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'en_US.UTF-8'</span><span class="w"> </span><span class="n">LC_CTYPE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'en_US.UTF-8'</span><span class="p">;</span>
+<span class="k">UPDATE</span><span class="w"> </span><span class="n">pg_database</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">datistemplate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">TRUE</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">datname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'template1'</span><span class="p">;</span>
+</code></pre></div>
+   Then retry <code>faraday-manage initdb</code>.</p>
+</li>
+<li>
+<p>If the Alembic log directory is missing:
+   <div class="highlight"><pre><span></span><code>FileNotFoundError: No such file or directory: '/home/faraday/.faraday/logs/alembic.log'
+</code></pre></div>
+   Create the directory:
+   <div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.faraday/logs
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="error-while-backing-up-the-database">Error while backing up the database<a class="headerlink" href="#error-while-backing-up-the-database" title="Permanent link">¶</a></h3>
+<p>If <code>pg_dump</code> fails with:
+<div class="highlight"><pre><span></span><code>FATAL: role "root" does not exist
+</code></pre></div></p>
+<p>Switch to the <code>postgres</code> system user first:
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>pg_dump<span class="w"> </span>faraday<span class="w"> </span>&gt;<span class="w"> </span>faraday_backup.sql
+</code></pre></div></p>
+<h3 id="changing-the-database-password-breaks-faraday">Changing the database password breaks Faraday<a class="headerlink" href="#changing-the-database-password-breaks-faraday" title="Permanent link">¶</a></h3>
+<p>After changing the PostgreSQL password, update the connection string in <code>~/.faraday/config/server.ini</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[database]</span>
+<span class="na">connection_string</span><span class="o">=</span><span class="s">postgresql+psycopg2://faraday:NEW_PASSWORD@localhost/faraday</span>
+</code></pre></div>
+<p>Then restart the server.</p>
+<hr/>
+<h2 id="report-import-plugins">Report Import &amp; Plugins<a class="headerlink" href="#report-import-plugins" title="Permanent link">¶</a></h2>
+<h3 id="report-is-not-being-imported">Report is not being imported<a class="headerlink" href="#report-is-not-being-imported" title="Permanent link">¶</a></h3>
+<ol>
+<li>
+<p>Verify your tool is listed in the <a href="../Plugin-List-v4/">Plugin List</a>. If not, you can <a href="../Basic-plugin-development/">create a custom plugin</a> or <a href="https://github.com/infobyte/faraday/issues">request support</a>.</p>
+</li>
+<li>
+<p><strong>Force plugin detection</strong> — Rename the report file with the plugin suffix:
+   <div class="highlight"><pre><span></span><code>myreport_faraday_Nmap.xml
+myreport_faraday_Nessus.nessus
+myreport_faraday_Nuclei.json
+</code></pre></div>
+   Then upload via the Web UI or copy to <code>~/.faraday/reports/{workspace_name}/</code>.</p>
+</li>
+<li>
+<p>Check the server logs for plugin parsing errors:
+   <div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"plugin\|import\|report"</span><span class="w"> </span>~/.faraday/logs/faraday-server.log
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="nuclei-reports-fail-to-import">Nuclei reports fail to import<a class="headerlink" href="#nuclei-reports-fail-to-import" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> Nuclei scan results are not imported, or imported data is missing fields.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Use Nuclei's <strong>JSON output</strong> format, not the default stdout or markdown:
+   <div class="highlight"><pre><span></span><code>nuclei<span class="w"> </span>-u<span class="w"> </span>target.com<span class="w"> </span>-json<span class="w"> </span>-o<span class="w"> </span>nuclei_results.json
+</code></pre></div></p>
+</li>
+<li>
+<p>Ensure you are using a compatible version of <code>faraday-plugins</code>. Update with:
+   <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>faraday-plugins
+</code></pre></div></p>
+</li>
+<li>
+<p>If sensitive fields are missing from vulnerability details, verify your Nuclei template includes severity and description fields.</p>
+</li>
+</ol>
+<h3 id="nessus-import-issues">Nessus import issues<a class="headerlink" href="#nessus-import-issues" title="Permanent link">¶</a></h3>
+<ol>
+<li>Export from Nessus in <code>.nessus</code> format (native XML), not CSV or HTML.</li>
+<li>If severity levels are not recognized, ensure the <code>.nessus</code> file contains the <code>risk_factor</code> and <code>severity</code> elements.</li>
+<li>For agent-based Nessus imports, verify the agent executor configuration includes correct Nessus API credentials.</li>
+</ol>
+<h3 id="nmap-xml-report-upload-fails">Nmap XML report upload fails<a class="headerlink" href="#nmap-xml-report-upload-fails" title="Permanent link">¶</a></h3>
+<ol>
+<li>Ensure the report is in XML format (<code>-oX</code> flag in Nmap):
+   <div class="highlight"><pre><span></span><code>nmap<span class="w"> </span>-sV<span class="w"> </span>-oX<span class="w"> </span>scan_results.xml<span class="w"> </span>target.com
+</code></pre></div></li>
+<li>Verify the XML is well-formed (not truncated by an interrupted scan).</li>
+<li>Try importing via the CLI for more detailed error output:
+   <div class="highlight"><pre><span></span><code>faraday-cli<span class="w"> </span>tool<span class="w"> </span>report<span class="w"> </span>scan_results.xml<span class="w"> </span>-w<span class="w"> </span>workspace_name
+</code></pre></div></li>
+</ol>
+<h3 id="large-reports-cause-errors-or-timeouts">Large reports cause errors or timeouts<a class="headerlink" href="#large-reports-cause-errors-or-timeouts" title="Permanent link">¶</a></h3>
+<p>For reports over 50–100 MB:</p>
+<ol>
+<li>Split the scan into smaller segments (by subnet, port range, or target group).</li>
+<li>Increase the Celery worker timeout if you control the deployment.</li>
+<li>Upload via the API with chunked processing if available.</li>
+<li>Monitor the reports queue for stuck tasks:
+   <div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>status-check
+</code></pre></div></li>
+</ol>
+<h3 id="a-plugin-added-too-much-information">A plugin added too much information<a class="headerlink" href="#a-plugin-added-too-much-information" title="Permanent link">¶</a></h3>
+<p>Go to the <strong>Activity Feed</strong> in the Web GUI, filter vulnerabilities by the relevant criteria (severity, date, service), select them, and click <strong>Delete</strong>.</p>
+<hr/>
+<h2 id="agents-dispatcher">Agents &amp; Dispatcher<a class="headerlink" href="#agents-dispatcher" title="Permanent link">¶</a></h2>
+<h3 id="agent-cannot-connect-to-faraday-server">Agent cannot connect to Faraday server<a class="headerlink" href="#agent-cannot-connect-to-faraday-server" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms:</strong> The agent dispatcher shows <code>ConnectionError: Unexpected status code 503</code> or <code>Cannot connect to host :9000</code>.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p>Verify the Faraday server and WebSocket service are running and port 9000 is accessible:
+   <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9000/status
+</code></pre></div></p>
+</li>
+<li>
+<p>Check the agent dispatcher configuration (<code>~/.faraday/config/dispatcher.ini</code> or environment variables):</p>
+</li>
+<li><code>server_url</code> must point to the Faraday server (e.g., <code>http://faraday-server:5985</code>)</li>
+<li>
+<p><code>websocket_url</code> must point to the WebSocket service (e.g., <code>ws://faraday-server:9000</code>)</p>
+</li>
+<li>
+<p>Ensure the agent's API token is valid and not expired. Re-register the agent if needed.</p>
+</li>
+<li>
+<p>If running the dispatcher in Docker, ensure it is on the same Docker network as the Faraday server:
+   <div class="highlight"><pre><span></span><code><span class="nt">networks</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">faraday_network</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>Check for websockets library version mismatches:
+   <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>show<span class="w"> </span>websockets<span class="w"> </span>python-socketio
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="agent-dispatcher-docker-image-is-outdated">Agent dispatcher Docker image is outdated<a class="headerlink" href="#agent-dispatcher-docker-image-is-outdated" title="Permanent link">¶</a></h3>
+<p>The <code>:latest</code> tag for the dispatcher image may lag behind releases. Pin to a specific version:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">faradaysec/faraday_agent_dispatcher:3.7.0</span>
+</code></pre></div>
+<p>Check <a href="https://hub.docker.com/r/faradaysec/faraday_agent_dispatcher/tags">Docker Hub</a> for the latest tag.</p>
+<h3 id="executor-errors-nmap-nuclei-nessus-openvas">Executor errors (Nmap, Nuclei, Nessus, OpenVAS)<a class="headerlink" href="#executor-errors-nmap-nuclei-nessus-openvas" title="Permanent link">¶</a></h3>
+<ol>
+<li>Verify the executor's dependencies are installed inside the executor environment.</li>
+<li>Check executor logs for specific error messages.</li>
+<li>Test the executor command manually outside of Faraday to verify it works.</li>
+<li>For Nessus executors, the agent supports API key authentication (not just username/password). Check the executor parameters.</li>
+</ol>
+<h3 id="run-button-is-greyed-out">"Run" button is greyed out<a class="headerlink" href="#run-button-is-greyed-out" title="Permanent link">¶</a></h3>
+<ol>
+<li>Ensure the agent is in <strong>Connected</strong> status in the Agents panel.</li>
+<li>Verify the workspace has at least one executor configured.</li>
+<li>Check that your user has permissions to run agents in the current workspace.</li>
+</ol>
+<h3 id="how-to-delete-an-agent">How to delete an agent<a class="headerlink" href="#how-to-delete-an-agent" title="Permanent link">¶</a></h3>
+<p>Use the API:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:5985/_api/v3/agents/<span class="o">{</span>agent_id<span class="o">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token &lt;your_token&gt;"</span>
+</code></pre></div>
+<p>Or use the Web UI Agents panel (Professional/Corporate editions).</p>
+<hr/>
+<h2 id="cli-issues">CLI Issues<a class="headerlink" href="#cli-issues" title="Permanent link">¶</a></h2>
+<h3 id="cli-cannot-connect-to-faraday-server">CLI cannot connect to Faraday server<a class="headerlink" href="#cli-cannot-connect-to-faraday-server" title="Permanent link">¶</a></h3>
+<ol>
+<li>
+<p>Verify the CLI is configured with the correct server URL:
+   <div class="highlight"><pre><span></span><code>faraday-cli<span class="w"> </span>auth
+</code></pre></div></p>
+</li>
+<li>
+<p>If connecting to a Docker deployment from outside the Docker network, use the host's IP/hostname, not the internal Docker service name.</p>
+</li>
+<li>
+<p>If using HTTPS behind a reverse proxy, ensure the CLI trusts the certificate:
+   <div class="highlight"><pre><span></span><code>faraday-cli<span class="w"> </span>auth<span class="w"> </span>--url<span class="w"> </span>https://faraday.example.com<span class="w"> </span>--ignore-ssl
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="cli-returns-500-errors-when-sending-data">CLI returns 500 errors when sending data<a class="headerlink" href="#cli-returns-500-errors-when-sending-data" title="Permanent link">¶</a></h3>
+<ol>
+<li>
+<p>Check the server logs for the actual error:
+   <div class="highlight"><pre><span></span><code>grep<span class="w"> </span>ERROR<span class="w"> </span>~/.faraday/logs/faraday-server.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-20
+</code></pre></div></p>
+</li>
+<li>
+<p>Verify the target workspace exists and you have write permissions.</p>
+</li>
+<li>
+<p>Ensure the report format is supported — try uploading the same file via the Web UI to isolate whether the issue is CLI-specific.</p>
+</li>
+</ol>
+<h3 id="cli-fails-to-detect-report-format">CLI fails to detect report format<a class="headerlink" href="#cli-fails-to-detect-report-format" title="Permanent link">¶</a></h3>
+<p>If <code>faraday-cli tool report</code> says "Failed to detect report":</p>
+<ol>
+<li>
+<p>Specify the plugin explicitly:
+   <div class="highlight"><pre><span></span><code>faraday-cli<span class="w"> </span>tool<span class="w"> </span>report<span class="w"> </span>output.json<span class="w"> </span>--plugin-id<span class="w"> </span>nuclei
+</code></pre></div></p>
+</li>
+<li>
+<p>Update faraday-plugins to the latest version:
+   <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>faraday-plugins
+</code></pre></div></p>
+</li>
+</ol>
+<hr/>
+<h2 id="server-configuration">Server Configuration<a class="headerlink" href="#server-configuration" title="Permanent link">¶</a></h2>
+<h3 id="cant-access-faraday-server-remotely">Can't access Faraday Server remotely<a class="headerlink" href="#cant-access-faraday-server-remotely" title="Permanent link">¶</a></h3>
+<p>Edit <code>~/.faraday/config/server.ini</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[faraday_server]</span>
+<span class="na">port</span><span class="o">=</span><span class="s">5985</span>
+<span class="na">bind_address</span><span class="o">=</span><span class="s">0.0.0.0</span>
+</code></pre></div>
+<p>Restart the server. If using a firewall, ensure port 5985 (and 9000 for WebSocket) is open.</p>
+<h3 id="nginx-reverse-proxy-configuration">NGINX reverse proxy configuration<a class="headerlink" href="#nginx-reverse-proxy-configuration" title="Permanent link">¶</a></h3>
+<p>Ensure your NGINX config includes proper proxy settings:</p>
+<div class="highlight"><pre><span></span><code><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">faraday.example.com</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">ssl_certificate</span><span class="w"> </span><span class="s">/path/to/cert.pem</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">ssl_certificate_key</span><span class="w"> </span><span class="s">/path/to/key.pem</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://localhost:5985/</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_redirect</span><span class="w"> </span><span class="s">http://</span><span class="w"> </span><span class="nv">$scheme://</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-For</span><span class="w"> </span><span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-Proto</span><span class="w"> </span><span class="nv">$scheme</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/dispatcher</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://localhost:9000</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_http_version</span><span class="w"> </span><span class="mi">1</span><span class="s">.1</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Upgrade</span><span class="w"> </span><span class="nv">$http_upgrade</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Connection</span><span class="w"> </span><span class="s">"upgrade"</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Generate a baseline config with:</p>
+<div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>generate-nginx-config
+</code></pre></div>
+<h3 id="smtp-is-not-being-saved-from-the-ui">SMTP is not being saved from the UI<a class="headerlink" href="#smtp-is-not-being-saved-from-the-ui" title="Permanent link">¶</a></h3>
+<p>Update SMTP settings manually via the CLI:</p>
+<div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>settings<span class="w"> </span>-a<span class="w"> </span>update<span class="w"> </span>smtp
+</code></pre></div>
+<p>Set each field (host, port, username, password, sender, ssl, enabled) as prompted.</p>
+<h3 id="ldap-reconfiguration-after-faraday-v315">LDAP reconfiguration (after Faraday v3.15)<a class="headerlink" href="#ldap-reconfiguration-after-faraday-v315" title="Permanent link">¶</a></h3>
+<p>LDAP settings were moved to a database-backed configuration system. Reconfigure via CLI:</p>
+<div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>settings<span class="w"> </span>-a<span class="w"> </span>update<span class="w"> </span>ldap
+</code></pre></div>
+<p>Update all fields according to your directory server configuration. Key fields include:</p>
+<ul>
+<li><code>enabled</code> — <code>True</code> to activate LDAP</li>
+<li><code>server</code> — LDAP server hostname or IP</li>
+<li><code>port</code> — Usually 389 (LDAP) or 636 (LDAPS)</li>
+<li><code>use_ldaps</code> / <code>use_start_tls</code> — Enable TLS</li>
+<li><code>domain_dn</code> — Base DN for searches (e.g., <code>DC=company,DC=com</code>)</li>
+<li><code>user_attribute</code> — Usually <code>sAMAccountName</code> (AD) or <code>uid</code> (OpenLDAP)</li>
+</ul>
+<h3 id="executive-reports-disappeared-after-enabling-markdown">Executive reports disappeared after enabling markdown<a class="headerlink" href="#executive-reports-disappeared-after-enabling-markdown" title="Permanent link">¶</a></h3>
+<p>Markdown report templates are stored at:</p>
+<div class="highlight"><pre><span></span><code>~/.faraday/executive_reports_templates/markdown_generic
+~/.faraday/executive_reports_templates/markdown_grouped
+</code></pre></div>
+<p>Verify these directories exist and contain your template files.</p>
+<hr/>
+<h2 id="python-dependency-issues">Python Dependency Issues<a class="headerlink" href="#python-dependency-issues" title="Permanent link">¶</a></h2>
+<h3 id="importerror-cannot-import-name-jsonencoder-from-flaskjson">ImportError: cannot import name 'JSONEncoder' from 'flask.json'<a class="headerlink" href="#importerror-cannot-import-name-jsonencoder-from-flaskjson" title="Permanent link">¶</a></h3>
+<p>This occurs when Flask is updated beyond the version Faraday was tested with. Pin dependencies to the versions in <code>requirements.txt</code>:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+<h3 id="attributeerror-greensocket-has-no-attribute-sendmsg">AttributeError: 'GreenSocket' has no attribute 'sendmsg'<a class="headerlink" href="#attributeerror-greensocket-has-no-attribute-sendmsg" title="Permanent link">¶</a></h3>
+<p>This is a gevent/greenlet compatibility issue. Ensure matching versions:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>gevent<span class="w"> </span>greenlet
+</code></pre></div>
+<h3 id="unicodeencodeerror-ascii-codec-cant-encode-character">UnicodeEncodeError: 'ascii' codec can't encode character<a class="headerlink" href="#unicodeencodeerror-ascii-codec-cant-encode-character" title="Permanent link">¶</a></h3>
+<p>If the database encoding is ASCII instead of UTF-8:</p>
+<ol>
+<li>
+<p>Check the current encoding:
+   <div class="highlight"><pre><span></span><code>faraday-manage<span class="w"> </span>sql-shell
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="k">SHOW</span><span class="w"> </span><span class="n">SERVER_ENCODING</span><span class="p">;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>If the encoding is not UTF-8, you must migrate the database:</p>
+</li>
+<li>Dump the database</li>
+<li>Drop and recreate with UTF-8 encoding</li>
+<li>Reload the data</li>
+</ol>
+<hr/>
+<h2 id="startup-performance">Startup &amp; Performance<a class="headerlink" href="#startup-performance" title="Permanent link">¶</a></h2>
+<h3 id="server-fails-to-start-on-kali-linux">Server fails to start on Kali Linux<a class="headerlink" href="#server-fails-to-start-on-kali-linux" title="Permanent link">¶</a></h3>
+<ol>
+<li>
+<p>Check for port conflicts — Kali may have other services on port 5985:
+   <div class="highlight"><pre><span></span><code>ss<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">5985</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>Ensure all dependencies are installed:
+   <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>postgresql<span class="w"> </span>redis-server
+</code></pre></div></p>
+</li>
+<li>
+<p>Start required services:
+   <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>postgresql<span class="w"> </span>redis-server
+</code></pre></div></p>
+</li>
+<li>
+<p>If using HTTPS and the server fails to start, verify your SSL certificates are valid and readable.</p>
+</li>
+</ol>
+<h3 id="redis-connection-refused">Redis connection refused<a class="headerlink" href="#redis-connection-refused" title="Permanent link">¶</a></h3>
+<ol>
+<li>
+<p>Verify Redis is running:
+   <div class="highlight"><pre><span></span><code>redis-cli<span class="w"> </span>ping
+</code></pre></div>
+   Should return <code>PONG</code>.</p>
+</li>
+<li>
+<p>If Redis is not installed:
+   <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>redis-server
+sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>redis-server
+</code></pre></div></p>
+</li>
+<li>
+<p>Check the Redis connection settings in <code>server.ini</code> if using a non-default host/port.</p>
+</li>
+</ol>
+<h3 id="port-5985-already-in-use">Port 5985 already in use<a class="headerlink" href="#port-5985-already-in-use" title="Permanent link">¶</a></h3>
+<p>Another process is using the default Faraday port:</p>
+<div class="highlight"><pre><span></span><code>ss<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">5985</span>
+</code></pre></div>
+<p>Either stop the conflicting process or change Faraday's port in <code>server.ini</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[faraday_server]</span>
+<span class="na">port</span><span class="o">=</span><span class="s">5986</span>
+</code></pre></div>
+<hr/>
+<h2 id="still-need-help">Still need help?<a class="headerlink" href="#still-need-help" title="Permanent link">¶</a></h2>
+<ul>
+<li><strong>Community edition:</strong> <a href="https://github.com/infobyte/faraday/issues">GitHub Issues</a></li>
+<li><strong>Professional / Corporate:</strong> <a href="https://support.faradaysec.com/portal/en/newticket">Support Portal</a></li>
+<li><strong>FAQ:</strong> <a href="../FAQ/">Frequently Asked Questions</a></li>
+<li><strong>Installation issues:</strong> <a href="../Install-guide-Troubleshooting/">Installation Troubleshooting</a></li>
+</ul>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/infobyte/faraday/" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</a>
+<a class="md-social__link" href="https://twitter.com/faradaysec" rel="noopener" target="_blank" title="twitter.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"></path></svg>
+</a>
+<a class="md-social__link" href="https://www.linkedin.com/company/faradaysec/" rel="noopener" target="_blank" title="www.linkedin.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/faradaysec" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script src="https://unpkg.com/mermaid@8.5.1/dist/mermaid.min.js"></script>
+</body>
+</html>

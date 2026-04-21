@@ -1,0 +1,2740 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Faraday" name="description"/>
+<meta content="Faradaysec" name="author"/>
+<link href="https://faradaysec.com/agent-technical-reference/" rel="canonical"/>
+<link href="../images/favicon.svg" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>Agent Dispatcher — Technical Reference - Faraday</title>
+<link href="../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../stylesheets/faraday_doc.css" rel="stylesheet"/>
+<link href="../stylesheets/hover.css" rel="stylesheet"/>
+<link href="https://unpkg.com/mermaid@8.5.1/dist/mermaid.css" rel="stylesheet"/>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-BEQW65R59H"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-BEQW65R59H",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-BEQW65R59H",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#agent-dispatcher-technical-reference">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Faraday" class="md-header__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Faraday
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Agent Dispatcher — Technical Reference
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Light" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Light">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="dark" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="dark">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Faraday" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Faraday">
+<img alt="logo" src="../images/favicon.svg"/>
+</a>
+    Faraday
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/infobyte/faraday" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</div>
+<div class="md-source__repository">
+    infobyte/faraday
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_1_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../First-Steps/">
+<span class="md-ellipsis">
+    
+  
+    First Steps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Using Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Using Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Users/">
+<span class="md-ellipsis">
+    
+  
+    Users and Roles
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Workspaces/">
+<span class="md-ellipsis">
+    
+  
+    Workspaces
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Activity-Dashboard/">
+<span class="md-ellipsis">
+    
+  
+    Activity Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulns/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Grouping/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability Grouping
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Vulnerability-Templates-KB/">
+<span class="md-ellipsis">
+    
+  
+    Vulnerability KB
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Assets-and-Services-v4/">
+<span class="md-ellipsis">
+    
+  
+    Assets and Services
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_8" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_8_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reports
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Report-v4/">
+<span class="md-ellipsis">
+    
+  
+    What is Report
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../How-to-build-your-template/">
+<span class="md-ellipsis">
+    
+  
+    How to Build Your Own Template
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Jinja2-context/">
+<span class="md-ellipsis">
+    
+  
+    Jinja2 Context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../import/">
+<span class="md-ellipsis">
+    
+  
+    Importing
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Dashboard-v4/">
+<span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Custom-Fields-v4/">
+<span class="md-ellipsis">
+    
+  
+    Custom Attributes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_11_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Notifications
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications/">
+<span class="md-ellipsis">
+    
+  
+    Notifications Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Slack/">
+<span class="md-ellipsis">
+    
+  
+    Configure Slack Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Notifications-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Notifications
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Planner/">
+<span class="md-ellipsis">
+    
+  
+    Planner
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_13" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_13_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_13">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-gitlab/">
+<span class="md-ellipsis">
+    
+  
+    GitLab
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-jira/">
+<span class="md-ellipsis">
+    
+  
+    Jira
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-solarwinds/">
+<span class="md-ellipsis">
+    
+  
+    SolarWinds
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicenow/">
+<span class="md-ellipsis">
+    
+  
+    ServiceNow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-servicedesk/">
+<span class="md-ellipsis">
+    
+  
+    ServiceDesk
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_14">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../faraday-server-settings/">
+<span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP/">
+<span class="md-ellipsis">
+    
+  
+    LDAP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../LDAP-OKTA/">
+<span class="md-ellipsis">
+    
+  
+    LDAP with OKTA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_14_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_14_4" id="__nav_3_14_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    SSO
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_14_4_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_3_14_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    SSO
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML/">
+<span class="md-ellipsis">
+    
+  
+    Faraday configuration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Auth0/">
+<span class="md-ellipsis">
+    
+  
+    Auth0 integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Google/">
+<span class="md-ellipsis">
+    
+  
+    Google integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Okta/">
+<span class="md-ellipsis">
+    
+  
+    Okta integration
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SAML-Azure/">
+<span class="md-ellipsis">
+    
+  
+    Azure integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../2-Factor-Authentication/">
+<span class="md-ellipsis">
+    
+  
+    2nd Factor
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Architecture/">
+<span class="md-ellipsis">
+    
+  
+    Arch
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_16" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_16" id="__nav_3_16_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_16_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_16">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../api-swagger/">
+<span class="md-ellipsis">
+    
+  
+    Openapi
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Server/">
+<span class="md-ellipsis">
+    
+  
+    API Server
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../API-Token/">
+<span class="md-ellipsis">
+    
+  
+    API Token
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_17" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_17" id="__nav_3_17_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_17_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_17">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Faraday Manage
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-Manage-Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Manage Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Deduplicated-Assets/">
+<span class="md-ellipsis">
+    
+  
+    Deduplicated Assets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3_18" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3_18" id="__nav_3_18_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Extras
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_18_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_3_18">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Extras
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Burp-proxy-extender/">
+<span class="md-ellipsis">
+    
+  
+    Burp
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../beef/">
+<span class="md-ellipsis">
+    
+  
+    Beef
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Automation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Automation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_4_1">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../agents-v4/">
+<span class="md-ellipsis">
+    
+  
+    About Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4_1_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4_1_2" id="__nav_4_1_2_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Agent List
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_1_2_label" class="md-nav" data-md-level="3">
+<label class="md-nav__title" for="__nav_4_1_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Agent List
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-appscan/">
+<span class="md-ellipsis">
+    
+  
+    AppScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-arachni/">
+<span class="md-ellipsis">
+    
+  
+    Arachni
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-burp/">
+<span class="md-ellipsis">
+    
+  
+    Burp Suite
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-cybervision/">
+<span class="md-ellipsis">
+    
+  
+    Cyber Vision
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-codeql/">
+<span class="md-ellipsis">
+    
+  
+    Code QL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-crackmapexec/">
+<span class="md-ellipsis">
+    
+  
+    CrackMapExec
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-dependabot/">
+<span class="md-ellipsis">
+    
+  
+    Dependabot
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gitgub-secrets/">
+<span class="md-ellipsis">
+    
+  
+    Github Secrets
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-gvm-openvas/">
+<span class="md-ellipsis">
+    
+  
+    GVM OpenVAS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-insightvm/">
+<span class="md-ellipsis">
+    
+  
+    InsightVM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nessus/">
+<span class="md-ellipsis">
+    
+  
+    Nessus
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nikto2/">
+<span class="md-ellipsis">
+    
+  
+    Nikto 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nmap/">
+<span class="md-ellipsis">
+    
+  
+    NMap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-nuclei/">
+<span class="md-ellipsis">
+    
+  
+    Nuclei
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-openvas-legacy/">
+<span class="md-ellipsis">
+    
+  
+    OpenVAS Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-qualys/">
+<span class="md-ellipsis">
+    
+  
+    Qualys
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-report-processor/">
+<span class="md-ellipsis">
+    
+  
+    Report Processor
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-shodan2/">
+<span class="md-ellipsis">
+    
+  
+    Shodan 2
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sonarqube/">
+<span class="md-ellipsis">
+    
+  
+    SonarQube
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-sublist3r/">
+<span class="md-ellipsis">
+    
+  
+    Sublist3r
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenableio/">
+<span class="md-ellipsis">
+    
+  
+    TenableIO
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-tenablesc/">
+<span class="md-ellipsis">
+    
+  
+    TenableSC
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-w3af/">
+<span class="md-ellipsis">
+    
+  
+    W3af
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan/">
+<span class="md-ellipsis">
+    
+  
+    WPScan
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-wpscan-legacy/">
+<span class="md-ellipsis">
+    
+  
+    WPScan Legacy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../executors/executor-zap/">
+<span class="md-ellipsis">
+    
+  
+    Zap
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Scheduling/">
+<span class="md-ellipsis">
+    
+  
+    Scheduler, Pipelines and Jobs
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Installing Faraday
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Installing Faraday
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Linux/">
+<span class="md-ellipsis">
+    
+  
+    Linux
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Redhat-8/">
+<span class="md-ellipsis">
+    
+  
+    RedHat 8/Centos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Docker/">
+<span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-community/">
+<span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Update/">
+<span class="md-ellipsis">
+    
+  
+    Update
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Advanced/">
+<span class="md-ellipsis">
+    
+  
+    Advanced Install
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Remote-PostgreSQL/">
+<span class="md-ellipsis">
+    
+  
+    Remote PostgreSQL
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../NGINX-Setup/">
+<span class="md-ellipsis">
+    
+  
+    NGINX (SSL Config)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Install-guide-Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Backup-v4/">
+<span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Changelog
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../RELEASE/">
+<span class="md-ellipsis">
+    
+  
+    Faraday
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Faraday-MCP/">
+<span class="md-ellipsis">
+    
+  
+    Faraday MCP
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../faraday-cli/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Cli
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Settings-v4/">
+<span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    For Developers
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    For Developers
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Development-setup/">
+<span class="md-ellipsis">
+    
+  
+    Faraday Developer Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Basic-plugin-development/">
+<span class="md-ellipsis">
+    
+  
+    Plugin Development
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    FAQs
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Contact-us/">
+<span class="md-ellipsis">
+    
+  
+    Contact Us
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../FAQ/">
+<span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Plugin-List-v4/">
+<span class="md-ellipsis">
+    
+  
+    Supported-Plugins
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#table-of-contents">
+<span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#architecture-overview">
+<span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#components">
+<span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+</a>
+<nav aria-label="Components" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#faraday-server">
+<span class="md-ellipsis">
+      
+        Faraday Server
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agent-dispatcher">
+<span class="md-ellipsis">
+      
+        Agent Dispatcher
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executors">
+<span class="md-ellipsis">
+      
+        Executors
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#communication-protocol">
+<span class="md-ellipsis">
+      
+        Communication Protocol
+      
+    </span>
+</a>
+<nav aria-label="Communication Protocol" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rest-api-endpoints">
+<span class="md-ellipsis">
+      
+        REST API Endpoints
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#socketio-events">
+<span class="md-ellipsis">
+      
+        Socket.IO Events
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#websocket-messages-legacy">
+<span class="md-ellipsis">
+      
+        WebSocket Messages (legacy)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agent-registration-flow">
+<span class="md-ellipsis">
+      
+        Agent Registration Flow
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executor-execution-flow">
+<span class="md-ellipsis">
+      
+        Executor Execution Flow
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#environment-variable-system">
+<span class="md-ellipsis">
+      
+        Environment Variable System
+      
+    </span>
+</a>
+<nav aria-label="Environment Variable System" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#variable-prefixes">
+<span class="md-ellipsis">
+      
+        Variable prefixes
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#common-agent-parameters">
+<span class="md-ellipsis">
+      
+        Common agent parameters
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#parameter-type-system">
+<span class="md-ellipsis">
+      
+        Parameter type system
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#result-submission-pipeline">
+<span class="md-ellipsis">
+      
+        Result Submission Pipeline
+      
+    </span>
+</a>
+<nav aria-label="Result Submission Pipeline" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#stdout-processing">
+<span class="md-ellipsis">
+      
+        Stdout processing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#stderr-processing">
+<span class="md-ellipsis">
+      
+        Stderr processing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#bulk-create-payload-format">
+<span class="md-ellipsis">
+      
+        Bulk create payload format
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#async-architecture">
+<span class="md-ellipsis">
+      
+        Async Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#configuration-internals">
+<span class="md-ellipsis">
+      
+        Configuration Internals
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#official-executor-manifest-system">
+<span class="md-ellipsis">
+      
+        Official Executor Manifest System
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#custom-executor-development">
+<span class="md-ellipsis">
+      
+        Custom Executor Development
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#security-considerations">
+<span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="agent-dispatcher-technical-reference">Agent Dispatcher — Technical Reference<a class="headerlink" href="#agent-dispatcher-technical-reference" title="Permanent link">¶</a></h1>
+<p><strong>Dispatcher version:</strong> 3.9.1
+<strong>Faraday server version:</strong> 5.19.0
+<strong>Communication protocol:</strong> Socket.IO (v3.9.1) / WebSocket (legacy)
+<strong>Async framework:</strong> Python asyncio</p>
+<p>This document provides a deep technical reference for the Faraday Agent Dispatcher, covering its architecture, communication protocols, executor lifecycle, and data flow.</p>
+<hr/>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">¶</a></h2>
+<ul>
+<li><a href="#architecture-overview">Architecture Overview</a></li>
+<li><a href="#components">Components</a></li>
+<li><a href="#faraday-server">Faraday Server</a></li>
+<li><a href="#agent-dispatcher">Agent Dispatcher</a></li>
+<li><a href="#executors">Executors</a></li>
+<li><a href="#communication-protocol">Communication Protocol</a></li>
+<li><a href="#rest-api-endpoints">REST API Endpoints</a></li>
+<li><a href="#socketio-events">Socket.IO Events</a></li>
+<li><a href="#websocket-messages-legacy">WebSocket Messages (legacy)</a></li>
+<li><a href="#agent-registration-flow">Agent Registration Flow</a></li>
+<li><a href="#executor-execution-flow">Executor Execution Flow</a></li>
+<li><a href="#environment-variable-system">Environment Variable System</a></li>
+<li><a href="#variable-prefixes">Variable prefixes</a></li>
+<li><a href="#common-agent-parameters">Common agent parameters</a></li>
+<li><a href="#parameter-type-system">Parameter type system</a></li>
+<li><a href="#result-submission-pipeline">Result Submission Pipeline</a></li>
+<li><a href="#stdout-processing">Stdout processing</a></li>
+<li><a href="#stderr-processing">Stderr processing</a></li>
+<li><a href="#bulk-create-payload-format">Bulk create payload format</a></li>
+<li><a href="#async-architecture">Async Architecture</a></li>
+<li><a href="#configuration-internals">Configuration Internals</a></li>
+<li><a href="#official-executor-manifest-system">Official Executor Manifest System</a></li>
+<li><a href="#custom-executor-development">Custom Executor Development</a></li>
+<li><a href="#security-considerations">Security Considerations</a></li>
+</ul>
+<hr/>
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">¶</a></h2>
+<div class="highlight"><pre><span></span><code>+------------------+       Socket.IO       +-------------------+
+|                  | &lt;-------------------&gt; |                   |
+|  Faraday Server  |    REST API (HTTPS)   | Agent Dispatcher  |
+|  (Flask + Redis) | &lt;-------------------&gt; | (Python asyncio)  |
+|                  |                       |                   |
++------------------+                       +--------+----------+
+       |                                           |
+       | bulk_create API                           | subprocess
+       |                                           | (stdin/stdout/stderr)
+       v                                           v
++------------------+                       +-------------------+
+|   PostgreSQL     |                       |   Executor        |
+|   (results)      |                       |   (nmap, nuclei,  |
++------------------+                       |    burp, etc.)    |
+                                           +-------------------+
+</code></pre></div>
+<p>The dispatcher is a <strong>single-process, async</strong> Python application. It:</p>
+<ol>
+<li>Maintains a persistent Socket.IO connection to the Faraday server</li>
+<li>Receives RUN commands from the server (triggered by UI, scheduler, or API)</li>
+<li>Spawns executor scripts as subprocesses</li>
+<li>Reads stdout (JSON data) and stderr (logs) concurrently</li>
+<li>POSTs each JSON line to the Faraday <code>bulk_create</code> endpoint</li>
+<li>Reports execution status back via Socket.IO</li>
+</ol>
+<hr/>
+<h2 id="components">Components<a class="headerlink" href="#components" title="Permanent link">¶</a></h2>
+<h3 id="faraday-server">Faraday Server<a class="headerlink" href="#faraday-server" title="Permanent link">¶</a></h3>
+<p>The Faraday server (Flask application) manages agents through these modules:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Location</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api/modules/agent.py</code></td>
+<td>Agent CRUD, token management, run endpoint</td>
+<td>Agent lifecycle</td>
+</tr>
+<tr>
+<td><code>api/modules/agent_execution.py</code></td>
+<td>Execution history tracking</td>
+<td>Read-only history</td>
+</tr>
+<tr>
+<td><code>api/modules/agent_auth_token.py</code></td>
+<td>Registration token generation</td>
+<td>Token management</td>
+</tr>
+<tr>
+<td><code>api/modules/agents_schedule.py</code></td>
+<td>Scheduler CRUD, manual trigger</td>
+<td>Cron scheduling</td>
+</tr>
+<tr>
+<td>WebSocket server (Socket.IO)</td>
+<td><code>/dispatcher</code> namespace</td>
+<td>Real-time communication</td>
+</tr>
+</tbody>
+</table>
+<h3 id="agent-dispatcher">Agent Dispatcher<a class="headerlink" href="#agent-dispatcher" title="Permanent link">¶</a></h3>
+<p>The dispatcher (<code>faraday_agent_dispatcher</code>) is composed of these modules:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dispatcher</strong></td>
+<td><code>dispatcher_io.py</code></td>
+<td>Core class: registration, Socket.IO connection, executor management</td>
+</tr>
+<tr>
+<td><strong>DispatcherNamespace</strong></td>
+<td><code>dispatcher_io.py</code></td>
+<td>Socket.IO event handler (on_connect, on_run, on_disconnect)</td>
+</tr>
+<tr>
+<td><strong>Executor</strong></td>
+<td><code>executor.py</code></td>
+<td>Executor model: config validation, command resolution, dependency checks</td>
+</tr>
+<tr>
+<td><strong>StdOutLineProcessor</strong></td>
+<td><code>executor_helper.py</code></td>
+<td>Reads executor stdout, parses JSON, POSTs to bulk_create API</td>
+</tr>
+<tr>
+<td><strong>StdErrLineProcessor</strong></td>
+<td><code>executor_helper.py</code></td>
+<td>Reads executor stderr, logs to dispatcher output</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>config.py</code></td>
+<td>YAML/INI configuration loading and validation</td>
+</tr>
+<tr>
+<td><strong>CLI</strong></td>
+<td><code>cli/main.py</code></td>
+<td>Click-based CLI entry point (run, config-wizard)</td>
+</tr>
+<tr>
+<td><strong>Wizard</strong></td>
+<td><code>cli/wizard.py</code></td>
+<td>Interactive configuration wizard</td>
+</tr>
+</tbody>
+</table>
+<h3 id="executors">Executors<a class="headerlink" href="#executors" title="Permanent link">¶</a></h3>
+<p>Executors are standalone scripts located at:</p>
+<div class="highlight"><pre><span></span><code>faraday_agent_dispatcher/static/executors/official/
+</code></pre></div>
+<p>Each official executor has a corresponding manifest JSON file in <code>faraday_agent_parameters_types</code> that defines:
+- Required environment variables (credentials)
+- Runtime parameters (targets, options) with types and mandatory flags
+- Command template with dependencies
+- Tool category metadata</p>
+<hr/>
+<h2 id="communication-protocol">Communication Protocol<a class="headerlink" href="#communication-protocol" title="Permanent link">¶</a></h2>
+<h3 id="rest-api-endpoints">REST API Endpoints<a class="headerlink" href="#rest-api-endpoints" title="Permanent link">¶</a></h3>
+<p>The dispatcher uses these Faraday server REST endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Auth</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/_api/config</code></td>
+<td>GET</td>
+<td>None</td>
+<td>Connectivity check (health check)</td>
+</tr>
+<tr>
+<td><code>/_api/v3/agents</code></td>
+<td>POST</td>
+<td>Registration token</td>
+<td>Register new agent, returns agent token</td>
+</tr>
+<tr>
+<td><code>/_api/v3/agent_websocket_token</code></td>
+<td>POST</td>
+<td>Agent token</td>
+<td>Obtain Socket.IO authentication token</td>
+</tr>
+<tr>
+<td><code>/_api/v3/ws/{workspace}/bulk_create</code></td>
+<td>POST</td>
+<td>Agent token</td>
+<td>Submit scan results (hosts, services, vulns)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Authentication headers:</strong>
+- Registration: <code>Authorization: Token &lt;registration_token&gt;</code> (POST body)
+- Agent operations: <code>Authorization: Agent &lt;agent_token&gt;</code></p>
+<h3 id="socketio-events">Socket.IO Events<a class="headerlink" href="#socketio-events" title="Permanent link">¶</a></h3>
+<p>The dispatcher connects to the <code>/dispatcher</code> Socket.IO namespace.</p>
+<p><strong>Agent → Server events:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>join_agent</code></td>
+<td><code>{action: "JOIN_AGENT", token, executors: [{executor_name, args, category, tool}]}</code></td>
+<td>On connect</td>
+</tr>
+<tr>
+<td><code>run_status</code></td>
+<td><code>{action: "RUN_STATUS", execution_ids, executor_name, running, successful, message}</code></td>
+<td>During/after execution</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Server → Agent events:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run</code></td>
+<td><code>{action: "RUN", execution_ids, workspaces, executor, args, plugin_args}</code></td>
+<td>Triggered by UI/scheduler/API</td>
+</tr>
+</tbody>
+</table>
+<h3 id="websocket-messages-legacy">WebSocket Messages (legacy)<a class="headerlink" href="#websocket-messages-legacy" title="Permanent link">¶</a></h3>
+<p>Older dispatcher versions used raw WebSocket connections to <code>/websockets</code>. The message format is similar but uses <code>JSON.dumps</code> over a raw WebSocket connection instead of Socket.IO events. The legacy code path still exists in <code>dispatcher.py</code> but the active path in v3.9.1 uses Socket.IO via <code>dispatcher_io.py</code>.</p>
+<hr/>
+<h2 id="agent-registration-flow">Agent Registration Flow<a class="headerlink" href="#agent-registration-flow" title="Permanent link">¶</a></h2>
+<div class="highlight"><pre><span></span><code>Agent Dispatcher                              Faraday Server
+      |                                              |
+      |--- GET /_api/config -----------------------&gt;|  (1) Connection check
+      |&lt;-- 200 OK ----------------------------------|
+      |                                              |
+      |--- POST /_api/v3/agents -------------------&gt;|  (2) Register agent
+      |   {token, name, description}                 |      (one-time, with reg token)
+      |&lt;-- 200 {token: "&lt;agent_token&gt;"} ------------|
+      |                                              |
+      |   [agent_token saved to config YAML]         |
+      |                                              |
+      |--- POST /_api/v3/agent_websocket_token -----&gt;|  (3) Get WS auth token
+      |   Authorization: Agent &lt;agent_token&gt;         |
+      |&lt;-- 200 {token: "&lt;ws_token&gt;"} ---------------|
+      |                                              |
+      |=== Socket.IO connect /dispatcher ==========&gt;|  (4) Establish connection
+      |                                              |
+      |--- emit("join_agent") ---------------------&gt;|  (5) Announce executors
+      |   {action: "JOIN_AGENT",                     |
+      |    token: ws_token,                          |
+      |    executors: [...]}                         |
+      |                                              |
+      |   [Agent shows ONLINE in UI]                 |
+</code></pre></div>
+<p><strong>Error handling during registration:</strong></p>
+<table>
+<thead>
+<tr>
+<th>HTTP Status</th>
+<th>Meaning</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td>Invalid registration token</td>
+<td>Re-generate token in admin panel</td>
+</tr>
+<tr>
+<td>402</td>
+<td>License expired/invalid</td>
+<td>Check Faraday license</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Server unreachable or wrong URL</td>
+<td>Verify host/port/SSL settings</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="executor-execution-flow">Executor Execution Flow<a class="headerlink" href="#executor-execution-flow" title="Permanent link">¶</a></h2>
+<div class="highlight"><pre><span></span><code>Faraday Server                  Dispatcher                      Executor Process
+      |                              |                                |
+      |--- emit("run") ------------&gt;|                                |
+      |   {executor, args,           |                                |
+      |    workspaces,               |                                |
+      |    execution_ids,            |                                |
+      |    plugin_args}              |                                |
+      |                              |                                |
+      |                              |-- Validate parameters --------&gt;|
+      |                              |   (type check, mandatory check)|
+      |                              |                                |
+      |                              |-- Check dependencies ---------&gt;|
+      |                              |   (verify tool is installed)    |
+      |                              |                                |
+      |&lt;-- emit("run_status") ------|                                |
+      |   {running: true}            |                                |
+      |                              |-- create_subprocess_shell ----&gt;|
+      |                              |   (with env vars set)          |
+      |                              |                                |
+      |                              |       +------ stdout --------&gt;|
+      |                              |       |   (JSON lines)        |
+      |                              |       +------ stderr --------&gt;|
+      |                              |       |   (log messages)      |
+      |                              |                                |
+      |&lt;-- POST bulk_create --------|&lt;-- read stdout (per line) -----|
+      |   (for each workspace)       |   parse JSON, add execution_id|
+      |                              |   add command metadata         |
+      |                              |                                |
+      |                              |&lt;-- read stderr (per line) -----|
+      |                              |   log to dispatcher output     |
+      |                              |                                |
+      |                              |&lt;-- process exits (rc=0) ------|
+      |                              |                                |
+      |&lt;-- POST bulk_create --------|  (final: empty hosts + duration)|
+      |   (command closure)          |                                |
+      |                              |                                |
+      |&lt;-- emit("run_status") ------|                                |
+      |   {successful: true}         |                                |
+</code></pre></div>
+<hr/>
+<h2 id="environment-variable-system">Environment Variable System<a class="headerlink" href="#environment-variable-system" title="Permanent link">¶</a></h2>
+<h3 id="variable-prefixes">Variable prefixes<a class="headerlink" href="#variable-prefixes" title="Permanent link">¶</a></h3>
+<p>When the dispatcher spawns an executor subprocess, it sets environment variables from three sources:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Prefix</th>
+<th>Set By</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime arguments</td>
+<td><code>EXECUTOR_CONFIG_</code></td>
+<td>Faraday server (from UI/API/scheduler)</td>
+<td><code>EXECUTOR_CONFIG_TARGET=192.168.1.0/24</code></td>
+</tr>
+<tr>
+<td>Plugin arguments</td>
+<td><code>AGENT_CONFIG_</code></td>
+<td>Faraday server (shared filters/tags)</td>
+<td><code>AGENT_CONFIG_IGNORE_INFO=True</code></td>
+</tr>
+<tr>
+<td>Persistent credentials</td>
+<td><em>(no prefix)</em></td>
+<td>Config file <code>varenvs</code> section</td>
+<td><code>NESSUS_USERNAME=admin</code></td>
+</tr>
+</tbody>
+</table>
+<p>The executor reads these variables from its environment (e.g., <code>os.environ["EXECUTOR_CONFIG_TARGET"]</code> in Python, <code>$EXECUTOR_CONFIG_TARGET</code> in Bash).</p>
+<p><strong>List parameters</strong> passed as <code>EXECUTOR_CONFIG_*</code> are JSON-encoded: <code>EXECUTOR_CONFIG_TARGETS=["10.0.0.1","10.0.0.2"]</code></p>
+<p><strong>List parameters</strong> passed as <code>AGENT_CONFIG_*</code> are comma-separated: <code>AGENT_CONFIG_VULN_TAG=web,critical</code></p>
+<h3 id="common-agent-parameters">Common agent parameters<a class="headerlink" href="#common-agent-parameters" title="Permanent link">¶</a></h3>
+<p>These parameters are sent by the Faraday server as plugin arguments and are available to all executors:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENT_CONFIG_IGNORE_INFO</code></td>
+<td>Boolean</td>
+<td><code>False</code></td>
+<td>Skip informational-severity vulnerabilities</td>
+</tr>
+<tr>
+<td><code>AGENT_CONFIG_RESOLVE_HOSTNAME</code></td>
+<td>Boolean</td>
+<td><code>True</code></td>
+<td>Resolve hostnames to IP addresses</td>
+</tr>
+<tr>
+<td><code>AGENT_CONFIG_MIN_SEVERITY</code></td>
+<td>String</td>
+<td><em>(none)</em></td>
+<td>Minimum severity filter</td>
+</tr>
+<tr>
+<td><code>AGENT_CONFIG_MAX_SEVERITY</code></td>
+<td>String</td>
+<td><em>(none)</em></td>
+<td>Maximum severity filter</td>
+</tr>
+<tr>
+<td><code>AGENT_CONFIG_VULN_TAG</code></td>
+<td>CSV list</td>
+<td><em>(none)</em></td>
+<td>Tags to apply to vulnerabilities</td>
+</tr>
+<tr>
+<td><code>AGENT_CONFIG_SERVICE_TAG</code></td>
+<td>CSV list</td>
+<td><em>(none)</em></td>
+<td>Tags to apply to services</td>
+</tr>
+<tr>
+<td><code>AGENT_CONFIG_HOSTNAME_TAG</code></td>
+<td>CSV list</td>
+<td><em>(none)</em></td>
+<td>Tags to apply to hosts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameter-type-system">Parameter type system<a class="headerlink" href="#parameter-type-system" title="Permanent link">¶</a></h3>
+<p>The <code>faraday_agent_parameters_types</code> package (v1.9.1) provides 10 validated types for executor parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Validation</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>string</code></td>
+<td>Any non-empty string</td>
+<td><code>target_host</code></td>
+</tr>
+<tr>
+<td><code>integer</code></td>
+<td>Whole number</td>
+<td><code>port</code></td>
+</tr>
+<tr>
+<td><code>float</code></td>
+<td>Decimal number</td>
+<td><code>timeout</code></td>
+</tr>
+<tr>
+<td><code>boolean</code></td>
+<td><code>true</code> / <code>false</code></td>
+<td><code>verbose</code></td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>JSON array of strings</td>
+<td><code>targets</code></td>
+</tr>
+<tr>
+<td><code>ip</code></td>
+<td>Valid IPv4/IPv6 address</td>
+<td><code>scan_target</code></td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>Valid URL format</td>
+<td><code>api_endpoint</code></td>
+</tr>
+<tr>
+<td><code>password</code></td>
+<td>Masked string</td>
+<td><code>secret_key</code></td>
+</tr>
+<tr>
+<td><code>domains</code></td>
+<td>Comma-separated domain names</td>
+<td><code>target_domains</code></td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>IP range (CIDR or dash notation)</td>
+<td><code>network_range</code></td>
+</tr>
+</tbody>
+</table>
+<p>The dispatcher validates parameters against their declared types <strong>before</strong> spawning the executor. Invalid parameters result in a <code>RUN_STATUS</code> error sent back to the server.</p>
+<hr/>
+<h2 id="result-submission-pipeline">Result Submission Pipeline<a class="headerlink" href="#result-submission-pipeline" title="Permanent link">¶</a></h2>
+<h3 id="stdout-processing">Stdout processing<a class="headerlink" href="#stdout-processing" title="Permanent link">¶</a></h3>
+<p>The <code>StdOutLineProcessor</code> reads the executor's stdout line by line:</p>
+<ol>
+<li>Each line is expected to be a complete JSON object (one JSON document per line)</li>
+<li>The processor adds <code>execution_id</code> and <code>command</code> metadata to the JSON</li>
+<li>For each target workspace, the enriched JSON is POSTed to:
+   <div class="highlight"><pre><span></span><code>/_api/v3/ws/{workspace_name}/bulk_create
+</code></pre></div></li>
+<li>Authentication uses the agent token: <code>Authorization: Agent &lt;token&gt;</code></li>
+<li>Successful submission returns HTTP 201</li>
+<li>A 1-second delay is inserted between POSTs (rate limiting)</li>
+</ol>
+<h3 id="stderr-processing">Stderr processing<a class="headerlink" href="#stderr-processing" title="Permanent link">¶</a></h3>
+<p>The <code>StdErrLineProcessor</code> reads stderr line by line and logs each line to the dispatcher's output. Stderr output is informational and does not affect data submission.</p>
+<h3 id="bulk-create-payload-format">Bulk create payload format<a class="headerlink" href="#bulk-create-payload-format" title="Permanent link">¶</a></h3>
+<p>The executor's stdout must produce JSON matching the Faraday <code>bulk_create</code> schema:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"hosts"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"ip"</span><span class="p">:</span><span class="w"> </span><span class="s2">"192.168.1.1"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Target host"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"hostnames"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"server.example.com"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"os"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Linux"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"services"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"port"</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"protocol"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tcp"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"open"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Apache 2.4"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"vulnerabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Apache Version Disclosure"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"desc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The server exposes its version number"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"low"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"refs"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"CVE-2024-XXXX"</span><span class="p">],</span>
+<span class="w">              </span><span class="nt">"tags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"web"</span><span class="p">,</span><span class="w"> </span><span class="s2">"disclosure"</span><span class="p">],</span>
+<span class="w">              </span><span class="nt">"data"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Additional technical details..."</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vulnerability"</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">          </span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"vulnerabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Command closure:</strong> When the executor's stdout stream ends (process exits), the dispatcher sends a final <code>bulk_create</code> with an empty hosts array and the command duration:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"hosts"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"execution_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"production-scanner"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nmap_scan"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"user"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"hostname"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="s2">"target=192.168.1.0/24"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"import_source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"agent"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"start_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-02-27T10:30:00"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"duration"</span><span class="p">:</span><span class="w"> </span><span class="mi">45000000</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>duration</code> is in microseconds.</p>
+<hr/>
+<h2 id="async-architecture">Async Architecture<a class="headerlink" href="#async-architecture" title="Permanent link">¶</a></h2>
+<p>The dispatcher uses Python <code>asyncio</code> with a single event loop. Running coroutines:</p>
+<ol>
+<li><strong>Socket.IO client</strong> — Maintains the persistent connection to the server, dispatches events to the <code>DispatcherNamespace</code> handler</li>
+<li><strong><code>on_run</code> handler</strong> — Triggered per RUN command; validates parameters, spawns executor, manages subprocess lifecycle</li>
+<li><strong>StdOutLineProcessor</strong> — Per-executor coroutine reading stdout</li>
+<li><strong>StdErrLineProcessor</strong> — Per-executor coroutine reading stderr</li>
+</ol>
+<p>Multiple executors can run concurrently (each RUN spawns a new set of stdout/stderr reader coroutines).</p>
+<p><strong>Graceful shutdown:</strong> On SIGINT or SIGTERM:
+1. The dispatcher sends a <code>LEAVE_AGENT</code> message via WebSocket
+2. All running executor tasks are cancelled
+3. The Socket.IO connection is closed with code 1000
+4. The process exits</p>
+<hr/>
+<h2 id="configuration-internals">Configuration Internals<a class="headerlink" href="#configuration-internals" title="Permanent link">¶</a></h2>
+<p><strong>Config file resolution order:</strong></p>
+<ol>
+<li>Path specified via <code>-c</code> / <code>--config-file</code> CLI flag</li>
+<li><code>$FARADAY_HOME/config/dispatcher.yaml</code></li>
+<li><code>~/.faraday/config/dispatcher.yaml</code></li>
+</ol>
+<p><strong>Legacy INI migration:</strong> If a <code>.ini</code> file is found instead of <code>.yaml</code>, the dispatcher automatically converts it to YAML format, preserving all settings. The conversion handles:
+- Agent/executor section mapping
+- Single <code>workspace</code> → <code>workspaces</code> list migration
+- SSL defaults injection
+- Parameter type normalization</p>
+<p><strong>Config validation</strong> (<code>control_config</code>):
+- Server section: host, ssl (boolean), ssl_cert (string, nullable), api_port (integer), websocket_port (integer)
+- Agent section: agent_name (string), executors (validated per-executor)
+- Tokens section: optional, validated if present</p>
+<hr/>
+<h2 id="official-executor-manifest-system">Official Executor Manifest System<a class="headerlink" href="#official-executor-manifest-system" title="Permanent link">¶</a></h2>
+<p>Official executors are registered in <code>faraday_agent_parameters_types</code> with manifest files:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"cmd"</span><span class="p">:</span><span class="w"> </span><span class="s2">"python {EXECUTOR_FILE_PATH}"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"repo_executor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nmap.py"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"environment_variables"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"NMAP_EXTRA_ARGS"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"arguments"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"mandatory"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ip"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"base"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"check_cmds"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"nmap --version"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"category"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Network &amp; Vulnerability Scanners"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Manifest field</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd</code></td>
+<td>Command template. <code>{EXECUTOR_FILE_PATH}</code> is replaced with the absolute path to the executor script</td>
+</tr>
+<tr>
+<td><code>repo_executor</code></td>
+<td>Filename of the executor script in <code>static/executors/official/</code></td>
+</tr>
+<tr>
+<td><code>environment_variables</code></td>
+<td>List of required env vars (credentials) that must be set in <code>varenvs</code></td>
+</tr>
+<tr>
+<td><code>arguments</code></td>
+<td>Parameter definitions with type, mandatory flag, and base type</td>
+</tr>
+<tr>
+<td><code>check_cmds</code></td>
+<td>Shell commands to verify tool dependencies before execution</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>Tool category for UI grouping</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="custom-executor-development">Custom Executor Development<a class="headerlink" href="#custom-executor-development" title="Permanent link">¶</a></h2>
+<p>A custom executor is any script that:</p>
+<ol>
+<li>Reads configuration from environment variables</li>
+<li>Runs a security tool or data collection process</li>
+<li>Outputs Faraday-compatible JSON to stdout (one JSON document per line)</li>
+<li>Outputs logging/diagnostic info to stderr</li>
+<li>Exits with code 0 on success, non-zero on failure</li>
+</ol>
+<p><strong>Minimal Python example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="n">target</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"EXECUTOR_CONFIG_TARGET"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+
+<span class="c1"># Your tool logic here</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"hosts"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"ip"</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Scanned host"</span><span class="p">,</span>
+            <span class="s2">"services"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"vulnerabilities"</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">))</span>
+</code></pre></div>
+<p><strong>Minimal Bash example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">EXECUTOR_CONFIG_TARGET</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="c1"># Run your tool and convert output to Faraday JSON</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"{\"hosts\": [{\"ip\": \"</span><span class="si">${</span><span class="nv">TARGET</span><span class="si">}</span><span class="s2">\", \"services\": [], \"vulnerabilities\": []}]}"</span>
+</code></pre></div>
+<p>Register a custom executor in the config:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">agent</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">executors</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">my_tool</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">cmd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/my_executor.py</span>
+<span class="w">      </span><span class="nt">max_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65536</span>
+<span class="w">      </span><span class="nt">varenvs</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"secret"</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">mandatory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">          </span><span class="nt">base</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+</code></pre></div>
+<hr/>
+<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">¶</a></h2>
+<ul>
+<li><strong>Agent tokens</strong> are stored in plaintext in the YAML config file. Restrict file permissions (<code>chmod 600 dispatcher.yaml</code>)</li>
+<li><strong>Credential env vars</strong> (in <code>varenvs</code>) are passed to executor subprocesses. Avoid logging them</li>
+<li><strong>SSL verification</strong> should be enabled in production. Use <code>ssl_ignore: false</code> and provide a valid <code>ssl_cert</code> path</li>
+<li>The dispatcher uses <code>asyncio.create_subprocess_shell</code> to run executors. Executor commands are not user-supplied at runtime (they come from the config file), but ensure config files are not writable by untrusted users</li>
+<li>Agent registration tokens are one-time use and should be treated as secrets</li>
+<li>The <code>HTTPS_PROXY</code> environment variable is respected and automatically triggers SSL context adjustments</li>
+</ul>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/infobyte/faraday/" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+</a>
+<a class="md-social__link" href="https://twitter.com/faradaysec" rel="noopener" target="_blank" title="twitter.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"></path></svg>
+</a>
+<a class="md-social__link" href="https://www.linkedin.com/company/faradaysec/" rel="noopener" target="_blank" title="www.linkedin.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/faradaysec" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script src="https://unpkg.com/mermaid@8.5.1/dist/mermaid.min.js"></script>
+</body>
+</html>

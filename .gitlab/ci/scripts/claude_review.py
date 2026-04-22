@@ -278,9 +278,14 @@ def _parse_numstat_z(raw: str) -> list[tuple[str, str, str]]:
     return entries
 
 
-def collect_diff(env: Env) -> list[tuple[str, str]]:
-    """Return list of (file_path, unified_diff_text) for reviewable files."""
-    numstat = git("diff", "--numstat", "-z", f"{env.base_sha}..{env.head_sha}")
+def collect_diff(env: Env, base_override: str | None = None) -> list[tuple[str, str]]:
+    """Return list of (file_path, unified_diff_text) for reviewable files.
+
+    `base_override` lets an incremental run diff from a prior review's commit
+    rather than the MR base.
+    """
+    base = base_override or env.base_sha
+    numstat = git("diff", "--numstat", "-z", f"{base}..{env.head_sha}")
     reviewable: list[str] = []
     skipped_notes: list[str] = []
     for added, removed, path in _parse_numstat_z(numstat):
@@ -309,7 +314,7 @@ def collect_diff(env: Env) -> list[tuple[str, str]]:
         patch = git(
             "diff",
             "--no-color",
-            f"{env.base_sha}..{env.head_sha}",
+            f"{base}..{env.head_sha}",
             "--",
             path,
         )
@@ -335,12 +340,29 @@ def chunk_diffs(diffs: list[tuple[str, str]]) -> list[str]:
     return chunks
 
 
-def call_claude(client: Anthropic, model: str, chunk: str) -> dict[str, Any]:
-    user_msg = (
+def call_claude(
+    client: Anthropic,
+    model: str,
+    chunk: str,
+    prior_summary: str | None = None,
+) -> dict[str, Any]:
+    lead = (
         "Review the following MR diff. Do a Phase 1 scan and Phase 2 filter "
         "as specified in your instructions, then respond via the emit_review "
-        "tool.\n" + chunk
+        "tool.\n"
     )
+    if prior_summary:
+        lead += (
+            "\nA previous Claude review ran on an earlier commit of this same "
+            "MR. Its summary is below, for context. The diff you are reviewing "
+            "now covers ONLY the commits added since that prior review. Do not "
+            "re-raise items already listed in the prior summary unless they "
+            "are still applicable to the new changes.\n\n"
+            "=== PREVIOUS REVIEW SUMMARY ===\n"
+            + prior_summary.strip()
+            + "\n=== END PREVIOUS REVIEW SUMMARY ===\n\n"
+        )
+    user_msg = lead + chunk
     thinking_budget = int(os.environ.get(
         "CLAUDE_THINKING_BUDGET", DEFAULT_THINKING_BUDGET
     ))
@@ -558,6 +580,58 @@ def _ensure_commits_fetched(base_sha: str, head_sha: str) -> None:
     )
 
 
+def _git_has_commit(sha: str) -> bool:
+    """True if the commit is reachable in the local repository."""
+    r = subprocess.run(
+        ["git", "cat-file", "-e", sha],
+        capture_output=True, text=True,
+    )
+    return r.returncode == 0
+
+
+_PRIOR_MARKER_RE = re.compile(r"<!-- claude-review:([0-9a-f]{12}) -->")
+
+
+def _prior_sha_from_body(body: str) -> str | None:
+    """Extract the commit sha12 from the hidden marker in a summary note body."""
+    m = _PRIOR_MARKER_RE.search(body or "")
+    return m.group(1) if m else None
+
+
+def _find_last_review(env: Env) -> dict[str, Any] | None:
+    """Return the newest prior-review *summary* note on this MR, or None.
+
+    Identified by BOTH the `<!-- claude-review:{sha12} -->` marker and the
+    `## Claude review` header. The header excludes inline-fallback notes
+    (those use a different heading) so we only latch on to actual summaries.
+    """
+    url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}/notes"
+    page = 1
+    while True:
+        r = requests.get(
+            url,
+            headers=gitlab_headers(env),
+            params={
+                "per_page": 100,
+                "page": page,
+                "sort": "desc",
+                "order_by": "created_at",
+            },
+            timeout=30,
+        )
+        r.raise_for_status()
+        batch = r.json()
+        if not batch:
+            return None
+        for n in batch:
+            body = n.get("body", "")
+            if "<!-- claude-review:" in body and "## Claude review" in body:
+                return n
+        if len(batch) < 100:
+            return None
+        page += 1
+
+
 def main() -> int:
     # Branch pipelines have no MR env; resolve the MR from the source branch.
     if not os.environ.get("CI_MERGE_REQUEST_IID"):
@@ -580,14 +654,44 @@ def main() -> int:
     _ensure_commits_fetched(env.base_sha, env.head_sha)
 
     try:
-        existing = existing_markers(list_existing_discussions(env))
-        if env.head_sha[:12] in existing:
-            print("[claude-review] already reviewed this SHA, exiting")
-            return 0
+        # Incremental review: if a prior summary exists, diff from that SHA
+        # instead of the MR base, and pass its body to Claude for context.
+        prior_sha: str | None = None
+        prior_summary: str | None = None
+        prior = _find_last_review(env)
+        if prior is not None:
+            prior_sha_short = _prior_sha_from_body(prior.get("body", ""))
+            if prior_sha_short:
+                _ensure_commits_fetched(prior_sha_short, env.head_sha)
+                if _git_has_commit(prior_sha_short):
+                    if prior_sha_short == env.head_sha[:12]:
+                        post_note(
+                            env,
+                            "_No new commits since the previous Claude review._",
+                        )
+                        return 0
+                    prior_sha = prior_sha_short
+                    prior_summary = prior.get("body") or None
+                    print(
+                        f"[claude-review] incremental review since {prior_sha} "
+                        f"(prior note #{prior.get('id')})"
+                    )
+                else:
+                    print(
+                        f"[claude-review] prior review SHA {prior_sha_short} "
+                        f"not reachable locally — falling back to full diff"
+                    )
 
-        diffs = collect_diff(env)
+        diffs = collect_diff(env, base_override=prior_sha)
         if not diffs:
-            post_note(env, "_No reviewable changes in this MR._")
+            if prior_sha:
+                post_note(
+                    env,
+                    f"_No reviewable changes since the previous Claude review "
+                    f"(`{prior_sha}`)._",
+                )
+            else:
+                post_note(env, "_No reviewable changes in this MR._")
             return 0
 
         total_chars = sum(len(p) for _, p in diffs)
@@ -602,7 +706,9 @@ def main() -> int:
         for i, chunk in enumerate(chunks, 1):
             print(f"[claude-review] chunk {i}/{len(chunks)} "
                   f"({len(chunk)} chars)")
-            result = call_claude(client, env.model, chunk)
+            result = call_claude(
+                client, env.model, chunk, prior_summary=prior_summary
+            )
             all_comments.extend(result.get("comments", []))
             s = result.get("summary", "").strip()
             if s:
@@ -643,10 +749,15 @@ def main() -> int:
             elif result == "fallback":
                 fallback_count += 1
 
+        meta_line = (
+            f"**Model** `{env.model}` · **Commit** `{env.head_sha[:12]}`"
+        )
+        if prior_sha:
+            meta_line += f" · **Incremental since** `{prior_sha}`"
         summary_lines = [
             "## Claude review",
             "",
-            f"**Model** `{env.model}` · **Commit** `{env.head_sha[:12]}`",
+            meta_line,
             "",
             f"| Inline | Fallback | Nits |",
             f"| ---: | ---: | ---: |",

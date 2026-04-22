@@ -4,22 +4,24 @@ claude_review:
   extends:
     - .get-secrets
   image: python:3.11-slim-bookworm
-  stage: review
+  stage: claude_review
   allow_failure: true
   interruptible: true
   timeout: 15m
+  needs:
+    - job: postgresql_test_uv
   variables:
     GIT_DEPTH: 0
     GIT_STRATEGY: fetch
     CLAUDE_MODEL: "claude-sonnet-4-6"
   rules:
-    - if: $RUN_CLAUDE_REVIEW == "1"
-      when: on_success
+    # Only offer the review on feature-style branches (tkt/exp/sup/mig).
+    # Merges into dev/master/staging skip it.
+    - if: '$CI_COMMIT_REF_NAME =~ /^(tkt|exp|sup|mig)_.+$/'
+      when: manual
     - when: never
   before_script:
     - apt-get update -qq && apt-get install -y --no-install-recommends git ca-certificates >/dev/null
     - pip install --quiet "anthropic>=0.40" requests
   script:
-    - git fetch --no-tags origin "$CI_MERGE_REQUEST_DIFF_BASE_SHA" "$CI_COMMIT_SHA" || true
-    - git fetch --no-tags origin "+refs/heads/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}:refs/remotes/origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
     - python3 .gitlab/ci/scripts/claude_review.py

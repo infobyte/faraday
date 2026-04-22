@@ -495,17 +495,89 @@ def post_note(env: Env, body: str) -> None:
     r.raise_for_status()
 
 
+def _populate_mr_env_from_branch() -> bool:
+    """When running on a branch pipeline (no MR context set), look up the
+    open MR for CI_COMMIT_REF_NAME and populate the MR env vars in-place.
+
+    Returns True if an MR was found and env is populated, False if no open
+    MR matches the source branch.
+    """
+    token = _resolve_secret(os.environ.get("GITLAB_REVIEW_TOKEN", ""))
+    api_url = os.environ.get("CI_API_V4_URL", "").rstrip("/")
+    project_id = os.environ.get("CI_PROJECT_ID", "")
+    branch = os.environ.get("CI_COMMIT_REF_NAME", "")
+    missing = [k for k, v in {
+        "GITLAB_REVIEW_TOKEN": token,
+        "CI_API_V4_URL": api_url,
+        "CI_PROJECT_ID": project_id,
+        "CI_COMMIT_REF_NAME": branch,
+    }.items() if not v]
+    if missing:
+        raise RuntimeError(f"MR lookup missing env: {', '.join(missing)}")
+
+    headers = {"PRIVATE-TOKEN": token}
+    r = requests.get(
+        f"{api_url}/projects/{project_id}/merge_requests",
+        headers=headers,
+        params={"state": "opened", "source_branch": branch, "per_page": 1},
+        timeout=30,
+    )
+    r.raise_for_status()
+    mrs = r.json()
+    if not mrs:
+        return False
+
+    iid = mrs[0]["iid"]
+    # Fetch detail to guarantee diff_refs are present.
+    d = requests.get(
+        f"{api_url}/projects/{project_id}/merge_requests/{iid}",
+        headers=headers,
+        timeout=30,
+    )
+    d.raise_for_status()
+    full = d.json()
+    diff_refs = full.get("diff_refs") or {}
+    base_sha = diff_refs.get("base_sha")
+    if not base_sha:
+        raise RuntimeError(f"MR !{iid} has no diff_refs.base_sha")
+
+    os.environ["CI_MERGE_REQUEST_IID"] = str(iid)
+    os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"] = base_sha
+    os.environ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"] = full["target_branch"]
+    if full.get("title"):
+        os.environ.setdefault("CI_MERGE_REQUEST_TITLE", full["title"])
+    print(f"[claude-review] resolved MR !{iid} for branch {branch!r}")
+    return True
+
+
+def _ensure_commits_fetched(base_sha: str, head_sha: str) -> None:
+    """Best-effort fetch of the two SHAs in case the runner did a shallow clone."""
+    subprocess.run(
+        ["git", "fetch", "--no-tags", "origin", base_sha, head_sha],
+        check=False, capture_output=True, text=True,
+    )
+
+
 def main() -> int:
-    title = os.environ.get("CI_MERGE_REQUEST_TITLE", "")
-    if title.lower().startswith(("draft:", "wip:")):
-        print(f"[claude-review] MR is Draft ({title!r}), skipping review")
-        return 0
+    # Branch pipelines have no MR env; resolve the MR from the source branch.
+    if not os.environ.get("CI_MERGE_REQUEST_IID"):
+        try:
+            found = _populate_mr_env_from_branch()
+        except Exception as exc:
+            print(f"[claude-review] MR lookup error: {exc}", file=sys.stderr)
+            return 0
+        if not found:
+            branch = os.environ.get("CI_COMMIT_REF_NAME", "?")
+            print(f"[claude-review] no open MR for branch {branch!r}, nothing to review")
+            return 0
 
     try:
         env = load_env()
     except Exception as exc:
         print(f"[claude-review] env error: {exc}", file=sys.stderr)
         return 0
+
+    _ensure_commits_fetched(env.base_sha, env.head_sha)
 
     try:
         existing = existing_markers(list_existing_discussions(env))

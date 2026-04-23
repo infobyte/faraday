@@ -2,12 +2,14 @@
 """
 Claude-powered GitLab MR reviewer.
 
-Runs as a GitLab CI job on Ready (non-Draft) Merge Request pipelines.
-Collects the MR diff, asks Claude for structured review comments, and
-posts them as inline discussions + a summary note on the MR.
+Manual-triggered GitLab CI job. Collects the MR diff, asks Claude for
+structured review comments, and posts them as inline discussions + a
+summary note on the MR. Runs on any MR state (including Draft) — the
+manual-trigger gate is the human control point.
 
-Non-blocking: any failure degrades to a summary note and exits 0 so the
-pipeline does not fail on reviewer-side issues.
+Exit codes: 0 on success or legitimate no-op (no MR, no reviewable changes,
+no new commits since prior review). Non-zero on real failures (env error,
+MR lookup error, fatal exception) so the CI job surfaces the problem.
 
 Required env vars (all provided by GitLab CI + .get-secrets):
   ANTHROPIC_API_KEY
@@ -15,7 +17,6 @@ Required env vars (all provided by GitLab CI + .get-secrets):
   CI_API_V4_URL                e.g. https://gitlab.com/api/v4
   CI_PROJECT_ID
   CI_MERGE_REQUEST_IID
-  CI_MERGE_REQUEST_TARGET_BRANCH_NAME
   CI_MERGE_REQUEST_DIFF_BASE_SHA
   CI_COMMIT_SHA
 Optional:
@@ -34,7 +35,13 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
-from anthropic import Anthropic, APIStatusError, RateLimitError
+from anthropic import (
+    Anthropic,
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    RateLimitError,
+)
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 RESPONSE_TOKEN_BUDGET = 8000
@@ -145,7 +152,6 @@ class Env:
     api_url: str
     project_id: str
     mr_iid: str
-    target_branch: str
     base_sha: str
     head_sha: str
     model: str
@@ -167,7 +173,6 @@ def load_env() -> Env:
         "CI_API_V4_URL",
         "CI_PROJECT_ID",
         "CI_MERGE_REQUEST_IID",
-        "CI_MERGE_REQUEST_TARGET_BRANCH_NAME",
         "CI_MERGE_REQUEST_DIFF_BASE_SHA",
         "CI_COMMIT_SHA",
     ]
@@ -180,7 +185,6 @@ def load_env() -> Env:
         api_url=os.environ["CI_API_V4_URL"].rstrip("/"),
         project_id=os.environ["CI_PROJECT_ID"],
         mr_iid=os.environ["CI_MERGE_REQUEST_IID"],
-        target_branch=os.environ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"],
         base_sha=os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"],
         head_sha=os.environ["CI_COMMIT_SHA"],
         model=os.environ.get("CLAUDE_MODEL", DEFAULT_MODEL),
@@ -318,8 +322,16 @@ def collect_diff(env: Env, base_override: str | None = None) -> list[tuple[str, 
             "--",
             path,
         )
-        if patch.strip():
-            diffs.append((path, annotate_patch(patch)))
+        if not patch.strip():
+            continue
+        annotated = annotate_patch(patch)
+        # Single-file block must fit in a chunk on its own.
+        if len(annotated) > MAX_INPUT_CHARS_PER_CHUNK:
+            print(f"[claude-review] skipping {path}: annotated diff "
+                  f"{len(annotated)} chars exceeds chunk budget "
+                  f"{MAX_INPUT_CHARS_PER_CHUNK}")
+            continue
+        diffs.append((path, annotated))
     return diffs
 
 
@@ -363,9 +375,9 @@ def call_claude(
             + "\n=== END PREVIOUS REVIEW SUMMARY ===\n\n"
         )
     user_msg = lead + chunk
-    thinking_budget = int(os.environ.get(
+    thinking_budget = max(0, int(os.environ.get(
         "CLAUDE_THINKING_BUDGET", DEFAULT_THINKING_BUDGET
-    ))
+    )))
     kwargs: dict[str, Any] = dict(
         model=model,
         max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
@@ -387,6 +399,11 @@ def call_claude(
         attempt += 1
         try:
             resp = client.messages.create(**kwargs)
+        except (APIConnectionError, APITimeoutError):
+            if attempt >= 3:
+                raise
+            time.sleep(2 ** attempt)
+            continue
         except (RateLimitError, APIStatusError) as exc:
             status = getattr(exc, "status_code", None)
             if attempt >= 3 or (status and status < 500 and status not in (408, 429)):
@@ -422,44 +439,9 @@ def gitlab_headers(env: Env) -> dict[str, str]:
     return {"PRIVATE-TOKEN": env.gitlab_token}
 
 
-def list_existing_discussions(env: Env) -> list[dict[str, Any]]:
-    url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}/discussions"
-    results: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        r = requests.get(
-            url,
-            headers=gitlab_headers(env),
-            params={"per_page": 100, "page": page},
-            timeout=30,
-        )
-        r.raise_for_status()
-        batch = r.json()
-        if not batch:
-            break
-        results.extend(batch)
-        if len(batch) < 100:
-            break
-        page += 1
-    return results
-
-
-def existing_markers(discussions: list[dict[str, Any]]) -> set[str]:
-    seen: set[str] = set()
-    for d in discussions:
-        for note in d.get("notes", []):
-            body = note.get("body", "")
-            if "<!-- claude-review:" in body:
-                start = body.find("<!-- claude-review:") + len("<!-- claude-review:")
-                end = body.find(" -->", start)
-                if end > 0:
-                    seen.add(body[start:end].strip())
-    return seen
-
-
 def comment_fingerprint(c: dict[str, Any]) -> str:
     raw = f"{c['file']}|{c['line']}|{c['body']}"
-    return hashlib.sha1(raw.encode()).hexdigest()[:10]
+    return hashlib.sha256(raw.encode()).hexdigest()[:10]
 
 
 def _valid_comment(c: Any) -> bool:
@@ -495,7 +477,6 @@ def post_inline(env: Env, comment: dict[str, Any]) -> str:
         return "inline"
     print(f"[claude-review] inline post failed ({r.status_code}) for "
           f"{comment['file']}:{comment['line']} — falling back to note")
-    badge = SEVERITY_BADGE.get(comment["severity"], comment["severity"].title())
     try:
         post_note(
             env,
@@ -541,7 +522,13 @@ def _populate_mr_env_from_branch() -> bool:
     r = requests.get(
         f"{api_url}/projects/{project_id}/merge_requests",
         headers=headers,
-        params={"state": "opened", "source_branch": branch, "per_page": 1},
+        params={
+            "state": "opened",
+            "source_branch": branch,
+            "order_by": "created_at",
+            "sort": "desc",
+            "per_page": 1,
+        },
         timeout=30,
     )
     r.raise_for_status()
@@ -565,9 +552,6 @@ def _populate_mr_env_from_branch() -> bool:
 
     os.environ["CI_MERGE_REQUEST_IID"] = str(iid)
     os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"] = base_sha
-    os.environ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"] = full["target_branch"]
-    if full.get("title"):
-        os.environ.setdefault("CI_MERGE_REQUEST_TITLE", full["title"])
     print(f"[claude-review] resolved MR !{iid} for branch {branch!r}")
     return True
 
@@ -606,8 +590,8 @@ def _find_last_review(env: Env) -> dict[str, Any] | None:
     (those use a different heading) so we only latch on to actual summaries.
     """
     url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}/notes"
-    page = 1
-    while True:
+    max_pages = 20  # cap: 2000 notes is far beyond any realistic MR
+    for page in range(1, max_pages + 1):
         r = requests.get(
             url,
             headers=gitlab_headers(env),
@@ -629,7 +613,7 @@ def _find_last_review(env: Env) -> dict[str, Any] | None:
                 return n
         if len(batch) < 100:
             return None
-        page += 1
+    return None
 
 
 def main() -> int:
@@ -639,7 +623,7 @@ def main() -> int:
             found = _populate_mr_env_from_branch()
         except Exception as exc:
             print(f"[claude-review] MR lookup error: {exc}", file=sys.stderr)
-            return 0
+            return 1
         if not found:
             branch = os.environ.get("CI_COMMIT_REF_NAME", "?")
             print(f"[claude-review] no open MR for branch {branch!r}, nothing to review")
@@ -649,7 +633,7 @@ def main() -> int:
         env = load_env()
     except Exception as exc:
         print(f"[claude-review] env error: {exc}", file=sys.stderr)
-        return 0
+        return 1
 
     _ensure_commits_fetched(env.base_sha, env.head_sha)
 
@@ -662,7 +646,6 @@ def main() -> int:
         if prior is not None:
             prior_sha_short = _prior_sha_from_body(prior.get("body", ""))
             if prior_sha_short:
-                _ensure_commits_fetched(prior_sha_short, env.head_sha)
                 if _git_has_commit(prior_sha_short):
                     if prior_sha_short == env.head_sha[:12]:
                         post_note(
@@ -706,8 +689,10 @@ def main() -> int:
         for i, chunk in enumerate(chunks, 1):
             print(f"[claude-review] chunk {i}/{len(chunks)} "
                   f"({len(chunk)} chars)")
+            # Prior summary is context, not per-chunk input — send on first chunk only.
             result = call_claude(
-                client, env.model, chunk, prior_summary=prior_summary
+                client, env.model, chunk,
+                prior_summary=prior_summary if i == 1 else None,
             )
             all_comments.extend(result.get("comments", []))
             s = result.get("summary", "").strip()
@@ -784,7 +769,7 @@ def main() -> int:
             )
         except Exception:
             pass
-        return 0
+        return 1
 
 
 if __name__ == "__main__":

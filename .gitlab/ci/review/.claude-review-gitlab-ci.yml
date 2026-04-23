@@ -13,7 +13,6 @@ claude_review:
   variables:
     GIT_DEPTH: 0
     GIT_STRATEGY: fetch
-    CLAUDE_MODEL: "claude-sonnet-4-6"
   rules:
     # Only offer the review on feature-style branches (tkt/exp/sup/mig).
     # Merges into dev/master/staging skip it.
@@ -22,6 +21,6 @@ claude_review:
     - when: never
   before_script:
     - apt-get update -qq && apt-get install -y --no-install-recommends git ca-certificates >/dev/null
-    - pip install --quiet "anthropic>=0.40" requests
+    - pip install --quiet "anthropic>=0.40,<1.0" "requests>=2.31,<3.0"
   script:
     - python3 .gitlab/ci/scripts/claude_review.py

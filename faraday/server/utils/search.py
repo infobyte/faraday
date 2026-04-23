@@ -32,7 +32,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import ColumnProperty
+from sqlalchemy.orm import ColumnProperty, RelationshipProperty
+from sqlalchemy.orm.interfaces import MANYTOMANY
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.schema import Table as SQLAlchemySchemaTableType
@@ -488,6 +489,36 @@ class SearchParameters:
                                 order_by=order_by, group_by=group_by)
 
 
+def apply_order(query, field, direction):
+    order = field.desc() if direction == "desc" else field.asc()
+    nulls = nullslast if direction == "desc" else nullsfirst
+    return query.order_by(nulls(order))
+
+
+def apply_json_order(query, model, field_name, field_name_in_relation, direction):
+    table_name = model.__tablename__
+    json_field = f"{table_name}.{field_name} ->> '{field_name_in_relation}'"
+    ordering = "DESC NULLS LAST" if direction == "desc" else "ASC NULLS FIRST"
+    return query.order_by(text(f"{json_field} {ordering}"))
+
+
+def apply_join(query, model, relation, joined_models):
+    relation_model = relation.mapper.class_
+
+    join_key = relation.key
+
+    if join_key in joined_models:
+        return query
+
+    if getattr(relation.property, "direction", None) == MANYTOMANY or getattr(relation.property, "secondary", None) is not None:
+        query = query.join(relation_model)
+    else:
+        query = query.join(relation_model, isouter=True)
+
+    joined_models.add(join_key)
+    return query
+
+
 class QueryBuilder:
     """Provides a static function for building a SQLAlchemy query object based
     on a :class:`SearchParameters` instance.
@@ -806,38 +837,23 @@ class QueryBuilder:
                         relation = getattr(model, field_name)
                         # Check if this is a plain column (e.g. JSONType) vs a relationship
                         if hasattr(relation, 'property') and isinstance(relation.property, ColumnProperty):
-                            table_name = model.__tablename__
-                            json_field = f"{table_name}.{field_name} ->> '{field_name_in_relation}'"
-                            if val.direction == 'desc':
-                                query = query.order_by(text(f"{json_field} DESC NULLS LAST"))
-                            else:
-                                query = query.order_by(text(f"{json_field} ASC NULLS FIRST"))
+                            query = apply_json_order(
+                                query,
+                                model,
+                                field_name,
+                                field_name_in_relation,
+                                val.direction,
+                            )
                         else:
+                            query = apply_join(query, model, relation, joined_models)
+
                             relation_model = relation.mapper.class_
-                            if relation_model not in joined_models:
-                                # TODO: is it possible to guess if relationship is a many to many
-                                if relation_model == Role:
-                                    query = query.join(relation_model, User.roles)
-                                elif relation_model == User:
-                                    query = query.join(relation_model, model.creator_id == relation_model.id)
-                                elif relation_model == CVE:
-                                    query = query.join(relation_model, model.cve_instances)
-                                else:
-                                    query = query.join(relation_model, isouter=True)
-                            joined_models.add(relation_model)
                             field = getattr(relation_model, field_name_in_relation)
-                            direction = getattr(field, val.direction)
-                            if val.direction == 'desc':
-                                query = query.order_by(nullslast(direction()))
-                            else:
-                                query = query.order_by(nullsfirst(direction()))
+
+                            query = apply_order(query, field, val.direction)
                     else:
                         field = getattr(model, val.field)
-                        direction = getattr(field, val.direction)
-                        if val.direction == 'desc':
-                            query = query.order_by(nullslast(direction()))
-                        else:
-                            query = query.order_by(nullsfirst(direction()))
+                        query = apply_order(query, field, val.direction)
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

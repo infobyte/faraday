@@ -282,35 +282,44 @@ def _parse_numstat_z(raw: str) -> list[tuple[str, str, str]]:
     return entries
 
 
-def collect_diff(env: Env, base_override: str | None = None) -> list[tuple[str, str]]:
-    """Return list of (file_path, unified_diff_text) for reviewable files.
+def collect_diff(
+    env: Env, base_override: str | None = None,
+) -> tuple[list[tuple[str, str]], list[str]]:
+    """Return ``(diffs, size_skipped)``.
 
-    `base_override` lets an incremental run diff from a prior review's commit
-    rather than the MR base.
+    ``diffs`` is a list of ``(file_path, annotated_patch)`` for reviewable
+    files. ``size_skipped`` is a list of ``"path (reason)"`` strings for
+    files whose size prevents review — these are surfaced in the MR
+    summary so the author knows the file wasn't ignored silently. Binary
+    and generated/vendored skips are policy and stay stdout-only.
+
+    ``base_override`` lets an incremental run diff from a prior review's
+    commit rather than the MR base.
     """
     base = base_override or env.base_sha
     numstat = git("diff", "--numstat", "-z", f"{base}..{env.head_sha}")
     reviewable: list[str] = []
-    skipped_notes: list[str] = []
+    skipped_policy: list[str] = []
+    size_skipped: list[str] = []
     for added, removed, path in _parse_numstat_z(numstat):
         if added == "-" and removed == "-":
-            skipped_notes.append(f"{path} (binary)")
+            skipped_policy.append(f"{path} (binary)")
             continue
         if should_skip_path(path):
-            skipped_notes.append(f"{path} (generated/vendored)")
+            skipped_policy.append(f"{path} (generated/vendored)")
             continue
         try:
             total = int(added) + int(removed)
         except ValueError:
             total = 0
         if total > MAX_FILE_DIFF_LINES:
-            skipped_notes.append(f"{path} ({total} lines, too large)")
+            size_skipped.append(f"{path} ({total} lines, > {MAX_FILE_DIFF_LINES})")
             continue
         reviewable.append(path)
 
-    if skipped_notes:
-        print("[claude-review] skipped files:")
-        for n in skipped_notes:
+    if skipped_policy:
+        print("[claude-review] skipped (policy):")
+        for n in skipped_policy:
             print(f"  - {n}")
 
     diffs: list[tuple[str, str]] = []
@@ -327,12 +336,19 @@ def collect_diff(env: Env, base_override: str | None = None) -> list[tuple[str, 
         annotated = annotate_patch(patch)
         # Single-file block must fit in a chunk on its own.
         if len(annotated) > MAX_INPUT_CHARS_PER_CHUNK:
-            print(f"[claude-review] skipping {path}: annotated diff "
-                  f"{len(annotated)} chars exceeds chunk budget "
-                  f"{MAX_INPUT_CHARS_PER_CHUNK}")
+            size_skipped.append(
+                f"{path} (annotated diff {len(annotated)} chars, "
+                f"> {MAX_INPUT_CHARS_PER_CHUNK})"
+            )
             continue
         diffs.append((path, annotated))
-    return diffs
+
+    if size_skipped:
+        print("[claude-review] skipped (too large):")
+        for n in size_skipped:
+            print(f"  - {n}")
+
+    return diffs, size_skipped
 
 
 def chunk_diffs(diffs: list[tuple[str, str]]) -> list[str]:
@@ -646,6 +662,9 @@ def main() -> int:
         if prior is not None:
             prior_sha_short = _prior_sha_from_body(prior.get("body", ""))
             if prior_sha_short:
+                # No pre-fetch for prior_sha_short: git remotes can't be
+                # queried by abbreviated SHA, and GIT_DEPTH=0 in CI yaml
+                # means the runner already has full history.
                 if _git_has_commit(prior_sha_short):
                     if prior_sha_short == env.head_sha[:12]:
                         post_note(
@@ -665,16 +684,19 @@ def main() -> int:
                         f"not reachable locally — falling back to full diff"
                     )
 
-        diffs = collect_diff(env, base_override=prior_sha)
+        diffs, size_skipped = collect_diff(env, base_override=prior_sha)
         if not diffs:
-            if prior_sha:
-                post_note(
-                    env,
-                    f"_No reviewable changes since the previous Claude review "
-                    f"(`{prior_sha}`)._",
-                )
+            scope = (
+                f"since the previous Claude review (`{prior_sha}`)"
+                if prior_sha else "in this MR"
+            )
+            if size_skipped:
+                lines = [f"_No reviewable changes {scope} — all candidate "
+                         f"files exceeded size limits:_", ""]
+                lines += [f"- `{n}`" for n in size_skipped]
+                post_note(env, "\n".join(lines))
             else:
-                post_note(env, "_No reviewable changes in this MR._")
+                post_note(env, f"_No reviewable changes {scope}._")
             return 0
 
         total_chars = sum(len(p) for _, p in diffs)
@@ -756,6 +778,10 @@ def main() -> int:
                 summary_lines.append(
                     f"- `{c['file']}:{c['line']}` — {c['body']}"
                 )
+        if size_skipped:
+            summary_lines += ["", "### Skipped (too large)"]
+            for n in size_skipped:
+                summary_lines.append(f"- `{n}`")
         post_note(env, "\n".join(summary_lines))
         return 0
 

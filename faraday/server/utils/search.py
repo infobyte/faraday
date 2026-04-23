@@ -511,9 +511,9 @@ def apply_join(query, model, relation, joined_models):
         return query
 
     if getattr(relation.property, "direction", None) == MANYTOMANY or getattr(relation.property, "secondary", None) is not None:
-        query = query.join(relation_model)
+        query = query.join(relation)
     else:
-        query = query.join(relation_model, isouter=True)
+        query = query.join(relation, isouter=True)
 
     joined_models.add(join_key)
     return query

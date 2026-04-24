@@ -88,7 +88,7 @@ def get_filtered_data(filters, filter_query):
     return data, len(rows)
 
 
-def _hydrate_sample_for_conflict(model_class, ids):
+def hydrate_sample_for_conflict(model_class, ids):
     # Hydrate from the first id so get_conflict_object can fall back to real
     # column values for unique-index fields absent from `data`. See ticket 8232:
     # empty model instances synthesize a filter that never matches the real
@@ -1543,7 +1543,7 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            sample_obj = _hydrate_sample_for_conflict(self.model_class, ids)
+            sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
             conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
@@ -2227,7 +2227,7 @@ class ContextMixin(GenericView):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            sample_obj = _hydrate_sample_for_conflict(self.model_class, ids)
+            sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
             conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(

@@ -732,7 +732,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
         }
         stmt = insert(association_table_vulnerabilities_credentials).values(
             [{'vulnerability_id': v_id, 'credential_id': c_id} for v_id, c_id in unique_pairs]
-        )
+        ).on_conflict_do_nothing()
         db.session.execute(stmt)
     _create_or_update_histogram(histogram)
     db.session.commit()

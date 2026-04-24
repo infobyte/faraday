@@ -88,6 +88,21 @@ def get_filtered_data(filters, filter_query):
     return data, len(rows)
 
 
+def _hydrate_sample_for_conflict(model_class, ids):
+    # Hydrate from the first id so get_conflict_object can fall back to real
+    # column values for unique-index fields absent from `data`. See ticket 8232:
+    # empty model instances synthesize a filter that never matches the real
+    # conflicting row, turning the 409 into a 500.
+    sample = model_class()
+    if ids:
+        sample = (
+            db.session.query(model_class)
+            .filter(model_class.id == ids[0])
+            .first()
+        ) or sample
+    return sample
+
+
 def get_group_by_and_sort_dir(model_class):
     group_by = request.args.get('group_by', None)
     sort_dir = request.args.get('order', "asc").lower()
@@ -1528,13 +1543,7 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            sample_obj = self.model_class()
-            if ids:
-                sample_obj = (
-                    db.session.query(self.model_class)
-                    .filter(self.model_class.id == ids[0])
-                    .first()
-                ) or sample_obj
+            sample_obj = _hydrate_sample_for_conflict(self.model_class, ids)
             conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
@@ -2218,13 +2227,7 @@ class ContextMixin(GenericView):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            sample_obj = self.model_class()
-            if ids:
-                sample_obj = (
-                    db.session.query(self.model_class)
-                    .filter(self.model_class.id == ids[0])
-                    .first()
-                ) or sample_obj
+            sample_obj = _hydrate_sample_for_conflict(self.model_class, ids)
             conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(

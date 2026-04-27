@@ -1368,10 +1368,10 @@ class UpdateMixin:
             db.session.commit()
             logger.info(f"{obj} updated")
         except IntegrityError as ex:
+            db.session.rollback()
             logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
-            db.session.rollback()
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()

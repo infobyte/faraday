@@ -16,6 +16,7 @@ import marshmallow_sqlalchemy
 from dateutil.parser import parse
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
+from sqlalchemy.orm import ColumnProperty
 
 # Local application imports
 from faraday.server.models import (
@@ -139,6 +140,11 @@ class FlaskRestlessFilterSchema(Schema):
         if '__' in column_name:
             # relation attribute search, example service__port:80
             model_name, column_name = column_name.split('__')
+            # Check if it's a JSON/plain column on the model (not a relationship)
+            model_class = self._model_class()
+            model_attr = getattr(model_class, model_name, None)
+            if model_attr is not None and hasattr(model_attr, 'property') and isinstance(model_attr.property, ColumnProperty):
+                return [filter_]
             model = self.valid_relationship.get(model_name, None)
             if not model:
                 raise ValidationError('Invalid Relationship')

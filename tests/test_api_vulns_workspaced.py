@@ -2941,6 +2941,25 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         res = test_client.put(self.url(obj=target_vuln), data=raw_data)
         assert res.status_code == 409, res.json
 
+    def test_bulk_update_single_id_conflict_returns_409(self, host, vulnerability_factory,
+                                                        session, test_client):
+        """Regression: bulk PATCH /vulns with a single id whose rename collides
+        with another vuln on the same host must return 409, not 500. The
+        previous code called get_conflict_object with an empty model instance,
+        causing the conflict lookup to fail silently and the IntegrityError to
+        re-raise as 500."""
+        vulnerability_factory.create(
+            workspace=self.workspace, host=host, service=None,
+            name="duplicada", description="a")
+        target_vuln = vulnerability_factory.create(
+            workspace=self.workspace, host=host, service=None,
+            name="original", description="a")
+        session.commit()
+        res = test_client.patch(
+            self.url(workspace=self.workspace),
+            data={"ids": [target_vuln.id], "name": "duplicada"})
+        assert res.status_code == 409, (res.status_code, res.json)
+
     def test_create_and_update_webvuln(self, host_with_hostnames, test_client, session):
         """
             This reproduces a bug found. after creating an object with a

@@ -13,7 +13,7 @@ import pyotp
 import pytest
 
 from faraday.server.api.modules.agent import AgentView
-from faraday.server.models import Agent, Command
+from faraday.server.models import Agent, Command, Executor, db
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests import factories
@@ -560,3 +560,37 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         print(response.json)
         assert response.status_code == 400
         assert response.json["errors"]['OPTION_SC'] == 'Expected boolean, got int'
+
+    def test_bulk_delete_agents(self, test_client, session):
+        agent_1 = AgentFactory.create()
+        agent_2 = AgentFactory.create()
+        session.commit()
+        ids = [agent_1.id, agent_2.id]
+
+        response = test_client.delete(self.url(), data={'ids': ids})
+
+        assert response.status_code == 200
+        assert response.json['deleted'] == 2
+        assert session.query(Agent).filter(Agent.id.in_(ids)).count() == 0
+
+    def test_bulk_delete_agents_without_ids(self, test_client):
+        response = test_client.delete(self.url(), data={'agents_ids': []})
+        assert response.status_code == 400
+
+    def test_bulk_delete_agents_invalid_characters(self, test_client):
+        response = test_client.delete(self.url(), data={'ids': [-1, 'test']})
+        assert response.json['deleted'] == 0
+
+    def test_bulk_delete_agents_with_executors(self, test_client, session):
+        agent = AgentFactory.create()
+        executor = ExecutorFactory.create(agent=agent)
+        session.commit()
+        agent_id = agent.id
+        executor_id = executor.id
+
+        response = test_client.delete(self.url(), data={'ids': [agent_id]})
+
+        assert response.status_code == 200
+        assert response.json['deleted'] == 1
+        assert session.query(Agent).filter(Agent.id == agent_id).count() == 0
+        assert session.query(Executor).filter(Executor.id == executor_id).count() == 0

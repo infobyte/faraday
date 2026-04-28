@@ -16,6 +16,7 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
 )
+from faraday.server.config import faraday_server as server_config
 from faraday.server.models import (
     db,
     Workflow,
@@ -269,6 +270,7 @@ class PipelineSchema(AutoSchema):
 
     class Meta:
         model = Pipeline
+        exclude = ('running_since',)
 
 
 class JobSchema(AutoSchema):
@@ -941,7 +943,14 @@ class PipelineView(ReadWriteView):
             abort(400, "Pipeline doesn't have an assigned Workspace")
 
         if pipeline.running is True:
-            abort(400, "Pipeline already running")
+            timeout = server_config.pipeline_running_timeout
+            if pipeline.running_since and (datetime.datetime.utcnow() - pipeline.running_since).total_seconds() > timeout:
+                logger.warning(f"Pipeline {pipeline_id} stuck since {pipeline.running_since}, auto-resetting")
+                pipeline.running = False
+                pipeline.running_since = None
+                db.session.commit()
+            else:
+                abort(400, "Pipeline already running")
 
         if pipeline.workspace.readonly:
             abort(403, "Cannot run pipelines on read-only workspaces")

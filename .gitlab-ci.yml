@@ -61,6 +61,8 @@ include:
 
   - template: Security/Secret-Detection.gitlab-ci.yml
 
+  - local: .gitlab/ci/review/.claude-review-gitlab-ci.yml
+
 stages:
     - pre_testing
     - test
@@ -72,6 +74,7 @@ stages:
     - upload_testing
     - deploy
     - publish
+    - claude_review
 
 services:
     - postgres:latest

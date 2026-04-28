@@ -241,10 +241,13 @@ def annotate_patch(patch: str) -> str:
             new_line += 1
         elif line.startswith("-") and not line.startswith("---"):
             out.append(f"     : {line}")
-        elif line.startswith(" ") or line == "":
+        elif line.startswith(" "):
             out.append(f"{new_line:5d}: {line}")
             new_line += 1
         else:
+            # Empty strings or any other shape: pass through without
+            # advancing the line counter so a malformed input can't shift
+            # numbering for the rest of the hunk.
             out.append(line)
     return "\n".join(out)
 
@@ -311,7 +314,12 @@ def collect_diff(
         try:
             total = int(added) + int(removed)
         except ValueError:
-            total = 0
+            print(
+                f"[claude-review] skipping {path}: malformed numstat "
+                f"(added={added!r}, removed={removed!r})",
+                file=sys.stderr,
+            )
+            continue
         if total > MAX_FILE_DIFF_LINES:
             size_skipped.append(f"{path} ({total} lines, > {MAX_FILE_DIFF_LINES})")
             continue
@@ -426,10 +434,27 @@ def call_claude(
                 raise
             time.sleep(2 ** attempt)
             continue
+        merged_comments: list[Any] = []
+        merged_summaries: list[str] = []
         for block in resp.content:
-            if block.type == "tool_use" and block.name == "emit_review":
-                return block.input
-        return {"comments": [], "summary": "(model returned no structured output)"}
+            if block.type != "tool_use" or block.name != "emit_review":
+                continue
+            inp = block.input or {}
+            comments = inp.get("comments")
+            if isinstance(comments, list):
+                merged_comments.extend(comments)
+            summary = inp.get("summary")
+            if isinstance(summary, str) and summary.strip():
+                merged_summaries.append(summary.strip())
+        if not merged_comments and not merged_summaries:
+            return {
+                "comments": [],
+                "summary": "(model returned no structured output)",
+            }
+        return {
+            "comments": merged_comments,
+            "summary": "\n\n".join(merged_summaries),
+        }
 
 
 SEVERITY_BADGE = {
@@ -461,11 +486,16 @@ def comment_fingerprint(c: dict[str, Any]) -> str:
 
 
 def _valid_comment(c: Any) -> bool:
+    if not isinstance(c, dict):
+        return False
+    file_ = c.get("file")
+    line = c.get("line")
+    body = c.get("body")
     return (
-        isinstance(c, dict)
-        and isinstance(c.get("file"), str)
-        and isinstance(c.get("line"), int)
-        and isinstance(c.get("body"), str)
+        isinstance(file_, str) and file_ != ""
+        # bool is a subclass of int — exclude it explicitly.
+        and isinstance(line, int) and not isinstance(line, bool) and line > 0
+        and isinstance(body, str) and body.strip() != ""
         and c.get("severity") in ("low", "medium", "high")
     )
 
@@ -590,6 +620,28 @@ def _git_has_commit(sha: str) -> bool:
 
 
 _PRIOR_MARKER_RE = re.compile(r"<!-- claude-review:([0-9a-f]{12}) -->")
+_OVERVIEW_HEADER_RE = re.compile(r"^### Overview\s*$", re.MULTILINE)
+_NEXT_SECTION_RE = re.compile(r"^### \S", re.MULTILINE)
+
+
+def _extract_overview(body: str) -> str:
+    """Pull the `### Overview` section out of a prior summary note.
+
+    Returns just the prose under that header, dropping the meta line, the
+    counts table, the Nits list, the Skipped list, and the hidden
+    markers. If the header isn't present the prior summary likely had no
+    overview content, so return an empty string rather than feeding the
+    full noisy body back to the model.
+    """
+    if not body:
+        return ""
+    m = _OVERVIEW_HEADER_RE.search(body)
+    if not m:
+        return ""
+    rest = body[m.end():]
+    nxt = _NEXT_SECTION_RE.search(rest)
+    section = rest[:nxt.start()] if nxt else rest
+    return section.strip()
 
 
 def _prior_sha_from_body(body: str) -> str | None:
@@ -673,7 +725,10 @@ def main() -> int:
                         )
                         return 0
                     prior_sha = prior_sha_short
-                    prior_summary = prior.get("body") or None
+                    # Strip everything but the Overview prose — the meta
+                    # line, counts table, Nits and Skipped sections, and
+                    # hidden markers are noise that hurts model focus.
+                    prior_summary = _extract_overview(prior.get("body") or "") or None
                     print(
                         f"[claude-review] incremental review since {prior_sha} "
                         f"(prior note #{prior.get('id')})"

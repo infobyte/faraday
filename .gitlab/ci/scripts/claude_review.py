@@ -319,6 +319,7 @@ def collect_diff(
                 f"(added={added!r}, removed={removed!r})",
                 file=sys.stderr,
             )
+            size_skipped.append(f"{path} (malformed numstat)")
             continue
         if total > MAX_FILE_DIFF_LINES:
             size_skipped.append(f"{path} ({total} lines, > {MAX_FILE_DIFF_LINES})")

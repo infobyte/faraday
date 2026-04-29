@@ -4119,6 +4119,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.status_code == 200
         # Query count must stay low regardless of CVE count — N+1 would produce 150+ queries
         assert len(queries) <= 30, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_list_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
@@ -4156,6 +4158,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.status_code == 200
         # Query count must stay low regardless of CVE count — N+1 would produce 100+ queries
         assert len(queries) <= 40, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_without_cves_baseline_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
@@ -4186,6 +4190,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.status_code == 200
         # Baseline: 1 vuln, no CVEs — should be very few queries
         assert len(queries) <= 20, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
 
 @pytest.mark.usefixtures('logged_user')

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Fixed pipeline getting permanently stuck in \"running\" state when Celery worker dies. Added automatic recovery via timeout and periodic cleanup. #8170"
+}

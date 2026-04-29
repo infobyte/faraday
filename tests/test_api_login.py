@@ -138,6 +138,11 @@ class TestLogin:
 
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
+        # Flask-Login 0.6.x caches the user in g._login_user (app-context scoped).
+        # Clear it so the next request goes through the full token auth flow.
+        from flask import g
+        if hasattr(g, '_login_user'):
+            del g._login_user
         res = test_client.get('/v3/ws', headers=headers)
         assert res.status_code == 401
 

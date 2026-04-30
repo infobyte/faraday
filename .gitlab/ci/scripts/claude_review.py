@@ -230,7 +230,7 @@ GREP_REPO_TOOL = {
 
 MAX_FILE_READ_LINES = 2000
 MAX_GREP_HITS = 200
-MAX_TOOL_TURNS = 8
+MAX_HELPER_TURNS = 8
 
 
 def _tool_read_file(
@@ -650,7 +650,7 @@ def call_claude(
         {"role": "user", "content": user_msg},
     ]
 
-    for turn in range(MAX_TOOL_TURNS + 1):
+    for turn in range(MAX_HELPER_TURNS + 1):
         kwargs: dict[str, Any] = dict(
             model=model,
             max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
@@ -681,12 +681,12 @@ def call_claude(
                 "summary": "(model returned no structured output)",
             }
 
-        if turn >= MAX_TOOL_TURNS:
+        if turn >= MAX_HELPER_TURNS:
             # Budget exhausted: feed results plus a hard nudge to wrap up.
             messages.append({
-            "role": "assistant",
-            "content": [b.model_dump() for b in resp.content],
-        })
+                "role": "assistant",
+                "content": [b.model_dump() for b in resp.content],
+            })
             wrap_results = [
                 {**r, "content": r["content"] + "\n\n[NOTE: tool budget exhausted; "
                  "emit_review now with what you have, or emit an empty review.]"}

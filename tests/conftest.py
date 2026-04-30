@@ -40,6 +40,14 @@ if _xdist_worker:
             ignore=shutil.ignore_patterns('config', 'session'),
             dirs_exist_ok=True,
         )
+    # Each worker gets its own server.ini from the test template so that
+    # concurrent writes don't race and celery_enabled=false is honoured.
+    _worker_config_dir = os.path.join(_worker_faraday_dir, 'config')
+    _worker_server_ini = os.path.join(_worker_config_dir, 'server.ini')
+    if not os.path.exists(_worker_server_ini):
+        os.makedirs(_worker_config_dir, exist_ok=True)
+        _test_server_ini = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'server.ini')
+        shutil.copyfile(_test_server_ini, _worker_server_ini)
     os.environ['FARADAY_HOME'] = _worker_home
 
 import json

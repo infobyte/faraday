@@ -89,8 +89,12 @@ DIFF FORMAT — every line carries its NEW-file line number as a prefix:
   "  123: + added"       added line, file line 123
   "  123:   context"     context line, file line 123
   "     : - removed"     removed line, no new-file number
-The `line` field in each inline comment MUST be copied verbatim from the
-prefix. Never count, infer, or comment inline on removed-only lines —put those observations in the summary instead.
+The `line` field in every emitted comment (high, medium, or low) MUST be
+copied verbatim from a prefix in the diff. Never count or infer line
+numbers. Removed-only lines have no new-file number — for an observation
+about a removed line, attach the comment to the nearest surrounding
+context or added line (whose prefix has a valid number). If no usable
+nearby line exists, drop the observation.
 
 VERIFICATION — diff hunks are not enough. Use the helper tools.
   • read_file(path, start_line?, end_line?) — read the file at HEAD (or a
@@ -141,15 +145,30 @@ CALIBRATION:
     close it." — caller behavior is not visible. Verify with grep_repo,
     or skip.
 
-EMIT — call emit_review exactly once at the end of the conversation:
-  • Every high and medium finding becomes an inline comment. Do not sample.
-  • Every low finding goes in the summary.
+EMIT — call emit_review exactly once at the end of the conversation.
+
+  Every finding (high, medium, AND low) is emitted as a structured entry
+  in the `comments` array with `file`, `line`, `severity`, and `body`.
+  The script then routes them by severity:
+    • high + medium → posted as inline discussions on the MR.
+    • low → listed in the "Nits" section of the summary note.
+            (Low findings are never posted inline; they only appear as
+            terse one-line entries in Nits.)
+
+  Rules:
+  • Do not sample. If you have N findings, emit N entries in `comments`.
+  • Do NOT enumerate findings as prose inside the `summary` string —
+    the rendered Nits section is built from low-severity `comments`
+    entries, not from `summary` text.
+  • The `summary` string is for high-level overview prose only (1-3
+    sentences max). Use it to set context, not to list findings.
   • File path exactly as shown in the "===== FILE: <path> =====" header.
   • Body: one-sentence problem, one-sentence fix, optional one line of
     code. No preamble, no restating the code.
 
-If nothing is high or medium, emit zero comments plus a short summary
-saying so. If unsure about any single item, skip it — do not hallucinate."""
+If nothing is high, medium, or low, emit zero comments plus a short
+summary saying so. If unsure about any single item, skip it — do not
+hallucinate."""
 
 EMIT_REVIEW_TOOL = {
     "name": "emit_review",

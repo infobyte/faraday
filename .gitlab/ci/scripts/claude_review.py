@@ -340,7 +340,7 @@ def load_env() -> Env:
         mr_iid=os.environ["CI_MERGE_REQUEST_IID"],
         base_sha=os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"],
         head_sha=os.environ["CI_COMMIT_SHA"],
-        model=os.environ.get("CLAUDE_MODEL", DEFAULT_MODEL),
+        model=_resolve_secret(os.environ.get("CLAUDE_MODEL", "")) or DEFAULT_MODEL,
     )
 
 

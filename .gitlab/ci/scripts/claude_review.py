@@ -89,8 +89,26 @@ DIFF FORMAT — every line carries its NEW-file line number as a prefix:
   "  123: + added"       added line, file line 123
   "  123:   context"     context line, file line 123
   "     : - removed"     removed line, no new-file number
-The `line` field in each inline comment MUST be copied verbatim from the
-prefix. Never count, infer, or comment inline on removed-only lines —put those observations in the summary instead.
+The `line` field in every emitted comment (high, medium, or low) MUST be
+copied verbatim from a prefix in the diff. Never count or infer line
+numbers. Removed-only lines have no new-file number — for an observation
+about a removed line, attach the comment to the nearest surrounding
+context or added line (whose prefix has a valid number). If no usable
+nearby line exists, drop the observation.
+
+VERIFICATION — diff hunks are not enough. Use the helper tools.
+  • read_file(path, start_line?, end_line?) — read the file at HEAD (or a
+    slice). Use it to confirm imports, class invariants, surrounding error
+    handling, the rest of a partially-shown function, related models or
+    migrations.
+  • grep_repo(pattern, path_glob?) — git grep across the repo. Use it to
+    find callers of a changed symbol, prior definitions, and similar
+    patterns elsewhere.
+Call these as many times as needed before emitting. For every non-trivial
+finding you must be able to point to specific evidence either in the diff
+itself or in code you have actually read with these tools. If verifying
+the concern would require code you have not read, drop it. Better to miss
+a real bug than invent one.
 
 APPROACH — two phases before emitting:
 
@@ -102,22 +120,55 @@ APPROACH — two phases before emitting:
        crypto, TOCTOU.
      • Data integrity — migrations, schema drift, index/query changes,
        breaking contract or API changes.
-     • Maintainability — dead code, duplication, misleading names —
-       only if clearly shown in the diff.
+     (Skip maintainability/style — too subjective without full repo
+     context. Comment only on things that are likely-broken, not just
+     unattractive.)
 
-  2. FILTER. For each candidate: present in the diff? actionable?
-     severity high (bug/risk), medium (likely issue), or low (nit)?
-     Drop speculative or non-actionable items.
+  2. FILTER. For each candidate:
+     • Is it actually present in the diff?
+     • Have you verified it (from the hunk's content or from a tool call)?
+       If not, drop it.
+     • Is it actionable?
+     • Severity: high (bug/risk), medium (likely issue), or low (nit)?
+     Drop any item whose validity depends on code you have not read. Drop
+     any item where the natural phrasing is "consider", "might", "could",
+     or "potentially" — those are speculation, not findings.
 
-EMIT — call emit_review exactly once:
-  • Every high and medium finding becomes an inline comment. Do not sample.
-  • Every low finding goes in the summary.
+CALIBRATION:
+  GOOD finding (concrete, verified):
+    "SQL string interpolation of `user_id` in line 142 allows injection
+    when `user_id` is user-supplied (verified: comes straight from
+    `request.args` per read_file of the route handler above). Fix: use a
+    parameterized query."
+  BAD finding (speculative, would require unseen code):
+    "This function might leak the database session if the caller doesn't
+    close it." — caller behavior is not visible. Verify with grep_repo,
+    or skip.
+
+EMIT — call emit_review exactly once at the end of the conversation.
+
+  Every finding (high, medium, AND low) is emitted as a structured entry
+  in the `comments` array with `file`, `line`, `severity`, and `body`.
+  The script then routes them by severity:
+    • high + medium → posted as inline discussions on the MR.
+    • low → listed in the "Nits" section of the summary note.
+            (Low findings are never posted inline; they only appear as
+            terse one-line entries in Nits.)
+
+  Rules:
+  • Do not sample. If you have N findings, emit N entries in `comments`.
+  • Do NOT enumerate findings as prose inside the `summary` string —
+    the rendered Nits section is built from low-severity `comments`
+    entries, not from `summary` text.
+  • The `summary` string is for high-level overview prose only (1-3
+    sentences max). Use it to set context, not to list findings.
   • File path exactly as shown in the "===== FILE: <path> =====" header.
   • Body: one-sentence problem, one-sentence fix, optional one line of
     code. No preamble, no restating the code.
 
-If nothing is high or medium, emit zero comments plus a short summary
-saying so. If unsure about any single item, skip it — do not hallucinate."""
+If nothing is high, medium, or low, emit zero comments plus a short
+summary saying so. If unsure about any single item, skip it — do not
+hallucinate."""
 
 EMIT_REVIEW_TOOL = {
     "name": "emit_review",
@@ -143,6 +194,127 @@ EMIT_REVIEW_TOOL = {
         "required": ["comments", "summary"],
     },
 }
+
+READ_FILE_TOOL = {
+    "name": "read_file",
+    "description": (
+        "Read a repo file at the MR HEAD commit. Use this to verify a "
+        "candidate finding by checking surrounding code, imports, "
+        "invariants, and related files (callers, models, migrations). "
+        "Output is line-numbered."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "path": {
+                "type": "string",
+                "description": "Repo-relative file path.",
+            },
+            "start_line": {
+                "type": "integer",
+                "description": "1-indexed start line, inclusive. Optional; defaults to 1.",
+            },
+            "end_line": {
+                "type": "integer",
+                "description": "1-indexed end line, inclusive. Optional; defaults to end of file.",
+            },
+        },
+        "required": ["path"],
+    },
+}
+
+GREP_REPO_TOOL = {
+    "name": "grep_repo",
+    "description": (
+        "Run `git grep -n -P` at the MR HEAD commit. Use this to find "
+        "callers of a changed symbol, prior definitions, or similar "
+        "patterns elsewhere in the repo. Returns up to 200 matches as "
+        "`path:line:content`."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "pattern": {
+                "type": "string",
+                "description": "PCRE regex pattern to grep for.",
+            },
+            "path_glob": {
+                "type": "string",
+                "description": "Optional pathspec to scope the search, e.g. '*.py' or 'tests/'.",
+            },
+        },
+        "required": ["pattern"],
+    },
+}
+
+MAX_FILE_READ_LINES = 2000
+MAX_GREP_HITS = 200
+MAX_HELPER_TURNS = 8
+
+
+def _tool_read_file(
+    head_sha: str,
+    path: str,
+    start_line: int | None,
+    end_line: int | None,
+) -> str:
+    if not path or ".." in path.split("/") or path.startswith("/"):
+        return f"error: invalid path {path!r}"
+    try:
+        content = subprocess.run(
+            ["git", "show", f"{head_sha}:{path}"],
+            check=True, capture_output=True, text=True,
+        ).stdout
+    except subprocess.CalledProcessError as exc:
+        return f"error: cannot read {path!r} at HEAD: {exc.stderr.strip() or exc}"
+    lines = content.splitlines()
+    total = len(lines)
+    if total == 0:
+        return f"# {path} (empty)"
+    s = max(1, start_line or 1)
+    e = min(total, end_line or total)
+    if e < s:
+        return f"error: end_line {e} < start_line {s}"
+    truncated = False
+    if e - s + 1 > MAX_FILE_READ_LINES:
+        e = s + MAX_FILE_READ_LINES - 1
+        truncated = True
+    body = "\n".join(f"{i:5d}: {lines[i - 1]}" for i in range(s, e + 1))
+    header = f"# {path} (lines {s}-{e} of {total})"
+    if truncated:
+        header += f" [truncated to {MAX_FILE_READ_LINES} lines; call again with start_line={e + 1} for more]"
+    return f"{header}\n{body}"
+
+
+def _tool_grep_repo(
+    head_sha: str,
+    pattern: str,
+    path_glob: str | None,
+) -> str:
+    if not pattern:
+        return "error: empty pattern"
+    args = ["git", "grep", "-n", "-P", "--no-color", "-e", pattern, head_sha]
+    if path_glob:
+        args += ["--", path_glob]
+    try:
+        out = subprocess.run(args, capture_output=True, text=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        return "error: grep timed out"
+    except Exception as exc:
+        return f"error: grep failed: {type(exc).__name__}: {exc}"
+    if out.returncode == 1 and not out.stdout:
+        return "(no matches)"
+    if out.returncode not in (0, 1):
+        return f"error: grep exit {out.returncode}: {out.stderr.strip() or '(no stderr)'}"
+    # Strip the leading "{head_sha}:" that `git grep <treeish>` prepends.
+    cleaned: list[str] = []
+    prefix = f"{head_sha}:"
+    for line in out.stdout.splitlines():
+        cleaned.append(line[len(prefix):] if line.startswith(prefix) else line)
+    if len(cleaned) > MAX_GREP_HITS:
+        kept = cleaned[:MAX_GREP_HITS]
+        return "\n".join(kept) + f"\n... [truncated; {len(cleaned) - MAX_GREP_HITS} more matches]"
+    return "\n".join(cleaned) if cleaned else "(no matches)"
 
 
 @dataclass
@@ -187,7 +359,7 @@ def load_env() -> Env:
         mr_iid=os.environ["CI_MERGE_REQUEST_IID"],
         base_sha=os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"],
         head_sha=os.environ["CI_COMMIT_SHA"],
-        model=os.environ.get("CLAUDE_MODEL", DEFAULT_MODEL),
+        model=_resolve_secret(os.environ.get("CLAUDE_MODEL", "")) or DEFAULT_MODEL,
     )
 
 
@@ -336,6 +508,7 @@ def collect_diff(
         patch = git(
             "diff",
             "--no-color",
+            "-U30",
             f"{base}..{env.head_sha}",
             "--",
             path,
@@ -377,16 +550,104 @@ def chunk_diffs(diffs: list[tuple[str, str]]) -> list[str]:
     return chunks
 
 
+def _create_with_retry(
+    client: Anthropic, kwargs: dict[str, Any]
+) -> Any:
+    """Wrap messages.create with exponential-backoff retry for transient errors."""
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            return client.messages.create(**kwargs)
+        except (APIConnectionError, APITimeoutError):
+            if attempt >= 3:
+                raise
+            time.sleep(2 ** attempt)
+        except (RateLimitError, APIStatusError) as exc:
+            status = getattr(exc, "status_code", None)
+            if attempt >= 3 or (status and status < 500 and status not in (408, 429)):
+                raise
+            time.sleep(2 ** attempt)
+
+
+def _emit_review_payload(content: list[Any]) -> dict[str, Any] | None:
+    """Extract the merged emit_review payload from a response, or None if not emitted."""
+    merged_comments: list[Any] = []
+    merged_summaries: list[str] = []
+    saw_emit = False
+    for block in content:
+        if getattr(block, "type", None) != "tool_use" or block.name != "emit_review":
+            continue
+        saw_emit = True
+        inp = block.input or {}
+        comments = inp.get("comments")
+        if isinstance(comments, list):
+            merged_comments.extend(comments)
+        summary = inp.get("summary")
+        if isinstance(summary, str) and summary.strip():
+            merged_summaries.append(summary.strip())
+    if not saw_emit:
+        return None
+    if not merged_comments and not merged_summaries:
+        return {"comments": [], "summary": "(model returned no structured output)"}
+    return {
+        "comments": merged_comments,
+        "summary": "\n\n".join(merged_summaries),
+    }
+
+
+def _run_helper_tools(
+    head_sha: str, content: list[Any]
+) -> tuple[list[Any], list[dict[str, Any]]]:
+    """Run any read_file/grep_repo tool_use blocks. Returns (tool_use_blocks, tool_results)."""
+    tool_use_blocks: list[Any] = []
+    results: list[dict[str, Any]] = []
+    for block in content:
+        if getattr(block, "type", None) != "tool_use":
+            continue
+        if block.name not in ("read_file", "grep_repo"):
+            continue
+        tool_use_blocks.append(block)
+        inp = block.input or {}
+        try:
+            if block.name == "read_file":
+                out = _tool_read_file(
+                    head_sha,
+                    inp.get("path", ""),
+                    inp.get("start_line"),
+                    inp.get("end_line"),
+                )
+            else:
+                out = _tool_grep_repo(
+                    head_sha,
+                    inp.get("pattern", ""),
+                    inp.get("path_glob"),
+                )
+        except Exception as exc:
+            out = f"error: {type(exc).__name__}: {exc}"
+        # Anthropic's tool_result content has a hard limit; cap aggressively.
+        if len(out) > 60_000:
+            out = out[:60_000] + "\n... [tool output truncated at 60k chars]"
+        results.append({
+            "type": "tool_result",
+            "tool_use_id": block.id,
+            "content": out,
+        })
+        print(f"[claude-review] tool {block.name}({inp!r}) -> {len(out)} chars")
+    return tool_use_blocks, results
+
+
 def call_claude(
     client: Anthropic,
+    head_sha: str,
     model: str,
     chunk: str,
     prior_summary: str | None = None,
 ) -> dict[str, Any]:
     lead = (
         "Review the following MR diff. Do a Phase 1 scan and Phase 2 filter "
-        "as specified in your instructions, then respond via the emit_review "
-        "tool.\n"
+        "as specified in your instructions, calling read_file/grep_repo as "
+        "needed to verify candidates, then respond via the emit_review tool.\n"
     )
     if prior_summary:
         lead += (
@@ -403,59 +664,75 @@ def call_claude(
     thinking_budget = max(0, int(os.environ.get(
         "CLAUDE_THINKING_BUDGET", DEFAULT_THINKING_BUDGET
     )))
-    kwargs: dict[str, Any] = dict(
-        model=model,
-        max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
-        system=SYSTEM_PROMPT,
-        tools=[EMIT_REVIEW_TOOL],
-        # Extended thinking disallows any form of forced tool use. `auto`
-        # lets Claude choose — with one tool defined and the system prompt
-        # explicitly instructing to call it, this reliably triggers it.
-        tool_choice={"type": "auto"},
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    if thinking_budget > 0:
-        kwargs["thinking"] = {
-            "type": "enabled",
-            "budget_tokens": thinking_budget,
-        }
-    attempt = 0
-    while True:
-        attempt += 1
-        try:
-            resp = client.messages.create(**kwargs)
-        except (APIConnectionError, APITimeoutError):
-            if attempt >= 3:
-                raise
-            time.sleep(2 ** attempt)
-            continue
-        except (RateLimitError, APIStatusError) as exc:
-            status = getattr(exc, "status_code", None)
-            if attempt >= 3 or (status and status < 500 and status not in (408, 429)):
-                raise
-            time.sleep(2 ** attempt)
-            continue
-        merged_comments: list[Any] = []
-        merged_summaries: list[str] = []
-        for block in resp.content:
-            if block.type != "tool_use" or block.name != "emit_review":
-                continue
-            inp = block.input or {}
-            comments = inp.get("comments")
-            if isinstance(comments, list):
-                merged_comments.extend(comments)
-            summary = inp.get("summary")
-            if isinstance(summary, str) and summary.strip():
-                merged_summaries.append(summary.strip())
-        if not merged_comments and not merged_summaries:
+    tools = [EMIT_REVIEW_TOOL, READ_FILE_TOOL, GREP_REPO_TOOL]
+    messages: list[dict[str, Any]] = [
+        {"role": "user", "content": user_msg},
+    ]
+
+    for turn in range(MAX_HELPER_TURNS + 1):
+        kwargs: dict[str, Any] = dict(
+            model=model,
+            max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
+            system=SYSTEM_PROMPT,
+            tools=tools,
+            # Extended thinking disallows any form of forced tool use. `auto`
+            # lets Claude choose — the system prompt instructs it to call
+            # helper tools when uncertain and emit_review at the end.
+            tool_choice={"type": "auto"},
+            messages=messages,
+        )
+        if thinking_budget > 0:
+            kwargs["thinking"] = {
+                "type": "enabled",
+                "budget_tokens": thinking_budget,
+            }
+        resp = _create_with_retry(client, kwargs)
+
+        emit = _emit_review_payload(resp.content)
+        if emit is not None:
+            return emit
+
+        helper_blocks, tool_results = _run_helper_tools(head_sha, resp.content)
+        if not helper_blocks:
+            # No emit, no helper tools — model is done but produced nothing structured.
             return {
                 "comments": [],
                 "summary": "(model returned no structured output)",
             }
-        return {
-            "comments": merged_comments,
-            "summary": "\n\n".join(merged_summaries),
-        }
+
+        if turn >= MAX_HELPER_TURNS:
+            # Budget exhausted: feed results plus a hard nudge to wrap up.
+            messages.append({
+                "role": "assistant",
+                "content": [b.model_dump() for b in resp.content],
+            })
+            wrap_results = [
+                {**r, "content": r["content"] + "\n\n[NOTE: tool budget exhausted; "
+                 "emit_review now with what you have, or emit an empty review.]"}
+                for r in tool_results
+            ]
+            messages.append({"role": "user", "content": wrap_results})
+            # One final pass without helper tools to force a wrap-up.
+            kwargs_final = dict(kwargs)
+            kwargs_final["tools"] = [EMIT_REVIEW_TOOL]
+            kwargs_final["messages"] = messages
+            resp = _create_with_retry(client, kwargs_final)
+            emit = _emit_review_payload(resp.content)
+            if emit is not None:
+                return emit
+            return {
+                "comments": [],
+                "summary": "(model exceeded tool budget without emitting)",
+            }
+
+        messages.append({
+            "role": "assistant",
+            "content": [b.model_dump() for b in resp.content],
+        })
+        messages.append({"role": "user", "content": tool_results})
+
+    # Should be unreachable — the loop returns inside.
+    return {"comments": [], "summary": "(unreachable)"}
 
 
 SEVERITY_BADGE = {
@@ -769,7 +1046,7 @@ def main() -> int:
                   f"({len(chunk)} chars)")
             # Prior summary is context, not per-chunk input — send on first chunk only.
             result = call_claude(
-                client, env.model, chunk,
+                client, env.head_sha, env.model, chunk,
                 prior_summary=prior_summary if i == 1 else None,
             )
             all_comments.extend(result.get("comments", []))
@@ -799,6 +1076,16 @@ def main() -> int:
         inline = [c for c in unique if c["severity"] in ("medium", "high")]
         low_notes = [c for c in unique if c["severity"] == "low"]
 
+        sev_hist = {"high": 0, "medium": 0, "low": 0}
+        for c in unique:
+            sev_hist[c["severity"]] = sev_hist.get(c["severity"], 0) + 1
+        print(
+            f"[claude-review] candidates: model={len(all_comments)} "
+            f"valid={len(valid_comments)} unique={len(unique)} "
+            f"(high={sev_hist['high']} medium={sev_hist['medium']} "
+            f"low={sev_hist['low']})"
+        )
+
         inline_count = 0
         fallback_count = 0
         for c in inline:
@@ -811,6 +1098,10 @@ def main() -> int:
                 inline_count += 1
             elif result == "fallback":
                 fallback_count += 1
+        print(
+            f"[claude-review] posted: inline={inline_count} "
+            f"fallback={fallback_count} nits={len(low_notes)}"
+        )
 
         meta_line = (
             f"**Model** `{env.model}` · **Commit** `{env.head_sha[:12]}`"

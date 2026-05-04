@@ -31,6 +31,11 @@ class LicenseEnvelopedView(LicenseView):
         return {"object_list": objects}
 
 
+@pytest.fixture(scope='session', autouse=True)
+def _register_envelope_view(app):
+    LicenseEnvelopedView.register(app)
+
+
 class TestLicensesAPI(ReadWriteAPITests):
     model = License
     factory = factories.LicenseFactory
@@ -39,12 +44,7 @@ class TestLicensesAPI(ReadWriteAPITests):
     patchable_fields = ["product"]
 
     # @pytest.mark.skip(reason="Not a license actually test")
-    def test_envelope_list(self, test_client, app):
-        if not any('test_envelope_list' in rule.rule for rule in app.url_map.iter_rules()):
-            was_got_first = app._got_first_request
-            app._got_first_request = False
-            LicenseEnvelopedView.register(app)
-            app._got_first_request = was_got_first
+    def test_envelope_list(self, test_client):
         original_res = test_client.get(self.url())
         assert original_res.status_code == 200
         new_res = test_client.get(API_PREFIX + 'test_envelope_list')

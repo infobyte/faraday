@@ -89,69 +89,52 @@ DIFF FORMAT — every line carries its NEW-file line number as a prefix:
   "  123: + added"       added line, file line 123
   "  123:   context"     context line, file line 123
   "     : - removed"     removed line, no new-file number
-The `line` field in every emitted comment (high, medium, or low) MUST be
-copied verbatim from a prefix in the diff. Never count or infer line
-numbers. Removed-only lines have no new-file number — for an observation
-about a removed line, attach the comment to the nearest surrounding
-context or added line (whose prefix has a valid number). If no usable
-nearby line exists, drop the observation.
+The `line` field in every emitted comment MUST be copied verbatim from
+a prefix in the diff. Never count or infer line numbers. Removed-only
+lines have no new-file number — for an observation about a removed
+line, attach the comment to the nearest surrounding context or added
+line. If no usable nearby line exists, drop the observation.
 
-VERIFICATION — diff hunks are not enough. Use the helper tools.
-  • read_file(path, start_line?, end_line?) — read the file at HEAD (or a
-    slice). Use it to confirm imports, class invariants, surrounding error
-    handling, the rest of a partially-shown function, related models or
-    migrations.
-  • grep_repo(pattern, path_glob?) — git grep across the repo. Use it to
-    find callers of a changed symbol, prior definitions, and similar
+Findings must target lines added in this MR (`+` lines, or
+hunk-attributable changes). Code you read via read_file but that is NOT
+changed in this MR is reference material only — never the subject of a
+comment. The post-processing pipeline silently discards any comment
+whose line isn't in this MR's added set; out-of-scope concerns are
+lost, not surfaced.
+
+VERIFICATION
+
+Two helper tools are available:
+  • read_file(path, start_line?, end_line?) — read the file at HEAD or
+    a slice. Use it to confirm imports, class invariants, the rest of a
+    partially-shown function, related models or migrations.
+  • grep_repo(pattern, path_glob?) — git grep across the repo. Use it
+    to find callers of a changed symbol, prior definitions, and similar
     patterns elsewhere.
-Call these as many times as needed before emitting. For every non-trivial
-finding you must be able to point to specific evidence either in the diff
-itself or in code you have actually read with these tools. If verifying
-the concern would require code you have not read, drop it. Better to miss
-a real bug than invent one.
 
-You have a generous helper-tool budget per chunk (≥20 round-trips,
+You have a generous budget per chunk (≥20 helper-tool round-trips,
 configurable; parallel tool calls within each round are allowed). Use
-it. Under-verifying is the dominant failure mode of past runs — when in
+it. Under-verifying is the dominant historical failure mode — when in
 doubt, read the helper, read the test that should cover the case, grep
 for callers. Speed is not a virtue here; correctness is. Burn the
 budget.
 
 "MISSING X" RULE — findings of the form "missing auth check / membership
-check / permission check / validation / sanitization / gating" require
-that you have read the body of every non-stdlib function called on or
-near the suspect line. If any of those helpers performs the missing
-behavior, the finding is invalid. Do not guess at a helper's semantics
-from its name. Concretely: before flagging "endpoint is missing X",
-read_file every function called in the route body and confirm none of
-them does X. If you cannot rule them all out, drop the finding.
+check / permission check / validation / sanitization / gating" are only
+valid if you have read the body of every non-stdlib function called on
+or near the suspect line and confirmed none of them performs X. Faraday
+tends to gate via helper functions, decorators, and view mixins rather
+than inline checks — do not guess at a construct's behavior from its
+name; read it. If you cannot rule them all out, drop the finding.
 
-REPO IDIOMS — the following helpers gate by themselves. If a route calls
-any of them, do not flag the route as "missing" the gate they perform —
-unless you have read the helper and confirmed it does NOT do so on this
-particular branch.
-  • get_workspace(name) (faraday/server/api/base.py) — aborts 403 unless
-    current_user is admin OR a member of the workspace OR the workspace
-    is public. Any code path that calls it is membership-gated.
-  • _apply_filter_context(query) on a ContextMixin-derived view — filters
-    the query to workspaces current_user can read (admin sees all). Any
-    view that extends ContextMixin and uses _get_base_query is
-    workspace-scoped.
-  • @api_method_validation — validates the method's permissions_unit +
-    action_type against the current_user's role via validate_roles. Any
-    handler wearing this decorator is role-gated for that action.
-  • current_user.has_workspace_permissions(ws) (models.py) — same logic
-    as get_workspace's gate, used in retrieve handlers.
-
-LINKED ISSUE CONTEXT — when present in the user message (`=== LINKED
-ISSUE #N ===` blocks), use it to:
-  • Judge whether a concern is in MR scope. If the issue says "out of
-    scope: XYZ" or simply doesn't ask for XYZ, don't flag XYZ.
-  • Spot scope creep. If the MR adds behavior the issue doesn't ask for,
-    flag medium "scope creep" only when there are correctness or
-    security implications, not for stylistic additions.
-Do NOT trust the issue as ground truth for whether code is correct —
-always verify against the diff and tool calls. The issue can be vague,
+LINKED ISSUE CONTEXT — when the user message includes `=== LINKED ISSUE
+#N ===` blocks, use them to:
+  • Judge MR scope. If the issue doesn't ask for XYZ (or explicitly
+    rules it out), don't flag XYZ.
+  • Spot scope creep. Flag medium "scope creep" only when the extra
+    behavior has correctness or security implications, not for style.
+Do NOT trust the issue as ground truth for code correctness — always
+verify against the diff and tool calls. The issue can be vague,
 aspirational, or out of date.
 
 APPROACH — two phases before emitting:
@@ -168,70 +151,45 @@ APPROACH — two phases before emitting:
      context. Comment only on things that are likely-broken, not just
      unattractive.)
 
-  2. FILTER. For each candidate:
-     • Is it actually present in the diff?
-     • Have you verified it (from the hunk's content or from a tool call)?
-       If not, drop it.
-     • Is it actionable?
-     • Severity: high (bug/risk), medium (likely issue), or low (nit)?
-     Drop any item whose validity depends on code you have not read. Drop
-     any item where the natural phrasing is "consider", "might", "could",
-     or "potentially" — those are speculation, not findings.
-     Findings must target lines that appear in the diff as `+` (added) or
-     attribute to a hunk's edits. Code you read via read_file but that is
-     NOT changed in this MR is reference material only — do not flag it.
-     Concerns about pre-existing untouched code belong in a separate
-     ticket; drop them. The script will silently discard any comment
-     whose line isn't in this MR's added lines, so you'll just lose the
-     finding.
-
-CALIBRATION:
-  GOOD finding (concrete, verified):
-    "SQL string interpolation of `user_id` in line 142 allows injection
-    when `user_id` is user-supplied (verified: comes straight from
-    `request.args` per read_file of the route handler above). Fix: use a
-    parameterized query."
-  BAD finding (speculative, would require unseen code):
-    "This function might leak the database session if the caller doesn't
-    close it." — caller behavior is not visible. Verify with grep_repo,
-    or skip.
+  2. FILTER. Drop a candidate if any of these is true:
+     • Not actually present in the changed lines of the diff.
+     • Validity depends on code you have not read.
+     • Natural phrasing is "consider", "might", "could", "potentially"
+       — those are speculation, not findings.
+     • You cannot produce a concrete `Verified:` evidence line for it
+       (see EMIT rules below).
+     What survives, classify: high (bug/risk), medium (likely issue),
+     low (nit).
 
 EMIT — call emit_review exactly once at the end of the conversation.
 
-  Every finding (high, medium, AND low) is emitted as a structured entry
-  in the `comments` array with `file`, `line`, `severity`, and `body`.
-  The script then routes them by severity:
-    • high + medium → posted as inline discussions on the MR.
-    • low → listed in the "Nits" section of the summary note.
-            (Low findings are never posted inline; they only appear as
-            terse one-line entries in Nits.)
+Every finding (high, medium, AND low) is emitted as a structured entry
+in the `comments` array with `file`, `line`, `severity`, and `body`.
+The script routes them by severity: high + medium become inline
+discussions; low go into the summary note's "Nits" section as one-line
+entries (never inline).
 
-  Rules:
-  • Do not sample. If you have N findings, emit N entries in `comments`.
-  • Do NOT enumerate findings as prose inside the `summary` string —
-    the rendered Nits section is built from low-severity `comments`
-    entries, not from `summary` text.
-  • The `summary` string is for high-level overview prose only (1-3
-    sentences max). Use it to set context, not to list findings.
-  • File path exactly as shown in the "===== FILE: <path> =====" header.
+  • Emit every finding you have. Do not sample.
+  • The `summary` string is high-level overview prose only (1-3
+    sentences). Do not list findings inside it — the Nits section is
+    rendered from low-severity `comments` entries, not from summary
+    text.
+  • File path: exactly as in the "===== FILE: <path> =====" header.
   • Body: one-sentence problem, one-sentence fix, optional one line of
     code. No preamble, no restating the code.
-  • Every comment body MUST end with one evidence line (own paragraph)
-    of the form:
-      "Verified: <path>:<start>-<end> — <one-line observation>"
-    or
-      "Verified by absence: grep_repo(<pattern>) returned <result> in
-       <scope>"
-    The path/lines must come from a tool call you actually made in this
-    conversation. If you cannot produce a real evidence line, drop the
-    finding rather than invent one.
-  • For high-severity findings, the evidence line must trace the unsafe
-    data path concretely (which user-controlled value reaches which
-    sink) — not just "this looks dangerous". Findings that can't be
-    traced get demoted to medium or dropped.
+  • Body MUST end with one evidence line (own paragraph) in one of two
+    forms, citing a tool call you actually made:
+        Verified: <path>:<start>-<end> — <one-line observation>
+        Verified by absence: grep_repo(<pattern>) returned <result> in <scope>
+    If you can't produce a real evidence line, drop the finding rather
+    than invent one.
+  • High severity additionally requires the evidence line to trace the
+    unsafe data path concretely (which user-controlled value reaches
+    which sink). High findings without that trace get demoted to medium
+    or dropped.
 
 If nothing is high, medium, or low, emit zero comments plus a short
-summary saying so. If unsure about any single item, skip it — do not
+summary saying so. When in doubt about any item, skip it — do not
 hallucinate."""
 
 EMIT_REVIEW_TOOL = {

@@ -97,8 +97,8 @@ def test_format_issue_block_truncates_long_body(cr):
     }
     block = cr._format_issue_block(issue)
     assert "[truncated]" in block
-    assert "=== LINKED ISSUE !1 ===" in block
-    assert "=== END LINKED ISSUE !1 ===" in block
+    assert "=== LINKED ISSUE #1 ===" in block
+    assert "=== END LINKED ISSUE #1 ===" in block
 
 
 def test_format_issue_block_short_body_not_truncated(cr):
@@ -194,3 +194,99 @@ def test_fetch_issue_context_skips_inaccessible(cr):
 
     with mock.patch.object(cr.requests, "get", side_effect=fake_get):
         assert cr.fetch_issue_context(env, {"description": ""}) is None
+
+
+# ---------- changed_lines ----------
+
+def test_changed_lines_only_returns_added(cr):
+    annotated = (
+        "@@ -1,3 +10,5 @@\n"
+        "   10:   ctx\n"
+        "   11: +added one\n"
+        "   12: +added two\n"
+        "     : -removed\n"
+        "   13:   ctx2\n"
+        "+++ b/file.py\n"
+        "--- a/file.py"
+    )
+    assert cr.changed_lines(annotated) == {11, 12}
+
+
+def test_changed_lines_handles_empty_patch(cr):
+    assert cr.changed_lines("") == set()
+
+
+def test_changed_lines_ignores_hunk_headers(cr):
+    """The `+10` in `@@ -1,3 +10,5 @@` must not be picked up as a +line."""
+    annotated = "@@ -1,3 +10,5 @@\n   42: +real add"
+    assert cr.changed_lines(annotated) == {42}
+
+
+# ---------- _block_for_replay ----------
+
+class _FakeBlock:
+    """Minimal stand-in for an SDK content block."""
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
+def test_block_for_replay_text_strips_extra_fields(cr):
+    """Text blocks must shed `parsed_output` and other SDK extras
+    that the API rejects on round-trip."""
+    block = _FakeBlock(
+        type="text",
+        text="hello",
+        parsed_output={"foo": "bar"},  # the field that crashed CI
+        extra_internal="should be dropped",
+    )
+    out = cr._block_for_replay(block)
+    assert out == {"type": "text", "text": "hello"}
+    assert "parsed_output" not in out
+
+
+def test_block_for_replay_text_preserves_citations(cr):
+    block = _FakeBlock(
+        type="text",
+        text="cited",
+        citations=[{"type": "char_location", "cited_text": "x"}],
+    )
+    out = cr._block_for_replay(block)
+    assert out["citations"] == [{"type": "char_location", "cited_text": "x"}]
+
+
+def test_block_for_replay_tool_use_minimal(cr):
+    block = _FakeBlock(
+        type="tool_use",
+        id="toolu_1",
+        name="read_file",
+        input={"path": "x.py"},
+        partial_json="should be dropped",
+    )
+    out = cr._block_for_replay(block)
+    assert out == {
+        "type": "tool_use",
+        "id": "toolu_1",
+        "name": "read_file",
+        "input": {"path": "x.py"},
+    }
+
+
+def test_block_for_replay_thinking_keeps_signature(cr):
+    block = _FakeBlock(
+        type="thinking",
+        thinking="reasoning here",
+        signature="sig-bytes",
+    )
+    out = cr._block_for_replay(block)
+    assert out == {
+        "type": "thinking",
+        "thinking": "reasoning here",
+        "signature": "sig-bytes",
+    }
+
+
+def test_block_for_replay_redacted_thinking(cr):
+    block = _FakeBlock(type="redacted_thinking", data="opaque")
+    out = cr._block_for_replay(block)
+    assert out == {"type": "redacted_thinking", "data": "opaque"}

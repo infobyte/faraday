@@ -144,7 +144,7 @@ particular branch.
     as get_workspace's gate, used in retrieve handlers.
 
 LINKED ISSUE CONTEXT — when present in the user message (`=== LINKED
-ISSUE !N ===` blocks), use it to:
+ISSUE #N ===` blocks), use it to:
   • Judge whether a concern is in MR scope. If the issue says "out of
     scope: XYZ" or simply doesn't ask for XYZ, don't flag XYZ.
   • Spot scope creep. If the MR adds behavior the issue doesn't ask for,
@@ -686,6 +686,45 @@ def _emit_review_payload(content: list[Any]) -> dict[str, Any] | None:
     }
 
 
+def _block_for_replay(block: Any) -> dict[str, Any]:
+    """Convert an SDK content block to an API-acceptable dict for replay.
+
+    The streaming SDK adds internal fields (e.g. ``parsed_output`` on
+    text blocks) that the API rejects when an assistant turn is sent
+    back as conversation history. This builds a minimal dict containing
+    only the fields the API accepts per block type.
+    """
+    btype = getattr(block, "type", None)
+    if btype == "text":
+        out: dict[str, Any] = {"type": "text", "text": getattr(block, "text", "")}
+        citations = getattr(block, "citations", None)
+        if citations is not None:
+            out["citations"] = citations
+        return out
+    if btype == "tool_use":
+        return {
+            "type": "tool_use",
+            "id": block.id,
+            "name": block.name,
+            "input": block.input,
+        }
+    if btype == "thinking":
+        # Extended thinking requires the signature on round-trip.
+        out = {"type": "thinking", "thinking": getattr(block, "thinking", "")}
+        sig = getattr(block, "signature", None)
+        if sig is not None:
+            out["signature"] = sig
+        return out
+    if btype == "redacted_thinking":
+        return {
+            "type": "redacted_thinking",
+            "data": getattr(block, "data", ""),
+        }
+    if hasattr(block, "model_dump"):
+        return block.model_dump(exclude_none=True)
+    return dict(block)
+
+
 def _run_helper_tools(
     head_sha: str, content: list[Any]
 ) -> tuple[list[Any], list[dict[str, Any]]]:
@@ -809,7 +848,7 @@ def call_claude(
             # Budget exhausted: feed results plus a hard nudge to wrap up.
             messages.append({
                 "role": "assistant",
-                "content": [b.model_dump() for b in resp.content],
+                "content": [_block_for_replay(b) for b in resp.content],
             })
             wrap_results = [
                 {**r, "content": r["content"] + "\n\n[NOTE: tool budget exhausted; "
@@ -832,7 +871,7 @@ def call_claude(
 
         messages.append({
             "role": "assistant",
-            "content": [b.model_dump() for b in resp.content],
+            "content": [_block_for_replay(b) for b in resp.content],
         })
         messages.append({"role": "user", "content": tool_results})
 
@@ -1062,14 +1101,14 @@ def _fetch_issue(env: Env, iid: int | str) -> dict[str, Any] | None:
         r = requests.get(url, headers=gitlab_headers(env), timeout=30)
         if r.status_code in (403, 404):
             print(
-                f"[claude-review] issue !{iid} not accessible "
+                f"[claude-review] issue #{iid} not accessible "
                 f"({r.status_code}); skipping",
                 file=sys.stderr,
             )
             return None
         r.raise_for_status()
     except requests.RequestException as exc:
-        print(f"[claude-review] issue !{iid} fetch failed: {exc}", file=sys.stderr)
+        print(f"[claude-review] issue #{iid} fetch failed: {exc}", file=sys.stderr)
         return None
     return r.json() or None
 
@@ -1130,13 +1169,13 @@ def _format_issue_block(issue: dict[str, Any]) -> str:
     body = (issue.get("description") or "").strip()
     if len(body) > MAX_ISSUE_BODY_CHARS:
         body = body[:MAX_ISSUE_BODY_CHARS] + "\n... [truncated]"
-    parts = [f"=== LINKED ISSUE !{iid} ===",
+    parts = [f"=== LINKED ISSUE #{iid} ===",
              f"Title: {title}"]
     if url:
         parts.append(f"URL: {url}")
     parts.append("")
     parts.append(body if body else "(no description)")
-    parts.append(f"=== END LINKED ISSUE !{iid} ===")
+    parts.append(f"=== END LINKED ISSUE #{iid} ===")
     return "\n".join(parts)
 
 
@@ -1153,7 +1192,7 @@ def fetch_issue_context(
         if not issue:
             continue
         blocks.append(_format_issue_block(issue))
-        print(f"[claude-review] resolved issue !{iid}")
+        print(f"[claude-review] resolved issue #{iid}")
     return "\n\n".join(blocks) if blocks else None
 
 

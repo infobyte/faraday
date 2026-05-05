@@ -45,7 +45,7 @@ from anthropic import (
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 RESPONSE_TOKEN_BUDGET = 8000
-DEFAULT_THINKING_BUDGET = 8000
+DEFAULT_THINKING_BUDGET = 16000
 MAX_INPUT_CHARS_PER_CHUNK = 280_000  # rough proxy for ~80k input tokens
 MAX_FILE_DIFF_LINES = 1500
 SKIP_PATH_SUFFIXES = (
@@ -110,6 +110,13 @@ itself or in code you have actually read with these tools. If verifying
 the concern would require code you have not read, drop it. Better to miss
 a real bug than invent one.
 
+You have a generous helper-tool budget per chunk (≥20 round-trips,
+configurable; parallel tool calls within each round are allowed). Use
+it. Under-verifying is the dominant failure mode of past runs — when in
+doubt, read the helper, read the test that should cover the case, grep
+for callers. Speed is not a virtue here; correctness is. Burn the
+budget.
+
 "MISSING X" RULE — findings of the form "missing auth check / membership
 check / permission check / validation / sanitization / gating" require
 that you have read the body of every non-stdlib function called on or
@@ -135,6 +142,17 @@ particular branch.
     handler wearing this decorator is role-gated for that action.
   • current_user.has_workspace_permissions(ws) (models.py) — same logic
     as get_workspace's gate, used in retrieve handlers.
+
+LINKED ISSUE CONTEXT — when present in the user message (`=== LINKED
+ISSUE !N ===` blocks), use it to:
+  • Judge whether a concern is in MR scope. If the issue says "out of
+    scope: XYZ" or simply doesn't ask for XYZ, don't flag XYZ.
+  • Spot scope creep. If the MR adds behavior the issue doesn't ask for,
+    flag medium "scope creep" only when there are correctness or
+    security implications, not for stylistic additions.
+Do NOT trust the issue as ground truth for whether code is correct —
+always verify against the diff and tool calls. The issue can be vague,
+aspirational, or out of date.
 
 APPROACH — two phases before emitting:
 
@@ -293,9 +311,9 @@ GREP_REPO_TOOL = {
     },
 }
 
-MAX_FILE_READ_LINES = 2000
+MAX_FILE_READ_LINES = 3000
 MAX_GREP_HITS = 200
-MAX_HELPER_TURNS = 8
+DEFAULT_MAX_HELPER_TURNS = 20
 
 
 def _tool_read_file(
@@ -373,6 +391,7 @@ class Env:
     base_sha: str
     head_sha: str
     model: str
+    branch: str = ""
 
 
 def _resolve_secret(value: str) -> str:
@@ -406,6 +425,7 @@ def load_env() -> Env:
         base_sha=os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"],
         head_sha=os.environ["CI_COMMIT_SHA"],
         model=_resolve_secret(os.environ.get("CLAUDE_MODEL", "")) or DEFAULT_MODEL,
+        branch=os.environ.get("CI_COMMIT_REF_NAME", ""),
     )
 
 
@@ -707,12 +727,24 @@ def call_claude(
     model: str,
     chunk: str,
     prior_summary: str | None = None,
+    issue_context: str | None = None,
 ) -> dict[str, Any]:
     lead = (
         "Review the following MR diff. Do a Phase 1 scan and Phase 2 filter "
         "as specified in your instructions, calling read_file/grep_repo as "
         "needed to verify candidates, then respond via the emit_review tool.\n"
     )
+    if issue_context:
+        lead += (
+            "\nThe MR claims to address the GitLab issue(s) below. Use them "
+            "to judge MR scope and intent — concerns about behavior the "
+            "issue explicitly accepts or that lives outside the issue's "
+            "stated scope should be dropped. The issue is NOT ground truth "
+            "for code correctness; always verify against the diff and tool "
+            "calls.\n\n"
+            + issue_context.strip()
+            + "\n\n"
+        )
     if prior_summary:
         lead += (
             "\nA previous Claude review ran on an earlier commit of this same "
@@ -728,12 +760,15 @@ def call_claude(
     thinking_budget = max(0, int(os.environ.get(
         "CLAUDE_THINKING_BUDGET", DEFAULT_THINKING_BUDGET
     )))
+    max_helper_turns = max(1, int(os.environ.get(
+        "CLAUDE_MAX_HELPER_TURNS", DEFAULT_MAX_HELPER_TURNS
+    )))
     tools = [EMIT_REVIEW_TOOL, READ_FILE_TOOL, GREP_REPO_TOOL]
     messages: list[dict[str, Any]] = [
         {"role": "user", "content": user_msg},
     ]
 
-    for turn in range(MAX_HELPER_TURNS + 1):
+    for turn in range(max_helper_turns + 1):
         kwargs: dict[str, Any] = dict(
             model=model,
             max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
@@ -764,7 +799,7 @@ def call_claude(
                 "summary": "(model returned no structured output)",
             }
 
-        if turn >= MAX_HELPER_TURNS:
+        if turn >= max_helper_turns:
             # Budget exhausted: feed results plus a hard nudge to wrap up.
             messages.append({
                 "role": "assistant",
@@ -992,6 +1027,130 @@ def _prior_sha_from_body(body: str) -> str | None:
     return m.group(1) if m else None
 
 
+ISSUE_REF_RE = re.compile(
+    r"(?i)\b(?:closes|fixes|resolves|implements|related\s+to)\s+#(\d+)\b"
+)
+BRANCH_TICKET_RE = re.compile(r"^tkt_(?:white|black|pink|red|gold)_(\d+)_")
+MAX_ISSUES_TO_FETCH = 3
+MAX_ISSUE_BODY_CHARS = 5000
+
+
+def _fetch_mr_detail(env: Env) -> dict[str, Any]:
+    """Return the MR detail JSON, or {} on lookup failure."""
+    if not env.mr_iid:
+        return {}
+    url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}"
+    try:
+        r = requests.get(url, headers=gitlab_headers(env), timeout=30)
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[claude-review] MR detail lookup failed: {exc}", file=sys.stderr)
+        return {}
+    return r.json() or {}
+
+
+def _fetch_issue(env: Env, iid: int | str) -> dict[str, Any] | None:
+    """Return issue detail or None on failure."""
+    url = f"{env.api_url}/projects/{env.project_id}/issues/{iid}"
+    try:
+        r = requests.get(url, headers=gitlab_headers(env), timeout=30)
+        if r.status_code in (403, 404):
+            print(
+                f"[claude-review] issue !{iid} not accessible "
+                f"({r.status_code}); skipping",
+                file=sys.stderr,
+            )
+            return None
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[claude-review] issue !{iid} fetch failed: {exc}", file=sys.stderr)
+        return None
+    return r.json() or None
+
+
+def _resolve_linked_issue_iids(
+    env: Env, mr_detail: dict[str, Any] | None,
+) -> list[int]:
+    """Return up to MAX_ISSUES_TO_FETCH unique issue IIDs in lookup order:
+    closes_issues API → MR description regex → branch-name fallback.
+    """
+    found: list[int] = []
+    seen: set[int] = set()
+
+    def _add(value: Any) -> None:
+        try:
+            iid = int(value)
+        except (TypeError, ValueError):
+            return
+        if iid <= 0 or iid in seen:
+            return
+        seen.add(iid)
+        found.append(iid)
+
+    if env.mr_iid:
+        url = (
+            f"{env.api_url}/projects/{env.project_id}"
+            f"/merge_requests/{env.mr_iid}/closes_issues"
+        )
+        try:
+            r = requests.get(url, headers=gitlab_headers(env), timeout=30)
+            r.raise_for_status()
+            for issue in r.json() or []:
+                _add(issue.get("iid"))
+                if len(found) >= MAX_ISSUES_TO_FETCH:
+                    return found
+        except requests.RequestException as exc:
+            print(f"[claude-review] closes_issues lookup failed: {exc}",
+                  file=sys.stderr)
+
+    description = (mr_detail or {}).get("description") or ""
+    for m in ISSUE_REF_RE.finditer(description):
+        _add(m.group(1))
+        if len(found) >= MAX_ISSUES_TO_FETCH:
+            return found
+
+    if env.branch:
+        m = BRANCH_TICKET_RE.match(env.branch)
+        if m:
+            _add(m.group(1))
+
+    return found[:MAX_ISSUES_TO_FETCH]
+
+
+def _format_issue_block(issue: dict[str, Any]) -> str:
+    iid = issue.get("iid", "?")
+    title = (issue.get("title") or "").strip() or "(no title)"
+    url = (issue.get("web_url") or "").strip()
+    body = (issue.get("description") or "").strip()
+    if len(body) > MAX_ISSUE_BODY_CHARS:
+        body = body[:MAX_ISSUE_BODY_CHARS] + "\n... [truncated]"
+    parts = [f"=== LINKED ISSUE !{iid} ===",
+             f"Title: {title}"]
+    if url:
+        parts.append(f"URL: {url}")
+    parts.append("")
+    parts.append(body if body else "(no description)")
+    parts.append(f"=== END LINKED ISSUE !{iid} ===")
+    return "\n".join(parts)
+
+
+def fetch_issue_context(
+    env: Env, mr_detail: dict[str, Any] | None,
+) -> str | None:
+    """Return a textual block describing the linked issue(s), or None."""
+    iids = _resolve_linked_issue_iids(env, mr_detail)
+    if not iids:
+        return None
+    blocks: list[str] = []
+    for iid in iids:
+        issue = _fetch_issue(env, iid)
+        if not issue:
+            continue
+        blocks.append(_format_issue_block(issue))
+        print(f"[claude-review] resolved issue !{iid}")
+    return "\n\n".join(blocks) if blocks else None
+
+
 def _find_last_review(env: Env) -> dict[str, Any] | None:
     """Return the newest prior-review *summary* note on this MR, or None.
 
@@ -1081,6 +1240,9 @@ def main() -> int:
                         f"not reachable locally — falling back to full diff"
                     )
 
+        mr_detail = _fetch_mr_detail(env)
+        issue_context = fetch_issue_context(env, mr_detail)
+
         diffs, size_skipped = collect_diff(env, base_override=prior_sha)
         if not diffs:
             scope = (
@@ -1108,10 +1270,12 @@ def main() -> int:
         for i, chunk in enumerate(chunks, 1):
             print(f"[claude-review] chunk {i}/{len(chunks)} "
                   f"({len(chunk)} chars)")
-            # Prior summary is context, not per-chunk input — send on first chunk only.
+            # Prior summary and issue context are context, not per-chunk
+            # input — send on first chunk only.
             result = call_claude(
                 client, env.head_sha, env.model, chunk,
                 prior_summary=prior_summary if i == 1 else None,
+                issue_context=issue_context if i == 1 else None,
             )
             all_comments.extend(result.get("comments", []))
             s = result.get("summary", "").strip()

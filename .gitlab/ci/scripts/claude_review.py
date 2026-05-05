@@ -637,12 +637,18 @@ def chunk_diffs(diffs: list[tuple[str, str]]) -> list[str]:
 def _create_with_retry(
     client: Anthropic, kwargs: dict[str, Any]
 ) -> Any:
-    """Wrap messages.create with exponential-backoff retry for transient errors."""
+    """Wrap messages.stream with exponential-backoff retry for transient errors.
+
+    We use streaming because long-thinking + many-tool-turn calls can exceed
+    the SDK's 10-minute non-streaming timeout. The Message object returned
+    by ``get_final_message()`` is the same shape ``messages.create`` returns.
+    """
     attempt = 0
     while True:
         attempt += 1
         try:
-            return client.messages.create(**kwargs)
+            with client.messages.stream(**kwargs) as stream:
+                return stream.get_final_message()
         except (APIConnectionError, APITimeoutError):
             if attempt >= 3:
                 raise

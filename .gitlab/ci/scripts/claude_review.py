@@ -110,6 +110,32 @@ itself or in code you have actually read with these tools. If verifying
 the concern would require code you have not read, drop it. Better to miss
 a real bug than invent one.
 
+"MISSING X" RULE — findings of the form "missing auth check / membership
+check / permission check / validation / sanitization / gating" require
+that you have read the body of every non-stdlib function called on or
+near the suspect line. If any of those helpers performs the missing
+behavior, the finding is invalid. Do not guess at a helper's semantics
+from its name. Concretely: before flagging "endpoint is missing X",
+read_file every function called in the route body and confirm none of
+them does X. If you cannot rule them all out, drop the finding.
+
+REPO IDIOMS — the following helpers gate by themselves. If a route calls
+any of them, do not flag the route as "missing" the gate they perform —
+unless you have read the helper and confirmed it does NOT do so on this
+particular branch.
+  • get_workspace(name) (faraday/server/api/base.py) — aborts 403 unless
+    current_user is admin OR a member of the workspace OR the workspace
+    is public. Any code path that calls it is membership-gated.
+  • _apply_filter_context(query) on a ContextMixin-derived view — filters
+    the query to workspaces current_user can read (admin sees all). Any
+    view that extends ContextMixin and uses _get_base_query is
+    workspace-scoped.
+  • @api_method_validation — validates the method's permissions_unit +
+    action_type against the current_user's role via validate_roles. Any
+    handler wearing this decorator is role-gated for that action.
+  • current_user.has_workspace_permissions(ws) (models.py) — same logic
+    as get_workspace's gate, used in retrieve handlers.
+
 APPROACH — two phases before emitting:
 
   1. SCAN. Enumerate every candidate concern across:
@@ -133,6 +159,13 @@ APPROACH — two phases before emitting:
      Drop any item whose validity depends on code you have not read. Drop
      any item where the natural phrasing is "consider", "might", "could",
      or "potentially" — those are speculation, not findings.
+     Findings must target lines that appear in the diff as `+` (added) or
+     attribute to a hunk's edits. Code you read via read_file but that is
+     NOT changed in this MR is reference material only — do not flag it.
+     Concerns about pre-existing untouched code belong in a separate
+     ticket; drop them. The script will silently discard any comment
+     whose line isn't in this MR's added lines, so you'll just lose the
+     finding.
 
 CALIBRATION:
   GOOD finding (concrete, verified):
@@ -165,6 +198,19 @@ EMIT — call emit_review exactly once at the end of the conversation.
   • File path exactly as shown in the "===== FILE: <path> =====" header.
   • Body: one-sentence problem, one-sentence fix, optional one line of
     code. No preamble, no restating the code.
+  • Every comment body MUST end with one evidence line (own paragraph)
+    of the form:
+      "Verified: <path>:<start>-<end> — <one-line observation>"
+    or
+      "Verified by absence: grep_repo(<pattern>) returned <result> in
+       <scope>"
+    The path/lines must come from a tool call you actually made in this
+    conversation. If you cannot produce a real evidence line, drop the
+    finding rather than invent one.
+  • For high-severity findings, the evidence line must trace the unsafe
+    data path concretely (which user-controlled value reaches which
+    sink) — not just "this looks dangerous". Findings that can't be
+    traced get demoted to medium or dropped.
 
 If nothing is high, medium, or low, emit zero comments plus a short
 summary saying so. If unsure about any single item, skip it — do not
@@ -422,6 +468,24 @@ def annotate_patch(patch: str) -> str:
             # numbering for the rest of the hunk.
             out.append(line)
     return "\n".join(out)
+
+
+_ANNOTATED_ADDED_RE = re.compile(r"^\s*(\d+):\s\+(?!\+)")
+
+
+def changed_lines(annotated_patch: str) -> set[int]:
+    """Return the set of NEW-file line numbers added in this annotated patch.
+
+    Used to gate model findings: a comment whose ``line`` isn't here is
+    flagging code the MR didn't touch, so the MR review is the wrong
+    place for it.
+    """
+    out: set[int] = set()
+    for line in annotated_patch.splitlines():
+        m = _ANNOTATED_ADDED_RE.match(line)
+        if m:
+            out.add(int(m.group(1)))
+    return out
 
 
 def _parse_numstat_z(raw: str) -> list[tuple[str, str, str]]:
@@ -1073,6 +1137,31 @@ def main() -> int:
             seen.add(fp)
             unique.append(c)
 
+        # Drop comments whose (file, line) doesn't land on a line the MR
+        # actually adds. The model occasionally read_files unchanged code
+        # and emits findings about it; those would fail GitLab's inline
+        # position check and fall back to confusing free-floating notes.
+        # Map only the files in this run's diffs (incremental review may
+        # have a subset of the MR's full diff).
+        added_by_file: dict[str, set[int]] = {
+            path: changed_lines(patch) for path, patch in diffs
+        }
+        in_scope: list[dict[str, Any]] = []
+        out_of_scope_dropped = 0
+        for c in unique:
+            allowed = added_by_file.get(c["file"], set())
+            if c["line"] in allowed:
+                in_scope.append(c)
+                continue
+            out_of_scope_dropped += 1
+            print(
+                f"[claude-review] dropping out-of-scope comment "
+                f"{c['file']}:{c['line']} (sev={c['severity']}); "
+                f"line is not in this MR's added lines",
+                file=sys.stderr,
+            )
+        unique = in_scope
+
         inline = [c for c in unique if c["severity"] in ("medium", "high")]
         low_notes = [c for c in unique if c["severity"] == "low"]
 
@@ -1082,6 +1171,7 @@ def main() -> int:
         print(
             f"[claude-review] candidates: model={len(all_comments)} "
             f"valid={len(valid_comments)} unique={len(unique)} "
+            f"out_of_scope_dropped={out_of_scope_dropped} "
             f"(high={sev_hist['high']} medium={sev_hist['medium']} "
             f"low={sev_hist['low']})"
         )

@@ -62,7 +62,7 @@ class TestAgentWebsocketToken:
         headers = [('Authorization', 'Token ' + res.json)]
 
         # clean cookies make sure test_client has no session
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         res = test_client.post(
             '/v3/agent_websocket_token',
             headers=headers,

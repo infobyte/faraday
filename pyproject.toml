@@ -85,7 +85,7 @@ dependencies = [
     "tqdm>=4.15.0",
     "validators>=0.20.0",
     "webargs>=8.0.0",
-    "werkzeug==2.2.3",
+    "werkzeug==2.3.8",
     "wtforms>=2.1",
     "lxml>=6.1.0",
     "ujson>=5.12.0",

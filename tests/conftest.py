@@ -74,7 +74,7 @@ class CustomClient(FlaskClient):
 
     @property
     def cookies(self):
-        return self.cookie_jar
+        return self._cookies.values()
 
 
 def pytest_addoption(parser):

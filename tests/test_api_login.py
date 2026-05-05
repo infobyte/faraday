@@ -72,7 +72,7 @@ class TestLogin:
             Use of an invalid auth token
         """
         # clean cookies make sure test_client has no session
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         secret_key = current_app.config['SECRET_KEY']
         alice = factories.UserFactory.create(
                 active=True,
@@ -99,7 +99,7 @@ class TestLogin:
     @pytest.mark.usefixtures('logged_user')
     def test_retrieve_token_from_api_and_use_it(self, test_client, session):
         res = test_client.get('/v3/token')
-        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        cookies = [cookie.key for cookie in test_client._cookies.values()]
         assert "faraday_session_2" in cookies
         assert res.status_code == 200
 
@@ -108,16 +108,16 @@ class TestLogin:
         session.add(ws)
         session.commit()
         # clean cookies make sure test_client has no session
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         res = test_client.get('/v3/ws/wonderland', headers=headers)
         assert res.status_code == 200
         assert 'Set-Cookie' not in res.headers
-        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        cookies = [cookie.key for cookie in test_client._cookies.values()]
         assert "faraday_session_2" not in cookies
 
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         res = test_client.get('/v3/token')
 
         assert res.status_code == 401
@@ -137,7 +137,7 @@ class TestLogin:
         session.commit()
 
         # clean cookies make sure test_client has no session
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         # Flask-Login 0.6.x caches the user in g._login_user (app-context scoped).
         # Clear it so the next request goes through the full token auth flow.
         from flask import g
@@ -181,7 +181,7 @@ class TestLogin:
         """
             When the remember me option is true, flask stores a remember_token
         """
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         susan = factories.UserFactory.create(
                 active=True,
                 username='susan',
@@ -197,7 +197,7 @@ class TestLogin:
         }
         res = test_client.post('/login', data=login_payload)
         assert res.status_code == 200
-        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        cookies = [cookie.key for cookie in test_client._cookies.values()]
         assert "remember_token" in cookies
 
     def test_login_not_remember_me(self, test_client, session):
@@ -205,7 +205,7 @@ class TestLogin:
             When the remember me option is false, flask dont stores a remember_token
         """
 
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         susan = factories.UserFactory.create(
                 active=True,
                 username='susan',
@@ -220,7 +220,7 @@ class TestLogin:
         }
         res = test_client.post('/login', data=login_payload)
         assert res.status_code == 200
-        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        cookies = [cookie.key for cookie in test_client._cookies.values()]
         assert "remember_token" not in cookies
 
     def test_login_without_remember_me(self, test_client, session):
@@ -228,7 +228,7 @@ class TestLogin:
             When the remember me option is missing, flask dont stores a remember_token
         """
 
-        test_client.cookie_jar.clear()
+        test_client._cookies.clear()
         susan = factories.UserFactory.create(
                 active=True,
                 username='susan',
@@ -242,14 +242,14 @@ class TestLogin:
         }
         res = test_client.post('/login', data=login_payload)
         assert res.status_code == 200
-        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        cookies = [cookie.key for cookie in test_client._cookies.values()]
         assert "remember_token" not in cookies
 
     @pytest.mark.parametrize('session_timeout', [0.8, 1.0, -0.5, 0, 1, 2, 999, -999.0])
     def test_session_timeout_setting(self, test_client, session, session_timeout):
         mocked_config.session_timeout = session_timeout
         with mock.patch('faraday.server.config.faraday_server', mocked_config):
-            test_client.cookie_jar.clear()
+            test_client._cookies.clear()
             alice = factories.UserFactory.create(
                     active=True,
                     username='alice',

@@ -112,12 +112,13 @@ Two helper tools are available:
     to find callers of a changed symbol, prior definitions, and similar
     patterns elsewhere.
 
-You have a generous budget per chunk (≥20 helper-tool round-trips,
-configurable; parallel tool calls within each round are allowed). Use
-it. Under-verifying is the dominant historical failure mode — when in
-doubt, read the helper, read the test that should cover the case, grep
-for callers. Speed is not a virtue here; correctness is. Burn the
-budget.
+You have a meaningful budget per chunk (~14 helper-tool round-trips by
+default, configurable; parallel tool calls within each round are
+allowed). Use it. Under-verifying is the dominant historical failure
+mode — when in doubt, read the helper, read the test that should cover
+the case, grep for callers. But each round-trip costs real money, so
+prefer one well-targeted call (e.g. read the entire suspect function in
+one go) over many small reads.
 
 "MISSING X" RULE — findings of the form "missing auth check / membership
 check / permission check / validation / sanitization / gating" are only
@@ -271,7 +272,7 @@ GREP_REPO_TOOL = {
 
 MAX_FILE_READ_LINES = 3000
 MAX_GREP_HITS = 200
-DEFAULT_MAX_HELPER_TURNS = 20
+DEFAULT_MAX_HELPER_TURNS = 14
 
 
 def _tool_read_file(
@@ -644,6 +645,38 @@ def _emit_review_payload(content: list[Any]) -> dict[str, Any] | None:
     }
 
 
+def _accumulate_usage(acc: dict[str, int], resp: Any, turn: int) -> None:
+    """Accumulate token counts from one API response into ``acc`` and log them.
+
+    ``resp.usage`` exposes ``input_tokens``, ``output_tokens``,
+    ``cache_creation_input_tokens``, ``cache_read_input_tokens``. Any of
+    them may be missing on older SDKs — defaults to 0.
+    """
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return
+    inp = int(getattr(u, "input_tokens", 0) or 0)
+    out = int(getattr(u, "output_tokens", 0) or 0)
+    cw = int(getattr(u, "cache_creation_input_tokens", 0) or 0)
+    cr = int(getattr(u, "cache_read_input_tokens", 0) or 0)
+    acc["input"] += inp
+    acc["output"] += out
+    acc["cache_write"] += cw
+    acc["cache_read"] += cr
+    print(
+        f"[claude-review] turn {turn} usage: "
+        f"input={inp} output={out} cache_read={cr} cache_write={cw}"
+    )
+
+
+def _log_chunk_usage(acc: dict[str, int]) -> None:
+    print(
+        f"[claude-review] chunk total tokens: "
+        f"input={acc['input']} output={acc['output']} "
+        f"cache_read={acc['cache_read']} cache_write={acc['cache_write']}"
+    )
+
+
 def _block_for_replay(block: Any) -> dict[str, Any]:
     """Convert an SDK content block to an API-acceptable dict for replay.
 
@@ -767,15 +800,32 @@ def call_claude(
         "CLAUDE_MAX_HELPER_TURNS", DEFAULT_MAX_HELPER_TURNS
     )))
     tools = [EMIT_REVIEW_TOOL, READ_FILE_TOOL, GREP_REPO_TOOL]
-    messages: list[dict[str, Any]] = [
-        {"role": "user", "content": user_msg},
-    ]
+    # Cache the system prompt + first user message (the static prefix:
+    # system + diff + issue context). Anthropic caches everything up to
+    # and including the block carrying the cache_control marker, so
+    # placing it on the first user message captures both. Cache TTL is
+    # 5 min, well within a single review run; subsequent turns pay
+    # cache-read rates (~10% of input) on this prefix.
+    messages: list[dict[str, Any]] = [{
+        "role": "user",
+        "content": [{
+            "type": "text",
+            "text": user_msg,
+            "cache_control": {"type": "ephemeral"},
+        }],
+    }]
+
+    cumulative_usage = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
 
     for turn in range(max_helper_turns + 1):
         kwargs: dict[str, Any] = dict(
             model=model,
             max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
-            system=SYSTEM_PROMPT,
+            system=[{
+                "type": "text",
+                "text": SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }],
             tools=tools,
             # Extended thinking disallows any form of forced tool use. `auto`
             # lets Claude choose — the system prompt instructs it to call
@@ -789,14 +839,17 @@ def call_claude(
                 "budget_tokens": thinking_budget,
             }
         resp = _create_with_retry(client, kwargs)
+        _accumulate_usage(cumulative_usage, resp, turn)
 
         emit = _emit_review_payload(resp.content)
         if emit is not None:
+            _log_chunk_usage(cumulative_usage)
             return emit
 
         helper_blocks, tool_results = _run_helper_tools(head_sha, resp.content)
         if not helper_blocks:
             # No emit, no helper tools — model is done but produced nothing structured.
+            _log_chunk_usage(cumulative_usage)
             return {
                 "comments": [],
                 "summary": "(model returned no structured output)",
@@ -819,7 +872,9 @@ def call_claude(
             kwargs_final["tools"] = [EMIT_REVIEW_TOOL]
             kwargs_final["messages"] = messages
             resp = _create_with_retry(client, kwargs_final)
+            _accumulate_usage(cumulative_usage, resp, turn + 1)
             emit = _emit_review_payload(resp.content)
+            _log_chunk_usage(cumulative_usage)
             if emit is not None:
                 return emit
             return {

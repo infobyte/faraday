@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 from flask import Blueprint, request, make_response, abort, send_file
 from werkzeug.exceptions import HTTPException
 import csv
-from io import TextIOWrapper
+from io import TextIOWrapper, BytesIO
 from marshmallow import fields
 
 # Local application imports
@@ -188,7 +188,7 @@ class CredentialView(ReadWriteWorkspacedView,
             vulns_ids = []
 
         try:
-            io_wrapper = TextIOWrapper(credentials_file, encoding=request.content_encoding or "utf8")
+            io_wrapper = TextIOWrapper(BytesIO(credentials_file.read()), encoding=request.content_encoding or "utf8")
             sample = io_wrapper.read(4096)
             if not sample.strip():
                 abort(make_response({"message": "CSV file is empty"}, HTTPStatus.BAD_REQUEST))

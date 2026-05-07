@@ -96,7 +96,7 @@ logger = getLogger(__name__)
 
 
 class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
-    credentials = fields.Nested('BulkCredentialSchema', many=True, missing=[])
+    credentials = fields.Nested('BulkCredentialSchema', many=True, load_default=[])
 
     class Meta(vulns_base.VulnerabilitySchema.Meta):
         extra_fields = ('run_date', 'credentials')
@@ -107,7 +107,7 @@ class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
 
 
 class BulkVulnerabilityWebSchema(vulns_base.VulnerabilityWebSchema):
-    credentials = fields.Nested('BulkCredentialSchema', many=True, missing=[])
+    credentials = fields.Nested('BulkCredentialSchema', many=True, load_default=[])
 
     class Meta(vulns_base.VulnerabilityWebSchema.Meta):
         extra_fields = ('run_date', 'credentials')
@@ -156,7 +156,7 @@ class BulkServiceSchema(services_base.ServiceSchema):
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
         many=True,
-        missing=[],
+        load_default=[],
     )
 
     def post_load_parent(self, data, **kwargs):
@@ -175,12 +175,12 @@ class HostBulkSchema(hosts_base.HostSchema):
     services = fields.Nested(
         BulkServiceSchema(many=True, context={'updating': False}),
         many=True,
-        missing=[],
+        load_default=[],
     )
     vulnerabilities = fields.Nested(
         VulnerabilitySchema(many=True),
         many=True,
-        missing=[],
+        load_default=[],
     )
 
     class Meta(hosts_base.HostSchema.Meta):

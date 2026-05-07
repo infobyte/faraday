@@ -780,15 +780,17 @@ class VulnerabilityView(
 
     @property
     def model_class(self):
-        if request.method == 'POST' and request.json:
-            return self.model_class_dict[request.json.get('type', 'VulnerabilityGeneric')]
+        _json = request.get_json(silent=True)
+        if request.method == 'POST' and _json:
+            return self.model_class_dict[_json.get('type', 'VulnerabilityGeneric')]
         # We use Generic to list all vulns from all types
         return self.model_class_dict['VulnerabilityGeneric']
 
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
-        if request.method == 'POST' and request.json:
-            requested_type = request.json.get('type')
+        _json = request.get_json(silent=True)
+        if request.method == 'POST' and _json:
+            requested_type = _json.get('type')
             if not requested_type:
                 raise InvalidUsage('Type is required.')
             if requested_type not in self.schema_class_dict:
@@ -1020,9 +1022,9 @@ class VulnerabilityView(
 
         file_name = f"Faraday-SR-{workspace_name}.csv" if workspace_name else default_filename
         return send_file(memory_file,
-                            attachment_filename=file_name,
+                            download_name=file_name,
                             as_attachment=True,
-                            cache_timeout=-1)
+                            max_age=0)
 
     def _hostname_filters(self, filters):
         res_filters = []
@@ -1252,7 +1254,7 @@ class VulnerabilityView(
 
         return send_file(
             BytesIO(depot_file.read()),
-            attachment_filename=depot_file.filename,
+            download_name=depot_file.filename,
             as_attachment=as_attachment,
             mimetype=depot_file.content_type
         )
@@ -1366,15 +1368,15 @@ class VulnerabilityView(
         if workspace_name:
             logger.info(f"CSV file with vulnerabilities from workspace {workspace_name} exported")
             return send_file(memory_file,
-                             attachment_filename=f"Faraday-SR-{workspace_name}.csv",
+                             download_name=f"Faraday-SR-{workspace_name}.csv",
                              as_attachment=True,
-                             cache_timeout=-1)
+                             max_age=0)
         else:
             logger.info("CSV file exported with context vulnerabilities")
             return send_file(memory_file,
-                             attachment_filename="Faraday-SR-Context.csv",
+                             download_name="Faraday-SR-Context.csv",
                              as_attachment=True,
-                             cache_timeout=-1)
+                             max_age=0)
 
     @route('top_users', methods=['GET'])
     def top_users(self, **kwargs):
@@ -1420,9 +1422,10 @@ class VulnerabilityView(
     @route('', methods=['DELETE'])
     def bulk_delete(self, **kwargs):
         # TODO BULK_DELETE_SCHEMA
-        if not request.json or 'severities' not in request.json:
+        _json = request.get_json(silent=True)
+        if not _json or 'severities' not in _json:
             return super().bulk_delete(self, **kwargs)
-        return self._perform_bulk_delete(request.json['severities'], by='severity', **kwargs), HTTP_OK
+        return self._perform_bulk_delete(_json['severities'], by='severity', **kwargs), HTTP_OK
     bulk_delete.__doc__ = BulkDeleteMixin.bulk_delete.__doc__
 
     def _bulk_delete_query(self, ids, **kwargs):

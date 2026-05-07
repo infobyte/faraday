@@ -21,6 +21,7 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
     FilterMixin,
+    BulkDeleteMixin,
     get_workspace
 )
 from faraday.server.extensions import socketio
@@ -180,7 +181,7 @@ class AgentRunSchema(Schema):
         self.unknown = EXCLUDE
 
 
-class AgentView(ReadWriteView, FilterMixin):
+class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema

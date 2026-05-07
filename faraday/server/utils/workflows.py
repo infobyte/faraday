@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 WORKFLOW_QUEUE = Queue()
 INTERVAL = 0.1
+PIPELINE_CHUNK_SIZE = 5000
 
 valid_object_types = ("vulnerability", "host", "vulnerability_web")
 valid_classes = (Host, VulnerabilityGeneric)
@@ -122,8 +123,9 @@ def _get_obj_and_workspace(obj_type, obj_ids, ws_id, fields=None, pipeline_id=No
 
     # CHECK FOR JOINED LOADS
 
-    vuln_joined_loads = []
-    host_joined_loads = []
+    vuln_load_hostnames = False
+    vuln_load_host = False
+    host_load_hostnames = False
 
     if pipeline is not None:
         for job in pipeline.jobs:
@@ -131,18 +133,25 @@ def _get_obj_and_workspace(obj_type, obj_ids, ws_id, fields=None, pipeline_id=No
             if job.model == "host":
                 for act in job.actions:
                     if act.field == "hostnames" and act.command == "APPEND":
-                        host_joined_loads.append(joinedload(Host.hostnames))
+                        host_load_hostnames = True
 
             if job.model == "vulnerability":
                 for act in job.actions:
                     if act.target == "asset":
                         if act.field == "hostnames":
-                            vuln_joined_loads.append(joinedload(VulnerabilityGeneric.host).subqueryload(Host.hostnames))
+                            vuln_load_hostnames = True
                         else:
-                            vuln_joined_loads.append(joinedload(VulnerabilityGeneric.host))
+                            vuln_load_host = True
 
-    vuln_joined_loads = set(vuln_joined_loads)
-    host_joined_loads = set(host_joined_loads)
+    vuln_joined_loads = []
+    if vuln_load_hostnames:
+        vuln_joined_loads.append(joinedload(VulnerabilityGeneric.host).subqueryload(Host.hostnames))
+    elif vuln_load_host:
+        vuln_joined_loads.append(joinedload(VulnerabilityGeneric.host))
+
+    host_joined_loads = []
+    if host_load_hostnames:
+        host_joined_loads.append(joinedload(Host.hostnames))
 
     filters = []
     if obj_type in ("vulnerability", "vulnerability_web"):
@@ -593,13 +602,20 @@ def _check_workflows(objs, obj_type, ws, fields=None, pipeline=None):
             logger.debug(f"No workflows found to run with object: {repr(objs)}")
             return True, [], None
         workflows_results = []
-        pipeline_wf_order = pipeline.jobs_order
-        if pipeline_wf_order == "":
-            workflows_ids = [x.id for x in workflows]
+        valid_ids = {w.id for w in workflows}
+        if pipeline.jobs_order == "":
+            workflows_ids = [w.id for w in workflows]
         else:
-            workflows_ids = pipeline_wf_order.split('-')
-
-        workflows_ids = [int(x) for x in workflows_ids if int(x) in [x.id for x in workflows]]
+            workflows_ids = []
+            for token in pipeline.jobs_order.split('-'):
+                if not token:
+                    continue
+                try:
+                    wf_id = int(token)
+                except ValueError:
+                    continue
+                if wf_id in valid_ids:
+                    workflows_ids.append(wf_id)
 
         logger.debug(f"Executing in order: {workflows_ids}")
 
@@ -654,12 +670,168 @@ def _change_pipeline_running_status(id, status):
     if pipeline is None:
         raise ValueError("Invalid Pipeline id")
     pipeline.running = status
+    pipeline.running_since = datetime.utcnow() if status else None
     db.session.add(pipeline)
     db.session.commit()
 
 
+def _iter_id_chunks(ws_id, obj_model, chunk_size=PIPELINE_CHUNK_SIZE):
+    """Yield lists of object IDs from the workspace in chunks.
+
+    Uses yield_per to stream IDs without loading all at once.
+    """
+    query = (db.session.query(obj_model.id)
+             .filter(obj_model.workspace_id == ws_id)
+             .order_by(obj_model.id)
+             .yield_per(chunk_size))
+
+    chunk = []
+    for (obj_id,) in query:
+        chunk.append(obj_id)
+        if len(chunk) >= chunk_size:
+            yield chunk
+            chunk = []
+    if chunk:
+        yield chunk
+
+
+def _get_query_options_for_job(workflow, obj_key):
+    """Determine SQLAlchemy query options (joinedloads) needed for a specific job."""
+    options = []
+
+    if obj_key == "host":
+        load_hostnames = any(
+            act.field == "hostnames" and act.command == "APPEND"
+            for act in workflow.actions
+        )
+        if load_hostnames:
+            options.append(joinedload(Host.hostnames))
+
+    elif obj_key in ("vulnerability", "vulnerability_web"):
+        load_hostnames = False
+        load_host = False
+        for act in workflow.actions:
+            if act.target == "asset":
+                if act.field == "hostnames":
+                    load_hostnames = True
+                else:
+                    load_host = True
+        if load_hostnames:
+            options.append(joinedload(VulnerabilityGeneric.host).subqueryload(Host.hostnames))
+        elif load_host:
+            options.append(joinedload(VulnerabilityGeneric.host))
+
+    return options
+
+
+def _run_pipeline_chunked(ws_id, pipeline_id):
+    """Run pipeline jobs in configured order, each job processing its model's objects in chunks.
+
+    Iterates jobs in `pipeline.jobs_order`. Each job processes all objects
+    of its own model (vulnerability or host) before the next job starts,
+    so Job N+1 observes Job N's effects. Memory is bounded by
+    PIPELINE_CHUNK_SIZE objects at a time.
+    """
+    update_host_stats = []
+
+    workspace = _get_workspace(ws_id)
+    if workspace is None:
+        return update_host_stats
+
+    pipeline = _get_pipeline(pipeline_id, workspace=workspace, ws_id=ws_id)
+    if pipeline is None:
+        return update_host_stats
+
+    workflows = pipeline.jobs
+    if not any(workflows):
+        logger.debug("No workflows found")
+        return update_host_stats
+
+    valid_ids = {w.id for w in workflows}
+    if pipeline.jobs_order == "":
+        workflows_ids = [w.id for w in workflows]
+    else:
+        workflows_ids = []
+        for token in pipeline.jobs_order.split('-'):
+            if not token:
+                continue
+            try:
+                wf_id = int(token)
+            except ValueError:
+                continue
+            if wf_id in valid_ids:
+                workflows_ids.append(wf_id)
+
+    logger.debug(f"Executing pipeline jobs in order: {workflows_ids}")
+
+    for workflow_id in workflows_ids:
+        workflow = next((x for x in workflows if x.id == workflow_id), None)
+        if workflow is None:
+            continue
+
+        obj_key = workflow.model
+        obj_model = run_all_obj_table.get(obj_key)
+        if obj_model is None:
+            logger.debug(f"Job {workflow.id} model {obj_key} not runnable in pipeline chunked, skipping")
+            continue
+
+        logger.info(f"Running job {workflow.id} ({workflow.name}) on {obj_key} "
+                    f"in chunks of {PIPELINE_CHUNK_SIZE}")
+
+        query_options = _get_query_options_for_job(workflow, obj_key)
+
+        chunk_num = 0
+        for id_chunk in _iter_id_chunks(ws_id, obj_model):
+            chunk_num += 1
+            logger.debug(f"Job {workflow.id}: processing chunk {chunk_num} "
+                         f"({len(id_chunk)} objects)")
+
+            query = db.session.query(obj_model)
+            if query_options:
+                query = query.options(*query_options)
+
+            if obj_key == "vulnerability":
+                objs = query.filter(
+                    VulnerabilityGeneric.workspace_id == ws_id,
+                    VulnerabilityGeneric.id.in_(id_chunk)
+                ).all()
+            elif obj_key == "host":
+                objs = query.filter(
+                    Host.workspace_id == ws_id,
+                    Host.id.in_(id_chunk)
+                ).all()
+            else:
+                continue
+
+            if not objs:
+                continue
+
+            try:
+                result, log, host_to_update = _run_workflow(workflow, objs)
+                if host_to_update:
+                    update_host_stats += host_to_update
+            except Exception as e:
+                logger.error(f"Error running job {workflow.id} on chunk {chunk_num}: {e}")
+
+            # Free memory: expire chunk objects so cached attributes can be GC'd.
+            # Avoid expire_all() which would also expire pipeline/workflow metadata.
+            for o in objs:
+                db.session.expire(o)
+            del objs
+
+        logger.info(f"Job {workflow.id}: completed ({chunk_num} chunks)")
+
+    return update_host_stats
+
+
 def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=None):
     update_host_stats = []
+
+    workspace = db.session.query(Workspace).get(ws_id) if ws_id else None
+    if workspace and workspace.readonly:
+        logger.warning(f"Skipping workflow for pipeline {pipeline_id}: workspace {ws_id} is read-only")
+        return []
+
     if obj and obj_ids and ws_id:
         _, _, host_ids = _check_workflows(*_get_obj_and_workspace(obj, obj_ids, ws_id, fields, pipeline_id))
         return host_ids
@@ -669,23 +841,11 @@ def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=
         _change_pipeline_running_status(pipeline_id, True)
 
         try:
-            for obj_key, obj_model in run_all_obj_table.items():
-                ids = db.session.query(obj_model.id).filter(obj_model.workspace_id == ws_id).all()
-                update_host_list = _process_entry(
-                    obj_key,
-                    ids,
-                    ws_id,
-                    None,
-                    False,
-                    pipeline_id if pipeline_id is not None else None
-                   )
-                if update_host_list:
-                    update_host_stats += update_host_list
+            update_host_stats = _run_pipeline_chunked(ws_id, pipeline_id)
         except Exception as e:
             logger.error(f"Error while running pipeline\n{e}")
+        finally:
             _change_pipeline_running_status(pipeline_id, False)
-
-        _change_pipeline_running_status(pipeline_id, False)
 
         logger.debug(f"Hosts to update stats {update_host_stats}")
         return update_host_stats

@@ -53,9 +53,9 @@ class ExportDataView(GenericWorkspacedView):
             logger.info("Workspace´s data exported")
             return send_file(
                 memory_file,
-                attachment_filename=f"Faraday-{workspace_name}-data.xml",
+                download_name=f"Faraday-{workspace_name}-data.xml",
                 as_attachment=True,
-                cache_timeout=-1
+                max_age=0
             )
         else:
             logger.error("Invalid format. Please, specify a valid format.")

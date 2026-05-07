@@ -1,0 +1,26 @@
+claude_review:
+  tags:
+    - faradaytests
+  extends:
+    - .get-secrets
+  image: python:3.11-slim-bookworm
+  stage: claude_review
+  allow_failure: true
+  interruptible: true
+  timeout: 15m
+  needs:
+    - job: postgresql_test_uv
+  variables:
+    GIT_DEPTH: 0
+    GIT_STRATEGY: fetch
+  rules:
+    # Only offer the review on feature-style branches (tkt/exp/sup/mig).
+    # Merges into dev/master/staging skip it.
+    - if: '$CI_COMMIT_REF_NAME =~ /^(tkt|exp|sup|mig)_.+$/'
+      when: manual
+    - when: never
+  before_script:
+    - apt-get update -qq && apt-get install -y --no-install-recommends git ca-certificates >/dev/null
+    - pip install --quiet "anthropic>=0.40,<1.0" "requests>=2.31,<3.0"
+  script:
+    - python3 .gitlab/ci/scripts/claude_review.py

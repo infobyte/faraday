@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 # Related third party imports
 from flask import Blueprint, request, make_response, abort, send_file
+from werkzeug.exceptions import HTTPException
 import csv
 from io import TextIOWrapper
 from marshmallow import fields
@@ -188,16 +189,39 @@ class CredentialView(ReadWriteWorkspacedView,
 
         try:
             io_wrapper = TextIOWrapper(credentials_file, encoding=request.content_encoding or "utf8")
-            credentials_reader = csv.DictReader(io_wrapper, skipinitialspace=True)
+            sample = io_wrapper.read(4096)
+            if not sample.strip():
+                abort(make_response({"message": "CSV file is empty"}, HTTPStatus.BAD_REQUEST))
 
-            required_headers = {'username', 'password', 'endpoint'}
-            missing_headers = required_headers.difference(set(credentials_reader.fieldnames))
-            if missing_headers:
-                abort(
-                    make_response(
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=',;\t:|')
+            except csv.Error:
+                dialect = csv.excel
+
+            first_row = next(csv.reader([sample.splitlines()[0]], dialect=dialect))
+            first_row_fields = {f.strip().lower() for f in first_row}
+            known_fields = {'username', 'password', 'endpoint', 'leak_date', 'owned'}
+            has_header = bool(first_row_fields & known_fields)
+            io_wrapper.seek(0)
+
+            if has_header:
+                credentials_reader = csv.DictReader(io_wrapper, skipinitialspace=True, dialect=dialect)
+                missing_headers = {'username', 'password'}.difference(set(credentials_reader.fieldnames or []))
+                if missing_headers:
+                    abort(make_response(
                         {"message": f"Missing required headers in CSV: {missing_headers}"}, HTTPStatus.BAD_REQUEST
-                    )
-                )
+                    ))
+            else:
+                num_cols = len(first_row)
+                if num_cols >= 3:
+                    fieldnames = ['endpoint', 'username', 'password']
+                elif num_cols == 2:
+                    fieldnames = ['username', 'password']
+                else:
+                    abort(make_response(
+                        {"message": "CSV must have at least 2 columns (username, password)"}, HTTPStatus.BAD_REQUEST
+                    ))
+                credentials_reader = csv.DictReader(io_wrapper, fieldnames=fieldnames, skipinitialspace=True, dialect=dialect)
 
             workspace = get_workspace(workspace_name)
 
@@ -233,7 +257,7 @@ class CredentialView(ReadWriteWorkspacedView,
                     credential = Credential(
                         username=row['username'],
                         password=row['password'],
-                        endpoint=row['endpoint'],
+                        endpoint=row.get('endpoint') or '',
                         owned=owned,
                         leak_date=leak_date,
                         workspace=workspace
@@ -259,6 +283,8 @@ class CredentialView(ReadWriteWorkspacedView,
                 "errors": errors
             }, HTTPStatus.CREATED)
 
+        except HTTPException:
+            raise
         except Exception as e:
             db.session.rollback()
             abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, HTTPStatus.BAD_REQUEST))

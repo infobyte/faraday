@@ -301,36 +301,10 @@ def bulk_create(ws: Workspace,
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
     workspace_id = ws.id
 
-    # Process credentials FIRST (before hosts processing that might return early)
-    # Store credential IDs and external_id for later linking
-    credential_ids_to_link = []
-    external_id_for_linking = None
-
-    credentials_to_create = data.get('credentials', [])
-    if credentials_to_create:
-        logger.debug(f"Needs to create {len(credentials_to_create)} credentials...")
-        credentials_created = 0
-        credentials_updated = 0
-        for credential_data in credentials_to_create:
-            result = _create_credential(ws, credential_data, return_id=True)
-            credential_id = result.get('credential_id')
-            if credential_id:
-                credential_ids_to_link.append(credential_id)
-            credentials_created += result['created']
-            credentials_updated += result['updated']
-        # Commit credentials to ensure they are saved before processing hosts
+    for credential_data in data.get('credentials', []):
+        get_or_create(ws, Credential, credential_data)
+    if data.get('credentials'):
         db.session.commit()
-        logger.info(f"Credentials processed: {credentials_created} created, {credentials_updated} already existed")
-
-        # Extract external_id from vulnerabilities for later linking
-        for host in data.get('hosts', []):
-            for vuln in host.get('vulnerabilities', []):
-                external_id = vuln.get('external_id')
-                if external_id and external_id.startswith('BAGRE-'):
-                    external_id_for_linking = external_id
-                    break
-            if external_id_for_linking:
-                break
 
     hosts_to_create = len(data['hosts'])
     if hosts_to_create > 0:
@@ -340,14 +314,6 @@ def bulk_create(ws: Workspace,
             _hosts_to_create = []
             _current_size = 0
             tasks = []
-            # Prepare linking info for Celery callback
-            linking_info = None
-            if credential_ids_to_link and external_id_for_linking:
-                linking_info = {
-                    'credential_ids': credential_ids_to_link,
-                    'external_id': external_id_for_linking,
-                }
-
             for host in data['hosts']:
                 logger.info(f"Current size of Message: {_current_size}")
                 _host_size = get_host_size(host)
@@ -357,23 +323,19 @@ def bulk_create(ws: Workspace,
                     _current_size += _host_size
                 else:
                     logger.debug("Sending task to celery")
-                    task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create, linking_info)
+                    task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create)
                     tasks.append(task.id)
                     _current_size = _host_size
                     _hosts_to_create = [host]
             # Processing the tail of hosts
             if _hosts_to_create:
-                task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create, linking_info)
+                task = process_report_task.delay(workspace_id, command_dict, _hosts_to_create)
                 tasks.append(task.id)
             return tasks
 
         # just in case celery is not configured
         for host in data['hosts']:
             _create_host(ws, host, command_dict)
-
-        # Link credentials to vulnerabilities after they're created (non-Celery path)
-        if credential_ids_to_link and external_id_for_linking:
-            _link_credentials_to_vulnerabilities(ws, credential_ids_to_link, external_id_for_linking)
     else:
         logger.info("No hosts to create")
 
@@ -393,81 +355,6 @@ def _update_command(command_id: int, command_data: dict):
 
 def get_created_tuple(obj: object) -> tuple:
     return deepcopy(obj.__class__.__name__), deepcopy(obj.id), deepcopy(obj.workspace.id)
-
-
-def _create_credential(ws: Workspace, credential_data: dict, return_id: bool = False) -> dict:
-    """Create or get existing credential.
-
-    Args:
-        ws: Workspace object
-        credential_data: Dictionary with credential data (username, password, endpoint, etc.)
-        return_id: If True, include credential_id in result
-
-    Returns:
-        dict: {'created': int, 'updated': int, 'credential_id': int (optional)} count of created/updated credentials
-    """
-    logger.debug("Trying to create credential...")
-    credential_data = credential_data.copy()
-    result = {'created': 0, 'updated': 0}
-
-    username = credential_data.get('username')
-    try:
-        created, credential = get_or_create(ws, Credential, credential_data)
-        if created:
-            result['created'] = 1
-            logger.debug(f"Created credential for user {username}")
-        else:
-            result['updated'] = 1
-            logger.debug(f"Credential already exists for user {username}")
-
-        if return_id and credential:
-            result['credential_id'] = credential.id
-    except Exception:
-        logger.exception("Could not create credential for user %s", username)
-
-    return result
-
-
-def _link_credentials_to_vulnerabilities(ws: Workspace, credential_ids: list, external_id: str) -> None:
-    """Link credentials to vulnerabilities by external_id.
-
-    Args:
-        ws: Workspace object
-        credential_ids: List of credential IDs to link
-        external_id: External ID to find vulnerabilities
-    """
-    if not credential_ids or not external_id:
-        return
-
-    try:
-        # Find vulnerabilities by external_id
-        vulns = Vulnerability.query.filter(
-            Vulnerability.workspace == ws,
-            Vulnerability.external_id == external_id
-        ).all()
-
-        if not vulns:
-            logger.debug(f"No vulnerabilities found with external_id {external_id}")
-            return
-
-        logger.debug(f"Found {len(vulns)} vulnerabilities with external_id {external_id}, linking {len(credential_ids)} credentials")
-
-        # Link credentials to vulnerabilities (batch query to avoid N+1)
-        credentials = Credential.query.filter(
-            Credential.workspace == ws,
-            Credential.id.in_(credential_ids)
-        ).all()
-
-        for credential in credentials:
-            for vuln in vulns:
-                if vuln not in credential.vulnerabilities:
-                    credential.vulnerabilities.append(vuln)
-
-        db.session.commit()
-        logger.info(f"Linked {len(credentials)} credentials to {len(vulns)} vulnerabilities (external_id: {external_id})")
-    except Exception:
-        logger.exception("Error linking credentials to vulnerabilities")
-        db.session.rollback()
 
 
 def _create_host(ws, host_data, command: dict):

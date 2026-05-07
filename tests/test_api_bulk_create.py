@@ -79,10 +79,9 @@ vuln_web_data = {
 }
 
 credential_data = {
-    'name': 'test credential',
-    'description': 'test',
     'username': 'admin',
     'password': '12345',
+    'endpoint': '',
 }
 
 command_data = {
@@ -717,29 +716,6 @@ class TestBulkCredentialSchema:
             bc.BulkCredentialSchema().load(data)
 
 
-class TestCreateCredential:
-
-    # _create_credential expects schema-validated data (no 'name'/'description')
-    valid_cred = {'username': 'admin', 'password': '12345', 'endpoint': '', 'owned': False, 'leak_date': None}
-
-    def test_new_credential_returns_created(self, session, workspace):
-        result = bc._create_credential(workspace, self.valid_cred.copy(), return_id=True)
-        assert result['created'] == 1
-        assert result['updated'] == 0
-        assert 'credential_id' in result
-        assert result['credential_id'] is not None
-
-    def test_duplicate_credential_returns_updated(self, session, workspace):
-        bc._create_credential(workspace, self.valid_cred.copy(), return_id=True)
-        db.session.commit()
-        result = bc._create_credential(workspace, self.valid_cred.copy(), return_id=True)
-        assert result['created'] == 0
-        assert result['updated'] == 1
-
-    def test_return_id_false_omits_credential_id(self, session, workspace):
-        result = bc._create_credential(workspace, self.valid_cred.copy(), return_id=False)
-        assert 'credential_id' not in result
-
 
 class TestTopLevelCredentials:
 
@@ -829,31 +805,6 @@ class TestCredentialAssociationOnUpdatedVuln:
         vuln = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.workspace == workspace).one()
         assert len(vuln.credentials) == 1
 
-
-class TestLinkCredentialsToVulnerabilities:
-
-    def test_no_match_on_external_id_does_not_fail(self, session, workspace):
-        cred = Credential(username='u', password='p', workspace=workspace)
-        session.add(cred)
-        session.commit()
-        bc._link_credentials_to_vulnerabilities(workspace, [cred.id], 'BAGRE-nonexistent')
-
-    def test_empty_inputs_do_not_fail(self, session, workspace):
-        bc._link_credentials_to_vulnerabilities(workspace, [], 'BAGRE-123')
-        bc._link_credentials_to_vulnerabilities(workspace, [1], '')
-        bc._link_credentials_to_vulnerabilities(workspace, [], '')
-
-    def test_links_credentials_by_external_id(self, session, workspace, host, vulnerability_factory):
-        vuln = vulnerability_factory.create(workspace=workspace, host=host, service=None, external_id='BAGRE-001')
-        cred = Credential(username='u', password='p', workspace=workspace)
-        session.add(cred)
-        session.commit()
-
-        bc._link_credentials_to_vulnerabilities(workspace, [cred.id], 'BAGRE-001')
-
-        updated_vuln = VulnerabilityGeneric.query.get(vuln.id)
-        assert len(updated_vuln.credentials) == 1
-        assert updated_vuln.credentials[0].id == cred.id
 
 
 class TestWebVulnWithCredentials:

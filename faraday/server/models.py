@@ -1434,6 +1434,7 @@ association_table_vulnerabilities_credentials = Table(
     db.Model.metadata,
     Column('vulnerability_id', Integer, ForeignKey('vulnerability.id', ondelete='CASCADE')),
     Column('credential_id', Integer, ForeignKey('credential.id', ondelete='CASCADE')),
+    UniqueConstraint('vulnerability_id', 'credential_id', name='uix_vuln_cred_pair'),
     Index('ix_association_vuln_creds_vuln_id', 'vulnerability_id'),
     Index('ix_association_vuln_creds_cred_id', 'credential_id')
 )

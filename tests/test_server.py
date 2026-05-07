@@ -35,7 +35,11 @@ class BaseAPITestCase:
 
     @pytest.fixture(autouse=True)
     def route_endpoint(self, app):
-        app.route(self.ENDPOINT_ROUTE)(endpoint)
+        if not any(rule.rule == self.ENDPOINT_ROUTE for rule in app.url_map.iter_rules()):
+            was_got_first = app._got_first_request
+            app._got_first_request = False
+            app.route(self.ENDPOINT_ROUTE)(endpoint)
+            app._got_first_request = was_got_first
 
 
 class TestAuthentication(BaseAPITestCase, unittest.TestCase):

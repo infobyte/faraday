@@ -416,6 +416,25 @@ class TestPipelineMixinsView(ReadWriteAPITests):
             db.session.refresh(v)
             assert v.description == "other", f"Vuln {v.id} should be untouched"
 
+    def test_run_all_readonly_workspace_returns_403(self, test_client):
+        ws, actions, workflow, pipeline = create_pipeline(test_client)
+        ws.readonly = True
+        db.session.commit()
+        res = test_client.post(self.url(obj=pipeline) + "/run")
+        assert res.status_code == 403
+
+    def test_process_entry_skips_readonly_workspace(self, test_client):
+        WORKFLOW_QUEUE.queue.clear()
+        ws, actions, workflow, pipeline = create_pipeline(test_client)
+        host = HostFactory.create(description="testing", workspace=ws)
+        db.session.add(host)
+        db.session.commit()
+        ws.readonly = True
+        db.session.commit()
+        result = _process_entry(None, None, ws.id, None, True, pipeline_id=pipeline.id)
+        assert result == []
+        assert host.description == "testing"
+
 
 class TestActionMixinsView(ReadWriteAPITests):
     model = Action

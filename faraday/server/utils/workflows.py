@@ -826,6 +826,12 @@ def _run_pipeline_chunked(ws_id, pipeline_id):
 
 def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=None):
     update_host_stats = []
+
+    workspace = db.session.query(Workspace).get(ws_id) if ws_id else None
+    if workspace and workspace.readonly:
+        logger.warning(f"Skipping workflow for pipeline {pipeline_id}: workspace {ws_id} is read-only")
+        return []
+
     if obj and obj_ids and ws_id:
         _, _, host_ids = _check_workflows(*_get_obj_and_workspace(obj, obj_ids, ws_id, fields, pipeline_id))
         return host_ids

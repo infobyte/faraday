@@ -577,7 +577,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     from faraday.server.api.modules.agent import agent_creation_api  # pylint: disable=import-outside-toplevel
 
     app.limiter = Limiter(
-        app,
+        app=app,
         key_func=get_remote_address,
         default_limits=[]
     )

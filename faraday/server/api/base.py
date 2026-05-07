@@ -1383,10 +1383,10 @@ class UpdateMixin:
             db.session.commit()
             logger.info(f"{obj} updated")
         except IntegrityError as ex:
+            db.session.rollback()
             logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
-            db.session.rollback()
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
@@ -1459,8 +1459,9 @@ class BulkUpdateMixin(FilterObjects):
         workspace_name = kwargs.get('workspace_name') if 'workspace_name' in kwargs else None
 
         # Try to get ids
-        if request.json and 'ids' in request.json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, request.json['ids']))
+        _json = request.get_json(silent=True)
+        if _json and 'ids' in _json:
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
@@ -1716,8 +1717,9 @@ class BulkDeleteMixin(FilterObjects):
         """
         # TODO BULK_DELETE_SCHEMA
         # Try to get ids
-        if request.json and 'ids' in request.json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, request.json['ids']))
+        _json = request.get_json(silent=True)
+        if _json and 'ids' in _json:
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:

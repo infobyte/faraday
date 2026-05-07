@@ -4086,6 +4086,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
     def test_vulnerability_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
+        from flask import _app_ctx_stack
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4107,19 +4108,23 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            ctx.sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-
-        slow_queries = [q for q in queries if q.duration > 0.5]
-        assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
+        # Query count must stay low regardless of CVE count — N+1 would produce 150+ queries
+        assert len(queries) <= 30, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_list_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
+        from flask import _app_ctx_stack
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4142,19 +4147,23 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            ctx.sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-
-        slow_queries = [q for q in queries if q.duration > 0.5]
-        assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
+        # Query count must stay low regardless of CVE count — N+1 would produce 100+ queries
+        assert len(queries) <= 40, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_without_cves_baseline_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
+        from flask import _app_ctx_stack
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4170,13 +4179,19 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            ctx.sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 0.5, f"Baseline query time too slow: {total_time:.3f}s"
+        # Baseline: 1 vuln, no CVEs — should be very few queries
+        assert len(queries) <= 20, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
 
 @pytest.mark.usefixtures('logged_user')

@@ -7,11 +7,12 @@ See the file 'doc/LICENSE' for the license information
 import logging
 import os
 import signal
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import lru_cache
 from typing import Dict, Optional
 
-from flask import current_app
+from flask import current_app, has_app_context
 
 # Local application imports
 from faraday.server.models import (
@@ -45,7 +46,9 @@ class Settings:
             LOADED_SETTINGS[self.settings_key] = self
 
     def load_configuration(self) -> Dict:
-        with current_app.app_context():
+        from faraday.server.app import get_app  # pylint: disable=import-outside-toplevel
+        ctx = nullcontext() if has_app_context() else get_app().app_context()
+        with ctx:
             query = db.session.query(Configuration).filter(Configuration.key == self.settings_key).first()
             settings_config = self.get_default_config()
             if query:
@@ -55,7 +58,8 @@ class Settings:
 
     def delete_configuration(self):
         from faraday.server.app import get_app   # pylint: disable=import-outside-toplevel
-        with get_app().app_context():
+        ctx = nullcontext() if has_app_context() else get_app().app_context()
+        with ctx:
             db.session.query(Configuration).filter(Configuration.key == self.settings_key).delete()
             db.session.commit()
             self.__class__.value.fget.cache_clear()

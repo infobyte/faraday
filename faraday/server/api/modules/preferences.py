@@ -31,10 +31,11 @@ class PreferencesView(GenericView):
         """
         user = flask_login.current_user
 
-        if request.json and 'preferences' not in request.json:
+        _json = request.get_json(silent=True)
+        if _json and 'preferences' not in _json:
             abort(400)
 
-        preferences = request.json.get('preferences', {})
+        preferences = (_json or {}).get('preferences', {})
         user.preferences = preferences
 
         db.session.commit()

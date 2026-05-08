@@ -45,6 +45,7 @@ from faraday.server.api.modules import (
     services_base,
     vulns_base,
 )
+from faraday.server.api.modules.credentials import CredentialSchema
 from faraday.server.api.modules.websocket_auth import require_agent_token
 from faraday.server.config import CONST_FARADAY_HOME_PATH, faraday_server
 from faraday.server.debouncer import update_workspace_vulns_count
@@ -216,25 +217,18 @@ class BulkCommandSchema(AutoSchema):
         return data
 
 
-class BulkCredentialSchema(AutoSchema):
-    """Schema for credentials in bulk_create."""
+class BulkCredentialSchema(CredentialSchema):
+    """Credential schema for bulk_create.
 
-    username = fields.String(required=True)
-    password = fields.String(required=True)
+    Inherits field-level validation from CredentialSchema. Omits
+    workspace/vulnerability/metadata fields; endpoint defaults to ''
+    instead of being required.
+    """
+
     endpoint = fields.String(load_default='')
-    leak_date = fields.DateTime(allow_none=True)
-    owned = fields.Boolean(load_default=False)
 
-    class Meta:
-        model = Credential
+    class Meta(CredentialSchema.Meta):
         fields = ('username', 'password', 'endpoint', 'leak_date', 'owned')
-
-    @validates_schema
-    def validate_not_empty(self, data, **kwargs):
-        if not data.get('username', '').strip():
-            raise ValidationError('Username cannot be empty')
-        if not data.get('password', '').strip():
-            raise ValidationError('Password cannot be empty')
 
 
 class BulkCreateSchema(Schema):

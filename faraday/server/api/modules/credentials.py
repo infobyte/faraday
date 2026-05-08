@@ -4,11 +4,15 @@ Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
+# Standard library imports
+import csv
+from http import HTTPStatus
+from io import TextIOWrapper, BytesIO
+from logging import getLogger
+
 # Related third party imports
 from flask import Blueprint, request, make_response, abort, send_file
 from werkzeug.exceptions import HTTPException
-import csv
-from io import TextIOWrapper, BytesIO
 from marshmallow import fields
 
 # Local application imports
@@ -26,10 +30,10 @@ from faraday.server.models import Credential, db, VulnerabilityGeneric
 from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 from faraday.server.utils.export import export_credentials_to_csv
-from http import HTTPStatus
 from sqlalchemy.exc import IntegrityError
 
 credentials_api = Blueprint('credentials_api', __name__)
+logger = getLogger(__name__)
 
 
 class CredentialSchema(AutoSchema):
@@ -178,6 +182,7 @@ class CredentialView(ReadWriteWorkspacedView,
             abort(make_response({"message": "No file provided."}, HTTPStatus.BAD_REQUEST))
 
         credentials_file = request.files['file']
+        logger.info("Importing credentials CSV for workspace %s", workspace_name)
 
         if request.form:
             vulns_ids = request.form.get('vulns_ids', "")
@@ -273,11 +278,14 @@ class CredentialView(ReadWriteWorkspacedView,
                 except IntegrityError as e:
                     db.session.rollback()
                     skipped_credentials += 1
+                    logger.warning("Skipping duplicate credential '%s' in workspace %s", row.get('username', 'unknown'), workspace_name)
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
                 except Exception as e:
+                    logger.warning("Skipping credential '%s' in workspace %s: %s", row.get('username', 'unknown'), workspace_name, e)
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
                     skipped_credentials += 1
 
+            logger.info("CSV import finished for workspace %s: created=%d, skipped=%d", workspace_name, created_credentials, skipped_credentials)
             return make_response({
                 "message": f"CSV imported successfully - Created: {created_credentials} credentials, Skipped: {skipped_credentials} credentials",
                 "errors": errors
@@ -286,6 +294,7 @@ class CredentialView(ReadWriteWorkspacedView,
         except HTTPException:
             raise
         except Exception as e:
+            logger.exception("Error processing CSV file for workspace %s", workspace_name, exc_info=e)
             db.session.rollback()
             abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, HTTPStatus.BAD_REQUEST))
 

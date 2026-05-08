@@ -45,7 +45,7 @@ from anthropic import (
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 RESPONSE_TOKEN_BUDGET = 8000
-DEFAULT_THINKING_BUDGET = 8000
+DEFAULT_THINKING_BUDGET = 16000
 MAX_INPUT_CHARS_PER_CHUNK = 280_000  # rough proxy for ~80k input tokens
 MAX_FILE_DIFF_LINES = 1500
 SKIP_PATH_SUFFIXES = (
@@ -89,26 +89,54 @@ DIFF FORMAT — every line carries its NEW-file line number as a prefix:
   "  123: + added"       added line, file line 123
   "  123:   context"     context line, file line 123
   "     : - removed"     removed line, no new-file number
-The `line` field in every emitted comment (high, medium, or low) MUST be
-copied verbatim from a prefix in the diff. Never count or infer line
-numbers. Removed-only lines have no new-file number — for an observation
-about a removed line, attach the comment to the nearest surrounding
-context or added line (whose prefix has a valid number). If no usable
-nearby line exists, drop the observation.
+The `line` field in every emitted comment MUST be copied verbatim from
+a prefix in the diff. Never count or infer line numbers. Removed-only
+lines have no new-file number — for an observation about a removed
+line, attach the comment to the nearest surrounding context or added
+line. If no usable nearby line exists, drop the observation.
 
-VERIFICATION — diff hunks are not enough. Use the helper tools.
-  • read_file(path, start_line?, end_line?) — read the file at HEAD (or a
-    slice). Use it to confirm imports, class invariants, surrounding error
-    handling, the rest of a partially-shown function, related models or
-    migrations.
-  • grep_repo(pattern, path_glob?) — git grep across the repo. Use it to
-    find callers of a changed symbol, prior definitions, and similar
+Findings must target lines added in this MR (`+` lines, or
+hunk-attributable changes). Code you read via read_file but that is NOT
+changed in this MR is reference material only — never the subject of a
+comment. The post-processing pipeline silently discards any comment
+whose line isn't in this MR's added set; out-of-scope concerns are
+lost, not surfaced.
+
+VERIFICATION
+
+Two helper tools are available:
+  • read_file(path, start_line?, end_line?) — read the file at HEAD or
+    a slice. Use it to confirm imports, class invariants, the rest of a
+    partially-shown function, related models or migrations.
+  • grep_repo(pattern, path_glob?) — git grep across the repo. Use it
+    to find callers of a changed symbol, prior definitions, and similar
     patterns elsewhere.
-Call these as many times as needed before emitting. For every non-trivial
-finding you must be able to point to specific evidence either in the diff
-itself or in code you have actually read with these tools. If verifying
-the concern would require code you have not read, drop it. Better to miss
-a real bug than invent one.
+
+You have a meaningful budget per chunk (~14 helper-tool round-trips by
+default, configurable; parallel tool calls within each round are
+allowed). Use it. Under-verifying is the dominant historical failure
+mode — when in doubt, read the helper, read the test that should cover
+the case, grep for callers. But each round-trip costs real money, so
+prefer one well-targeted call (e.g. read the entire suspect function in
+one go) over many small reads.
+
+"MISSING X" RULE — findings of the form "missing auth check / membership
+check / permission check / validation / sanitization / gating" are only
+valid if you have read the body of every non-stdlib function called on
+or near the suspect line and confirmed none of them performs X. Faraday
+tends to gate via helper functions, decorators, and view mixins rather
+than inline checks — do not guess at a construct's behavior from its
+name; read it. If you cannot rule them all out, drop the finding.
+
+LINKED ISSUE CONTEXT — when the user message includes `=== LINKED ISSUE
+#N ===` blocks, use them to:
+  • Judge MR scope. If the issue doesn't ask for XYZ (or explicitly
+    rules it out), don't flag XYZ.
+  • Spot scope creep. Flag medium "scope creep" only when the extra
+    behavior has correctness or security implications, not for style.
+Do NOT trust the issue as ground truth for code correctness — always
+verify against the diff and tool calls. The issue can be vague,
+aspirational, or out of date.
 
 APPROACH — two phases before emitting:
 
@@ -124,50 +152,45 @@ APPROACH — two phases before emitting:
      context. Comment only on things that are likely-broken, not just
      unattractive.)
 
-  2. FILTER. For each candidate:
-     • Is it actually present in the diff?
-     • Have you verified it (from the hunk's content or from a tool call)?
-       If not, drop it.
-     • Is it actionable?
-     • Severity: high (bug/risk), medium (likely issue), or low (nit)?
-     Drop any item whose validity depends on code you have not read. Drop
-     any item where the natural phrasing is "consider", "might", "could",
-     or "potentially" — those are speculation, not findings.
-
-CALIBRATION:
-  GOOD finding (concrete, verified):
-    "SQL string interpolation of `user_id` in line 142 allows injection
-    when `user_id` is user-supplied (verified: comes straight from
-    `request.args` per read_file of the route handler above). Fix: use a
-    parameterized query."
-  BAD finding (speculative, would require unseen code):
-    "This function might leak the database session if the caller doesn't
-    close it." — caller behavior is not visible. Verify with grep_repo,
-    or skip.
+  2. FILTER. Drop a candidate if any of these is true:
+     • Not actually present in the changed lines of the diff.
+     • Validity depends on code you have not read.
+     • Natural phrasing is "consider", "might", "could", "potentially"
+       — those are speculation, not findings.
+     • You cannot produce a concrete `Verified:` evidence line for it
+       (see EMIT rules below).
+     What survives, classify: high (bug/risk), medium (likely issue),
+     low (nit).
 
 EMIT — call emit_review exactly once at the end of the conversation.
 
-  Every finding (high, medium, AND low) is emitted as a structured entry
-  in the `comments` array with `file`, `line`, `severity`, and `body`.
-  The script then routes them by severity:
-    • high + medium → posted as inline discussions on the MR.
-    • low → listed in the "Nits" section of the summary note.
-            (Low findings are never posted inline; they only appear as
-            terse one-line entries in Nits.)
+Every finding (high, medium, AND low) is emitted as a structured entry
+in the `comments` array with `file`, `line`, `severity`, and `body`.
+The script routes them by severity: high + medium become inline
+discussions; low go into the summary note's "Nits" section as one-line
+entries (never inline).
 
-  Rules:
-  • Do not sample. If you have N findings, emit N entries in `comments`.
-  • Do NOT enumerate findings as prose inside the `summary` string —
-    the rendered Nits section is built from low-severity `comments`
-    entries, not from `summary` text.
-  • The `summary` string is for high-level overview prose only (1-3
-    sentences max). Use it to set context, not to list findings.
-  • File path exactly as shown in the "===== FILE: <path> =====" header.
+  • Emit every finding you have. Do not sample.
+  • The `summary` string is high-level overview prose only (1-3
+    sentences). Do not list findings inside it — the Nits section is
+    rendered from low-severity `comments` entries, not from summary
+    text.
+  • File path: exactly as in the "===== FILE: <path> =====" header.
   • Body: one-sentence problem, one-sentence fix, optional one line of
     code. No preamble, no restating the code.
+  • Body MUST end with one evidence line (own paragraph) in one of two
+    forms, citing a tool call you actually made:
+        Verified: <path>:<start>-<end> — <one-line observation>
+        Verified by absence: grep_repo(<pattern>) returned <result> in <scope>
+    If you can't produce a real evidence line, drop the finding rather
+    than invent one.
+  • High severity additionally requires the evidence line to trace the
+    unsafe data path concretely (which user-controlled value reaches
+    which sink). High findings without that trace get demoted to medium
+    or dropped.
 
 If nothing is high, medium, or low, emit zero comments plus a short
-summary saying so. If unsure about any single item, skip it — do not
+summary saying so. When in doubt about any item, skip it — do not
 hallucinate."""
 
 EMIT_REVIEW_TOOL = {
@@ -247,9 +270,9 @@ GREP_REPO_TOOL = {
     },
 }
 
-MAX_FILE_READ_LINES = 2000
+MAX_FILE_READ_LINES = 3000
 MAX_GREP_HITS = 200
-MAX_HELPER_TURNS = 8
+DEFAULT_MAX_HELPER_TURNS = 14
 
 
 def _tool_read_file(
@@ -327,6 +350,7 @@ class Env:
     base_sha: str
     head_sha: str
     model: str
+    branch: str = ""
 
 
 def _resolve_secret(value: str) -> str:
@@ -360,6 +384,7 @@ def load_env() -> Env:
         base_sha=os.environ["CI_MERGE_REQUEST_DIFF_BASE_SHA"],
         head_sha=os.environ["CI_COMMIT_SHA"],
         model=_resolve_secret(os.environ.get("CLAUDE_MODEL", "")) or DEFAULT_MODEL,
+        branch=os.environ.get("CI_COMMIT_REF_NAME", ""),
     )
 
 
@@ -422,6 +447,24 @@ def annotate_patch(patch: str) -> str:
             # numbering for the rest of the hunk.
             out.append(line)
     return "\n".join(out)
+
+
+_ANNOTATED_ADDED_RE = re.compile(r"^\s*(\d+):\s\+(?!\+)")
+
+
+def changed_lines(annotated_patch: str) -> set[int]:
+    """Return the set of NEW-file line numbers added in this annotated patch.
+
+    Used to gate model findings: a comment whose ``line`` isn't here is
+    flagging code the MR didn't touch, so the MR review is the wrong
+    place for it.
+    """
+    out: set[int] = set()
+    for line in annotated_patch.splitlines():
+        m = _ANNOTATED_ADDED_RE.match(line)
+        if m:
+            out.add(int(m.group(1)))
+    return out
 
 
 def _parse_numstat_z(raw: str) -> list[tuple[str, str, str]]:
@@ -553,12 +596,18 @@ def chunk_diffs(diffs: list[tuple[str, str]]) -> list[str]:
 def _create_with_retry(
     client: Anthropic, kwargs: dict[str, Any]
 ) -> Any:
-    """Wrap messages.create with exponential-backoff retry for transient errors."""
+    """Wrap messages.stream with exponential-backoff retry for transient errors.
+
+    We use streaming because long-thinking + many-tool-turn calls can exceed
+    the SDK's 10-minute non-streaming timeout. The Message object returned
+    by ``get_final_message()`` is the same shape ``messages.create`` returns.
+    """
     attempt = 0
     while True:
         attempt += 1
         try:
-            return client.messages.create(**kwargs)
+            with client.messages.stream(**kwargs) as stream:
+                return stream.get_final_message()
         except (APIConnectionError, APITimeoutError):
             if attempt >= 3:
                 raise
@@ -594,6 +643,77 @@ def _emit_review_payload(content: list[Any]) -> dict[str, Any] | None:
         "comments": merged_comments,
         "summary": "\n\n".join(merged_summaries),
     }
+
+
+def _accumulate_usage(acc: dict[str, int], resp: Any, turn: int) -> None:
+    """Accumulate token counts from one API response into ``acc`` and log them.
+
+    ``resp.usage`` exposes ``input_tokens``, ``output_tokens``,
+    ``cache_creation_input_tokens``, ``cache_read_input_tokens``. Any of
+    them may be missing on older SDKs — defaults to 0.
+    """
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return
+    inp = int(getattr(u, "input_tokens", 0) or 0)
+    out = int(getattr(u, "output_tokens", 0) or 0)
+    cw = int(getattr(u, "cache_creation_input_tokens", 0) or 0)
+    cr = int(getattr(u, "cache_read_input_tokens", 0) or 0)
+    acc["input"] += inp
+    acc["output"] += out
+    acc["cache_write"] += cw
+    acc["cache_read"] += cr
+    print(
+        f"[claude-review] turn {turn} usage: "
+        f"input={inp} output={out} cache_read={cr} cache_write={cw}"
+    )
+
+
+def _log_chunk_usage(acc: dict[str, int]) -> None:
+    print(
+        f"[claude-review] chunk total tokens: "
+        f"input={acc['input']} output={acc['output']} "
+        f"cache_read={acc['cache_read']} cache_write={acc['cache_write']}"
+    )
+
+
+def _block_for_replay(block: Any) -> dict[str, Any]:
+    """Convert an SDK content block to an API-acceptable dict for replay.
+
+    The streaming SDK adds internal fields (e.g. ``parsed_output`` on
+    text blocks) that the API rejects when an assistant turn is sent
+    back as conversation history. This builds a minimal dict containing
+    only the fields the API accepts per block type.
+    """
+    btype = getattr(block, "type", None)
+    if btype == "text":
+        out: dict[str, Any] = {"type": "text", "text": getattr(block, "text", "")}
+        citations = getattr(block, "citations", None)
+        if citations is not None:
+            out["citations"] = citations
+        return out
+    if btype == "tool_use":
+        return {
+            "type": "tool_use",
+            "id": block.id,
+            "name": block.name,
+            "input": block.input,
+        }
+    if btype == "thinking":
+        # Extended thinking requires the signature on round-trip.
+        out = {"type": "thinking", "thinking": getattr(block, "thinking", "")}
+        sig = getattr(block, "signature", None)
+        if sig is not None:
+            out["signature"] = sig
+        return out
+    if btype == "redacted_thinking":
+        return {
+            "type": "redacted_thinking",
+            "data": getattr(block, "data", ""),
+        }
+    if hasattr(block, "model_dump"):
+        return block.model_dump(exclude_none=True)
+    return dict(block)
 
 
 def _run_helper_tools(
@@ -643,12 +763,24 @@ def call_claude(
     model: str,
     chunk: str,
     prior_summary: str | None = None,
+    issue_context: str | None = None,
 ) -> dict[str, Any]:
     lead = (
         "Review the following MR diff. Do a Phase 1 scan and Phase 2 filter "
         "as specified in your instructions, calling read_file/grep_repo as "
         "needed to verify candidates, then respond via the emit_review tool.\n"
     )
+    if issue_context:
+        lead += (
+            "\nThe MR claims to address the GitLab issue(s) below. Use them "
+            "to judge MR scope and intent — concerns about behavior the "
+            "issue explicitly accepts or that lives outside the issue's "
+            "stated scope should be dropped. The issue is NOT ground truth "
+            "for code correctness; always verify against the diff and tool "
+            "calls.\n\n"
+            + issue_context.strip()
+            + "\n\n"
+        )
     if prior_summary:
         lead += (
             "\nA previous Claude review ran on an earlier commit of this same "
@@ -664,16 +796,36 @@ def call_claude(
     thinking_budget = max(0, int(os.environ.get(
         "CLAUDE_THINKING_BUDGET", DEFAULT_THINKING_BUDGET
     )))
+    max_helper_turns = max(1, int(os.environ.get(
+        "CLAUDE_MAX_HELPER_TURNS", DEFAULT_MAX_HELPER_TURNS
+    )))
     tools = [EMIT_REVIEW_TOOL, READ_FILE_TOOL, GREP_REPO_TOOL]
-    messages: list[dict[str, Any]] = [
-        {"role": "user", "content": user_msg},
-    ]
+    # Cache the system prompt + first user message (the static prefix:
+    # system + diff + issue context). Anthropic caches everything up to
+    # and including the block carrying the cache_control marker, so
+    # placing it on the first user message captures both. Cache TTL is
+    # 5 min, well within a single review run; subsequent turns pay
+    # cache-read rates (~10% of input) on this prefix.
+    messages: list[dict[str, Any]] = [{
+        "role": "user",
+        "content": [{
+            "type": "text",
+            "text": user_msg,
+            "cache_control": {"type": "ephemeral"},
+        }],
+    }]
 
-    for turn in range(MAX_HELPER_TURNS + 1):
+    cumulative_usage = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
+
+    for turn in range(max_helper_turns + 1):
         kwargs: dict[str, Any] = dict(
             model=model,
             max_tokens=thinking_budget + RESPONSE_TOKEN_BUDGET,
-            system=SYSTEM_PROMPT,
+            system=[{
+                "type": "text",
+                "text": SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }],
             tools=tools,
             # Extended thinking disallows any form of forced tool use. `auto`
             # lets Claude choose — the system prompt instructs it to call
@@ -687,24 +839,27 @@ def call_claude(
                 "budget_tokens": thinking_budget,
             }
         resp = _create_with_retry(client, kwargs)
+        _accumulate_usage(cumulative_usage, resp, turn)
 
         emit = _emit_review_payload(resp.content)
         if emit is not None:
+            _log_chunk_usage(cumulative_usage)
             return emit
 
         helper_blocks, tool_results = _run_helper_tools(head_sha, resp.content)
         if not helper_blocks:
             # No emit, no helper tools — model is done but produced nothing structured.
+            _log_chunk_usage(cumulative_usage)
             return {
                 "comments": [],
                 "summary": "(model returned no structured output)",
             }
 
-        if turn >= MAX_HELPER_TURNS:
+        if turn >= max_helper_turns:
             # Budget exhausted: feed results plus a hard nudge to wrap up.
             messages.append({
                 "role": "assistant",
-                "content": [b.model_dump() for b in resp.content],
+                "content": [_block_for_replay(b) for b in resp.content],
             })
             wrap_results = [
                 {**r, "content": r["content"] + "\n\n[NOTE: tool budget exhausted; "
@@ -717,7 +872,9 @@ def call_claude(
             kwargs_final["tools"] = [EMIT_REVIEW_TOOL]
             kwargs_final["messages"] = messages
             resp = _create_with_retry(client, kwargs_final)
+            _accumulate_usage(cumulative_usage, resp, turn + 1)
             emit = _emit_review_payload(resp.content)
+            _log_chunk_usage(cumulative_usage)
             if emit is not None:
                 return emit
             return {
@@ -727,7 +884,7 @@ def call_claude(
 
         messages.append({
             "role": "assistant",
-            "content": [b.model_dump() for b in resp.content],
+            "content": [_block_for_replay(b) for b in resp.content],
         })
         messages.append({"role": "user", "content": tool_results})
 
@@ -928,6 +1085,130 @@ def _prior_sha_from_body(body: str) -> str | None:
     return m.group(1) if m else None
 
 
+ISSUE_REF_RE = re.compile(
+    r"(?i)\b(?:closes|fixes|resolves|implements|related\s+to)\s+#(\d+)\b"
+)
+BRANCH_TICKET_RE = re.compile(r"^tkt_(?:white|black|pink|red|gold)_(\d+)_")
+MAX_ISSUES_TO_FETCH = 3
+MAX_ISSUE_BODY_CHARS = 5000
+
+
+def _fetch_mr_detail(env: Env) -> dict[str, Any]:
+    """Return the MR detail JSON, or {} on lookup failure."""
+    if not env.mr_iid:
+        return {}
+    url = f"{env.api_url}/projects/{env.project_id}/merge_requests/{env.mr_iid}"
+    try:
+        r = requests.get(url, headers=gitlab_headers(env), timeout=30)
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[claude-review] MR detail lookup failed: {exc}", file=sys.stderr)
+        return {}
+    return r.json() or {}
+
+
+def _fetch_issue(env: Env, iid: int | str) -> dict[str, Any] | None:
+    """Return issue detail or None on failure."""
+    url = f"{env.api_url}/projects/{env.project_id}/issues/{iid}"
+    try:
+        r = requests.get(url, headers=gitlab_headers(env), timeout=30)
+        if r.status_code in (403, 404):
+            print(
+                f"[claude-review] issue #{iid} not accessible "
+                f"({r.status_code}); skipping",
+                file=sys.stderr,
+            )
+            return None
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[claude-review] issue #{iid} fetch failed: {exc}", file=sys.stderr)
+        return None
+    return r.json() or None
+
+
+def _resolve_linked_issue_iids(
+    env: Env, mr_detail: dict[str, Any] | None,
+) -> list[int]:
+    """Return up to MAX_ISSUES_TO_FETCH unique issue IIDs in lookup order:
+    closes_issues API → MR description regex → branch-name fallback.
+    """
+    found: list[int] = []
+    seen: set[int] = set()
+
+    def _add(value: Any) -> None:
+        try:
+            iid = int(value)
+        except (TypeError, ValueError):
+            return
+        if iid <= 0 or iid in seen:
+            return
+        seen.add(iid)
+        found.append(iid)
+
+    if env.mr_iid:
+        url = (
+            f"{env.api_url}/projects/{env.project_id}"
+            f"/merge_requests/{env.mr_iid}/closes_issues"
+        )
+        try:
+            r = requests.get(url, headers=gitlab_headers(env), timeout=30)
+            r.raise_for_status()
+            for issue in r.json() or []:
+                _add(issue.get("iid"))
+                if len(found) >= MAX_ISSUES_TO_FETCH:
+                    return found
+        except requests.RequestException as exc:
+            print(f"[claude-review] closes_issues lookup failed: {exc}",
+                  file=sys.stderr)
+
+    description = (mr_detail or {}).get("description") or ""
+    for m in ISSUE_REF_RE.finditer(description):
+        _add(m.group(1))
+        if len(found) >= MAX_ISSUES_TO_FETCH:
+            return found
+
+    if env.branch:
+        m = BRANCH_TICKET_RE.match(env.branch)
+        if m:
+            _add(m.group(1))
+
+    return found[:MAX_ISSUES_TO_FETCH]
+
+
+def _format_issue_block(issue: dict[str, Any]) -> str:
+    iid = issue.get("iid", "?")
+    title = (issue.get("title") or "").strip() or "(no title)"
+    url = (issue.get("web_url") or "").strip()
+    body = (issue.get("description") or "").strip()
+    if len(body) > MAX_ISSUE_BODY_CHARS:
+        body = body[:MAX_ISSUE_BODY_CHARS] + "\n... [truncated]"
+    parts = [f"=== LINKED ISSUE #{iid} ===",
+             f"Title: {title}"]
+    if url:
+        parts.append(f"URL: {url}")
+    parts.append("")
+    parts.append(body if body else "(no description)")
+    parts.append(f"=== END LINKED ISSUE #{iid} ===")
+    return "\n".join(parts)
+
+
+def fetch_issue_context(
+    env: Env, mr_detail: dict[str, Any] | None,
+) -> str | None:
+    """Return a textual block describing the linked issue(s), or None."""
+    iids = _resolve_linked_issue_iids(env, mr_detail)
+    if not iids:
+        return None
+    blocks: list[str] = []
+    for iid in iids:
+        issue = _fetch_issue(env, iid)
+        if not issue:
+            continue
+        blocks.append(_format_issue_block(issue))
+        print(f"[claude-review] resolved issue #{iid}")
+    return "\n\n".join(blocks) if blocks else None
+
+
 def _find_last_review(env: Env) -> dict[str, Any] | None:
     """Return the newest prior-review *summary* note on this MR, or None.
 
@@ -1017,6 +1298,9 @@ def main() -> int:
                         f"not reachable locally — falling back to full diff"
                     )
 
+        mr_detail = _fetch_mr_detail(env)
+        issue_context = fetch_issue_context(env, mr_detail)
+
         diffs, size_skipped = collect_diff(env, base_override=prior_sha)
         if not diffs:
             scope = (
@@ -1044,10 +1328,12 @@ def main() -> int:
         for i, chunk in enumerate(chunks, 1):
             print(f"[claude-review] chunk {i}/{len(chunks)} "
                   f"({len(chunk)} chars)")
-            # Prior summary is context, not per-chunk input — send on first chunk only.
+            # Prior summary and issue context are context, not per-chunk
+            # input — send on first chunk only.
             result = call_claude(
                 client, env.head_sha, env.model, chunk,
                 prior_summary=prior_summary if i == 1 else None,
+                issue_context=issue_context if i == 1 else None,
             )
             all_comments.extend(result.get("comments", []))
             s = result.get("summary", "").strip()
@@ -1073,6 +1359,31 @@ def main() -> int:
             seen.add(fp)
             unique.append(c)
 
+        # Drop comments whose (file, line) doesn't land on a line the MR
+        # actually adds. The model occasionally read_files unchanged code
+        # and emits findings about it; those would fail GitLab's inline
+        # position check and fall back to confusing free-floating notes.
+        # Map only the files in this run's diffs (incremental review may
+        # have a subset of the MR's full diff).
+        added_by_file: dict[str, set[int]] = {
+            path: changed_lines(patch) for path, patch in diffs
+        }
+        in_scope: list[dict[str, Any]] = []
+        out_of_scope_dropped = 0
+        for c in unique:
+            allowed = added_by_file.get(c["file"], set())
+            if c["line"] in allowed:
+                in_scope.append(c)
+                continue
+            out_of_scope_dropped += 1
+            print(
+                f"[claude-review] dropping out-of-scope comment "
+                f"{c['file']}:{c['line']} (sev={c['severity']}); "
+                f"line is not in this MR's added lines",
+                file=sys.stderr,
+            )
+        unique = in_scope
+
         inline = [c for c in unique if c["severity"] in ("medium", "high")]
         low_notes = [c for c in unique if c["severity"] == "low"]
 
@@ -1082,6 +1393,7 @@ def main() -> int:
         print(
             f"[claude-review] candidates: model={len(all_comments)} "
             f"valid={len(valid_comments)} unique={len(unique)} "
+            f"out_of_scope_dropped={out_of_scope_dropped} "
             f"(high={sev_hist['high']} medium={sev_hist['medium']} "
             f"low={sev_hist['low']})"
         )

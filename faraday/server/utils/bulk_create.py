@@ -27,6 +27,8 @@ def add_creator(data, creator_user):
         command["creator_id"] = creator_user.id
         response["command"] = command
     if "credentials" in data:
+        for credential in data["credentials"]:
+            credential["creator_id"] = creator_user.id
         response["credentials"] = data["credentials"]
 
     return response

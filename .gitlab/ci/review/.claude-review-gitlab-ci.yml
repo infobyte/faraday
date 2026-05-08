@@ -14,6 +14,11 @@ claude_review:
     GIT_DEPTH: 0
     GIT_STRATEGY: fetch
   rules:
+    # Skip release/build/scheduled-test pipelines entirely — review is
+    # for feature-branch code, not for build/test orchestration runs.
+    - !reference [ .ignore-on-tag, rules ]
+    - if: '$BUILD_TEST || $FULL_TEST || $DAILY_TEST || $UPDATE_DOCKER_TEST'
+      when: never
     # Only offer the review on feature-style branches (tkt/exp/sup/mig).
     # Merges into dev/master/staging skip it.
     - if: '$CI_COMMIT_REF_NAME =~ /^(tkt|exp|sup|mig)_.+$/'

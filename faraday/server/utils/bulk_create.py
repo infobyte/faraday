@@ -26,5 +26,7 @@ def add_creator(data, creator_user):
         command = data['command']
         command["creator_id"] = creator_user.id
         response["command"] = command
+    if "credentials" in data:
+        response["credentials"] = data["credentials"]
 
     return response

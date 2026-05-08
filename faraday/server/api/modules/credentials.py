@@ -13,7 +13,7 @@ from logging import getLogger
 # Related third party imports
 from flask import Blueprint, request, make_response, abort, send_file
 from werkzeug.exceptions import HTTPException
-from marshmallow import fields
+from marshmallow import fields, ValidationError
 
 # Local application imports
 from faraday.server.api.base import (
@@ -36,10 +36,17 @@ credentials_api = Blueprint('credentials_api', __name__)
 logger = getLogger(__name__)
 
 
+def _non_blank(field_name):
+    def _validate(value):
+        if not value or not value.strip():
+            raise ValidationError(f'{field_name} cannot be empty')
+    return _validate
+
+
 class CredentialSchema(AutoSchema):
     owned = fields.Boolean(default=False)
-    username = fields.String(required=True, validate=lambda s: bool(s.strip()))
-    password = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    username = fields.String(required=True, validate=_non_blank('Username'))
+    password = fields.String(required=True, validate=_non_blank('Password'))
     endpoint = fields.String(required=True)
     leak_date = fields.DateTime(allow_none=True)
 

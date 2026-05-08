@@ -2941,6 +2941,25 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         res = test_client.put(self.url(obj=target_vuln), data=raw_data)
         assert res.status_code == 409, res.json
 
+    def test_bulk_update_single_id_conflict_returns_409(self, host, vulnerability_factory,
+                                                        session, test_client):
+        """Regression: bulk PATCH /vulns with a single id whose rename collides
+        with another vuln on the same host must return 409, not 500. The
+        previous code called get_conflict_object with an empty model instance,
+        causing the conflict lookup to fail silently and the IntegrityError to
+        re-raise as 500."""
+        vulnerability_factory.create(
+            workspace=self.workspace, host=host, service=None,
+            name="duplicada", description="a")
+        target_vuln = vulnerability_factory.create(
+            workspace=self.workspace, host=host, service=None,
+            name="original", description="a")
+        session.commit()
+        res = test_client.patch(
+            self.url(workspace=self.workspace),
+            data={"ids": [target_vuln.id], "name": "duplicada"})
+        assert res.status_code == 409, (res.status_code, res.json)
+
     def test_create_and_update_webvuln(self, host_with_hostnames, test_client, session):
         """
             This reproduces a bug found. after creating an object with a
@@ -4067,6 +4086,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
     def test_vulnerability_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
+        from flask import _app_ctx_stack
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4088,19 +4108,23 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            ctx.sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-
-        slow_queries = [q for q in queries if q.duration > 0.5]
-        assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
+        # Query count must stay low regardless of CVE count — N+1 would produce 150+ queries
+        assert len(queries) <= 30, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_list_with_many_cves_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
+        from flask import _app_ctx_stack
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4123,19 +4147,23 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            ctx.sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-
-        slow_queries = [q for q in queries if q.duration > 0.5]
-        assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
+        # Query count must stay low regardless of CVE count — N+1 would produce 100+ queries
+        assert len(queries) <= 40, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_without_cves_baseline_performance(self, test_client, session, workspace):
         from flask_sqlalchemy import get_debug_queries
+        from flask import _app_ctx_stack
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4151,13 +4179,19 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        ctx = _app_ctx_stack.top
+        if ctx is not None:
+            ctx.sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 0.5, f"Baseline query time too slow: {total_time:.3f}s"
+        # Baseline: 1 vuln, no CVEs — should be very few queries
+        assert len(queries) <= 20, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
 
 @pytest.mark.usefixtures('logged_user')

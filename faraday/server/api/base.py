@@ -88,6 +88,21 @@ def get_filtered_data(filters, filter_query):
     return data, len(rows)
 
 
+def hydrate_sample_for_conflict(model_class, ids):
+    # Hydrate from the first id so get_conflict_object can fall back to real
+    # column values for unique-index fields absent from `data`. See ticket 8232:
+    # empty model instances synthesize a filter that never matches the real
+    # conflicting row, turning the 409 into a 500.
+    sample = model_class()
+    if ids:
+        sample = (
+            db.session.query(model_class)
+            .filter(model_class.id == ids[0])
+            .first()
+        ) or sample
+    return sample
+
+
 def get_group_by_and_sort_dir(model_class):
     group_by = request.args.get('group_by', None)
     sort_dir = request.args.get('order', "asc").lower()
@@ -1368,10 +1383,10 @@ class UpdateMixin:
             db.session.commit()
             logger.info(f"{obj} updated")
         except IntegrityError as ex:
+            db.session.rollback()
             logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
-            db.session.rollback()
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
@@ -1444,8 +1459,9 @@ class BulkUpdateMixin(FilterObjects):
         workspace_name = kwargs.get('workspace_name') if 'workspace_name' in kwargs else None
 
         # Try to get ids
-        if request.json and 'ids' in request.json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, request.json['ids']))
+        _json = request.get_json(silent=True)
+        if _json and 'ids' in _json:
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
@@ -1528,7 +1544,8 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
+            sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
+            conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
                     {
@@ -1700,8 +1717,9 @@ class BulkDeleteMixin(FilterObjects):
         """
         # TODO BULK_DELETE_SCHEMA
         # Try to get ids
-        if request.json and 'ids' in request.json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, request.json['ids']))
+        _json = request.get_json(silent=True)
+        if _json and 'ids' in _json:
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
@@ -2211,7 +2229,8 @@ class ContextMixin(GenericView):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
+            sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
+            conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
                     {

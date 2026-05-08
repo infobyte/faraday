@@ -63,10 +63,6 @@ class CustomClient(FlaskClient):
                 ('Content-Type', 'application/json'),
             ]
 
-        # Reset queries to make the log_queries_count
-        from flask import _app_ctx_stack
-        _app_ctx_stack.top.sqlalchemy_queries = []
-
         ret = super().open(*args, **kwargs)
         # Now set in flask 1.0
         # if ret.headers.get('content-type') == 'application/json':
@@ -78,7 +74,7 @@ class CustomClient(FlaskClient):
 
     @property
     def cookies(self):
-        return self.cookie_jar
+        return self._cookies.values()
 
 
 def pytest_addoption(parser):
@@ -299,6 +295,11 @@ def login_as(test_client, user):
         sess['_user_id'] = user.fs_uniquifier  # TODO use public flask_login functions
         identity_changed.send(test_client.application,
                               identity=Identity(user.id))
+    # Flask-Login 0.6.x stores current_user in g._login_user (app-context scoped, not
+    # request-scoped like 0.5.x). Updating it explicitly ensures subsequent requests
+    # use the correct user even when login_as() is called mid-test after logout().
+    from flask import g
+    g._login_user = user
 
 
 @pytest.fixture
@@ -313,6 +314,19 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = False
     yield
     app.config['NPLUSONE_RAISE'] = old
+
+
+@pytest.fixture(autouse=True)
+def clear_flask_login_state():
+    """Flask-Login 0.6.x caches the current user in g._login_user (app-context scope).
+    The conftest's app context is session-scoped, so this cache leaks between tests.
+    After each test's session teardown, the cached user becomes detached, causing
+    DetachedInstanceError in the next test's login_as() → identity_changed signal.
+    Clearing it before each test prevents the leak."""
+    from flask import g
+    if hasattr(g, '_login_user'):
+        del g._login_user
+    yield
 
 
 @pytest.fixture(autouse=True)

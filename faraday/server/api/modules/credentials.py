@@ -283,9 +283,9 @@ class CredentialView(ReadWriteWorkspacedView,
         if export_csv.lower() == 'true':
             memory_file = export_credentials_to_csv(filtered_creds)
             return send_file(memory_file,
-                             attachment_filename=f"Faraday-{workspace_name}-Credentials.csv",
+                             download_name=f"Faraday-{workspace_name}-Credentials.csv",
                              as_attachment=True,
-                             cache_timeout=-1)
+                             max_age=0)
 
         class PageMeta:
             total = 0

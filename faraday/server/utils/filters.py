@@ -39,7 +39,7 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 logger = logging.getLogger(__name__)
 
-SENSITIVE_FILTER_FIELDS = frozenset({'password', 'token', '_otp_secret', 'fs_uniquifier'})
+SENSITIVE_FILTER_FIELDS = frozenset({'password', 'token', '_otp_secret', 'fs_uniquifier', 'session_id'})
 
 
 def _reject_sensitive_filter(val):

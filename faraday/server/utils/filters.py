@@ -39,6 +39,41 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 logger = logging.getLogger(__name__)
 
+SENSITIVE_FILTER_FIELDS = frozenset(
+    {
+        'password',
+        'token',
+        '_otp_secret',
+        'fs_uniquifier',
+        'email',
+        'last_login_at',
+        'current_login_at',
+        'last_login_ip',
+        'current_login_ip',
+        'login_count',
+        'confirmed_at',
+        'state_otp',
+        'preferences',
+        'roles',
+        'user_type',
+        'session_id',
+    }
+)
+
+
+def _reject_sensitive_filter(val):
+    """Raise ValidationError if val (or any nested filter within it) references a sensitive field."""
+    if isinstance(val, dict):
+        if val.get('name') in SENSITIVE_FILTER_FIELDS:
+            raise ValidationError('Filter on sensitive field is not allowed')
+        _reject_sensitive_filter(val.get('val'))
+        for key in ('and', 'or'):
+            if key in val:
+                _reject_sensitive_filter(val[key])
+    elif isinstance(val, list):
+        for item in val:
+            _reject_sensitive_filter(item)
+
 
 def generate_datetime_filter(filter_: dict = "") -> typing.List:
     """
@@ -114,6 +149,10 @@ class FlaskRestlessFilterSchema(Schema):
             PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
+
+        if filter_['name'] in SENSITIVE_FILTER_FIELDS:
+            raise ValidationError('Filter on sensitive field is not allowed')
+        _reject_sensitive_filter(filter_.get('val'))
 
         if '->' in filter_['name']:
             key = filter_['name'].split('->')[1]

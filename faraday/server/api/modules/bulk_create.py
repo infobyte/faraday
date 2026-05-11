@@ -1224,7 +1224,7 @@ class BulkCreateView(GenericWorkspacedView):
         # Store command_id before bulk_create might close the session
         command_id = command.id
 
-        if data['hosts']:
+        if data['hosts'] or data['credentials']:
             # Create random file
             chars = ascii_uppercase + digits
             random_prefix = ''.join(choice(chars) for _ in range(30))  # nosec
@@ -1269,12 +1269,6 @@ class BulkCreateView(GenericWorkspacedView):
             logger.warning(data)
             logger.warning(json_data)
             _update_command(command_id, data['command'])
-            user_id = current_user.id if not current_user.is_anonymous else command.creator_id
-            for credential_data in data.get('credentials', []):
-                credential_data['creator_id'] = user_id
-                get_or_create(workspace, Credential, credential_data)
-            if data.get('credentials'):
-                db.session.commit()
         return jsonify(
             {
                 "message": "Created",

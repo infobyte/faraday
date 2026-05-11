@@ -42,10 +42,19 @@ logger = logging.getLogger(__name__)
 SENSITIVE_FILTER_FIELDS = frozenset({'password', 'token', '_otp_secret', 'fs_uniquifier', 'session_id'})
 
 
+def _is_sensitive_field_name(name: str) -> bool:
+    if name in SENSITIVE_FILTER_FIELDS:
+        return True
+    if '__' in name:
+        _, field = name.split('__', 1)
+        return field in SENSITIVE_FILTER_FIELDS
+    return False
+
+
 def _reject_sensitive_filter(val):
     """Raise ValidationError if val (or any nested filter within it) references a sensitive field."""
     if isinstance(val, dict):
-        if val.get('name') in SENSITIVE_FILTER_FIELDS:
+        if _is_sensitive_field_name(val.get('name', '')):
             raise ValidationError('Filter on sensitive field is not allowed')
         _reject_sensitive_filter(val.get('val'))
         for key in ('and', 'or'):

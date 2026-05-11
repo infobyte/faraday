@@ -344,3 +344,10 @@ class TestFilters:
             {'name': 'creator__name', 'op': 'eq', 'val': 'john'}
         )
         assert result == [{'name': 'creator__name', 'op': 'eq', 'val': 'john'}]
+
+    def test_sensitive_field_compound_name_in_nested_val_is_rejected(self):
+        # defense-in-depth: compound name like 'creator__password' inside a nested has/any val
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'creator__password', 'op': 'like', 'val': '$2b$1%'}}
+            )

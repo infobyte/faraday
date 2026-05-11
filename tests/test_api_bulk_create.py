@@ -743,6 +743,18 @@ class TestTopLevelCredentials:
         bc.bulk_create(workspace, command, data)
         assert Credential.query.filter(Credential.workspace == workspace).count() == 1
 
+    def test_top_level_credentials_without_hosts_are_created(self, session, workspace):
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        data = {
+            'hosts': [],
+            'command': command_data,
+            'credentials': [credential_data],
+        }
+        bc.bulk_create(workspace, command, data)
+        assert Credential.query.filter(Credential.workspace == workspace).count() == 1
+
 
 class TestCredentialAssociationOnUpdatedVuln:
 
@@ -1460,6 +1472,13 @@ class TestBulkCreateAPI:
         assert service.creator_id == creator_id
         for vuln in Vulnerability.query.filter(Vulnerability.workspace == workspace):
             assert vuln.custom_fields['changes'] == ['1', '2', '3']
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_bulk_create_endpoint_creates_credentials_without_hosts(self, session, workspace, test_client):
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(url, data=dict(hosts=[], command=command_data.copy(), credentials=[credential_data]))
+        assert res.status_code == 201
+        assert Credential.query.filter(Credential.workspace == workspace).count() == 1
 
     @pytest.mark.usefixtures('logged_user')
     def test_vuln_web_cannot_have_host_parent(self, session, workspace, test_client, logged_user):

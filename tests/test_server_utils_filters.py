@@ -282,3 +282,48 @@ class TestFilters:
         filters = {'filters': [{'name': 'id', 'op': 'range', 'val': '2020-01-01,2020-12-31'}]}
         with pytest.raises(ValidationError):
             FilterSchema().load(filters)
+
+    def test_sensitive_field_direct_filter_is_rejected(self):
+        filters = {'filters': [{'name': 'password', 'op': 'like', 'val': '$2b$1%'}]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_token_direct_filter_is_rejected(self):
+        filters = {'filters': [{'name': 'token', 'op': 'eq', 'val': 'abc123'}]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_via_has_relationship_is_rejected(self):
+        # {"name":"creator","op":"has","val":{"name":"password","op":"like","val":"$2b$1%"}}
+        filters = {'filters': [
+            {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '$2b$1%'}}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_via_any_relationship_is_rejected(self):
+        filters = {'filters': [
+            {'name': 'creator', 'op': 'any', 'val': {'name': 'password', 'op': 'eq', 'val': 'secret'}}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_deeply_nested_in_and_is_rejected(self):
+        filters = {'filters': [
+            {'and': [
+                {'name': 'severity', 'op': 'eq', 'val': 'high'},
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '%secret%'}}
+            ]}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_deeply_nested_in_or_is_rejected(self):
+        filters = {'filters': [
+            {'or': [
+                {'name': 'confirmed', 'op': '==', 'val': 'true'},
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '%secret%'}}
+            ]}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)

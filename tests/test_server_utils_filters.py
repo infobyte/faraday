@@ -2,8 +2,13 @@ import pytest
 
 from marshmallow.exceptions import ValidationError
 
-from faraday.server.utils.filters import FilterSchema
-from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.filters import (
+    FilterSchema,
+    FlaskRestlessSchema,
+    FlaskRestlessUserFilterSchema,
+    FlaskRestlessCredentialFilterSchema,
+    FlaskRestlessVulnerabilityFilterSchema,
+)
 
 
 class TestFilters:
@@ -283,30 +288,30 @@ class TestFilters:
         with pytest.raises(ValidationError):
             FilterSchema().load(filters)
 
-    def test_sensitive_field_direct_filter_is_rejected(self):
-        filters = {'filters': [{'name': 'password', 'op': 'like', 'val': '$2b$1%'}]}
+    def test_user_password_direct_filter_is_rejected(self):
         with pytest.raises(ValidationError):
-            FilterSchema().load(filters)
+            FlaskRestlessUserFilterSchema().load({'name': 'password', 'op': 'like', 'val': '$2b$1%'})
 
-    def test_sensitive_field_token_direct_filter_is_rejected(self):
-        filters = {'filters': [{'name': 'token', 'op': 'eq', 'val': 'abc123'}]}
+    def test_user_token_direct_filter_is_rejected(self):
         with pytest.raises(ValidationError):
-            FilterSchema().load(filters)
+            FlaskRestlessUserFilterSchema().load({'name': 'token', 'op': 'eq', 'val': 'abc123'})
+
+    def test_credential_password_direct_filter_is_allowed(self):
+        result = FlaskRestlessCredentialFilterSchema().load({'name': 'password', 'op': 'eq', 'val': 'secret'})
+        assert result == [{'name': 'password', 'op': 'eq', 'val': 'secret'}]
 
     def test_sensitive_field_via_has_relationship_is_rejected(self):
         # {"name":"creator","op":"has","val":{"name":"password","op":"like","val":"$2b$1%"}}
-        filters = {'filters': [
-            {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '$2b$1%'}}
-        ]}
         with pytest.raises(ValidationError):
-            FilterSchema().load(filters)
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '$2b$1%'}}
+            )
 
     def test_sensitive_field_via_any_relationship_is_rejected(self):
-        filters = {'filters': [
-            {'name': 'creator', 'op': 'any', 'val': {'name': 'password', 'op': 'eq', 'val': 'secret'}}
-        ]}
         with pytest.raises(ValidationError):
-            FilterSchema().load(filters)
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator', 'op': 'any', 'val': {'name': 'password', 'op': 'eq', 'val': 'secret'}}
+            )
 
     def test_sensitive_field_deeply_nested_in_and_is_rejected(self):
         filters = {'filters': [

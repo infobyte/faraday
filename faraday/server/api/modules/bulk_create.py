@@ -1224,7 +1224,7 @@ class BulkCreateView(GenericWorkspacedView):
         # Store command_id before bulk_create might close the session
         command_id = command.id
 
-        if data['hosts'] or data['credentials']:
+        if data['hosts']:
             # Create random file
             chars = ascii_uppercase + digits
             random_prefix = ''.join(choice(chars) for _ in range(30))  # nosec
@@ -1264,6 +1264,8 @@ class BulkCreateView(GenericWorkspacedView):
                     )
                 )
                 logger.info(f"Faraday objects enqueued in bulk for workspace {workspace}")
+        elif data['credentials']:
+            bulk_create(workspace, command, data, True, True)
         else:
             logger.warning("No hosts parsed in data...")
             logger.warning(data)

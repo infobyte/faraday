@@ -343,15 +343,39 @@ def csrf_token(logged_user, test_client):
     return session_response.json.get('csrf_token')
 
 
+def _parse_pg_host(db_host: str) -> tuple[str, int | None]:
+    """
+    Accepts either "hostname" or "hostname:port" and returns (host, port).
+
+    This is useful when Postgres is exposed from docker with a random host port.
+    """
+    if not db_host:
+        return db_host, None
+    host = db_host
+    port = None
+    if ':' in db_host:
+        maybe_host, maybe_port = db_host.rsplit(':', 1)
+        try:
+            port = int(maybe_port)
+            host = maybe_host
+        except ValueError:
+            # Keep original db_host if it doesn't look like host:port
+            host = db_host
+            port = None
+    return host, port
+
+
 def get_cursor(db_user: str, db_password: str, db_host: str):
     """
     Gets a psycopg2 cursor for the parent Database
     """
+    host, port = _parse_pg_host(db_host)
     conn = psycopg2.connect(
         dbname="postgres",
         user=db_user,
         password=db_password,
-        host=db_host
+        host=host,
+        port=port,
     )
 
     conn.set_isolation_level(0)

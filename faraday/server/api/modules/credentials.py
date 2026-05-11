@@ -4,11 +4,16 @@ Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
+# Standard library imports
+import csv
+from http import HTTPStatus
+from io import TextIOWrapper, BytesIO
+from logging import getLogger
+
 # Related third party imports
 from flask import Blueprint, request, make_response, abort, send_file
-import csv
-from io import TextIOWrapper
-from marshmallow import fields
+from werkzeug.exceptions import HTTPException
+from marshmallow import fields, ValidationError
 
 # Local application imports
 from faraday.server.api.base import (
@@ -25,16 +30,23 @@ from faraday.server.models import Credential, db, VulnerabilityGeneric
 from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 from faraday.server.utils.export import export_credentials_to_csv
-from http import HTTPStatus
 from sqlalchemy.exc import IntegrityError
 
 credentials_api = Blueprint('credentials_api', __name__)
+logger = getLogger(__name__)
+
+
+def _non_blank(field_name):
+    def _validate(value):
+        if not value or not value.strip():
+            raise ValidationError(f'{field_name} cannot be empty')
+    return _validate
 
 
 class CredentialSchema(AutoSchema):
     owned = fields.Boolean(default=False)
-    username = fields.String(required=True, validate=lambda s: bool(s.strip()))
-    password = fields.String(required=True, validate=lambda s: bool(s.strip()))
+    username = fields.String(required=True, validate=_non_blank('Username'))
+    password = fields.String(required=True, validate=_non_blank('Password'))
     endpoint = fields.String(required=True)
     leak_date = fields.DateTime(allow_none=True)
 
@@ -177,6 +189,7 @@ class CredentialView(ReadWriteWorkspacedView,
             abort(make_response({"message": "No file provided."}, HTTPStatus.BAD_REQUEST))
 
         credentials_file = request.files['file']
+        logger.info("Importing credentials CSV for workspace %s", workspace_name)
 
         if request.form:
             vulns_ids = request.form.get('vulns_ids', "")
@@ -187,17 +200,40 @@ class CredentialView(ReadWriteWorkspacedView,
             vulns_ids = []
 
         try:
-            io_wrapper = TextIOWrapper(credentials_file, encoding=request.content_encoding or "utf8")
-            credentials_reader = csv.DictReader(io_wrapper, skipinitialspace=True)
+            io_wrapper = TextIOWrapper(BytesIO(credentials_file.read()), encoding=request.content_encoding or "utf8")
+            sample = io_wrapper.read(4096)
+            if not sample.strip():
+                abort(make_response({"message": "CSV file is empty"}, HTTPStatus.BAD_REQUEST))
 
-            required_headers = {'username', 'password', 'endpoint'}
-            missing_headers = required_headers.difference(set(credentials_reader.fieldnames))
-            if missing_headers:
-                abort(
-                    make_response(
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=',;\t:|')
+            except csv.Error:
+                dialect = csv.excel
+
+            first_row = next(csv.reader([sample.splitlines()[0]], dialect=dialect))
+            first_row_fields = {f.strip().lower() for f in first_row}
+            known_fields = {'username', 'password', 'endpoint', 'leak_date', 'owned'}
+            has_header = bool(first_row_fields & known_fields)
+            io_wrapper.seek(0)
+
+            if has_header:
+                credentials_reader = csv.DictReader(io_wrapper, skipinitialspace=True, dialect=dialect)
+                missing_headers = {'username', 'password'}.difference(set(credentials_reader.fieldnames or []))
+                if missing_headers:
+                    abort(make_response(
                         {"message": f"Missing required headers in CSV: {missing_headers}"}, HTTPStatus.BAD_REQUEST
-                    )
-                )
+                    ))
+            else:
+                num_cols = len(first_row)
+                if num_cols >= 3:
+                    fieldnames = ['endpoint', 'username', 'password']
+                elif num_cols == 2:
+                    fieldnames = ['username', 'password']
+                else:
+                    abort(make_response(
+                        {"message": "CSV must have at least 2 columns (username, password)"}, HTTPStatus.BAD_REQUEST
+                    ))
+                credentials_reader = csv.DictReader(io_wrapper, fieldnames=fieldnames, skipinitialspace=True, dialect=dialect)
 
             workspace = get_workspace(workspace_name)
 
@@ -214,9 +250,9 @@ class CredentialView(ReadWriteWorkspacedView,
                 try:
                     owned = False
 
-                    # Handle empty username and password
                     username = row.get('username')
                     password = row.get('password')
+                    endpoint = row.get('endpoint', '')
                     if username is None or username.strip() == '':
                         errors.append("Username cannot be empty")
                         skipped_credentials += 1
@@ -231,9 +267,9 @@ class CredentialView(ReadWriteWorkspacedView,
                     leak_date = None if leak_date is None or leak_date.strip() == '' else leak_date
 
                     credential = Credential(
-                        username=row['username'],
-                        password=row['password'],
-                        endpoint=row['endpoint'],
+                        username=username,
+                        password=password,
+                        endpoint=endpoint,
                         owned=owned,
                         leak_date=leak_date,
                         workspace=workspace
@@ -249,17 +285,23 @@ class CredentialView(ReadWriteWorkspacedView,
                 except IntegrityError as e:
                     db.session.rollback()
                     skipped_credentials += 1
+                    logger.warning("Skipping duplicate credential '%s' in workspace %s", row.get('username', 'unknown'), workspace_name)
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
                 except Exception as e:
+                    logger.warning("Skipping credential '%s' in workspace %s: %s", row.get('username', 'unknown'), workspace_name, e)
                     errors.append(f"Error importing credential {row.get('username', 'unknown')}: {str(e)}")
                     skipped_credentials += 1
 
+            logger.info("CSV import finished for workspace %s: created=%d, skipped=%d", workspace_name, created_credentials, skipped_credentials)
             return make_response({
                 "message": f"CSV imported successfully - Created: {created_credentials} credentials, Skipped: {skipped_credentials} credentials",
                 "errors": errors
             }, HTTPStatus.CREATED)
 
+        except HTTPException:
+            raise
         except Exception as e:
+            logger.exception("Error processing CSV file for workspace %s", workspace_name, exc_info=e)
             db.session.rollback()
             abort(make_response({"message": f"Error processing CSV file: {str(e)}"}, HTTPStatus.BAD_REQUEST))
 

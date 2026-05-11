@@ -45,6 +45,7 @@ from faraday.server.api.modules import (
     services_base,
     vulns_base,
 )
+from faraday.server.api.modules.credentials import CredentialSchema
 from faraday.server.api.modules.websocket_auth import require_agent_token
 from faraday.server.config import CONST_FARADAY_HOME_PATH, faraday_server
 from faraday.server.debouncer import update_workspace_vulns_count
@@ -52,6 +53,7 @@ from faraday.server.models import (
     AgentExecution,
     Command,
     CommandObject,
+    Credential,
     CVE,
     Host,
     Hostname,
@@ -62,6 +64,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityReference,
     Workspace,
+    association_table_vulnerabilities_credentials,
     cve_vulnerability_association,
     cwe_vulnerability_association,
     db,
@@ -94,8 +97,10 @@ logger = getLogger(__name__)
 
 
 class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
+    credentials = fields.Nested('BulkCredentialSchema', many=True, load_default=[])
+
     class Meta(vulns_base.VulnerabilitySchema.Meta):
-        extra_fields = ('run_date',)
+        extra_fields = ('run_date', 'credentials')
         fields = tuple(
             field_name for field_name in (vulns_base.VulnerabilitySchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
@@ -103,8 +108,10 @@ class VulnerabilitySchema(vulns_base.VulnerabilitySchema):
 
 
 class BulkVulnerabilityWebSchema(vulns_base.VulnerabilityWebSchema):
+    credentials = fields.Nested('BulkCredentialSchema', many=True, load_default=[])
+
     class Meta(vulns_base.VulnerabilityWebSchema.Meta):
-        extra_fields = ('run_date',)
+        extra_fields = ('run_date', 'credentials')
         fields = tuple(
             field_name for field_name in (vulns_base.VulnerabilityWebSchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
@@ -150,7 +157,7 @@ class BulkServiceSchema(services_base.ServiceSchema):
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
         many=True,
-        missing=[],
+        load_default=[],
     )
 
     def post_load_parent(self, data, **kwargs):
@@ -169,12 +176,12 @@ class HostBulkSchema(hosts_base.HostSchema):
     services = fields.Nested(
         BulkServiceSchema(many=True, context={'updating': False}),
         many=True,
-        missing=[],
+        load_default=[],
     )
     vulnerabilities = fields.Nested(
         VulnerabilitySchema(many=True),
         many=True,
-        missing=[],
+        load_default=[],
     )
 
     class Meta(hosts_base.HostSchema.Meta):
@@ -210,6 +217,20 @@ class BulkCommandSchema(AutoSchema):
         return data
 
 
+class BulkCredentialSchema(CredentialSchema):
+    """Credential schema for bulk_create.
+
+    Inherits field-level validation from CredentialSchema. Omits
+    workspace/vulnerability/metadata fields; endpoint defaults to ''
+    instead of being required.
+    """
+
+    endpoint = fields.String(load_default='')
+
+    class Meta(CredentialSchema.Meta):
+        fields = ('username', 'password', 'endpoint', 'leak_date', 'owned')
+
+
 class BulkCreateSchema(Schema):
     hosts = fields.Nested(
         HostBulkSchema(many=True),
@@ -219,6 +240,11 @@ class BulkCreateSchema(Schema):
     command = fields.Nested(
         BulkCommandSchema(),
         required=True,
+    )
+    credentials = fields.Nested(
+        BulkCredentialSchema(many=True),
+        many=True,
+        load_default=[],
     )
     execution_id = fields.Integer(attribute='execution_id')
 
@@ -268,6 +294,11 @@ def bulk_create(ws: Workspace,
 
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
     workspace_id = ws.id
+
+    for credential_data in data.get('credentials', []):
+        get_or_create(ws, Credential, credential_data)
+    if data.get('credentials'):
+        db.session.commit()
 
     hosts_to_create = len(data['hosts'])
     if hosts_to_create > 0:
@@ -486,6 +517,7 @@ def manage_relationships(processed_data, result, workspace_id=None):
     owasp_object_created = []
     cwe_object_created = []
     policy_object_created = []
+    credential_association_created = []
     created = 0
     updated = 0
 
@@ -510,6 +542,12 @@ def manage_relationships(processed_data, result, workspace_id=None):
                     reference['id'] = reference_sequence_id
                     reference['vulnerability_id'] = v_id
                     references_created.append(reference)
+            credentials_ids = data.get('credential_ids')
+            if credentials_ids:
+                for cred_id in set(credentials_ids):
+                    credential_association_created.append(
+                        {'vulnerability_id': v_id, 'credential_id': cred_id}
+                    )
             logger.debug(f"Data vulnerability On conflict {data['vuln_data']}")
             updated += 1
             set_histogram(histogram, data['vuln_data'])
@@ -544,6 +582,12 @@ def manage_relationships(processed_data, result, workspace_id=None):
                 cwe_object_created.append(cwe_association)
             for policy in data['policy_violations_associations']:
                 policy_object_created.append(policy)
+            credentials_ids = data.get('credential_ids')
+            if credentials_ids:
+                for cred_id in set(credentials_ids):
+                    credential_association_created.append(
+                        {'vulnerability_id': v_id, 'credential_id': cred_id}
+                    )
     # TODO: Improve with an iterator
     if references_created:
         stmt = insert(VulnerabilityReference).values(references_created).on_conflict_do_nothing()
@@ -562,6 +606,14 @@ def manage_relationships(processed_data, result, workspace_id=None):
         db.session.execute(stmt)
     if policy_object_created:
         stmt = insert(PolicyViolationVulnerabilityAssociation).values(policy_object_created).on_conflict_do_nothing()
+        db.session.execute(stmt)
+    if credential_association_created:
+        unique_pairs = {
+            (a['vulnerability_id'], a['credential_id']) for a in credential_association_created
+        }
+        stmt = insert(association_table_vulnerabilities_credentials).values(
+            [{'vulnerability_id': v_id, 'credential_id': c_id} for v_id, c_id in unique_pairs]
+        ).on_conflict_do_nothing()
         db.session.execute(stmt)
     _create_or_update_histogram(histogram)
     db.session.commit()
@@ -728,7 +780,7 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
         raise
 
     vuln_data['workspace_id'] = ws.id
-    processed_data = set_relationships_data(vuln_data, command)
+    processed_data = set_relationships_data(ws, vuln_data, command)
 
     if 'host' in vuln_data:
         vuln_data['host_id'] = vuln_data['host'].id
@@ -992,7 +1044,7 @@ def set_cvss4_data(vuln_data):
             logger.exception("Could not create cvss4", exc_info=e)
 
 
-def set_relationships_data(vulnerability, command):
+def set_relationships_data(ws: Workspace, vulnerability, command):
 
     vulnerability.pop('_attachments', {})
     references = vulnerability.pop('refs', [])
@@ -1000,8 +1052,21 @@ def set_relationships_data(vulnerability, command):
     cwe_list = vulnerability.pop('cwe', [])
     policyviolations = vulnerability.pop('policy_violations', [])
     owasp_list = vulnerability.pop('owasp', [])
+    credentials_list = vulnerability.pop('credentials', [])
 
     vuln_sequence_id = vulnerability['id']
+
+    credential_ids = []
+    for credential in credentials_list or []:
+        credential_data = {
+            'username': credential.get('username', ''),
+            'password': credential.get('password', ''),
+            'endpoint': credential.get('endpoint', '') or '',
+            'owned': credential.get('owned', False),
+            'leak_date': credential.get('leak_date'),
+        }
+        _, cred_obj = get_or_create(ws, Credential, credential_data)
+        credential_ids.append(cred_obj.id)
 
     processed_data = {
         vuln_sequence_id: {
@@ -1011,6 +1076,7 @@ def set_relationships_data(vulnerability, command):
             'owasp_objects': [],
             'cwe_associations': [],
             'policy_violations_associations': [],
+            'credential_ids': credential_ids,
             'vuln_data': None
         }
     }
@@ -1155,6 +1221,9 @@ class BulkCreateView(GenericWorkspacedView):
             db.session.add(command)
             db.session.commit()
 
+        # Store command_id before bulk_create might close the session
+        command_id = command.id
+
         if data['hosts']:
             # Create random file
             chars = ascii_uppercase + digits
@@ -1168,7 +1237,7 @@ class BulkCreateView(GenericWorkspacedView):
             if faraday_server.celery_enabled:
                 from faraday.server.utils.reports_processor import process_report  # pylint: disable=import-outside-toplevel
                 process_report(workspace.name,
-                               command.id,
+                               command_id,
                                file_path,
                                None,
                                user_id,
@@ -1183,7 +1252,7 @@ class BulkCreateView(GenericWorkspacedView):
                 REPORTS_QUEUE.put(
                     (
                         workspace.name,
-                        command.id,
+                        command_id,
                         file_path,
                         None,
                         user_id,
@@ -1195,15 +1264,17 @@ class BulkCreateView(GenericWorkspacedView):
                     )
                 )
                 logger.info(f"Faraday objects enqueued in bulk for workspace {workspace}")
+        elif data['credentials']:
+            bulk_create(workspace, command, data, True, True)
         else:
             logger.warning("No hosts parsed in data...")
             logger.warning(data)
             logger.warning(json_data)
-            _update_command(command.id, data['command'])
+            _update_command(command_id, data['command'])
         return jsonify(
             {
                 "message": "Created",
-                "command_id": command.id
+                "command_id": command_id
             }
         ), HTTP_CREATED
 

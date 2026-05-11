@@ -13,6 +13,7 @@ from faraday.server.models import (
     db,
     Command,
     CommandObject,
+    Credential,
     Host,
     Service,
     Vulnerability,
@@ -78,10 +79,9 @@ vuln_web_data = {
 }
 
 credential_data = {
-    'name': 'test credential',
-    'description': 'test',
     'username': 'admin',
     'password': '12345',
+    'endpoint': '',
 }
 
 command_data = {
@@ -676,6 +676,171 @@ def test_create_host_ignores_cred(session, workspace):
     command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
     bc._create_host(workspace, host_data_loaded, command_dict)
     assert count(Host, workspace) == 1
+
+
+def test_create_host_vuln_with_credentials_creates_association(session, workspace, host):
+    vuln_data_copy = vuln_data.copy()
+    vuln_data_copy['credentials'] = [credential_data]
+    new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
+    host_data_copy = host_data.copy()
+    host_data_copy['vulnerabilities'] = [new_vuln]
+
+    command = new_empty_command(workspace)
+    db.session.add(command)
+    db.session.commit()
+    command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+    bc._create_host(workspace, host_data_copy, command_dict)
+
+    vuln = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.workspace == workspace).one()
+    cred = Credential.query.filter(Credential.workspace == workspace).one()
+    assert cred.username == credential_data['username']
+    assert cred.password == credential_data['password']
+    assert cred.endpoint == ''
+    assert len(vuln.credentials) == 1
+    assert vuln.credentials[0].id == cred.id
+
+
+class TestBulkCredentialSchema:
+
+    @pytest.mark.parametrize('field', ['username', 'password'])
+    def test_empty_field_raises(self, field):
+        data = {**credential_data, field: ''}
+        with pytest.raises(ValidationError):
+            bc.BulkCredentialSchema().load(data)
+
+    @pytest.mark.parametrize('field', ['username', 'password'])
+    def test_whitespace_only_field_raises(self, field):
+        data = {**credential_data, field: '   '}
+        with pytest.raises(ValidationError):
+            bc.BulkCredentialSchema().load(data)
+
+
+
+class TestTopLevelCredentials:
+
+    def test_top_level_credentials_are_created(self, session, workspace):
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        data = {
+            'hosts': [host_data],
+            'command': command_data,
+            'credentials': [credential_data],
+        }
+        bc.bulk_create(workspace, command, data)
+        assert Credential.query.filter(Credential.workspace == workspace).count() == 1
+
+    def test_duplicate_top_level_credential_does_not_fail(self, session, workspace):
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        data = {
+            'hosts': [host_data],
+            'command': command_data,
+            'credentials': [credential_data, credential_data],
+        }
+        bc.bulk_create(workspace, command, data)
+        assert Credential.query.filter(Credential.workspace == workspace).count() == 1
+
+    def test_top_level_credentials_without_hosts_are_created(self, session, workspace):
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        data = {
+            'hosts': [],
+            'command': command_data,
+            'credentials': [credential_data],
+        }
+        bc.bulk_create(workspace, command, data)
+        assert Credential.query.filter(Credential.workspace == workspace).count() == 1
+
+
+class TestCredentialAssociationOnUpdatedVuln:
+
+    def test_credentials_linked_when_vuln_is_updated(self, session, workspace, host, vulnerability_factory):
+        vuln = vulnerability_factory.create(
+            workspace=workspace,
+            host=host,
+            service=None,
+            name=vuln_data['name'],
+            description=vuln_data['desc'],
+            severity=vuln_data['severity'],
+        )
+        session.commit()
+
+        vuln_data_copy = {
+            'name': vuln.name,
+            'description': vuln.description,
+            'severity': vuln.severity,
+            'type': 'vulnerability',
+            'credentials': [credential_data],
+        }
+        host_data_copy = {
+            'ip': host.ip,
+            'description': host.description,
+            'hostnames': [hn.name for hn in host.hostnames],
+            'vulnerabilities': [vuln_data_copy],
+        }
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+        bc._create_host(workspace, host_data_copy, command_dict)
+
+        cred = Credential.query.filter(Credential.workspace == workspace).one()
+        updated_vuln = VulnerabilityGeneric.query.get(vuln.id)
+        assert len(updated_vuln.credentials) == 1
+        assert updated_vuln.credentials[0].id == cred.id
+
+    def test_duplicate_credential_association_does_not_fail(self, session, workspace, host):
+        vuln_data_copy = vuln_data.copy()
+        vuln_data_copy['credentials'] = [credential_data]
+        new_vuln = bc.VulnerabilitySchema().load(vuln_data_copy)
+        host_data_copy = host_data.copy()
+        host_data_copy['vulnerabilities'] = [new_vuln]
+
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+        bc._create_host(workspace, host_data_copy, command_dict)
+        # second call with same host/vuln/cred triggers on_conflict_do_nothing
+        host_data_copy2 = host_data.copy()
+        vuln_data_copy2 = vuln_data.copy()
+        vuln_data_copy2['credentials'] = [credential_data]
+        host_data_copy2['vulnerabilities'] = [bc.VulnerabilitySchema().load(vuln_data_copy2)]
+        bc._create_host(workspace, host_data_copy2, command_dict)
+
+        vuln = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.workspace == workspace).one()
+        assert len(vuln.credentials) == 1
+
+
+
+class TestWebVulnWithCredentials:
+
+    def test_web_vuln_with_credentials_creates_association(self, session, workspace, host):
+        vuln_web_data_copy = {**vuln_web_data, 'name': 'web vuln', 'severity': 'low',
+                              'credentials': [credential_data]}
+        new_vuln = bc.BulkVulnerabilityWebSchema().load(vuln_web_data_copy)
+        service_data_copy = service_data.copy()
+        service_data_copy['vulnerabilities'] = [new_vuln]
+        host_data_copy = host_data.copy()
+        host_data_copy['services'] = [service_data_copy]
+
+        command = new_empty_command(workspace)
+        db.session.add(command)
+        db.session.commit()
+        command_dict = {'id': command.id, 'tool': command.tool, 'user': command.user}
+
+        bc._create_host(workspace, host_data_copy, command_dict)
+
+        vuln = VulnerabilityWeb.query.filter(VulnerabilityWeb.workspace == workspace).one()
+        cred = Credential.query.filter(Credential.workspace == workspace).one()
+        assert len(vuln.credentials) == 1
+        assert vuln.credentials[0].id == cred.id
 
 
 def test_create_service_with_vuln(session, host):
@@ -1307,6 +1472,13 @@ class TestBulkCreateAPI:
         assert service.creator_id == creator_id
         for vuln in Vulnerability.query.filter(Vulnerability.workspace == workspace):
             assert vuln.custom_fields['changes'] == ['1', '2', '3']
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_bulk_create_endpoint_creates_credentials_without_hosts(self, session, workspace, test_client):
+        url = f'/v3/ws/{workspace.name}/bulk_create'
+        res = test_client.post(url, data=dict(hosts=[], command=command_data.copy(), credentials=[credential_data]))
+        assert res.status_code == 201
+        assert Credential.query.filter(Credential.workspace == workspace).count() == 1
 
     @pytest.mark.usefixtures('logged_user')
     def test_vuln_web_cannot_have_host_parent(self, session, workspace, test_client, logged_user):

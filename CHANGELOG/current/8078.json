@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Bulk Create now supports attaching credentials to vulnerabilities via a `credentials` field (works both sync and with Celery enabled). #8078"
+}

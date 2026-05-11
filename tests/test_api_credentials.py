@@ -477,6 +477,60 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         creds = Credential.query.filter_by(workspace=workspace).all()
         assert len(creds) == 7
 
+    def _post_csv(self, test_client, workspace, csrf_token, content, filename='credentials.csv'):
+        data = {'file': (io.BytesIO(content.encode('utf-8')), filename), 'csrf_token': csrf_token}
+        return test_client.post(self.url(workspace=workspace) + '/import_csv', data=data, use_json_data=False)
+
+    @pytest.mark.parametrize("delimiter", [",", ";", "\t", ":", "|"])
+    def test_import_csv_delimiter_variants(self, test_client, workspace, session, csrf_token, delimiter):
+        header = delimiter.join(['username', 'password', 'endpoint'])
+        row = delimiter.join(['alice', 'secret', 'example.com'])
+        content = f"{header}\n{row}\n"
+        res = self._post_csv(test_client, workspace, csrf_token, content)
+        assert res.status_code == 201
+        cred = Credential.query.filter_by(workspace=workspace, username='alice').first()
+        assert cred is not None
+        assert cred.password == 'secret'
+
+    def test_import_csv_without_endpoint_column(self, test_client, workspace, session, csrf_token):
+        content = "alice,secret\nbob,pass123\n"
+        res = self._post_csv(test_client, workspace, csrf_token, content)
+        assert res.status_code == 201
+        cred = Credential.query.filter_by(workspace=workspace, username='alice').first()
+        assert cred is not None
+        assert cred.endpoint == ''
+
+    def test_import_csv_colon_with_app_endpoint(self, test_client, workspace, session, csrf_token):
+        content = "com.roblox.client/:aldrin00155:aldrin111\ncom.example.app/:bob:pass456\n"
+        res = self._post_csv(test_client, workspace, csrf_token, content)
+        assert res.status_code == 201
+        cred = Credential.query.filter_by(workspace=workspace, username='aldrin00155').first()
+        assert cred is not None
+        assert cred.password == 'aldrin111'
+
+    def test_import_csv_empty_file(self, test_client, workspace, csrf_token):
+        res = self._post_csv(test_client, workspace, csrf_token, "")
+        assert res.status_code == 400
+        assert 'empty' in res.json['message'].lower()
+
+    def test_import_csv_missing_required_headers(self, test_client, workspace, csrf_token):
+        content = "endpoint,username\n/login,alice\n"
+        res = self._post_csv(test_client, workspace, csrf_token, content)
+        assert res.status_code == 400
+        assert 'password' in res.json['message']
+
+    def test_import_csv_skips_rows_with_empty_username(self, test_client, workspace, session, csrf_token):
+        content = "username,password,endpoint\n,secret,example.com\nbob,pass,other.com\n"
+        res = self._post_csv(test_client, workspace, csrf_token, content)
+        assert res.status_code == 201
+        assert res.json['message'] == 'CSV imported successfully - Created: 1 credentials, Skipped: 1 credentials'
+
+    def test_import_csv_skips_rows_with_empty_password(self, test_client, workspace, session, csrf_token):
+        content = "username,password,endpoint\nalice,,example.com\nbob,pass,other.com\n"
+        res = self._post_csv(test_client, workspace, csrf_token, content)
+        assert res.status_code == 201
+        assert res.json['message'] == 'CSV imported successfully - Created: 1 credentials, Skipped: 1 credentials'
+
     def test_delete_workspace_cascades_credentials(self, test_client, session):
         """When a workspace is deleted, credentials in that workspace must be deleted as well."""
         from tests.factories import WorkspaceFactory

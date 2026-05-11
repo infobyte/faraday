@@ -101,7 +101,8 @@ def on_chord_error(request, exc, *args, **kwargs):
 
 @celery.task(acks_late=True)
 def process_report_task(workspace_id: int, command: dict, hosts):
-    callback = on_success_process_report_task.subtask(kwargs={'command_id': command['id']}).on_error(on_chord_error.subtask(kwargs={'command_id': command['id']}))
+    callback_kwargs = {'command_id': command['id']}
+    callback = on_success_process_report_task.subtask(kwargs=callback_kwargs).on_error(on_chord_error.subtask(kwargs={'command_id': command['id']}))
     g = [create_host_task.s(workspace_id, command, host) for host in hosts]
     logger.info("Task to execute %s", len(g))
     group_of_tasks = group(g)

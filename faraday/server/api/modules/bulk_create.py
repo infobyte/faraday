@@ -1269,7 +1269,7 @@ class BulkCreateView(GenericWorkspacedView):
             logger.warning(data)
             logger.warning(json_data)
             _update_command(command_id, data['command'])
-            user_id = current_user.id if not current_user.is_anonymous else None
+            user_id = current_user.id if not current_user.is_anonymous else command.creator_id
             for credential_data in data.get('credentials', []):
                 credential_data['creator_id'] = user_id
                 get_or_create(workspace, Credential, credential_data)

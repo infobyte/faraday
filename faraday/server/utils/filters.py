@@ -143,6 +143,9 @@ class FlaskRestlessFilterSchema(Schema):
     def _model_class(self):
         raise NotImplementedError
 
+    def _model_sensitive_fields(self) -> frozenset:
+        return frozenset()
+
     def _validate_filter_types(self, filter_):
         """
             Compares the filter_ list against the model field and the value to be compared.
@@ -150,7 +153,7 @@ class FlaskRestlessFilterSchema(Schema):
             Return a list of filters (filters are dicts)
         """
 
-        if filter_['name'] in SENSITIVE_FILTER_FIELDS:
+        if filter_['name'] in self._model_sensitive_fields():
             raise ValidationError('Filter on sensitive field is not allowed')
         _reject_sensitive_filter(filter_.get('val'))
 
@@ -322,6 +325,9 @@ class FlaskRestlessWorkspaceFilterSchema(FlaskRestlessFilterSchema):
 class FlaskRestlessUserFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return User
+
+    def _model_sensitive_fields(self) -> frozenset:
+        return SENSITIVE_FILTER_FIELDS
 
 
 class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):

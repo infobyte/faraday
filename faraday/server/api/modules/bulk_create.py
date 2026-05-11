@@ -1065,9 +1065,6 @@ def set_relationships_data(ws: Workspace, vulnerability, command):
             'owned': credential.get('owned', False),
             'leak_date': credential.get('leak_date'),
         }
-        # The schema should validate these, but keep a defensive check.
-        if not credential_data['username'] or not credential_data['password']:
-            continue
         _, cred_obj = get_or_create(ws, Credential, credential_data)
         credential_ids.append(cred_obj.id)
 

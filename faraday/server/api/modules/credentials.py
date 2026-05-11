@@ -250,9 +250,9 @@ class CredentialView(ReadWriteWorkspacedView,
                 try:
                     owned = False
 
-                    # Handle empty username and password
                     username = row.get('username')
                     password = row.get('password')
+                    endpoint = row.get('endpoint', '')
                     if username is None or username.strip() == '':
                         errors.append("Username cannot be empty")
                         skipped_credentials += 1
@@ -267,9 +267,9 @@ class CredentialView(ReadWriteWorkspacedView,
                     leak_date = None if leak_date is None or leak_date.strip() == '' else leak_date
 
                     credential = Credential(
-                        username=row['username'],
-                        password=row['password'],
-                        endpoint=row.get('endpoint') or '',
+                        username=username,
+                        password=password,
+                        endpoint=endpoint,
                         owned=owned,
                         leak_date=leak_date,
                         workspace=workspace

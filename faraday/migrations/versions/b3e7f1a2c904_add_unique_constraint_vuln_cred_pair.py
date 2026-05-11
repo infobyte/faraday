@@ -16,24 +16,13 @@ depends_on = None
 
 
 def upgrade():
-    bind = op.get_bind()
-    if bind.dialect.name == 'postgresql':
-        op.execute("""
-            DELETE FROM association_table_vulnerabilities_credentials a
-            USING association_table_vulnerabilities_credentials b
-            WHERE a.ctid > b.ctid
-              AND a.vulnerability_id = b.vulnerability_id
-              AND a.credential_id = b.credential_id
-        """)
-    else:
-        op.execute("""
-            DELETE FROM association_table_vulnerabilities_credentials
-            WHERE rowid NOT IN (
-                SELECT MIN(rowid)
-                FROM association_table_vulnerabilities_credentials
-                GROUP BY vulnerability_id, credential_id
-            )
-        """)
+    op.execute("""
+        DELETE FROM association_table_vulnerabilities_credentials a
+        USING association_table_vulnerabilities_credentials b
+        WHERE a.ctid > b.ctid
+          AND a.vulnerability_id = b.vulnerability_id
+          AND a.credential_id = b.credential_id
+    """)
     op.create_unique_constraint(
         'uix_vuln_cred_pair',
         'association_table_vulnerabilities_credentials',

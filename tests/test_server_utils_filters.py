@@ -332,3 +332,15 @@ class TestFilters:
         ]}
         with pytest.raises(ValidationError):
             FilterSchema().load(filters)
+
+    def test_sensitive_field_via_double_underscore_notation_is_rejected(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator__password', 'op': 'like', 'val': '$2b$1%'}
+            )
+
+    def test_non_sensitive_field_via_double_underscore_notation_is_allowed(self):
+        result = FlaskRestlessVulnerabilityFilterSchema().load(
+            {'name': 'creator__name', 'op': 'eq', 'val': 'john'}
+        )
+        assert result == [{'name': 'creator__name', 'op': 'eq', 'val': 'john'}]

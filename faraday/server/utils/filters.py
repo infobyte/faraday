@@ -39,26 +39,7 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 logger = logging.getLogger(__name__)
 
-SENSITIVE_FILTER_FIELDS = frozenset(
-    {
-        'password',
-        'token',
-        '_otp_secret',
-        'fs_uniquifier',
-        'email',
-        'last_login_at',
-        'current_login_at',
-        'last_login_ip',
-        'current_login_ip',
-        'login_count',
-        'confirmed_at',
-        'state_otp',
-        'preferences',
-        'roles',
-        'user_type',
-        'session_id',
-    }
-)
+SENSITIVE_FILTER_FIELDS = frozenset({'password', 'token', '_otp_secret', 'fs_uniquifier'})
 
 
 def _reject_sensitive_filter(val):
@@ -117,7 +98,8 @@ class FlaskRestlessFilterSchema(Schema):
     valid_relationship = {
         'host': Host,
         'services': Service,
-        'workspaces': Workspace
+        'workspace': Workspace,
+        'creator': User,
     }
 
     def load(
@@ -190,6 +172,8 @@ class FlaskRestlessFilterSchema(Schema):
             model = self.valid_relationship.get(model_name, None)
             if not model:
                 raise ValidationError('Invalid Relationship')
+            if model is User and column_name in SENSITIVE_FILTER_FIELDS:
+                raise ValidationError('Filter on sensitive field is not allowed')
             column = getattr(model, column_name)
         else:
             try:

@@ -292,13 +292,17 @@ class TestFilters:
         with pytest.raises(ValidationError):
             FlaskRestlessUserFilterSchema().load({'name': 'password', 'op': 'like', 'val': '$2b$1%'})
 
-    def test_user_token_direct_filter_is_rejected(self):
+    def test_access_token_direct_filter_is_rejected_on_any_schema(self):
         with pytest.raises(ValidationError):
-            FlaskRestlessUserFilterSchema().load({'name': 'token', 'op': 'eq', 'val': 'abc123'})
+            FlaskRestlessVulnerabilityFilterSchema().load({'name': 'access_token', 'op': 'eq', 'val': 'abc123'})
 
     def test_credential_password_direct_filter_is_allowed(self):
         result = FlaskRestlessCredentialFilterSchema().load({'name': 'password', 'op': 'eq', 'val': 'secret'})
         assert result == [{'name': 'password', 'op': 'eq', 'val': 'secret'}]
+
+    def test_credential_access_token_direct_filter_is_rejected(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessCredentialFilterSchema().load({'name': 'access_token', 'op': 'eq', 'val': 'abc123'})
 
     def test_sensitive_field_via_has_relationship_is_rejected(self):
         # {"name":"creator","op":"has","val":{"name":"password","op":"like","val":"$2b$1%"}}

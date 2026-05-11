@@ -135,7 +135,7 @@ class FlaskRestlessFilterSchema(Schema):
         raise NotImplementedError
 
     def _model_sensitive_fields(self) -> frozenset:
-        return frozenset()
+        return SENSITIVE_FILTER_FIELDS
 
     def _validate_filter_types(self, filter_):
         """
@@ -348,6 +348,9 @@ class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
 class FlaskRestlessCredentialFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return Credential
+
+    def _model_sensitive_fields(self) -> frozenset:
+        return SENSITIVE_FILTER_FIELDS - {'password'}
 
 
 class FlaskRestlessOperator(Schema):

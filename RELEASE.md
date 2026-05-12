@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+5.20.1 [May 8th, 2026]:
+---
+ * [ADD] Added MCP Configuration. #9999
+
+
 5.20.0 [Apr 10th, 2026]:
 ---
  * [MOD] Debouncer now uses Redis to ensure distributed, single execution of workspace updates across Celery workers. #8076
@@ -15,7 +20,7 @@ New features in the latest update
 ---
  * [MOD] Refined Docker configuration with health checks, service dependencies, and optimized image handling. #8081
  * [FIX] Several indexes were added to improve workspace delete performance. #8075
- * [FIX] Fixed Credentials Bulk Update overwriting linked vulns. #8080
+ * [FIX] Fixed Credentials Bulk Update overwriting linked vulnerabilities. #8080
  * [FIX] Resolved a date inconsistency that could trigger continuous scheduler runs or runs at incorrect times. #8071
 
 

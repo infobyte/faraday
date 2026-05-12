@@ -991,7 +991,7 @@ wheels = [
 
 [[package]]
 name = "faraday-plugins"
-version = "1.27.1"
+version = "1.28.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -1009,9 +1009,9 @@ dependencies = [
     { name = "tabulate" },
     { name = "tldextract" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/6b/15166a525708a24df53cb16e04690d9848862e1d8de9f193fe83cd1b05c2/faraday_plugins-1.27.1.tar.gz", hash = "sha256:06c0ac8dbbfa0ecc67fc129d772ee4ec074ff8f385a9c8bafacbf71a370cf73a", size = 203045, upload-time = "2025-12-11T18:27:21.555Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/57/4e608c245b6a3e72c978622e9cecda2bfeda7b65f1c772965cefbc88bc4d/faraday_plugins-1.28.0.tar.gz", hash = "sha256:efdc75bd44bbccfe6584139a0326395c34105d29933c6dcd3d9defb9a1af7b0a", size = 204564, upload-time = "2026-05-12T00:40:26.329Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/8b/9da59023e9fa074263d43942ee19e9ec64cc57dae6747d638aa5e3234f6a/faraday_plugins-1.27.1-py3-none-any.whl", hash = "sha256:8d1ac44b47240fe13aee3fbb0674eb2685e564c508f4030c4ab02a1231c69849", size = 301162, upload-time = "2025-12-11T18:27:20.422Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/08/ba0c042cc23d4804ae4c1df9aa2c0c3177cac2aa272e96c51671dc592e6b/faraday_plugins-1.28.0-py3-none-any.whl", hash = "sha256:5d3a5d52038fb82af6cbad355f1fbe23226f570da0e88195914bd3c6c9dbbb49", size = 303984, upload-time = "2026-05-12T00:40:24.692Z" },
 ]
 
 [[package]]
@@ -1137,7 +1137,7 @@ requires-dist = [
     { name = "elasticsearch", specifier = ">=7.16.3,<8" },
     { name = "email-validator", specifier = ">=2.3.0" },
     { name = "faraday-agent-parameters-types", specifier = ">=1.9.1" },
-    { name = "faraday-plugins", specifier = ">=1.27.0,<2.0.0" },
+    { name = "faraday-plugins", specifier = ">=1.28.0,<2.0.0" },
     { name = "filedepot", specifier = ">=0.5.0,<0.11.0" },
     { name = "filetype", specifier = ">=1.0.5" },
     { name = "filteralchemy-fork", specifier = ">=0.1.0" },

@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Users update conflicts now properly handle SQLAlchemy session rollback. #8246"
-}

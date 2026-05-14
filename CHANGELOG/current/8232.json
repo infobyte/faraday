@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fix 500 error on some occasions when editing a vulnerability into a duplicate. #8232"
-}

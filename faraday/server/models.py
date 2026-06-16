@@ -100,8 +100,14 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task',
+    'project_task',
+    'user',
+    'executivereport',
+    'agent',
+    'agentexecution',
+    'command',
     'report_logo',
+    'task',
     'report_template',
 ]
 

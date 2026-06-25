@@ -42,7 +42,8 @@ services:
     image: *faraday-image
     restart: always
     container_name: faraday_worker
-    command: [ "faraday-worker" ]
+    entrypoint: [ "faraday-worker" ]
+    command: []
     volumes: *faraday-volumes
     environment:
       - PGSQL_USER=postgres

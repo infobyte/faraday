@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
@@ -13,7 +14,7 @@ from faraday.server.models import User, db
 
 def changes_password(username, password):
     with current_app.app_context():
-        user = User.query.filter_by(username=username).first()
+        user = db.session.execute(select(User)).scalars().filter_by(username=username).first()
         if user:
             user.password = hash_password(password)
             db.session.add(user)

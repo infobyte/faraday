@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -55,7 +56,7 @@ class CredentialSchema(AutoSchema):
             VulnerabilitySchema(many=True).dump(obj.vulnerabilities) if obj.vulnerabilities else []
         ),
         deserialize=lambda value: (
-            db.session.query(VulnerabilityGeneric).filter(
+            db.session.execute(select(VulnerabilityGeneric)).scalars().filter(
                 VulnerabilityGeneric.id.in_(value if isinstance(value, list) else [value])
             ).all() if value else []
         )
@@ -111,7 +112,7 @@ class CredentialView(ReadWriteWorkspacedView,
                 vulns = valid_vulns
 
             for credential_id in ids:
-                credential = db.session.query(Credential).get(credential_id)
+                credential = db.session.execute(select(Credential)).scalars().get(credential_id)
                 if not credential:
                     continue
 
@@ -237,7 +238,7 @@ class CredentialView(ReadWriteWorkspacedView,
 
             workspace = get_workspace(workspace_name)
 
-            vulns = db.session.query(VulnerabilityGeneric).filter(
+            vulns = db.session.execute(select(VulnerabilityGeneric)).scalars().filter(
                 VulnerabilityGeneric.id.in_(vulns_ids),
                 VulnerabilityGeneric.workspace_id == workspace.id
             ).all() if vulns_ids else []

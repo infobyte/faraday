@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
@@ -222,8 +223,8 @@ class InitDB:
 
         for config in default_initial_notifications_config:
             for event_type in config['event_types']:
-                allowed_roles_objs = Role.query.filter(Role.name.in_(config['roles'])).all()
-                event_type_obj = EventType.query.filter(EventType.name == event_type).first()
+                allowed_roles_objs = db.session.execute(select(Role)).scalars().filter(Role.name.in_(config['roles'])).all()
+                event_type_obj = db.session.execute(select(EventType)).scalars().filter(EventType.name == event_type).first()
                 n = NotificationSubscription(event_type=event_type_obj, allowed_roles=allowed_roles_objs)
                 db.session.add(n)
                 db.session.commit()

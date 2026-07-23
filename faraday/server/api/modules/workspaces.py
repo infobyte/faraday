@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -215,7 +216,7 @@ def init_date_range(days):
 def generate_histogram(days_before):
     histogram_dict = {}
 
-    workspaces_histograms = SeveritiesHistogram.query \
+    workspaces_histograms = db.session.execute(select(SeveritiesHistogram)).scalars() \
         .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()
 
     # group dates by workspace
@@ -437,7 +438,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         confirmed = self._get_querystring_boolean_field('confirmed')
         active = self._get_querystring_boolean_field('active')
         readonly = self._get_querystring_boolean_field('readonly')
-        query = Workspace.query_with_count(
+        query = db.session.execute(select(Workspace)).scalars()_with_count(
                 confirmed,
                 active=active,
                 readonly=readonly,
@@ -451,7 +452,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         """
 
         self._validate_object_id(object_id)
-        query = db.session.query(Workspace).filter_by(name=object_id)
+        query = db.session.execute(select(Workspace)).scalars().filter_by(name=object_id)
 
         query = query.options(
             with_expression(
@@ -577,7 +578,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
     def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
 
         # Lookup field is set to 'name', so this is a patch to use bulk_update and send the right ids
-        real_ids = [id_[0] for id_ in db.session.query(Workspace.id).filter(Workspace.name.in_(ids)).all()]
+        real_ids = [id_[0] for id_ in db.session.execute(select(Workspace.id)).scalars().filter(Workspace.name.in_(ids)).all()]
         return super()._perform_bulk_update(real_ids, data, workspace_name, **kwargs)
 
 

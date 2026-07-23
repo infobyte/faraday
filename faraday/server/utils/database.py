@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -166,7 +167,7 @@ def get_count(query, count_col=None):
 
 
 def get_or_create(session, model, defaults=None, **kwargs):
-    instance = session.query(model).filter_by(**kwargs).first()
+    instance = session.execute(select(model)).scalars().filter_by(**kwargs).first()
     if instance:
         return instance, False
     else:
@@ -289,7 +290,7 @@ def get_conflict_object(session, obj, data, workspace=None, ids=None):
                 filter_data.append(table.columns['workspace_id'] == workspace.id)
             else:
                 # if not workspace but there is a relationship it must be from context view
-                workspaces_ids = session.query(klass.workspace_id).filter(klass.id.in_(ids)).subquery()
+                workspaces_ids = session.execute(select(klass.workspace_id)).scalars().filter(klass.id.in_(ids)).subquery()
                 filter_data.append(table.columns['workspace_id'].in_(workspaces_ids))
         for relations_field in relations_fields:
             if relations_field not in data and relations_field.strip('_id') in data:
@@ -304,7 +305,7 @@ def get_conflict_object(session, obj, data, workspace=None, ids=None):
                         table.columns[relations_field] == relation_id)
         if filter_data:
             filter_data = reduce(operator.and_, filter_data)
-            return session.query(klass).filter(filter_data).first()
+            return session.execute(select(klass)).scalars().filter(filter_data).first()
         else:
             return
 

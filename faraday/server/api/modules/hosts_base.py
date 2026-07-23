@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
@@ -369,7 +370,7 @@ class HostView(
         host_count_schema = HostCountSchema()
 
         for workspace in workspaces:
-            host_count = Host.query_with_count(host_id_list, workspace)
+            host_count = db.session.execute(select(Host)).scalars()_with_count(host_id_list, workspace)
 
             for host in host_count.all():
                 res_dict["hosts"][host.id] = host_count_schema.dump(host)
@@ -394,7 +395,7 @@ class HostView(
           200:
             description: Ok
         """
-        query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
+        query = db.session.execute(select(Host, Command)).scalars().filter(Host.id == CommandObject.object_id,
                                                        CommandObject.object_type == 'host',
                                                        Command.id == CommandObject.command_id,
                                                        Host.id == host_id).order_by(desc(CommandObject.create_date))
@@ -458,12 +459,12 @@ class HostView(
             for obj in self._bulk_update_query(ids, **kwargs).all():
                 obj.set_hostnames(extracted_data["hostnames"])
 
-        workspaces = Workspace.query.join(Host).filter(Host.id.in_(ids)).distinct(Workspace.name).all()
+        workspaces = db.session.execute(select(Workspace)).scalars().join(Host).filter(Host.id.in_(ids)).distinct(Workspace.name).all()
         for workspace in workspaces:
             debounce_workspace_update(workspace.name)
 
     def _perform_bulk_delete(self, values, **kwargs):
-        workspaces = Workspace.query.join(Host).filter(Host.id.in_(values)).distinct(Workspace.name).all()
+        workspaces = db.session.execute(select(Workspace)).scalars().join(Host).filter(Host.id.in_(values)).distinct(Workspace.name).all()
         response = super()._perform_bulk_delete(values, **kwargs)
         for workspace in workspaces:
             debounce_workspace_update(workspace.name)

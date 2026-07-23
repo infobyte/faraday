@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import logging
 
 from flask import Blueprint
@@ -65,7 +66,7 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
         Filters out executions with NULL run_uuid to avoid grouping old undefined executions.
         """
         subquery = (
-            db.session.query(func.min(AgentExecution.id))
+            db.session.execute(select(func.min(AgentExecution.id)).scalars())
             .filter(AgentExecution.run_uuid.isnot(None))
             .group_by(AgentExecution.run_uuid)
             .subquery()
@@ -76,7 +77,7 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
     def _paginate(self, query, hard_limit=0):
         # TODO: Duplicated code. Fix.
         subquery = (
-            db.session.query(AgentExecution.run_uuid, func.min(AgentExecution.id).label("min_id"))
+            db.session.execute(select(AgentExecution.run_uuid, func.min(AgentExecution.id)).scalars().label("min_id"))
             .filter(AgentExecution.run_uuid.isnot(None))
             .group_by(AgentExecution.run_uuid)
             .subquery()

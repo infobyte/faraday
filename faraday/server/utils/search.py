@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
     flask.ext.restless.search
     ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,7 +85,7 @@ def session_query(session, model):
             query = model.query
         if hasattr(query, 'filter'):
             return query
-    return session.query(model)
+    return session.execute(select(model)).scalars()
 
 
 def get_related_association_proxy_model(attr):
@@ -578,7 +579,7 @@ class QueryBuilder:
                 table = 'vulnerability' if model in VULNERABILITY_MODELS else model.__tablename__
 
                 field, key = fieldname.split('->')
-                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+                custom_field = db.session.execute(select(CustomFieldsSchema)).scalars().filter(CustomFieldsSchema.field_name == key).first()
 
                 try:
                     op, op_type = get_json_operator(operator)
@@ -775,7 +776,7 @@ class QueryBuilder:
         """
         # TODO: Can't this be done with group by below?
         joined_models = set()
-        query = session.query(model)
+        query = session.execute(select(model)).scalars()
 
         if search_params.group_by:
             select_fields = [func.count()]
@@ -908,7 +909,7 @@ class QueryBuilder:
     @staticmethod
     def create_query_only_ids(session, model, search_params, _ignore_order_by=False):
 
-        query = session.query(model.id)
+        query = session.execute(select(model.id)).scalars()
 
         # This function call may raise an exception.
         valid_model_fields = []

@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from faraday.server.models import db, Host, Workspace
 from faraday.server.config import faraday_server
 from colorama import Fore
@@ -8,8 +9,8 @@ def _sync_hosts_stats(async_mode=False):
     #  so update stats synchronously on community instances
 
     print(f"[{Fore.GREEN}*{Fore.RESET}] Syncing hosts stats ...")
-    hosts_id = db.session.query(Host.id).all()
-    workspaces_id = db.session.query(Workspace).all()
+    hosts_id = db.session.execute(select(Host.id)).scalars().all()
+    workspaces_id = db.session.execute(select(Workspace)).scalars().all()
     if hosts_id and workspaces_id:
         print(f"[{Fore.GREEN}*{Fore.RESET}] Found {len(hosts_id)} hosts ...")
         print(f"[{Fore.YELLOW}!{Fore.RESET}] This may take a while ...")

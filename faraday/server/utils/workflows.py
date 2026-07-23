@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import logging
 from datetime import datetime
 from functools import lru_cache
@@ -61,7 +62,7 @@ class BooleanSchema(Schema):
 
 
 def _get_workspace(ws_id):
-    workspace = (db.session.query(Workspace)
+    workspace = (db.session.execute(select(Workspace)).scalars()
                  .options(joinedload(Workspace.pipelines)
                           .subqueryload(Pipeline.jobs)
                           .joinedload(Workflow.conditions, Workflow.actions))
@@ -85,7 +86,7 @@ def _get_pipeline(pipeline_id: int = None, workspace: Workspace = None, ws_id: i
                 return None
             return pipeline
     else:
-        pipeline = (db.session.query(Pipeline)
+        pipeline = (db.session.execute(select(Pipeline)).scalars()
                     .options(subqueryload(Pipeline.jobs)
                              .joinedload(Workflow.conditions, Workflow.actions))
                     .filter(Workspace.id == ws_id, Pipeline.id == pipeline_id).first()) \
@@ -119,7 +120,7 @@ def _get_obj_and_workspace(obj_type, obj_ids, ws_id, fields=None, pipeline_id=No
         logger.error(f"Invalid object type: {obj_type}")
         return return_if_fail
 
-    query = db.session.query(obj_table[obj_type])
+    query = db.session.execute(select(obj_table[obj_type])).scalars()
 
     # CHECK FOR JOINED LOADS
 
@@ -337,7 +338,7 @@ def _check_condition(obj, condition):
 
 @lru_cache(maxsize=128)
 def _get_custom_field_type(cf_name):
-    cf = db.session.query(CustomFieldsSchema).filter(CustomFieldsSchema.field_name == cf_name).first()
+    cf = db.session.execute(select(CustomFieldsSchema)).scalars().filter(CustomFieldsSchema.field_name == cf_name).first()
     if cf is None:
         raise ValueError(f"Custom field \"{cf_name}\" not found in DB")
     return cf.field_type
@@ -472,7 +473,7 @@ def _calculate_or_execute_action(objs, action, workflow):
                 obj_id = host_id = obj.service.host_id
             if obj_id is None:
                 raise ValueError(f"Object {obj} has no host_id")
-            obj = db.session.query(Host).filter(Host.id == obj_id).first()
+            obj = db.session.execute(select(Host)).scalars().filter(Host.id == obj_id).first()
             model_to_modify = "host"
 
         action_to_perform_dict = None
@@ -675,7 +676,7 @@ def _check_workflows(objs, obj_type, ws, fields=None, pipeline=None):
 
 
 def _change_pipeline_running_status(id, status):
-    pipeline = db.session.query(Pipeline).filter(Pipeline.id == id).first()
+    pipeline = db.session.execute(select(Pipeline)).scalars().filter(Pipeline.id == id).first()
     if pipeline is None:
         raise ValueError("Invalid Pipeline id")
     pipeline.running = status
@@ -689,7 +690,7 @@ def _iter_id_chunks(ws_id, obj_model, chunk_size=PIPELINE_CHUNK_SIZE):
 
     Uses yield_per to stream IDs without loading all at once.
     """
-    query = (db.session.query(obj_model.id)
+    query = (db.session.execute(select(obj_model.id)).scalars()
              .filter(obj_model.workspace_id == ws_id)
              .order_by(obj_model.id)
              .yield_per(chunk_size))
@@ -795,7 +796,7 @@ def _run_pipeline_chunked(ws_id, pipeline_id):
             logger.debug(f"Job {workflow.id}: processing chunk {chunk_num} "
                          f"({len(id_chunk)} objects)")
 
-            query = db.session.query(obj_model)
+            query = db.session.execute(select(obj_model)).scalars()
             if query_options:
                 query = query.options(*query_options)
 
@@ -836,7 +837,7 @@ def _run_pipeline_chunked(ws_id, pipeline_id):
 def _process_entry(obj, obj_ids, ws_id, fields=None, run_all=False, pipeline_id=None):
     update_host_stats = []
 
-    workspace = db.session.query(Workspace).get(ws_id) if ws_id else None
+    workspace = db.session.execute(select(Workspace)).scalars().get(ws_id) if ws_id else None
     if workspace and workspace.readonly:
         logger.warning(f"Skipping workflow for pipeline {pipeline_id}: workspace {ws_id} is read-only")
         return []

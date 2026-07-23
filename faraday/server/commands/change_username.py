@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
@@ -16,7 +17,7 @@ from faraday.server.models import User, db
 
 def change_username(current_username, new_username):
     with current_app.app_context():
-        user = User.query.filter_by(username=current_username).first()
+        user = db.session.execute(select(User)).scalars().filter_by(username=current_username).first()
         if not user:
             print(f"\nERROR: User {current_username} was not found in Faraday's Database.")
             sys.exit(1)

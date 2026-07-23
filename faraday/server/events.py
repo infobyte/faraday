@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
@@ -62,15 +63,15 @@ def delete_object_event(mapper, connection, instance):
         'name': name,
         'workspace': instance.workspace.name
     }
-    db.session.query(TagObject).filter_by(
+    db.session.execute(select(TagObject)).scalars().filter_by(
         object_id=instance.id,
         object_type=msg['type'].lower(),
     ).delete()
-    db.session.query(Comment).filter_by(
+    db.session.execute(select(Comment)).scalars().filter_by(
         object_id=instance.id,
         object_type=msg['type'].lower(),
     ).delete()
-    db.session.query(File).filter_by(
+    db.session.execute(select(File)).scalars().filter_by(
         object_id=instance.id,
         object_type=msg['type'].lower(),
     ).delete()
@@ -297,7 +298,7 @@ def alter_histogram_on_before_compile_update(query, update_context):
                                         query.statement.compile(dialect=postgresql.dialect()).params.items())]
             if ids:
                 # this can arise some issues with counters when other filters were applied to query but...
-                instances = update_context.session.query(VulnerabilityGeneric).filter(
+                instances = update_context.session.execute(select(VulnerabilityGeneric)).scalars().filter(
                     VulnerabilityGeneric.id.in_(ids)).all()
             else:
                 instances = query.all()

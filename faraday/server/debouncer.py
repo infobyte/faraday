@@ -1,3 +1,4 @@
+from sqlalchemy import select
 # pylint: disable=R1719,C0415
 import json
 import time
@@ -57,7 +58,7 @@ def _resolve_workspace_id(parameters: dict) -> int | None:
     if not workspace_name:
         return None
 
-    return db.session.query(Workspace.id).filter(Workspace.name == workspace_name).scalar()
+    return db.session.execute(select(Workspace.id)).scalars().filter(Workspace.name == workspace_name).scalar()
 
 
 def _debounce_key_for_workspace(action_name: str, workspace_id: int, discriminator: str = None) -> str:
@@ -84,10 +85,10 @@ def update_workspace_host_count(workspace_id=None, workspace_name=None):
     with _app_ctx(app):
         logger.debug(f"Updating workspace: {workspace_id if workspace_id else workspace_name}")
         if not workspace_id and workspace_name:
-            workspace_id = db.session.query(Workspace.id).filter(Workspace.name == workspace_name).scalar()
-        host_count = db.session.query(func.count(Host.id)).filter(Host.workspace_id == workspace_id).scalar()
+            workspace_id = db.session.execute(select(Workspace.id)).scalars().filter(Workspace.name == workspace_name).scalar()
+        host_count = db.session.execute(select(func.count(Host.id)).scalars()).filter(Host.workspace_id == workspace_id).scalar()
         start_time = time.time()
-        db.session.query(Workspace).filter(Workspace.id == workspace_id).update(
+        db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).update(
             {Workspace.host_count: host_count},
             synchronize_session=False
         )
@@ -104,22 +105,22 @@ def update_workspace_service_count(workspace_id=None, workspace_name=None):
 
         # Get workspace_id if it's not provided but workspace_name is provided
         if not workspace_id and workspace_name:
-            workspace_id = db.session.query(Workspace.id).filter(Workspace.name == workspace_name).scalar()
+            workspace_id = db.session.execute(select(Workspace.id)).scalars().filter(Workspace.name == workspace_name).scalar()
 
         if workspace_id is None:
             logger.warning(f"Workspace with name '{workspace_name}' not found.")
             return
 
         # Calculate total_service_count
-        total_service_count = db.session.query(func.count(Service.id)).filter(
+        total_service_count = db.session.execute(select(func.count(Service.id)).scalars()).filter(
             Service.workspace_id == workspace_id).scalar()
 
         # Calculate open_service_count
-        open_service_count = db.session.query(func.count(Service.id)).filter(Service.workspace_id == workspace_id,
+        open_service_count = db.session.execute(select(func.count(Service.id)).scalars()).filter(Service.workspace_id == workspace_id,
                                                                              Service.status == 'open').scalar()
 
         # Update the workspace with the new service counts
-        db.session.query(Workspace).filter(Workspace.id == workspace_id).update(
+        db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).update(
             {
                 Workspace.total_service_count: total_service_count,
                 Workspace.open_service_count: open_service_count
@@ -134,7 +135,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
     start_time = datetime.utcnow()
 
     def count_vulnerabilities(extra_query=None, type_=None, confirmed=None):
-        query = db.session.query(func.count(VulnerabilityGeneric.id)).filter(
+        query = db.session.execute(select(func.count(VulnerabilityGeneric.id)).scalars()).filter(
             VulnerabilityGeneric.workspace_id == workspace_id
         )
         if type_:
@@ -149,8 +150,8 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         return query.scalar()
 
     def count_hosts(workspace_id, confirmed=None, not_closed=None):
-        query_vuln_hosts = db.session.query(
-            VulnerabilityGeneric.host_id.label('host_id')
+        query_vuln_hosts = db.session.execute(select(
+            VulnerabilityGeneric.host_id.label('host_id')).scalars()
         ).filter(
             VulnerabilityGeneric.workspace_id == workspace_id,
             VulnerabilityGeneric.host_id.isnot(None)
@@ -166,8 +167,8 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         if not_closed:
             query_vuln_hosts = query_vuln_hosts.filter(VulnerabilityGeneric.status.in_(['open', 're-opened']))
 
-        query_service_hosts = db.session.query(
-            Service.host_id.label('host_id')
+        query_service_hosts = db.session.execute(select(
+            Service.host_id.label('host_id')).scalars()
         ).join(
             VulnerabilityGeneric, VulnerabilityGeneric.service_id == Service.id
         ).filter(
@@ -190,13 +191,13 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         combined_query = query_vuln_hosts.union_all(query_service_hosts).subquery()
 
         # Count distinct host_ids
-        distinct_hosts_count = db.session.query(func.count(func.distinct(combined_query.c.host_id))).scalar()
+        distinct_hosts_count = db.session.execute(select(func.count(func.distinct(combined_query.c.host_id)).scalars())).scalar()
 
         return distinct_hosts_count
 
     def count_services(workspace_id, confirmed=None, not_closed=None):
         # Define the base query for services
-        query_services = db.session.query(func.count(func.distinct(VulnerabilityGeneric.service_id))).filter(
+        query_services = db.session.execute(select(func.count(func.distinct(VulnerabilityGeneric.service_id)).scalars())).filter(
             VulnerabilityGeneric.workspace_id == workspace_id,
             VulnerabilityGeneric.service_id.isnot(None)
         )
@@ -216,7 +217,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
     app = get_app()
     with _app_ctx(app):
         if not workspace_id and workspace_name:
-            workspace_id = db.session.query(Workspace.id).filter(Workspace.name == workspace_name).scalar()
+            workspace_id = db.session.execute(select(Workspace.id)).scalars().filter(Workspace.name == workspace_name).scalar()
         logger.debug(f"Calculating ws stats for {workspace_id}")
 
         start = time.time()
@@ -325,7 +326,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         logger.debug(f"Count execution time in update workspace vulns count = {end - start}")
         logger.debug(f"Vulnerability closed count: {vulnerability_closed_count} ")
 
-        db.session.query(Workspace).filter(Workspace.id == workspace_id).update(
+        db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).update(
             {
                 Workspace.vulnerability_web_count: vulnerability_web_count,
                 Workspace.vulnerability_standard_count: vulnerability_standard_count,
@@ -382,8 +383,8 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         #  Total By Severity
 
         vuln_counts = (
-            db.session.query(
-                coalesce(func.sum(Host.vulnerability_critical_generic_count), 0).label('total_critical'),
+            db.session.execute(select(
+                coalesce(func.sum(Host.vulnerability_critical_generic_count)).scalars(), 0).label('total_critical'),
                 coalesce(func.sum(Host.vulnerability_high_generic_count), 0).label('total_high'),
                 coalesce(func.sum(Host.vulnerability_medium_generic_count), 0).label('total_medium'),
                 coalesce(func.sum(Host.vulnerability_low_generic_count), 0).label('total_low'),
@@ -406,7 +407,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         )
 
         # Update the Workspace fields with the calculated sums
-        db.session.query(Workspace).filter(Workspace.id == workspace_id).update({
+        db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).update({
             Workspace.vulnerability_critical_count: vuln_counts.total_critical,
             Workspace.vulnerability_high_count: vuln_counts.total_high,
             Workspace.vulnerability_medium_count: vuln_counts.total_medium,
@@ -426,7 +427,7 @@ def update_workspace_update_date(workspace_dates_dict):
     app = get_app()
     with _app_ctx(app):
         for workspace_id, update_date in workspace_dates_dict.items():
-            db.session.query(Workspace).filter(Workspace.id == workspace_id).update(
+            db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).update(
                 {Workspace.update_date: update_date},
                 synchronize_session=False
             )
@@ -448,7 +449,7 @@ def debounce_workspace_update(workspace_name, debouncer=None, update_date=None, 
         update_date = datetime.utcnow()
 
     if workspace_id is None:
-        workspace_id = db.session.query(Workspace.id).filter(Workspace.name == workspace_name).scalar()
+        workspace_id = db.session.execute(select(Workspace.id)).scalars().filter(Workspace.name == workspace_name).scalar()
     if workspace_id is None:
         logger.warning(f"Debounce: workspace not found while resolving id (workspace_name={workspace_name})")
         return debouncer

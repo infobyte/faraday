@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -85,7 +86,7 @@ def decode_agent_websocket_token(token):
         agent_id = signer.unsign(token, max_age=60).decode('utf-8')
     except BadData as e:
         raise ValueError("Invalid Token") from e
-    agent = Agent.query.get(agent_id)
+    agent = db.session.execute(select(Agent)).scalars().get(agent_id)
     if agent is None:
         raise ValueError("No agent found with that ID")
     return agent
@@ -108,7 +109,7 @@ def require_agent_token():
     if auth_type != 'agent':
         flask.abort(401)
     try:
-        agent = Agent.query.filter_by(token=token).one()
+        agent = db.session.execute(select(Agent)).scalars().filter_by(token=token).one()
     except NoResultFound:
         flask.abort(403)
     return agent

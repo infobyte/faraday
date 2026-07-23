@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
@@ -96,7 +97,7 @@ def hydrate_sample_for_conflict(model_class, ids):
     sample = model_class()
     if ids:
         sample = (
-            db.session.query(model_class)
+            db.session.execute(select(model_class)).scalars()
             .filter(model_class.id == ids[0])
             .first()
         ) or sample
@@ -125,7 +126,7 @@ def get_workspace(workspace_name):
     ws = None
     if not current_user.is_anonymous:
         try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
+            ws = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).one()
             if not ws.active:
                 abort(HTTP_FORBIDDEN, f"Disabled workspace: {workspace_name}")
         except NoResultFound:
@@ -133,7 +134,7 @@ def get_workspace(workspace_name):
     else:
         # For anonymous users, check if the workspace exists
         try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
+            ws = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).one()
             if not ws.active:
                 abort(HTTP_UNAUTHORIZED)
         except NoResultFound:
@@ -391,7 +392,7 @@ class GenericView(FlaskView):
         except AttributeError:
             # Handle the case where `query` is a ResultProxy, this comes from Workspace query_object_with_count
             if isinstance(query, ResultProxy):
-                res = db.session.query(self.model_class).filter(self.model_class.name.in_(object_ids)).all()
+                res = db.session.execute(select(self.model_class)).scalars().filter(self.model_class.name.in_(object_ids)).all()
                 return res
             # If it's another AttributeError, re-raise
             raise
@@ -1226,7 +1227,7 @@ class CommandMixin:
             command_id = None
 
         if command_id:
-            command = db.session.query(Command).filter(Command.id == command_id,
+            command = db.session.execute(select(Command)).scalars().filter(Command.id == command_id,
                                                        Command.workspace == obj.workspace).first()
             if command is None:
                 raise InvalidUsage('Command not found.')
@@ -1235,7 +1236,7 @@ class CommandMixin:
             # we skip the creation.
             object_type = obj.__class__.__table__.name
 
-            command_object = CommandObject.query.filter_by(
+            command_object = db.session.execute(select(CommandObject)).scalars().filter_by(
                 object_id=obj.id,
                 object_type=object_type,
                 command=command,
@@ -1393,7 +1394,7 @@ class UpdateMixin:
                 raise
             workspace = None
             if workspace_name:
-                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+                workspace = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).first()
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
                 abort(HTTP_CONFLICT, ValidationError(
@@ -1547,7 +1548,7 @@ class BulkUpdateMixin(FilterObjects):
             db.session.rollback()
             workspace = None
             if workspace_name:
-                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+                workspace = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).first()
             sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
             conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
@@ -1857,7 +1858,7 @@ class CountWorkspacedMixin:
         group_by = f'{table_name}.{group_by}'
 
         query_count = self._filter_query(
-            db.session.query(self.model_class).
+            db.session.execute(select(self.model_class)).scalars().
             join(Workspace).
             group_by(group_by).
             filter(Workspace.name == workspace_name,
@@ -1948,10 +1949,10 @@ class CountMultiWorkspacedMixin:
 
         grouped_attr = getattr(self.model_class, group_by)
 
-        q = db.session.query(
+        q = db.session.execute(select(
             Workspace.name,
             grouped_attr,
-            func.count(grouped_attr)
+            func.count(grouped_attr)).scalars()
         ) \
             .join(Workspace) \
             .group_by(grouped_attr, Workspace.name) \
@@ -2139,7 +2140,7 @@ class ContextMixin(GenericView):
 
     @staticmethod
     def _get_context_workspace_ids(filter):
-        return db.session.query(Workspace.id)\
+        return db.session.execute(select(Workspace.id)).scalars()\
             .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
             .filter(filter).all()
 
@@ -2156,7 +2157,7 @@ class ContextMixin(GenericView):
         )
 
     def _get_context_workspace_query(self, operation="write"):
-        workspace_query = Workspace.query
+        workspace_query = db.session.execute(select(Workspace)).scalars()
         return workspace_query
 
     def _bulk_delete_query(self, ids, **kwargs):
@@ -2199,7 +2200,7 @@ class ContextMixin(GenericView):
 
         query_count = self._apply_filter_context(
             self._filter_query(
-                db.session.query(self.model_class).
+                db.session.execute(select(self.model_class)).scalars().
                 group_by(group_by).
                 filter(*self.count_extra_filters)
             )
@@ -2259,7 +2260,7 @@ class ContextMixin(GenericView):
             db.session.rollback()
             workspace = None
             if workspace_name:
-                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+                workspace = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).first()
             sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
             conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:

@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
@@ -62,11 +63,11 @@ class FaradayCustomField(fields.Field):
         try:
             custom_fields = g.custom_fields[self.table_name]
         except KeyError:
-            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+            custom_fields = db.session.execute(select(CustomFieldsSchema)).scalars().filter_by(
                     table_name=self.table_name).all()
             g.custom_fields[self.table_name] = custom_fields
         except AttributeError:
-            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+            custom_fields = db.session.execute(select(CustomFieldsSchema)).scalars().filter_by(
                 table_name=self.table_name).all()
 
         for custom_field in custom_fields:
@@ -85,7 +86,7 @@ class FaradayCustomField(fields.Field):
             for key, raw_data in value.items():
                 if not raw_data:
                     continue
-                field_schema = db.session.query(CustomFieldsSchema).filter_by(
+                field_schema = db.session.execute(select(CustomFieldsSchema)).scalars().filter_by(
                     table_name=self.table_name,
                     field_name=key,
                 ).first()

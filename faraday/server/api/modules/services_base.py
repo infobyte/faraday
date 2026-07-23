@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
@@ -119,7 +120,7 @@ class ServiceSchema(AutoSchema):
                 raise ValidationError('Parent id is required when creating a service.')
 
             try:
-                data['host'] = Host.query.join(Workspace).filter(
+                data['host'] = db.session.execute(select(Host)).scalars().join(Workspace).filter(
                     Workspace.name == self.context['workspace_name'],
                     Host.id == host_id
                 ).one()
@@ -171,8 +172,8 @@ class ServiceView(
 
     def _perform_bulk_delete(self, values, **kwargs):
         workspace_names = [workspace.name for workspace in
-                           Workspace.query.join(Service).filter(Service.id.in_(values)).distinct(Workspace.name).all()]
-        services_host_id = db.session.query(Service.host_id).filter(
+                           db.session.execute(select(Workspace)).scalars().join(Service).filter(Service.id.in_(values)).distinct(Workspace.name).all()]
+        services_host_id = db.session.execute(select(Service.host_id)).scalars().filter(
             Service.id.in_(values)).all()  # obtain services host ids before deleting them
         response = super()._perform_bulk_delete(values, **kwargs)
         host_ids = []
@@ -187,7 +188,7 @@ class ServiceView(
         return response
 
     def _post_bulk_update(self, ids, extracted_data, data=None, **kwargs):
-        workspaces = Workspace.query.join(Service).filter(Service.id.in_(ids)).distinct(Workspace.name).all()
+        workspaces = db.session.execute(select(Workspace)).scalars().join(Service).filter(Service.id.in_(ids)).distinct(Workspace.name).all()
         for workspace in workspaces:
             debounce_workspace_update(workspace.name)
             debounce_workspace_service_count(workspace_id=workspace.id)

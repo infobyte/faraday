@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from faraday.server.models import Workspace, db, VulnerabilityReference
@@ -6,9 +7,9 @@ from faraday.server.models import Workspace, db, VulnerabilityReference
 def _move_references(all_workspaces=False, workspace_name=None):
     if all_workspaces:
         print("This could take a while ...")
-        workspaces = Workspace.query.all()
+        workspaces = db.session.execute(select(Workspace)).scalars().all()
     elif workspace_name:
-        workspaces = Workspace.query.filter(Workspace.name == workspace_name).all()
+        workspaces = db.session.execute(select(Workspace)).scalars().filter(Workspace.name == workspace_name).all()
     else:
         print("Options required")
         return

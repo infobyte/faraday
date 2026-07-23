@@ -1,3 +1,4 @@
+from sqlalchemy import select
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
@@ -127,7 +128,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         """
         res = []
         query = Command.with_severity_counts(
-            Command.query.filter(Command.workspace == get_workspace(workspace_name))
+            db.session.execute(select(Command)).scalars().filter(Command.workspace == get_workspace(workspace_name))
         )
         for command in query.all():
             res.append(populate_command_dict(command))
@@ -144,7 +145,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
                description: Last executed command or an empty json
         """
         command = Command.with_severity_counts(
-            Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc())
+            db.session.execute(select(Command)).scalars().join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc())
         ).first()
         command_obj = {}
         if command:

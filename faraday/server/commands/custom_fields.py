@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
@@ -28,11 +29,11 @@ def delete_custom_field_main():
 def delete_custom_field_wizard():
     print('This wizard will guide you to DELETE custom field to the vulnerability model.')
     print('All available custom fields are:')
-    for custom_field in db.session.query(CustomFieldsSchema):
+    for custom_field in db.session.execute(select(CustomFieldsSchema)).scalars():
         print(f'* {custom_field.field_name}')
     print('End of custom fields')
     field_name = click.prompt('Field name')
-    custom_field = db.session.query(CustomFieldsSchema).filter_by(field_name=field_name).first()
+    custom_field = db.session.execute(select(CustomFieldsSchema)).scalars().filter_by(field_name=field_name).first()
     if custom_field:
         db.session.delete(custom_field)
         db.session.commit()
@@ -45,7 +46,7 @@ def add_custom_field_wizard():
     field_name = click.prompt('Field name')
     field_display_name = click.prompt('Display name')
     field_type = click.prompt('Field type (int, float, str, list)', type=click.Choice(['int', 'float', 'str', 'list']))
-    custom_fields = db.session.query(CustomFieldsSchema)
+    custom_fields = db.session.execute(select(CustomFieldsSchema)).scalars()
 
     # Checks the name of the fields wont be a duplicate
     for custom_field in custom_fields:

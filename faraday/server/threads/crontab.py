@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (https://faradaysec.com/)
@@ -69,7 +70,7 @@ class CronTab(FaradayCronTab):
     def refresh_schedule(self):
         with self.app.app_context():
             # first we clean deleted jobs
-            all_scheduled_jobs = db.session.query(AgentsSchedule).filter_by(active=True).all()
+            all_scheduled_jobs = db.session.execute(select(AgentsSchedule)).scalars().filter_by(active=True).all()
             all_scheduled_jobs_ids = {schedule.id for schedule in all_scheduled_jobs}
 
             for fixed_job in self.fixed_jobs:
@@ -157,7 +158,7 @@ class AgentsCronItem(CronItem):
 
     def run(self):
         with self.app.app_context():
-            schedule: AgentsSchedule = db.session.query(AgentsSchedule).\
+            schedule: AgentsSchedule = db.session.execute(select(AgentsSchedule)).scalars().\
                 filter_by(id=self.schedule_id).first()
 
             if not schedule:

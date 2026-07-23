@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import re
 import logging
 
@@ -17,7 +18,7 @@ def get_or_create_cwe(cwe_name: str) -> [None, CWE]:
     # Just in case.
     if not cwe_name:
         return None
-    cwe = CWE.query.filter(CWE.name == cwe_name).first()
+    cwe = db.session.execute(select(CWE)).scalars().filter(CWE.name == cwe_name).first()
     if not cwe:
         try:
             cwe = CWE(name=cwe_name)
@@ -29,7 +30,7 @@ def get_or_create_cwe(cwe_name: str) -> [None, CWE]:
                 return None
             logger.debug("CWE violated unique constraint. Rollback in progress")
             db.session.rollback()
-            cwe = CWE.query.filter(CWE.name == cwe_name).first()
+            cwe = db.session.execute(select(CWE)).scalars().filter(CWE.name == cwe_name).first()
             if not cwe:
                 logger.error("Could not get cwe")
                 return None

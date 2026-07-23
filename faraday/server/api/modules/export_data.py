@@ -1,3 +1,4 @@
+from sqlalchemy import select
 # Standard library imports
 import logging
 from io import BytesIO
@@ -46,7 +47,7 @@ class ExportDataView(GenericWorkspacedView):
               description: Ok
         """
 
-        workspace = Workspace.query.filter_by(name=workspace_name).first()
+        workspace = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).first()
         if not workspace:
             logger.error("No such workspace. Please, specify a valid workspace.")
             abort(404, f"No such workspace: {workspace_name}")

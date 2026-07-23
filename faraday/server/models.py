@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -884,7 +885,7 @@ class CustomAssociationSet(_AssociationSet):
                     continue
                 if conflict_obj.name == value:
                     continue
-                persisted_conflict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
+                persisted_conflict_obj = session.execute(select(conflict_obj.__class__)).scalars().filter_by(name=conflict_obj.name).first()
                 if persisted_conflict_obj:
                     self.col.add(persisted_conflict_obj)
             yield self.creator(value, parent_instance)
@@ -2079,7 +2080,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     @property
     def attachments(self):
-        return db.session.query(File).filter_by(
+        return db.session.execute(select(File)).scalars().filter_by(
             object_id=self.id,
             object_type='vulnerability'
         )
@@ -2757,7 +2758,7 @@ class WorkspacePermission(db.Model):
 
 
 def get(workspace_name):
-    return db.session.query(Workspace).filter_by(name=workspace_name).first()
+    return db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).first()
 
 
 roles_users = db.Table('roles_users',
@@ -3170,7 +3171,7 @@ class ExecutiveReport(Metadata):
 
     @property
     def attachments(self):
-        return db.session.query(File).filter_by(
+        return db.session.execute(select(File)).scalars().filter_by(
             object_id=self.id,
             object_type='executive_report'
         )
@@ -3665,7 +3666,7 @@ class Agent(Metadata):
 
     @property
     def last_run(self):
-        execs = db.session.query(Executor).filter_by(agent_id=self.id)
+        execs = db.session.execute(select(Executor)).scalars().filter_by(agent_id=self.id)
         if execs:
             _last_run = None
             for exe in execs:
@@ -3729,7 +3730,7 @@ class CloudAgent(Metadata):
 
     @property
     def last_run(self):
-        execs = db.session.query(CloudAgentExecution).filter_by(cloud_agent_id=self.id)
+        execs = db.session.execute(select(CloudAgentExecution)).scalars().filter_by(cloud_agent_id=self.id)
         if execs:
             _last_run = None
             for exe in execs:

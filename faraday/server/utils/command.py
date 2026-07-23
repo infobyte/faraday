@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import logging
 import random
 from datetime import datetime, timedelta
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def set_command_id(session, obj, created, command_id):
-    command = session.query(Command).filter(
+    command = session.execute(select(Command)).scalars().filter(
         Command.id == command_id,
         Command.workspace == obj.workspace
     ).first()
@@ -25,7 +26,7 @@ def set_command_id(session, obj, created, command_id):
     # we skip the creation.
     object_type = obj.__class__.__table__.name
 
-    command_object = CommandObject.query.filter_by(
+    command_object = db.session.execute(select(CommandObject)).scalars().filter_by(
         object_id=obj.id,
         object_type=object_type,
         command=command,

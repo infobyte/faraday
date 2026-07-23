@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import sys
 import uuid
 from datetime import datetime
@@ -75,9 +76,9 @@ def _ingest(all_workspaces=False,
         sys.exit()
 
     if all_workspaces:
-        workspaces = Workspace.query.all()
+        workspaces = db.session.execute(select(Workspace)).scalars().all()
     elif workspace_name:
-        workspaces = Workspace.query.filter(Workspace.name == workspace_name).all()
+        workspaces = db.session.execute(select(Workspace)).scalars().filter(Workspace.name == workspace_name).all()
     else:
         from faraday.manage import ingest  # pylint: disable=import-outside-toplevel
         with click.Context(ingest) as ctx:
@@ -111,7 +112,7 @@ def _ingest(all_workspaces=False,
 
 def generate_actions(ws, elk_ids, from_id=None, to_id=None, rename_as=None, extra_vuln_tags=[], from_update_date=None):
     click.secho("Processing vulnerabilities ...", fg="magenta")
-    query = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.workspace_id == ws.id)
+    query = db.session.execute(select(VulnerabilityGeneric)).scalars().filter(VulnerabilityGeneric.workspace_id == ws.id)
     if from_update_date:
         query = query.filter(VulnerabilityGeneric.update_date >= from_update_date)
     if from_id:

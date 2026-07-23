@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2024  Infobyte LLC (https://faradaysec.com/)
@@ -457,7 +458,7 @@ class VulnerabilitySchema(AutoSchema):
                     if vulnerability.type == 'vulnerability_web':
                         raise ValidationError('Trying to set a host for a vulnerability web')
         try:
-            parent = db.session.query(parent_class).join(Workspace).filter(
+            parent = db.session.execute(select(parent_class)).scalars().join(Workspace).filter(
                 Workspace.name == self.context['workspace_name'],
                 parent_class.id == parent_id
             ).one()
@@ -685,7 +686,7 @@ class VulnerabilityView(
 
     @staticmethod
     def _process_attachments(obj, attachments):
-        old_attachments = db.session.query(File).options(
+        old_attachments = db.session.execute(select(File)).scalars().options(
             joinedload(File.creator),
             joinedload(File.update_user)
         ).filter_by(
@@ -851,7 +852,7 @@ class VulnerabilityView(
         extra_filters = [Workspace.active == True]  # noqa
 
         query = (
-            db.session.query(func.count(VulnerabilityGeneric.id))
+            db.session.execute(select(func.count(VulnerabilityGeneric.id)).scalars())
             .join(Workspace)
             .filter(*extra_filters)
         )
@@ -878,7 +879,7 @@ class VulnerabilityView(
             description: Ok
         """
         vuln_permission_check = self._apply_filter_context(
-            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
+            db.session.execute(select(VulnerabilityGeneric)).scalars().filter(VulnerabilityGeneric.id == vuln_id),
             operation="write"
         ).first()
 
@@ -945,7 +946,7 @@ class VulnerabilityView(
               description: Validation error
         """
         vuln_permission_check = self._apply_filter_context(
-            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id),
+            db.session.execute(select(VulnerabilityGeneric)).scalars().filter(VulnerabilityGeneric.id == vuln_id),
             operation="write"
         ).first()
 
@@ -961,7 +962,7 @@ class VulnerabilityView(
 
         # Check if attachment exists
         try:
-            attachment = db.session.query(File).filter_by(
+            attachment = db.session.execute(select(File)).scalars().filter_by(
                 object_type='vulnerability',
                 object_id=vuln_id,
                 filename=attachment_filename
@@ -1051,7 +1052,7 @@ class VulnerabilityView(
         # Handle CSV exports
         if is_full_export:
             custom_fields_columns = []
-            for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+            for custom_field in db.session.execute(select(CustomFieldsSchema)).scalars().order_by(CustomFieldsSchema.field_order):
                 custom_fields_columns.append(custom_field.field_name)
             memory_file = export_vulns_to_csv(filtered_vulns, custom_fields_columns)
             default_filename = "Faraday-SR-Context.csv"
@@ -1282,10 +1283,10 @@ class VulnerabilityView(
             description: Ok
         """
         vuln_permission_check = self._apply_filter_context(
-            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+            db.session.execute(select(VulnerabilityGeneric)).scalars().filter(VulnerabilityGeneric.id == vuln_id)
         ).first()
 
-        file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+        file_obj = db.session.execute(select(File)).scalars().filter_by(object_type='vulnerability',
                                                     object_id=vuln_id,
                                                     filename=attachment_filename.replace(" ", "%20")).first()
 
@@ -1335,13 +1336,13 @@ class VulnerabilityView(
             description: Ok
         """
         vuln_permission_check = self._apply_filter_context(
-            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+            db.session.execute(select(VulnerabilityGeneric)).scalars().filter(VulnerabilityGeneric.id == vuln_id)
         ).first()
 
         if not vuln_permission_check:
             abort(HTTP_NOT_FOUND, "Vulnerability not found")
 
-        files = db.session.query(File).filter_by(object_type='vulnerability', object_id=vuln_id).all()
+        files = db.session.execute(select(File)).scalars().filter_by(object_type='vulnerability', object_id=vuln_id).all()
 
         res = {}
         for file_obj in files:
@@ -1362,13 +1363,13 @@ class VulnerabilityView(
               description: Ok
         """
         vuln_permission_check = self._apply_filter_context(
-            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+            db.session.execute(select(VulnerabilityGeneric)).scalars().filter(VulnerabilityGeneric.id == vuln_id)
         ).first()
 
         if not vuln_permission_check:
             abort(HTTP_NOT_FOUND, "Vulnerability not found")
 
-        file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+        file_obj = db.session.execute(select(File)).scalars().filter_by(object_type='vulnerability',
                                                     object_id=vuln_id,
                                                     filename=attachment_filename).first()
         if not file_obj:
@@ -1413,7 +1414,7 @@ class VulnerabilityView(
         filters = request.args.get('q', '{}')
         custom_fields_columns = []
 
-        for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+        for custom_field in db.session.execute(select(CustomFieldsSchema)).scalars().order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
 
         if confirmed:
@@ -1469,12 +1470,12 @@ class VulnerabilityView(
 
         if workspace_name:
             workspace = get_workspace(workspace_name)
-            data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator) \
+            data = db.session.execute(select(User, func.count(VulnerabilityGeneric.id)).scalars()).join(VulnerabilityGeneric.creator) \
                 .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id) \
                 .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
         else:
             data = self._apply_filter_context(
-                db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)
+                db.session.execute(select(User, func.count(VulnerabilityGeneric.id)).scalars()).join(VulnerabilityGeneric.creator)
                 .group_by(User.id)
             ).order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
 
@@ -1556,7 +1557,7 @@ class VulnerabilityView(
         return custom_behaviour_fields
 
     def _post_bulk_update(self, ids, extracted_data, **kwargs):
-        workspaces = (db.session.query(Workspace)
+        workspaces = (db.session.execute(select(Workspace)).scalars()
                       .join(VulnerabilityGeneric)
                       .filter(VulnerabilityGeneric.id.in_(ids))
                       .distinct().all())
@@ -1626,10 +1627,10 @@ class VulnerabilityView(
 
     def _perform_bulk_delete(self, values, **kwargs):
         # Get host and service ids in order to update host stats
-        host_ids = db.session.query(
+        host_ids = db.session.execute(select(
             VulnerabilityGeneric.host_id,
             VulnerabilityGeneric.service_id
-        )
+        )).scalars()
 
         by_severity = kwargs.get('by', None) == 'severity'
         if by_severity:

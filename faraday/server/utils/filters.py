@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2020  Infobyte LLC (https://faradaysec.com/)
@@ -151,7 +152,7 @@ class FlaskRestlessFilterSchema(Schema):
         if '->' in filter_['name']:
             key = filter_['name'].split('->')[1]
             try:
-                custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == key).first()
+                custom_field = db.session.execute(select(CustomFieldsSchema)).scalars().filter(CustomFieldsSchema.field_name == key).first()
                 if custom_field.field_type == 'date':
                     return [filter_]
             except AttributeError as e:

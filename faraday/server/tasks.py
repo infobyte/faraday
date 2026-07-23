@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import json
 import time
 from datetime import datetime, timedelta
@@ -56,7 +57,7 @@ def finalize_report(command_id=None, workspace_id=None, attempt=0):
     from faraday.server.app import get_app, get_debouncer  # pylint: disable=import-outside-toplevel
     app = get_app()
     with _app_ctx(app):
-        command = db.session.query(Command).filter(Command.id == command_id).first()
+        command = db.session.execute(select(Command)).scalars().filter(Command.id == command_id).first()
         if not command:
             logger.error("Finalize: command id %s was not found", command_id)
             return
@@ -78,7 +79,7 @@ def finalize_report(command_id=None, workspace_id=None, attempt=0):
             logger.warning("Finalize: giving up on %s pending task(s) for command %s after %s polls",
                            len(pending), command_id, attempt)
 
-        workspace = db.session.query(Workspace).filter(Workspace.id == workspace_id).first()
+        workspace = db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).first()
         if workspace and workspace.name:
             debounce_workspace_update(workspace.name, workspace_id=workspace.id)
 
@@ -107,11 +108,11 @@ def finalize_report(command_id=None, workspace_id=None, attempt=0):
 
 @celery.task
 def on_success_process_report_task(results, command_id=None):
-    command = db.session.query(Command).filter(Command.id == command_id).first()
+    command = db.session.execute(select(Command)).scalars().filter(Command.id == command_id).first()
     if not command:
         logger.error("File imported but command id %s was not found", command_id)
         return
-    workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
+    workspace = db.session.execute(select(Workspace)).scalars().filter(Workspace.id == command.workspace_id).first()
 
     # Per-batch: per-host vulnerability stats must run for every batch.
     for result in results:
@@ -134,7 +135,7 @@ def on_chord_error(request, exc, *args, **kwargs):
     command_id = kwargs.get("command_id", None)
     if command_id:
         logger.error("File for command id %s imported with errors", command_id)
-        command = db.session.query(Command).filter(Command.id == command_id).first()
+        command = db.session.execute(select(Command)).scalars().filter(Command.id == command_id).first()
         command.end_date = datetime.utcnow()
         db.session.commit()
     logger.error(f'Task {request.id} raised error: {exc}')
@@ -151,7 +152,7 @@ def process_report_task(workspace_id: int, command: dict, hosts):
 
     if ret.id:
         #  We save the task id to check the status later through the command's API
-        db.session.query(Command).filter(Command.id == command['id']).update(
+        db.session.execute(select(Command)).scalars().filter(Command.id == command['id']).update(
             {
                 Command.tasks: func.coalesce(
                     func.cast(Command.tasks, JSONB),
@@ -181,7 +182,7 @@ def cleanup_stuck_pipelines():
     try:
         timeout = faraday_server.pipeline_running_timeout
         threshold = datetime.utcnow() - timedelta(seconds=timeout)
-        stuck = db.session.query(Pipeline).filter(
+        stuck = db.session.execute(select(Pipeline)).scalars().filter(
             Pipeline.running == True,  # noqa: E712
             db.or_(Pipeline.running_since < threshold, Pipeline.running_since.is_(None))
         ).all()
@@ -224,7 +225,7 @@ def create_host_task(workspace_id, command: dict, host):
     created_objects = {}
     db.engine.dispose()
     start_time = time.time()
-    workspace = Workspace.query.filter_by(id=workspace_id).first()
+    workspace = db.session.execute(select(Workspace)).scalars().filter_by(id=workspace_id).first()
     if not workspace:
         logger.error("Workspace %s not found", workspace_id)
         return created_objects
@@ -306,14 +307,14 @@ def update_host_stats(
         end_time = datetime.utcnow()
         logger.info(f"all calcs took {end_time - start_time}")
         if command_id:
-            db.session.query(Command).filter(Command.id == command_id).update({
+            db.session.execute(select(Command)).scalars().filter(Command.id == command_id).update({
                 Command.end_date: datetime.utcnow()
             })
             db.session.commit()
         return
 
     all_hosts = set(hosts)
-    services_host_id = db.session.query(Service.host_id).filter(Service.id.in_(services)).all()
+    services_host_id = db.session.execute(select(Service.host_id)).scalars().filter(Service.id.in_(services)).all()
     for host_id in services_host_id:
         all_hosts.add(host_id[0])
     for host in all_hosts:
@@ -336,7 +337,7 @@ def update_host_stats(
             debounce_workspace_host_count(workspace_id=workspace_id, debouncer=debouncer)
             debounce_workspace_service_count(workspace_id=workspace_id, debouncer=debouncer)
     if command_id:
-        db.session.query(Command).filter(Command.id == command_id).update({
+        db.session.execute(select(Command)).scalars().filter(Command.id == command_id).update({
             Command.end_date: datetime.utcnow()
         })
         db.session.commit()
@@ -361,7 +362,7 @@ def calc_vulnerability_stats(host_id: int) -> None:
         'vulnerability_info_generic_count': 0,
         'vulnerability_unclassified_generic_count': 0,
     }
-    severities = db.session.query(func.count(VulnerabilityGeneric.severity), VulnerabilityGeneric.severity)\
+    severities = db.session.execute(select(func.count(VulnerabilityGeneric.severity)).scalars(), VulnerabilityGeneric.severity)\
         .join(Service, Service.id.in_([Vulnerability.service_id, VulnerabilityWeb.service_id]), isouter=True)\
         .join(Host, or_(Host.id == VulnerabilityGeneric.host_id, Host.id == Service.host_id))\
         .filter(or_(VulnerabilityGeneric.host_id == host_id,
@@ -376,7 +377,7 @@ def calc_vulnerability_stats(host_id: int) -> None:
         severities_dict[severity_model_names[severity[1]]] = severity[0]
     logger.debug(f"Host vulns stats {severities_dict}")
 
-    db.session.query(Host).filter(Host.id == host_id).update(severities_dict)
+    db.session.execute(select(Host)).scalars().filter(Host.id == host_id).update(severities_dict)
     db.session.commit()
 
 
@@ -395,7 +396,7 @@ def update_failed_command_stats(debouncer=None):
         seven_days_ago = now - timedelta(days=7)
 
         failed_commands_ids = [
-            command for (command,) in db.session.query(Command.id)
+            command for (command,) in db.session.execute(select(Command.id)).scalars()
             .filter(Command.end_date.is_(None), Command.create_date > seven_days_ago)
             .all()
         ]
@@ -405,7 +406,7 @@ def update_failed_command_stats(debouncer=None):
             return
 
         hosts_ids = [
-            host for (host,) in db.session.query(CommandObject.object_id)
+            host for (host,) in db.session.execute(select(CommandObject.object_id)).scalars()
             .filter(CommandObject.command_id.in_(failed_commands_ids),
                     CommandObject.object_type == 'host',
                     CommandObject.created_persistent.is_(True))
@@ -418,7 +419,7 @@ def update_failed_command_stats(debouncer=None):
             return
 
         workspaces_ids = [
-            workspace for (workspace,) in db.session.query(Host.workspace_id)
+            workspace for (workspace,) in db.session.execute(select(Host.workspace_id)).scalars()
             .filter(Host.id.in_(hosts_ids))
             .distinct()
             .all()
@@ -470,9 +471,9 @@ def create_bulk_update_commands_task(
         db.session.flush()  # get command.id
 
         select_stmt = (
-            db.session.query(
+            db.session.execute(select(
                 VulnerabilityGeneric.id,
-                literal('vulnerability'),
+                literal('vulnerability')).scalars(),
                 literal(command.id),
                 literal(workspace_id),
                 literal(start_date),

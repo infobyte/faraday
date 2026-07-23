@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
@@ -64,7 +65,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             services_ids.add(vuln['parent'])
         vulns_ids.add(vuln['_id'])
 
-    comments = db.session.query(Comment)\
+    comments = db.session.execute(select(Comment)).scalars()\
         .filter(Comment.object_type == 'vulnerability')\
         .filter(Comment.object_id.in_(vulns_ids)).all()
     for comment in comments:
@@ -167,7 +168,7 @@ def export_vulns_to_csv_limited(vulns, selected_columns=None):
 
 
 def _build_hosts_data(hosts_id):
-    hosts = db.session.query(Host)\
+    hosts = db.session.execute(select(Host)).scalars()\
                             .filter(Host.id.in_(hosts_id)).all()
 
     hosts_dict = {}
@@ -189,7 +190,7 @@ def _build_hosts_data(hosts_id):
 
 
 def _build_services_data(services_ids):
-    services = db.session.query(Service)\
+    services = db.session.execute(select(Service)).scalars()\
                             .filter(Service.id.in_(services_ids)).all()
     services_dict = {}
 

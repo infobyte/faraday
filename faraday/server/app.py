@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -213,7 +214,7 @@ def register_handlers(app):
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS512"])
             user_id = data["user_id"]
-            user = User.query.filter_by(fs_uniquifier=user_id).first()
+            user = db.session.execute(select(User)).scalars().filter_by(fs_uniquifier=user_id).first()
             if not user or not verify_hash(data['validation_check'], user.password):
                 logger.warning('Invalid authentication token. token invalid after password change')
                 return None
@@ -248,7 +249,7 @@ def register_handlers(app):
             elif auth_type == "basic":
                 username = flask.request.authorization.get('username', '')
                 password = flask.request.authorization.get('password', '')
-                user = User.query.filter_by(username=username).first()
+                user = db.session.execute(select(User)).scalars().filter_by(username=username).first()
                 if user and user.verify_and_update_password(password):
                     session["last_access"] = time()
                     return user

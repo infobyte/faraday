@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
@@ -65,7 +66,7 @@ def reports_manager_background_task():
 
 
 def command_status_error(command_id: int):
-    command = Command.query.filter_by(id=command_id).first()
+    command = db.session.execute(select(Command)).scalars().filter_by(id=command_id).first()
     command.command = "error"
     db.session.commit()
 
@@ -73,12 +74,12 @@ def command_status_error(command_id: int):
 def send_report_data(workspace_name: str, command_id: int, report_json: dict,
                      user_id: Optional[int], set_end_date: bool):
     logger.info("Send Report data to workspace [%s]", workspace_name)
-    ws = Workspace.query.filter_by(name=workspace_name).one()
-    command = Command.query.filter_by(id=command_id).one()
+    ws = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).one()
+    command = db.session.execute(select(Command)).scalars().filter_by(id=command_id).one()
     schema = BulkCreateSchema()
     data = schema.load(report_json)
     if user_id:
-        user = User.query.filter_by(id=user_id).one()
+        user = db.session.execute(select(User)).scalars().filter_by(id=user_id).one()
         data = add_creator(data, user)
     return bulk_create(ws, command, data, True, set_end_date)
 

@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2021  Infobyte LLC (https://faradaysec.com/)
@@ -45,7 +46,7 @@ def update_executors(agent, executors):
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])
 
-    current_executors = Executor.query.filter(Executor.agent == agent)
+    current_executors = db.session.execute(select(Executor)).scalars().filter(Executor.agent == agent)
     for current_executor in current_executors:
         if current_executor.name not in incoming_executor_names:
             db.session.delete(current_executor)
@@ -56,7 +57,7 @@ def update_executors(agent, executors):
 
 def remove_sid():
     try:
-        agents = Agent.query.filter(Agent.sid!=None).all()  # noqa E711
+        agents = db.session.execute(select(Agent)).scalars().filter(Agent.sid!=None).all()  # noqa E711
     except Exception as error:
         logger.warning("Could not update agents table. %s", error)
         return
@@ -71,15 +72,15 @@ class DispatcherNamespace(Namespace):
         self.send("Connected to faraday websocket")
 
     def on_disconnect(self):
-        agent = Agent.query.filter(Agent.sid == request.sid).first()
+        agent = db.session.execute(select(Agent)).scalars().filter(Agent.sid == request.sid).first()
         if not agent:
             logger.warning("An agent disconnected but id could not be found. SID %s", request.sid)
             return
 
         # Mark ongoing executions as failed due to disconnection
-        db.session.query(AgentExecution).filter(
+        db.session.execute(select(AgentExecution)).scalars().filter(
             AgentExecution.executor_id.in_(
-                db.session.query(Executor.id).filter(Executor.agent_id == agent.id)
+                db.session.execute(select(Executor.id)).scalars().filter(Executor.agent_id == agent.id)
             ),
             AgentExecution.running.is_(True)
         ).update(
@@ -118,7 +119,7 @@ class DispatcherNamespace(Namespace):
             return
 
         # Update AgentExecution in bulk
-        db.session.query(AgentExecution).filter(AgentExecution.id.in_(execution_ids)).update(
+        db.session.execute(select(AgentExecution)).scalars().filter(AgentExecution.id.in_(execution_ids)).update(
             update_values, synchronize_session=False
         )
         db.session.commit()
@@ -158,7 +159,7 @@ class DispatcherNamespace(Namespace):
             logger.exception(e)
         else:
             with current_app.app_context():
-                workspace = Workspace.query.get(int(workspace_id))
+                workspace = db.session.execute(select(Workspace)).scalars().get(int(workspace_id))
             if workspace.name != message['workspace']:
                 logger.warning(f"Trying to join workspace {message['workspace']} "
                                f"with token of workspace {workspace.name}. "

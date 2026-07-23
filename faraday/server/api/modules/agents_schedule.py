@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (https://faradaysec.com/)
@@ -141,7 +142,7 @@ class AgentsScheduleSchema(AutoSchema):
             if 'executor_id' in data:
                 executor_id = data.pop('executor_id')
                 try:
-                    executor = db.session.query(Executor).filter(Executor.id == executor_id).one()
+                    executor = db.session.execute(select(Executor)).scalars().filter(Executor.id == executor_id).one()
                 except NoResultFound as e:
                     raise InvalidUsage(f'Executor id not found: {executor_id}') from e
                 data['executor'] = executor
@@ -171,7 +172,7 @@ class AgentsScheduleSchema(AutoSchema):
     def get_agent(obj):
         agent_id = obj.executor.agent_id
         try:
-            agent = db.session.query(Agent).\
+            agent = db.session.execute(select(Agent)).scalars().\
                 filter(Agent.id == agent_id).one()
         except NoResultFound as e:
             raise InvalidUsage(f'Agent id not found: {agent_id}') from e
@@ -204,7 +205,7 @@ class AgentsScheduleView(
         }
 
     def _perform_create(self, data):
-        schedules_in_use = db.session.query(AgentsSchedule).count()
+        schedules_in_use = db.session.execute(select(AgentsSchedule)).scalars().count()
         schedules_limit = SCHEDULES_LIMIT
         if schedules_in_use >= schedules_limit:
             message = "Agent schedules limit reached. Can't create new Schedules"
@@ -326,9 +327,9 @@ class AgentsScheduleView(
                         description: Count of Agent Schedulers
         """
         #  ONLY FOR COMMUNITY
-        counts = db.session.query(
+        counts = db.session.execute(select(
             AgentsSchedule.type,
-            db.func.count(AgentsSchedule.id).label('count')
+            db.func.count(AgentsSchedule.id)).scalars().label('count')
         ).group_by(AgentsSchedule.type).all()
 
         result = {

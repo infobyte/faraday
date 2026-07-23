@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import re
 import logging
 import json
@@ -170,7 +171,7 @@ def get_or_create_owasp(owasp_name: str) -> [None, OWASP]:
     if not owasp_name:
         logger.error("owasp_name not provided.")
         return None
-    owasp = OWASP.query.filter(OWASP.name == owasp_name).first()
+    owasp = db.session.execute(select(OWASP)).scalars().filter(OWASP.name == owasp_name).first()
     if not owasp:
         try:
             owasp = OWASP(name=owasp_name)
@@ -182,7 +183,7 @@ def get_or_create_owasp(owasp_name: str) -> [None, OWASP]:
                 return None
             logger.debug("OWASP violated unique constraint. Rollback in progress")
             db.session.rollback()
-            owasp = OWASP.query.filter(OWASP.name == owasp_name).first()
+            owasp = db.session.execute(select(OWASP)).scalars().filter(OWASP.name == owasp_name).first()
             if not owasp:
                 logger.error("Could not create owasp")
                 return None
@@ -211,7 +212,7 @@ def get_or_create_reference(reference_name: str, reference_type: str, workspace_
             return None
         logger.debug("Reference violated unique constraint. Rollback in progress")
         db.session.rollback()
-        reference_obj = Reference.query.filter(Reference.name == reference_name,
+        reference_obj = db.session.execute(select(Reference)).scalars().filter(Reference.name == reference_name,
                                                Reference.type == reference_type,
                                                Reference.workspace_id == workspace_id).first()
         if not reference_obj:
@@ -223,7 +224,7 @@ def get_or_create_reference(reference_name: str, reference_type: str, workspace_
 
 def add_cves(obj, cves):
     for cve_name in cves:
-        cve = CVE.query.filter(CVE.name == cve_name).first()
+        cve = db.session.execute(select(CVE)).scalars().filter(CVE.name == cve_name).first()
         if not cve:
             try:
                 cve = CVE(name=cve_name)
@@ -236,7 +237,7 @@ def add_cves(obj, cves):
                     continue
                 logger.debug("CVE violated unique constraint. Rollback in progress")
                 db.session.rollback()
-                cve = CVE.query.filter_by(name=cve_name).first()
+                cve = db.session.execute(select(CVE)).scalars().filter_by(name=cve_name).first()
                 if not cve:
                     logger.error("Could not get cve")
                     continue
@@ -245,7 +246,7 @@ def add_cves(obj, cves):
 
 
 def create_cve_obj(cve_name):
-    cve = CVE.query.filter(CVE.name == cve_name).first()
+    cve = db.session.execute(select(CVE)).scalars().filter(CVE.name == cve_name).first()
     if not cve:
         try:
             cve = CVE(name=cve_name)
@@ -258,7 +259,7 @@ def create_cve_obj(cve_name):
                 return None
             logger.debug("CVE violated unique constraint. Rollback in progress")
             db.session.rollback()
-            cve = CVE.query.filter_by(name=cve_name).first()
+            cve = db.session.execute(select(CVE)).scalars().filter_by(name=cve_name).first()
             if not cve:
                 logger.error("Could not get cve")
                 return None
@@ -269,7 +270,7 @@ def create_cve_obj(cve_name):
 def create_cves_append(cves):
     cve_obj_list = []
     for cve_name in cves:
-        cve = CVE.query.filter(CVE.name == cve_name).first()
+        cve = db.session.execute(select(CVE)).scalars().filter(CVE.name == cve_name).first()
         if not cve:
             try:
                 cve = CVE(name=cve_name)
@@ -282,7 +283,7 @@ def create_cves_append(cves):
                     continue
                 logger.debug("CVE violated unique constraint. Rollback in progress")
                 db.session.rollback()
-                cve = CVE.query.filter_by(name=cve_name).first()
+                cve = db.session.execute(select(CVE)).scalars().filter_by(name=cve_name).first()
                 if not cve:
                     logger.error("Could not get cve")
                     continue
@@ -294,7 +295,7 @@ def create_cves_append(cves):
 def add_references(obj, references):
     for reference_dict in references:
         reference_name = reference_dict.get('name')
-        reference = Reference.query.filter(Reference.name == reference_name,
+        reference = db.session.execute(select(Reference)).scalars().filter(Reference.name == reference_name,
                                            Reference.type == 'other',
                                            Reference.workspace_id == obj.workspace_id).first()
         if not reference:
@@ -309,7 +310,7 @@ def add_references(obj, references):
                     continue
                 logger.debug("Reference violated unique constraint. Rollback in progress")
                 db.session.rollback()
-                reference = Reference.query.filter(Reference.name == reference_name,
+                reference = db.session.execute(select(Reference)).scalars().filter(Reference.name == reference_name,
                                                    Reference.type == 'other',
                                                    Reference.workspace_id == obj.workspace_id).first()
                 if not reference:
@@ -321,7 +322,7 @@ def add_references(obj, references):
 
 def add_policy_violations(obj, policy_violations):
     for policy_violation_name in policy_violations:
-        policy_violation = PolicyViolation.query.filter(PolicyViolation.name == policy_violation_name,
+        policy_violation = db.session.execute(select(PolicyViolation)).scalars().filter(PolicyViolation.name == policy_violation_name,
                                                         PolicyViolation.workspace_id == obj.workspace_id).first()
         if not policy_violation:
             try:
@@ -335,7 +336,7 @@ def add_policy_violations(obj, policy_violations):
                     continue
                 logger.debug("PolicyViolation violated unique constraint. Rollback in progress")
                 db.session.rollback()
-                policy_violation = PolicyViolation.query.filter_by(name=policy_violation_name,
+                policy_violation = db.session.execute(select(PolicyViolation)).scalars().filter_by(name=policy_violation_name,
                                                                    workspace_id=obj.workspace_id).first()
                 if not policy_violation:
                     logger.error("Could not get policy_violation")
@@ -345,7 +346,7 @@ def add_policy_violations(obj, policy_violations):
 
 
 def create_policy_violation_obj(policy_violation_name, ws_id):
-    policy_violation = PolicyViolation.query.filter(PolicyViolation.name == policy_violation_name,
+    policy_violation = db.session.execute(select(PolicyViolation)).scalars().filter(PolicyViolation.name == policy_violation_name,
                                                     PolicyViolation.workspace_id == ws_id).first()
     if not policy_violation:
         try:
@@ -362,7 +363,7 @@ def create_policy_violation_obj(policy_violation_name, ws_id):
             logger.debug("PolicyViolation violated unique constraint. Rollback in progress")
             db.session.rollback()
             # nested.rollback()
-            policy_violation = PolicyViolation.query.filter_by(name=policy_violation_name,
+            policy_violation = db.session.execute(select(PolicyViolation)).scalars().filter_by(name=policy_violation_name,
                                                                workspace_id=ws_id).first()
             if not policy_violation:
                 logger.error("Could not get policy_violation")

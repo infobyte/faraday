@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (https://faradaysec.com/)
@@ -93,7 +94,7 @@ class UploadReportView(GenericWorkspacedView):
         """
         logger.info("Importing new plugin report in server...")
         # Authorization code copy-pasted from server/api/base.py
-        ws = Workspace.query.filter_by(name=workspace_name).first()
+        ws = db.session.execute(select(Workspace)).scalars().filter_by(name=workspace_name).first()
         if not ws or not ws.active:
             # Don't raise a 403 to prevent workspace name enumeration
             abort(404, f"Workspace disabled: {workspace_name}")
@@ -133,7 +134,7 @@ class UploadReportView(GenericWorkspacedView):
                     jsonify(message="Upload reports not configured: Run faraday client and start Faraday server again"),
                     500))
             else:
-                workspace_instance = Workspace.query.filter_by(
+                workspace_instance = db.session.execute(select(Workspace)).scalars().filter_by(
                     name=workspace_name).one()
                 command = Command()
                 command.workspace = workspace_instance

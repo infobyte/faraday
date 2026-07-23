@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
@@ -252,7 +253,7 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     def _run_agent(agent: Agent, parameters_data: dict, workspaces: list, plugins_args: dict, username: str, user_id: int):
         executor_data = parameters_data["executor_data"]
         try:
-            executor = Executor.query.filter(Executor.name == executor_data['executor'],
+            executor = db.session.execute(select(Executor)).scalars().filter(Executor.name == executor_data['executor'],
                                              Executor.agent_id == agent.id).one()
 
             # VALIDATE
@@ -424,7 +425,7 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         if not parameters_data:
             abort(400, "Missing 'parameters_data' in request body")
 
-        executor = Executor.query.get(executor_id)
+        executor = db.session.execute(select(Executor)).scalars().get(executor_id)
         if not executor:
             abort(404, "Executor not found")
 

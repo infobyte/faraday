@@ -1,3 +1,4 @@
+from sqlalchemy import select
 # Standard library imports
 import datetime
 import json
@@ -221,9 +222,9 @@ WORKFLOW_LIMIT = 2
 def _get_rules_attributes():
     rules = deepcopy(rules_attributes)
 
-    custom_fields = (db.session.query(CustomFieldsSchema.field_name,
+    custom_fields = (db.session.execute(select(CustomFieldsSchema.field_name,
                                       CustomFieldsSchema.field_type,
-                                      CustomFieldsSchema.field_metadata)
+                                      CustomFieldsSchema.field_metadata)).scalars()
                      .filter(CustomFieldsSchema.table_name == "vulnerability").all())
 
     for field in custom_fields:
@@ -449,7 +450,7 @@ class JobView(ReadWriteView):
 
     def _perform_create(self, data, **kwargs):
 
-        workflows_in_use = db.session.query(Workflow).count()
+        workflows_in_use = db.session.execute(select(Workflow)).scalars().count()
         workflow_limit = WORKFLOW_LIMIT
         if workflows_in_use >= workflow_limit:
             message = "Workflow limit reached. Can't create new Workflows"
@@ -458,7 +459,7 @@ class JobView(ReadWriteView):
 
         actions_ids = data.pop('actions_ids', [])
 
-        data["actions"] = Action.query.filter(Action.id.in_(actions_ids)).all()
+        data["actions"] = db.session.execute(select(Action)).scalars().filter(Action.id.in_(actions_ids)).all()
         check_if_field_in_model(data)
 
         conditions_json = data.pop("conditions_json", [])
@@ -492,7 +493,7 @@ class JobView(ReadWriteView):
         actions_ids = data.pop('actions_ids', [])
         if actions_ids:
             db.session.begin_nested()
-            obj.actions = Action.query.filter(Action.id.in_(actions_ids)).all()
+            obj.actions = db.session.execute(select(Action)).scalars().filter(Action.id.in_(actions_ids)).all()
             check_if_field_in_model(obj)
 
         conditions_json = data.pop("conditions_json", [])
@@ -512,7 +513,7 @@ class JobView(ReadWriteView):
 
     @staticmethod
     def _get_workflow(job_id):
-        workflow = db.session.query(Workflow)\
+        workflow = db.session.execute(select(Workflow)).scalars()\
             .filter(Workflow.id == job_id)\
             .first()
         if not workflow:
@@ -545,7 +546,7 @@ class JobView(ReadWriteView):
           200:
             description: Ok
         """
-        workflow = db.session.query(Workflow) \
+        workflow = db.session.execute(select(Workflow)).scalars() \
             .filter(Workflow.id == job_id) \
             .first()
         if not workflow:
@@ -571,7 +572,7 @@ class JobView(ReadWriteView):
           200:
             description: Ok
         """
-        workflow = db.session.query(Workflow) \
+        workflow = db.session.execute(select(Workflow)).scalars() \
             .filter(Workflow.id == job_id) \
             .first()
         if not workflow:
@@ -597,7 +598,7 @@ class JobView(ReadWriteView):
           200:
             description: Ok
         """
-        workflow = db.session.query(Workflow) \
+        workflow = db.session.execute(select(Workflow)).scalars() \
             .filter(Workflow.id == job_id) \
             .first()
         if not workflow:
@@ -621,7 +622,7 @@ class JobView(ReadWriteView):
           200:
             description: Ok
         """
-        workflow = db.session.query(Workflow)\
+        workflow = db.session.execute(select(Workflow)).scalars()\
             .filter(Workflow.id == job_id)\
             .first()
         if not workflow:
@@ -750,7 +751,7 @@ class JobView(ReadWriteView):
         num = 1
         while True:
             name = f"{workflow_json['name']} - Copy {num}"
-            if db.session.query(exists().where(Workflow.name == name)).scalar():
+            if db.session.execute(select(exists()).scalars().where(Workflow.name == name)).scalar():
                 num += 1
             else:
                 break
@@ -785,7 +786,7 @@ class TaskView(ReadWriteView):
           200:
             description: Ok
         """
-        action = Action.query.filter(Action.id == task_id).first()
+        action = db.session.execute(select(Action)).scalars().filter(Action.id == task_id).first()
         if not action:
             abort(404)
         serialized_workflows = JobSchema().dump(action.workflows, many=True)
@@ -809,11 +810,11 @@ class TaskView(ReadWriteView):
         result = deepcopy(fields_lookup)
 
         custom_fields = (
-            db.session.query(
+            db.session.execute(select(
                 CustomFieldsSchema.field_name,
                 CustomFieldsSchema.field_type,
                 CustomFieldsSchema.field_metadata,
-            )
+            )).scalars()
             .filter(CustomFieldsSchema.table_name == "vulnerability")
             .all()
         )
@@ -849,11 +850,11 @@ class PipelineView(ReadWriteView):
     def _perform_create(self, data, **kwargs):
         jobs_ids = data.pop("jobs_ids", None)
         if jobs_ids is not None:
-            data["jobs"] = Workflow.query.filter(Workflow.id.in_(jobs_ids)).all()
+            data["jobs"] = db.session.execute(select(Workflow)).scalars().filter(Workflow.id.in_(jobs_ids)).all()
 
         workspace_id = data.get("workspace_id", None)
         if workspace_id is not None:
-            ws = db.session.query(Workspace).filter(Workspace.id == workspace_id).first()
+            ws = db.session.execute(select(Workspace)).scalars().filter(Workspace.id == workspace_id).first()
             if ws is not None:
                 data["enabled"] = not ws.pipelines
 
@@ -873,21 +874,21 @@ class PipelineView(ReadWriteView):
         if partial:
             new_ws = data.get("workspace_id", None)
             if new_ws:
-                ws = db.session.query(Workspace).filter(Workspace.id == new_ws).first()
+                ws = db.session.execute(select(Workspace)).scalars().filter(Workspace.id == new_ws).first()
                 if ws is not None:
                     data["enabled"] = not ws.pipelines
 
         jobs_ids = data.pop("jobs_ids", None)
         if jobs_ids is not None:
             db.session.begin_nested()
-            obj.jobs = Workflow.query.filter(Workflow.id.in_(jobs_ids)).all()
+            obj.jobs = db.session.execute(select(Workflow)).scalars().filter(Workflow.id.in_(jobs_ids)).all()
             db.session.add(obj)
             db.session.commit()
         return super()._perform_update(object_id, obj, data, partial)
 
     @staticmethod
     def _get_pipeline(pipeline_id):
-        pipeline = db.session.query(Pipeline) \
+        pipeline = db.session.execute(select(Pipeline)).scalars() \
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
@@ -950,7 +951,7 @@ class PipelineView(ReadWriteView):
         num = 1
         while True:
             name = f"{pipeline_json['name']} - Copy {num}"
-            if db.session.query(exists().where(Pipeline.name == name)).scalar():
+            if db.session.execute(select(exists()).scalars().where(Pipeline.name == name)).scalar():
                 num += 1
             else:
                 break
@@ -977,7 +978,7 @@ class PipelineView(ReadWriteView):
           200:
             description: Ok
         """
-        pipeline = db.session.query(Pipeline) \
+        pipeline = db.session.execute(select(Pipeline)).scalars() \
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
@@ -1026,7 +1027,7 @@ class PipelineView(ReadWriteView):
           200:
             description: Ok
         """
-        pipeline = db.session.query(Pipeline) \
+        pipeline = db.session.execute(select(Pipeline)).scalars() \
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
@@ -1053,7 +1054,7 @@ class PipelineView(ReadWriteView):
           200:
             description: Ok
         """
-        pipeline = db.session.query(Pipeline) \
+        pipeline = db.session.execute(select(Pipeline)).scalars() \
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:

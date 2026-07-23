@@ -1,3 +1,4 @@
+from sqlalchemy import select
 # Standard library imports
 import json
 from copy import deepcopy
@@ -342,7 +343,7 @@ def bulk_create(ws: Workspace,
 
 
 def _update_command(command_id: int, command_data: dict):
-    command = db.session.query(Command).filter(Command.id == command_id)
+    command = db.session.execute(select(Command)).scalars().filter(Command.id == command_id)
     command.update(command_data)
     db.session.commit()
     return command
@@ -1189,7 +1190,7 @@ class BulkCreateView(GenericWorkspacedView):
 
             execution_id = data["execution_id"]
 
-            agent_execution: AgentExecution = AgentExecution.query.filter(
+            agent_execution: AgentExecution = db.session.execute(select(AgentExecution)).scalars().filter(
                 AgentExecution.id == execution_id
             ).one_or_none()
 
@@ -1206,7 +1207,7 @@ class BulkCreateView(GenericWorkspacedView):
                                f"to workspace {agent_execution.workspace.name}")
                 )
                 abort(HTTP_BAD_REQUEST, "Trying to write to the incorrect workspace")
-            command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
+            command = db.session.execute(select(Command)).scalars().filter(Command.id == agent_execution.command.id).one_or_none()
             if command is None:
                 logger.exception(
                     ValueError(f"There is no command with {agent_execution.command.id}")

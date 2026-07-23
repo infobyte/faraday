@@ -1,3 +1,4 @@
+from sqlalchemy import select
 """
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (https://faradaysec.com/)
@@ -55,7 +56,7 @@ class CommentCreateMixing(CreateWorkspacedMixin):
             'vulnerability': VulnerabilityGeneric,
             'comment': Comment
         }
-        obj = db.session.query(model[data['object_type']]).get(
+        obj = db.session.execute(select(model[data['object_type']])).scalars().get(
             data['object_id'])
         workspace = get_workspace(workspace_name)
         if not obj:
@@ -83,7 +84,7 @@ class UniqueCommentView(GenericWorkspacedView,
     schema_class = CommentSchema
 
     def _perform_create(self, data, workspace_name):
-        comment = db.session.query(Comment).filter_by(
+        comment = db.session.execute(select(Comment)).scalars().filter_by(
             text=data['text'],
             object_type=data['object_type'],
             object_id=data['object_id'],

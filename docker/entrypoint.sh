@@ -51,5 +51,10 @@ faraday-manage openapi-swagger --server https://$FQDN
 echo "$(date) Running migrations ..."
 faraday-manage migrate
 
+if [ "$#" -gt 0 ]; then
+    echo "$(date) Executing command: $*"
+    exec "$@"
+fi
+
 echo "$(date) Starting Faraday server ..."
-faraday-server --bind 0.0.0.0
+exec faraday-server --bind 0.0.0.0

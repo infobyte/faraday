@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Exporting vulnerabilities to CSV with the Last Detected column no longer returns a 400. #8460"
+}

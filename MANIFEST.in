@@ -5,3 +5,4 @@ include faraday/config/default.xml
 include faraday/server/default.ini
 include faraday/server/commands/templates/nginx_config.j2
 include faraday/openapi/faraday_swagger.json
+include faraday/whats_new.json

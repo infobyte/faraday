@@ -1,0 +1,16 @@
+:root{
+    --md-primary-fg-color: hsla(195.2,100%,44.1%,1);
+    --md-accent-fg-color: hsla(195.2,100%,44.1%,1);
+}
+
+/* Normalizes doc screenshots that come from different capture sizes so a
+   page doesn't alternate between full-width and noticeably narrower images. */
+.md-typeset img.doc-screenshot {
+    display: block;
+    width: 100%;
+    max-width: 640px;
+    margin: 1.25em auto;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}

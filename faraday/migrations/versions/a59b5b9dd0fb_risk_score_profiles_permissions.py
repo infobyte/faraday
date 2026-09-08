@@ -38,7 +38,7 @@ DELETE = 'delete'
 ADMIN_ROLE = 'admin'
 WORKSPACE_ADMIN_ROLE = 'workspace_admin'
 
-_UNIT_SUBQUERY = f"(SELECT id FROM permissions_unit WHERE name = '{UNIT_RISK_SCORE_PROFILES}')"
+_UNIT_SUBQUERY = f"(SELECT id FROM permissions_unit WHERE name = '{UNIT_RISK_SCORE_PROFILES}')"  # nosec B608
 
 
 def upgrade():

@@ -2525,6 +2525,54 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             {"name": "critical", "severity": "critical", "count": 1},
         ], key=lambda i: (i['count'], i['name'], i['severity']))
 
+    def test_count_filter_by_status_single_value_backwards_compatible(self, test_client, session):
+        # A single `status` value must keep behaving exactly like the
+        # previous `==` filter (col.in_(['x']) is equivalent to col == 'x').
+        statuses = ['open', 'open', 'closed', 'closed', 'closed']
+        for vuln, status in zip(self.objects, statuses):
+            vuln.status = status
+            session.add(vuln)
+        session.commit()
+
+        res = test_client.get(join(self.url(), 'count?group_by=severity&status=open'))
+        assert res.status_code == 200
+        assert res.json['total_count'] == 2
+
+    def test_count_filter_by_status_in_open_and_reopened_excludes_closed_and_risk_accepted(self, test_client, session):
+        statuses = ['open', 're-opened', 'closed', 'risk-accepted']
+        for vuln, status in zip(self.objects, statuses):
+            vuln.status = status
+            session.add(vuln)
+        session.commit()
+
+        # "Not Closed" = status IN (open, re-opened): excludes both closed
+        # and risk-accepted from the accountable backlog.
+        res = test_client.get(join(self.url(), 'count?group_by=severity&status=open&status=re-opened'))
+        assert res.status_code == 200
+        assert res.json['total_count'] == 2
+
+        # Clearing the filter still returns every status, risk-accepted included.
+        res = test_client.get(join(self.url(), 'count?group_by=severity'))
+        assert res.status_code == 200
+        assert res.json['total_count'] == len(self.objects)
+
+    def test_count_filter_by_status_invalid_value_returns_400(self, test_client, session):
+        res = test_client.get(join(self.url(), 'count?group_by=severity&status=bogus'))
+        assert res.status_code == 400
+
+    def test_list_filter_by_status_in(self, test_client, session):
+        statuses = ['open', 're-opened', 'closed', 'risk-accepted']
+        for vuln, status in zip(self.objects, statuses):
+            vuln.status = status
+            session.add(vuln)
+        session.commit()
+
+        # GET /vulns shares the same VulnerabilityFilterSet, so the `status`
+        # IN-filter must work there too, not only on /vulns/count.
+        res = test_client.get(self.url() + '?status=open&status=re-opened')
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 2
+
     def test_count_severity_map(self, test_client, second_workspace, session):
         VulnerabilityGeneric.query.delete()
         session.commit()

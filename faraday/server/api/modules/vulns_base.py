@@ -603,10 +603,18 @@ class VulnerabilityFilterSet(FilterSet):
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
     status_code = StatusCodeFilter(fields.Int())
-    status = Filter(fields.Function(
-        deserialize=lambda val: 'open' if val == 'opened' else val,
-        validate=OneOf(Vulnerability.STATUSES + ['opened'])
-    ))
+    # Accepts one or more repeated `status` query params
+    # (e.g. status=open&status=re-opened) and filters with SQL IN.
+    # A single value keeps working identically to a plain `==` filter
+    # (col.in_(['x']) is equivalent to col == 'x'), so this is backwards
+    # compatible with existing single-value usages of `status`.
+    status = Filter(
+        fields.List(fields.Function(
+            deserialize=lambda val: 'open' if val == 'opened' else val,
+            validate=OneOf(Vulnerability.STATUSES + ['opened'])
+        )),
+        operator=operators.In,
+    )
     hostnames = HostnamesFilter(fields.Str())
     confirmed = Filter(fields.Boolean())
 

@@ -204,8 +204,12 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Field does not support in operator')
 
         if filter_['op'].lower() in ['in', 'not_in']:
-            # in and not_in must be used with Iterable
-            if not isinstance(filter_['val'], Iterable):
+            # in and not_in must be used with a list of values. A bare string
+            # is technically Iterable too (it iterates its characters), so it
+            # must be wrapped explicitly or a single-value filter like
+            # status=in=open would otherwise be validated character by
+            # character ('o', 'p', 'e', 'n', ...) below.
+            if isinstance(filter_['val'], str) or not isinstance(filter_['val'], Iterable):
                 filter_['val'] = [filter_['val']]
 
         try:
@@ -278,7 +282,19 @@ class FlaskRestlessFilterSchema(Schema):
         # we try to deserialize the value, any error means that the value was not valid for the field typ3
         # previous checks were added since postgresql is very strict with operators.
         try:
-            if isinstance(field, fields.String):
+            if filter_['op'].lower() in ['in', 'not_in']:
+                # 'in'/'not_in' always operate on a list (see the isinstance(...,
+                # Iterable) normalization above) — each element must be
+                # validated/coerced individually against the field, not the
+                # list as a whole (str(['open', 're-opened']) would otherwise
+                # collapse it into the single, unusable string
+                # "['open', 're-opened']").
+                if isinstance(field, fields.String):
+                    filter_['val'] = [str(v) for v in filter_['val']]
+                else:
+                    for v in filter_['val']:
+                        field.deserialize(v)
+            elif isinstance(field, fields.String):
                 filter_['val'] = str(filter_['val'])
             else:
                 field.deserialize(filter_['val'])

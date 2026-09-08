@@ -464,4 +464,31 @@ class InitDB:
             command.stamp(alembic_cfg, "head")
             # TODO ADD RETURN TO PREV DIR
         self._create_roles(conn_string)
+        self._create_default_risk_score_profile()
         self._create_initial_notifications_config()
+
+    @staticmethod
+    def _create_default_risk_score_profile():
+        # command.stamp(alembic_cfg, "head") above marks every migration as already applied
+        # without running its code, so 73198eab4b2a_add_risk_score_profile.py's own INSERT
+        # never executes on a fresh install - this is the fresh-install-side mirror of that
+        # seed, the same pattern initdb_roles_and_permissions() already follows for roles/
+        # permissions. Values hardcoded (not imported) so this keeps working even if the
+        # historical defaults in faraday/enrichment/enrichment.py change later.
+        # pylint:disable=import-outside-toplevel
+        from faraday.server.models import db, RiskScoreProfile
+
+        if RiskScoreProfile.query.filter_by(is_system_default=True).first():
+            return
+
+        db.session.add(RiskScoreProfile(
+            name="Faraday Default",
+            description="Default risk score profile shipped by Faraday. Immutable: cannot be edited or deleted.",
+            is_system_default=True,
+            severity_base_critical=93, severity_base_high=76, severity_base_medium=42,
+            severity_base_low=12, severity_base_informational=2,
+            confirmed_multiplier=1.15, cisa_multiplier=1.25, exploit_multiplier=1.15,
+            trending_multiplier=1.07, internet_facing_multiplier=1.20,
+            attack_vector_multiplier=1.15, important_host_multiplier=1.10,
+        ))
+        db.session.commit()

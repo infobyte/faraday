@@ -2373,6 +2373,49 @@ def _return_last_30_days() -> list:
     return last_30_days
 
 
+class RiskScoreProfile(Metadata):
+    """A reusable, named set of risk score calculation values, assignable to workspaces.
+
+    ``creator``/``creator_id`` (from ``Metadata``) serve as the profile's "author" for the
+    authoring/edit-lock rules: only an instance admin or the profile's own author (when they
+    hold the workspace_admin role) may edit/delete it, and only while unused by any workspace.
+    MAX_RISK/MULTIPLIER_CAP/RISK_SEVERITY_THRESHOLDS are NOT part of this model: they remain
+    hardcoded invariants in faraday/enrichment/enrichment.py regardless of the active profile.
+    """
+    __tablename__ = 'risk_score_profile'
+
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+    description = BlankColumn(Text)
+    is_system_default = Column(Boolean, nullable=False, default=False)
+
+    severity_base_critical = Column(Float, nullable=False)
+    severity_base_high = Column(Float, nullable=False)
+    severity_base_medium = Column(Float, nullable=False)
+    severity_base_low = Column(Float, nullable=False)
+    severity_base_informational = Column(Float, nullable=False)
+
+    confirmed_multiplier = Column(Float, nullable=False)
+    cisa_multiplier = Column(Float, nullable=False)
+    exploit_multiplier = Column(Float, nullable=False)
+    trending_multiplier = Column(Float, nullable=False)
+    internet_facing_multiplier = Column(Float, nullable=False)
+    attack_vector_multiplier = Column(Float, nullable=False)
+    important_host_multiplier = Column(Float, nullable=False)
+
+    def severity_base(self) -> dict:
+        return {
+            'critical': self.severity_base_critical,
+            'high': self.severity_base_high,
+            'medium': self.severity_base_medium,
+            'low': self.severity_base_low,
+            'informational': self.severity_base_informational,
+        }
+
+    def __repr__(self):
+        return f"<RiskScoreProfile: {self.name}>"
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
 
@@ -2404,6 +2447,9 @@ class Workspace(Metadata):
     group_by = Column(Enum(*GROUP_BY, name='group_by'), nullable=True)
     group_algorithm = Column(Enum(*GROUP_ALGORITHM, name='group_algorithm'), nullable=True)
     group_threshold = Column(Integer, nullable=True)
+
+    risk_score_profile_id = Column(Integer, ForeignKey('risk_score_profile.id'), index=True, nullable=False)
+    risk_score_profile = relationship('RiskScoreProfile', foreign_keys=[risk_score_profile_id])
 
     # Stats
 
@@ -2788,6 +2834,20 @@ class User(db.Model, UserMixin):
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
     preferences = Column(JSONType, nullable=True, default={})
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
+
+    # Personal default risk score profile (Admin/Workspace Administrator only). Auto-assigned
+    # to workspaces this user creates; falls back to the system default profile when unset.
+    # use_alter=True breaks the circular FK dependency between this table and
+    # risk_score_profile (whose creator_id/update_user_id point back at faraday_user).
+    default_risk_score_profile_id = Column(
+        Integer,
+        ForeignKey(
+            'risk_score_profile.id', ondelete='SET NULL', use_alter=True,
+            name='faraday_user_default_risk_score_profile_id_fkey',
+        ),
+        nullable=True,
+    )
+    default_risk_score_profile = relationship('RiskScoreProfile', foreign_keys=[default_risk_score_profile_id])
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
     user_type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default=LOCAL_TYPE)

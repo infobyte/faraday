@@ -1,5 +1,5 @@
 {
-  "changelogUrl": "https://.faradaysec.com/RELEASE",
+  "changelogUrl": "https://docs.faradaysec.com/RELEASE",
   "versions": [
     {
       "id": "5.24",
@@ -15,7 +15,7 @@
           "link": {
             "type": "doc",
             "label": "See documentation",
-            "url": "https://.faradaysec.com/Shortcuts/"
+            "url": "https://docs.faradaysec.com/Shortcuts/"
           }
         },
         {
@@ -101,7 +101,7 @@
           "link": {
             "type": "doc",
             "label": "See documentation",
-            "url": "https://.faradaysec.com/Update/#recalculate-risk-scores-v52"
+            "url": "https://docs.faradaysec.com/Update/#recalculate-risk-scores-v52"
           }
         },
         {
@@ -113,7 +113,7 @@
           "link": {
             "type": "doc",
             "label": "See documentation",
-            "url": "http://docs.faradaysec.com/Custom-Attributes/"
+            "url": "https://docs.faradaysec.com/Custom-Attributes/"
           }
         },
         {

@@ -2539,7 +2539,10 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.json['total_count'] == 2
 
     def test_count_filter_by_status_in_open_and_reopened_excludes_closed_and_risk_accepted(self, test_client, session):
-        statuses = ['open', 're-opened', 'closed', 'risk-accepted']
+        # One status per object in self.objects (OBJECT_COUNT == 5): leaving
+        # one uncovered would fall back to the model's "open" default and
+        # inflate the "open"/"re-opened" count below.
+        statuses = ['open', 're-opened', 'closed', 'risk-accepted', 'closed']
         for vuln, status in zip(self.objects, statuses):
             vuln.status = status
             session.add(vuln)
@@ -2561,7 +2564,10 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert res.status_code == 400
 
     def test_list_filter_by_status_in(self, test_client, session):
-        statuses = ['open', 're-opened', 'closed', 'risk-accepted']
+        # One status per object in self.objects (OBJECT_COUNT == 5): leaving
+        # one uncovered would fall back to the model's "open" default and
+        # inflate the "open"/"re-opened" count below.
+        statuses = ['open', 're-opened', 'closed', 'risk-accepted', 'closed']
         for vuln, status in zip(self.objects, statuses):
             vuln.status = status
             session.add(vuln)

@@ -388,13 +388,13 @@ class TestFilters:
         )
         assert result[0]['val'] == ['Vuln A', 'Vuln B']
 
-    def test_in_operator_single_value_backwards_compatible(self):
-        # A single value (auto-wrapped into a list, see the Iterable check
-        # above `_validate_filter_types`) must keep working as before.
-        result = FlaskRestlessVulnerabilityFilterSchema(many=True).load(
-            [{'name': 'status', 'op': 'in', 'val': 'open'}]
-        )
-        assert result[0]['val'] == ['open']
+    def test_in_operator_rejects_scalar_value(self):
+        # The front always sends a list for in/not_in; a scalar is now
+        # rejected outright instead of being silently wrapped into a list.
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema(many=True).load(
+                [{'name': 'status', 'op': 'in', 'val': 'open'}]
+            )
 
 
 class TestSensitiveGroupByAndOrderBy:

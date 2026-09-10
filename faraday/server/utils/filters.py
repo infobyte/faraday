@@ -8,7 +8,6 @@ import datetime
 import logging
 import numbers
 import typing
-from collections.abc import Iterable
 from distutils.util import strtobool
 
 # Related third party imports
@@ -204,13 +203,12 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Field does not support in operator')
 
         if filter_['op'].lower() in ['in', 'not_in']:
-            # in and not_in must be used with a list of values. A bare string
-            # is technically Iterable too (it iterates its characters), so it
-            # must be wrapped explicitly or a single-value filter like
-            # status=in=open would otherwise be validated character by
-            # character ('o', 'p', 'e', 'n', ...) below.
-            if isinstance(filter_['val'], str) or not isinstance(filter_['val'], Iterable):
-                filter_['val'] = [filter_['val']]
+            # in/not_in must be used with a list of values; the front always
+            # sends one for these operators. Fail fast instead of silently
+            # wrapping a scalar, so a caller that doesn't respect this
+            # contract surfaces immediately instead of being tolerated forever.
+            if not isinstance(filter_['val'], list):
+                raise ValidationError("'in'/'not_in' operators require a list of values")
 
         try:
             field = converter.column2field(column)
@@ -279,21 +277,20 @@ class FlaskRestlessFilterSchema(Schema):
             except (AttributeError, ValueError) as e:
                 raise ValidationError('Can\'t compare Boolean field against a'
                                       ' non boolean value. Please use True or False') from e
-        # we try to deserialize the value, any error means that the value was not valid for the field typ3
+        # we try to deserialize the value, any error means that the value was not valid for the field type
         # previous checks were added since postgresql is very strict with operators.
         try:
-            if filter_['op'].lower() in ['in', 'not_in']:
-                # 'in'/'not_in' always operate on a list (see the isinstance(...,
-                # Iterable) normalization above) — each element must be
-                # validated/coerced individually against the field, not the
-                # list as a whole (str(['open', 're-opened']) would otherwise
-                # collapse it into the single, unusable string
-                # "['open', 're-opened']").
+            # Only in/not_in produce a list (enforced above), so the value's
+            # own shape already tells us which case we're in — no need to
+            # re-check filter_['op'] here. Each element must be
+            # validated/coerced individually against the field, not the list
+            # as a whole (str(['open', 're-opened']) would otherwise collapse
+            # it into the single, unusable string "['open', 're-opened']").
+            if isinstance(filter_['val'], list):
                 if isinstance(field, fields.String):
                     filter_['val'] = [str(v) for v in filter_['val']]
                 else:
-                    for v in filter_['val']:
-                        field.deserialize(v)
+                    fields.List(field).deserialize(filter_['val'])
             elif isinstance(field, fields.String):
                 filter_['val'] = str(filter_['val'])
             else:

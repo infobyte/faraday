@@ -50,6 +50,20 @@ def _is_sensitive_field_name(name: str) -> bool:
     return False
 
 
+def _reject_sensitive_field_name(name: str):
+    """Validator for the 'field' entries of group_by/order_by.
+
+    Those are a separate branch of FilterSchema: they never reach
+    _validate_filter_types, and they key the field name under 'field' instead
+    of 'name', so neither the checks in FlaskRestlessFilterSchema nor
+    _reject_sensitive_filter apply to them. Without this, search() resolves the
+    name with a bare getattr() and group_by dumps the column value into the
+    response.
+    """
+    if _is_sensitive_field_name(name):
+        raise ValidationError('Grouping or ordering by a sensitive field is not allowed')
+
+
 def _reject_sensitive_filter(val):
     """Raise ValidationError if val (or any nested filter within it) references a sensitive field."""
     if isinstance(val, dict):
@@ -419,11 +433,11 @@ class FlaskRestlessOperator(Schema):
 
 
 class FlaskRestlessGroupFieldSchema(Schema):
-    field = fields.String(required=True)
+    field = fields.String(required=True, validate=_reject_sensitive_field_name)
 
 
 class FlaskRestlessOrderFieldSchema(Schema):
-    field = fields.String(required=True)
+    field = fields.String(required=True, validate=_reject_sensitive_field_name)
     direction = fields.String(validate=validate.OneOf(["asc", "desc"]), required=False)
 
 

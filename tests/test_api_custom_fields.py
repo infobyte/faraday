@@ -112,8 +112,52 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkDeleteTestsMixin):
         updated_vuln = session.query(Vulnerability).filter_by(id=vuln.id).one()
         assert 'prueba' not in (updated_vuln.custom_fields or {})
 
+    def test_delete_clears_custom_field_values_from_templates_sharing_the_definition(self, session, test_client):
+        """Vulnerability and vulnerability_template share table_name='vulnerability' definitions
+        but store values in their own physical column, so deleting the CA must clear both (issue #6369)."""
+        cf = CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name='prueba',
+            field_type='str',
+            field_order=1,
+            field_display_name='Prueba',
+        )
+        template = VulnerabilityTemplateFactory.create(custom_fields={'prueba': 'hola'})
+        session.add_all([cf, template])
+        session.commit()
+
+        res = test_client.delete(self.url(cf.id))
+        assert res.status_code == 204
+
+        session.expire(template)
+        updated_template = session.query(VulnerabilityTemplate).filter_by(id=template.id).one()
+        assert 'prueba' not in (updated_template.custom_fields or {})
+
+    def test_bulk_delete_clears_custom_field_values_from_templates_sharing_the_definition(
+            self, session, test_client
+    ):
+        """Bulk-delete variant of the previous test (issue #6369)."""
+        cf = CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name='prueba',
+            field_type='str',
+            field_order=1,
+            field_display_name='Prueba',
+        )
+        template = VulnerabilityTemplateFactory.create(custom_fields={'prueba': 'hola'})
+        session.add_all([cf, template])
+        session.commit()
+
+        res = test_client.delete(self.url(), json={'ids': [cf.id]})
+        assert res.status_code == 200
+
+        session.expire(template)
+        updated_template = session.query(VulnerabilityTemplate).filter_by(id=template.id).one()
+        assert 'prueba' not in (updated_template.custom_fields or {})
+
     def test_delete_clears_custom_field_values_from_vulnerability_templates(self, session, test_client):
-        """Deleting a CA must wipe its values from all vulnerability templates (issue #6369)."""
+        """A CA defined directly with table_name='vulnerability_template' (not resolved by any
+        current serializer, but still a valid row) must also have its own table cleared (issue #6369)."""
         cf = CustomFieldsSchemaFactory.create(
             table_name='vulnerability_template',
             field_name='prueba',
@@ -133,7 +177,7 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert 'prueba' not in (updated_template.custom_fields or {})
 
     def test_bulk_delete_clears_custom_field_values_from_vulnerability_templates(self, session, test_client):
-        """Bulk-deleting CAs must wipe their values from all vulnerability templates (issue #6369)."""
+        """Bulk-delete variant of the previous test (issue #6369)."""
         cf = CustomFieldsSchemaFactory.create(
             table_name='vulnerability_template',
             field_name='prueba',

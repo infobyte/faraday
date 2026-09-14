@@ -47,6 +47,16 @@ class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
 
+    # Vulnerability and VulnerabilityTemplate both resolve their custom field
+    # definitions with table_name='vulnerability' (see FaradayCustomField usage
+    # in vulns_base.py and vulnerability_template.py), but each stores its own
+    # values in its own physical custom_fields column. So a schema defined with
+    # table_name='vulnerability' must be cleared from both physical tables.
+    _PHYSICAL_TABLES_BY_SCHEMA_TABLE_NAME = {
+        'vulnerability': ('vulnerability', 'vulnerability_template'),
+        'vulnerability_template': ('vulnerability_template',),
+    }
+
     @staticmethod
     def _check_post_only_data(data):
         for read_only_key in ['field_name', 'table_name', 'field_type']:
@@ -60,19 +70,17 @@ class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
         data = self._check_post_only_data(data)
         return super()._update_object(obj, data)
 
-    @staticmethod
-    def _clear_custom_field_values(table_name: str, field_name: str):
-        """Remove field_name key from custom_fields JSON in the affected table."""
-        allowed_tables = {'vulnerability', 'vulnerability_template'}
-        if table_name not in allowed_tables:
-            return
-        db.session.execute(
-            text(
-                f"UPDATE {table_name} SET custom_fields = custom_fields - :key"  # noqa: S608 # nosec B608
-                f" WHERE custom_fields ? :key"
-            ),
-            {'key': field_name},
-        )
+    @classmethod
+    def _clear_custom_field_values(cls, table_name: str, field_name: str):
+        """Remove field_name key from custom_fields JSON in every physical table sharing this field definition."""
+        for physical_table in cls._PHYSICAL_TABLES_BY_SCHEMA_TABLE_NAME.get(table_name, ()):
+            db.session.execute(
+                text(
+                    f"UPDATE {physical_table} SET custom_fields = custom_fields - :key"  # noqa: S608 # nosec B608
+                    f" WHERE custom_fields ? :key"
+                ),
+                {'key': field_name},
+            )
 
     def _perform_delete(self, obj, workspace_name=None):
         self._clear_custom_field_values(obj.table_name, obj.field_name)

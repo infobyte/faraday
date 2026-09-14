@@ -16,6 +16,7 @@ import marshmallow_sqlalchemy
 from dateutil.parser import parse
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
+from sqlalchemy.orm import ColumnProperty
 
 # Local application imports
 from faraday.server.models import (
@@ -37,6 +38,31 @@ VALID_OPERATORS = set(OPERATORS.keys()) - {'desc', 'asc'}
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 logger = logging.getLogger(__name__)
+
+SENSITIVE_FILTER_FIELDS = frozenset({'password', 'token', '_otp_secret', 'fs_uniquifier', 'session_id', 'access_token'})
+
+
+def _is_sensitive_field_name(name: str) -> bool:
+    if name in SENSITIVE_FILTER_FIELDS:
+        return True
+    if '__' in name:
+        _, field = name.split('__', 1)
+        return field in SENSITIVE_FILTER_FIELDS
+    return False
+
+
+def _reject_sensitive_filter(val):
+    """Raise ValidationError if val (or any nested filter within it) references a sensitive field."""
+    if isinstance(val, dict):
+        if _is_sensitive_field_name(val.get('name', '')):
+            raise ValidationError('Filter on sensitive field is not allowed')
+        _reject_sensitive_filter(val.get('val'))
+        for key in ('and', 'or'):
+            if key in val:
+                _reject_sensitive_filter(val[key])
+    elif isinstance(val, list):
+        for item in val:
+            _reject_sensitive_filter(item)
 
 
 def generate_datetime_filter(filter_: dict = "") -> typing.List:
@@ -81,7 +107,8 @@ class FlaskRestlessFilterSchema(Schema):
     valid_relationship = {
         'host': Host,
         'services': Service,
-        'workspaces': Workspace
+        'workspace': Workspace,
+        'creator': User,
     }
 
     def load(
@@ -107,12 +134,19 @@ class FlaskRestlessFilterSchema(Schema):
     def _model_class(self):
         raise NotImplementedError
 
+    def _model_sensitive_fields(self) -> frozenset:
+        return SENSITIVE_FILTER_FIELDS
+
     def _validate_filter_types(self, filter_):
         """
             Compares the filter_ list against the model field and the value to be compared.
             PostgreSQL is very strict with types.
             Return a list of filters (filters are dicts)
         """
+
+        if filter_['name'] in self._model_sensitive_fields():
+            raise ValidationError('Filter on sensitive field is not allowed')
+        _reject_sensitive_filter(filter_.get('val'))
 
         if '->' in filter_['name']:
             key = filter_['name'].split('->')[1]
@@ -139,9 +173,16 @@ class FlaskRestlessFilterSchema(Schema):
         if '__' in column_name:
             # relation attribute search, example service__port:80
             model_name, column_name = column_name.split('__')
+            # Check if it's a JSON/plain column on the model (not a relationship)
+            model_class = self._model_class()
+            model_attr = getattr(model_class, model_name, None)
+            if model_attr is not None and hasattr(model_attr, 'property') and isinstance(model_attr.property, ColumnProperty):
+                return [filter_]
             model = self.valid_relationship.get(model_name, None)
             if not model:
                 raise ValidationError('Invalid Relationship')
+            if model is User and column_name in SENSITIVE_FILTER_FIELDS:
+                raise ValidationError('Filter on sensitive field is not allowed')
             column = getattr(model, column_name)
         else:
             try:
@@ -278,6 +319,9 @@ class FlaskRestlessUserFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return User
 
+    def _model_sensitive_fields(self) -> frozenset:
+        return SENSITIVE_FILTER_FIELDS
+
 
 class FlaskRestlessServiceFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
@@ -304,6 +348,9 @@ class FlaskRestlessAgentSchedulerSchema(FlaskRestlessFilterSchema):
 class FlaskRestlessCredentialFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return Credential
+
+    def _model_sensitive_fields(self) -> frozenset:
+        return SENSITIVE_FILTER_FIELDS - {'password'}
 
 
 class FlaskRestlessOperator(Schema):

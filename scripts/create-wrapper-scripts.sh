@@ -29,6 +29,7 @@ ENTRY_POINTS=(
     "faraday-manage"
     "faraday-worker"
     "faraday-worker-gevent"
+    "faraday-beat"
     "faraday-start-all"
 )
 

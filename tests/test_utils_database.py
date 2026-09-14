@@ -7,15 +7,17 @@ See the file 'doc/LICENSE' for the license information
 
 import pytest
 
-from faraday.server.utils.database import get_unique_fields
+from faraday.server.utils.database import get_conflict_object, get_unique_fields
 from faraday.server.models import (
     License,
     Service,
     Host,
+    User,
     Vulnerability,
     Workspace,
     vulnerability_uniqueness
 )
+from tests import factories
 
 UNIQUE_FIELDS = {
     License: ['product', 'start_date', 'end_date'],
@@ -69,3 +71,25 @@ def test_unique_fields_workspace(obj_class, expected_unique_fields, session):
     unique_constraints = get_unique_fields(session, object_)
     for unique_constraint in unique_constraints:
         assert unique_constraint == expected_unique_fields
+
+
+def test_get_conflict_object_checks_every_unique_constraint(session):
+    """User has several single-column unique constraints (email,
+    fs_uniquifier, session_id, username). The conflict must be found even
+    when the violated constraint is not the first one reflected."""
+    existing = factories.UserFactory.create(username="taken_name")
+    session.commit()
+
+    duplicate = User(
+        username="taken_name",
+        email="not_taken@faradaysec.com",
+        fs_uniquifier="ffffffffffffffffffffffffffffffff",
+    )
+    data = {
+        'username': duplicate.username,
+        'email': duplicate.email,
+        'fs_uniquifier': duplicate.fs_uniquifier,
+    }
+    conflict_obj = get_conflict_object(session, duplicate, data)
+    assert conflict_obj is not None
+    assert conflict_obj.id == existing.id

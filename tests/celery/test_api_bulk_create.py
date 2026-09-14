@@ -80,6 +80,7 @@ def new_empty_command(workspace: Workspace):
     command.import_source = 'report'
     command.tool = "In progress"
     command.command = "In progress"
+    db.session.add(command)
     db.session.commit()
     return command
 

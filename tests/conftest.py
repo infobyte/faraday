@@ -17,7 +17,7 @@ from flask.testing import FlaskClient
 from flask_principal import Identity, identity_changed
 from pathlib import Path
 from pytest_factoryboy import register
-from sqlalchemy import event
+from sqlalchemy import text
 
 import psycopg2
 from psycopg2.sql import SQL
@@ -63,10 +63,6 @@ class CustomClient(FlaskClient):
                 ('Content-Type', 'application/json'),
             ]
 
-        # Reset queries to make the log_queries_count
-        from flask import _app_ctx_stack
-        _app_ctx_stack.top.sqlalchemy_queries = []
-
         ret = super().open(*args, **kwargs)
         # Now set in flask 1.0
         # if ret.headers.get('content-type') == 'application/json':
@@ -78,7 +74,7 @@ class CustomClient(FlaskClient):
 
     @property
     def cookies(self):
-        return self.cookie_jar
+        return self._cookies.values()
 
 
 def pytest_addoption(parser):
@@ -166,24 +162,41 @@ def database(app, request):
 
     db.app = app
     db.create_all()
-    db.engine.execute("INSERT INTO faraday_role(name, weight, custom) "
-                      "VALUES ('admin', 10, false),('asset_owner', 20, false),('pentester', 30, false),('client', 40, false);"
-                      )
+    with db.engine.begin() as conn:
+        conn.execute(text(
+            "INSERT INTO faraday_role(name, weight, custom) "
+            "VALUES ('admin', 10, false),('asset_owner', 20, false),"
+            "('pentester', 30, false),('client', 40, false),"
+            "('workspace_admin', 15, false);"
+        ))
 
     request.addfinalizer(teardown)
     return db
 
 
+def _swap_app_engine(app, connection):
+    """Replace Flask-SQLAlchemy's per-app engine with a Connection so that
+    ``db.session.get_bind()`` (which routes via ``db.engines[None]``) returns
+    the test-owned connection. Returns the original engine for restoration."""
+    engines = db._app_engines[app]
+    original = engines[None]
+    engines[None] = connection
+    db.session.remove()
+    return original
+
+
+def _restore_app_engine(app, original_engine):
+    db.session.remove()
+    db._app_engines[app][None] = original_engine
+
+
 @pytest.fixture(scope='function')
-def fake_session(database, request):
+def fake_session(app, database, request):
     connection = database.engine.connect()
     transaction = connection.begin()
 
-    options = {"bind": connection, 'binds': {}}
-    session = db.create_scoped_session(options=options)
-
-    database.session = session
-    db.session = session
+    original_engine = _swap_app_engine(app, connection)
+    session = db.session
 
     for factory in enabled_factories:
         factory._meta.sqlalchemy_session = session
@@ -193,44 +206,31 @@ def fake_session(database, request):
         # Session above (including calls to commit())
         # is rolled back.
         # be careful with this!!!!!
+        db.session.remove()
         transaction.rollback()
         connection.close()
-        session.remove()
+        _restore_app_engine(app, original_engine)
 
     request.addfinalizer(teardown)
     return session
 
 
 @pytest.fixture(scope='function')
-def session(database, request):
-    """Use this fixture if the function being tested does a session
-    rollback.
+def session(app, database, request):
+    """Per-test session bound to an outer SAVEPOINT.
 
-    See http://docs.sqlalchemy.org/en/latest/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
-    for further information
+    Test-side ``session.commit()`` calls are translated into SAVEPOINT releases
+    (via ``join_transaction_mode="create_savepoint"`` configured on the db
+    instance), so the outer rollback in teardown undoes everything regardless
+    of intermediate commits.
+
+    See https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
     """
     connection = database.engine.connect()
     transaction = connection.begin()
 
-    options = {"bind": connection, 'binds': {}}
-    session = db.create_scoped_session(options=options)
-
-    # start the session in a SAVEPOINT...
-    session.begin_nested()
-
-    # then each time that SAVEPOINT ends, reopen it
-    @event.listens_for(session, "after_transaction_end")
-    def restart_savepoint(session, transaction):
-        if transaction.nested and not transaction._parent.nested:
-            # ensure that state is expired the way
-            # session.commit() at the top level normally does
-            # (optional step)
-            session.expire_all()
-
-            session.begin_nested()
-
-    database.session = session
-    db.session = session
+    original_engine = _swap_app_engine(app, connection)
+    session = db.session
 
     for factory in enabled_factories:
         factory._meta.sqlalchemy_session = session
@@ -240,9 +240,10 @@ def session(database, request):
         # Session above (including calls to commit())
         # is rolled back.
         # be careful with this!!!!!
+        db.session.remove()
         transaction.rollback()
         connection.close()
-        session.remove()
+        _restore_app_engine(app, original_engine)
 
     request.addfinalizer(teardown)
     return session
@@ -293,12 +294,18 @@ def host_with_hostnames(host, hostname_factory):
 
 def login_as(test_client, user):
     with test_client.session_transaction() as sess:
-        # Without this line the test breaks. Taken from
-        # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
         assert user.id is not None
-        sess['_user_id'] = user.fs_uniquifier  # TODO use public flask_login functions
+        sess['_user_id'] = user.fs_uniquifier
+        sess['_fresh'] = True
         identity_changed.send(test_client.application,
                               identity=Identity(user.id))
+    # Clear any cached current_user from the outer app context so the next
+    # request loads from the session we just populated, which forces
+    # flask-security's _user_loader to run and set `fs_authn_via=session`
+    # (required by @auth_required endpoints like /change).
+    from flask import g
+    if hasattr(g, '_login_user'):
+        del g._login_user
 
 
 @pytest.fixture
@@ -316,8 +323,21 @@ def ignore_nplusone(app):
 
 
 @pytest.fixture(autouse=True)
+def clear_flask_login_state():
+    """Flask-Login 0.6.x caches the current user in g._login_user (app-context scope).
+    The conftest's app context is session-scoped, so this cache leaks between tests.
+    After each test's session teardown, the cached user becomes detached, causing
+    DetachedInstanceError in the next test's login_as() → identity_changed signal.
+    Clearing it before each test prevents the leak."""
+    from flask import g
+    if hasattr(g, '_login_user'):
+        del g._login_user
+    yield
+
+
+@pytest.fixture(autouse=True)
 def skip_by_sql_dialect(app, request):
-    dialect = db.session.bind.dialect.name
+    dialect = db.engine.dialect.name
     if request.node.get_closest_marker('skip_sql_dialect'):
         if request.node.get_closest_marker('skip_sql_dialect').args[0] == dialect:
             pytest.skip(f'Skipped dialect is {dialect}')
@@ -329,15 +349,39 @@ def csrf_token(logged_user, test_client):
     return session_response.json.get('csrf_token')
 
 
+def _parse_pg_host(db_host: str) -> tuple[str, int | None]:
+    """
+    Accepts either "hostname" or "hostname:port" and returns (host, port).
+
+    This is useful when Postgres is exposed from docker with a random host port.
+    """
+    if not db_host:
+        return db_host, None
+    host = db_host
+    port = None
+    if ':' in db_host:
+        maybe_host, maybe_port = db_host.rsplit(':', 1)
+        try:
+            port = int(maybe_port)
+            host = maybe_host
+        except ValueError:
+            # Keep original db_host if it doesn't look like host:port
+            host = db_host
+            port = None
+    return host, port
+
+
 def get_cursor(db_user: str, db_password: str, db_host: str):
     """
     Gets a psycopg2 cursor for the parent Database
     """
+    host, port = _parse_pg_host(db_host)
     conn = psycopg2.connect(
         dbname="postgres",
         user=db_user,
         password=db_password,
-        host=db_host
+        host=host,
+        port=port,
     )
 
     conn.set_isolation_level(0)

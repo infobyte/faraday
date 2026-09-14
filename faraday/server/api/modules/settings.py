@@ -31,17 +31,16 @@ class SettingsAPIView(GenericView):
     def get(self, **kwargs):
         """
         ---
-        get:
-          tags: ["settings"]
-          summary: Retrieves settings of {route_base}
-          responses:
-            200:
-              description: Ok
-              content:
-                application/json:
-                  schema: {schema_class}
-            403:
-              description: Admin user required
+        tags: ["settings"]
+        summary: Retrieves settings of {route_base}
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema: {schema_class}
+          403:
+            description: Admin user required
         """
         settings = get_settings(self.route_base)
         return self._dump(settings.value, kwargs)
@@ -49,22 +48,21 @@ class SettingsAPIView(GenericView):
     def patch(self, **kwargs):
         """
         ---
-        patch:
-          tags: ["settings"]
-          summary: Creates/Updates settings of {route_base}
-          requestBody:
-            required: true
+        tags: ["settings"]
+        summary: Creates/Updates settings of {route_base}
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema: {schema_class}
+        responses:
+          200:
+            description: Created
             content:
               application/json:
                 schema: {schema_class}
-          responses:
-            200:
-              description: Created
-              content:
-                application/json:
-                  schema: {schema_class}
-            403:
-              description: Admin user required
+          403:
+            description: Admin user required
         """
         context = {'updating': False}
 

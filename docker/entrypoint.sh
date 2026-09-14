@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
+# A command given to the container replaces the default server startup, so that
+# `command:` entries in docker-compose.yaml (workers, beat, faraday-manage) run
+# what they ask for. Database bootstrap stays the faraday-server container's
+# job: the others share its FARADAY_HOME volume and wait for it to be healthy.
+if [ "$#" -gt 0 ]; then
+    echo "$(date) Starting $*"
+    exec "$@"
+fi
+
 if [ ! -f "$FARADAY_HOME/.faraday/config/server.ini" ]; then
     if [ -z "$PGSQL_USER" ] || [ -z "$PGSQL_PASSWD" ] || [ -z "$PGSQL_HOST" ] || [ -z "$PGSQL_DBNAME" ] ; then
         echo "$(date) Missing database configuration..."
@@ -52,4 +61,4 @@ echo "$(date) Running migrations ..."
 faraday-manage migrate
 
 echo "$(date) Starting Faraday server ..."
-faraday-server --bind 0.0.0.0
+exec faraday-server --bind 0.0.0.0

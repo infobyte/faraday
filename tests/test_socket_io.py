@@ -90,11 +90,13 @@ class TestSockets:
             "executors": []
         }
         client.emit("join_agent", message, namespace='/dispatcher')
+        session.expire_all()
         agent = Agent.query.one()
         assert agent.is_online
 
         client.emit("leave_agent", namespace='/dispatcher')
         assert client.is_connected() is False
+        session.expire_all()
         agent = Agent.query.one()
         assert not agent.is_online
 

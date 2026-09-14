@@ -7,6 +7,7 @@ Create Date: 2023-09-25 18:19:45.271406+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '34468fcfd92e'
@@ -41,7 +42,7 @@ def downgrade():
     op.create_foreign_key('executive_report_workspace_id_fkey', 'executive_report', 'workspace', ['workspace_id'], ['id'])
     op.create_index('ix_executive_report_workspace_id', 'executive_report', ['workspace_id'], unique=False)
     conn = op.get_bind()
-    res = conn.execute("SELECT DISTINCT executive_report_id, workspace_id from executive_report_workspace_table").fetchall()
+    res = conn.execute(text("SELECT DISTINCT executive_report_id, workspace_id from executive_report_workspace_table")).fetchall()
     for r in res:
         conn.execute(sa.text("UPDATE executive_report SET workspace_id = :workspace_id WHERE id= :report_id"), **{"report_id": r[0], "workspace_id": r[1]})
     op.alter_column('executive_report', 'workspace_id', nullable=False)

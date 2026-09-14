@@ -25,7 +25,7 @@ def upgrade():
     user_table = sa.Table('faraday_user', sa.MetaData(), sa.Column('id', sa.Integer, primary_key=True),
                           sa.Column('fs_uniquifier', sa.String))
     conn = op.get_bind()
-    for row in conn.execute(sa.select([user_table.c.id])):
+    for row in conn.execute(sa.select(user_table.c.id)):
         conn.execute(user_table.update().values(fs_uniquifier=uuid.uuid4().hex).where(user_table.c.id == row['id']))
 
     # finally - set nullable to false

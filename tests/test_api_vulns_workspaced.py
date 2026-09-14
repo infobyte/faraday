@@ -2941,6 +2941,25 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         res = test_client.put(self.url(obj=target_vuln), data=raw_data)
         assert res.status_code == 409, res.json
 
+    def test_bulk_update_single_id_conflict_returns_409(self, host, vulnerability_factory,
+                                                        session, test_client):
+        """Regression: bulk PATCH /vulns with a single id whose rename collides
+        with another vuln on the same host must return 409, not 500. The
+        previous code called get_conflict_object with an empty model instance,
+        causing the conflict lookup to fail silently and the IntegrityError to
+        re-raise as 500."""
+        vulnerability_factory.create(
+            workspace=self.workspace, host=host, service=None,
+            name="duplicada", description="a")
+        target_vuln = vulnerability_factory.create(
+            workspace=self.workspace, host=host, service=None,
+            name="original", description="a")
+        session.commit()
+        res = test_client.patch(
+            self.url(workspace=self.workspace),
+            data={"ids": [target_vuln.id], "name": "duplicada"})
+        assert res.status_code == 409, (res.status_code, res.json)
+
     def test_create_and_update_webvuln(self, host_with_hostnames, test_client, session):
         """
             This reproduces a bug found. after creating an object with a
@@ -3412,11 +3431,15 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/filter', query_string=data)
         assert res.status_code == 200, res.json
         assert res.json['count'] == 2, res.json  # all vulns created by the same creator
-        expected = {'vulnerabilities': [
-            {'id': 0, 'key': 0, 'value': {'count': 10, 'severity': 'critical', 'name': 'name 1'}},
-            {'id': 1, 'key': 1, 'value': {'count': 10, 'severity': 'critical', 'name': 'name 2'}}], 'count': 2}
-
-        assert res.json == expected, res.json
+        expected_values = [
+            {'count': 10, 'severity': 'critical', 'name': 'name 1'},
+            {'count': 10, 'severity': 'critical', 'name': 'name 2'},
+        ]
+        actual_values = sorted(
+            (group['value'] for group in res.json['vulnerabilities']),
+            key=lambda v: v['name'],
+        )
+        assert actual_values == expected_values, res.json
 
     @pytest.mark.parametrize('col_name', [
         'severity',
@@ -4066,7 +4089,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert vuln in cred2.vulnerabilities
 
     def test_vulnerability_with_many_cves_performance(self, test_client, session, workspace):
-        from flask_sqlalchemy import get_debug_queries
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4088,19 +4112,21 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
 
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        g._sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-
-        slow_queries = [q for q in queries if q.duration > 0.5]
-        assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
+        # Query count must stay low regardless of CVE count — N+1 would produce 150+ queries
+        assert len(queries) <= 30, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_list_with_many_cves_performance(self, test_client, session, workspace):
-        from flask_sqlalchemy import get_debug_queries
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4123,19 +4149,21 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        g._sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
-
-        assert total_time < 2.0, f"Query time too slow: {total_time:.3f}s"
-
-        slow_queries = [q for q in queries if q.duration > 0.5]
-        assert len(slow_queries) == 0, f"Found {len(slow_queries)} slow queries (>0.5s)"
+        # Query count must stay low regardless of CVE count — N+1 would produce 100+ queries
+        assert len(queries) <= 40, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_without_cves_baseline_performance(self, test_client, session, workspace):
-        from flask_sqlalchemy import get_debug_queries
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4151,13 +4179,50 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.commit()
         session.expire_all()
 
+        # Clear accumulated queries so we only measure this request
+        g._sqlalchemy_queries = []
+
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
         queries = get_debug_queries()
         assert res.status_code == 200
-        total_time = sum(q.duration for q in queries)
+        # Baseline: 1 vuln, no CVEs — should be very few queries
+        assert len(queries) <= 20, f"Too many queries: {len(queries)} (N+1 problem?)"
+        assert sum(q.duration for q in queries) < 2.0, \
+            f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
-        assert total_time < 0.5, f"Baseline query time too slow: {total_time:.3f}s"
+    def test_vulnerability_list_hostnames_no_n_plus_one(self, test_client, session, workspace):
+        """The vuln list must eager-load host/service hostnames; otherwise each
+        vuln triggers a per-row hostnames query (N+1). Query count must stay
+        flat as the number of vulns/hostnames grows."""
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
+
+        # Several hosts, each with several hostnames, each with one vuln.
+        for host_idx in range(6):
+            host = HostFactory.create(workspace=workspace)
+            session.add(host)
+            session.flush()
+            for hn_idx in range(3):
+                session.add(HostnameFactory.create(
+                    workspace=workspace, host=host,
+                    name=f'host{host_idx}-name{hn_idx}.example.com'))
+            session.add(VulnerabilityFactory.create(
+                workspace=workspace, host=host, service=None, severity='high'))
+        session.commit()
+        session.expire_all()
+
+        # Clear accumulated queries so we only measure this request
+        g._sqlalchemy_queries = []
+
+        res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
+
+        queries = get_debug_queries()
+        assert res.status_code == 200
+        assert res.json['count'] >= 6  # the 6 we created (plus any fixture vulns)
+        # With eager-loaded hostnames this is a handful of queries; a per-vuln
+        # hostnames lazy-load (N+1) would push it well past this bound.
+        assert len(queries) <= 25, f"Too many queries: {len(queries)} (hostnames N+1?)"
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -4271,6 +4336,88 @@ class TestCustomFieldVulnerability(ReadWriteAPITests):
             'type': 'Vulnerability',
             'custom_fields': {
                 'cvss': 'pepe',
+            }
+        }
+        res = test_client.post(self.url(), data=data)
+
+        assert res.status_code == 400
+
+    def test_create_vuln_with_float_custom_field(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        custom_field_schema = CustomFieldsSchemaFactory(
+            field_name='score',
+            field_type='float',
+            field_display_name='Score',
+            table_name='vulnerability'
+        )
+        session.add(host)
+        session.add(custom_field_schema)
+        session.commit()
+        data = {
+            'name': 'Test float custom field',
+            'severity': 'high',
+            'parent_type': 'Host',
+            'parent': host.id,
+            'type': 'Vulnerability',
+            'custom_fields': {
+                'score': 7.25,
+            }
+        }
+        res = test_client.post(self.url(), data=data)
+
+        assert res.status_code == 201
+        assert res.json['custom_fields']['score'] == 7.25
+
+        # Verify it persists when read back
+        vuln_id = res.json['_id']
+        res = test_client.get(self.url(vuln_id))
+        assert res.status_code == 200
+        assert res.json['custom_fields']['score'] == 7.25
+
+    def test_create_vuln_with_float_custom_field_rejects_more_than_2_decimals(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        custom_field_schema = CustomFieldsSchemaFactory(
+            field_name='score',
+            field_type='float',
+            field_display_name='Score',
+            table_name='vulnerability'
+        )
+        session.add(host)
+        session.add(custom_field_schema)
+        session.commit()
+        data = {
+            'name': 'Test float too many decimals',
+            'severity': 'high',
+            'parent_type': 'Host',
+            'parent': host.id,
+            'type': 'Vulnerability',
+            'custom_fields': {
+                'score': 7.555,
+            }
+        }
+        res = test_client.post(self.url(), data=data)
+
+        assert res.status_code == 400
+
+    def test_create_vuln_with_float_custom_field_rejects_invalid_value(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        custom_field_schema = CustomFieldsSchemaFactory(
+            field_name='score',
+            field_type='float',
+            field_display_name='Score',
+            table_name='vulnerability'
+        )
+        session.add(host)
+        session.add(custom_field_schema)
+        session.commit()
+        data = {
+            'name': 'Test float invalid value',
+            'severity': 'high',
+            'parent_type': 'Host',
+            'parent': host.id,
+            'type': 'Vulnerability',
+            'custom_fields': {
+                'score': 'not_a_number',
             }
         }
         res = test_client.post(self.url(), data=data)

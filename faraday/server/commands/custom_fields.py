@@ -44,7 +44,7 @@ def add_custom_field_wizard():
     print('This wizard will guide you to ADD custom field to the vulnerability model.')
     field_name = click.prompt('Field name')
     field_display_name = click.prompt('Display name')
-    field_type = click.prompt('Field type (int, str, list)', type=click.Choice(['int', 'str', 'list']))
+    field_type = click.prompt('Field type (int, float, str, list)', type=click.Choice(['int', 'float', 'str', 'list']))
     custom_fields = db.session.query(CustomFieldsSchema)
 
     # Checks the name of the fields wont be a duplicate

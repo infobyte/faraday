@@ -53,6 +53,22 @@ services:
     depends_on:
       faraday-server:
         condition: service_healthy
+  # Celery Beat scheduler. Run exactly one; do not scale this service.
+  faraday-beat:
+    image: *faraday-image
+    restart: always
+    container_name: faraday_beat
+    command: [ "faraday-beat" ]
+    volumes: *faraday-volumes
+    environment:
+      - PGSQL_USER=postgres
+      - PGSQL_PASSWD=postgres
+      - PGSQL_HOST=db
+      - PGSQL_DBNAME=faraday
+      - REDIS_SERVER=redis
+    depends_on:
+      faraday-server:
+        condition: service_healthy
   faraday-server:
     build:
       context: .

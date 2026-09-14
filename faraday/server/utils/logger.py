@@ -14,7 +14,7 @@ from syslog_rfc5424_formatter import RFC5424Formatter
 
 # Local application imports
 import faraday.server.config
-from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CELERY_LOG_FILE, CONST_FARADAY_HOME_PATH
 
 LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'faraday-server.log'
 AUDIT_LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'audit.log'
@@ -82,6 +82,29 @@ def create_logging_path(path_file):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def setup_celery_logging():
+    """Register RotatingFileHandler on Celery's logger signals."""
+    if os.environ.get("FARADAY_DISABLE_LOGS"):
+        return
+
+    from celery.signals import after_setup_logger, after_setup_task_logger  # pylint: disable=import-outside-toplevel
+
+    def _add_rotating_handler(logger, **kwargs):
+        create_logging_path(CELERY_LOG_FILE)
+        handler = logging.handlers.RotatingFileHandler(
+            CELERY_LOG_FILE,
+            maxBytes=MAX_LOG_FILE_SIZE,
+            backupCount=MAX_LOG_FILE_BACKUP_COUNT,
+        )
+        handler.setFormatter(logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT))
+        handler.setLevel(faraday.server.config.LOGGING_LEVEL)
+        logger.addHandler(handler)
+
+    # weak=False: the closure has no external reference and would be GC'd otherwise
+    after_setup_logger.connect(_add_rotating_handler, weak=False)
+    after_setup_task_logger.connect(_add_rotating_handler, weak=False)
 
 
 setup_logging()

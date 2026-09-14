@@ -103,6 +103,16 @@ class FaradayCustomField(fields.Field):
                         return None
                     except ValueError as e:
                         raise ValidationError("Can not convert custom type to int") from e
+                elif field_schema.field_type == 'float':
+                    try:
+                        val = float(raw_data)
+                        if val != round(val, 2):
+                            raise ValidationError("Float custom field allows at most 2 decimal places")
+                        serialized[key] = round(val, 2)
+                    except TypeError:
+                        return None
+                    except ValueError as e:
+                        raise ValidationError("Can not convert custom type to float") from e
                 elif field_schema.field_type == 'list':
                     serialized[key] = raw_data
                 elif field_schema.field_type == 'choice':

@@ -58,6 +58,8 @@ from faraday.server.models import (
     Workflow,
     Pipeline,
     VulnerabilityReference,
+    CloudAgent,
+    CloudAgentExecution,
 )
 
 
@@ -776,4 +778,28 @@ class ConditionFactory(FaradayFactory):
 
     class Meta:
         model = Condition
+        sqlalchemy_session = db.session
+
+
+class CloudAgentFactory(FaradayFactory):
+    name = FuzzyText()
+    slug = FuzzyText()
+    parameters_data = {}
+    tools_count = 1
+
+    class Meta:
+        model = CloudAgent
+        sqlalchemy_session = db.session
+
+
+class CloudAgentExecutionFactory(FaradayFactory):
+    cloud_agent = factory.SubFactory(CloudAgentFactory)
+    workspace = factory.SubFactory(WorkspaceFactory)
+    parameters_data = {}
+    last_run = factory.LazyFunction(datetime.datetime.utcnow)
+    run_uuid = FuzzyAttribute(lambda: uuid4())
+    tasks_completed = 0
+
+    class Meta:
+        model = CloudAgentExecution
         sqlalchemy_session = db.session

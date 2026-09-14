@@ -1,11 +1,77 @@
 New features in the latest update
 =====================================
 
+5.24.0 [Sep 3rd, 2026]:
+---
+ * [FIX] Fixed TypeError during docker-compose up -- @BekTim. #8369
+
+5.23.2 [August 19th, 2026]:
+---
+ * [FIX] Periodic maintenance tasks now run via Celery Beat instead of a self-rescheduling ETA chain, preventing task-storm redelivery. #8399
+ * [FIX] Fixed `faraday-manage` failing on a clean installation after the SQLAlchemy 2 upgrade, which left `initdb` unable to create the database. #8465
+
+
+5.23.0 [July 23rd, 2026]:
+---
+ * [ADD] Runners table now supports filtering by Status, Tools, Last Execution Date, Last Execution Tool, and Category. #8279
+ * [MOD] Upgrade SQLAlchemy to 2.0 and Flask-SQLAlchemy to 3.x. #8308
+ * [MOD] Invalidate the current session after a successful password change so users must re-authenticate. #8379
+ * [FIX] Fixed 500 error when filtering user tokens by the `expired` column. #8395
+ * [FIX] Reject out-of-range cron expressions on agent schedules so an invalid crontab can no longer break the schedule list or the scheduler. #8355
+
+
+5.22.0 [Jun 19th, 2026]:
+---
+ * [ADD] Added workspace_name to the supported columns for vulnerabilities CSV export. #8272
+ * [ADD] Expose creator command, parameters and per-service status on assets' API response. #8253
+ * [ADD] Added float type support for custom attributes. #8079
+ * [ADD] Added `Last Detected` as a filterable attribute in pipeline job rules. #8202
+ * [MOD] Truncate large vulnerability fields to 100 chars in the table view; CSV export preserves full content. #8270
+ * [MOD] Modify celery log handler to support log rotation with 5 historical files. #7649
+ * [FIX] Include cloud agent executions in workspace last_run_agent_date. #8233
+ * [FIX] Improved handling and validation of sorting parameters in the Filter API. #8327
+ * [FIX] Fixed `Activity Feed` returning nonvisible items. #8003
+ * [FIX] Fixed workflow conditions failing on asset date/numeric fields with `<`/`>`/`<=`/`>=`. #8296
+ * [FIX] Fixed duplicate notifications and premature command close on multi-batch report imports. #8313
+ * [FIX] Fixed random CI test failures. #8187
+ * [FIX] Fixed assets filter dropping items with no creator when ordering, filtering or grouping by creator username. #7268
+ * [FIX] Fixed several OpenAPI/Swagger generation bugs and document enum constraints on schema fields. #8181
+
+
+5.21.0 [May 14th, 2026]:
+---
+ * [ADD] Added custom attributes to the tasks/fields endpoint for `Jobs`. #8007
+ * [ADD] Bulk Create now supports attaching credentials to vulnerabilities via a `credentials` field. #8078
+ * [ADD] Add bulk delete endpoint for agents. #8084
+ * [MOD] Update dependencies to resolve security CVEs (flask-login, flask, pyjwt and others). #8058
+ * [FIX] Block pipeline execution on read-only workspaces. #8093
+ * [FIX] Users update conflicts now properly handle SQLAlchemy session rollback. #8246
+ * [FIX] Fixed pipeline getting permanently stuck in "running" state when Celery worker dies. Added automatic recovery via timeout and periodic cleanup. #8170
+ * [FIX] Fixed security issue related to filter. #8274
+ * [FIX] Fixed filter order on notifications. #8178
+ * [FIX] Fixed 500 error on some occasions when editing a vulnerability into a duplicate. #8232
+
+
+5.20.1 [May 8th, 2026]:
+---
+ * [ADD] Added MCP Configuration. #9999
+
+
+5.20.0 [Apr 10th, 2026]:
+---
+ * [MOD] Debouncer now uses Redis to ensure distributed, single execution of workspace updates across Celery workers. #8076
+ * [MOD] Changed the packaging and build process to use uv. #8083
+ * [FIX] Fixed user password not being validated on create and edit actions. #8059
+ * [FIX] Fixed flaky tests. #8185
+ * [FIX] Fixed vulnerability bulk update endpoint to improve memory usage and performance. #8094
+ * [FIX] Optimized some internal queries. #8201
+
+
 5.19.0 [Jan 26th, 2026]:
 ---
  * [MOD] Refined Docker configuration with health checks, service dependencies, and optimized image handling. #8081
  * [FIX] Several indexes were added to improve workspace delete performance. #8075
- * [FIX] Fixed Credentials Bulk Update overwriting linked vulns. #8080
+ * [FIX] Fixed Credentials Bulk Update overwriting linked vulnerabilities. #8080
  * [FIX] Resolved a date inconsistency that could trigger continuous scheduler runs or runs at incorrect times. #8071
 
 

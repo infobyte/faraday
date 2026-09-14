@@ -31,6 +31,56 @@ class TestSearchFilterAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
 
     pytest.fixture(autouse=True)
 
+    def test_bulk_update_an_object(self, test_client, session, logged_user):
+        all_objs = self.model.query.all()
+        all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in self.model.query.all()]
+        all_objs, all_objs_id = all_objs[:-1], all_objs_id[:-1]
+        for obj in all_objs:
+            obj.creator_id = logged_user.id
+        session.commit()
+
+        data = self.factory.build_dict()
+        data = BulkUpdateTestsMixin.control_data(self, data)
+
+        res = test_client.patch(self.url(), data={})
+        assert res.status_code == 400
+        data["ids"] = all_objs_id
+        res = test_client.patch(self.url(), data=data)
+
+        assert res.status_code == 200, (res.status_code, res.json)
+        assert self.model.query.count() == 5
+        assert res.json['updated'] == len(all_objs)
+        for obj in self.model.query.all():
+            if getattr(obj, self.view_class.lookup_field) not in all_objs_id:
+                assert any(
+                    [
+                        data[updated_field] != getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
+            else:
+                assert all(
+                    [
+                        data[updated_field] == getattr(obj, updated_field)
+                        for updated_field in data if updated_field != 'ids'
+                    ]
+                )
+
+    def test_bulk_update_invalid_ids(self, test_client, session, logged_user):
+        data = self.factory.build_dict()
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        data['ids'] = [-1, 'test']
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 0
+
+        self.first_object.creator_id = logged_user.id
+        session.commit()
+        data['ids'] = [-1, 'test', self.first_object.__getattribute__(self.view_class.lookup_field)]
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 1
+
     def test_list_retrieves_all_items_from(self, test_client, logged_user):
         for searchfilter in SearchFilter.query.all():
             searchfilter.creator = logged_user
@@ -61,7 +111,6 @@ class TestSearchFilterAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
 
         session.commit()
 
-        print(self.url(filters[randrange(5)]))
         res = test_client.get(self.url(filters[randrange(5)]))
         assert res.status_code == 200
         assert isinstance(res.json, dict)

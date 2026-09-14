@@ -62,6 +62,7 @@ jsconfig.json
 # PyCharm project files
 .idea
 .junie
+.claude
 
 # vFeed DB
 data/vfeed.db
@@ -83,6 +84,7 @@ _install
 faraday_plugins/
 faraday/frontend/
 .cache
+refactor.db
 
 ## OSX files
 .DS_Store

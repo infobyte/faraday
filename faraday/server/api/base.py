@@ -32,11 +32,11 @@ from marshmallow import EXCLUDE, Schema, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaMeta, SQLAlchemyAutoSchemaOpts
-from sqlalchemy import and_, asc, desc, func, update as sqlalchemy_update
-from sqlalchemy.engine import ResultProxy
+from sqlalchemy import and_, asc, column, desc, func, update as sqlalchemy_update
+from sqlalchemy.engine import CursorResult, MappingResult, Result, ResultProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import joinedload, undefer, with_expression
+from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.core import ValidationError
@@ -47,10 +47,9 @@ from faraday.server.config import faraday_server
 from faraday.server.models import (
     Command,
     CommandObject,
+    User,
     Workspace,
     WorkspacePermission,
-    _make_vuln_count_property,
-    count_vulnerability_severities,
     db,
 )
 from faraday.server.schemas import NullToBlankString
@@ -60,7 +59,11 @@ from faraday.server.utils.database import (
     not_null_constraint_violation,
 )
 from faraday.server.utils.filters import FlaskRestlessSchema
-from faraday.server.utils.search import search
+from faraday.server.utils.search import (
+    search,
+    delete_returning_only_ids,
+    search_retrieve_only_ids,
+)
 
 logger = getLogger(__name__)
 
@@ -84,6 +87,21 @@ def get_filtered_data(filters, filter_query):
         data.append({field[0]: field[1] for field in row})
 
     return data, len(rows)
+
+
+def hydrate_sample_for_conflict(model_class, ids):
+    # Hydrate from the first id so get_conflict_object can fall back to real
+    # column values for unique-index fields absent from `data`. See ticket 8232:
+    # empty model instances synthesize a filter that never matches the real
+    # conflicting row, turning the 409 into a 500.
+    sample = model_class()
+    if ids:
+        sample = (
+            db.session.query(model_class)
+            .filter(model_class.id == ids[0])
+            .first()
+        ) or sample
+    return sample
 
 
 def get_group_by_and_sort_dir(model_class):
@@ -315,7 +333,7 @@ class GenericView(FlaskView):
             # username. Do a joinedload to prevent doing one query per object
             # (n+1) problem
             options.append(joinedload(
-                getattr(self.model_class, 'creator')).load_only('username'))
+                getattr(self.model_class, 'creator')).load_only(User.username))
         query = self._get_base_query(*args, **kwargs)
         options += [joinedload(relationship)
                     for relationship in self.get_joinedloads]
@@ -372,8 +390,10 @@ class GenericView(FlaskView):
         try:
             obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
         except AttributeError:
-            # Handle the case where `query` is a ResultProxy, this comes from Workspace query_object_with_count
-            if isinstance(query, ResultProxy):
+            # Handle the case where `query` is a raw-SQL Result (e.g. Workspace.query_with_count
+            # returns a MappingResult from db.session.execute(text(...)).mappings()). Fall back to
+            # a normal ORM query on the model.
+            if isinstance(query, (ResultProxy, CursorResult, MappingResult, Result)):
                 res = db.session.query(self.model_class).filter(self.model_class.name.in_(object_ids)).all()
                 return res
             # If it's another AttributeError, re-raise
@@ -471,9 +491,11 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v3/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    def _get_base_query(self, workspace_name):
+    def _get_base_query(self, workspace_name, **kwargs):
         base = super()._get_base_query()
-        return base.join(Workspace).filter(
+        return base.join(
+            Workspace, Workspace.id == self.model_class.workspace_id
+        ).filter(
             Workspace.id == get_workspace(workspace_name).id)
 
     def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
@@ -514,7 +536,7 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
 
     """
 
-    def _get_base_query(self, workspace_name):
+    def _get_base_query(self, workspace_name, **kwargs):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.filter(
             self.model_class.workspaces.any(
@@ -529,6 +551,15 @@ class ListMixin:
     #: If set (to a SQLAlchemy attribute instance) use this field to order the
     #: query by default
     order_field = None
+
+    def _filter_eagerload_options(self):
+        """Loader options for the /filter endpoints.
+
+        Filter endpoints build their query from scratch instead of going
+        through _get_eagerloaded_query, so each view returns here whatever
+        its schema reads, to avoid a lazy load per dumped row (n+1).
+        """
+        return []
 
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
@@ -727,6 +758,8 @@ class FilterWorkspacedMixin(ListMixin):
         - in: query
           name: q
           description: recursive json with filters that supports operators. The json could also contain sort and group.
+          schema:
+            type: string
         responses:
           200:
             description: returns filtered, sorted and grouped results
@@ -752,6 +785,8 @@ class FilterWorkspacedMixin(ListMixin):
                               filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         if severity_count and 'group_by' not in filters:
             filter_query = filter_query.options(
                 undefer(self.model_class.vulnerability_critical_generic_count),
@@ -765,7 +800,7 @@ class FilterWorkspacedMixin(ListMixin):
                 joinedload(self.model_class.hostnames),
                 joinedload(self.model_class.services),
                 joinedload(self.model_class.update_user),
-                joinedload(getattr(self.model_class, 'creator')).load_only('username'),
+                joinedload(getattr(self.model_class, 'creator')).load_only(User.username),
             )
         return filter_query
 
@@ -818,74 +853,29 @@ class FilterWorkspacedMixin(ListMixin):
 
 class FilterObjects:
 
-    def _process_filter_data(self, filters, workspace_name=None):
-        filters = self._get_validated_filters_standalone(filters)
-        return self._filter_standalone(filters, None, False, False, workspace_name)
+    def _translate_filters(self, filters):
+        """Hook for subclasses to translate pseudo-filters before query execution.
+        Returns (translated_filters_json, extra_alchemy_filters).
+        """
+        return filters, None
 
-    def _get_validated_filters_standalone(self, filters):
-        filters_to_validate = None
+    def _process_filter_data(self, filters, workspace_name=None, **kwargs):
+        translated, extra = self._translate_filters(filters)
+        return self._filter_standalone(translated, extra, workspace_name, **kwargs)
 
-        try:
-            filters_to_validate = FlaskRestlessSchema().load(json_loads(filters)) or {}
-        except (ValidationError, JSONDecodeError) as ex:
-            logger.exception(ex)
-            abort(HTTP_BAD_REQUEST, "Invalid filters")
+    def _generate_filter_query_standalone(self, filters, workspace=None, delete=False):
 
-        if hasattr(self, 'fields_to_exclude'):
-            if not self._validate_fields_standalone(filters_to_validate):
-                abort(HTTP_BAD_REQUEST, "Invalid filters")
+        if delete:
+            delete_query = delete_returning_only_ids(db.session, self.model_class, filters)
+            if workspace:
+                delete_query = delete_query.where(self.model_class.workspace == workspace)
+            delete_query = delete_query.returning(self.model_class.id)
+            return delete_query
 
-        return filters
-
-    def _generate_filter_query_standalone(self, filters, severity_count=False, host_vulns=False, workspace=None):
-        filter_query = search(db.session,
-                              self.model_class,
-                              filters)
+        filter_query = search_retrieve_only_ids(db.session, self.model_class, filters)
 
         if workspace:
             filter_query = filter_query.filter(self.model_class.workspace == workspace)
-
-        if severity_count and 'group_by' not in filters:
-            filter_query = count_vulnerability_severities(filter_query, self.model_class,
-                                                          all_severities=True, host_vulns=host_vulns)
-
-            filter_query = filter_query.options(
-                with_expression(
-                    Workspace.vulnerability_web_count,
-                    _make_vuln_count_property('vulnerability_web', use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.vulnerability_standard_count,
-                    _make_vuln_count_property('vulnerability', use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.vulnerability_code_count,
-                    _make_vuln_count_property('vulnerability_code', use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.vulnerability_confirmed_count,
-                    _make_vuln_count_property(None,
-                                              confirmed=True,
-                                              use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.vulnerability_open_count,
-                    _make_vuln_count_property(None,
-                                              extra_query=" status!='closed' ",
-                                              use_column_property=False),
-                ),
-                with_expression(
-                    Workspace.vulnerability_closed_count,
-                    _make_vuln_count_property(None,
-                                              extra_query=" status='closed' ",
-                                              use_column_property=False)
-                ),
-                with_expression(
-                    Workspace.vulnerability_total_count,
-                    _make_vuln_count_property(type_=None,
-                                              use_column_property=False)
-                )
-            )
 
         return filter_query
 
@@ -906,8 +896,9 @@ class FilterObjects:
         intersection = set(self.fields_to_exclude).intersection(set(self._key_finder_standalone('name', filters)))
         return not intersection
 
-    def _filter_standalone(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
-                severity_count=False, host_vulns=False, workspace_name=None) -> Tuple[list, int]:
+    def _filter_standalone(
+            self, filters: str, extra_alchemy_filters: BooleanClauseList = None, workspace_name=None, **kwargs
+    ) -> Tuple[list, int]:
 
         marshmallow_params = {'many': True, 'context': {}}
 
@@ -919,57 +910,57 @@ class FilterObjects:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")
 
+        if hasattr(self, 'fields_to_exclude'):
+            if not self._validate_fields_standalone(filters):
+                abort(HTTP_BAD_REQUEST, "Invalid filters")
+
         workspace = get_workspace(workspace_name) if workspace_name else None
 
         filter_query = None
-        if 'group_by' not in filters:
-            offset = None
-            limit = None
-            if 'offset' in filters:
-                offset = filters.pop('offset')
-            if 'limit' in filters:
-                limit = filters.pop('limit')  # we need to remove pagination, since
 
+        offset = None
+        limit = None
+        if 'offset' in filters:
+            offset = filters.pop('offset')
+        if 'limit' in filters:
+            limit = filters.pop('limit')  # we need to remove pagination, since
+
+        if 'delete' in kwargs and kwargs['delete']:
             try:
-                filter_query = self._generate_filter_query_standalone(
+                delete_query = self._generate_filter_query_standalone(
                     filters,
-                    severity_count=severity_count,
-                    host_vulns=host_vulns,
-                    workspace=workspace
+                    workspace=workspace,
+                    delete=True
                 )
-            except TypeError as e:
-                abort(HTTP_BAD_REQUEST, e)
             except AttributeError as e:
                 abort(HTTP_BAD_REQUEST, e)
 
-            if extra_alchemy_filters is not None:
-                filter_query = filter_query.filter(extra_alchemy_filters)
-            count = filter_query.count()
-            if limit:
-                filter_query = filter_query.limit(limit)
-            if offset:
-                filter_query = filter_query.offset(offset)
-            filter_query = self._add_to_filter_standalone(filter_query)
-            objs = self.schema_class(**marshmallow_params).dumps(filter_query)
-            return json_loads(objs), count
-        else:
-            try:
-                filter_query = self._generate_filter_query_standalone(
-                    filters,
-                    workspace=workspace
-                )
-            except TypeError as e:
-                abort(HTTP_BAD_REQUEST, e)
-            except AttributeError as e:
-                abort(HTTP_BAD_REQUEST, e)
-            if extra_alchemy_filters is not None:
-                filter_query += filter_query.filter(extra_alchemy_filters)
+            ids = db.session.execute(delete_query).fetchall()
+            ids = [x[0] for x in ids]
+            return ids
 
-            data, rows_count = get_filtered_data(filters, filter_query)
-            return data, rows_count
+        try:
+            filter_query = self._generate_filter_query_standalone(
+                filters,
+                workspace=workspace
+            )
+        except TypeError as e:
+            abort(HTTP_BAD_REQUEST, e)
+        except AttributeError as e:
+            abort(HTTP_BAD_REQUEST, e)
 
-    def _add_to_filter_standalone(self, filter_query, **kwargs):
-        return filter_query
+        if extra_alchemy_filters is not None:
+            filter_query = filter_query.filter(extra_alchemy_filters)
+        if limit:
+            filter_query = filter_query.limit(limit)
+        if offset:
+            filter_query = filter_query.offset(offset)
+        try:
+            ids = [x[0] for x in filter_query.all()]
+        except IntegrityError as e:
+            logger.exception(e)
+            abort(HTTP_CONFLICT, e)
+        return ids
 
 
 class FilterMixin(ListMixin):
@@ -986,6 +977,8 @@ class FilterMixin(ListMixin):
         - in: query
           name: q
           description: Recursive json with filters that supports operators. The json could also contain sort and group.
+          schema:
+            type: string
         responses:
           200:
             description: Returns filtered, sorted and grouped results
@@ -1013,6 +1006,8 @@ class FilterMixin(ListMixin):
         filter_query = search(db.session,
                               self.model_class,
                               filters)
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
@@ -1043,14 +1038,14 @@ class FilterMixin(ListMixin):
 
             if extra_alchemy_filters is not None:
                 filter_query = filter_query.filter(extra_alchemy_filters)
-            count = filter_query.order_by(None).count()
+            count = filter_query.order_by(None).with_entities(func.count(self.model_class.id)).scalar()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
             filter_query = self._add_to_filter(filter_query)
             if return_objects:
-                return filter_query.all(), filter_query.count()
+                return filter_query.all(), count
             objs = self.schema_class(**marshmallow_params).dumps(filter_query)
             return json_loads(objs), count
         else:
@@ -1064,7 +1059,7 @@ class FilterMixin(ListMixin):
                 abort(HTTP_BAD_REQUEST, e)
 
             if extra_alchemy_filters is not None:
-                filter_query += filter_query.filter(extra_alchemy_filters)
+                filter_query = filter_query.filter(extra_alchemy_filters)
 
             data, rows_count = get_filtered_data(filters, filter_query)
             return data, rows_count
@@ -1417,10 +1412,10 @@ class UpdateMixin:
             db.session.commit()
             logger.info(f"{obj} updated")
         except IntegrityError as ex:
+            db.session.rollback()
             logger.info(f"Couldn't update {obj}")
             if not is_unique_constraint_violation(ex):
                 raise
-            db.session.rollback()
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
@@ -1493,24 +1488,42 @@ class BulkUpdateMixin(FilterObjects):
         workspace_name = kwargs.get('workspace_name') if 'workspace_name' in kwargs else None
 
         # Try to get ids
-        if request.json and 'ids' in request.json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, request.json['ids']))
+        _json = request.get_json(silent=True)
+        if _json and 'ids' in _json:
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
-            filtered_objects = self._process_filter_data(request.args.get('q', '{"filters": []}'), workspace_name)
-            ids = list(x.get("obj_id") for x in filtered_objects[0])
+            _time = time()
+            ids = self._process_filter_data(request.args.get('q', '{"filters": []}'), workspace_name)
+            logger.debug(f"Filtering took {time() - _time} seconds")
         else:
             abort(HTTP_BAD_REQUEST)
 
-        objects = self._get_objects(ids, **kwargs)
+        _time = time()
+        objects = self._get_bulk_update_objects(ids, **kwargs)
+        if objects and isinstance(objects[0], Workspace):
+            ids = [obj.name for obj in objects]  # had to do this because lookup field is name in workspaces.
+        else:
+            ids = [obj.id for obj in objects]
+        logger.debug(f"Getting objects took {time() - _time} seconds")
         context = {'updating': True, 'objects': objects}
+        _time = time()
         data = self._parse_data(self._get_schema_instance(kwargs, context=context, partial=True), request)
+        logger.debug(f"Parsing data took {time() - _time} seconds")
         # just in case a schema allows id as writable.
         data.pop('id', None)
         data.pop('ids', None)
 
         return self._perform_bulk_update(ids, data, **kwargs), HTTP_OK
+
+    def _get_bulk_update_objects(self, ids, **kwargs):
+        """Load objects needed for bulk_update context and id extraction.
+
+        Override this to avoid loading full ORM instances when the schema
+        does not use context['objects'] (e.g. vulns).
+        """
+        return self._get_objects(ids, **kwargs)
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
@@ -1536,9 +1549,11 @@ class BulkUpdateMixin(FilterObjects):
                     updated = len(returns)
                 else:
                     queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
-                    updated = queryset.update(data, synchronize_session='fetch')
+                    updated = queryset.update(data, synchronize_session=False)
                 logger.debug(f"Updated {updated} {self.model_class.__name__} in {time() - _time} seconds")
-                self._post_bulk_update(ids, post_bulk_update_data, workspace_name=workspace_name, data=data, returning=returns)
+                self._post_bulk_update(
+                    ids, post_bulk_update_data, workspace_name=workspace_name, data=data, returning=returns
+                )
             else:
                 updated = 0
             db.session.commit()
@@ -1558,7 +1573,8 @@ class BulkUpdateMixin(FilterObjects):
             workspace = None
             if workspace_name:
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
-            conflict_obj = get_conflict_object(db.session, self.model_class(), data, workspace, ids)
+            sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
+            conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
             if conflict_obj is not None:
                 abort(HTTP_CONFLICT, ValidationError(
                     {
@@ -1730,17 +1746,24 @@ class BulkDeleteMixin(FilterObjects):
         """
         # TODO BULK_DELETE_SCHEMA
         # Try to get ids
-        if request.json and 'ids' in request.json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, request.json['ids']))
+        _json = request.get_json(silent=True)
+        if _json and 'ids' in _json:
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
             filtered_objects = self._process_filter_data(request.args.get('q', '{"filters": []}'))
-            ids = list(x.get("id") for x in filtered_objects[0])
+            ids = filtered_objects
         else:
             abort(HTTP_BAD_REQUEST)
-        # TODO: Check _post_bulk_delete with corp
-        return self._perform_bulk_delete(ids, **kwargs), HTTP_OK
+
+        if not self.__class__.model_class == Workspace:
+            objects = self._get_objects(ids, **kwargs)
+            ids = [obj.id for obj in objects]
+
+        response = self._perform_bulk_delete(ids, **kwargs), HTTP_OK
+        self._post_bulk_delete(ids, **kwargs)
+        return self._bulk_delete_response(ids, response, **kwargs)
 
     def _bulk_delete_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
@@ -1751,6 +1774,12 @@ class BulkDeleteMixin(FilterObjects):
         db.session.commit()
         response = {'deleted': deleted}
         return jsonify(response)
+
+    def _post_bulk_delete(self, ids, **kwargs):
+        pass
+
+    def _bulk_delete_response(self, ids, response, **kwargs):
+        return response
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
@@ -1824,6 +1853,13 @@ class CountWorkspacedMixin:
           ---
           tags: [{tag_name}]
           summary: "Group {class_model} by the field set in the group_by GET parameter."
+          parameters:
+          - in: query
+            name: group_by
+            required: true
+            description: "Column to group by. Endpoint returns 404 if omitted."
+            schema:
+              type: string
           responses:
             200:
               description: Ok
@@ -1843,11 +1879,11 @@ class CountWorkspacedMixin:
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
-        group_by = f'{table_name}.{group_by}'
+        group_by = column(f'{table_name}.{group_by}', is_literal=True)
 
         query_count = self._filter_query(
             db.session.query(self.model_class).
-            join(Workspace).
+            join(Workspace, Workspace.id == self.model_class.workspace_id).
             group_by(group_by).
             filter(Workspace.name == workspace_name,
                    *self.count_extra_filters)
@@ -1859,7 +1895,7 @@ class CountWorkspacedMixin:
             query_count = query_count.order_by(desc(order_by))
         else:
             query_count = query_count.order_by(asc(order_by))
-        for key, query_count in query_count.values(group_by, func.count(group_by)):
+        for key, query_count in query_count.with_entities(group_by, func.count(group_by)).all():
             res['groups'].append(
                 {'count': query_count,
                  'name': key,
@@ -1895,6 +1931,19 @@ class CountMultiWorkspacedMixin:
         ---
           tags: [{tag_name}]
           summary: "Count {class_model} by multiples workspaces"
+          parameters:
+          - in: query
+            name: workspaces
+            required: true
+            description: "Comma-separated workspace names to count across. Endpoint returns 400 if omitted."
+            schema:
+              type: string
+          - in: query
+            name: group_by
+            required: true
+            description: "Column to group by. Endpoint returns 400 if omitted."
+            schema:
+              type: string
           responses:
             200:
               description: Ok
@@ -1904,17 +1953,6 @@ class CountMultiWorkspacedMixin:
             400:
               description: No workspace passed or group_by is not specified
         """
-        # """head:
-        #  tags: [{tag_name}]
-        #   responses:
-        #     200:
-        #       description: Ok
-        # options:
-        #   tags: [{tag_name}]
-        #   responses:
-        #     200:
-        #       description: Ok
-        # """
         res = {
             'groups': defaultdict(dict),
             'total_count': 0
@@ -2126,9 +2164,12 @@ class ContextMixin(GenericView):
 
     @staticmethod
     def _get_context_workspace_ids(filter):
-        return db.session.query(Workspace.id)\
-            .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
+        return [
+            row[0]
+            for row in db.session.query(Workspace.id)
+            .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)
             .filter(filter).all()
+        ]
 
     @staticmethod
     def _get_context_workspace_filter():
@@ -2157,6 +2198,13 @@ class ContextMixin(GenericView):
           ---
           tags: [{tag_name}]
           summary: "Group {class_model} by the field set in the group_by GET parameter."
+          parameters:
+          - in: query
+            name: group_by
+            required: true
+            description: "Column to group by. Endpoint returns 404 if omitted."
+            schema:
+              type: string
           responses:
             200:
               description: Ok
@@ -2175,7 +2223,7 @@ class ContextMixin(GenericView):
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
-        group_by = f'{table_name}.{group_by}'
+        group_by = column(f'{table_name}.{group_by}', is_literal=True)
 
         query_count = self._apply_filter_context(
             self._filter_query(
@@ -2190,7 +2238,7 @@ class ContextMixin(GenericView):
             query_count = query_count.order_by(desc(order_by))
         else:
             query_count = query_count.order_by(asc(order_by))
-        for key, query_count in query_count.values(group_by, func.count(group_by)):
+        for key, query_count in query_count.with_entities(group_by, func.count(group_by)).all():
             res['groups'].append(
                 {'count': query_count,
                  'name': key,
@@ -2200,3 +2248,62 @@ class ContextMixin(GenericView):
             )
             res['total_count'] += query_count
         return res
+
+    def _perform_bulk_update(self, ids, data, workspace_name=None, **kwargs):
+        try:
+            post_bulk_update_data = self._pre_bulk_update(data, workspace_name=workspace_name, **kwargs)
+            if (len(data) > 0 or len(post_bulk_update_data) > 0) and len(ids) > 0:
+                returns = None
+                _time = time()
+                if 'returning' in kwargs:
+                    smt = (sqlalchemy_update(self.model_class)
+                           .where(self.model_class.id.in_(ids))
+                           .values(data).returning(*kwargs['returning']))
+                    returns = db.session.execute(smt)
+                    returns = returns.fetchall()
+                    updated = len(returns)
+                else:
+                    queryset = self._bulk_update_query(ids, workspace_name=workspace_name, **kwargs)
+                    updated = queryset.update(data, synchronize_session=False)
+                logger.debug(f"Updated {updated} {self.model_class.__name__} in {time() - _time} seconds")
+                self._post_bulk_update(
+                    ids, post_bulk_update_data, workspace_name=workspace_name, data=data, returning=returns
+                )
+            else:
+                updated = 0
+            db.session.commit()
+            response = {'updated': updated}
+            return jsonify(response)
+        except ValueError as e:
+            db.session.rollback()
+            abort(HTTP_BAD_REQUEST, ValidationError(
+               {
+                   'message': str(e),
+               }
+            ))
+        except IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
+            db.session.rollback()
+            workspace = None
+            if workspace_name:
+                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+            sample_obj = hydrate_sample_for_conflict(self.model_class, ids)
+            conflict_obj = get_conflict_object(db.session, sample_obj, data, workspace, ids)
+            if conflict_obj is not None:
+                abort(HTTP_CONFLICT, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj),
+                    }
+                ))
+            elif len(ids) >= 2:
+                abort(HTTP_CONFLICT, ValidationError(
+                    {
+                        'message': 'Updating more than one object with unique data',
+                        'data': data
+                    }
+                ))
+            else:
+                raise

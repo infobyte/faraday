@@ -58,6 +58,18 @@ class HostWorkspacedView(
         post:
           tags: ["Bulk", "Host"]
           description: Creates hosts in bulk
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  required: [file]
+                  properties:
+                    file:
+                      type: string
+                      format: binary
+                      description: "CSV with headers: description, hostnames, ip, os."
           responses:
             201:
               description: Created
@@ -68,10 +80,6 @@ class HostWorkspacedView(
               description: Bad request
             403:
               description: Forbidden
-        tags: ["Bulk", "Host"]
-        responses:
-          200:
-            description: Ok
         """
         try:
             validate_csrf(request.form.get('csrf_token'))

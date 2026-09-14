@@ -97,6 +97,7 @@ class TestCascadeDelete:
             reply_to=self.comment,
             creator=user,
         )
+        self.session.add(self.reply_comment)
 
         self.command = empty_command_factory.create(
             workspace=workspace,

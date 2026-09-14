@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 from unittest import mock
 
 import pytest
+from sqlalchemy import text
 
 from faraday.server.api.modules.agents_schedule import AgentsScheduleView
 from faraday.server.models import AgentsSchedule
@@ -130,6 +131,42 @@ class TestAgentScheduleView(ReadWriteAPITests):
         res = test_client.post(self.url(), data=agent_schedule)
         assert res.status_code == 201
 
+    @pytest.mark.parametrize("bad_cron", [
+        '*/0 * * * *',   # step zero
+        '60 * * * *',    # minute out of range
+        '* 24 * * *',    # hour out of range
+        '* * 0 * *',     # day-of-month out of range
+        '* * * 13 *',    # month out of range
+    ])
+    def test_create_out_of_range_cron_rejected(self, test_client, session, user, bad_cron):
+        workspaces = [WorkspaceFactory.create()]
+        agent = AgentFactory.create()
+        executor = ExecutorFactory.create(agent=agent)
+        session.commit()
+        agent_schedule = AgentScheduleFactory.build_dict(workspace=workspaces,
+                                                         executor=executor)
+        agent_schedule['crontab'] = bad_cron
+        res = test_client.post(self.url(), data=agent_schedule)
+        assert res.status_code == 400
+
+    def test_next_run_is_none_for_unparseable_crontab(self, session):
+        # A row that bypassed validation (legacy/import/direct DB) must not raise on serialization
+        schedule = AgentScheduleFactory.create(crontab='*/0 * * * *',
+                                               workspaces=[WorkspaceFactory.create()],
+                                               executor=ExecutorFactory.create())
+        session.commit()
+        assert schedule.next_run is None
+
+    def test_refresh_schedule_skips_invalid_crontab(self, app, session):
+        # An active bad-cron row must not crash the scheduler thread / app boot
+        from faraday.server.threads.crontab import CronTab
+        schedule = AgentScheduleFactory.create(crontab='*/0 * * * *', active=True,
+                                               workspaces=[WorkspaceFactory.create()],
+                                               executor=ExecutorFactory.create())
+        session.commit()
+        crontab_thread = CronTab(app=app)
+        assert schedule.id not in crontab_thread.jobs
+
     def test_create_until_limit(self, test_client, session):
         with mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', 7):
             for i in range(2):
@@ -242,7 +279,7 @@ class TestAgentScheduleView(ReadWriteAPITests):
 
     def test_count_agent_schedulers(self, test_client, session):
         # Cleanup - Delete all schedules from the AgentsSchedule table
-        session.execute('DELETE FROM agents_schedule_workspace_table')
+        session.execute(text('DELETE FROM agents_schedule_workspace_table'))
         session.query(AgentsSchedule).delete()
         session.commit()
 

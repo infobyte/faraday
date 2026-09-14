@@ -124,3 +124,4 @@ class TestVulnerabilityCustomFields(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert {'table_name': 'vulnerability', 'id': add_choice_field.id, 'field_type': 'choice',
                 'field_name': 'gender', 'field_display_name': 'Gender', 'field_metadata': "['Male', 'Female']",
                 'field_order': 1} in res.json
+

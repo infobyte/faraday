@@ -1,11 +1,12 @@
+import json
 import logging
 
-from flask import Blueprint
+from flask import Blueprint, abort
 from marshmallow import fields
-from sqlalchemy import func
+from sqlalchemy import and_, func
 
 from faraday.server.api.base import ReadOnlyView, PaginatedMixin, AutoSchema, FilterMixin, BulkDeleteMixin
-from faraday.server.models import AgentExecution, db
+from faraday.server.models import Agent, AgentExecution, Executor, Workspace, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 
 agent_execution_api = Blueprint('agent_execution_api', __name__)
@@ -54,7 +55,7 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
     schema_class = AgentExecutionSchema
     order_field = AgentExecution.id.desc()
 
-    def _filter(self, *args, **kwargs):
+    def _translate_filters(self, filters):
         """
         Groups AgentExecutions by run_uuid, returning only one representative row per group.
 
@@ -64,14 +65,70 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
 
         Filters out executions with NULL run_uuid to avoid grouping old undefined executions.
         """
+        try:
+            raw = json.loads(filters) if isinstance(filters, str) else dict(filters or {})
+        except (ValueError, TypeError):
+            abort(400, 'Invalid filter JSON')
+        if not isinstance(raw, dict):
+            abort(400, 'Invalid filter JSON')
+
+        top = raw.get('filters', [])
+        standard = []
+        custom_conditions = []
+
+        for f in top:
+            if not isinstance(f, dict):
+                standard.append(f)
+                continue
+            name = f.get('name')
+            op = str(f.get('op') or 'eq').lower()
+            val = f.get('val', '')
+
+            if name == 'name':
+                if op == 'contains':
+                    custom_conditions.append(
+                        AgentExecution.executor.has(Executor.agent.has(Agent.name.ilike(f'%{val}%')))
+                    )
+                elif op in ('eq', '=='):
+                    custom_conditions.append(
+                        AgentExecution.executor.has(Executor.agent.has(Agent.name == val))
+                    )
+                elif op in ('ne', '!=', 'neq'):
+                    custom_conditions.append(
+                        ~AgentExecution.executor.has(Executor.agent.has(Agent.name == val))
+                    )
+                else:
+                    standard.append(f)
+            elif name == 'triggered_by' and op == 'contains':
+                standard.append({"name": "triggered_by", "op": "ilike", "val": f"%{val}%"})
+            elif name == 'workspaces':
+                vals = val if isinstance(val, list) else [v.strip() for v in str(val).split(',') if v.strip()]
+                ws_ids = db.session.query(Workspace.id).filter(Workspace.name.in_(vals))
+                if op in ('is_one_of', 'in'):
+                    custom_conditions.append(AgentExecution.workspace_id.in_(ws_ids))
+                elif op in ('is_not_one_of', 'not_in', 'nin'):
+                    custom_conditions.append(AgentExecution.workspace_id.notin_(ws_ids))
+                else:
+                    abort(400, f"Unsupported operator {op!r} for workspaces filter; use 'is_one_of' or 'is_not_one_of'")
+            else:
+                standard.append(f)
+
         subquery = (
             db.session.query(func.min(AgentExecution.id))
             .filter(AgentExecution.run_uuid.isnot(None))
             .group_by(AgentExecution.run_uuid)
             .subquery()
         )
-        kwargs["extra_alchemy_filters"] = (AgentExecution.id.in_(subquery))
-        return super()._filter(*args, **kwargs)
+
+        extra = and_(AgentExecution.id.in_(subquery), *custom_conditions)
+        raw['filters'] = standard
+        return json.dumps(raw), extra
+
+    def _filter(self, filters, extra_alchemy_filters=None, *args, **kwargs):
+        translated, extra = self._translate_filters(filters)
+        if extra_alchemy_filters is not None:
+            extra = and_(extra_alchemy_filters, extra)
+        return super()._filter(translated, extra_alchemy_filters=extra, **kwargs)
 
     def _paginate(self, query, hard_limit=0):
         # TODO: Duplicated code. Fix.

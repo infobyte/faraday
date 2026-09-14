@@ -32,7 +32,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import ColumnProperty
+from sqlalchemy.orm import ColumnProperty, RelationshipProperty
+from sqlalchemy.orm.interfaces import MANYTOMANY
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.schema import Table as SQLAlchemySchemaTableType
@@ -40,7 +41,6 @@ from sqlalchemy.sql.schema import Table as SQLAlchemySchemaTableType
 # Local application imports
 from faraday.server.models import (
     User,
-    CVE,
     Role,
     CustomFieldsSchema,
     VulnerabilityGeneric,
@@ -190,6 +190,8 @@ OPERATORS = {
     'like': lambda f, a: f.like(a),
     'in': lambda f, a: f.in_(a),
     'not_in': lambda f, a: ~f.in_(a),
+    'is_one_of': lambda f, a: f.in_(a),
+    'is_not_one_of': lambda f, a: ~f.in_(a),
     # Operators which accept three arguments.
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),
@@ -241,6 +243,8 @@ def get_json_query(table, field, op, op_type, counter):
         return f"({table}.{field} ->> :key_{counter}) {op} :value_{counter}"  # nosec
     elif op_type == 'compare_int':
         return f"({table}.{field} ->> :key_{counter})::int {op} :value_{counter}"  # nosec
+    elif op_type == 'compare_float':
+        return f"({table}.{field} ->> :key_{counter})::numeric {op} :value_{counter}"  # nosec
     elif op_type == 'exists':
         return f"{table}.{field} ->> :key_{counter} {op}"  # nosec
     elif op_type == 'any':
@@ -488,6 +492,37 @@ class SearchParameters:
                                 order_by=order_by, group_by=group_by)
 
 
+def apply_order(query, field, direction):
+    order = field.desc() if direction == "desc" else field.asc()
+    nulls = nullslast if direction == "desc" else nullsfirst
+    return query.order_by(nulls(order))
+
+
+def apply_json_order(query, model, field_name, field_name_in_relation, direction):
+    table_name = model.__tablename__
+    ordering = "DESC NULLS LAST" if direction == "desc" else "ASC NULLS FIRST"
+    return query.order_by(
+        text(f"{table_name}.{field_name} ->> :json_key {ordering}").bindparams(json_key=field_name_in_relation)
+    )
+
+
+def apply_join(query, model, relation, joined_models):
+    relation_model = relation.mapper.class_
+
+    join_key = relation.key
+
+    if join_key in joined_models:
+        return query
+
+    if getattr(relation.property, "direction", None) == MANYTOMANY or getattr(relation.property, "secondary", None) is not None:
+        query = query.join(relation)
+    else:
+        query = query.join(relation, isouter=True)
+
+    joined_models.add(join_key)
+    return query
+
+
 class QueryBuilder:
     """Provides a static function for building a SQLAlchemy query object based
     on a :class:`SearchParameters` instance.
@@ -567,6 +602,8 @@ class QueryBuilder:
                 if op_type == 'compare':
                     if custom_field.field_type == 'int':
                         op_type = 'compare_int'
+                    elif custom_field.field_type == 'float':
+                        op_type = 'compare_float'
 
                 # Handle range operator
                 if op_type == 'range':
@@ -610,8 +647,25 @@ class QueryBuilder:
                 numargs = len(inspect.getfullargspec(opfunc).args)
             # raises AttributeError if `fieldname` or `relation` does not exist
             if relation:
+                rel_attr = getattr(model, relation)
+                # Check if this is a JSON/plain column (not a relationship)
+                if hasattr(rel_attr, 'property') and isinstance(rel_attr.property, ColumnProperty):
+                    table = model.__tablename__
+                    # Map 'has'/'any' to '==' for JSON subfields
+                    json_operator = operator if operator not in ('has', 'any') else '=='
+                    try:
+                        op, op_type = get_json_operator(json_operator)
+                    except TypeError as e:
+                        raise TypeError('Invalid filters') from e
+                    increment_bind_counter()
+                    bindparams = {
+                        f'key_{get_bind_counter()}': fieldname,
+                        f'value_{get_bind_counter()}': argument,
+                    }
+                    query = get_json_query(table, relation, op, op_type, get_bind_counter())
+                    return OPERATORS['json'](text(f"{query}").bindparams(**bindparams))
                 # For relationship queries, get the relationship field first
-                field = getattr(model, relation)
+                field = rel_attr
             else:
                 field = getattr(model, fieldname)
             # each of these will raise a TypeError if the wrong number of arguments
@@ -734,14 +788,7 @@ class QueryBuilder:
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_
                     field = getattr(relation_model, field_name_in_relation)
-                    if relation_model not in joined_models:
-                        if relation_model == User:
-                            query = query.join(relation_model, model.creator_id == relation_model.id)
-                        elif relation_model == CVE:
-                            query = query.join(relation_model, model.cve_instances)
-                        else:
-                            query = query.join(relation_model)
-                    joined_models.add(relation_model)
+                    query = apply_join(query, model, relation, joined_models)
                     select_fields.append(field)
                 else:
                     select_fields.append(getattr(model, group_by.field))
@@ -764,15 +811,15 @@ class QueryBuilder:
         filters = [filt for filt in filters_generator if filt is not None]
 
         # Check if it is necessary to join relationship tables for filters
-        if model.__tablename__ != User.__tablename__:
+        creator_relation = getattr(model, 'creator', None)
+        if model.__tablename__ != User.__tablename__ and creator_relation is not None:
             for filter in filters:
                 if isinstance(filter, BinaryExpression):
                     table = getattr(filter.left, "table", None)
                     if not isinstance(table, SQLAlchemySchemaTableType):
                         continue
-                    if table.name == User.__tablename__ and User not in joined_models:
-                        query = query.join(User, model.creator_id == User.id)
-                        joined_models.add(User)
+                    if table.name == User.__tablename__:
+                        query = apply_join(query, model, creator_relation, joined_models)
 
         # Multiple filter criteria at the top level of the provided search
         # parameters are interpreted as a conjunction (AND).
@@ -787,31 +834,25 @@ class QueryBuilder:
                     if '__' in field_name:
                         field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
-                        relation_model = relation.mapper.class_
-                        if relation_model not in joined_models:
-                            # TODO: is it possible to guess if relationship is a many to many
-                            if relation_model == Role:
-                                query = query.join(relation_model, User.roles)
-                            elif relation_model == User:
-                                query = query.join(relation_model, model.creator_id == relation_model.id)
-                            elif relation_model == CVE:
-                                query = query.join(relation_model, model.cve_instances)
-                            else:
-                                query = query.join(relation_model, isouter=True)
-                        joined_models.add(relation_model)
-                        field = getattr(relation_model, field_name_in_relation)
-                        direction = getattr(field, val.direction)
-                        if val.direction == 'desc':
-                            query = query.order_by(nullslast(direction()))
+                        # Check if this is a plain column (e.g. JSONType) vs a relationship
+                        if hasattr(relation, 'property') and isinstance(relation.property, ColumnProperty):
+                            query = apply_json_order(
+                                query,
+                                model,
+                                field_name,
+                                field_name_in_relation,
+                                val.direction,
+                            )
                         else:
-                            query = query.order_by(nullsfirst(direction()))
+                            query = apply_join(query, model, relation, joined_models)
+
+                            relation_model = relation.mapper.class_
+                            field = getattr(relation_model, field_name_in_relation)
+
+                            query = apply_order(query, field, val.direction)
                     else:
                         field = getattr(model, val.field)
-                        direction = getattr(field, val.direction)
-                        if val.direction == 'desc':
-                            query = query.order_by(nullslast(direction()))
-                        else:
-                            query = query.order_by(nullsfirst(direction()))
+                        query = apply_order(query, field, val.direction)
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

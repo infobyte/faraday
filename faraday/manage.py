@@ -60,8 +60,6 @@ if platform.system() == "Linux":
     except KeyError:
         pass
 
-app = get_app(register_extensions_flag=False)
-
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -74,6 +72,7 @@ def check_faraday_server(url):
 
 @click.command(help="Show all URLs in Faraday Server API")
 def show_urls():
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         show_all_urls()
 
@@ -82,6 +81,7 @@ def show_urls():
 @click.option('--server', prompt=True, default="http://localhost:5985")
 @click.option('--modify_default', default=False)
 def openapi_swagger(server, modify_default):
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         openapi_format(server=server, modify_default=modify_default)
 
@@ -90,6 +90,7 @@ def openapi_swagger(server, modify_default):
 @click.option('--language', required=False, default='en')
 @click.option('--list-languages', is_flag=True)
 def import_vulnerability_templates(language, list_languages):
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         import_vulnerability_template.run(language, list_languages)
 
@@ -106,8 +107,10 @@ def import_vulnerability_templates(language, list_languages):
           'use the one provided')
 )
 def initdb(choose_password, password):
-    with app.app_context():
-        InitDB().run(choose_password=choose_password, faraday_user_password=password)
+    # The app is deliberately not built here. Flask-SQLAlchemy 3.x creates its engines
+    # inside init_app(), and the connection string is only known once initdb created the
+    # role and generated its password, so InitDB.run() builds the app itself at that point.
+    InitDB().run(choose_password=choose_password, faraday_user_password=password)
 
 
 @click.command(help="Create a PNG image with Faraday model object")
@@ -130,6 +133,7 @@ def sql_shell():
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
 def change_password(username, password):
+    app = get_app(register_extensions_flag=False)
     try:
         with app.app_context():
             change_pass.changes_password(username, password)
@@ -139,6 +143,7 @@ def change_password(username, password):
 
 
 def validate_user_unique_field(ctx, param, value):
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         try:
             if User.query.filter_by(**{param.name: value}).count():
@@ -175,6 +180,7 @@ def list_plugins():
 @click.option('--password', prompt=True, hide_input=True,
               confirmation_prompt=True)
 def create_superuser(username, email, password):
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
             print(
@@ -196,6 +202,7 @@ def create_superuser(username, email, password):
 @click.command(help="Create database tables. Requires a functional "
                     "PostgreSQL database configured in the server.ini")
 def create_tables():
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
@@ -227,6 +234,7 @@ def create_tables():
     required=False,
 )
 def migrate(downgrade, revision):
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         try:
             revision = revision or ("-1" if downgrade else "head")
@@ -251,12 +259,14 @@ def migrate(downgrade, revision):
 
 @click.command(help='Custom field wizard')
 def add_custom_field():
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         add_custom_field_main()
 
 
 @click.command(help='Custom field delete wizard')
 def delete_custom_field():
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         delete_custom_field_main()
 
@@ -269,6 +279,7 @@ def rename_user(current_username, new_username):
         print("\nERROR: Usernames must be different.")
         sys.exit(1)
     else:
+        app = get_app(register_extensions_flag=False)
         with app.app_context():
             change_username.change_username(current_username, new_username)
 
@@ -293,6 +304,7 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
               help="Settings config in json")
 @click.argument('name', required=False)
 def settings(action, data, name):
+    app = get_app(register_extensions_flag=False)
     with app.app_context():
         manage_settings.manage(action.lower(), data, name)
 

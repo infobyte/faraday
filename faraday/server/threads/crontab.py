@@ -85,8 +85,14 @@ class CronTab(FaradayCronTab):
                     # job already loaded
                     self.jobs[schedule.id].update(schedule)
                 else:
-                    logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} [{schedule.crontab}]')
-                    self.jobs[schedule.id] = AgentsCronItem(schedule, app=self.app)
+                    try:
+                        self.jobs[schedule.id] = AgentsCronItem(schedule, app=self.app)
+                        logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} [{schedule.crontab}]')
+                    except Exception as e:
+                        # A single bad schedule (e.g. unparseable crontab) must never crash
+                        # the scheduler thread or app startup; log it and skip.
+                        logger.error(f"Skipping schedule {schedule.id} with invalid crontab "
+                                     f"[{schedule.crontab}]: {e}")
 
     def tick(self, sleep_time=60):
         self.refresh_schedule()

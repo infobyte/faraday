@@ -2641,13 +2641,13 @@
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -2669,7 +2669,7 @@ Scan duration : 453 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -2736,7 +2736,7 @@ Confidence level : 99
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -2750,7 +2750,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -2772,15 +2772,15 @@ cpe:/a:microsoft:remote_desktop_protocol</cpe>
 <script_version>$Revision: 1.2 $</script_version>
 <solution>n/a</solution>
 <synopsis>The remote Terminal Services use SSL/TLS.</synopsis>
-<plugin_output>Subject Name: 
+<plugin_output>Subject Name:
 
 Common Name: QA3APP09.RB.local
 
-Issuer Name: 
+Issuer Name:
 
 Common Name: QA3APP09.RB.local
 
-Serial Number: 6F 1D C2 73 BE DE 2D 99 40 54 BB FA 2E DC 6C DE 
+Serial Number: 6F 1D C2 73 BE DE 2D 99 40 54 BB FA 2E DC 6C DE
 
 Version: 3
 
@@ -2789,39 +2789,39 @@ Signature Algorithm: SHA-1 With RSA Encryption
 Not Valid Before: Mar 09 00:17:42 2013 GMT
 Not Valid After: Sep 08 00:17:42 2013 GMT
 
-Public Key Info: 
+Public Key Info:
 
 Algorithm: RSA Encryption
 Key Length: 2048 bits
-Public Key: 00 B6 9C C3 03 8B 53 08 79 C5 6C 71 AF 1B 73 88 76 9F F1 0C 
-            20 79 49 D1 54 56 A1 CF 59 91 76 86 85 97 EB E1 91 33 5F 9A 
-            7E DA 7A 63 53 56 C7 F0 EC 0A FC 4B 85 62 D5 4D 78 BD 49 4F 
-            56 0E 69 A4 8F F7 D3 79 6D 16 6A 3E A4 4E 63 E9 38 CB 96 AF 
-            7E 03 4F A3 60 BB EA B7 24 28 94 9D DE 61 E7 AC 95 57 58 8E 
-            D7 08 CB 6D EF 56 60 2A A2 52 75 B8 31 A9 10 CA 87 C5 BD D7 
-            8C 2E 31 1D BE 39 F6 9B F4 68 65 B9 7F A8 4A 20 0A 63 D9 1A 
-            05 56 19 55 E1 EA 77 9F 56 F4 7D 59 2C 94 AC 75 2C 73 57 79 
-            A6 7D 2F FA 82 51 2C 01 1A 46 6B DA 73 24 57 6C 43 DF FE A6 
-            30 E0 56 26 CD 7E 9F C0 04 55 1C 24 7A A2 7C 52 C1 48 EE 71 
-            3F 1F 12 23 4F 23 4B 09 6D 2E 6B DE 51 21 02 AB 87 E6 E6 47 
-            43 BC 81 B6 4D F0 C7 17 9A F0 0D 1D E1 28 C4 8A 29 0F D6 48 
-            9F AC B7 B0 CF C6 4D BD CC 41 56 8A DD A3 5E 12 9F 
-Exponent: 01 00 01 
+Public Key: 00 B6 9C C3 03 8B 53 08 79 C5 6C 71 AF 1B 73 88 76 9F F1 0C
+            20 79 49 D1 54 56 A1 CF 59 91 76 86 85 97 EB E1 91 33 5F 9A
+            7E DA 7A 63 53 56 C7 F0 EC 0A FC 4B 85 62 D5 4D 78 BD 49 4F
+            56 0E 69 A4 8F F7 D3 79 6D 16 6A 3E A4 4E 63 E9 38 CB 96 AF
+            7E 03 4F A3 60 BB EA B7 24 28 94 9D DE 61 E7 AC 95 57 58 8E
+            D7 08 CB 6D EF 56 60 2A A2 52 75 B8 31 A9 10 CA 87 C5 BD D7
+            8C 2E 31 1D BE 39 F6 9B F4 68 65 B9 7F A8 4A 20 0A 63 D9 1A
+            05 56 19 55 E1 EA 77 9F 56 F4 7D 59 2C 94 AC 75 2C 73 57 79
+            A6 7D 2F FA 82 51 2C 01 1A 46 6B DA 73 24 57 6C 43 DF FE A6
+            30 E0 56 26 CD 7E 9F C0 04 55 1C 24 7A A2 7C 52 C1 48 EE 71
+            3F 1F 12 23 4F 23 4B 09 6D 2E 6B DE 51 21 02 AB 87 E6 E6 47
+            43 BC 81 B6 4D F0 C7 17 9A F0 0D 1D E1 28 C4 8A 29 0F D6 48
+            9F AC B7 B0 CF C6 4D BD CC 41 56 8A DD A3 5E 12 9F
+Exponent: 01 00 01
 
 Signature Length: 256 bytes / 2048 bits
-Signature: 00 9F C1 3C 9C 5F 3E B2 27 12 A6 38 80 C1 55 06 FB E6 7F 55 
-           74 DA 72 90 29 91 66 58 BF 8D C7 09 40 B7 9A C7 29 56 D2 84 
-           BC DF A4 47 1F 7B F3 E0 16 2D 76 07 2D 51 6B 1E 0D D7 BF 72 
-           A7 B2 6E 8C 14 B1 03 18 C9 C3 65 52 98 76 8F 35 6A 2B 80 EE 
-           CB 71 30 B8 94 88 00 FB 81 69 BB C1 FE 0C 86 2E 9E B1 7A A3 
-           D2 23 60 6C 44 BD D7 2F 5F A2 ED 5A 11 DB C7 89 E0 61 F3 20 
-           E8 83 49 6A 6D 7C 81 2B 6D 94 1C 3B BD 6C B7 A0 23 57 20 61 
-           49 68 AB B8 C9 68 3C 6B 3B 79 D0 AF 72 EC AC 61 77 78 BF B6 
-           B0 6C C2 ED A4 3F 39 17 88 C5 45 FD 05 36 F2 91 84 33 D8 4D 
-           77 EF BF 31 00 38 7B B8 99 37 03 57 82 43 72 8D F5 23 CC F8 
-           46 61 C2 F0 70 75 25 63 F1 F1 2A F1 DE E8 41 9F 63 CB C9 52 
-           6A 48 B7 F0 CB 28 6C 19 B8 E1 B6 E2 F8 B0 24 BF CF A2 4A FC 
-           CC 08 AA 12 81 5A 7A FF E8 77 26 21 DE 55 8A AB 88 
+Signature: 00 9F C1 3C 9C 5F 3E B2 27 12 A6 38 80 C1 55 06 FB E6 7F 55
+           74 DA 72 90 29 91 66 58 BF 8D C7 09 40 B7 9A C7 29 56 D2 84
+           BC DF A4 47 1F 7B F3 E0 16 2D 76 07 2D 51 6B 1E 0D D7 BF 72
+           A7 B2 6E 8C 14 B1 03 18 C9 C3 65 52 98 76 8F 35 6A 2B 80 EE
+           CB 71 30 B8 94 88 00 FB 81 69 BB C1 FE 0C 86 2E 9E B1 7A A3
+           D2 23 60 6C 44 BD D7 2F 5F A2 ED 5A 11 DB C7 89 E0 61 F3 20
+           E8 83 49 6A 6D 7C 81 2B 6D 94 1C 3B BD 6C B7 A0 23 57 20 61
+           49 68 AB B8 C9 68 3C 6B 3B 79 D0 AF 72 EC AC 61 77 78 BF B6
+           B0 6C C2 ED A4 3F 39 17 88 C5 45 FD 05 36 F2 91 84 33 D8 4D
+           77 EF BF 31 00 38 7B B8 99 37 03 57 82 43 72 8D F5 23 CC F8
+           46 61 C2 F0 70 75 25 63 F1 F1 2A F1 DE E8 41 9F 63 CB C9 52
+           6A 48 B7 F0 CB 28 6C 19 B8 E1 B6 E2 F8 B0 24 BF CF A2 4A FC
+           CC 08 AA 12 81 5A 7A FF E8 77 26 21 DE 55 8A AB 88
 
 Extension: Extended Key Usage (2.5.29.37)
 Critical: 0
@@ -2851,7 +2851,7 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="35716" pluginName="Ethernet Card Manufacturer Detection" pluginFamily="Misc.">
@@ -2875,7 +2875,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -2937,7 +2937,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -2979,7 +2979,7 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="24260" pluginName="HyperText Transfer Protocol (HTTP) Information" pluginFamily="Web Servers">
-<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc... 
+<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc...
 
 This test is informational only and does not denote any security problem.</description>
 <fname>http_info.nasl</fname>
@@ -3006,13 +3006,13 @@ Headers :
   X-Powered-By: ASP.NET
   Date: Mon, 01 Jul 2013 18:36:55 GMT
   Content-Length: 689
-  
+
 </plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -3041,9 +3041,9 @@ Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle a
 Microsoft-IIS/7.5</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -3057,7 +3057,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -3114,9 +3114,9 @@ The default welcome page is from IIS.
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -3156,7 +3156,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.29 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.29 :
 172.16.138.174
 172.16.138.2
 10.31.112.29
@@ -3164,9 +3164,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -3315,7 +3315,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>
@@ -4314,13 +4314,13 @@ A CIFS server is running on this port.
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -4342,7 +4342,7 @@ Scan duration : 848 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -4391,7 +4391,7 @@ Confidence level : 99
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -4405,7 +4405,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -4430,11 +4430,11 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="24260" pluginName="HyperText Transfer Protocol (HTTP) Information" pluginFamily="Web Servers">
-<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc... 
+<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc...
 
 This test is informational only and does not denote any security problem.</description>
 <fname>http_info.nasl</fname>
@@ -4461,7 +4461,7 @@ Headers :
   X-Powered-By: ASP.NET
   Date: Mon, 01 Jul 2013 18:38:44 GMT
   Content-Length: 689
-  
+
 </plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="10107" pluginName="HTTP Server Type and Version" pluginFamily="Web Servers">
@@ -4480,9 +4480,9 @@ Headers :
 Microsoft-IIS/7.5</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -4496,7 +4496,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -4523,7 +4523,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -4603,7 +4603,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -4645,9 +4645,9 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -4693,9 +4693,9 @@ http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</see_also>
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -4735,7 +4735,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.26 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.26 :
 172.16.138.174
 172.16.138.2
 10.31.112.26
@@ -4743,9 +4743,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -4894,7 +4894,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>
@@ -5893,13 +5893,13 @@ A CIFS server is running on this port.
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -5921,7 +5921,7 @@ Scan duration : 700 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -5970,7 +5970,7 @@ Confidence level : 99
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -5984,7 +5984,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -6009,7 +6009,7 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="35716" pluginName="Ethernet Card Manufacturer Detection" pluginFamily="Misc.">
@@ -6033,7 +6033,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -6095,7 +6095,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -6137,9 +6137,9 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -6153,7 +6153,7 @@ Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle a
 <synopsis>The remote Windows host has Terminal Services enabled.</synopsis>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="24260" pluginName="HyperText Transfer Protocol (HTTP) Information" pluginFamily="Web Servers">
-<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc... 
+<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc...
 
 This test is informational only and does not denote any security problem.</description>
 <fname>http_info.nasl</fname>
@@ -6180,7 +6180,7 @@ Headers :
   X-Powered-By: ASP.NET
   Date: Mon, 01 Jul 2013 18:37:25 GMT
   Content-Length: 689
-  
+
 </plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="10107" pluginName="HTTP Server Type and Version" pluginFamily="Web Servers">
@@ -6199,9 +6199,9 @@ Headers :
 Microsoft-IIS/7.5</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -6215,7 +6215,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -6272,9 +6272,9 @@ The default welcome page is from IIS.
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -6314,7 +6314,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.25 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.25 :
 172.16.138.174
 172.16.138.2
 10.31.112.25
@@ -6322,9 +6322,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -6473,7 +6473,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>
@@ -7472,13 +7472,13 @@ A CIFS server is running on this port.
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -7500,7 +7500,7 @@ Scan duration : 766 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -7549,7 +7549,7 @@ Confidence level : 99
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -7563,7 +7563,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -7588,11 +7588,11 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="24260" pluginName="HyperText Transfer Protocol (HTTP) Information" pluginFamily="Web Servers">
-<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc... 
+<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc...
 
 This test is informational only and does not denote any security problem.</description>
 <fname>http_info.nasl</fname>
@@ -7619,7 +7619,7 @@ Headers :
   X-Powered-By: ASP.NET
   Date: Mon, 01 Jul 2013 18:38:50 GMT
   Content-Length: 689
-  
+
 </plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="10107" pluginName="HTTP Server Type and Version" pluginFamily="Web Servers">
@@ -7638,9 +7638,9 @@ Headers :
 Microsoft-IIS/7.5</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -7654,7 +7654,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -7681,7 +7681,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -7761,7 +7761,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -7803,9 +7803,9 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -7851,9 +7851,9 @@ http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</see_also>
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -7893,7 +7893,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.24 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.24 :
 172.16.138.174
 172.16.138.2
 10.31.112.24
@@ -7901,9 +7901,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -8052,7 +8052,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>
@@ -9051,13 +9051,13 @@ A CIFS server is running on this port.
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -9079,7 +9079,7 @@ Scan duration : 711 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -9128,7 +9128,7 @@ Confidence level : 99
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -9142,7 +9142,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -9167,7 +9167,7 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="35716" pluginName="Ethernet Card Manufacturer Detection" pluginFamily="Misc.">
@@ -9191,7 +9191,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -9253,7 +9253,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -9295,9 +9295,9 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -9311,7 +9311,7 @@ Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle a
 <synopsis>The remote Windows host has Terminal Services enabled.</synopsis>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="24260" pluginName="HyperText Transfer Protocol (HTTP) Information" pluginFamily="Web Servers">
-<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc... 
+<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc...
 
 This test is informational only and does not denote any security problem.</description>
 <fname>http_info.nasl</fname>
@@ -9338,7 +9338,7 @@ Headers :
   X-Powered-By: ASP.NET
   Date: Mon, 01 Jul 2013 18:37:27 GMT
   Content-Length: 689
-  
+
 </plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="10107" pluginName="HTTP Server Type and Version" pluginFamily="Web Servers">
@@ -9357,9 +9357,9 @@ Headers :
 Microsoft-IIS/7.5</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -9373,7 +9373,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -9430,9 +9430,9 @@ The default welcome page is from IIS.
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -9472,7 +9472,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.23 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.23 :
 172.16.138.174
 172.16.138.2
 10.31.112.23
@@ -9480,9 +9480,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -9631,7 +9631,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>
@@ -10630,13 +10630,13 @@ A CIFS server is running on this port.
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -10658,7 +10658,7 @@ Scan duration : 1293 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -10694,7 +10694,7 @@ Port 80 was detected as being open but is now unresponsive
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -10708,7 +10708,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -10748,7 +10748,7 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="10002" svc_name="www" protocol="tcp" severity="0" pluginID="10107" pluginName="HTTP Server Type and Version" pluginFamily="Web Servers">
@@ -10782,9 +10782,9 @@ Microsoft-HTTPAPI/2.0</plugin_output>
 Microsoft-IIS/7.5</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -10798,7 +10798,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -10825,7 +10825,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -10919,7 +10919,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -10961,9 +10961,9 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -11022,9 +11022,9 @@ http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</see_also>
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -11064,7 +11064,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.22 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.22 :
 172.16.138.174
 172.16.138.2
 10.31.112.22
@@ -11072,9 +11072,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -11253,7 +11253,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>
@@ -12252,13 +12252,13 @@ A CIFS server is running on this port.
 <script_version>$Revision: 1.59 $</script_version>
 <solution>n/a</solution>
 <synopsis>Information about the Nessus scan.</synopsis>
-<plugin_output>Information about this scan : 
+<plugin_output>Information about this scan :
 
 Nessus version : 5.2.1
 Plugin feed version : 201306260615
 Type of plugin feed : HomeFeed (Non-commercial use only)
 Scanner IP : 172.16.138.174
-Port scanner(s) : nessus_syn_scanner 
+Port scanner(s) : nessus_syn_scanner
 Port range : default
 Thorough tests : no
 Experimental tests : no
@@ -12280,7 +12280,7 @@ Scan duration : 494 sec
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10919" pluginName="Open Port Re-check" pluginFamily="General">
-<description>One of several ports that were previously open are now closed or unresponsive. 
+<description>One of several ports that were previously open are now closed or unresponsive.
 
 There are several possible reasons for this :
 
@@ -12347,7 +12347,7 @@ Confidence level : 99
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
-<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host. 
+<description>By using information obtained from a Nessus scan, this plugin reports CPE (Common Platform Enumeration) matches for various hardware and software products found on a host.
 
 Note that if an official CPE is not available for the product, this plugin computes the best possible CPE based on the information available from the scan.</description>
 <fname>cpe.nbin</fname>
@@ -12361,7 +12361,7 @@ Note that if an official CPE is not available for the product, this plugin compu
 <solution>n/a</solution>
 <synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
 <plugin_output>
-The remote operating system matched the following CPE : 
+The remote operating system matched the following CPE :
 
   cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
 
@@ -12383,15 +12383,15 @@ cpe:/a:microsoft:remote_desktop_protocol</cpe>
 <script_version>$Revision: 1.2 $</script_version>
 <solution>n/a</solution>
 <synopsis>The remote Terminal Services use SSL/TLS.</synopsis>
-<plugin_output>Subject Name: 
+<plugin_output>Subject Name:
 
 Common Name: QA3APP01.RB.local
 
-Issuer Name: 
+Issuer Name:
 
 Common Name: QA3APP01.RB.local
 
-Serial Number: 53 CA AA C9 1B D6 05 B1 47 C0 63 C2 D9 15 B7 28 
+Serial Number: 53 CA AA C9 1B D6 05 B1 47 C0 63 C2 D9 15 B7 28
 
 Version: 3
 
@@ -12400,39 +12400,39 @@ Signature Algorithm: SHA-1 With RSA Encryption
 Not Valid Before: Mar 08 00:16:31 2013 GMT
 Not Valid After: Sep 07 00:16:31 2013 GMT
 
-Public Key Info: 
+Public Key Info:
 
 Algorithm: RSA Encryption
 Key Length: 2048 bits
-Public Key: 00 EC 63 DC 70 9D E7 C0 53 EC F2 BB 5F 84 AC F7 DE D3 5A 2C 
-            C1 0F 54 34 D4 5B F0 BE BD 68 E7 DF BD E4 9B C0 F0 A0 05 5E 
-            6A 5F D6 A8 7B 5D 97 B5 65 E2 BC A9 52 C2 19 DF 5C 6A E8 E5 
-            FC 80 34 BE 04 19 DB 91 BC CB 8A B1 00 55 C7 22 02 44 90 A1 
-            79 41 6E 98 E5 D7 50 6C B4 D8 14 C9 D6 CF B9 5A F5 D7 BE DE 
-            EB F2 06 61 77 C5 83 1F 7C BF D8 6A 79 9D EE F9 F7 6B E6 DB 
-            D3 64 5E 9F E6 33 72 A8 FC D7 01 FD 55 33 32 DB D2 ED 87 CF 
-            7F B0 9F 23 49 F2 CF 55 2E F3 98 41 84 D4 EF AC 20 25 84 D4 
-            AE 5E 57 A7 8B 48 9D 6F 3D D5 15 5F F1 AB 58 C5 47 EE 38 55 
-            21 CF F3 EF 42 0C AD 97 3A 63 4E 3F F9 AB B8 69 4D B8 82 6E 
-            A0 11 67 1F 5A 5A 2F B9 30 B3 7C 58 12 DE D8 40 6A C4 D8 0B 
-            C1 DE 4F F9 3F 84 8B 02 8D F9 C1 16 FC 7B 03 2C 53 DD 9D F4 
-            1E B7 D6 10 37 4D 46 74 2C 88 26 5E 6B E3 A0 D9 3F 
-Exponent: 01 00 01 
+Public Key: 00 EC 63 DC 70 9D E7 C0 53 EC F2 BB 5F 84 AC F7 DE D3 5A 2C
+            C1 0F 54 34 D4 5B F0 BE BD 68 E7 DF BD E4 9B C0 F0 A0 05 5E
+            6A 5F D6 A8 7B 5D 97 B5 65 E2 BC A9 52 C2 19 DF 5C 6A E8 E5
+            FC 80 34 BE 04 19 DB 91 BC CB 8A B1 00 55 C7 22 02 44 90 A1
+            79 41 6E 98 E5 D7 50 6C B4 D8 14 C9 D6 CF B9 5A F5 D7 BE DE
+            EB F2 06 61 77 C5 83 1F 7C BF D8 6A 79 9D EE F9 F7 6B E6 DB
+            D3 64 5E 9F E6 33 72 A8 FC D7 01 FD 55 33 32 DB D2 ED 87 CF
+            7F B0 9F 23 49 F2 CF 55 2E F3 98 41 84 D4 EF AC 20 25 84 D4
+            AE 5E 57 A7 8B 48 9D 6F 3D D5 15 5F F1 AB 58 C5 47 EE 38 55
+            21 CF F3 EF 42 0C AD 97 3A 63 4E 3F F9 AB B8 69 4D B8 82 6E
+            A0 11 67 1F 5A 5A 2F B9 30 B3 7C 58 12 DE D8 40 6A C4 D8 0B
+            C1 DE 4F F9 3F 84 8B 02 8D F9 C1 16 FC 7B 03 2C 53 DD 9D F4
+            1E B7 D6 10 37 4D 46 74 2C 88 26 5E 6B E3 A0 D9 3F
+Exponent: 01 00 01
 
 Signature Length: 256 bytes / 2048 bits
-Signature: 00 78 9C 8F BD 43 88 DA 1F 13 EC F5 8E A8 EA A9 D3 91 33 47 
-           5F 53 2F 53 A7 5D 4E E9 18 7C CE 92 AA AC C0 C0 E8 E0 38 81 
-           9E 0C CA BA AD DF ED DA 91 1A 04 0A 30 8B A4 45 78 4E EC F4 
-           DE 06 F5 23 C0 F9 2F F8 31 0A 84 1B 88 DC 62 7C FD 83 37 26 
-           9A 4E 6A 83 69 CA F7 F7 62 F6 72 BE 51 AC 51 E7 7D 3F 50 3B 
-           55 B8 EC 77 08 DA E6 23 7D 92 BA AF 2A 9D 0D C8 EC 47 CB D3 
-           8F D5 37 43 D8 E2 61 B0 07 CE 02 A9 26 BA 0C 9E D7 32 94 6A 
-           0C 3F 99 FB 95 B0 DC 39 E6 9D 0B 83 C1 02 24 08 13 FF 9A 12 
-           37 E1 8F 60 EA 13 9A FB 32 76 1A 95 8A EE 24 43 38 9C 3E 74 
-           5E 70 AC B9 11 F0 AF 1E F4 46 68 49 C5 F7 C0 1B 10 B1 74 20 
-           19 1F 20 3B 5E 4B 57 AF E9 34 17 2D DD C0 B5 57 BF 7F 4B 9F 
-           EB E8 B0 B1 F0 41 F2 06 91 BB 53 D5 56 F9 55 AF F4 3F F5 23 
-           8B 5B 7E 0A DD D1 B7 7C 23 3D D9 1B 73 B1 1F EB FC 
+Signature: 00 78 9C 8F BD 43 88 DA 1F 13 EC F5 8E A8 EA A9 D3 91 33 47
+           5F 53 2F 53 A7 5D 4E E9 18 7C CE 92 AA AC C0 C0 E8 E0 38 81
+           9E 0C CA BA AD DF ED DA 91 1A 04 0A 30 8B A4 45 78 4E EC F4
+           DE 06 F5 23 C0 F9 2F F8 31 0A 84 1B 88 DC 62 7C FD 83 37 26
+           9A 4E 6A 83 69 CA F7 F7 62 F6 72 BE 51 AC 51 E7 7D 3F 50 3B
+           55 B8 EC 77 08 DA E6 23 7D 92 BA AF 2A 9D 0D C8 EC 47 CB D3
+           8F D5 37 43 D8 E2 61 B0 07 CE 02 A9 26 BA 0C 9E D7 32 94 6A
+           0C 3F 99 FB 95 B0 DC 39 E6 9D 0B 83 C1 02 24 08 13 FF 9A 12
+           37 E1 8F 60 EA 13 9A FB 32 76 1A 95 8A EE 24 43 38 9C 3E 74
+           5E 70 AC B9 11 F0 AF 1E F4 46 68 49 C5 F7 C0 1B 10 B1 74 20
+           19 1F 20 3B 5E 4B 57 AF E9 34 17 2D DD C0 B5 57 BF 7F 4B 9F
+           EB E8 B0 B1 F0 41 F2 06 91 BB 53 D5 56 F9 55 AF F4 3F F5 23
+           8B 5B 7E 0A DD D1 B7 7C 23 3D D9 1B 73 B1 1F EB FC
 
 Extension: Extended Key Usage (2.5.29.37)
 Critical: 0
@@ -12462,11 +12462,11 @@ Remote operating system : Microsoft Windows Server 2008 R2 Standard Service Pack
 Confidence Level : 99
 Method : MSRPC
 
- 
+
 The remote host is running Microsoft Windows Server 2008 R2 Standard Service Pack 1</plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="24260" pluginName="HyperText Transfer Protocol (HTTP) Information" pluginFamily="Web Servers">
-<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc... 
+<description>This test gives some information about the remote HTTP protocol - the version used, whether HTTP Keep-Alive and HTTP pipelining are enabled, etc...
 
 This test is informational only and does not denote any security problem.</description>
 <fname>http_info.nasl</fname>
@@ -12493,7 +12493,7 @@ Headers :
   X-Powered-By: ASP.NET
   Date: Mon, 01 Jul 2013 18:37:49 GMT
   Content-Length: 689
-  
+
 </plugin_output>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="10107" pluginName="HTTP Server Type and Version" pluginFamily="Web Servers">
@@ -12532,7 +12532,7 @@ The following card manufacturers were identified :
 </plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="20094" pluginName="VMware Virtual Machine Detection" pluginFamily="General">
-<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine. 
+<description>According to the MAC address of its network adapter, the remote host is a VMware virtual machine.
 
 Since it is physically accessible through the network, ensure that its configuration matches your organization&apos;s security policy.</description>
 <fname>vmware_detect.nasl</fname>
@@ -12546,9 +12546,9 @@ Since it is physically accessible through the network, ensure that its configura
 <synopsis>The remote host seems to be a VMware virtual machine.</synopsis>
 </ReportItem>
 <ReportItem port="80" svc_name="www" protocol="tcp" severity="0" pluginID="43111" pluginName="HTTP Methods Allowed (per directory)" pluginFamily="Web Servers">
-<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory. 
+<description>By calling the OPTIONS method, it is possible to determine which HTTP methods are allowed on each directory.
 
-As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501. 
+As this list may be incomplete, the plugin also tests - if &apos;Thorough tests&apos; are enabled or &apos;Enable web applications tests&apos; is set to &apos;yes&apos; in the scan policy - various known HTTP methods on each directory and considers them as unsupported if it receives a response code of 400, 403, 405, or 501.
 
 Note that the plugin output is only informational and does not necessarily indicate the presence of any security vulnerabilities.</description>
 <fname>web_directory_options.nasl</fname>
@@ -12562,7 +12562,7 @@ Note that the plugin output is only informational and does not necessarily indic
 <synopsis>This plugin determines which HTTP methods are allowed on various CGI directories.</synopsis>
 <plugin_output>Based on the response to an OPTIONS request :
 
-  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on : 
+  - HTTP methods  GET  HEAD  POST  TRACE OPTIONS are allowed on :
 
     /
 
@@ -12635,7 +12635,7 @@ While this is not a vulnerability by itself, some versions of Windows display th
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="57690" pluginName="Terminal Services Encryption Level is Medium or Low" pluginFamily="Misc.">
 <cvss_base_score>4.3</cvss_base_score>
 <cvss_vector>CVSS2#AV:N/AC:M/Au:N/C:P/I:N/A:N</cvss_vector>
-<description>The remote Terminal Services service is not configured to use strong cryptography. 
+<description>The remote Terminal Services service is not configured to use strong cryptography.
 
 Using weak cryptography with this service may allow an attacker to eavesdrop on the communications more easily and obtain screenshots and/or keystrokes.</description>
 <fname>rdp_weak_crypto.nbin</fname>
@@ -12677,9 +12677,9 @@ The terminal services encryption level is set to :
 2. Medium (Client Compatible)</plugin_output>
 </ReportItem>
 <ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="0" pluginID="10940" pluginName="Windows Terminal Services Enabled" pluginFamily="Windows">
-<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host). 
+<description>Terminal Services allows a Windows user to remotely obtain a graphical login (and therefore act as a local user on the remote host).
 
-If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely. 
+If an attacker gains a valid login and password, he may be able to use this service to gain further access on the remote host.  An attacker may also use this service to mount a dictionary attack against the remote host to try to log in remotely.
 
 Note that RDP (the Remote Desktop Protocol) is vulnerable to Man-in-the-middle attacks, making it easy for attackers to steal the credentials of legitimate users by impersonating the Windows server.</description>
 <fname>windows_terminal_services.nasl</fname>
@@ -12725,9 +12725,9 @@ http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html</see_also>
 <plugin_output>A web server is running on this port.</plugin_output>
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="46215" pluginName="Inconsistent Hostname and IP Address" pluginFamily="Settings">
-<description>The name of this machine either does not resolve or resolves to a different IP address. 
+<description>The name of this machine either does not resolve or resolves to a different IP address.
 
-This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host. 
+This may come from a badly configured reverse DNS or from a host file in use on the Nessus scanning host.
 
 As a result, URLs in plugin output may not be directly usable in a web browser and some web tests may be incomplete.</description>
 <fname>bad_rdns.nasl</fname>
@@ -12767,7 +12767,7 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 <script_version>1.62</script_version>
 <solution>n/a</solution>
 <synopsis>It was possible to obtain traceroute information.</synopsis>
-<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.21 : 
+<plugin_output>For your information, here is the traceroute from 172.16.138.174 to 10.31.112.21 :
 172.16.138.174
 172.16.138.2
 10.31.112.21
@@ -12775,9 +12775,9 @@ As a result, URLs in plugin output may not be directly usable in a web browser a
 </ReportItem>
 <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="24786" pluginName="Nessus Windows Scan Not Performed with Admin Privileges" pluginFamily="Settings">
 <cpe>cpe:/o:microsoft:windows</cpe>
-<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges. 
+<description>The Nessus scanner testing the remote host has been given SMB credentials to log into the remote host, however these credentials do not have administrative privileges.
 
-Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied. 
+Typically, when Nessus performs a patch audit, it logs into the remote host and reads the version of the DLLs on the remote host to determine if a given patch has been applied or not.  This is the method Microsoft recommends to determine if a patch has been applied.
 
 If your Nessus scanner does not have administrative privileges when doing a scan, then Nessus has to fall back to perform a patch audit through the registry which may lead to false positives (especially when using third-party patch auditing tools) or to false negatives (not all patches can be detected through the registry).</description>
 <fname>smb_scan_not_admin.nasl</fname>
@@ -12926,7 +12926,7 @@ The remote SMB Domain Name is : RB
 </plugin_output>
 </ReportItem>
 <ReportItem port="137" svc_name="netbios-ns" protocol="udp" severity="0" pluginID="10150" pluginName="Windows NetBIOS / SMB Remote Host Information Disclosure" pluginFamily="Windows">
-<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests. 
+<description>The remote host listens on UDP port 137 or TCP port 445 and replies to NetBIOS nbtscan or SMB requests.
 
 Note that this plugin gathers information to be used in other plugins but does not itself generate a report.</description>
 <fname>netbios_name_get.nasl</fname>

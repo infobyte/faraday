@@ -9,11 +9,13 @@ import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load, ValidationError
+from marshmallow.validate import OneOf
 
 from faraday.server.api.base import (
     AutoSchema,
+    PaginatedMixin,
     ReadWriteWorkspacedView,
-    PaginatedMixin
+    get_workspace,
 )
 from faraday.server.models import Command, Workspace
 from faraday.server.schemas import MutableField, PrimaryKeyRelatedField, SelfNestedField, MetadataSchema
@@ -48,6 +50,7 @@ class CommandSchema(AutoSchema):
     creator = PrimaryKeyRelatedField('username', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
     tasks = fields.List(fields.String(), attribute='tasks')
+    import_source = fields.String(validate=OneOf(Command.IMPORT_SOURCE), allow_none=True)
 
     @staticmethod
     def load_itime(value):
@@ -123,14 +126,16 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
                   schema: CommandSchema
         """
         res = []
-        query = Command.query.join(Workspace).filter_by(name=workspace_name)
+        query = Command.with_severity_counts(
+            Command.query.filter(Command.workspace == get_workspace(workspace_name))
+        )
         for command in query.all():
             res.append(populate_command_dict(command))
         return res
 
     @route('/last', methods=['GET'])
     def last_command(self, workspace_name):
-        """
+        """n
         ---
           tags: ["Command"]
           description: Gets the last executed command
@@ -138,8 +143,9 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
             200:
                description: Last executed command or an empty json
         """
-        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(
-            Command.start_date.desc()).first()
+        command = Command.with_severity_counts(
+            Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc())
+        ).first()
         command_obj = {}
         if command:
             command_obj = populate_command_dict(command)

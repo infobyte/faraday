@@ -7,6 +7,7 @@ Create Date: 2019-05-14 18:12:52.724079+00:00
 """
 
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -18,9 +19,9 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE executive_report ADD COLUMN filter JSONB')
+    conn.execute(text('ALTER TABLE executive_report ADD COLUMN filter JSONB'))
 
 
 def downgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE executive_report DROP COLUMN filter')
+    conn.execute(text('ALTER TABLE executive_report DROP COLUMN filter'))

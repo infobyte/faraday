@@ -12,6 +12,7 @@ def test_changes_password_command(session):
     )
     changes_password('test_change_pass', 'new_pass')
 
+    session.expire_all()
     user = User.query.filter_by(username='test_change_pass').first()
 
     assert not verify_password('old_pass', user.password)

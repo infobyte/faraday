@@ -22,19 +22,25 @@ class PreferencesView(GenericView):
     def post(self):
         """
         ---
-        set:
+        post:
           tags: ["User"]
           description: Set the user preferences
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: PreferenceSchema
           responses:
             200:
               description: Ok
         """
         user = flask_login.current_user
 
-        if request.json and 'preferences' not in request.json:
+        _json = request.get_json(silent=True)
+        if _json and 'preferences' not in _json:
             abort(400)
 
-        preferences = request.json.get('preferences', {})
+        preferences = (_json or {}).get('preferences', {})
         user.preferences = preferences
 
         db.session.commit()

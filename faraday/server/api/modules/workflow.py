@@ -6,8 +6,7 @@ import re
 from copy import deepcopy
 
 # Related third party imports
-import flask
-from flask import Blueprint, request, Response
+from flask import Blueprint, Response, abort, jsonify, request
 from flask_classful import route
 from marshmallow import fields, validate, validates_schema, ValidationError, post_dump
 from sqlalchemy import exists
@@ -17,6 +16,7 @@ from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
 )
+from faraday.server.config import faraday_server as server_config
 from faraday.server.models import (
     db,
     Workflow,
@@ -171,6 +171,7 @@ rules_attributes = {
         {"name": "resolution", "display_name": "Resolution", "type": "string", "operators": string_operators},
         {"name": "create_date", "display_name": "Create Date", "type": "datetime", "operators": numeric_operators},
         {"name": "update_date", "display_name": "Update Date", "type": "datetime", "operators": numeric_operators},
+        {"name": "last_detected", "display_name": "Last Detected", "type": "datetime", "operators": numeric_operators},
         {"name": "ease_of_resolution", "display_name": "Ease of Resolution", "type": "string", "operators": equals_not_equals, "valid": ('trivial', 'simple', 'moderate', 'difficult', 'infeasible')},
         {"name": "severity", "display_name": "Severity", "type": "string", "operators": equals_not_equals, "valid": ('critical', 'high', 'medium', 'low', 'informational', 'unclassified')},
         {"name": "status", "display_name": "Status", "type": "string", "operators": equals_not_equals, "valid": ('open', 'closed', 're-opened', 'risk-accepted')},
@@ -235,7 +236,7 @@ def _get_rules_attributes():
 
         c_operators = []
 
-        if c_type in ["int", "datetime"]:
+        if c_type in ["int", "float", "datetime"]:
             c_operators = numeric_operators
         elif c_type == "string":
             c_operators = string_operators
@@ -270,6 +271,7 @@ class PipelineSchema(AutoSchema):
 
     class Meta:
         model = Pipeline
+        exclude = ('running_since',)
 
 
 class JobSchema(AutoSchema):
@@ -387,7 +389,7 @@ def create_condition_from_json(workflow, jsondata, parent_id: int = None):
 def check_if_field_in_model(data):
     model = data.get("model") if isinstance(data, dict) else data.model
     if model is None:
-        return flask.abort(403, "Invalid model")
+        return abort(403, "Invalid model")
     for action in data["actions"] if isinstance(data, dict) else data.actions:
         if action.custom_field is True or action.command == "DELETE":
             continue
@@ -396,7 +398,7 @@ def check_if_field_in_model(data):
                 continue
             if not isinstance(data, dict):
                 db.session.rollback()
-            return flask.abort(400, f"Field [{action.field}] in action id: [{action.id}] "
+            return abort(400, f"Field [{action.field}] in action id: [{action.id}] "
                                     f"not compatible with workflow model "
                                     f"\"{data['model'] if isinstance(data, dict) else data.model}\"")
 
@@ -452,7 +454,7 @@ class JobView(ReadWriteView):
         if workflows_in_use >= workflow_limit:
             message = "Workflow limit reached. Can't create new Workflows"
             logger.error(message)
-            return flask.abort(403, message)
+            return abort(403, message)
 
         actions_ids = data.pop('actions_ids', [])
 
@@ -469,7 +471,7 @@ class JobView(ReadWriteView):
             logger.error(f"Error while creating conditions - {e}")
             db.session.delete(created)
             db.session.commit()
-            return flask.abort(400, "Error During Condition Creation, Check json")
+            return abort(400, "Error During Condition Creation, Check json")
 
         workflow_message = f"Job created [model: {data['model']}] "
         logger.info(workflow_message)
@@ -503,7 +505,7 @@ class JobView(ReadWriteView):
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Error while creating conditions - {e}")
-                return flask.abort(400, "Error During Condition Creation, Check json")
+                return abort(400, "Error During Condition Creation, Check json")
         db.session.commit()
 
         super()._perform_update(object_id, obj, data)
@@ -514,7 +516,7 @@ class JobView(ReadWriteView):
             .filter(Workflow.id == job_id)\
             .first()
         if not workflow:
-            flask.abort(404)
+            abort(404)
 
         workflow_json = JobSchema().dump(workflow)
 
@@ -547,9 +549,9 @@ class JobView(ReadWriteView):
             .filter(Workflow.id == job_id) \
             .first()
         if not workflow:
-            flask.abort(404)
+            abort(404)
         serialized_executions = WorkflowExecutionSchema().dump(workflow.executions, many=True)
-        return flask.jsonify(serialized_executions)
+        return jsonify(serialized_executions)
 
     @route('/<int:job_id>/tasks', methods=['GET'])
     def get_actions(self, job_id):
@@ -573,9 +575,9 @@ class JobView(ReadWriteView):
             .filter(Workflow.id == job_id) \
             .first()
         if not workflow:
-            flask.abort(404)
+            abort(404)
         serialized_actions = TaskwfSchema().dump(workflow.actions, many=True)
-        return flask.jsonify(serialized_actions)
+        return jsonify(serialized_actions)
 
     @route('/<int:job_id>/conditions', methods=['GET'])
     def get_conditions(self, job_id):
@@ -599,10 +601,10 @@ class JobView(ReadWriteView):
             .filter(Workflow.id == job_id) \
             .first()
         if not workflow:
-            flask.abort(404)
+            abort(404)
 
         serialized_conditions = ConditionSchema().dump(workflow.root_condition)
-        return flask.jsonify(serialized_conditions)
+        return jsonify(serialized_conditions)
 
     @route('/<int:job_id>/enabled', methods=['GET'])
     def enabled(self, job_id):
@@ -623,59 +625,9 @@ class JobView(ReadWriteView):
             .filter(Workflow.id == job_id)\
             .first()
         if not workflow:
-            flask.abort(404)
+            abort(404)
 
-        return flask.jsonify(workflow.enabled)
-
-    # @api_method_validation
-    # @route('/order', methods=['POST'])
-    # def set_wf_order(self, workspace_name):
-    #     """
-    #     ---
-    #     post:
-    #       tags: ["Job", "Workspace"]
-    #       summary: "Sets the order of execution of jobs"
-    #       responses:
-    #         200:
-    #           description: Ok
-    #     tags: ["Job", "Workspace"]
-    #     responses:
-    #       200:
-    #         description: Ok
-    #     """
-    #     workspace = db.session.query(Workspace).filter(Workspace.name == workspace_name).first()
-    #     if not workspace:
-    #         flask.abort(404)
-    #
-    #     if request.json.get("wf_order") is not None:
-    #         ids = request.json.get("wf_order")
-    #
-    #         if isinstance(ids, str):
-    #             match = re.match(order_regex, ids)
-    #             if match is not None:
-    #                 workspace.workflows_order = match.group(0)
-    #                 db.session.add(workspace)
-    #                 db.session.commit()
-    #                 return 200
-    #             else:
-    #                 flask.abort(400)
-    #         else:
-    #             # Check for repeated entries
-    #             if len(ids) != len(set(ids)):
-    #                 flask.abort(400)
-    #
-    #             wfs_ids_str = [str(x) for x in ids]
-    #             order_string = "-".join(wfs_ids_str)
-    #             match = re.match(order_regex, order_string)
-    #             if match is not None:
-    #                 workspace.workflows_order = match.group(0)
-    #                 db.session.add(workspace)
-    #                 db.session.commit()
-    #                 return 200
-    #             else:
-    #                 flask.abort(400)
-    #     else:
-    #         flask.abort(400)
+        return jsonify(workflow.enabled)
 
     @route('/<int:job_id>/export_job', methods=['GET'])
     def export_wf(self, job_id):
@@ -714,9 +666,20 @@ class JobView(ReadWriteView):
     def import_wf(self):
         """
         ---
-        get:
+        post:
           tags: ["Job"]
           summary: "Import job from json"
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    file:
+                      type: string
+                      format: binary
+                      description: "JSON file describing the job to import."
           responses:
             201:
               description: Ok
@@ -727,16 +690,16 @@ class JobView(ReadWriteView):
         """
         json_file = None
         if len(request.files) == 0:
-            flask.abort(400)
+            abort(400)
         created = None
         for file in request.files.values():
             try:
                 json_file = json.loads(file.read())
             except Exception:
-                flask.abort(400, "Error while parsing file")
+                abort(400, "Error while parsing file")
             created = self._perform_create(json_file)
         serialized_workflow = JobSchema().dump(created)
-        return flask.jsonify(serialized_workflow)
+        return jsonify(serialized_workflow)
 
     @route('/rules/attributes', methods=['GET'])
     def get_attribs(self):
@@ -754,7 +717,7 @@ class JobView(ReadWriteView):
             description: Ok
         """
 
-        return flask.jsonify(_get_rules_attributes())
+        return jsonify(_get_rules_attributes())
 
     @route('/<int:job_id>/clone', methods=['POST'])
     def clone_wf(self, job_id):
@@ -796,7 +759,7 @@ class JobView(ReadWriteView):
 
         created = self._perform_create(workflow_json)
         serialized_workflow = JobSchema().dump(created)
-        return flask.jsonify(serialized_workflow)
+        return jsonify(serialized_workflow)
 
 
 class TaskView(ReadWriteView):
@@ -824,9 +787,9 @@ class TaskView(ReadWriteView):
         """
         action = Action.query.filter(Action.id == task_id).first()
         if not action:
-            flask.abort(404)
+            abort(404)
         serialized_workflows = JobSchema().dump(action.workflows, many=True)
-        return flask.jsonify(serialized_workflows)
+        return jsonify(serialized_workflows)
 
     @route('/fields', methods=['GET'])
     def get_fields(self):
@@ -843,7 +806,39 @@ class TaskView(ReadWriteView):
           200:
             description: Ok
         """
-        return flask.jsonify(fields_lookup)
+        result = deepcopy(fields_lookup)
+
+        custom_fields = (
+            db.session.query(
+                CustomFieldsSchema.field_name,
+                CustomFieldsSchema.field_type,
+                CustomFieldsSchema.field_metadata,
+            )
+            .filter(CustomFieldsSchema.table_name == "vulnerability")
+            .all()
+        )
+
+        type_mapping = {
+            "str": ("string", True, True),
+            "markdown": ("string", True, True),
+            "int": ("int", True, False),
+            "list": ("list", False, True),
+            "choice": ("string", True, False),
+            "date": ("date", True, False),
+        }
+
+        for field in custom_fields:
+            mapped = type_mapping.get(field.field_type)
+            if mapped is None:
+                continue
+            output_type, replace, append = mapped
+            field_def = {"type": output_type, "replace": replace, "append": append}
+            if field.field_type == "choice" and field.field_metadata:
+                field_def["valid"] = json.loads(field.field_metadata)
+            result["vulnerability"][field.field_name] = field_def
+            result["vulnerability_web"][field.field_name] = field_def
+
+        return jsonify(result)
 
 
 class PipelineView(ReadWriteView):
@@ -896,7 +891,7 @@ class PipelineView(ReadWriteView):
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
-            flask.abort(404)
+            abort(404)
 
         pipeline_json = PipelineSchema().dump(pipeline)
 
@@ -965,7 +960,7 @@ class PipelineView(ReadWriteView):
 
         created = self._perform_create(pipeline_json)
         serialized_pl = PipelineSchema().dump(created)
-        return flask.jsonify(serialized_pl)
+        return jsonify(serialized_pl)
 
     @route('/<int:pipeline_id>/run', methods=['POST'])
     def run_all(self, pipeline_id):
@@ -986,13 +981,23 @@ class PipelineView(ReadWriteView):
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
-            flask.abort(404)
+            abort(404)
 
         if pipeline.workspace_id is None:
-            flask.abort(400, "Pipeline doesn't have an assigned Workspace")
+            abort(400, "Pipeline doesn't have an assigned Workspace")
 
         if pipeline.running is True:
-            flask.abort(400, "Pipeline already running")
+            timeout = server_config.pipeline_running_timeout
+            if pipeline.running_since and (datetime.datetime.utcnow() - pipeline.running_since).total_seconds() > timeout:
+                logger.warning(f"Pipeline {pipeline_id} stuck since {pipeline.running_since}, auto-resetting")
+                pipeline.running = False
+                pipeline.running_since = None
+                db.session.commit()
+            else:
+                abort(400, "Pipeline already running")
+
+        if pipeline.workspace.readonly:
+            abort(403, "Cannot run pipelines on read-only workspaces")
 
         from faraday.server.tasks import workflow_task  # pylint: disable=import-outside-toplevel
         # TODO: Check if there is an active workflow
@@ -1025,7 +1030,7 @@ class PipelineView(ReadWriteView):
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
-            flask.abort(404)
+            abort(404)
 
         pipeline.enabled = False
         db.session.add(pipeline)
@@ -1052,9 +1057,9 @@ class PipelineView(ReadWriteView):
             .filter(Pipeline.id == pipeline_id) \
             .first()
         if not pipeline:
-            flask.abort(404)
+            abort(404)
         if pipeline.workspace_id is None:
-            flask.abort(400, "Pipeline doesn't have an assigned Workspace")
+            abort(400, "Pipeline doesn't have an assigned Workspace")
 
         ws = pipeline.workspace
         pipeline.enabled = True

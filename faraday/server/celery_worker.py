@@ -4,9 +4,8 @@ import os
 
 import faraday.server.config
 from faraday.server.app import celery, get_app  # noqa
-from faraday.server.config import CELERY_LOG_FILE
-
-application = get_app()
+from faraday.server.utils.celery import require_celery_enabled
+from faraday.server.utils.logger import setup_celery_logging
 
 
 def main():
@@ -15,6 +14,9 @@ def main():
     parser.add_argument('--concurrency', type=str, help='Celery concurrency', required=False)
     parser.add_argument('--loglevel', type=str, help='Celery log level', required=False)
     args = parser.parse_args()
+
+    require_celery_enabled('workers')
+    get_app()
     print("Starting celery %s", args)
 
     queue = 'celery'
@@ -35,6 +37,7 @@ def main():
         if args.loglevel:
             loglevel = args.loglevel
 
+    setup_celery_logging()
     celery.worker_main(
         [
             'worker',
@@ -44,8 +47,6 @@ def main():
             concurrency,
             '--loglevel',
             loglevel,
-            '-f',
-            CELERY_LOG_FILE
         ]
     )
 

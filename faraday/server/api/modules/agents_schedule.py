@@ -27,6 +27,7 @@ from marshmallow import (
 )
 from sqlalchemy.orm.exc import NoResultFound
 import dateutil
+from croniter import croniter
 
 # Local application imports
 from faraday.server.api.base import (
@@ -51,6 +52,7 @@ from faraday.server.models import (
     AgentsSchedule,
     db,
     Executor,
+    SchedulerGeneric,
 )
 agents_schedule_api = Blueprint('agents_schedule_api', __name__)
 logger = logging.getLogger(__name__)
@@ -63,18 +65,26 @@ def check_timezone(tz: str):
         raise ValidationError("Invalid timezone")
 
 
+def check_crontab(value):
+    # The regex above only checks the shape; croniter validates field ranges
+    # (e.g. minute 60, hour 24, step 0) that would otherwise raise at run time.
+    if not croniter.is_valid(value):
+        raise ValidationError('Invalid format, Please use basic crontab format, Example: 10 * 10 * *')
+
+
 class AgentsScheduleSchema(AutoSchema):
     id = fields.Integer(dump_only=True)
     description = fields.String(required=True)
     crontab = fields.String(required=True,
-                            validate=validate
-                            .Regexp
-                            (r"^(((([1-5]?\d(-([1-5]?\d))?|\*)(\/(\d+))?),?)+)\ (((((2[0-3]|1?\d)(-(2["
-                             r"0-3]|1?\d))?|\*)(\/(\d+))?),?)+)\ (((((3[01]|[12]?\d)(-(3[01]|[12]?\d))?|\*)(\/("
-                             r"\d+))?),?)+)\ (((((1[0-2]|\d)(-(1[0-2]|\d))?|\*)(\/(\d+))?),?)+)\ (((([0-6](-(["
-                             r"0-6]))?|\*)(\/(\d+))?),?)+)$",
-                             0,
-                             error='Invalid format, Please use basic crontab format, Example: 10 * 10 * *'))
+                            metadata={"example": "10 * 10 * *"},
+                            validate=[validate.Regexp(
+                                r"^(((([1-5]?\d(-([1-5]?\d))?|\*)(\/(\d+))?),?)+)\ (((((2[0-3]|1?\d)(-(2["
+                                r"0-3]|1?\d))?|\*)(\/(\d+))?),?)+)\ (((((3[01]|[12]?\d)(-(3[01]|[12]?\d))?|\*)(\/("
+                                r"\d+))?),?)+)\ (((((1[0-2]|\d)(-(1[0-2]|\d))?|\*)(\/(\d+))?),?)+)\ (((([0-6](-(["
+                                r"0-6]))?|\*)(\/(\d+))?),?)+)$",
+                                0,
+                                error='Invalid format, Please use basic crontab format, Example: 10 * 10 * *'),
+                                check_crontab])
     timezone = fields.String(required=True,
                              validate=check_timezone
                              )
@@ -94,8 +104,10 @@ class AgentsScheduleSchema(AutoSchema):
     vuln_tag = fields.List(fields.String, required=False)
     service_tag = fields.List(fields.String, required=False)
     host_tag = fields.List(fields.String, required=False)
-    min_severity = fields.String(required=False, allow_none=True)
-    max_severity = fields.String(required=False, allow_none=True)
+    min_severity = fields.String(required=False, allow_none=True,
+                                 validate=validate.OneOf(SchedulerGeneric.SEVERITIES))
+    max_severity = fields.String(required=False, allow_none=True,
+                                 validate=validate.OneOf(SchedulerGeneric.SEVERITIES))
 
     class Meta:
         model = AgentsSchedule

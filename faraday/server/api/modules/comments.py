@@ -28,12 +28,14 @@ from faraday.server.api.base import (
 
 comment_api = Blueprint('comment_api', __name__)
 
+COMMENT_OBJECT_TYPES = ['host', 'service', 'comment', 'vulnerability']
+
 
 class CommentSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     object_id = fields.Integer(attribute='object_id', required=True)
     object_type = fields.String(attribute='object_type',
-                                validate=OneOf(['host', 'service', 'comment', 'vulnerability']),
+                                validate=OneOf(COMMENT_OBJECT_TYPES),
                                 required=True)
     text = fields.String(attribute='text', required=True)
 

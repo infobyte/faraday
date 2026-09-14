@@ -1,11 +1,15 @@
+import json
 import time
 from datetime import datetime, timedelta
 from typing import Optional, List
 
+import redis
 from celery import group, chord
 from celery.utils.log import get_task_logger
 from sqlalchemy import (
     func,
+    insert as sqlalchemy_insert,
+    literal,
     or_,
     and_,
 )
@@ -20,18 +24,85 @@ from faraday.server.models import (
     CommandObject,
     Service,
     Host,
+    Pipeline,
     VulnerabilityGeneric,
     VulnerabilityWeb,
     Vulnerability,
 )
 from faraday.server.utils.workflows import _process_entry
-from faraday.server.debouncer import (debounce_workspace_update,
-                                      debounce_workspace_vulns_count_update,
-                                      debounce_workspace_host_count,
-                                      debounce_workspace_service_count, update_workspace_vulns_count,
-                                      update_workspace_host_count, update_workspace_service_count)
+from faraday.server.debouncer import (
+    _app_ctx,
+    debounce_workspace_update,
+    debounce_workspace_vulns_count_update,
+    debounce_workspace_host_count,
+    debounce_workspace_service_count,
+    get_redis_client,
+    update_workspace_vulns_count,
+    update_workspace_host_count,
+    update_workspace_service_count,
+    update_workspace_update_date,
+)
 
 logger = get_task_logger(__name__)
+
+
+FINALIZE_MAX_POLLS = 360  # ~1h at the 10s poll interval; cap so a lost task can't poll forever
+
+
+def finalize_report(command_id=None, workspace_id=None, attempt=0):
+    # Runs once per command via the debouncer, after all import batches have actually finished.
+    # Holds everything that must happen exactly once: end_date, workspace count refresh,
+    # and pipeline/workflow processing over the command's full object set.
+    from faraday.server.app import get_app, get_debouncer  # pylint: disable=import-outside-toplevel
+    app = get_app()
+    with _app_ctx(app):
+        command = db.session.query(Command).filter(Command.id == command_id).first()
+        if not command:
+            logger.error("Finalize: command id %s was not found", command_id)
+            return
+
+        # Only finalize once every batch chord of this command has completed. Each batch's chord id
+        # is recorded in command.tasks; AsyncResult.ready() is True on SUCCESS or FAILURE, so a
+        # failed/errored batch won't block forever. While any are pending, re-debounce and poll.
+        pending = [tid for tid in (command.tasks or []) if not celery.AsyncResult(tid).ready()]
+        if pending and attempt < FINALIZE_MAX_POLLS:
+            logger.info("Finalize deferred: %s batch task(s) pending for command %s (attempt %s)",
+                        len(pending), command_id, attempt)
+            get_debouncer().debounce(
+                finalize_report,
+                {"command_id": command_id, "workspace_id": workspace_id, "attempt": attempt + 1},
+                key_suffix=f"cmd_id:{command_id}",
+            )
+            return
+        if pending:
+            logger.warning("Finalize: giving up on %s pending task(s) for command %s after %s polls",
+                           len(pending), command_id, attempt)
+
+        workspace = db.session.query(Workspace).filter(Workspace.id == workspace_id).first()
+        if workspace and workspace.name:
+            debounce_workspace_update(workspace.name, workspace_id=workspace.id)
+
+        no_debounce = command.import_source == "report"
+        update_host_stats.delay([], [], workspace_id=workspace_id, no_debounce=no_debounce, command_id=command_id)
+
+        # Apply Workflow
+        pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
+        if pipeline:
+            vuln_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability"]
+            vuln_web_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability_web"]
+            host_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "host"]
+
+            # Process vulns
+            if vuln_object_ids:
+                workflow_task.delay("vulnerability", vuln_object_ids, command.workspace.id, update_hosts=False)
+
+            # Process vulns web
+            if vuln_web_object_ids:
+                workflow_task.delay("vulnerability_web", vuln_web_object_ids, command.workspace.id, update_hosts=False)
+
+            # Process hosts
+            if host_object_ids:
+                workflow_task.delay("host", host_object_ids, command.workspace.id, update_hosts=False)
 
 
 @celery.task
@@ -40,41 +111,22 @@ def on_success_process_report_task(results, command_id=None):
     if not command:
         logger.error("File imported but command id %s was not found", command_id)
         return
-    else:
-        workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
-        if workspace.name:
-            debounce_workspace_update(workspace.name)
-    db.session.commit()
-    host_ids = []
+    workspace = db.session.query(Workspace).filter(Workspace.id == command.workspace_id).first()
+
+    # Per-batch: per-host vulnerability stats must run for every batch.
     for result in results:
         if result.get('created'):
             calc_vulnerability_stats.delay(result['host_id'])
-            host_ids.append(result["host_id"])
-    no_debounce = False
-    if command.import_source == "report":
-        no_debounce = True
-    update_host_stats.delay(host_ids, [], workspace_id=workspace.id, no_debounce=no_debounce, command_id=command_id)
 
-    # Apply Workflow
-    pipeline = [pipeline for pipeline in command.workspace.pipelines if pipeline.enabled]
-    if pipeline:
-        vuln_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability"]
-        vuln_web_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "vulnerability_web"]
-        host_object_ids = [command_object.object_id for command_object in command.command_objects if command_object.object_type == "host"]
-
-        # Process vulns
-        if vuln_object_ids:
-            workflow_task.delay("vulnerability", vuln_object_ids, command.workspace.id, update_hosts=False)
-
-        # Process vulns web
-        if vuln_web_object_ids:
-            workflow_task.delay("vulnerability_web", vuln_web_object_ids, command.workspace.id, update_hosts=False)
-
-        # Process hosts
-        if host_object_ids:
-            workflow_task.delay("host", host_object_ids, command.workspace.id, update_hosts=False)
-
-    logger.debug("No pipelines found in ws %s", command.workspace.name)
+    # Debounce the finalization so it runs once per command after all batches settle.
+    # This collapses multi-batch repetition and worker-death (acks_late) redelivery into
+    # a single finalization. Keyed per command so concurrent same-workspace imports don't collide.
+    from faraday.server.app import get_debouncer  # pylint: disable=import-outside-toplevel
+    get_debouncer().debounce(
+        finalize_report,
+        {"command_id": command_id, "workspace_id": workspace.id},
+        key_suffix=f"cmd_id:{command_id}",
+    )
 
 
 @celery.task()
@@ -90,7 +142,8 @@ def on_chord_error(request, exc, *args, **kwargs):
 
 @celery.task(acks_late=True)
 def process_report_task(workspace_id: int, command: dict, hosts):
-    callback = on_success_process_report_task.subtask(kwargs={'command_id': command['id']}).on_error(on_chord_error.subtask(kwargs={'command_id': command['id']}))
+    callback_kwargs = {'command_id': command['id']}
+    callback = on_success_process_report_task.subtask(kwargs=callback_kwargs).on_error(on_chord_error.subtask(kwargs={'command_id': command['id']}))
     g = [create_host_task.s(workspace_id, command, host) for host in hosts]
     logger.info("Task to execute %s", len(g))
     group_of_tasks = group(g)
@@ -122,11 +175,42 @@ def workflow_task(obj_type: str, obj_ids: list, workspace_id: int, fields=None, 
         update_host_stats.delay(hosts_to_update, [])
 
 
+@celery.task()
+def cleanup_stuck_pipelines():
+    """Reset pipelines stuck in running state longer than configured timeout."""
+    try:
+        timeout = faraday_server.pipeline_running_timeout
+        threshold = datetime.utcnow() - timedelta(seconds=timeout)
+        stuck = db.session.query(Pipeline).filter(
+            Pipeline.running == True,  # noqa: E712
+            db.or_(Pipeline.running_since < threshold, Pipeline.running_since.is_(None))
+        ).all()
+        for pipeline in stuck:
+            if pipeline.running_since is None:
+                logger.error(
+                    f"Pipeline {pipeline.id} in inconsistent state: running=True with running_since=NULL. "
+                    f"This indicates corrupted data (likely a crash before running_since was set). Resetting."
+                )
+            else:
+                logger.warning(
+                    f"Resetting stuck pipeline {pipeline.id} (running since {pipeline.running_since})"
+                )
+            pipeline.running = False
+            pipeline.running_since = None
+        if stuck:
+            db.session.commit()
+            logger.info(f"Reset {len(stuck)} stuck pipeline(s)")
+    except Exception as e:
+        db.session.rollback()
+        logger.exception(f"Failed to cleanup stuck pipelines: {e}")
+
+
 @celery.task(ignore_result=False, acks_late=True)
 def create_host_task(workspace_id, command: dict, host):
     from faraday.server.api.modules.bulk_create import _create_host  # pylint: disable=import-outside-toplevel
     created_objects = {}
-    db.engine.dispose()
+    if hasattr(db.engine, 'dispose'):
+        db.engine.dispose()
     start_time = time.time()
     workspace = Workspace.query.filter_by(id=workspace_id).first()
     if not workspace:
@@ -164,7 +248,7 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
         if not plugin:
             from faraday.server.utils.reports_processor import command_status_error  # pylint: disable=import-outside-toplevel
-            logger.info("Could not get plugin for file")
+            logger.error("Could not get plugin for file")
             logger.info("Plugin analyzer took %s", time.time() - start_time)
             command_status_error(command_id)
             return
@@ -192,10 +276,19 @@ def pre_process_report_task(workspace_name: str, command_id: int, file_path: str
 
 
 @celery.task()
-def update_host_stats(hosts: List, services: List, workspace_name: str = None, workspace_id: int = None, workspace_ids: List = None, debouncer=None, sync=False, no_debounce: bool = None, command_id: int = None) -> None:
+def update_host_stats(
+        hosts: List,
+        services: List,
+        workspace_name: str = None,
+        workspace_id: int = None,
+        workspace_ids: List = None,
+        debouncer=None, sync=False,
+        no_debounce: bool = None,
+        command_id: int = None,
+) -> None:
     start_time = datetime.utcnow()
     if no_debounce:  # For reports, we don't need to calculate host stats because they are already calculated.
-        update_workspace_vulns_count(workspace_id=workspace_id)
+        debounce_workspace_vulns_count_update(workspace_id=workspace_id)
         update_workspace_host_count(workspace_id=workspace_id)
         update_workspace_service_count(workspace_id=workspace_id)
         end_time = datetime.utcnow()
@@ -336,3 +429,156 @@ def update_failed_command_stats(debouncer=None):
         logger.error(f"Failed to update command stats: {e}")
     else:
         logger.info("Stats update complete")
+
+
+@celery.task(ignore_result=True)
+def create_bulk_update_commands_task(
+    ids: list,
+    workspace_ids: list,
+    user_id,
+    start_date: datetime,
+):
+    """Async task: create Command and CommandObject audit records for a bulk vuln update.
+
+    Runs after the main UPDATE transaction commits. INSERT...SELECT filters by
+    VulnerabilityGeneric.workspace_id + id, so deleted vulns are silently skipped.
+    One Command per workspace, one CommandObject per vuln.
+    """
+    if not ids or not workspace_ids:
+        return
+
+    for workspace_id in workspace_ids:
+        command = Command()
+        command.workspace_id = workspace_id
+        command.user_id = user_id
+        command.start_date = start_date
+        command.tool = 'web_ui'
+        command.command = 'bulk_update'
+        db.session.add(command)
+        db.session.flush()  # get command.id
+
+        select_stmt = (
+            db.session.query(
+                VulnerabilityGeneric.id,
+                literal('vulnerability'),
+                literal(command.id),
+                literal(workspace_id),
+                literal(start_date),
+                literal(False),
+            ).filter(
+                VulnerabilityGeneric.workspace_id == workspace_id,
+                VulnerabilityGeneric.id.in_(ids),
+            )
+        )
+        db.session.execute(
+            sqlalchemy_insert(CommandObject).from_select(
+                ['object_id', 'object_type', 'command_id', 'workspace_id', 'create_date', 'created_persistent'],
+                select_stmt,
+            )
+        )
+        db.session.commit()
+
+    logger.debug(
+        f"[bulk_update_commands] async INSERT commands for "
+        f"{len(workspace_ids)} workspaces, {len(ids)} vulns"
+    )
+
+
+@celery.task(ignore_result=True)
+def execute_debounced_action(debounce_key: str, expected_token: int) -> None:
+    """
+    Executes a debounced action ONLY if it is still the latest for debounce_key.
+    Uses Redis WATCH/MULTI/EXEC to atomically claim execution rights BEFORE running
+    the action, preventing duplicate execution when parallel Celery workers race.
+    """
+    _redis = get_redis_client()
+
+    token_key = f"{debounce_key}:token"
+    meta_key = f"{debounce_key}:meta"
+    payload_key = f"{debounce_key}:payload"
+
+    current_token_raw = _redis.get(token_key)
+    if not current_token_raw:
+        return
+
+    try:
+        current_token = int(current_token_raw)
+    except ValueError:
+        return
+
+    if current_token != expected_token:
+        # A newer event arrived for the same workspace + action; this task is obsolete.
+        logger.debug(
+            f"Debouncer(redis): skip stale token (key={debounce_key} expected={expected_token} current={current_token})"
+        )
+        return
+
+    meta = _redis.hgetall(meta_key) or {}
+    action_name = meta.get("action")
+    if not action_name:
+        return
+
+    payload_raw = _redis.get(payload_key)
+    if not payload_raw:
+        return
+
+    try:
+        payload = json.loads(payload_raw)
+    except json.JSONDecodeError:
+        return
+
+    parameters = payload.get("parameters") or {}
+
+    # Explicit allowlist (prevents executing arbitrary things)
+    action_map = {
+        "update_workspace_host_count": update_workspace_host_count,
+        "update_workspace_service_count": update_workspace_service_count,
+        "update_workspace_vulns_count": update_workspace_vulns_count,
+        "update_workspace_update_date": None,  # handled separately below
+        "finalize_report": finalize_report,
+    }
+
+    if action_name not in action_map:
+        logger.warning(f"Debouncer: unsupported action (action={action_name} key={debounce_key})")
+        return
+
+    # Atomically claim execution rights BEFORE running the action.
+    # WATCH token_key so that if another worker already claimed or a newer debounce
+    # arrived between our initial read and now, we get a WatchError and skip.
+    pipe = _redis.pipeline()
+    try:
+        pipe.watch(token_key)
+        token_now = pipe.get(token_key)  # immediate execution in WATCH mode
+        if not token_now or int(token_now) != expected_token:
+            pipe.unwatch()
+            logger.debug(f"Debouncer(redis): skip, token changed before claim (key={debounce_key})")
+            return
+        pipe.multi()
+        pipe.delete(token_key)
+        pipe.delete(meta_key)
+        pipe.delete(payload_key)
+        pipe.execute()  # raises WatchError if token_key was modified between WATCH and EXEC
+    except redis.WatchError:
+        logger.info(f"Debouncer(redis): skip, lost race to another worker (key={debounce_key})")
+        return
+    finally:
+        pipe.reset()
+
+    # We hold exclusive execution rights — run the action exactly once.
+    logger.info(
+        f"Debouncer(redis): executing (action={action_name} key={debounce_key} token={expected_token} "
+        f"params={list(parameters.keys())})"
+    )
+    if action_name == "update_workspace_update_date":
+        workspace_id = parameters.get("workspace_id")
+        update_date = parameters.get("update_date") or datetime.utcnow().isoformat()
+        if workspace_id is None:
+            return
+        update_workspace_update_date({int(workspace_id): update_date})
+    else:
+        action = action_map[action_name]
+        action(**parameters)
+
+    logger.info(
+        f"Debouncer(redis): completed (action={action_name} key={debounce_key} token={expected_token})"
+    )

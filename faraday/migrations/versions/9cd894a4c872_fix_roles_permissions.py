@@ -6,6 +6,7 @@ Create Date: 2025-07-30 19:52:40.768225+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '9cd894a4c872'
@@ -16,22 +17,22 @@ depends_on = None
 
 def upgrade():
     result = op.get_bind().execute(
-        "SELECT id FROM faraday_role WHERE name = 'admin';"
+        text("SELECT id FROM faraday_role WHERE name = 'admin';")
     )
     admin_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM faraday_role WHERE name = 'asset_owner';"
+        text("SELECT id FROM faraday_role WHERE name = 'asset_owner';")
     )
     asset_owner_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM faraday_role WHERE name = 'pentester';"
+        text("SELECT id FROM faraday_role WHERE name = 'pentester';")
     )
     pentester_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM faraday_role WHERE name = 'client';"
+        text("SELECT id FROM faraday_role WHERE name = 'client';")
     )
     client_id = result.scalar()
 

@@ -20,7 +20,6 @@ import psycopg2
 from alembic import command
 from alembic.config import Config
 from colorama import Fore, init
-from flask import current_app
 from flask_security.utils import hash_password
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
@@ -66,6 +65,9 @@ class InitDB:
                  * creates tables.
         """
         try:
+            # Seed server.ini from default.ini (no-op if it already exists) before reading it,
+            # so the [faraday_server]/[logger] defaults survive being overwritten by _save_config().
+            faraday.server.config.copy_default_config_to_local()
             config = ConfigParser()
             config.read(LOCAL_CONFIG_FILE)
             if not self._check_current_config(config):
@@ -93,8 +95,15 @@ class InitDB:
 
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
-            self._create_tables(conn_string)
-            self._create_admin_user(conn_string, choose_password, faraday_user_password)
+            # Flask-SQLAlchemy 3.x builds its engines inside init_app() and ignores any later
+            # change to SQLALCHEMY_DATABASE_URI, so the app can only be created once the
+            # connection string is known, which is right here: the steps above are what create
+            # the role and generate its password.
+            from faraday.server.app import get_app  # pylint:disable=import-outside-toplevel
+            app = get_app(db_connection_string=conn_string, register_extensions_flag=False)
+            with app.app_context():
+                self._create_tables(conn_string)
+                self._create_admin_user(conn_string, choose_password, faraday_user_password)
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
@@ -104,8 +113,7 @@ class InitDB:
     def _create_roles(conn_string):
         engine = create_engine(conn_string)
         try:
-            connection = engine.connect()
-            initdb_roles_and_permissions(connection)
+            initdb_roles_and_permissions(engine)
         except IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
@@ -268,17 +276,18 @@ class InitDB:
                 'password': hash_password(user_password),
                 'fs_uniquifier': fs_uniquifier
             }
-            connection = engine.connect()
-            connection.execute(statement, **params)
-            result = connection.execute(text("""SELECT id, username FROM faraday_user"""))
-            user_id = list(user_tuple[0] for user_tuple in result if user_tuple[1] == "faraday")[0]
-            result = connection.execute(text("""SELECT id, name FROM faraday_role"""))
-            role_id = list(role_tuple[0] for role_tuple in result if role_tuple[1] == "admin")[0]
-            params = {
-                "user_id": user_id,
-                "role_id": role_id
-            }
-            connection.execute(text("INSERT INTO roles_users(user_id, role_id) VALUES (:user_id, :role_id)"), **params)
+            # SQLAlchemy 2.0 takes the bound parameters as a single dict argument, and no
+            # longer autocommits: begin() commits on exit and rolls back on error.
+            with engine.begin() as connection:
+                connection.execute(statement, params)
+                result = connection.execute(text("""SELECT id, username FROM faraday_user"""))
+                user_id = list(user_tuple[0] for user_tuple in result if user_tuple[1] == "faraday")[0]
+                result = connection.execute(text("""SELECT id, name FROM faraday_role"""))
+                role_id = list(role_tuple[0] for role_tuple in result if role_tuple[1] == "admin")[0]
+                connection.execute(
+                    text("INSERT INTO roles_users(user_id, role_id) VALUES (:user_id, :role_id)"),
+                    {"user_id": user_id, "role_id": role_id}
+                )
         except IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
@@ -414,11 +423,10 @@ class InitDB:
     def _create_tables(self, conn_string):
         print('Creating tables')
         from faraday.server.models import db  # pylint:disable=import-outside-toplevel
-        current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
 
         # Check if the alembic_version exists
         # Taken from https://stackoverflow.com/a/24089729
-        (result,) = list(db.session.execute("select to_regclass('alembic_version')"))
+        (result,) = list(db.session.execute(text("select to_regclass('alembic_version')")))
         exists = result[0] is not None
 
         if exists:

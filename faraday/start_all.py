@@ -16,6 +16,11 @@ def start_systemctl_all():
                 except sh.ErrorReturnCode as e:
                     systemctl.stop('faraday-server')
                     print(f"Could not start faraday worker. {str(e.stderr)}")
+                # Best-effort: beat is optional, don't fail the stack if its unit is missing.
+                try:
+                    systemctl.start('faraday-beat')
+                except sh.ErrorReturnCode as e:
+                    print(f"Could not start faraday beat. {str(e.stderr)}")
             except sh.ErrorReturnCode as e:
                 print(f"Could not start faraday-server. {str(e.stderr)}")
         else:

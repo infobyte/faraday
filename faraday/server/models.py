@@ -7,6 +7,23 @@ import logging
 import operator
 import string
 import time
+import warnings
+
+# Silence noisy SQLAlchemy 2.0 mapper-configuration warnings about overlapping
+# FK paths in legacy relationships (e.g. Host.commands / Command.command_objects,
+# Service.host / Host.services, polymorphic Vulnerability.service, plus the
+# many association tables under VulnerabilityGeneric / VulnerabilityTemplate).
+# These are pre-existing patterns that work correctly at runtime; properly
+# silencing each one with ``overlaps=`` is tracked as a separate cleanup.
+# Must be registered before any ORM model is imported so configure_mappers
+# (triggered by the post-class ``aliased(Host)`` calls below) doesn't surface
+# them.
+from sqlalchemy.exc import SAWarning  # noqa: E402
+warnings.filterwarnings(
+    "ignore",
+    category=SAWarning,
+    message=r"relationship '.*' will copy column .* to column .*",
+)
 from datetime import datetime, timedelta, date
 from functools import partial
 from random import SystemRandom
@@ -15,7 +32,7 @@ from typing import Callable
 import cvss
 import dateutil
 import jwt
-from croniter import croniter
+from croniter import croniter, CroniterError
 from depot.fields.sqlalchemy import UploadedFileField
 from flask import (
     current_app as app,
@@ -37,7 +54,10 @@ from sqlalchemy import (
     UniqueConstraint,
     Table,
     Date,
+    and_,
+    case as alchemy_case,
     event,
+    literal,
     func,
     Index,
 )
@@ -48,6 +68,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (
+    aliased,
     backref,
     column_property,
     query_expression,
@@ -57,10 +78,7 @@ from sqlalchemy.orm import (
     joinedload,
 )
 from sqlalchemy.schema import DDL
-from flask_sqlalchemy import (
-    SQLAlchemy as OriginalSQLAlchemy,
-    _EngineConnector,
-)
+from flask_sqlalchemy import SQLAlchemy
 
 from faraday.server.config import faraday_server
 from faraday.server.fields import JSONType, FaradayUploadedFile
@@ -100,6 +118,8 @@ OBJECT_TYPES = [
     'task',
     'report_logo',
     'report_template',
+    'template_logo',
+    'ws_sum_report',
 ]
 
 REFERENCE_TYPES = [
@@ -124,61 +144,53 @@ LOCAL_TYPE = 'local'
 SAML_TYPE = 'saml'
 
 
-class SQLAlchemy(OriginalSQLAlchemy):
-    """Override to fix issues when doing a rollback with sqlite driver
-    See https://docs.sqlalchemy.org/en/14/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
-    and https://bitbucket.org/zzzeek/sqlalchemy/issues/3561/sqlite-nested-transactions-fail-with
-    for further information"""
-
-    def make_connector(self, app=None, bind=None):
-        """Creates the connector for a given state and bind."""
-        return CustomEngineConnector(self, self.get_app(app), bind)
+db = SQLAlchemy(session_options={"join_transaction_mode": "create_savepoint"})
 
 
-class CustomEngineConnector(_EngineConnector):
-    """Used by overridden SQLAlchemy class to fix rollback issues.
+def register_sqlite_isolation_events(engine):
+    """SQLite needs special handling for nested transactions / savepoints.
 
-    Also set case sensitive likes (in SQLite there are case
-    insensitive by default)"""
+    See https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    Also enables case-sensitive LIKE (SQLite is case-insensitive by default).
+    """
+    if engine.url.get_backend_name() != "sqlite":
+        return
 
-    def get_engine(self):
-        # Use an existent engine and don't register events if possible
-        uri = self.get_uri()
-        echo = self._app.config['SQLALCHEMY_ECHO']
-        if (uri, echo) == self._connected_for:
-            return self._engine
+    @event.listens_for(engine, "connect")
+    def do_connect(dbapi_connection, connection_record):  # pylint:disable=unused-variable
+        # disable pysqlite's emitting of the BEGIN statement entirely.
+        # also stops it from emitting COMMIT before any DDL.
+        dbapi_connection.isolation_level = None
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA case_sensitive_like=true")
+        cursor.close()
 
-        # Call original method and register events
-        rv = super().get_engine()
-        if uri.startswith('sqlite://'):
-            with self._lock:
-                @event.listens_for(rv, "connect")
-                def do_connect(dbapi_connection, connection_record):  # pylint:disable=unused-variable
-                    # disable pysqlite's emitting of the BEGIN statement
-                    # entirely.  also stops it from emitting COMMIT before any DDL.
-                    dbapi_connection.isolation_level = None
-                    cursor = dbapi_connection.cursor()
-                    cursor.execute("PRAGMA case_sensitive_like=true")
-                    cursor.close()
-
-                @event.listens_for(rv, "begin")
-                def do_begin(conn):  # pylint:disable=unused-variable
-                    # emit our own BEGIN
-                    conn.execute("BEGIN")
-        return rv
-
-
-db = SQLAlchemy()
+    @event.listens_for(engine, "begin")
+    def do_begin(conn):  # pylint:disable=unused-variable
+        # emit our own BEGIN
+        conn.exec_driver_sql("BEGIN")
 
 
 def _last_run_agent_date():
-    query = select([text('executor.last_run')])
+    local_agent_query = (
+        select(text('executor.last_run'))
+        .select_from(
+            table('executor').join(AgentExecution, text('executor.id = agent_execution.executor_id'))
+        )
+        .where(text('executor.last_run is not null and agent_execution.workspace_id = workspace.id'))
+        .order_by(AgentExecution.create_date.desc())
+        .limit(1)
+        .scalar_subquery()
+    )
 
-    from_clause = table('executor') \
-        .join(AgentExecution, text('executor.id = agent_execution.executor_id'))
-    where_clause = text('executor.last_run is not null and agent_execution.workspace_id = workspace.id')
-    query = query.select_from(from_clause).where(where_clause).order_by(AgentExecution.create_date.desc()).limit(1)
-    return query
+    cloud_agent_query = (
+        select(func.max(text('cloud_agent_execution.last_run')))
+        .select_from(table('cloud_agent_execution'))
+        .where(text('cloud_agent_execution.workspace_id = workspace.id'))
+        .scalar_subquery()
+    )
+
+    return func.greatest(local_agent_query, cloud_agent_query)
 
 
 def _make_generic_count_property(parent_table, children_table, where=None, use_column_property=True):
@@ -187,24 +199,25 @@ def _make_generic_count_property(parent_table, children_table, where=None, use_c
     children_id_field = f'{children_table}.id'
     parent_id_field = f'{parent_table}.id'
     children_rel_field = f'{children_table}.{parent_table}_id'
-    query = (select([func.count(text(children_id_field))]).
+    query = (select(func.count(text(children_id_field))).
              select_from(table(children_table)).
              where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
+    query = query.scalar_subquery()
     if use_column_property:
         return column_property(query, deferred=True)
     return query
 
 
 def _make_command_created_related_object():
-    query = select([BooleanToIntColumn("(count(*) = 0)")])
+    query = select(BooleanToIntColumn("(count(*) = 0)"))
     query = query.select_from(text('command_object as command_object_inner'))
     where_expr = " command_object_inner.create_date < command_object.create_date and " \
                  " (command_object_inner.object_id = command_object.object_id and " \
                  " command_object_inner.object_type = command_object.object_type) and " \
                  " command_object_inner.workspace_id = command_object.workspace_id "
-    query = query.where(text(where_expr))
+    query = query.where(text(where_expr)).scalar_subquery()
     return column_property(
         query,
     )
@@ -219,7 +232,7 @@ def _make_vuln_count_property(type_=None, confirmed=None, use_column_property=Tr
             isouter=True
         )
 
-    query = (select([func.count(text('distinct(vulnerability.id)'))]).
+    query = (select(func.count(text('distinct(vulnerability.id)'))).
              select_from(from_clause)
              )
     if get_hosts_vulns:
@@ -233,26 +246,27 @@ def _make_vuln_count_property(type_=None, confirmed=None, use_column_property=Tr
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text(f"vulnerability.type = '{type_}'"))
     if confirmed:
-        if db.session.bind.dialect.name == 'sqlite':
+        if db.engine.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
             query = query.where(text("vulnerability.confirmed = 1"))
-        elif db.session.bind.dialect.name == 'postgresql':
+        elif db.engine.dialect.name == 'postgresql':
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
     elif confirmed is False:
-        if db.session.bind.dialect.name == 'sqlite':
+        if db.engine.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
             query = query.where(text("vulnerability.confirmed = 0"))
-        elif db.session.bind.dialect.name == 'postgresql':
+        elif db.engine.dialect.name == 'postgresql':
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = false"))
 
     if extra_query:
         query = query.where(text(extra_query))
+    query = query.scalar_subquery()
     if use_column_property:
         return column_property(query, deferred=True)
     else:
@@ -322,18 +336,18 @@ def _make_vuln_generic_count_by_severity(severity):
     assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
 
     vuln_count = (
-        select([func.count(text('vulnerability.id'))]).
+        select(func.count(text('vulnerability.id'))).
         select_from(text('vulnerability')).
         where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
-        as_scalar()
+        scalar_subquery()
     )
 
     vuln_web_count = (
-        select([func.count(text('vulnerability.id'))]).
+        select(func.count(text('vulnerability.id'))).
         select_from(text('vulnerability, service')).
         where(text('(vulnerability.service_id = service.id and '
                    f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
-        as_scalar()
+        scalar_subquery()
     )
 
     vulnerability_generic_count = column_property(
@@ -413,23 +427,24 @@ def set_children_objects(instance, value, parent_field, child_field='id', worksp
     children_model = getattr(type(instance), parent_field).property.mapper.class_
 
     value = set(value)
-    current_value = getattr(instance, parent_field)
-    current_value_fields = set(map(operator.attrgetter(child_field), current_value))
+    with db.session.no_autoflush:
+        current_value = getattr(instance, parent_field)
+        current_value_fields = set(map(operator.attrgetter(child_field), current_value))
 
-    for existing_child in current_value_fields:
-        if existing_child not in value:
-            removed_instance = next(
-                inst for inst in current_value
-                if getattr(inst, child_field) == existing_child)
-            db.session.delete(removed_instance)
+        for existing_child in current_value_fields:
+            if existing_child not in value:
+                removed_instance = next(
+                    inst for inst in current_value
+                    if getattr(inst, child_field) == existing_child)
+                db.session.delete(removed_instance)
 
-    for new_child in value:
-        if new_child in current_value_fields:
-            continue
-        kwargs = {child_field: new_child}
-        if workspaced:
-            kwargs['workspace'] = instance.workspace
-        current_value.append(children_model(**kwargs))
+        for new_child in value:
+            if new_child in current_value_fields:
+                continue
+            kwargs = {child_field: new_child}
+            if workspaced:
+                kwargs['workspace'] = instance.workspace
+            current_value.append(children_model(**kwargs))
 
 
 class Hostname(Metadata):
@@ -1061,6 +1076,7 @@ class CommandObject(db.Model):
     created_persistent = Column(Boolean, nullable=False)
 
     __table_args__ = (
+        Index('ix_command_object_command_id_type', 'command_id', 'object_type'),
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
                          name='uix_command_object_objid_objtype_command_id_ws'),
     )
@@ -1095,9 +1111,10 @@ def _make_created_objects_sum(object_type_filter):
                         "command_object.command_id = command.id",
                         "command_object.workspace_id = command.workspace_id"]
     return column_property(
-        select([func.sum(CommandObject.created)]).
+        select(func.sum(CommandObject.created)).
         select_from(table('command_object')).
-        where(text(' and '.join(where_conditions)))
+        where(text(' and '.join(where_conditions))).
+        scalar_subquery()
     )
 
 
@@ -1114,10 +1131,11 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
     for attr, filter_value in join_filters.items():
         where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
-        select([func.sum(CommandObject.created)]).
+        select(func.sum(CommandObject.created)).
         select_from(table('command_object')).
         select_from(table('vulnerability')).
-        where(text(' and '.join(where_conditions)))
+        where(text(' and '.join(where_conditions))).
+        scalar_subquery()
     )
 
 
@@ -1156,14 +1174,46 @@ class Command(Metadata):
                                                                        {'type': '\'vulnerability_web\''})
     sum_created_hosts = _make_created_objects_sum('host')
     sum_created_services = _make_created_objects_sum('service')
-    sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
-    sum_created_vulnerability_high = _make_created_objects_sum_joined('vulnerability', {'severity': '\'high\''})
-    sum_created_vulnerability_medium = _make_created_objects_sum_joined('vulnerability', {'severity': '\'medium\''})
-    sum_created_vulnerability_low = _make_created_objects_sum_joined('vulnerability', {'severity': '\'low\''})
-    sum_created_vulnerability_info = _make_created_objects_sum_joined('vulnerability',
-                                                                      {'severity': '\'informational\''})
-    sum_created_vulnerability_unclassified = _make_created_objects_sum_joined('vulnerability',
-                                                                              {'severity': '\'unclassified\''})
+    sum_created_vulnerability_critical = query_expression(literal(0))
+    sum_created_vulnerability_high = query_expression(literal(0))
+    sum_created_vulnerability_medium = query_expression(literal(0))
+    sum_created_vulnerability_low = query_expression(literal(0))
+    sum_created_vulnerability_info = query_expression(literal(0))
+    sum_created_vulnerability_unclassified = query_expression(literal(0))
+
+    @classmethod
+    def with_severity_counts(cls, query):
+        """Augment a Command ORM query with per-severity vulnerability creation counts.
+
+        Uses correlated scalar subqueries so the main query structure (joins, eager
+        loads, GROUP BY) is not altered. The attributes default to 0 when this method
+        is not called, avoiding overhead on Command queries that don't need counts.
+        """
+        def _sev_expr(severity):
+            where_conditions = [
+                "command_object.object_type = 'vulnerability'",
+                "command_object.command_id = command.id",
+                "vulnerability.id = command_object.object_id",
+                "command_object.workspace_id = vulnerability.workspace_id",
+                f"vulnerability.severity = '{severity}'",
+            ]
+            return (
+                select(func.sum(CommandObject.created))
+                .select_from(table('command_object'))
+                .select_from(table('vulnerability'))
+                .where(text(' and '.join(where_conditions)))
+                .scalar_subquery()
+            )
+
+        # populate_existing: SA 2.0 needs this for with_expression to override identity-map instances.
+        return query.options(
+            with_expression(cls.sum_created_vulnerability_critical, _sev_expr('critical')),
+            with_expression(cls.sum_created_vulnerability_high, _sev_expr('high')),
+            with_expression(cls.sum_created_vulnerability_medium, _sev_expr('medium')),
+            with_expression(cls.sum_created_vulnerability_low, _sev_expr('low')),
+            with_expression(cls.sum_created_vulnerability_info, _sev_expr('informational')),
+            with_expression(cls.sum_created_vulnerability_unclassified, _sev_expr('unclassified')),
+        ).execution_options(populate_existing=True)
 
     agent_execution = relationship(
         'AgentExecution',
@@ -1217,22 +1267,55 @@ class Host(Metadata):
     open_service_count = _make_generic_count_property('host', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('host', 'service')
 
-    __host_vulnerabilities = (
-        select([func.count(text('vulnerability.id'))]).
-        select_from(text('vulnerability')).
-        where(text('vulnerability.host_id = host.id')).
-        as_scalar()
-    )
-    __service_vulnerabilities = (
-        select([func.count(text('vulnerability.id'))]).
-        select_from(text('vulnerability, service')).
-        where(text('vulnerability.service_id = service.id and service.host_id = host.id')).
-        as_scalar()
-    )
     vulnerability_count = column_property(
-        # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),
-        __host_vulnerabilities + __service_vulnerabilities,
-        deferred=True)
+        (
+            select(func.count(text('vulnerability.id')))
+            .select_from(text('vulnerability'))
+            .where(text('vulnerability.host_id = host.id'))
+            .scalar_subquery()
+        ) + (
+            select(func.count(text('vulnerability.id')))
+            .select_from(text('vulnerability, service'))
+            .where(text('vulnerability.service_id = service.id and service.host_id = host.id'))
+            .scalar_subquery()
+        ),
+        deferred=True,
+    )
+
+    creator_command_id = column_property(
+        select(CommandObject.command_id)
+        .where(CommandObject.object_type == 'host')
+        .where(text('command_object.object_id = host.id'))
+        .where(CommandObject.workspace_id == workspace_id)
+        .order_by(asc(CommandObject.create_date))
+        .limit(1)
+        .scalar_subquery(),
+        deferred=True,
+    )
+
+    creator_command_tool = column_property(
+        select(Command.tool)
+        .select_from(join(Command, CommandObject, Command.id == CommandObject.command_id))
+        .where(CommandObject.object_type == 'host')
+        .where(text('command_object.object_id = host.id'))
+        .where(CommandObject.workspace_id == workspace_id)
+        .order_by(asc(CommandObject.create_date))
+        .limit(1)
+        .scalar_subquery(),
+        deferred=True,
+    )
+
+    creator_command_params = column_property(
+        select(Command.params)
+        .select_from(join(Command, CommandObject, Command.id == CommandObject.command_id))
+        .where(CommandObject.object_type == 'host')
+        .where(text('command_object.object_id = host.id'))
+        .where(CommandObject.workspace_id == workspace_id)
+        .order_by(asc(CommandObject.create_date))
+        .limit(1)
+        .scalar_subquery(),
+        deferred=True,
+    )
 
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
@@ -1259,7 +1342,7 @@ class Host(Metadata):
             joinedload(cls.hostnames),
             joinedload(cls.services),
             joinedload(cls.update_user),
-            joinedload(getattr(cls, 'creator')).load_only('username'),
+            joinedload(getattr(cls, 'creator')).load_only(User.username),
         ).limit(None).offset(0)
 
     @property
@@ -1399,9 +1482,24 @@ association_table_vulnerabilities_credentials = Table(
     db.Model.metadata,
     Column('vulnerability_id', Integer, ForeignKey('vulnerability.id', ondelete='CASCADE')),
     Column('credential_id', Integer, ForeignKey('credential.id', ondelete='CASCADE')),
+    UniqueConstraint('vulnerability_id', 'credential_id', name='uix_vuln_cred_pair'),
     Index('ix_association_vuln_creds_vuln_id', 'vulnerability_id'),
     Index('ix_association_vuln_creds_cred_id', 'credential_id')
 )
+
+
+class VulnerabilityGroup(db.Model):
+    __tablename__ = 'vulnerability_group'
+    id = Column(Integer, primary_key=True)
+    title = NonBlankColumn(Text)
+    is_automatic = Column(Boolean, nullable=True)
+    count = Column(Integer, nullable=False, default=0)
+    workspace_id = Column(Integer, ForeignKey('workspace.id', ondelete='CASCADE'), index=True, nullable=False)
+    workspace = relationship('Workspace', backref=backref('vulnerability_groups', passive_deletes=True))
+
+    @property
+    def parent(self):
+        return
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1423,6 +1521,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
+    __table_args__ = (
+        Index('ix_vulnerability_workspace_id_risk', 'workspace_id'),
+    )
+
     id = Column(Integer, primary_key=True)
     _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
@@ -1443,16 +1545,40 @@ class VulnerabilityGeneric(VulnerabilityABC):
     status_code = Column(Integer, nullable=True)
     epss = Column(Float, nullable=True)  # Exploit Prediction Scoring System (EPSS)
     is_main = Column(Boolean, nullable=True, default=None)
-
-    vulnerability_duplicate_id = Column(
+    vulnerability_duplicate_id = Column(Integer, nullable=True)
+    group_id = Column(
         Integer,
-        ForeignKey('vulnerability.id', ondelete='SET NULL'),
+        ForeignKey('vulnerability_group.id', ondelete='SET NULL'),
         index=True,
         nullable=True,
+        default=None,
     )
-    duplicates_associated = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
-                                         backref=backref('duplicates_main', remote_side=[id])
-                                         )
+    is_automatic = Column(Boolean, nullable=True, default=None)
+    group_title = BlankColumn(Text, nullable=True)
+
+    @hybrid_property
+    def group_count(self):
+        if not self.is_main or self.group_id is None:
+            return None
+        if self.group:
+            return self.group.count
+        return None
+
+    @group_count.expression
+    def group_count(cls):
+        inner = (
+            select(func.count(text('v.id')))
+            .select_from(text('vulnerability as v'))
+            .where(text('v.group_id = vulnerability.group_id'))
+            .where(cls.group_id.isnot(None))
+            .scalar_subquery()
+        )
+        return case(
+            (cls.is_main.is_(True), inner),
+            else_=None
+        )
+
+    group = relationship("VulnerabilityGroup", backref=backref('vulnerabilities', passive_deletes=True))
     vulnerability_template_id = Column(
         Integer,
         ForeignKey('vulnerability_template.id', ondelete='SET NULL'),
@@ -1885,53 +2011,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         collection_class=set,
     )
 
-    creator_command_id = column_property(
-        select([CommandObject.command_id]).
-        where(CommandObject.object_type == 'vulnerability').
-        where(text('command_object.object_id = vulnerability.id')).
-        where(CommandObject.workspace_id == workspace_id).
-        order_by(asc(CommandObject.create_date)).
-        limit(1),
-        deferred=True)
-
-    creator_command_tool = column_property(
-        select([Command.tool]).
-        select_from(join(Command, CommandObject, Command.id == CommandObject.command_id)).
-        where(CommandObject.object_type == 'vulnerability').
-        where(text('command_object.object_id = vulnerability.id')).
-        where(CommandObject.workspace_id == workspace_id).
-        order_by(asc(CommandObject.create_date)).
-        limit(1),
-        deferred=True
-    )
-
-    _host_ip_query = (
-        select([Host.ip]).
-        where(text('vulnerability.host_id = host.id'))
-    )
-    _service_ip_query = (
-        select([text('host_inner.ip')]).
-        select_from(text('host as host_inner, service')).
-        where(text('vulnerability.service_id = service.id and host_inner.id = service.host_id'))
-    )
-    target_host_ip = column_property(
-        case([
-            (text('vulnerability.host_id IS NOT null'), _host_ip_query.as_scalar()),
-            (text('vulnerability.service_id IS NOT null'), _service_ip_query.as_scalar())
-        ]),
-        deferred=True
-    )
-
-    _host_os_query = (
-        select([Host.os]).
-        where(text('vulnerability.host_id = host.id'))
-    )
-    _service_os_query = (
-        select([text('host_inner.os')]).
-        select_from(text('host as host_inner, service')).
-        where(text('vulnerability.service_id = service.id and host_inner.id = service.host_id'))
-    )
-
     host_id = Column(Integer, ForeignKey(Host.id, ondelete='CASCADE'), index=True)
     host = relationship(
         'Host',
@@ -1942,14 +2021,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     @declared_attr
     def service_id(self):
         return Column(Integer, db.ForeignKey('service.id', ondelete='CASCADE'), index=True)
-
-    target_host_os = column_property(
-        case([
-            (text('vulnerability.host_id IS NOT null'), _host_os_query.as_scalar()),
-            (text('vulnerability.service_id IS NOT null'), _service_os_query.as_scalar())
-        ]),
-        deferred=True
-    )
 
     __mapper_args__ = {
         'polymorphic_on': type
@@ -2304,6 +2375,15 @@ def _return_last_30_days() -> list:
 
 class Workspace(Metadata):
     __tablename__ = 'workspace'
+
+    NAME = "name"
+    CVE = "cve"
+    GROUP_BY = [NAME, CVE]
+
+    LEVENSHTEIN = "levenshtein"
+    SENTENCE_TRANSFORMER = "sentence_transformer"
+    GROUP_ALGORITHM = [LEVENSHTEIN, SENTENCE_TRANSFORMER]
+
     id = Column(Integer, primary_key=True)
     customer = BlankColumn(String(250))  # TBI
     description = BlankColumn(Text)
@@ -2320,6 +2400,10 @@ class Workspace(Metadata):
     last_run_agent_date = query_expression()
 
     force_lowercase_assets = Column(Boolean, nullable=False, default=False)
+
+    group_by = Column(Enum(*GROUP_BY, name='group_by'), nullable=True)
+    group_algorithm = Column(Enum(*GROUP_ALGORITHM, name='group_algorithm'), nullable=True)
+    group_threshold = Column(Integer, nullable=True)
 
     # Stats
 
@@ -2447,14 +2531,20 @@ class Workspace(Metadata):
                     FROM host
                     WHERE host.workspace_id = workspace.id
                 ) AS host_count,
-                (SELECT executor.last_run
-                    FROM executor
-                    JOIN agent_execution ON executor.id = agent_execution.executor_id
-                    WHERE executor.last_run is not null and
-                    agent_execution.workspace_id = workspace.id
-                    ORDER BY agent_execution.create_date DESC
-                    LIMIT 1
-                ) AS last_run_agent_date,
+                (SELECT GREATEST(
+                    (SELECT executor.last_run
+                        FROM executor
+                        JOIN agent_execution ON executor.id = agent_execution.executor_id
+                        WHERE executor.last_run is not null and
+                        agent_execution.workspace_id = workspace.id
+                        ORDER BY agent_execution.create_date DESC
+                        LIMIT 1
+                    ),
+                    (SELECT MAX(cloud_agent_execution.last_run)
+                        FROM cloud_agent_execution
+                        WHERE cloud_agent_execution.workspace_id = workspace.id
+                    )
+                )) AS last_run_agent_date,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,
@@ -2546,7 +2636,7 @@ class Workspace(Metadata):
         # query += " GROUP BY workspace.id "
         query += " ORDER BY workspace.name ASC"
 
-        return db.session.execute(text(query), params)
+        return db.session.execute(text(query), params).mappings()
 
     def set_scope(self, new_scope):
         return set_children_objects(self, new_scope,
@@ -2639,7 +2729,8 @@ class UserToken(Metadata):
     SCHEDULER_SCOPE = 'scheduler'
     SERVICE_DESK_SCOPE = 'service_desk'
     JIRA_SCOPE = 'jira'
-    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE, JIRA_SCOPE]
+    GLOBAL_SCOPE = 'global'
+    SCOPES = [GITLAB_SCOPE, SERVICE_DESK_SCOPE, SCHEDULER_SCOPE, JIRA_SCOPE, GLOBAL_SCOPE]
 
     id = Column(Integer(), primary_key=True)
 
@@ -2662,9 +2753,7 @@ class UserToken(Metadata):
     @expired.expression
     def expired(cls):
         return case(
-            [
-                (cls.expires_at != None, cls.expires_at < datetime.utcnow())  # noqa E711
-            ],
+            (cls.expires_at != None, cls.expires_at < datetime.utcnow()),  # noqa E711
             else_=False
         )
 
@@ -2675,7 +2764,8 @@ class User(db.Model, UserMixin):
     PENTESTER_ROLE = 'pentester'
     ASSET_OWNER_ROLE = 'asset_owner'
     CLIENT_ROLE = 'client'
-    ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE]
+    WORKSPACE_ADMIN_ROLE = 'workspace_admin'
+    ROLES = [ADMIN_ROLE, PENTESTER_ROLE, ASSET_OWNER_ROLE, CLIENT_ROLE, WORKSPACE_ADMIN_ROLE]
     OTP_STATES = ["disabled", "requested", "confirmed"]
     USER_TYPES = [LDAP_TYPE, LOCAL_TYPE, SAML_TYPE]
 
@@ -2936,6 +3026,11 @@ class TagObject(db.Model):
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
+    __table_args__ = (
+        # Enables fast lookup: "all tags for objects of type X with id IN (...)"
+        Index('ix_tag_object_type_object_id', 'object_type', 'object_id'),
+    )
+
 
 class CWE(Metadata):
     __tablename__ = 'cwe'
@@ -3002,7 +3097,7 @@ class ExecutiveReport(Metadata):
     border_size = Column(Integer, default=3, nullable=True)
     advanced_filter = Column(Boolean, default=False, nullable=False)
     advanced_filter_parsed = Column(Text, nullable=False, default="")
-    is_preview = Column(Boolean, default=False, nullable=False)
+    sections_metadata = Column(JSONType, nullable=False, default=dict)
 
     workspaces = relationship(
         'Workspace',
@@ -3278,6 +3373,7 @@ class Pipeline(Metadata):
 
     enabled = Column(Boolean, nullable=False, default=False)
     running = Column(Boolean, nullable=False, default=False)
+    running_since = Column(DateTime, nullable=True)
 
     @property
     def parent(self):
@@ -3372,6 +3468,7 @@ class Executor(Metadata):
     last_run = Column(DateTime)
     category = Column(JSONType, nullable=True)
     tool = Column(String(50), nullable=True)
+    website = Column(Text, nullable=True)
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -3426,11 +3523,15 @@ class SchedulerGeneric(Metadata):
 
     @property
     def next_run(self):
-        return croniter(
-            self.crontab,
-            datetime.now(tz=dateutil.tz.gettz(self.timezone)),
-            ret_type=datetime
-        ).get_next(datetime)
+        try:
+            return croniter(
+                self.crontab,
+                datetime.now(tz=dateutil.tz.gettz(self.timezone)),
+                ret_type=datetime
+            ).get_next(datetime)
+        except (CroniterError, ValueError):
+            # An unparseable crontab must not break serialization of the list
+            return None
 
     __mapper_args__ = {
         'polymorphic_on': type
@@ -3491,6 +3592,7 @@ class Agent(Metadata):
     id = Column(Integer, primary_key=True)
     token = Column(Text, unique=True, nullable=False, default=lambda: "".
                    join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
+
     name = NonBlankColumn(Text)
     description = BlankColumn(Text)
     active = Column(Boolean, default=True)
@@ -3536,7 +3638,7 @@ class AgentExecution(Metadata):
     running = Column(Boolean, nullable=True)
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
-    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
+    executor_id = Column(Integer, ForeignKey('executor.id', ondelete='CASCADE'), index=True, nullable=False)
     executor = relationship('Executor', foreign_keys=[executor_id],
                             backref=backref('executions', cascade="all, delete-orphan"))
 
@@ -3578,6 +3680,7 @@ class CloudAgent(Metadata):
     category = Column(JSONType, nullable=True)
     description = BlankColumn(Text)
     tools_count = Column(Integer, nullable=False, default=1)
+    website = Column(Text, nullable=True)
 
     @property
     def last_run(self):
@@ -3708,6 +3811,14 @@ class UserNotification(Metadata):
     links_to = Column(JSONType, nullable=True)
     event_date = Column(DateTime, default=datetime.utcnow(), nullable=False)
 
+    __table_args__ = (
+        Index(
+            'ix_user_notification_user_id_unread',
+            'user_id',
+            postgresql_where=text('read = false'),
+        ),
+    )
+
     def mark_as_read(self):
         self.read = True
 
@@ -3761,6 +3872,11 @@ class UserNotificationSettings(Metadata):
     reports_app = Column(Boolean, default=True)
     reports_email = Column(Boolean, default=False)
     reports_slack = Column(Boolean, default=False)
+
+    ws_sum_reports_enabled = Column(Boolean, default=True)
+    ws_sum_reports_app = Column(Boolean, default=True)
+    ws_sum_reports_email = Column(Boolean, default=False)
+    ws_sum_reports_slack = Column(Boolean, default=False)
 
     vulnerabilities_enabled = Column(Boolean, default=True)
     vulnerabilities_app = Column(Boolean, default=True)
@@ -3972,10 +4088,40 @@ class WorkspaceSummaryReport(Metadata):
         nullable=False,
         default='weekly',
     )
+    active = Column(Boolean, nullable=False, default=True)
 
     __table_args__ = (
         UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),
     )
+
+
+class WorkspaceSummaryReportRun(Metadata):
+    __tablename__ = 'workspace_summary_report_run'
+    id = Column(Integer, primary_key=True)
+
+    workspace_summary_report_id = Column(
+        Integer,
+        ForeignKey('workspace_summary_report.id', ondelete='CASCADE'),
+        index=True,
+        nullable=False,
+    )
+    workspace_summary_report = relationship(
+        'WorkspaceSummaryReport',
+        foreign_keys=[workspace_summary_report_id],
+        backref=backref('runs', cascade="all, delete-orphan", passive_deletes=True),
+    )
+
+    # Denormalized copy of the generated File's filename: set once at
+    # creation and never updated afterwards, so listing runs doesn't need to
+    # join the polymorphic File table.
+    filename = NonBlankColumn(Text)
+
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='ws_sum_report',
+        )
 
 
 # Indexes to speed up queries
@@ -4023,6 +4169,80 @@ event.listen(
     'after_create',
     vulnerability_uniqueness_sqlite.execute_if(dialect='sqlite')
 )
+
+# Column properties on VulnerabilityGeneric that reference other tables via
+# correlated subqueries are added here, after all classes are defined, so that
+# SQLAlchemy can rewrite the parent-table references when the outer FROM is
+# aliased (e.g. by eager-load subqueries).
+VulnerabilityGeneric.creator_command_id = column_property(
+    select(CommandObject.command_id)
+    .where(CommandObject.object_type == 'vulnerability')
+    .where(CommandObject.object_id == VulnerabilityGeneric.id)
+    .where(CommandObject.workspace_id == VulnerabilityGeneric.workspace_id)
+    .order_by(asc(CommandObject.create_date))
+    .limit(1)
+    .correlate(VulnerabilityGeneric)
+    .scalar_subquery(),
+    deferred=True,
+)
+
+VulnerabilityGeneric.creator_command_tool = column_property(
+    select(Command.tool)
+    .select_from(join(Command, CommandObject, Command.id == CommandObject.command_id))
+    .where(CommandObject.object_type == 'vulnerability')
+    .where(CommandObject.object_id == VulnerabilityGeneric.id)
+    .where(CommandObject.workspace_id == VulnerabilityGeneric.workspace_id)
+    .order_by(asc(CommandObject.create_date))
+    .limit(1)
+    .correlate(VulnerabilityGeneric)
+    .scalar_subquery(),
+    deferred=True,
+)
+
+_host_ip_query = (
+    select(Host.ip)
+    .where(VulnerabilityGeneric.host_id == Host.id)
+    .correlate(VulnerabilityGeneric)
+    .scalar_subquery()
+)
+_service_inner_ip = aliased(Host, name='host_inner')
+_service_ip_query = (
+    select(_service_inner_ip.ip)
+    .where(VulnerabilityGeneric.service_id == Service.id)
+    .where(_service_inner_ip.id == Service.host_id)
+    .correlate(VulnerabilityGeneric)
+    .scalar_subquery()
+)
+VulnerabilityGeneric.target_host_ip = column_property(
+    case(
+        (VulnerabilityGeneric.host_id.isnot(None), _host_ip_query),
+        (VulnerabilityGeneric.service_id.isnot(None), _service_ip_query),
+    ),
+    deferred=True,
+)
+
+_host_os_query = (
+    select(Host.os)
+    .where(VulnerabilityGeneric.host_id == Host.id)
+    .correlate(VulnerabilityGeneric)
+    .scalar_subquery()
+)
+_service_inner_os = aliased(Host, name='host_inner_os')
+_service_os_query = (
+    select(_service_inner_os.os)
+    .where(VulnerabilityGeneric.service_id == Service.id)
+    .where(_service_inner_os.id == Service.host_id)
+    .correlate(VulnerabilityGeneric)
+    .scalar_subquery()
+)
+VulnerabilityGeneric.target_host_os = column_property(
+    case(
+        (VulnerabilityGeneric.host_id.isnot(None), _host_os_query),
+        (VulnerabilityGeneric.service_id.isnot(None), _service_os_query),
+    ),
+    deferred=True,
+)
+
 
 # We have to import this after all models are defined
 import faraday.server.events  # noqa F401

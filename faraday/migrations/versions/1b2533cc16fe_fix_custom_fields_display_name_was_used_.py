@@ -20,15 +20,15 @@ depends_on = None
 def upgrade():
     connection = op.get_bind()
 
-    vulnerabilities = connection.execute("""
+    vulnerabilities = connection.execute(text("""
         SELECT id, custom_fields FROM vulnerability
-    """)
+    """))
 
     for vuln_id, custom_fields in vulnerabilities:
         if custom_fields:
-            custom_field_schemas = connection.execute("""
+            custom_field_schemas = connection.execute(text("""
                 SELECT table_name, field_name, field_type, field_order, field_display_name FROM custom_fields_schema
-            """)
+            """))
             for table_name, field_name, field_type, field_order, field_display_name in custom_field_schemas:
 
                 if table_name == 'vulnerability':
@@ -49,15 +49,15 @@ def upgrade():
 def downgrade():
     connection = op.get_bind()
 
-    vulnerabilities = connection.execute("""
+    vulnerabilities = connection.execute(text("""
         SELECT id, custom_fields FROM vulnerability
-    """)
+    """))
 
     for vuln_id, custom_fields in vulnerabilities:
         if custom_fields:
-            custom_field_schemas = connection.execute("""
+            custom_field_schemas = connection.execute(text("""
                 SELECT table_name, field_name, field_type, field_order, field_display_name FROM custom_fields_schema
-            """)
+            """))
 
             for table_name, field_name, field_type, field_order, field_display_name in custom_field_schemas:
                 if table_name == 'vulnerability':

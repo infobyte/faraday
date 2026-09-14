@@ -12,6 +12,7 @@ from tests.factories import (WorkspaceFactory,
                              CommandFactory,
                              EmptyCommandFactory,
                              HostFactory,
+                             ServiceFactory,
                              CommandObjectFactory)
 
 
@@ -137,3 +138,192 @@ class TestActivityFeed:
         assert res.json['activities'][0]['lowIssue'] == 1
         assert res.json['activities'][0]['infoIssue'] == 2
         assert res.json['activities'][0]['unclassifiedIssue'] == 1
+
+
+class TestActivityFeedEnvelopeFilter:
+    """Tests for the _envelope_list filter in ActivityFeedView.
+
+    A command is excluded if:
+      - Its 'command' field value equals the string 'error', OR
+      - All three counts (hosts, services, vulnerabilities) are zero/None.
+    """
+
+    def _add_host(self, session, command, workspace):
+        host = HostFactory.create(workspace=workspace)
+        session.flush()
+        CommandObjectFactory.create(
+            command=command, object_type='host', object_id=host.id, workspace=workspace
+        )
+        return host
+
+    def _add_service(self, session, command, workspace):
+        service = ServiceFactory.create(workspace=workspace)
+        session.flush()
+        CommandObjectFactory.create(
+            command=command, object_type='service', object_id=service.id, workspace=workspace
+        )
+        return service
+
+    def _add_vuln(self, session, command, workspace):
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=workspace, host=host, service=None, severity='low')
+        session.flush()
+        CommandObjectFactory.create(
+            command=command, object_type='vulnerability', object_id=vuln.id, workspace=workspace
+        )
+        return vuln
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_error_is_excluded(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws, command='error')
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert res.json['activities'] == []
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_no_data_is_excluded(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        EmptyCommandFactory.create(workspace=ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert res.json['activities'] == []
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_error_and_data_is_excluded(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws, command='error')
+        self._add_host(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert res.json['activities'] == []
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_only_host_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_host(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['hosts_count'] == 1
+        assert res.json['activities'][0]['services_count'] == 0
+        assert res.json['activities'][0]['vulnerabilities_count'] == 0
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_only_service_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_service(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['services_count'] == 1
+        assert res.json['activities'][0]['hosts_count'] == 0
+        assert res.json['activities'][0]['vulnerabilities_count'] == 0
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_only_vuln_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_vuln(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['vulnerabilities_count'] == 1
+        assert res.json['activities'][0]['hosts_count'] == 0
+        assert res.json['activities'][0]['services_count'] == 0
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_host_and_service_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_host(session, command, ws)
+        self._add_service(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['hosts_count'] == 1
+        assert res.json['activities'][0]['services_count'] == 1
+        assert res.json['activities'][0]['vulnerabilities_count'] == 0
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_host_and_vuln_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_host(session, command, ws)
+        self._add_vuln(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['hosts_count'] == 1
+        assert res.json['activities'][0]['vulnerabilities_count'] == 1
+        assert res.json['activities'][0]['services_count'] == 0
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_service_and_vuln_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_service(session, command, ws)
+        self._add_vuln(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['services_count'] == 1
+        assert res.json['activities'][0]['vulnerabilities_count'] == 1
+        assert res.json['activities'][0]['hosts_count'] == 0
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_command_with_all_data_is_included(self, test_client, session):
+        ws = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=ws)
+        self._add_host(session, command, ws)
+        self._add_service(session, command, ws)
+        self._add_vuln(session, command, ws)
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['hosts_count'] == 1
+        assert res.json['activities'][0]['services_count'] == 1
+        assert res.json['activities'][0]['vulnerabilities_count'] == 1
+
+    @pytest.mark.usefixtures('logged_user', 'ignore_nplusone')
+    def test_mixed_commands_only_valid_ones_returned(self, test_client, session):
+        ws = WorkspaceFactory.create()
+
+        # Should be included
+        valid_cmd = EmptyCommandFactory.create(workspace=ws)
+        self._add_host(session, valid_cmd, ws)
+
+        # Should be excluded: no data
+        EmptyCommandFactory.create(workspace=ws)
+
+        # Should be excluded: command='error'
+        EmptyCommandFactory.create(workspace=ws, command='error')
+
+        session.commit()
+
+        res = test_client.get(f'/v3/ws/{ws.name}/activities')
+        assert res.status_code == 200
+        assert len(res.json['activities']) == 1
+        assert res.json['activities'][0]['_id'] == valid_cmd.id

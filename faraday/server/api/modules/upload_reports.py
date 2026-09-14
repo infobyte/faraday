@@ -55,6 +55,34 @@ class UploadReportView(GenericWorkspacedView):
         post:
           tags: ["Workspace", "File"]
           description: Upload a report file to create data within the given workspace
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  required: [file]
+                  properties:
+                    file:
+                      type: string
+                      format: binary
+                      description: "Report file to import."
+                    ignore_info:
+                      type: string
+                      enum: ["True", "true", "False", "false"]
+                      description: "If truthy, skip vulnerabilities with severity 'informational'."
+                    min_severity:
+                      type: string
+                      enum: [unclassified, info, low, med, high, critical]
+                      description: "Lower bound for severities to import."
+                    max_severity:
+                      type: string
+                      enum: [unclassified, info, low, med, high, critical]
+                      description: "Upper bound for severities to import."
+                    resolve_hostname:
+                      type: string
+                      enum: ["True", "true", "False", "false"]
+                      description: "If truthy, resolve hostnames to IPs during import."
           responses:
             201:
               description: Created
@@ -62,10 +90,6 @@ class UploadReportView(GenericWorkspacedView):
               description: Bad request
             403:
               description: Forbidden
-        tags: ["Workspace", "File"]
-        responses:
-          200:
-            description: Ok
         """
         logger.info("Importing new plugin report in server...")
         # Authorization code copy-pasted from server/api/base.py

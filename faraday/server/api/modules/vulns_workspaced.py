@@ -12,10 +12,7 @@ from logging import getLogger
 from flask import Blueprint, abort, request
 from sqlalchemy.orm import (
     joinedload,
-    selectin_polymorphic,
     selectinload,
-    undefer,
-    noload
 )
 
 # Local application imports
@@ -29,11 +26,7 @@ from faraday.server.api.modules.vulns_base import VulnerabilityFilterSet, Vulner
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import debounce_workspace_update, debounce_workspace_vulns_count_update
 from faraday.server.models import (
-    Host,
-    Service,
-    Vulnerability,
     VulnerabilityGeneric,
-    VulnerabilityWeb,
     db,
 )
 from faraday.server.utils.command import set_command_id
@@ -69,46 +62,19 @@ class VulnerabilityWorkspacedView(
         This is too complex to get_joinedloads, so I have to override the function.
         """
         query = super()._get_eagerloaded_query(*args, **kwargs)
+        # NOTE: Strategies for host / service / Host.hostnames / Vulnerability.owasp
+        # / VulnerabilityWeb.owasp / evidence are already configured by the parent
+        # VulnerabilityView._get_eagerloaded_query. Re-declaring them here causes
+        # "Loader strategies conflict" errors in SQLAlchemy 2.0.
         options = [
-            joinedload(Vulnerability.host).
-            load_only(Host.id).  # Only hostnames are needed
-            joinedload(Host.hostnames),
-
-            joinedload(Vulnerability.service).
-            joinedload(Service.host).
-            joinedload(Host.hostnames),
-
-            joinedload(VulnerabilityWeb.service).
-            joinedload(Service.host).
-            joinedload(Host.hostnames),
-
-            joinedload(VulnerabilityGeneric.update_user),
-            undefer(VulnerabilityGeneric.creator_command_id),
-            undefer(VulnerabilityGeneric.creator_command_tool),
-            undefer(VulnerabilityGeneric.target_host_ip),
-            undefer(VulnerabilityGeneric.target_host_os),
-            selectinload(VulnerabilityGeneric.tags),
-            selectinload(VulnerabilityGeneric.cwe),
-            selectinload(VulnerabilityGeneric.owasp),
-            selectinload(Vulnerability.owasp),
-            selectinload(VulnerabilityWeb.owasp),
-
-            selectinload('refs'),
-            selectinload('cve_instances'),
-            selectinload('policy_violation_instances'),
-
+            joinedload(VulnerabilityGeneric.group),
+            selectinload(VulnerabilityGeneric.refs),
+            selectinload(VulnerabilityGeneric.cve_instances),
+            selectinload(VulnerabilityGeneric.policy_violation_instances),
             selectinload(VulnerabilityGeneric.credentials),
         ]
 
-        if request.args.get('get_evidence'):
-            options.append(joinedload(VulnerabilityGeneric.evidence))
-        else:
-            options.append(noload(VulnerabilityGeneric.evidence))
-
-        return query.options(selectin_polymorphic(
-            VulnerabilityGeneric,
-            [Vulnerability, VulnerabilityWeb]
-        ), *options)
+        return query.options(*options)
 
     def _bulk_update_query(self, ids, **kwargs):
         # It IS better to as is but warn of ON CASCADE
@@ -266,6 +232,13 @@ class VulnerabilityWorkspacedView(
         get:
           tags: ["Vulnerability"]
           summary: "Group vulnerabilities by the field set in the group_by GET parameter."
+          parameters:
+          - in: query
+            name: group_by
+            required: true
+            description: "Field to group vulnerabilities by (e.g. severity, confirmed, status)."
+            schema:
+              type: string
           responses:
             200:
               description: Ok
@@ -312,32 +285,21 @@ class VulnerabilityWorkspacedView(
 
     def put(self, object_id, workspace_name=None, **kwargs):
         """
-                ---
-                  tags: ["Vulnerability"]
-                  summary: Updates Vulnerability
-                  parameters:
-                  - in: path
-                    name: object_id
-                    required: true
-                    schema:
-                      type: integer
-                  - in: path
-                    name: workspace_name
-                    required: true
-                    schema:
-                      type: string
-                  requestBody:
-                    required: true
-                    content:
-                      application/json:
-                        schema: VulnerabilitySchema
-                  responses:
-                    200:
-                      description: Ok
-                      content:
-                        application/json:
-                          schema: VulnerabilitySchema
-                """
+        ---
+          tags: ["Vulnerability"]
+          summary: Updates Vulnerability
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         if workspace_name:
             debounce_workspace_update(workspace_name)
         return super().put(object_id, workspace_name=workspace_name, eagerload=True, **kwargs)

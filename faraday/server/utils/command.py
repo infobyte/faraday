@@ -1,14 +1,10 @@
 import logging
-import random
-from datetime import datetime, timedelta
 
 from faraday.server.api.base import InvalidUsage
-from faraday.server.config import faraday_server
 from faraday.server.models import (
     Command,
     CommandObject
 )
-from faraday.server.tasks import update_failed_command_stats
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +40,20 @@ def set_command_id(session, obj, created, command_id):
     session.add(command_object)
 
 
-def schedule_update_failed_command_stats():
-    delta_minutes = random.randint(5, 180)
-    run_time = datetime.utcnow() + timedelta(minutes=delta_minutes)
+def run_failed_command_stats_inline(app):
+    """Run update_failed_command_stats without celery.
 
+    Celery Beat schedules this task on celery deployments; when celery is
+    disabled there is no scheduler, so the server runs it once on boot.
+    The app context has to be pushed explicitly: celery only wraps tasks with
+    one through ContextTask, which is installed by init_app and therefore
+    missing when celery is disabled.
+    """
+    from faraday.server.tasks import update_failed_command_stats  # pylint: disable=import-outside-toplevel
+
+    logger.info("Celery disabled, running update_failed_command_stats inline")
     try:
-        if faraday_server.celery_enabled:
-            update_failed_command_stats.apply_async(eta=run_time)
-            logger.info(f"Scheduled update_failed_command_stats at {run_time}")
-        else:
-            logger.info("Celery disabled, running update_failed_command_stats inline")
+        with app.app_context():
             update_failed_command_stats()
     except Exception as e:
-        logger.error(f"Failed to schedule update_failed_command_stats: {e}")
+        logger.error(f"Failed to run update_failed_command_stats: {e}")

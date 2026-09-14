@@ -6,6 +6,7 @@ Create Date: 2020-02-04 15:28:09.796949+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,9 +18,9 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute("ALTER TABLE faraday_user ADD COLUMN preferences jsonb not null default '{}'::jsonb")
+    conn.execute(text("ALTER TABLE faraday_user ADD COLUMN preferences jsonb not null default '{}'::jsonb"))
 
 
 def downgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE faraday_user DROP COLUMN "preferences"')
+    conn.execute(text('ALTER TABLE faraday_user DROP COLUMN "preferences"'))

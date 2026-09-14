@@ -40,7 +40,11 @@ class TestLicensesAPI(ReadWriteAPITests):
 
     # @pytest.mark.skip(reason="Not a license actually test")
     def test_envelope_list(self, test_client, app):
-        LicenseEnvelopedView.register(app)
+        if not any('test_envelope_list' in rule.rule for rule in app.url_map.iter_rules()):
+            was_got_first = app._got_first_request
+            app._got_first_request = False
+            LicenseEnvelopedView.register(app)
+            app._got_first_request = was_got_first
         original_res = test_client.get(self.url())
         assert original_res.status_code == 200
         new_res = test_client.get(API_PREFIX + 'test_envelope_list')

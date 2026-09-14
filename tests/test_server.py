@@ -35,7 +35,11 @@ class BaseAPITestCase:
 
     @pytest.fixture(autouse=True)
     def route_endpoint(self, app):
-        app.route(self.ENDPOINT_ROUTE)(endpoint)
+        if not any(rule.rule == self.ENDPOINT_ROUTE for rule in app.url_map.iter_rules()):
+            was_got_first = app._got_first_request
+            app._got_first_request = False
+            app.route(self.ENDPOINT_ROUTE)(endpoint)
+            app._got_first_request = was_got_first
 
 
 class TestAuthentication(BaseAPITestCase, unittest.TestCase):
@@ -75,17 +79,15 @@ class TestAuthentication(BaseAPITestCase, unittest.TestCase):
 
     def test_401_when_logged_user_is_inactive(self):
         with self.flask_app.app_context():
-            # Without this line the test breaks. Taken from
-            # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
-            db.session.add(self.user)
-
-            self.assertTrue(self.flask_app.user_datastore.deactivate_user(self.user))
+            user = db.session.merge(self.user)
+            self.assertTrue(self.flask_app.user_datastore.deactivate_user(user))
         res = self.app.get('/_api/v3/ws/')
         self.assertEqual(res.status_code, 401)
 
     def test_401_when_logged_user_is_deleted(self):
         with self.flask_app.app_context():
-            self.flask_app.user_datastore.delete_user(self.user)
+            user = db.session.merge(self.user)
+            self.flask_app.user_datastore.delete_user(user)
         res = self.app.get('/_api/v3/ws/')
         self.assertEqual(res.status_code, 401)
 

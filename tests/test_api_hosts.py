@@ -6,7 +6,9 @@ See the file 'doc/LICENSE' for the license information
 '''
 import operator
 from io import BytesIO
+from unittest import mock
 from posixpath import join
+
 
 from urllib.parse import urljoin
 from random import choice
@@ -112,6 +114,57 @@ class TestHostAPI:
         assert res.status_code == 200
         assert len(res.json['rows']) == HOSTS_COUNT
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_order_by_creator_username_keeps_null_creators(
+            self, test_client, session, workspace, host_factory, user_factory):
+        owner = user_factory.create(username='no_ws_owner_alice')
+        host_factory.create_batch(3, workspace=workspace, creator=owner)
+        host_factory.create_batch(2, workspace=workspace, creator=None)
+        session.commit()
+        expected_total = HOSTS_COUNT + 5
+
+        res = test_client.get(join(
+            self.url(),
+            'filter?q={"order_by":[{"field":"creator__username","direction":"desc"}]}',
+        ))
+        assert res.status_code == 200
+        assert res.json['count'] == expected_total
+        assert len(res.json['rows']) == expected_total
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_filter_and_order_by_creator_username(
+            self, test_client, session, workspace, host_factory, user_factory):
+        owner = user_factory.create(username='no_ws_owner_bob')
+        host_factory.create_batch(3, workspace=workspace, creator=owner)
+        host_factory.create_batch(2, workspace=workspace, creator=None)
+        session.commit()
+
+        res = test_client.get(join(
+            self.url(),
+            'filter?q={"filters":[{"name":"creator","op":"eq","val":"no_ws_owner_bob"}],'
+            '"order_by":[{"field":"creator__username","direction":"desc"}]}',
+        ))
+        assert res.status_code == 200
+        assert res.json['count'] == 3
+        assert len(res.json['rows']) == 3
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_group_by_creator_username(
+            self, test_client, session, workspace, host_factory, user_factory):
+        owner = user_factory.create(username='no_ws_owner_carol')
+        host_factory.create_batch(3, workspace=workspace, creator=owner)
+        host_factory.create_batch(2, workspace=workspace, creator=None)
+        session.commit()
+
+        res = test_client.get(join(
+            self.url(),
+            'filter?q={"group_by":[{"field":"creator__username"}]}',
+        ))
+        assert res.status_code == 200
+        usernames = [row['value']['creator__username'] for row in res.json['rows']]
+        assert 'no_ws_owner_carol' in usernames
+        assert None in usernames
+
     def test_retrieve_one_host(self, test_client, database):
         host = self.workspace.hosts[0]
         assert host.id is not None
@@ -153,6 +206,7 @@ class TestHostAPI:
             session.commit()
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
+            assert res.json['open_services'] == len(services)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_index_shows_service_count(self, test_client, session,
@@ -174,6 +228,7 @@ class TestHostAPI:
         for host in res.json['rows']:
             if host['id'] in ids_map:
                 assert host['value']['services'] == len(ids_map[host['id']])
+                assert host['value']['open_services'] == len(ids_map[host['id']])
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_by_os_exact(self, test_client, session, workspace,
@@ -596,11 +651,12 @@ class TestHostAPI:
         assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
-    def test_bulk_delete_hosts(self, test_client, session):
+    def test_bulk_delete_hosts(self, test_client, session, second_workspace):
         host_1 = HostFactory.create(workspace=self.workspace)
-        host_2 = HostFactory.create(workspace=self.workspace)
+        host_2 = HostFactory.create(workspace=second_workspace)
         session.commit()
         hosts_ids = [host_1.id, host_2.id]
+        workspace_id = self.workspace.id
         request_data = {'ids': hosts_ids}
 
         delete_response = test_client.delete(self.url(), data=request_data)
@@ -608,11 +664,11 @@ class TestHostAPI:
         deleted_hosts = delete_response.json['deleted']
         host_count_after_delete = db.session.query(Host).filter(
             Host.id.in_(hosts_ids),
-            Host.workspace_id == self.workspace.id).count()
+            Host.workspace_id == workspace_id).count()
 
         assert delete_response.status_code == 200
-        assert deleted_hosts == len(hosts_ids)
         assert host_count_after_delete == 0
+        assert deleted_hosts == len(hosts_ids)
 
     def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
         request_data = {'hosts_ids': []}
@@ -912,29 +968,35 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
     def test_bulk_update_host_with_hostnames(self, test_client, session,
                                         host_with_hostnames):
         session.commit()
+        host_with_hostnames_id = host_with_hostnames.id
+        first_object_id = self.first_object.id
         data = {
-            "ids": [host_with_hostnames.id, self.first_object.id],
+            "ids": [host_with_hostnames_id, first_object_id],
             "hostnames": ["other.com", "test.com"],
         }
         res = test_client.patch(self.url(), data=data)
         assert res.status_code == 200
         assert res.json["updated"] == 2
         expected = {"other.com", "test.com"}
+        host_with_hostnames = session.query(Host).get(host_with_hostnames_id)
+        first_object = session.query(Host).get(first_object_id)
         assert {hn.name for hn in host_with_hostnames.hostnames} == expected
-        assert {hn.name for hn in self.first_object.hostnames} == expected
+        assert {hn.name for hn in first_object.hostnames} == expected
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_update_host_without_hostnames(self, test_client, session,
                                                 host_with_hostnames):
         session.commit()
         expected = {hn.name for hn in host_with_hostnames.hostnames}
+        host_id = host_with_hostnames.id
         data = {
-            "ids": [host_with_hostnames.id],
+            "ids": [host_id],
             "os": "NotAnOS"
         }
         res = test_client.patch(self.url(), data=data)
         assert res.status_code == 200
         assert res.json["updated"] == 1
+        host_with_hostnames = session.query(Host).get(host_id)
         assert {hn.name for hn in host_with_hostnames.hostnames} == expected
 
     def test_bulk_update_fails_with_existing(self, test_client, session):

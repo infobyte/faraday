@@ -2,8 +2,13 @@ import pytest
 
 from marshmallow.exceptions import ValidationError
 
-from faraday.server.utils.filters import FilterSchema
-from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.utils.filters import (
+    FilterSchema,
+    FlaskRestlessSchema,
+    FlaskRestlessUserFilterSchema,
+    FlaskRestlessCredentialFilterSchema,
+    FlaskRestlessVulnerabilityFilterSchema,
+)
 
 
 class TestFilters:
@@ -282,3 +287,71 @@ class TestFilters:
         filters = {'filters': [{'name': 'id', 'op': 'range', 'val': '2020-01-01,2020-12-31'}]}
         with pytest.raises(ValidationError):
             FilterSchema().load(filters)
+
+    def test_user_password_direct_filter_is_rejected(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessUserFilterSchema().load({'name': 'password', 'op': 'like', 'val': '$2b$1%'})
+
+    def test_access_token_direct_filter_is_rejected_on_any_schema(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load({'name': 'access_token', 'op': 'eq', 'val': 'abc123'})
+
+    def test_credential_password_direct_filter_is_allowed(self):
+        result = FlaskRestlessCredentialFilterSchema().load({'name': 'password', 'op': 'eq', 'val': 'secret'})
+        assert result == [{'name': 'password', 'op': 'eq', 'val': 'secret'}]
+
+    def test_credential_access_token_direct_filter_is_rejected(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessCredentialFilterSchema().load({'name': 'access_token', 'op': 'eq', 'val': 'abc123'})
+
+    def test_sensitive_field_via_has_relationship_is_rejected(self):
+        # {"name":"creator","op":"has","val":{"name":"password","op":"like","val":"$2b$1%"}}
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '$2b$1%'}}
+            )
+
+    def test_sensitive_field_via_any_relationship_is_rejected(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator', 'op': 'any', 'val': {'name': 'password', 'op': 'eq', 'val': 'secret'}}
+            )
+
+    def test_sensitive_field_deeply_nested_in_and_is_rejected(self):
+        filters = {'filters': [
+            {'and': [
+                {'name': 'severity', 'op': 'eq', 'val': 'high'},
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '%secret%'}}
+            ]}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_deeply_nested_in_or_is_rejected(self):
+        filters = {'filters': [
+            {'or': [
+                {'name': 'confirmed', 'op': '==', 'val': 'true'},
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'password', 'op': 'like', 'val': '%secret%'}}
+            ]}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)
+
+    def test_sensitive_field_via_double_underscore_notation_is_rejected(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator__password', 'op': 'like', 'val': '$2b$1%'}
+            )
+
+    def test_non_sensitive_field_via_double_underscore_notation_is_allowed(self):
+        result = FlaskRestlessVulnerabilityFilterSchema().load(
+            {'name': 'creator__name', 'op': 'eq', 'val': 'john'}
+        )
+        assert result == [{'name': 'creator__name', 'op': 'eq', 'val': 'john'}]
+
+    def test_sensitive_field_compound_name_in_nested_val_is_rejected(self):
+        # defense-in-depth: compound name like 'creator__password' inside a nested has/any val
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema().load(
+                {'name': 'creator', 'op': 'has', 'val': {'name': 'creator__password', 'op': 'like', 'val': '$2b$1%'}}
+            )

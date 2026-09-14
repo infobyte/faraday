@@ -33,6 +33,14 @@ class ExportDataView(GenericWorkspacedView):
         get:
           tags: ["File","Workspace"]
           description: Exports all the workspace data in a XML file
+          parameters:
+          - in: query
+            name: format
+            required: true
+            description: "Export format. Currently only 'xml_metasploit' is supported."
+            schema:
+              type: string
+              enum: [xml_metasploit]
           responses:
             200:
               description: Ok
@@ -53,9 +61,9 @@ class ExportDataView(GenericWorkspacedView):
             logger.info("Workspace´s data exported")
             return send_file(
                 memory_file,
-                attachment_filename=f"Faraday-{workspace_name}-data.xml",
+                download_name=f"Faraday-{workspace_name}-data.xml",
                 as_attachment=True,
-                cache_timeout=-1
+                max_age=0
             )
         else:
             logger.error("Invalid format. Please, specify a valid format.")

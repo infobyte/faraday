@@ -3,10 +3,10 @@ publish_pypi:
     stage: publish
     script:
       - !reference [ .get_from_tar_and_replace_www, script ]
-      - apt-get update -qy
-      - apt-get install twine -y
-      - python setup.py sdist bdist_wheel
-      - twine upload -u $PYPI_USER -p $PYPI_PASS dist/* --verbose
+      - curl -LsSf https://astral.sh/uv/install.sh | sh
+      - source $HOME/.local/bin/env
+      - uv build
+      - uv publish --username $PYPI_USER --password $PYPI_PASS
     rules:
       - !reference [ .on-community-tag, rules ]
     needs:

@@ -6,6 +6,7 @@ Create Date: 2025-07-08 17:35:08.550183+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 from faraday.server.models import PermissionsUnitAction
 
@@ -37,12 +38,12 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_group WHERE name = 'all';"
+        text("SELECT id FROM permissions_group WHERE name = 'all';")
     )
     all_group_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'user_tokens';"
+        text("SELECT id FROM permissions_unit WHERE name = 'user_tokens';")
     )
     user_tokens_unit_id = result.scalar()
 
@@ -51,22 +52,22 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     create_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{READ}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{READ}' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     read_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     update_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     delete_action_id = result.scalar()
 
@@ -90,33 +91,33 @@ def upgrade():
         op.execute(f"ALTER TYPE action_types ADD VALUE IF NOT EXISTS '{TAG}'")  # nosec B608
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'vulnerabilities';"
+        text("SELECT id FROM permissions_unit WHERE name = 'vulnerabilities';")
     )
     vulns_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'hosts';"
+        text("SELECT id FROM permissions_unit WHERE name = 'hosts';")
     )
     hosts_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'services';"
+        text("SELECT id FROM permissions_unit WHERE name = 'services';")
     )
     services_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'workspaces';"
+        text("SELECT id FROM permissions_unit WHERE name = 'workspaces';")
     )
     workspaces_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{TAG}', {vulns_unit_id}), ('{TAG}', {hosts_unit_id}), ('{TAG}', {services_unit_id}), ('{TAG}', {workspaces_unit_id}) RETURNING id;"  # nosec B608
+        text(f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{TAG}', {vulns_unit_id}), ('{TAG}', {hosts_unit_id}), ('{TAG}', {services_unit_id}), ('{TAG}', {workspaces_unit_id}) RETURNING id;")  # nosec B608
     )
 
     inserted_ids = [row[0] for row in result.fetchall()]
 
     result = op.get_bind().execute(
-        "SELECT id FROM faraday_role WHERE id > 4;"
+        text("SELECT id FROM faraday_role WHERE id > 4;")
     )
 
     roles_ids = [row[0] for row in result.fetchall()]
@@ -131,7 +132,7 @@ def upgrade():
             )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{workspaces_unit_id}' AND action_type = '{UPDATE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{workspaces_unit_id}' AND action_type = '{UPDATE}';")  # nosec B608
     )
     ws_update_id = result.scalar()
 
@@ -140,17 +141,17 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{CREATE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{CREATE}';")  # nosec B608
     )
     sv_create_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{UPDATE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{UPDATE}';")  # nosec B608
     )
     sv_update_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{DELETE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{services_unit_id}' AND action_type = '{DELETE}';")  # nosec B608
     )
     sv_delete_id = result.scalar()
 
@@ -167,17 +168,17 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{CREATE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{CREATE}';")  # nosec B608
     )
     ht_create_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{UPDATE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{UPDATE}';")  # nosec B608
     )
     ht_update_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{DELETE}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE permissions_unit_id = '{hosts_unit_id}' AND action_type = '{DELETE}';")  # nosec B608
     )
     ht_delete_id = result.scalar()
 
@@ -194,12 +195,12 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'preferences';"
+        text("SELECT id FROM permissions_unit WHERE name = 'preferences';")
     )
     preferences_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {preferences_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {preferences_unit_id};")  # nosec B608
     )
     create_action_id = result.scalar()
 
@@ -208,17 +209,17 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_group WHERE name = 'planners';"
+        text("SELECT id FROM permissions_group WHERE name = 'planners';")
     )
     planners_group_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'planners';"
+        text("SELECT id FROM permissions_unit WHERE name = 'planners';")
     )
     planners_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {planners_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {planners_unit_id};")  # nosec B608
     )
     update_action_id = result.scalar()
 
@@ -227,19 +228,19 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'tasks';"
+        text("SELECT id FROM permissions_unit WHERE name = 'tasks';")
     )
     tasks_unit_id = result.scalar()
 
     if not tasks_unit_id:
         result = op.get_bind().execute(
-            f"INSERT INTO permissions_unit (name, permissions_group_id) VALUES ('tasks', {planners_group_id}) RETURNING id;"  # nosec B608
+            text(f"INSERT INTO permissions_unit (name, permissions_group_id) VALUES ('tasks', {planners_group_id}) RETURNING id;")  # nosec B608
         )
 
         tasks_unit_id = result.scalar()
 
         result = op.get_bind().execute(
-            f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{CREATE}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+            text(f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{CREATE}', {tasks_unit_id}) RETURNING id;")  # nosec B608
         )
 
         create_action_id = result.scalar()
@@ -249,7 +250,7 @@ def upgrade():
         )
 
         result = op.get_bind().execute(
-            f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{READ}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+            text(f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{READ}', {tasks_unit_id}) RETURNING id;")  # nosec B608
         )
 
         read_action_id = result.scalar()
@@ -259,7 +260,7 @@ def upgrade():
         )
 
         result = op.get_bind().execute(
-            f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{UPDATE}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+            text(f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{UPDATE}', {tasks_unit_id}) RETURNING id;")  # nosec B608
         )
 
         update_action_id = result.scalar()
@@ -269,7 +270,7 @@ def upgrade():
         )
 
         result = op.get_bind().execute(
-            f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{DELETE}', {tasks_unit_id}) RETURNING id;"  # nosec B608
+            text(f"INSERT INTO permissions_unit_action (action_type, permissions_unit_id) VALUES ('{DELETE}', {tasks_unit_id}) RETURNING id;")  # nosec B608
         )
 
         delete_action_id = result.scalar()
@@ -279,7 +280,7 @@ def upgrade():
         )
 
         result = op.get_bind().execute(
-            f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {vulns_unit_id};"  # nosec B608
+            text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {vulns_unit_id};")  # nosec B608
         )
 
         create_action_id = result.scalar()
@@ -289,7 +290,7 @@ def upgrade():
         )
 
         result = op.get_bind().execute(
-            f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {vulns_unit_id};"  # nosec B608
+            text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {vulns_unit_id};")  # nosec B608
         )
 
         delete_action_id = result.scalar()
@@ -299,12 +300,12 @@ def upgrade():
         )
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'credentials';"
+        text("SELECT id FROM permissions_unit WHERE name = 'credentials';")
     )
     credentials_unit_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {credentials_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{CREATE}' AND permissions_unit_id = {credentials_unit_id};")  # nosec B608
     )
 
     create_action_id = result.scalar()
@@ -314,7 +315,7 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{READ}' AND permissions_unit_id = {credentials_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{READ}' AND permissions_unit_id = {credentials_unit_id};")  # nosec B608
     )
 
     read_action_id = result.scalar()
@@ -324,7 +325,7 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {credentials_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{UPDATE}' AND permissions_unit_id = {credentials_unit_id};")  # nosec B608
     )
 
     update_action_id = result.scalar()
@@ -334,7 +335,7 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {credentials_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{DELETE}' AND permissions_unit_id = {credentials_unit_id};")  # nosec B608
     )
 
     delete_action_id = result.scalar()
@@ -346,7 +347,7 @@ def upgrade():
 
 def downgrade():
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = '{TAG}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{TAG}';")  # nosec B608
     )
 
     tag_actions_ids = [row[0] for row in result.fetchall()]
@@ -368,12 +369,12 @@ def downgrade():
     op.execute("ALTER TYPE action_types_tmp RENAME TO action_types")
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_group WHERE name = 'admin';"
+        text("SELECT id FROM permissions_group WHERE name = 'admin';")
     )
     admin_group_id = result.scalar()
 
     result = op.get_bind().execute(
-        "SELECT id FROM permissions_unit WHERE name = 'user_tokens';"
+        text("SELECT id FROM permissions_unit WHERE name = 'user_tokens';")
     )
     user_tokens_unit_id = result.scalar()
 
@@ -382,22 +383,22 @@ def downgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = 'create' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     create_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'read' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = 'read' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     read_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'update' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = 'update' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     update_action_id = result.scalar()
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit_action WHERE action_type = 'delete' AND permissions_unit_id = {user_tokens_unit_id};"  # nosec B608
+        text(f"SELECT id FROM permissions_unit_action WHERE action_type = 'delete' AND permissions_unit_id = {user_tokens_unit_id};")  # nosec B608
     )
     delete_action_id = result.scalar()
 

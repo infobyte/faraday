@@ -68,7 +68,7 @@ class CustomFieldsSchemaView(ReadWriteView, BulkDeleteMixin):
             return
         db.session.execute(
             text(
-                f"UPDATE {table_name} SET custom_fields = custom_fields - :key"  # noqa: S608
+                f"UPDATE {table_name} SET custom_fields = custom_fields - :key"  # noqa: S608 # nosec B608
                 f" WHERE custom_fields ? :key"
             ),
             {'key': field_name},

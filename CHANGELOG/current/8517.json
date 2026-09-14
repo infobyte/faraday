@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[FIX] `/vulns/count`/`/vulns/filter` now support multiple statuses (Not Closed) and exclude grouped vulns from stats. #8517"
+  "md": "[FIX] `/vulns/count`/`/vulns/filter` support multiple statuses (Not Closed); Pro/Corp also excludes grouped vulns from stats. #8517"
 }

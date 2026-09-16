@@ -45,6 +45,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
+    Command,
     CommandObject,
     File,
     Host,
@@ -207,6 +208,16 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
             return {"data": objects}
 
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
+
+    def test_bulk_update_sets_command_creator_id(self, test_client, session, logged_user):
+        vuln = self.objects[0]
+        data = {'ids': [vuln.id], 'name': 'renamed by bulk update'}
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+
+        command = Command.query.filter_by(workspace_id=self.workspace.id).order_by(Command.id.desc()).first()
+        assert command is not None
+        assert command.creator_id == logged_user.id
 
     def test_bulk_update_custom_attributes(self, test_client, second_workspace, session):
 

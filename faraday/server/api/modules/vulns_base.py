@@ -165,6 +165,10 @@ class VulnToolsHistorySchema(Schema):
     create_date = fields.Function(lambda obj: obj.create_date.replace(tzinfo=utc).isoformat())
 
 
+class VulnToolsHistoryResponseSchema(Schema):
+    tools = fields.List(fields.Nested(VulnToolsHistorySchema), dump_only=True)
+
+
 class CVESchema(AutoSchema):
     name = fields.String()
 
@@ -893,7 +897,7 @@ class VulnerabilityView(
               description: Ok
               content:
                 application/json:
-                  schema: VulnToolsHistorySchema
+                  schema: VulnToolsHistoryResponseSchema
         """
         vuln_permission_check = self._apply_filter_context(
             db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)

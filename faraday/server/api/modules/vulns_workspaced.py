@@ -239,6 +239,20 @@ class VulnerabilityWorkspacedView(
             description: "Field to group vulnerabilities by (e.g. severity, confirmed, status)."
             schema:
               type: string
+          - in: query
+            name: status
+            required: false
+            description: >
+              Filter by one or more vulnerability statuses (repeat the
+              parameter for multiple values, e.g. status=open&status=re-opened).
+              Accepted values: open, re-opened, closed, risk-accepted.
+            style: form
+            explode: true
+            schema:
+              type: array
+              items:
+                type: string
+                enum: [open, re-opened, closed, risk-accepted]
           responses:
             200:
               description: Ok

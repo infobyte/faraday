@@ -8,7 +8,6 @@ import datetime
 import logging
 import numbers
 import typing
-from collections.abc import Iterable
 from distutils.util import strtobool
 
 # Related third party imports
@@ -49,6 +48,20 @@ def _is_sensitive_field_name(name: str) -> bool:
         _, field = name.split('__', 1)
         return field in SENSITIVE_FILTER_FIELDS
     return False
+
+
+def _reject_sensitive_field_name(name: str):
+    """Validator for the 'field' entries of group_by/order_by.
+
+    Those are a separate branch of FilterSchema: they never reach
+    _validate_filter_types, and they key the field name under 'field' instead
+    of 'name', so neither the checks in FlaskRestlessFilterSchema nor
+    _reject_sensitive_filter apply to them. Without this, search() resolves the
+    name with a bare getattr() and group_by dumps the column value into the
+    response.
+    """
+    if _is_sensitive_field_name(name):
+        raise ValidationError('Grouping or ordering by a sensitive field is not allowed')
 
 
 def _reject_sensitive_filter(val):
@@ -204,9 +217,12 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Field does not support in operator')
 
         if filter_['op'].lower() in ['in', 'not_in']:
-            # in and not_in must be used with Iterable
-            if not isinstance(filter_['val'], Iterable):
-                filter_['val'] = [filter_['val']]
+            # in/not_in must be used with a list of values; the front always
+            # sends one for these operators. Fail fast instead of silently
+            # wrapping a scalar, so a caller that doesn't respect this
+            # contract surfaces immediately instead of being tolerated forever.
+            if not isinstance(filter_['val'], list):
+                raise ValidationError("'in'/'not_in' operators require a list of values")
 
         try:
             field = converter.column2field(column)
@@ -275,10 +291,21 @@ class FlaskRestlessFilterSchema(Schema):
             except (AttributeError, ValueError) as e:
                 raise ValidationError('Can\'t compare Boolean field against a'
                                       ' non boolean value. Please use True or False') from e
-        # we try to deserialize the value, any error means that the value was not valid for the field typ3
+        # we try to deserialize the value, any error means that the value was not valid for the field type
         # previous checks were added since postgresql is very strict with operators.
         try:
-            if isinstance(field, fields.String):
+            # Only in/not_in produce a list (enforced above), so the value's
+            # own shape already tells us which case we're in — no need to
+            # re-check filter_['op'] here. Each element must be
+            # validated/coerced individually against the field, not the list
+            # as a whole (str(['open', 're-opened']) would otherwise collapse
+            # it into the single, unusable string "['open', 're-opened']").
+            if isinstance(filter_['val'], list):
+                if isinstance(field, fields.String):
+                    filter_['val'] = [str(v) for v in filter_['val']]
+                else:
+                    fields.List(field).deserialize(filter_['val'])
+            elif isinstance(field, fields.String):
                 filter_['val'] = str(filter_['val'])
             else:
                 field.deserialize(filter_['val'])
@@ -406,11 +433,11 @@ class FlaskRestlessOperator(Schema):
 
 
 class FlaskRestlessGroupFieldSchema(Schema):
-    field = fields.String(required=True)
+    field = fields.String(required=True, validate=_reject_sensitive_field_name)
 
 
 class FlaskRestlessOrderFieldSchema(Schema):
-    field = fields.String(required=True)
+    field = fields.String(required=True, validate=_reject_sensitive_field_name)
     direction = fields.String(validate=validate.OneOf(["asc", "desc"]), required=False)
 
 

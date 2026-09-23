@@ -7,6 +7,7 @@ Create Date: 2021-07-26 17:18:43.521015+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 from faraday.server.models import NotificationSubscription, NotificationSubscriptionWebSocketConfig, User
@@ -41,10 +42,10 @@ def upgrade():
     op.execute("INSERT INTO event_type (name, async_event) VALUES ('update_host', False)")
     op.execute("INSERT INTO event_type (name, async_event) VALUES ('delete_host', False)")
 
-    res = bind.execute('SELECT name, id FROM event_type').fetchall()  # nosec
+    res = bind.execute(text('SELECT name, id FROM event_type')).fetchall()  # nosec
     event_type_ids = dict(res)
 
-    res = bind.execute('SELECT name, id FROM faraday_role').fetchall()  # nosec
+    res = bind.execute(text('SELECT name, id FROM faraday_role')).fetchall()  # nosec
     role_ids = dict(res)
 
     for config in notifications_config:
@@ -68,35 +69,35 @@ def downgrade():
 
     for config in notifications_config:
         for event_type in config['event_types']:
-            event_type_name = session.execute(f"SELECT id "  # nosec
+            event_type_name = session.execute(text(f"SELECT id "  # nosec
                                               f"FROM event_type e "
-                                              f"WHERE e.name = '{event_type}'")
+                                              f"WHERE e.name = '{event_type}'"))
             for event_type_id in event_type_name:
                 subscriptions = session.execute(
-                    f"SELECT id "  # nosec
+                    text(f"SELECT id "  # nosec
                     f"FROM notification_subscription_config_base "
-                    f"WHERE subscription_id = '{event_type_id[0]}'")
+                    f"WHERE subscription_id = '{event_type_id[0]}'"))
                 for subscription_id in subscriptions:
                     base_config = session.execute(
-                        f"SELECT id "  # nosec
+                        text(f"SELECT id "  # nosec
                         f"FROM notification_subscription_config_base "
-                        f"WHERE subscription_id = '{subscription_id[0]}'")
+                        f"WHERE subscription_id = '{subscription_id[0]}'"))
                     for base_config_id in base_config:
-                        session.execute(f"DELETE "  # nosec
+                        session.execute(text(f"DELETE "  # nosec
                                         f"FROM notification_subscription_websocket_config "
-                                        f"WHERE id = '{base_config_id[0]}'")
+                                        f"WHERE id = '{base_config_id[0]}'"))
 
-                        session.execute(f"DELETE "  # nosec
+                        session.execute(text(f"DELETE "  # nosec
                                         f"FROM notification_allowed_roles na "
-                                        f"WHERE na.notification_subscription_id = '{subscription_id[0]}'")
+                                        f"WHERE na.notification_subscription_id = '{subscription_id[0]}'"))
 
-                        session.execute(f"DELETE "  # nosec
+                        session.execute(text(f"DELETE "  # nosec
                                         f"FROM notification_subscription_config_base "
-                                        f"WHERE id = '{base_config_id[0]}'")
+                                        f"WHERE id = '{base_config_id[0]}'"))
 
-                    session.execute(f"DELETE "  # nosec
+                    session.execute(text(f"DELETE "  # nosec
                                     f"FROM notification_subscription ns "
-                                    f"WHERE ns.id = '{subscription_id[0]}'")
+                                    f"WHERE ns.id = '{subscription_id[0]}'"))
 
         name_list = ",".join([f"'{elem}'" for elem in config["event_types"]])
-        session.execute(f'DELETE FROM event_type WHERE name IN ({name_list})')  # nosec
+        session.execute(text(f'DELETE FROM event_type WHERE name IN ({name_list})'))  # nosec

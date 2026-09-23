@@ -6,6 +6,7 @@ Create Date: 2025-05-30 16:22:47.068338+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 from faraday.server.models import PermissionsUnitAction, Role
 from faraday.server.utils.permissions import GROUP_WS_SUM_REPORTS, UNIT_WS_SUM_REPORTS
@@ -40,7 +41,7 @@ def upgrade():
     op.execute(f"INSERT INTO permissions_group (name) VALUES ('{GROUP_WS_SUM_REPORTS}');")  # nosec B608
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_group WHERE name = '{GROUP_WS_SUM_REPORTS}';"  # nosec B608
+        text(f"SELECT id FROM permissions_group WHERE name = '{GROUP_WS_SUM_REPORTS}';")  # nosec B608
     )
     group_id = result.scalar()
 
@@ -49,7 +50,7 @@ def upgrade():
     )
 
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit WHERE name = '{UNIT_WS_SUM_REPORTS}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit WHERE name = '{UNIT_WS_SUM_REPORTS}';")  # nosec B608
     )
     unit_id = result.scalar()
 
@@ -61,7 +62,7 @@ def upgrade():
     permisison_unit_action_ids = []
     for action in ACTIONS:
         result = op.get_bind().execute(
-            f"SELECT id FROM permissions_unit_action WHERE action_type = '{action}' AND permissions_unit_id = {unit_id};"  # nosec B608
+            text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{action}' AND permissions_unit_id = {unit_id};")  # nosec B608
         )
         permisison_unit_action_ids.append(result.scalar())
 
@@ -75,14 +76,14 @@ def upgrade():
 
 def downgrade():
     result = op.get_bind().execute(
-        f"SELECT id FROM permissions_unit WHERE name = '{UNIT_WS_SUM_REPORTS}';"  # nosec B608
+        text(f"SELECT id FROM permissions_unit WHERE name = '{UNIT_WS_SUM_REPORTS}';")  # nosec B608
     )
     unit_id = result.scalar()
 
     permisison_unit_action_ids = []
     for action in ACTIONS:
         result = op.get_bind().execute(
-            f"SELECT id FROM permissions_unit_action WHERE action_type = '{action}' AND permissions_unit_id = {unit_id};"  # nosec B608
+            text(f"SELECT id FROM permissions_unit_action WHERE action_type = '{action}' AND permissions_unit_id = {unit_id};")  # nosec B608
         )
         permisison_unit_action_ids.append(result.scalar())
 

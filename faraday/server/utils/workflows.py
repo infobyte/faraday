@@ -62,9 +62,14 @@ class BooleanSchema(Schema):
 
 def _get_workspace(ws_id):
     workspace = (db.session.query(Workspace)
-                 .options(joinedload(Workspace.pipelines)
-                          .subqueryload(Pipeline.jobs)
-                          .joinedload(Workflow.conditions, Workflow.actions))
+                 .options(
+                     joinedload(Workspace.pipelines)
+                     .subqueryload(Pipeline.jobs)
+                     .joinedload(Workflow.conditions),
+                     joinedload(Workspace.pipelines)
+                     .subqueryload(Pipeline.jobs)
+                     .joinedload(Workflow.actions),
+                 )
                  .filter(Workspace.id == ws_id).first())
     if workspace is None:
         logger.error(f"Workspace {ws_id} not found")
@@ -86,8 +91,10 @@ def _get_pipeline(pipeline_id: int = None, workspace: Workspace = None, ws_id: i
             return pipeline
     else:
         pipeline = (db.session.query(Pipeline)
-                    .options(subqueryload(Pipeline.jobs)
-                             .joinedload(Workflow.conditions, Workflow.actions))
+                    .options(
+                        subqueryload(Pipeline.jobs).joinedload(Workflow.conditions),
+                        subqueryload(Pipeline.jobs).joinedload(Workflow.actions),
+                    )
                     .filter(Workspace.id == ws_id, Pipeline.id == pipeline_id).first()) \
                     if pipeline_id is not None else None
         if pipeline is None:

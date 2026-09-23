@@ -857,6 +857,46 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         assert histogram[0].date == datetime.date.today()
         assert histogram[0].confirmed == 4
 
+    def test_histogram_bulk_update_via_session_execute(self, vulnerability_factory, session, host_factory):
+        """Bulk ORM update via session.execute(update(...)) must trigger histogram deltas.
+
+        Regression guard for _vuln_bulk_orm_execute (events.py) — confirms the
+        do_orm_execute listener picks up the pre-update vuln state and adjusts
+        SeveritiesHistogram counters by the row delta, not stale identity-map state.
+        """
+        from sqlalchemy import update as sa_update
+
+        VulnerabilityGeneric.query.delete()
+        session.query(SeveritiesHistogram).delete()
+        session.commit()
+
+        host = host_factory.create(workspace=self.workspace)
+        vulns = vulnerability_factory.create_batch(
+            3, workspace=self.workspace, host=host, service=None,
+            severity='medium', confirmed=True, status='open',
+        )
+        session.add_all(vulns)
+        session.commit()
+
+        histogram = SeveritiesHistogram.query.filter_by(workspace_id=self.workspace.id).first()
+        assert histogram is not None
+        assert histogram.medium == 3
+        assert histogram.high == 0
+        assert histogram.confirmed == 3
+
+        ids = [v.id for v in vulns]
+        session.execute(
+            sa_update(Vulnerability)
+            .where(Vulnerability.id.in_(ids))
+            .values(severity='high')
+        )
+        session.commit()
+
+        histogram = SeveritiesHistogram.query.filter_by(workspace_id=self.workspace.id).first()
+        assert histogram.medium == 0
+        assert histogram.high == 3
+        assert histogram.confirmed == 3
+
     def test_get_attachments_by_vuln(self, test_client, session, workspace):
         vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)

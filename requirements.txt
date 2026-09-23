@@ -1,4 +1,5 @@
-alembic>=0.9.9
+alembic>=1.13,<2.0
+greenlet>=2.0.0
 apispec>=6.3.0
 apispec-webframeworks<=0.5.2
 autobahn>=22.7.1
@@ -21,17 +22,17 @@ faraday-plugins>=1.27.0,<2.0.0
 filedepot>=0.5.0,<0.11.0
 filetype>=1.0.5
 filteralchemy-fork>=0.1.0
-flask==2.2.5
+flask>=2.3.2,<3.0
 flask-celery-helper>=1.1.0
 flask-classful>=0.16.0
 flask-kvsession-fork>=0.6.4
 flask-limiter>=2.6.0,<3.0.0
 flask-login>=0.6.0,<0.7.0
 flask-mail>=0.10.0
-flask-security-too>=4.0.0,<5.0.0
+flask-security-too>=5.4,<6.0
 flask-socketio>=5.0.1
-flask-sqlalchemy>=2.3.1,<=2.5.1
-flask-wtf>=0.15.1,<=1.0.1
+flask-sqlalchemy>=3.1,<4.0
+flask-wtf>=1.2.0,<2.0
 gevent>=23.9.0
 gevent-websocket>=0.10.1
 jinja2>=2.9.6
@@ -39,7 +40,7 @@ kombu==5.4.2
 lxml>=6.1.0
 mako>=1.3.11
 marshmallow>=3.19.0,<4.0.0
-marshmallow-sqlalchemy>=0.26.1,<0.28.1
+marshmallow-sqlalchemy>=0.30,<0.31
 matplotlib>=3.1.1
 networkx>=3.4.2
 nplusone>=0.8.1
@@ -62,7 +63,7 @@ service-identity>=17.0.0
 setuptools>=61,<81
 sh>=2.2.2
 simplekv>=0.13.0
-sqlalchemy>=1.2.0,<1.4.0
+sqlalchemy>=2.0.30,<2.1
 syslog-rfc5424-formatter>=1.1.1
 tqdm>=4.15.0
 ujson>=5.12.0

@@ -7,6 +7,7 @@ Create Date: 2020-08-12 13:53:50.672454+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSONB
 from configparser import ConfigParser
 
@@ -63,7 +64,7 @@ def upgrade():
 
 def downgrade():
     connection = op.get_bind()
-    query = connection.execute("SELECT key, value FROM configuration where key='jira_integration' or key='servicenow_integration'").first()
+    query = connection.execute(text("SELECT key, value FROM configuration where key='jira_integration' or key='servicenow_integration'")).first()
     if query:
         integration_name, integration_config = query
     else:

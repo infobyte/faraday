@@ -1,10 +1,12 @@
 from os.path import join
+import csv
 import datetime
 import json
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import pytest
 
+from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
 from tests.factories import WorkspaceFactory, HostFactory, HostnameFactory, VulnerabilityFactory, ServiceFactory, \
     VulnerabilityWebFactory
 
@@ -809,3 +811,97 @@ class TestVulnerabilitySearch:
         attachment = attachments_json['testing_description.txt']
 
         assert attachment['description'] == 'Attachment description'
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_with_workspace_name_column(self, test_client, session):
+        workspace_1 = WorkspaceFactory.create()
+        workspace_2 = WorkspaceFactory.create()
+        vulns = VulnerabilityFactory.create_batch(5, workspace=workspace_1, severity='medium')
+        vulns += VulnerabilityFactory.create_batch(5, workspace=workspace_2, severity='medium')
+        session.add_all(vulns)
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": ["name", "severity", "workspace_name"],
+        }
+        res = test_client.get(
+            join(
+                self.url(),
+                f'filter?q={json.dumps(query_filter)}'
+            )
+        )
+        assert res.status_code == 200
+        assert res.json['count'] == 10
+        workspace_names = {vuln['value']['workspace_name'] for vuln in res.json['vulnerabilities']}
+        assert workspace_names == {workspace_1.name, workspace_2.name}
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_export_csv_limited_with_workspace_name(self, test_client, session):
+        workspace_1 = WorkspaceFactory.create()
+        workspace_2 = WorkspaceFactory.create()
+        vulns = VulnerabilityFactory.create_batch(5, workspace=workspace_1, severity='medium')
+        vulns += VulnerabilityFactory.create_batch(5, workspace=workspace_2, severity='medium')
+        session.add_all(vulns)
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "severity", "op": "eq", "val": "medium"}],
+            "columns": VALID_FILTER_VULN_COLUMNS,
+        }
+        response = test_client.get(
+            join(
+                self.url(),
+                f'filter?export_csv_limited=true&q={json.dumps(query_filter)}'
+            )
+        )
+        assert response.status_code == 200
+        assert "text/csv" in response.content_type
+        assert "attachment" in response.headers["Content-Disposition"]
+
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+
+        assert len(rows) == 10
+        assert 'workspace_name' in rows[0]
+        assert {row['workspace_name'] for row in rows} == {workspace_1.name, workspace_2.name}
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_large_fields_truncated_in_table_view_no_workspace(self, test_client, session):
+        long_text = 'a' * 200
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            description=long_text,
+            data=long_text,
+            resolution=long_text,
+            host=host,
+            service=None,
+        )
+        web_vuln = VulnerabilityWebFactory.create(
+            workspace=workspace,
+            request=long_text,
+            response=long_text,
+        )
+        session.add_all([vuln, web_vuln])
+        session.commit()
+
+        query_filter = {
+            "filters": [],
+            "columns": ["description", "data", "resolution", "request", "response"],
+        }
+        res = test_client.get(f'/v3/vulns/filter?q={json.dumps(query_filter)}')
+        assert res.status_code == 200
+        assert res.json['count'] == 2
+        for vuln_result in res.json['vulnerabilities']:
+            value = vuln_result['value']
+            for field in ['description', 'data', 'resolution', 'request', 'response']:
+                if value.get(field):
+                    assert len(value[field]) <= 103, (
+                        f"Field '{field}' was not truncated: {len(value[field])} chars"
+                    )
+                    if len(value[field]) == 103:
+                        assert value[field].endswith('...')

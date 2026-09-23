@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.21.0 API",
+        "title": "Faraday 5.24.2 API",
         "version": "v3"
     },
     "security": [
@@ -15,6 +15,18 @@
         }
     ],
     "paths": {
+        "/_api/fs-static/{filename}": {
+            "parameters": [
+                {
+                    "name": "filename",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
+        },
         "/_api/logout": {},
         "/_api/login": {},
         "/_api/verify": {},
@@ -56,6 +68,17 @@
                     "Command"
                 ],
                 "summary": "Group Command by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -447,6 +470,17 @@
                     "Command"
                 ],
                 "summary": "Group Command by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -855,6 +889,17 @@
                     "Credential"
                 ],
                 "summary": "Group Credential by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -1190,6 +1235,17 @@
                     "Host"
                 ],
                 "summary": "Group Host by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -1213,6 +1269,26 @@
                     "Host"
                 ],
                 "summary": "Count Host by multiples workspaces",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "workspaces",
+                        "required": true,
+                        "description": "Comma-separated workspace names to count across. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -1573,6 +1649,17 @@
                     "Host"
                 ],
                 "summary": "Group Host by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -1606,6 +1693,26 @@
                     "Host"
                 ],
                 "summary": "Count Host by multiples workspaces",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "workspaces",
+                        "required": true,
+                        "description": "Comma-separated workspace names to count across. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -2281,6 +2388,17 @@
                     "Service"
                 ],
                 "summary": "Group Service by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -2478,6 +2596,17 @@
                     "Service"
                 ],
                 "summary": "Group Service by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -2833,6 +2962,26 @@
                     "VulnerabilityGeneric"
                 ],
                 "summary": "Count VulnerabilityGeneric by multiples workspaces",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "workspaces",
+                        "required": true,
+                        "description": "Comma-separated workspace names to count across. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -3257,6 +3406,26 @@
                     "VulnerabilityGeneric"
                 ],
                 "summary": "Count VulnerabilityGeneric by multiples workspaces",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "workspaces",
+                        "required": true,
+                        "description": "Comma-separated workspace names to count across. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 400 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -4473,6 +4642,17 @@
                     "Comment"
                 ],
                 "summary": "Group Comment by the field set in the group_by GET parameter.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "group_by",
+                        "required": true,
+                        "description": "Column to group by. Endpoint returns 404 if omitted.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Ok",
@@ -7692,6 +7872,9 @@
                         "readOnly": true
                     },
                     "metadata": {},
+                    "id": {
+                        "type": "integer"
+                    },
                     "create_date": {
                         "type": "string",
                         "format": "date-time",
@@ -7701,9 +7884,6 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
-                    },
-                    "id": {
-                        "type": "integer"
                     }
                 },
                 "required": [
@@ -7726,6 +7906,21 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
+                    },
+                    "creator_command_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "creator_command_tool": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "creator_command_params": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "default_gateway": {
                         "type": "string",
@@ -7764,6 +7959,13 @@
                     },
                     "services": {
                         "type": "integer",
+                        "readOnly": true
+                    },
+                    "open_services": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "services_status": {
                         "readOnly": true
                     },
                     "vulns": {
@@ -9013,6 +9215,21 @@
                         "type": "integer",
                         "writeOnly": true
                     },
+                    "creator_command_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "creator_command_tool": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "creator_command_params": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
+                    },
                     "default_gateway": {
                         "type": "string",
                         "nullable": true
@@ -9054,6 +9271,13 @@
                         "items": {
                             "$ref": "#/components/schemas/BulkService"
                         }
+                    },
+                    "open_services": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "services_status": {
+                        "readOnly": true
                     },
                     "vulns": {
                         "readOnly": true
@@ -9381,6 +9605,9 @@
                     "is_root": {
                         "type": "boolean"
                     },
+                    "id": {
+                        "type": "integer"
+                    },
                     "create_date": {
                         "type": "string",
                         "format": "date-time",
@@ -9390,9 +9617,6 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
-                    },
-                    "id": {
-                        "type": "integer"
                     }
                 },
                 "required": [

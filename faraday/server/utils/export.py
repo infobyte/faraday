@@ -126,47 +126,37 @@ def export_credentials_to_csv(credentials):
     return memory_file
 
 
-def export_vulns_to_csv_limited(vulns):
+def export_vulns_to_csv_limited(vulns, selected_columns=None):
     buffer = StringIO()
 
     if not vulns:
         raise ValueError("No vulnerabilities to export")
 
-    # Limit fields to essential ones to reduce memory usage
-    essential_fields = [
-        'id', '_id', 'name', 'severity', 'status', 'confirmed', 'target',
-        'hostnames', 'service', 'type', 'owner', 'tags', 'metadata',
-        'external_id', 'cve', 'cwe', 'cvss2', 'cvss3', 'cvss4', 'risk',
-        'impact', 'easeofresolution', 'custom_fields'
-    ]
+    if selected_columns:
+        fieldnames = selected_columns
+    else:
+        # Limit fields to essential ones to reduce memory usage
+        essential_fields = [
+            'id', '_id', 'name', 'severity', 'status', 'confirmed', 'target',
+            'hostnames', 'service', 'type', 'owner', 'tags', 'metadata',
+            'external_id', 'cve', 'cwe', 'cvss2', 'cvss3', 'cvss4', 'risk',
+            'impact', 'easeofresolution', 'custom_fields'
+        ]
 
-    # Get intersection of available fields and essential fields to avoid KeyError
-    first_vuln_keys = vulns[0].keys()
-    fieldnames = []
+        large_fields = {
+            'description', 'desc', 'request', 'response', 'data',
+            'resolution', 'refs', 'policyviolations', '_attachments'
+        }
 
-    for field in essential_fields:
-        if field in first_vuln_keys:
-            fieldnames.append(field)
+        first_vuln_keys = vulns[0].keys()
+        fieldnames = [f for f in essential_fields if f in first_vuln_keys]
+        fieldnames += [f for f in first_vuln_keys if f not in essential_fields and f not in large_fields]
 
-    large_fields = {
-        'description', 'desc', 'request', 'response', 'data',
-        'resolution', 'refs', 'policyviolations', '_attachments'
-    }
-
-    for field in first_vuln_keys:
-        if field not in essential_fields and field not in large_fields:
-            fieldnames.append(field)
-
-    writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction='ignore')
     writer.writeheader()
 
-    fieldnames_set = set(fieldnames)
-
     for vuln in vulns:
-        filtered_row = {}
-        for field in fieldnames_set:
-            filtered_row[field] = vuln.get(field, '')
-
+        filtered_row = {field: vuln.get(field, '') for field in fieldnames}
         filtered_row = csv_escape(filtered_row)
         writer.writerow(filtered_row)
 

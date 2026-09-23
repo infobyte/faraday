@@ -7,6 +7,7 @@ Create Date: 2021-03-17 20:23:03.864089+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -40,12 +41,14 @@ def downgrade():
     )
 
     conn = op.get_bind()
-    res = conn.execute('SELECT otp_secret, id FROM faraday_user').fetchall()
+    res = conn.execute(text('SELECT otp_secret, id FROM faraday_user')).fetchall()
 
     for user in res:
         if user[0] and len(user[0]) > 16:
             op.execute(
-                users.update().where(users.c.id == user[1]).values({'otp_secret': None, 'state_otp': "disabled"})
+                users.update().where(users.c.id == user[1]).values(
+                    {'otp_secret': None, 'state_otp': "disabled"}  # nosec B105
+                )
             )
 
     op.alter_column('faraday_user',

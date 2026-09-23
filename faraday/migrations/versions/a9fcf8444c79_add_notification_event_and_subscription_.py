@@ -11,6 +11,7 @@ from faraday.server.fields import JSONType
 
 # Added manually for inserts
 from sqlalchemy import orm
+from sqlalchemy import text
 from faraday.server.models import (NotificationSubscription,
                                    NotificationSubscriptionWebSocketConfig,
                                    User)
@@ -218,10 +219,10 @@ def upgrade():
         sa.column('allowed_role_id', sa.Integer)
     )
 
-    res = bind.execute('SELECT name, id FROM event_type').fetchall()
+    res = bind.execute(text('SELECT name, id FROM event_type')).fetchall()
     event_type_ids = dict(res)
 
-    res = bind.execute('SELECT name, id FROM faraday_role').fetchall()
+    res = bind.execute(text('SELECT name, id FROM faraday_role')).fetchall()
     role_ids = dict(res)
 
     for config in default_initial_notifications_config:

@@ -216,6 +216,7 @@ def generate_histogram(days_before):
     histogram_dict = {}
 
     workspaces_histograms = SeveritiesHistogram.query \
+        .options(joinedload(SeveritiesHistogram.workspace).load_only(Workspace.name)) \
         .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()
 
     # group dates by workspace
@@ -399,13 +400,12 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
 
     def _generate_filter_query(self, filters, severity_count=None):
         filter_query = super()._generate_filter_query(filters)
-        filter_query.options(
-                    with_expression(
-                     Workspace.credential_count,
-                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
-                    ),
-                    joinedload(Workspace.scope),
-                    joinedload(Workspace.allowed_users),
+        filter_query = filter_query.options(
+            with_expression(
+                Workspace.credential_count,
+                _make_generic_count_property('workspace', 'credential', use_column_property=False)
+            ),
+            joinedload(Workspace.scope),
         )
         return filter_query
 
@@ -417,12 +417,13 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         }
 
     def _add_to_filter(self, filter_query, **kwargs):
+        # populate_existing: SA 2.0 needs this for with_expression to override identity-map instances.
         filter_query = filter_query.options(
             with_expression(
                 Workspace.last_run_agent_date,
                 _last_run_agent_date(),
             ),
-        )
+        ).execution_options(populate_existing=True)
         return filter_query
 
     @staticmethod

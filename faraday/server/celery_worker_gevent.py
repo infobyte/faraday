@@ -13,8 +13,7 @@ import psycogreen.gevent
 psycogreen.gevent.patch_psycopg() # noqa
 
 from faraday.server.app import celery, get_app  # noqa
-
-application = get_app()
+from faraday.server.utils.celery import require_celery_enabled  # noqa
 
 
 def main(options=None):
@@ -23,6 +22,9 @@ def main(options=None):
     parser.add_argument('--concurrency', type=str, help='Celery concurrency', required=False)
     parser.add_argument('--loglevel', type=str, help='Celery log level', required=False)
     args = parser.parse_args()
+
+    require_celery_enabled('workers')
+    get_app()
     print("Starting celery")
 
     queue = 'celery'

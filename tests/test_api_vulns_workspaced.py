@@ -2525,6 +2525,60 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             {"name": "critical", "severity": "critical", "count": 1},
         ], key=lambda i: (i['count'], i['name'], i['severity']))
 
+    def test_count_filter_by_status_single_value_backwards_compatible(self, test_client, session):
+        # A single `status` value must keep behaving exactly like the
+        # previous `==` filter (col.in_(['x']) is equivalent to col == 'x').
+        statuses = ['open', 'open', 'closed', 'closed', 'closed']
+        for vuln, status in zip(self.objects, statuses):
+            vuln.status = status
+            session.add(vuln)
+        session.commit()
+
+        res = test_client.get(join(self.url(), 'count?group_by=severity&status=open'))
+        assert res.status_code == 200
+        assert res.json['total_count'] == 2
+
+    def test_count_filter_by_status_in_open_and_reopened_excludes_closed_and_risk_accepted(self, test_client, session):
+        # One status per object in self.objects (OBJECT_COUNT == 5): leaving
+        # one uncovered would fall back to the model's "open" default and
+        # inflate the "open"/"re-opened" count below.
+        statuses = ['open', 're-opened', 'closed', 'risk-accepted', 'closed']
+        for vuln, status in zip(self.objects, statuses):
+            vuln.status = status
+            session.add(vuln)
+        session.commit()
+
+        # "Not Closed" = status IN (open, re-opened): excludes both closed
+        # and risk-accepted from the accountable backlog.
+        res = test_client.get(join(self.url(), 'count?group_by=severity&status=open&status=re-opened'))
+        assert res.status_code == 200
+        assert res.json['total_count'] == 2
+
+        # Clearing the filter still returns every status, risk-accepted included.
+        res = test_client.get(join(self.url(), 'count?group_by=severity'))
+        assert res.status_code == 200
+        assert res.json['total_count'] == len(self.objects)
+
+    def test_count_filter_by_status_invalid_value_returns_400(self, test_client, session):
+        res = test_client.get(join(self.url(), 'count?group_by=severity&status=bogus'))
+        assert res.status_code == 400
+
+    def test_list_filter_by_status_in(self, test_client, session):
+        # One status per object in self.objects (OBJECT_COUNT == 5): leaving
+        # one uncovered would fall back to the model's "open" default and
+        # inflate the "open"/"re-opened" count below.
+        statuses = ['open', 're-opened', 'closed', 'risk-accepted', 'closed']
+        for vuln, status in zip(self.objects, statuses):
+            vuln.status = status
+            session.add(vuln)
+        session.commit()
+
+        # GET /vulns shares the same VulnerabilityFilterSet, so the `status`
+        # IN-filter must work there too, not only on /vulns/count.
+        res = test_client.get(self.url() + '?status=open&status=re-opened')
+        assert res.status_code == 200
+        assert len(res.json['vulnerabilities']) == 2
+
     def test_count_severity_map(self, test_client, second_workspace, session):
         VulnerabilityGeneric.query.delete()
         session.commit()
@@ -4089,8 +4143,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert vuln in cred2.vulnerabilities
 
     def test_vulnerability_with_many_cves_performance(self, test_client, session, workspace):
-        from flask_sqlalchemy import get_debug_queries
-        from flask import _app_ctx_stack
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4113,9 +4167,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.expire_all()
 
         # Clear accumulated queries so we only measure this request
-        ctx = _app_ctx_stack.top
-        if ctx is not None:
-            ctx.sqlalchemy_queries = []
+        g._sqlalchemy_queries = []
 
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
@@ -4127,8 +4179,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_list_with_many_cves_performance(self, test_client, session, workspace):
-        from flask_sqlalchemy import get_debug_queries
-        from flask import _app_ctx_stack
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4152,9 +4204,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.expire_all()
 
         # Clear accumulated queries so we only measure this request
-        ctx = _app_ctx_stack.top
-        if ctx is not None:
-            ctx.sqlalchemy_queries = []
+        g._sqlalchemy_queries = []
 
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
 
@@ -4166,8 +4216,8 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
 
     def test_vulnerability_without_cves_baseline_performance(self, test_client, session, workspace):
-        from flask_sqlalchemy import get_debug_queries
-        from flask import _app_ctx_stack
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
 
         host = HostFactory.create(workspace=workspace)
         session.add(host)
@@ -4184,9 +4234,7 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         session.expire_all()
 
         # Clear accumulated queries so we only measure this request
-        ctx = _app_ctx_stack.top
-        if ctx is not None:
-            ctx.sqlalchemy_queries = []
+        g._sqlalchemy_queries = []
 
         res = test_client.get(f'/v3/ws/{workspace.name}/vulns/{vuln.id}')
 
@@ -4196,6 +4244,39 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
         assert len(queries) <= 20, f"Too many queries: {len(queries)} (N+1 problem?)"
         assert sum(q.duration for q in queries) < 2.0, \
             f"Total query time too slow: {sum(q.duration for q in queries):.3f}s"
+
+    def test_vulnerability_list_hostnames_no_n_plus_one(self, test_client, session, workspace):
+        """The vuln list must eager-load host/service hostnames; otherwise each
+        vuln triggers a per-row hostnames query (N+1). Query count must stay
+        flat as the number of vulns/hostnames grows."""
+        from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
+        from flask import g
+
+        # Several hosts, each with several hostnames, each with one vuln.
+        for host_idx in range(6):
+            host = HostFactory.create(workspace=workspace)
+            session.add(host)
+            session.flush()
+            for hn_idx in range(3):
+                session.add(HostnameFactory.create(
+                    workspace=workspace, host=host,
+                    name=f'host{host_idx}-name{hn_idx}.example.com'))
+            session.add(VulnerabilityFactory.create(
+                workspace=workspace, host=host, service=None, severity='high'))
+        session.commit()
+        session.expire_all()
+
+        # Clear accumulated queries so we only measure this request
+        g._sqlalchemy_queries = []
+
+        res = test_client.get(f'/v3/ws/{workspace.name}/vulns')
+
+        queries = get_debug_queries()
+        assert res.status_code == 200
+        assert res.json['count'] >= 6  # the 6 we created (plus any fixture vulns)
+        # With eager-loaded hostnames this is a handful of queries; a per-vuln
+        # hostnames lazy-load (N+1) would push it well past this bound.
+        assert len(queries) <= 25, f"Too many queries: {len(queries)} (hostnames N+1?)"
 
 
 @pytest.mark.usefixtures('logged_user')

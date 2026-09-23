@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed duplicate notifications and premature command close on multi-batch report imports. #8313"
-}

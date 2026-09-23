@@ -338,8 +338,9 @@ class CredentialView(ReadWriteWorkspacedView,
         return self._envelope_list(filtered_creds, pagination_metadata)
 
     def _get_base_query(self, workspace_name):
+        from sqlalchemy.orm import joinedload  # pylint:disable=import-outside-toplevel
         base_query = super()._get_base_query(workspace_name)
-        return base_query.options(db.joinedload('vulnerabilities'))
+        return base_query.options(joinedload(Credential.vulnerabilities))
 
 
 CredentialView.register(credentials_api)

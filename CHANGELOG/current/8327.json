@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Improved handling and validation of sorting parameters in the Filter API. #8327"
-}

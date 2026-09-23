@@ -84,6 +84,8 @@ pylint_uv:
   rules:
     - !reference [ .ignore-on-build, rules ]
     - !reference [ .ignore-on-tag, rules ]
+    - !reference [ .ignore-on-master, rules ]
+    - !reference [ .ignore-on-staging, rules ]
     - !reference [ .pipeline-control-test, rules ]
     - when: on_success
 

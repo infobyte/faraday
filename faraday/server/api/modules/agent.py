@@ -4,6 +4,7 @@ Copyright (C) 2019  Infobyte LLC (https://faradaysec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 import http
+import json
 import logging
 from datetime import datetime
 from uuid import uuid4
@@ -15,8 +16,11 @@ import flask_login
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from marshmallow.validate import OneOf
+from sqlalchemy import and_, exists, func, or_
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm.exc import NoResultFound
 from faraday_agent_parameters_types.utils import type_validate, get_manifests
+from faraday.server.utils.search import OPERATORS
 
 from faraday.server.api.base import (
     AutoSchema,
@@ -154,7 +158,7 @@ class AgentCreationSchema(Schema):
             'id',
             'name',
             'token',
-            'description'
+            'description',
         )
 
 
@@ -182,6 +186,101 @@ class AgentRunSchema(Schema):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.unknown = EXCLUDE
+
+
+# Filters that require custom SQLAlchemy — cannot be expressed with standard OPERATORS
+_AGENT_CUSTOM_FILTER_NAMES = frozenset({'last_execution_date', 'last_execution_tool', 'category'})
+
+# Binary comparison operators valid for scalar subquery filters (last_execution_date).
+# 1-arg (is_null, is_not_null) and ordering (asc, desc) ops take a wrong arity → TypeError.
+_DATE_COMPARISON_OPS = frozenset({'eq', '==', 'ne', '!=', 'neq', 'lt', '<', 'le', '<=', 'gt', '>', 'ge', '>='})
+
+
+def _build_agent_conditions(custom_filters):
+    conditions = []
+    for f in custom_filters:
+        name = f.get('name')
+        op = str(f.get('op') or 'eq').lower()
+        val = f.get('val', '')
+
+        if name == 'last_execution_date':
+            if op not in _DATE_COMPARISON_OPS:
+                abort(400, f"Unsupported operator {op!r} for last_execution_date; use eq/ne/lt/le/gt/ge")
+            if not isinstance(val, str):
+                abort(400, f"Invalid date format for last_execution_date: {val!r}")
+            try:
+                dval = datetime.fromisoformat(val.replace('Z', '+00:00'))
+            except ValueError:
+                abort(400, f"Invalid date format for last_execution_date: {val!r}")
+            max_lr = (
+                db.session.query(func.max(Executor.last_run))
+                .filter(Executor.agent_id == Agent.id)
+                .correlate(Agent)
+                .as_scalar()
+            )
+            if 'T' in val:
+                conditions.append(OPERATORS[op](max_lr, dval))
+            else:
+                conditions.append(OPERATORS[op](func.date(max_lr), dval.date()))
+
+        elif name == 'tools':
+            op_lower = op.lower()
+            if op_lower in ('is_one_of', 'in'):
+                vals = val if isinstance(val, list) else [v.strip() for v in str(val).split(',') if v.strip()]
+                conditions.append(
+                    exists().where(and_(Executor.agent_id == Agent.id, Executor.tool.in_(vals)))
+                )
+            elif op_lower in ('is_not_one_of', 'not_in', 'nin'):
+                vals = val if isinstance(val, list) else [v.strip() for v in str(val).split(',') if v.strip()]
+                conditions.append(
+                    ~exists().where(and_(Executor.agent_id == Agent.id, Executor.tool.in_(vals)))
+                )
+            elif op_lower not in ('contains', 'ilike', 'like'):
+                abort(400, f"Unsupported operator {op!r} for tools filter; use 'contains', 'like', 'ilike', 'is_one_of', or 'is_not_one_of'")
+            else:
+                tool_escaped = str(val).replace('%', r'\%').replace('_', r'\_')
+                conditions.append(
+                    exists().where(and_(
+                        Executor.agent_id == Agent.id,
+                        Executor.name.ilike(f'%{tool_escaped}%'),
+                    ))
+                )
+
+        elif name == 'last_execution_tool':
+            tool = str(val)
+            op_lower = op.lower()
+            max_lr = (
+                db.session.query(func.max(Executor.last_run))
+                .filter(Executor.agent_id == Agent.id)
+                .correlate(Agent)
+                .as_scalar()
+            )
+            if op_lower in ('eq', '=='):
+                name_cond = Executor.name == tool
+            elif op_lower in ('ne', '!=', 'neq'):
+                name_cond = Executor.name != tool
+            else:
+                tool_escaped = tool.replace('%', r'\%').replace('_', r'\_')
+                name_cond = Executor.name.ilike(f'%{tool_escaped}%')
+            conditions.append(
+                exists().where(and_(Executor.agent_id == Agent.id, Executor.last_run == max_lr, name_cond))
+            )
+
+        elif name == 'category':
+            vals = val if isinstance(val, list) else [v.strip() for v in str(val).split(',') if v.strip()]
+            op_lower = op.lower()
+            cats = [
+                exists().where(and_(Executor.agent_id == Agent.id, Executor.category.cast(JSONB).contains([v])))
+                for v in vals
+            ]
+            if cats:
+                combined = or_(*cats)
+                if op_lower in ('is_not_one_of', 'not_in', 'nin', 'ne', '!=', 'neq'):
+                    conditions.append(~combined)
+                else:
+                    conditions.append(combined)
+
+    return conditions
 
 
 class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
@@ -442,6 +541,71 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         db.session.commit()
 
         return jsonify({"message": "Parameters saved successfully"}), 200
+
+    def _generate_filter_query(self, filters, severity_count=None):
+        if 'group_by' not in filters:
+            order_by = filters.get('order_by') or []
+            filters['order_by'] = (
+                order_by
+                + [
+                    {'field': 'active', 'direction': 'desc'},
+                    {'field': 'sid', 'direction': 'desc'},
+                ]
+                + [{'field': 'id', 'direction': 'asc'}]
+            )
+        return super()._generate_filter_query(filters, severity_count=severity_count)
+
+    def _translate_filters(self, filters):
+        try:
+            raw = json.loads(filters) if isinstance(filters, str) else dict(filters or {})
+        except (ValueError, TypeError):
+            abort(400, 'Invalid filter JSON')
+        top = raw.get('filters', [])
+        standard = []
+        sql_custom = []
+        for f in top:
+            if not isinstance(f, dict):
+                standard.append(f)
+                continue
+            name = f.get('name')
+            op = str(f.get('op') or 'eq').lower()
+            val = f.get('val', '')
+            if name == 'status':
+                is_online = str(val).lower() == 'online'
+                if op in ('ne', '!=', 'neq'):
+                    is_online = not is_online
+                standard.append({"name": "sid", "op": "is_not_null" if is_online else "is_null", "val": ""})
+            elif name == 'blocked':
+                is_blocked = str(val).lower() in ('true', '1', 'yes')
+                if op in ('ne', '!=', 'neq'):
+                    is_blocked = not is_blocked
+                standard.append({"name": "active", "op": "eq", "val": not is_blocked})
+            elif name in ('name', 'description') and op == 'contains':
+                standard.append({"name": name, "op": "ilike", "val": f"%{val}%"})
+            elif name == 'tools':
+                tool = str(val)
+                if op in ('eq', '=='):
+                    standard.append({"name": "executors", "op": "any", "val": {"name": "name", "op": "eq", "val": tool}})
+                elif op in ('ne', '!=', 'neq'):
+                    standard.append({"name": "executors", "op": "not_any", "val": {"name": "name", "op": "eq", "val": tool}})
+                else:
+                    sql_custom.append(f)
+            elif name in _AGENT_CUSTOM_FILTER_NAMES:
+                sql_custom.append(f)
+            else:
+                standard.append(f)
+        conditions = _build_agent_conditions(sql_custom)
+        extra = and_(*conditions) if conditions else None
+        raw['filters'] = standard
+        return json.dumps(raw), extra
+
+    def _filter(self, filters, extra_alchemy_filters=None, **kwargs):
+        translated, extra = self._translate_filters(filters)
+        if extra is not None and extra_alchemy_filters is not None:
+            extra = and_(extra_alchemy_filters, extra)
+        elif extra_alchemy_filters is not None:
+            extra = extra_alchemy_filters
+        return super()._filter(translated, extra_alchemy_filters=extra, **kwargs)
 
     @route('/filter')
     def filter(self, **kwargs):

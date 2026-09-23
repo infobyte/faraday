@@ -7,6 +7,7 @@ Create Date: 2022-06-10 20:04:02.729956+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -23,7 +24,7 @@ def upgrade():
                        )
 
     conn = op.get_bind()
-    res = conn.execute('SELECT username FROM faraday_user WHERE active = FALSE').fetchall()
+    res = conn.execute(text('SELECT username FROM faraday_user WHERE active = FALSE')).fetchall()
 
     for user in res:
         op.execute(

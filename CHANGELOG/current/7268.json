@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed hosts (assets) filter dropping items with no creator when ordering, filtering or grouping by creator username. #7268"
-}

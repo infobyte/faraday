@@ -206,6 +206,7 @@ class TestHostAPI:
             session.commit()
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
+            assert res.json['open_services'] == len(services)
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_index_shows_service_count(self, test_client, session,
@@ -227,6 +228,7 @@ class TestHostAPI:
         for host in res.json['rows']:
             if host['id'] in ids_map:
                 assert host['value']['services'] == len(ids_map[host['id']])
+                assert host['value']['open_services'] == len(ids_map[host['id']])
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_by_os_exact(self, test_client, session, workspace,

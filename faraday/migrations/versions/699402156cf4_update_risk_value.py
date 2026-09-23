@@ -6,6 +6,7 @@ Create Date: 2022-11-15 19:09:54.669437+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '699402156cf4'
@@ -17,15 +18,15 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     # Critical
-    conn.execute("UPDATE vulnerability SET risk = 70 WHERE severity = 'critical' and risk is NULL")
+    conn.execute(text("UPDATE vulnerability SET risk = 70 WHERE severity = 'critical' and risk is NULL"))
     # High
-    conn.execute("UPDATE vulnerability SET risk = 62 WHERE severity = 'high' and risk is NULL")
+    conn.execute(text("UPDATE vulnerability SET risk = 62 WHERE severity = 'high' and risk is NULL"))
     # Medium
-    conn.execute("UPDATE vulnerability SET risk = 48 WHERE severity = 'medium' and risk is NULL")
+    conn.execute(text("UPDATE vulnerability SET risk = 48 WHERE severity = 'medium' and risk is NULL"))
     # Low
-    conn.execute("UPDATE vulnerability SET risk = 27 WHERE severity = 'low' and risk is NULL")
+    conn.execute(text("UPDATE vulnerability SET risk = 27 WHERE severity = 'low' and risk is NULL"))
     # Info and Unclassified
-    conn.execute("UPDATE vulnerability SET risk = 0 WHERE severity in ('informational', 'unclassified') and risk is NULL")
+    conn.execute(text("UPDATE vulnerability SET risk = 0 WHERE severity in ('informational', 'unclassified') and risk is NULL"))
 
 
 def downgrade():

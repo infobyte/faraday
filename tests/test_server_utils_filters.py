@@ -355,3 +355,72 @@ class TestFilters:
             FlaskRestlessVulnerabilityFilterSchema().load(
                 {'name': 'creator', 'op': 'has', 'val': {'name': 'creator__password', 'op': 'like', 'val': '$2b$1%'}}
             )
+
+    # Regression tests for the Dashboard "Not Closed" filter bug: `in`/`not_in`
+    # against a non-fields.String field (e.g. the `status` Enum column, whose
+    # converted marshmallow field validates each value with OneOf) used to
+    # call `field.deserialize(filter_['val'])` on the *whole list*, which
+    # marshmallow rejects as "not one of" the allowed choices. Each element of
+    # the list must be validated individually instead.
+    def test_in_operator_on_enum_field_with_valid_values(self):
+        result = FlaskRestlessVulnerabilityFilterSchema(many=True).load(
+            [{'name': 'status', 'op': 'in', 'val': ['open', 're-opened']}]
+        )
+        assert result[0]['val'] == ['open', 're-opened']
+
+    def test_in_operator_on_enum_field_rejects_invalid_value(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema(many=True).load(
+                [{'name': 'status', 'op': 'in', 'val': ['open', 'bogus']}]
+            )
+
+    def test_not_in_operator_on_enum_field_with_valid_values(self):
+        result = FlaskRestlessVulnerabilityFilterSchema(many=True).load(
+            [{'name': 'status', 'op': 'not_in', 'val': ['closed', 'risk-accepted']}]
+        )
+        assert result[0]['val'] == ['closed', 'risk-accepted']
+
+    def test_in_operator_on_string_field_coerces_each_element(self):
+        # Before the fix, str(['a', 'b']) collapsed the whole list into the
+        # single, unusable string "['a', 'b']" for fields.String columns.
+        result = FlaskRestlessVulnerabilityFilterSchema(many=True).load(
+            [{'name': 'name', 'op': 'in', 'val': ['Vuln A', 'Vuln B']}]
+        )
+        assert result[0]['val'] == ['Vuln A', 'Vuln B']
+
+    def test_in_operator_rejects_scalar_value(self):
+        # The front always sends a list for in/not_in; a scalar is now
+        # rejected outright instead of being silently wrapped into a list.
+        with pytest.raises(ValidationError):
+            FlaskRestlessVulnerabilityFilterSchema(many=True).load(
+                [{'name': 'status', 'op': 'in', 'val': 'open'}]
+            )
+
+
+class TestSensitiveGroupByAndOrderBy:
+    """group_by/order_by are a separate branch of FilterSchema: they never go
+    through _validate_filter_types, so _reject_sensitive_field_name is what
+    keeps search() from resolving a sensitive column with getattr()."""
+
+    @pytest.mark.parametrize("field", [
+        "password",
+        "creator__password",
+        "token",
+        "creator__token",
+        "fs_uniquifier",
+        "creator__session_id",
+        "creator__access_token",
+    ])
+    def test_group_by_sensitive_field_is_rejected(self, field):
+        with pytest.raises(ValidationError):
+            FlaskRestlessSchema().load({"filters": [], "group_by": [{"field": field}]})
+
+    @pytest.mark.parametrize("field", ["password", "creator__password", "token"])
+    def test_order_by_sensitive_field_is_rejected(self, field):
+        with pytest.raises(ValidationError):
+            FlaskRestlessSchema().load({"filters": [], "order_by": [{"field": field}]})
+
+    @pytest.mark.parametrize("field", ["name", "severity", "creator__username", "confirmed"])
+    def test_group_by_regular_field_is_allowed(self, field):
+        res = FlaskRestlessSchema().load({"filters": [], "group_by": [{"field": field}]})
+        assert res["group_by"] == [{"field": field}]

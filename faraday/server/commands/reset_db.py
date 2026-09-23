@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 """
 # Related third party imports
 import click
+from sqlalchemy import text
 
 # Local application imports
 import faraday.server.config
@@ -20,7 +21,8 @@ def reset_db_all():
     for table in ('vulnerability', 'vulnerability_template', 'comment',
                   'faraday_user'):
         try:
-            db.engine.execute(f'DROP TABLE {table} CASCADE')
+            with db.engine.begin() as conn:
+                conn.execute(text(f'DROP TABLE {table} CASCADE'))  # nosec B608
         except Exception as ex:
             print(ex)
     db.drop_all()

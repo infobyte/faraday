@@ -17,15 +17,15 @@ depends_on = None
 
 
 def upgrade():
-    op.get_bind().execution_options(isolation_level="AUTOCOMMIT")
-    op.execute(
-        "CREATE INDEX CONCURRENTLY ix_vulnerability_workspace_id_risk "
-        "ON vulnerability (workspace_id) INCLUDE (risk)"
-    )
+    with op.get_context().autocommit_block():
+        op.execute(
+            "CREATE INDEX CONCURRENTLY ix_vulnerability_workspace_id_risk "
+            "ON vulnerability (workspace_id) INCLUDE (risk)"
+        )
 
 
 def downgrade():
-    op.get_bind().execution_options(isolation_level="AUTOCOMMIT")
-    op.execute(
-        "DROP INDEX CONCURRENTLY IF EXISTS ix_vulnerability_workspace_id_risk"
-    )
+    with op.get_context().autocommit_block():
+        op.execute(
+            "DROP INDEX CONCURRENTLY IF EXISTS ix_vulnerability_workspace_id_risk"
+        )

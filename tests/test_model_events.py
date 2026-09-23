@@ -13,7 +13,9 @@ from faraday.server.models import Host, Workspace
 def test_child_parent_verification_event_fails(session, workspace,
                                                second_workspace):
     host = HostFactory.build(workspace=workspace)
-    ServiceFactory.build(host=host, workspace=second_workspace)
+    service = ServiceFactory.build(host=host, workspace=second_workspace)
+    session.add(host)
+    session.add(service)
     with pytest.raises(AssertionError):
         session.commit()
 
@@ -29,7 +31,9 @@ def test_child_parent_verification_event_succeeds(session, workspace):
         Asserts that no exception will be raised when workspace are the same.
     """
     host = HostFactory.build(workspace=workspace)
-    ServiceFactory.build(host=host, workspace=workspace)
+    service = ServiceFactory.build(host=host, workspace=workspace)
+    session.add(host)
+    session.add(service)
     session.commit()
 
 
@@ -37,6 +41,8 @@ def test_child_parent_verification_event_fails_update(session, workspace,
                                                       second_workspace):
     host = HostFactory.build(workspace=workspace)
     service = ServiceFactory.build(host=host, workspace=workspace)
+    session.add(host)
+    session.add(service)
     session.commit()
     service.workspace = second_workspace
     session.add(service)
@@ -47,6 +53,8 @@ def test_child_parent_verification_event_fails_update(session, workspace,
 def test_child_parent_verification_event_succeds_update(session, workspace):
     host = HostFactory.build(workspace=workspace)
     service = ServiceFactory.build(host=host, workspace=workspace)
+    session.add(host)
+    session.add(service)
     session.commit()
     service.workspace = workspace
     session.add(service)

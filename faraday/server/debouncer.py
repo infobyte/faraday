@@ -140,9 +140,9 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         if type_:
             query = query.filter(VulnerabilityGeneric.type == type_)
         if confirmed is not None:
-            if db.session.bind.dialect.name == 'sqlite':
+            if db.engine.dialect.name == 'sqlite':
                 query = query.filter(VulnerabilityGeneric.confirmed == (1 if confirmed else 0))
-            elif db.session.bind.dialect.name == 'postgresql':
+            elif db.engine.dialect.name == 'postgresql':
                 query = query.filter(VulnerabilityGeneric.confirmed.is_(True if confirmed else False))
         if extra_query:
             query = query.filter(text(extra_query))
@@ -157,9 +157,9 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         )
 
         if confirmed is not None:
-            if db.session.bind.dialect.name == 'sqlite':
+            if db.engine.dialect.name == 'sqlite':
                 query_vuln_hosts = query_vuln_hosts.filter(VulnerabilityGeneric.confirmed == (1 if confirmed else 0))
-            elif db.session.bind.dialect.name == 'postgresql':
+            elif db.engine.dialect.name == 'postgresql':
                 query_vuln_hosts = query_vuln_hosts.filter(
                     VulnerabilityGeneric.confirmed.is_(True if confirmed else False))
 
@@ -176,10 +176,10 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         )
 
         if confirmed is not None:
-            if db.session.bind.dialect.name == 'sqlite':
+            if db.engine.dialect.name == 'sqlite':
                 query_service_hosts = query_service_hosts.filter(
                     VulnerabilityGeneric.confirmed == (1 if confirmed else 0))
-            elif db.session.bind.dialect.name == 'postgresql':
+            elif db.engine.dialect.name == 'postgresql':
                 query_service_hosts = query_service_hosts.filter(
                     VulnerabilityGeneric.confirmed.is_(True if confirmed else False))
 
@@ -203,7 +203,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
 
         # Apply the filters based on confirmed and not_closed
         if confirmed is not None:
-            if db.session.bind.dialect.name == 'sqlite':
+            if db.engine.dialect.name == 'sqlite':
                 query_services = query_services.filter(VulnerabilityGeneric.confirmed == (1 if confirmed else 0))
             else:
                 query_services = query_services.filter(VulnerabilityGeneric.confirmed.is_(True if confirmed else False))

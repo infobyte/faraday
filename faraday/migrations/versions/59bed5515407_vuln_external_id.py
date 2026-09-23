@@ -7,6 +7,7 @@ Create Date: 2019-06-18 15:38:31.879725+00:00
 """
 
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -18,11 +19,11 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE vulnerability ADD COLUMN external_id TEXT')
-    conn.execute('ALTER TABLE vulnerability_template ADD COLUMN external_id TEXT')
+    conn.execute(text('ALTER TABLE vulnerability ADD COLUMN external_id TEXT'))
+    conn.execute(text('ALTER TABLE vulnerability_template ADD COLUMN external_id TEXT'))
 
 
 def downgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE vulnerability DROP COLUMN external_id')
-    conn.execute('ALTER TABLE vulnerability_template DROP COLUMN external_id')
+    conn.execute(text('ALTER TABLE vulnerability DROP COLUMN external_id'))
+    conn.execute(text('ALTER TABLE vulnerability_template DROP COLUMN external_id'))

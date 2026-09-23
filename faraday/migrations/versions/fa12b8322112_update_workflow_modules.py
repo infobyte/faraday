@@ -46,10 +46,10 @@ def upgrade():
     )
     connection = op.get_bind()
     # We need id and model
-    results = connection.execute(sa.select([
+    results = connection.execute(sa.select(
         t_rule.c.id,
         t_rule.c.model,
-    ])).fetchall()
+    )).fetchall()
     # Iterate over all selected data tuples.
     for id_, model in results:
         # Update the new columns.

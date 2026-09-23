@@ -29,6 +29,7 @@ from tests.test_api_workspaced_base import (
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts_workspaced import HostWorkspacedView
 from tests.factories import (
+    CommandObjectFactory,
     HostFactory,
     EmptyCommandFactory,
     WorkspaceFactory,
@@ -255,6 +256,7 @@ class TestHostAPI:
             session.commit()
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
+            assert res.json['open_services'] == len(services)
 
     def test_index_shows_service_count(self, test_client, session,
                                        host_services, service_factory):
@@ -275,6 +277,7 @@ class TestHostAPI:
         for host in res.json['rows']:
             if host['id'] in ids_map:
                 assert host['value']['services'] == len(ids_map[host['id']])
+                assert host['value']['open_services'] == len(ids_map[host['id']])
 
     def test_filter_by_os_exact(self, test_client, session, workspace,
                                 second_workspace, host_factory):
@@ -816,7 +819,12 @@ class TestHostAPI:
             'owned': False,
             'owner': host.creator.username,
             'services': 0,
+            'open_services': 0,
             'service_summaries': [],
+            'services_status': [],
+            'creator_command_id': None,
+            'creator_command_tool': None,
+            'creator_command_params': None,
             'vulns': 0,
             "versions": [],
             'importance': 0,
@@ -1122,6 +1130,63 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTest
             '(53/udp) dns',
             '(5353/udp) dns',
         ]
+
+    def test_host_exposes_creator_command_fields(self, test_client, session):
+        command = EmptyCommandFactory.create(
+            workspace=self.workspace,
+            tool='nmap',
+            command='nmap -sV',
+            params='-sV 127.0.0.1',
+        )
+        session.flush()
+        CommandObjectFactory.create(
+            object_type='host',
+            object_id=self.first_object.id,
+            command=command,
+            workspace=self.workspace,
+        )
+        session.commit()
+
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        assert res.json['creator_command_id'] == command.id
+        assert res.json['creator_command_tool'] == 'nmap'
+        assert res.json['creator_command_params'] == '-sV 127.0.0.1'
+
+    def test_host_without_command_has_null_command_fields(self, test_client, session):
+        session.commit()
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        assert res.json['creator_command_id'] is None
+        assert res.json['creator_command_tool'] is None
+        assert res.json['creator_command_params'] is None
+
+    def test_host_services_status(self, test_client, session, service_factory):
+        service_factory.create(name='http', protocol='tcp', port=80,
+                               host=self.first_object, status='open',
+                               workspace=self.workspace)
+        service_factory.create(name='smtp', protocol='tcp', port=25,
+                               host=self.first_object, status='closed',
+                               workspace=self.workspace)
+        service_factory.create(name='dns', protocol='udp', port=53,
+                               host=self.first_object, status='filtered',
+                               workspace=self.workspace)
+        session.commit()
+
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        services_status = res.json['services_status']
+        assert len(services_status) == 3
+        by_port = {s['port']: s for s in services_status}
+        assert by_port[80] == {'name': 'http', 'port': 80, 'protocol': 'tcp', 'status': 'open'}
+        assert by_port[25] == {'name': 'smtp', 'port': 25, 'protocol': 'tcp', 'status': 'closed'}
+        assert by_port[53] == {'name': 'dns', 'port': 53, 'protocol': 'udp', 'status': 'filtered'}
+
+    def test_host_services_status_empty(self, test_client, session):
+        session.commit()
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        assert res.json['services_status'] == []
 
     def test_delete_host_with_blank_ip(self, session, test_client):
         """

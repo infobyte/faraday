@@ -193,6 +193,7 @@ def _group_concat_postgresql(element, compiler, **kw):
 
 
 class BooleanToIntColumn(FunctionElement):
+    inherit_cache = True
 
     def __init__(self, expression):
         super().__init__()
@@ -304,9 +305,10 @@ def get_conflict_object(session, obj, data, workspace=None, ids=None):
                         table.columns[relations_field] == relation_id)
         if filter_data:
             filter_data = reduce(operator.and_, filter_data)
-            return session.query(klass).filter(filter_data).first()
-        else:
-            return
+            conflict_obj = session.query(klass).filter(filter_data).first()
+            if conflict_obj is not None:
+                return conflict_obj
+    return None
 
 
 UNIQUE_VIOLATION = '23505'

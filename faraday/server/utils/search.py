@@ -190,6 +190,8 @@ OPERATORS = {
     'like': lambda f, a: f.like(a),
     'in': lambda f, a: f.in_(a),
     'not_in': lambda f, a: ~f.in_(a),
+    'is_one_of': lambda f, a: f.in_(a),
+    'is_not_one_of': lambda f, a: ~f.in_(a),
     # Operators which accept three arguments.
     'has': lambda f, a, fn: f.has(_sub_operator(f, a, fn)),
     'any': lambda f, a, fn: f.any(_sub_operator(f, a, fn)),

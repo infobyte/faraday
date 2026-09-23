@@ -28,25 +28,27 @@ import jwt
 import pyotp
 import requests
 from depot.manager import DepotManager
-from flask import Flask, session, g, request
-from flask.json import JSONEncoder
+from flask import Flask, session, g, request, after_this_request
 from flask_kvsession import KVSessionExtension
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import user_logged_out, user_logged_in
-from flask_security import Security, SQLAlchemyUserDatastore
+from flask_security import Security, SQLAlchemyUserDatastore, logout_user
 from flask_security.forms import LoginForm, ChangePasswordForm
+from flask_security.signals import password_changed
 from flask_security.utils import (
     _datastore,
     get_message,
     verify_and_update_password,
     verify_hash,
 )
-from flask_sqlalchemy import get_debug_queries
+from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
 from simplekv.decorator import PrefixDecorator
 from simplekv.fs import FilesystemStore
+from sqlalchemy.orm import Query as _SAQuery
 from sqlalchemy.pool import QueuePool
-from wtforms import ValidationError
+from wtforms import StringField, ValidationError
+from wtforms.validators import DataRequired
 
 # Local application imports
 import faraday.server.config
@@ -65,9 +67,8 @@ from faraday.server.models import (
 )
 from faraday.server.utils.ping import ping_home_background_task
 
+from faraday.server.utils.command import run_failed_command_stats_inline
 from faraday.server.utils.reports_processor import reports_manager_background_task
-from faraday.server.utils.command import schedule_update_failed_command_stats
-from faraday.server.tasks import schedule_cleanup_stuck_pipelines
 from faraday.server.utils.invalid_chars import remove_null_characters
 from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.websockets.dispatcher import remove_sid
@@ -77,6 +78,24 @@ from faraday.server.debouncer import Debouncer
 
 # Don't move this import from here
 from nplusone.ext.flask_sqlalchemy import NPlusOne
+
+
+def _patch_nplusone_for_sqlalchemy_14():
+    """Restore Query._offset / _limit attributes that nplusone reads;
+    SQLAlchemy 1.4 replaced them with _offset_clause / _limit_clause."""
+    if not hasattr(_SAQuery, "_offset"):
+        def _offset(self):
+            clause = getattr(self, "_offset_clause", None)
+            return clause.value if clause is not None else None
+
+        def _limit(self):
+            clause = getattr(self, "_limit_clause", None)
+            return clause.value if clause is not None else None
+        _SAQuery._offset = property(_offset)
+        _SAQuery._limit = property(_limit)
+
+
+_patch_nplusone_for_sqlalchemy_14()
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +107,10 @@ audit_logger = logging.getLogger('audit')
 
 FARADAY_APP = None
 DEBOUNCER = None
+
+# Intervals of the periodic tasks emitted by the faraday-beat scheduler.
+CLEANUP_STUCK_PIPELINES_INTERVAL = datetime.timedelta(hours=1)
+UPDATE_FAILED_COMMAND_STATS_INTERVAL = datetime.timedelta(hours=2)
 
 PASSWORD_REGEX = re.compile(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[~!@#$%^&*_\-+=|(){}\[\]:";\'<>,.?/]).{8,}$')
 
@@ -222,6 +245,8 @@ def register_handlers(app):
             return None  # valid token, but expired
         except jwt.InvalidSignatureError:
             return None  # invalid token
+        except jwt.InvalidTokenError:
+            return None  # malformed / otherwise undecodable token
 
     @app.login_manager.request_loader
     def load_user_from_request(request):
@@ -352,6 +377,18 @@ def expire_session(app, user):
     logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_logout_at}]")
 
 
+def force_logout_on_password_change(app, user):
+    # flask-security rotates fs_uniquifier on a successful change (invalidating
+    # every other session and token) but re-logs-in the current one. Tear that
+    # session down too so the user must re-authenticate with the new password.
+    # Deferred to after_this_request so current_user stays intact while the
+    # change view renders its response.
+    @after_this_request
+    def _logout(response):
+        logout_user()
+        return response
+
+
 def user_logged_in_successful(app, user):
     user_agent = request.headers.get('User-Agent')
     if user_agent.startswith('faraday-client/'):
@@ -410,10 +447,11 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     @app.errorhandler(404)
     @app.route('/', defaults={'text': ''})
     @app.route('/<path:text>')
-    def index(ex):
+    def index(ex=None, text=None):
         """
         Handles 404 errors of paths.
         :param ex: Exception to return.
+        :param text: Path captured by the route rules.
         :return: The exception if the path starts with the prefixes, or the default static file.
         """
         prefixes = ('/_api', '/v3', '/socket.io')
@@ -464,8 +502,8 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
             backend_url = f"redis://{faraday.server.config.faraday_server.celery_backend_url}"
 
     app.config.update({
-        'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,
-        'SECURITY_PASSWORD_SINGLE_HASH': True,
+        'SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN': True,  # nosec B105
+        'SECURITY_PASSWORD_SINGLE_HASH': True,  # nosec B105
         'WTF_CSRF_ENABLED': False,
         'SECURITY_USER_IDENTITY_ATTRIBUTES': [{'username': {'mapper': uia_username_mapper}}],
         'SECURITY_URL_PREFIX': app.config['APPLICATION_PREFIX'],
@@ -474,15 +512,15 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         # 'SECURITY_URL_PREFIX': '/_api',
         # 'SECURITY_POST_LOGIN_VIEW': '/_api/session',
         # 'SECURITY_POST_CHANGE_VIEW': '/_api/change',
-        'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
+        'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',  # nosec B105
         'SECURITY_POST_RESET_VIEW': '/',
-        'SECURITY_SEND_PASSWORD_RESET_EMAIL': True,
+        'SECURITY_SEND_PASSWORD_RESET_EMAIL': True,  # nosec B105
         # For testing purpose
         'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,
-        'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
+        'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,  # nosec B105
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
-        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
+        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',  # nosec B105
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.
@@ -514,7 +552,18 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         },
         'CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS': {
             'global_keyprefix': '' if not faraday_server.celery_queue_prefix else faraday_server.celery_queue_prefix,
-        }
+        },
+        # Periodic tasks, emitted by the faraday-beat scheduler.
+        'CELERYBEAT_SCHEDULE': {
+            'cleanup-stuck-pipelines': {
+                'task': 'faraday.server.tasks.cleanup_stuck_pipelines',
+                'schedule': CLEANUP_STUCK_PIPELINES_INTERVAL,
+            },
+            'update-failed-command-stats': {
+                'task': 'faraday.server.tasks.update_failed_command_stats',
+                'schedule': UPDATE_FAILED_COMMAND_STATS_INTERVAL,
+            },
+        },
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
@@ -522,6 +571,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     KVSessionExtension(prefixed_store, app)
     user_logged_in.connect(user_logged_in_successful, app)
     user_logged_out.connect(expire_session, app)
+    password_changed.connect(force_logout_on_password_change, app)
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:
@@ -548,10 +598,11 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     }
     check_testing_configuration(testing, app)
 
+    _db_configured = False
     try:
-        app.config[
-            'SQLALCHEMY_DATABASE_URI'] = db_connection_string or faraday.server.config.database.connection_string.strip(
-            "'")
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or \
+                                                faraday.server.config.database.connection_string.strip("'")
+        _db_configured = True
     except AttributeError:
         logger.info(
             'Missing [database] section on server.ini. Please configure the database before running the server.')
@@ -559,8 +610,11 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         logger.info('Missing connection_string on [database] section on server.ini. '
                     'Please configure the database before running the server.')
 
-    from faraday.server.models import db  # pylint:disable=import-outside-toplevel
+    from faraday.server.models import db, register_sqlite_isolation_events  # pylint:disable=import-outside-toplevel
     db.init_app(app)
+    if _db_configured:
+        with app.app_context():
+            register_sqlite_isolation_events(db.engine)
     # Session(app)
 
     # Setup Flask-Security
@@ -612,8 +666,8 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
         agents_crontab = CronTab(app=app)
         agents_crontab.start()
 
-        schedule_update_failed_command_stats()
-        schedule_cleanup_stuck_pipelines()
+        if not faraday.server.config.faraday_server.celery_enabled:
+            run_failed_command_stats_inline(app)
     return app
 
 
@@ -664,11 +718,8 @@ def register_extensions(app):
 
 
 def minify_json_output(app):
-    class MiniJSONEncoder(JSONEncoder):
-        item_separator = ','
-        key_separator = ':'
-
-    app.json_encoder = MiniJSONEncoder
+    # Flask 2.3+: configure the JSONProvider instead of subclassing JSONEncoder.
+    app.json.compact = True
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 
@@ -680,14 +731,17 @@ class CustomLoginForm(LoginForm):
     so it is possible for an attacker to enumerate usernames
     """
 
-    def validate(self):
+    # Override parent EmailField — Faraday logs in by username, not email.
+    email = StringField('Email', validators=[DataRequired()])
+
+    def validate(self, extra_validators=None):
 
         user_ip = request_user_ip()
         time_now = datetime.datetime.utcnow()
 
         # Use super of LoginForm, not super of CustomLoginForm, since I
         # want to skip the LoginForm validate logic
-        if not super(LoginForm, self).validate():
+        if not super(LoginForm, self).validate(extra_validators=extra_validators):
             audit_logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             logger.warning(f"Invalid Login - User [{self.email.data}] from IP [{user_ip}] at [{time_now}]")
             return False

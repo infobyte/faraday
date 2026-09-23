@@ -7,6 +7,7 @@ Create Date: 2021-09-21 13:46:08.382496+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -24,7 +25,7 @@ def upgrade():
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
 
-    session.execute("ALTER TABLE event_type ADD COLUMN enabled BOOLEAN DEFAULT true")
+    session.execute(text("ALTER TABLE event_type ADD COLUMN enabled BOOLEAN DEFAULT true"))
     session.commit()
 
     events = session.query(EventType).filter(EventType.name.notin_(enabled_notifications)).all()

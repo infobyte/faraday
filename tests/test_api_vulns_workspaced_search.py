@@ -5,7 +5,7 @@ from io import BytesIO, StringIO
 
 import pytest
 
-from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
+from faraday.server.utils.vulns import LARGE_VULN_FIELDS, VALID_FILTER_VULN_COLUMNS
 from tests.factories import (
     CustomFieldsSchemaFactory,
     HostFactory,
@@ -858,7 +858,7 @@ class TestVulnerabilitySearch:
         # Verify we have the expected number of rows
         assert len(rows) == 10
 
-        # Verify headers are correct
+        # When columns are explicitly requested, large fields are included.
         assert set(rows[0].keys()) == set(VALID_FILTER_VULN_COLUMNS)
 
     @pytest.mark.skip_sql_dialect('sqlite')
@@ -926,3 +926,141 @@ class TestVulnerabilitySearch:
         )
         assert res.status_code == 200
         assert res.json['count'] == 2
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_large_fields_truncated_in_table_view(self, test_client, session, workspace):
+        long_text = 'a' * 200
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            description=long_text,
+            data=long_text,
+            resolution=long_text,
+            host=host,
+            service=None,
+        )
+        web_vuln = VulnerabilityWebFactory.create(
+            workspace=workspace,
+            request=long_text,
+            response=long_text,
+        )
+        session.add_all([vuln, web_vuln])
+        session.commit()
+
+        query_filter = {
+            "filters": [],
+            "columns": ["description", "data", "resolution", "request", "response"],
+        }
+        res = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?q={json.dumps(query_filter)}'
+        )
+        assert res.status_code == 200
+        assert res.json['count'] == 2
+        for vuln_result in res.json['vulnerabilities']:
+            value = vuln_result['value']
+            for field in ['description', 'data', 'resolution', 'request', 'response']:
+                if value.get(field):
+                    assert len(value[field]) <= 103, (
+                        f"Field '{field}' was not truncated: {len(value[field])} chars"
+                    )
+                    if len(value[field]) == 103:
+                        assert value[field].endswith('...')
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_large_fields_full_content_in_csv_export(self, test_client, session, workspace):
+        long_text = 'a' * 200
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            description=long_text,
+            data=long_text,
+            resolution=long_text,
+            host=host,
+            service=None,
+        )
+        session.add(vuln)
+        session.commit()
+
+        query_filter = {"filters": []}
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv=true&q={json.dumps(query_filter)}'
+        )
+        assert response.status_code == 200
+        assert 'text/csv' in response.content_type
+
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+        assert len(rows) == 1
+        # CSV maps 'description' → 'desc'; 'data' and 'resolution' keep their names
+        assert rows[0]['desc'] == long_text
+        assert rows[0]['data'] == long_text
+        assert rows[0]['resolution'] == long_text
+
+    def test_export_csv_and_export_csv_limited_mutually_exclusive(self, test_client, workspace):
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv=true&export_csv_limited=true&q={{}}'
+        )
+        assert response.status_code == 400
+
+    @pytest.mark.parametrize('bad_columns', [
+        '{"columns": "description"}',           # string instead of list
+        '{"columns": [1, 2, 3]}',               # list of ints
+        '{"columns": [["description"]]}',       # nested list
+    ])
+    def test_export_csv_limited_invalid_columns_type_returns_400(
+            self, test_client, workspace, bad_columns):
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter'
+            f'?export_csv_limited=true&q={bad_columns}'
+        )
+        assert response.status_code == 400
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.parametrize('column', VALID_FILTER_VULN_COLUMNS)
+    def test_export_csv_limited_single_column(self, test_client, session, workspace, column):
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=workspace, host=host, service=None)
+        session.add(vuln)
+        session.commit()
+
+        query_filter = {"columns": [column], "filters": []}
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv_limited=true&q={json.dumps(query_filter)}'
+        )
+        assert response.status_code == 200
+        assert 'text/csv' in response.content_type
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+        assert len(rows) == 1
+        assert csv_reader.fieldnames == [column]
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_export_csv_limited_all_columns(self, test_client, session, workspace):
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            description='some description',
+            host=host,
+            service=None,
+        )
+        session.add(vuln)
+        session.commit()
+
+        query_filter = {"columns": VALID_FILTER_VULN_COLUMNS, "filters": []}
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv_limited=true&q={json.dumps(query_filter)}'
+        )
+        assert response.status_code == 200
+        assert 'text/csv' in response.content_type
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+        assert len(rows) == 1
+        assert csv_reader.fieldnames == VALID_FILTER_VULN_COLUMNS
+        assert rows[0]['description'] == 'some description'

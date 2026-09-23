@@ -32,8 +32,8 @@ from marshmallow import EXCLUDE, Schema, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import SQLAlchemyAutoSchemaMeta, SQLAlchemyAutoSchemaOpts
-from sqlalchemy import and_, asc, desc, func, update as sqlalchemy_update
-from sqlalchemy.engine import ResultProxy
+from sqlalchemy import and_, asc, column, desc, func, update as sqlalchemy_update
+from sqlalchemy.engine import CursorResult, MappingResult, Result, ResultProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload, undefer
@@ -47,6 +47,7 @@ from faraday.server.config import faraday_server
 from faraday.server.models import (
     Command,
     CommandObject,
+    User,
     Workspace,
     WorkspacePermission,
     db,
@@ -332,7 +333,7 @@ class GenericView(FlaskView):
             # username. Do a joinedload to prevent doing one query per object
             # (n+1) problem
             options.append(joinedload(
-                getattr(self.model_class, 'creator')).load_only('username'))
+                getattr(self.model_class, 'creator')).load_only(User.username))
         query = self._get_base_query(*args, **kwargs)
         options += [joinedload(relationship)
                     for relationship in self.get_joinedloads]
@@ -389,8 +390,10 @@ class GenericView(FlaskView):
         try:
             obj = query.filter(self._get_lookup_field().in_(object_ids)).all()
         except AttributeError:
-            # Handle the case where `query` is a ResultProxy, this comes from Workspace query_object_with_count
-            if isinstance(query, ResultProxy):
+            # Handle the case where `query` is a raw-SQL Result (e.g. Workspace.query_with_count
+            # returns a MappingResult from db.session.execute(text(...)).mappings()). Fall back to
+            # a normal ORM query on the model.
+            if isinstance(query, (ResultProxy, CursorResult, MappingResult, Result)):
                 res = db.session.query(self.model_class).filter(self.model_class.name.in_(object_ids)).all()
                 return res
             # If it's another AttributeError, re-raise
@@ -490,7 +493,9 @@ class GenericWorkspacedView(GenericView):
 
     def _get_base_query(self, workspace_name, **kwargs):
         base = super()._get_base_query()
-        return base.join(Workspace).filter(
+        return base.join(
+            Workspace, Workspace.id == self.model_class.workspace_id
+        ).filter(
             Workspace.id == get_workspace(workspace_name).id)
 
     def _get_object(self, object_id, workspace_name=None, eagerload=False, **kwargs):
@@ -546,6 +551,15 @@ class ListMixin:
     #: If set (to a SQLAlchemy attribute instance) use this field to order the
     #: query by default
     order_field = None
+
+    def _filter_eagerload_options(self):
+        """Loader options for the /filter endpoints.
+
+        Filter endpoints build their query from scratch instead of going
+        through _get_eagerloaded_query, so each view returns here whatever
+        its schema reads, to avoid a lazy load per dumped row (n+1).
+        """
+        return []
 
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
@@ -771,6 +785,8 @@ class FilterWorkspacedMixin(ListMixin):
                               filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         if severity_count and 'group_by' not in filters:
             filter_query = filter_query.options(
                 undefer(self.model_class.vulnerability_critical_generic_count),
@@ -784,7 +800,7 @@ class FilterWorkspacedMixin(ListMixin):
                 joinedload(self.model_class.hostnames),
                 joinedload(self.model_class.services),
                 joinedload(self.model_class.update_user),
-                joinedload(getattr(self.model_class, 'creator')).load_only('username'),
+                joinedload(getattr(self.model_class, 'creator')).load_only(User.username),
             )
         return filter_query
 
@@ -837,8 +853,15 @@ class FilterWorkspacedMixin(ListMixin):
 
 class FilterObjects:
 
+    def _translate_filters(self, filters):
+        """Hook for subclasses to translate pseudo-filters before query execution.
+        Returns (translated_filters_json, extra_alchemy_filters).
+        """
+        return filters, None
+
     def _process_filter_data(self, filters, workspace_name=None, **kwargs):
-        return self._filter_standalone(filters, None, workspace_name, **kwargs)
+        translated, extra = self._translate_filters(filters)
+        return self._filter_standalone(translated, extra, workspace_name, **kwargs)
 
     def _generate_filter_query_standalone(self, filters, workspace=None, delete=False):
 
@@ -983,6 +1006,8 @@ class FilterMixin(ListMixin):
         filter_query = search(db.session,
                               self.model_class,
                               filters)
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
@@ -1034,7 +1059,7 @@ class FilterMixin(ListMixin):
                 abort(HTTP_BAD_REQUEST, e)
 
             if extra_alchemy_filters is not None:
-                filter_query += filter_query.filter(extra_alchemy_filters)
+                filter_query = filter_query.filter(extra_alchemy_filters)
 
             data, rows_count = get_filtered_data(filters, filter_query)
             return data, rows_count
@@ -1854,11 +1879,11 @@ class CountWorkspacedMixin:
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
-        group_by = f'{table_name}.{group_by}'
+        group_by = column(f'{table_name}.{group_by}', is_literal=True)
 
         query_count = self._filter_query(
             db.session.query(self.model_class).
-            join(Workspace).
+            join(Workspace, Workspace.id == self.model_class.workspace_id).
             group_by(group_by).
             filter(Workspace.name == workspace_name,
                    *self.count_extra_filters)
@@ -1870,7 +1895,7 @@ class CountWorkspacedMixin:
             query_count = query_count.order_by(desc(order_by))
         else:
             query_count = query_count.order_by(asc(order_by))
-        for key, query_count in query_count.values(group_by, func.count(group_by)):
+        for key, query_count in query_count.with_entities(group_by, func.count(group_by)).all():
             res['groups'].append(
                 {'count': query_count,
                  'name': key,
@@ -2139,9 +2164,12 @@ class ContextMixin(GenericView):
 
     @staticmethod
     def _get_context_workspace_ids(filter):
-        return db.session.query(Workspace.id)\
-            .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)\
+        return [
+            row[0]
+            for row in db.session.query(Workspace.id)
+            .join(WorkspacePermission, Workspace.id == WorkspacePermission.workspace_id, isouter=True)
             .filter(filter).all()
+        ]
 
     @staticmethod
     def _get_context_workspace_filter():
@@ -2195,7 +2223,7 @@ class ContextMixin(GenericView):
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
-        group_by = f'{table_name}.{group_by}'
+        group_by = column(f'{table_name}.{group_by}', is_literal=True)
 
         query_count = self._apply_filter_context(
             self._filter_query(
@@ -2210,7 +2238,7 @@ class ContextMixin(GenericView):
             query_count = query_count.order_by(desc(order_by))
         else:
             query_count = query_count.order_by(asc(order_by))
-        for key, query_count in query_count.values(group_by, func.count(group_by)):
+        for key, query_count in query_count.with_entities(group_by, func.count(group_by)).all():
             res['groups'].append(
                 {'count': query_count,
                  'name': key,

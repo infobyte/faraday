@@ -7,6 +7,7 @@ Create Date: 2019-11-28 15:19:31.097481+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '84f266a05be3'
@@ -24,11 +25,11 @@ def upgrade():
     )
                   )
     conn = op.get_bind()
-    conn.execute("""UPDATE vulnerability
+    conn.execute(text("""UPDATE vulnerability
 SET tool=SUBQUERY.tool
 FROM (select v.id, c.tool from vulnerability v, command_object co, command c where v.id = co.object_id and co.object_type = 'vulnerability' and co.command_id = c.id) AS SUBQUERY
-WHERE vulnerability.id=SUBQUERY.id""")
-    conn.execute("UPDATE vulnerability set tool='Web UI' where tool=''")
+WHERE vulnerability.id=SUBQUERY.id"""))
+    conn.execute(text("UPDATE vulnerability set tool='Web UI' where tool=''"))
 
 
 def downgrade():

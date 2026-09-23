@@ -268,3 +268,94 @@ class TestLogin:
 
             response = test_client.get('/v3/ws/wonderland', headers=headers)
             assert response.status_code == 200
+
+
+class TestForceLogoutOnPasswordChange:
+    """A successful password change must invalidate the current session so the
+    user is forced to re-authenticate. A failed change must leave it intact."""
+
+    @staticmethod
+    def _login(test_client, username, password):
+        test_client._cookies.clear()
+        res = test_client.post('/login', data={'email': username, 'password': password})
+        assert res.status_code == 200
+        return res
+
+    @staticmethod
+    def _clear_login_cache():
+        # Flask-Login 0.6.x caches the user in g._login_user (app-context scoped).
+        # Clear it so the next request re-runs the session auth flow.
+        from flask import g
+        if hasattr(g, '_login_user'):
+            del g._login_user
+
+    def _make_user(self, session, username='changer', password='OldPass1!'):
+        user = factories.UserFactory.create(
+            active=True,
+            username=username,
+            password=hash_password(password),
+            roles=['pentester'])
+        session.add(user)
+        session.commit()
+        return user
+
+    def test_successful_change_invalidates_current_session(self, test_client, session):
+        self._make_user(session)
+        self._login(test_client, 'changer', 'OldPass1!')
+
+        # sanity: session is authenticated
+        self._clear_login_cache()
+        assert test_client.get('/v3/ws').status_code == 200
+
+        res = test_client.post('/change', json={
+            'password': 'OldPass1!',
+            'new_password': 'NewPass1!',
+            'new_password_confirm': 'NewPass1!',
+        })
+        assert res.status_code == 200
+
+        # the old session/cookie must no longer be valid
+        self._clear_login_cache()
+        assert test_client.get('/v3/ws').status_code == 401
+
+    def test_failed_change_wrong_current_password_keeps_session(self, test_client, session):
+        self._make_user(session)
+        self._login(test_client, 'changer', 'OldPass1!')
+
+        res = test_client.post('/change', json={
+            'password': 'WrongPass1!',
+            'new_password': 'NewPass1!',
+            'new_password_confirm': 'NewPass1!',
+        })
+        assert res.status_code == 400
+
+        self._clear_login_cache()
+        assert test_client.get('/v3/ws').status_code == 200
+
+    def test_failed_change_weak_new_password_keeps_session(self, test_client, session):
+        self._make_user(session)
+        self._login(test_client, 'changer', 'OldPass1!')
+
+        res = test_client.post('/change', json={
+            'password': 'OldPass1!',
+            'new_password': 'weak',
+            'new_password_confirm': 'weak',
+        })
+        assert res.status_code == 400
+
+        self._clear_login_cache()
+        assert test_client.get('/v3/ws').status_code == 200
+
+    def test_failed_change_mismatched_confirm_keeps_session(self, test_client, session):
+        self._make_user(session)
+        self._login(test_client, 'changer', 'OldPass1!')
+
+        res = test_client.post('/change', json={
+            'password': 'OldPass1!',
+            'new_password': 'NewPass1!',
+            'new_password_confirm': 'Different1!',
+        })
+        assert res.status_code == 400
+
+        self._clear_login_cache()
+        assert test_client.get('/v3/ws').status_code == 200

@@ -7,6 +7,7 @@ Create Date: 2021-05-26 18:38:23.267138+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -42,10 +43,10 @@ def upgrade():
     )
 
     conn = op.get_bind()
-    res = conn.execute('SELECT name, id FROM faraday_role').fetchall()
+    res = conn.execute(text('SELECT name, id FROM faraday_role')).fetchall()
     roles = dict(res)
 
-    res = conn.execute('SELECT id, role FROM faraday_user').fetchall()
+    res = conn.execute(text('SELECT id, role FROM faraday_user')).fetchall()
 
     for _id, role in res:
         op.execute(
@@ -86,10 +87,10 @@ def downgrade():
     )
 
     conn = op.get_bind()
-    res = conn.execute('SELECT id, name FROM faraday_role').fetchall()
+    res = conn.execute(text('SELECT id, name FROM faraday_role')).fetchall()
     roles = dict(res)
 
-    res = conn.execute('SELECT user_id, role_id FROM roles_users').fetchall()
+    res = conn.execute(text('SELECT user_id, role_id FROM roles_users')).fetchall()
 
     for _id, role_id in res:
         op.execute(

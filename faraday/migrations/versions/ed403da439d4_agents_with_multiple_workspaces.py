@@ -7,6 +7,7 @@ Create Date: 2020-07-01 22:12:46.001776+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -27,10 +28,10 @@ def upgrade():
     # MIGRATE DATA -> TAKE THE ONLY WORKSPACE AND LINK IN THE NEW TABLE
 
     conn = op.get_bind()
-    conn.execute("""
+    conn.execute(text("""
     INSERT INTO association_workspace_and_agents_table (workspace_id, agent_id)
     SELECT workspace_id, id FROM agent
-    """)
+    """))
 
     # DROP OLD COLUMN AND FK
     op.drop_constraint('agent_workspace_id_fkey', 'agent')
@@ -52,7 +53,7 @@ def downgrade():
     # MIGRATE DATA (PICK THE WORKSPACE OF LOWEST ID)
 
     conn = op.get_bind()
-    conn.execute("""
+    conn.execute(text("""
     UPDATE agent
     SET workspace_id=wa.workspace_id
     FROM agent as a
@@ -67,10 +68,10 @@ def downgrade():
         WHERE aa.id = a.id
         AND waa.workspace_id > wa.workspace_id
         );
-    """)
+    """))
 
     # DROP EXECUTORS FROM AGENTS WITHOUT WORKSPACE
-    conn.execute("""
+    conn.execute(text("""
     DELETE FROM agent_execution
     WHERE executor_id IN (
         SELECT e.id
@@ -78,22 +79,22 @@ def downgrade():
         INNER JOIN agent a ON e.agent_id = a.id
         WHERE a.workspace_id IS NULL
     )
-    """)
+    """))
 
-    conn.execute("""
+    conn.execute(text("""
     DELETE FROM executor
     WHERE agent_id IN (
         SELECT id
         FROM agent
         WHERE workspace_id IS NULL
     )
-    """)
+    """))
 
     # DROP AGENTS WITHOUT WORKSPACE
-    conn.execute("""
+    conn.execute(text("""
     DELETE FROM agent
     WHERE workspace_id IS NULL
-    """)
+    """))
 
     # SET WORKSPACE NOT NULLABLE
     op.alter_column(

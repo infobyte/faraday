@@ -311,8 +311,7 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         pipeline.running_since = datetime.utcnow() - timedelta(hours=7)
         db.session.commit()
 
-        with mock.patch('faraday.server.tasks.schedule_cleanup_stuck_pipelines'):
-            cleanup_stuck_pipelines()
+        cleanup_stuck_pipelines()
 
         updated = db.session.query(Pipeline).get(pipeline_id)
         assert updated.running is False
@@ -327,8 +326,7 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         pipeline.running_since = None
         db.session.commit()
 
-        with mock.patch('faraday.server.tasks.schedule_cleanup_stuck_pipelines'):
-            cleanup_stuck_pipelines()
+        cleanup_stuck_pipelines()
 
         updated = db.session.query(Pipeline).get(pipeline_id)
         assert updated.running is False
@@ -930,7 +928,7 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         assert not vuln.refs
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
-        assert [x.name for x in vuln.refs] == ["New ref", "New ref2"]
+        assert {x.name for x in vuln.refs} == {"New ref", "New ref2"}
 
     def test_action_execute_policy_violations(self, test_client):
         action = ActionFactory.create(field="policy_violations", value="Newpol")

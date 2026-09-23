@@ -10,9 +10,8 @@ import sys
 from queue import Queue
 
 # Related third party imports
-from sqlalchemy import event, text
+from sqlalchemy import event, select
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import get_history
 
 # Local application imports
@@ -26,6 +25,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
+    Workspace,
     db,
 )
 
@@ -84,12 +84,15 @@ def update_object_event(mapper, connection, instance):
         # this will avoid duplicate messages on websockets
         return
     name = getattr(instance, 'ip', None) or getattr(instance, 'name', None)
+    workspace_name = connection.execute(
+        select(Workspace.name).where(Workspace.id == instance.workspace_id)
+    ).scalar()
     msg = {
         'id': instance.id,
         'action': 'UPDATE',
         'type': instance.__class__.__name__,
         'name': name,
-        'workspace': instance.workspace.name
+        'workspace': workspace_name
     }
     changes_queue.put(msg)
 
@@ -120,13 +123,14 @@ def _create_or_update_histogram(connection, workspace_id=None, medium=0, high=0,
         'confirmed': confirmed
     }
     stmt = postgresql.insert(SeveritiesHistogram).values(histogram)
+    sh = SeveritiesHistogram.__table__
     on_update_stmt = stmt.on_conflict_do_update(
-        index_elements=[text('date'), text('workspace_id')],
+        index_elements=[sh.c.date, sh.c.workspace_id],
         set_={
-            "critical": text("severities_histogram.critical") + stmt.excluded.critical,
-            "high": text("severities_histogram.high") + stmt.excluded.high,
-            "medium": text("severities_histogram.medium") + stmt.excluded.medium,
-            "confirmed": text("severities_histogram.confirmed") + stmt.excluded.confirmed
+            "critical": sh.c.critical + stmt.excluded.critical,
+            "high": sh.c.high + stmt.excluded.high,
+            "medium": sh.c.medium + stmt.excluded.medium,
+            "confirmed": sh.c.confirmed + stmt.excluded.confirmed,
         }
     )
     connection.execute(on_update_stmt)
@@ -260,22 +264,33 @@ def alter_histogram_on_delete(mapper, connection, instance):
                                         confirmed=confirmed)
 
 
-def alter_histogram_on_before_compile_delete(query, delete_context):
-    for desc in query.column_descriptions:
-        if desc['type'] is Vulnerability or \
-            desc['type'] is VulnerabilityGeneric or\
-                desc['type'] is VulnerabilityWeb:
-            instances = query.all()
-            for instance in instances:
-                if instance.status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
-                    if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
-                        medium, high, critical = _decrease_severities_histogram(instance.severity)
-                        _create_or_update_histogram(delete_context.session,
-                                                    instance.workspace_id,
-                                                    medium=medium,
-                                                    high=high,
-                                                    critical=critical,
-                                                    confirmed=-1 if instance.confirmed is True else 0)
+_VULN_CLASSES = (Vulnerability, VulnerabilityGeneric, VulnerabilityWeb)
+
+
+def _orm_state_targets_vulnerability(state):
+    """True if the ORM update/delete statement targets a vulnerability mapper."""
+    try:
+        target = state.bind_mapper.class_
+    except AttributeError:
+        return False
+    return target in _VULN_CLASSES
+
+
+def alter_histogram_on_before_compile_delete(state):
+    session = state.session
+    select_stmt = select(VulnerabilityGeneric).where(state.statement.whereclause) \
+        if state.statement.whereclause is not None else select(VulnerabilityGeneric)
+    instances = session.scalars(select_stmt).all()
+    for instance in instances:
+        if instance.status in [Vulnerability.STATUS_OPEN, Vulnerability.STATUS_RE_OPENED]:
+            if instance.severity in SeveritiesHistogram.SEVERITIES_ALLOWED:
+                medium, high, critical = _decrease_severities_histogram(instance.severity)
+                _create_or_update_histogram(session,
+                                            instance.workspace_id,
+                                            medium=medium,
+                                            high=high,
+                                            critical=critical,
+                                            confirmed=-1 if instance.confirmed is True else 0)
 
 
 def get_history_from_context_values(context_values, field, old_value):
@@ -288,31 +303,47 @@ def get_history_from_context_values(context_values, field, old_value):
     return field_history
 
 
-def alter_histogram_on_before_compile_update(query, update_context):
-    for desc in query.column_descriptions:
-        if desc['type'] is Vulnerability or \
-            desc['type'] is VulnerabilityGeneric or\
-                desc['type'] is VulnerabilityWeb:
-            ids = [x[1] for x in filter(lambda x: x[0].startswith("id_"),
-                                        query.statement.compile(dialect=postgresql.dialect()).params.items())]
-            if ids:
-                # this can arise some issues with counters when other filters were applied to query but...
-                instances = update_context.session.query(VulnerabilityGeneric).filter(
-                    VulnerabilityGeneric.id.in_(ids)).all()
-            else:
-                instances = query.all()
+def alter_histogram_on_before_compile_update(state):
+    session = state.session
+    values = dict(state.statement._values) if state.statement._values is not None else {}
+    if state.statement.whereclause is not None:
+        instances = session.scalars(
+            select(VulnerabilityGeneric).where(state.statement.whereclause)
+        ).all()
+    else:
+        instances = session.scalars(select(VulnerabilityGeneric)).all()
 
-            for instance in instances:
-                status_history = get_history_from_context_values(update_context.values, 'status', instance.status)
-                severity_history = get_history_from_context_values(update_context.values, 'severity', instance.severity)
-                confirmed_history = get_history_from_context_values(update_context.values, 'confirmed',
-                                                                    instance.confirmed)
+    # _values maps Column objects -> BindParameter (SQLAlchemy 2.0). Extract the
+    # raw value from each BindParameter so downstream comparisons work against
+    # the enum literals (e.g. 'closed', not BindParameter('closed')).
+    values_by_name = {}
+    for key, val in values.items():
+        name = getattr(key, "key", None) or getattr(key, "name", None) or key
+        if hasattr(val, "value"):
+            val = val.value
+        values_by_name[name] = val
 
-                alter_histogram_on_update_general(update_context.session,
-                                                  instance.workspace_id,
-                                                  status_history=status_history,
-                                                  confirmed_history=confirmed_history,
-                                                  severity_history=severity_history)
+    for instance in instances:
+        status_history = get_history_from_context_values(values_by_name, 'status', instance.status)
+        severity_history = get_history_from_context_values(values_by_name, 'severity', instance.severity)
+        confirmed_history = get_history_from_context_values(values_by_name, 'confirmed',
+                                                            instance.confirmed)
+
+        alter_histogram_on_update_general(session,
+                                          instance.workspace_id,
+                                          status_history=status_history,
+                                          confirmed_history=confirmed_history,
+                                          severity_history=severity_history)
+
+
+def _vuln_bulk_orm_execute(orm_execute_state):
+    """do_orm_execute handler replacing legacy Query.before_compile_delete/update."""
+    if not _orm_state_targets_vulnerability(orm_execute_state):
+        return
+    if orm_execute_state.is_delete:
+        alter_histogram_on_before_compile_delete(orm_execute_state)
+    elif orm_execute_state.is_update:
+        alter_histogram_on_before_compile_update(orm_execute_state)
 
 
 # register the workspace verification for all objs that has workspace_id
@@ -338,5 +369,4 @@ event.listen(Service, 'after_update', update_object_event)
 event.listen(VulnerabilityGeneric, "before_insert", alter_histogram_on_insert, propagate=True)
 event.listen(VulnerabilityGeneric, "before_update", alter_histogram_on_update, propagate=True)
 event.listen(VulnerabilityGeneric, "after_delete", alter_histogram_on_delete, propagate=True)
-event.listen(Query, "before_compile_delete", alter_histogram_on_before_compile_delete)
-event.listen(Query, "before_compile_update", alter_histogram_on_before_compile_update)
+event.listen(db.session, "do_orm_execute", _vuln_bulk_orm_execute)

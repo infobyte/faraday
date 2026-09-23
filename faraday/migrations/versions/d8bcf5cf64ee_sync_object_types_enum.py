@@ -1,7 +1,7 @@
 """sync object_types enum
 
 Revision ID: d8bcf5cf64ee
-Revises: b3e7f1a2c904
+Revises: 82a05afc9c2f
 Create Date: 2026-06-16 00:00:00.000000+00:00
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'd8bcf5cf64ee'
-down_revision = 'b3e7f1a2c904'
+down_revision = '82a05afc9c2f'
 branch_labels = None
 depends_on = None
 

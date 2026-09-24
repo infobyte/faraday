@@ -63,6 +63,13 @@ def upgrade():
         '["period_activity_summary", "current_snapshot", "open_vulns_4m", '
         '"closed_vulns_4m", "last_5_confirmed", "workspace_status"]'
     )
+    # next_delivery: the next Monday-02:00 strictly after now(), matching
+    # the old cron's actual next trigger - not unconditionally "+7 days".
+    # date_trunc('week', now()) + '02:00:00' is *this* week's Monday-02:00;
+    # if that's already past (any day other than Monday-before-02:00), it's
+    # pushed a further week out. Running the migration on a Monday before
+    # 02:00 would otherwise record next_delivery a full week later than the
+    # delivery the old cron was about to fire that same day.
     op.execute(
         sa.text(
             "UPDATE workspace_summary_report SET "
@@ -70,7 +77,11 @@ def upgrade():
             "schedule_time = :schedule_time, "
             "content_sections = :content_sections, "
             "next_delivery = ("
-            "  date_trunc('week', now()) + interval '7 days' + interval '02:00:00'"
+            "  CASE"
+            "    WHEN date_trunc('week', now()) + interval '02:00:00' > now()"
+            "    THEN date_trunc('week', now()) + interval '02:00:00'"
+            "    ELSE date_trunc('week', now()) + interval '7 days' + interval '02:00:00'"
+            "  END"
             ")"
         ).bindparams(
             schedule_day=BACKFILL_DAY,
@@ -102,11 +113,35 @@ def downgrade():
     # below fails outright for any user with more than one cadence on the
     # same workspace. workspace_summary_report_run rows for the dropped ones
     # cascade-delete at the DB level.
+    #
+    # creator_id is nullable (ON DELETE SET NULL when the creator user is
+    # removed) - restricted to NOT NULL here because a plain GROUP BY treats
+    # every NULL as equal, unlike the UNIQUE constraint it's standing in for
+    # (which never conflicts on NULL): several unrelated, creator-less
+    # reports in the same workspace would otherwise collapse into a single
+    # "duplicate" group, deleting every one but the oldest even though the
+    # old constraint always allowed them all to coexist.
     op.execute(
         "DELETE FROM workspace_summary_report "
-        "WHERE id NOT IN ("
-        "  SELECT MIN(id) FROM workspace_summary_report GROUP BY creator_id, workspace_id"
+        "WHERE creator_id IS NOT NULL "
+        "AND id NOT IN ("
+        "  SELECT MIN(id) FROM workspace_summary_report "
+        "  WHERE creator_id IS NOT NULL "
+        "  GROUP BY creator_id, workspace_id"
         ")"
+    )
+
+    # A surviving row may still be 'biweekly' - the dedup above only picks
+    # one row per (creator_id, workspace_id), it doesn't care about its
+    # period type. The old model being downgraded to doesn't know that enum
+    # value (it's added to the DB enum type, not removed, by this same
+    # migration's upgrade() - see the note at the bottom of this function),
+    # so SQLAlchemy raises a LookupError the first time old code reads such
+    # a row. Fold it back into 'weekly' - the closest equivalent, and what
+    # the old fixed weekly-cron behavior already assumed for every row.
+    op.execute(
+        "UPDATE workspace_summary_report SET summary_period_type = 'weekly' "
+        "WHERE summary_period_type = 'biweekly'"
     )
 
     op.drop_constraint(

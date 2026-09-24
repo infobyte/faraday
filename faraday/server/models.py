@@ -54,6 +54,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Table,
     Date,
+    Time,
     and_,
     case as alchemy_case,
     event,

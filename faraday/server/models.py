@@ -4055,15 +4055,43 @@ class RolePermission(db.Model):
 class WorkspaceSummaryReport(Metadata):
     DAILY_TYPE = 'daily'
     WEEKLY_TYPE = 'weekly'
+    BIWEEKLY_TYPE = 'biweekly'
     MONTHLY_TYPE = 'monthly'
     YEARLY_TYPE = 'yearly'
 
+    # daily/yearly are kept in the DB enum for backwards compatibility (no
+    # rows ever used them) but are not offered by the Report Subscriptions
+    # feature; the API schema restricts input to weekly/biweekly/monthly.
     SUMMARY_PERIOD_TYPES = [
         DAILY_TYPE,
         WEEKLY_TYPE,
+        BIWEEKLY_TYPE,
         MONTHLY_TYPE,
         YEARLY_TYPE,
     ]
+
+    # Cadences actually offered by Report Subscriptions (subset of the
+    # legacy SUMMARY_PERIOD_TYPES DB enum).
+    SUBSCRIPTION_PERIOD_TYPES = [WEEKLY_TYPE, BIWEEKLY_TYPE, MONTHLY_TYPE]
+
+    CUSTOM_PRESET = 'custom'
+
+    # Valid `schedule_day` values for weekly/biweekly: always a weekday
+    # (send on the first occurrence of that weekday).
+    MONDAY = 'monday'
+    TUESDAY = 'tuesday'
+    WEDNESDAY = 'wednesday'
+    THURSDAY = 'thursday'
+    FRIDAY = 'friday'
+    SATURDAY = 'saturday'
+    SUNDAY = 'sunday'
+    WEEKDAYS = [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+
+    FIRST_DAY_OF_MONTH = 'first_day_of_month'
+    LAST_DAY_OF_MONTH = 'last_day_of_month'
+    # Monthly only offers 3 options: first Monday of the month, or the two
+    # calendar-day sentinels - not every weekday like weekly/biweekly does.
+    MONTHLY_SCHEDULE_DAYS = [MONDAY, FIRST_DAY_OF_MONTH, LAST_DAY_OF_MONTH]
 
     __tablename__ = 'workspace_summary_report'
     id = Column(Integer, primary_key=True)
@@ -4090,8 +4118,31 @@ class WorkspaceSummaryReport(Metadata):
     )
     active = Column(Boolean, nullable=False, default=True)
 
+    # Day of week ('monday'..'sunday') for weekly/biweekly, or day of month
+    # for monthly. Kept as a free-form string since the exact set of
+    # monthly options (wireframe 02B) isn't validated at the DB layer.
+    schedule_day = Column(String, nullable=True)
+    schedule_time = Column(Time, nullable=True)
+
+    # Next scheduled run, kept up to date by the scheduler (see
+    # faraday/ws_sum_reports/ws_sum_reports.py); drives the "Next delivery"
+    # column in the UI.
+    next_delivery = Column(DateTime, nullable=True, index=True)
+
+    # CUSTOM_PRESET or a preset key (see faraday/ws_sum_reports/sections.py).
+    content_preset = Column(String, nullable=False, default=CUSTOM_PRESET)
+    # Section keys selected when content_preset == CUSTOM_PRESET.
+    content_sections = Column(JSONType, nullable=False, default=[])
+
+    # Delivery methods, combinable and independent.
+    send_by_email = Column(Boolean, nullable=False, default=True)
+    save_in_faraday = Column(Boolean, nullable=False, default=True)
+
     __table_args__ = (
-        UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),
+        UniqueConstraint(
+            'workspace_id', 'user_id', 'summary_period_type',
+            name='uix_workspace_summary_report_workspace_user_period',
+        ),
     )
 
 

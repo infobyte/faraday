@@ -1223,6 +1223,10 @@ class Command(Metadata):
 
     tasks = Column(JSONType, nullable=True, default=[])
 
+    # Per-batch import counters, appended atomically by each Celery batch and
+    # collapsed into totals by finalize_report. See utils/bulk_create.sum_import_stats.
+    import_stats = Column(JSONType, nullable=True)
+
     @property
     def parent(self):
         return

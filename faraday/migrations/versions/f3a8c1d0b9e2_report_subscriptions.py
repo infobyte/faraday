@@ -63,13 +63,22 @@ def upgrade():
         '["period_activity_summary", "current_snapshot", "open_vulns_4m", '
         '"closed_vulns_4m", "last_5_confirmed", "workspace_status"]'
     )
-    # next_delivery: the next Monday-02:00 strictly after now(), matching
-    # the old cron's actual next trigger - not unconditionally "+7 days".
-    # date_trunc('week', now()) + '02:00:00' is *this* week's Monday-02:00;
-    # if that's already past (any day other than Monday-before-02:00), it's
-    # pushed a further week out. Running the migration on a Monday before
-    # 02:00 would otherwise record next_delivery a full week later than the
-    # delivery the old cron was about to fire that same day.
+    # next_delivery: the next Monday-02:00 strictly after the real current
+    # time, matching the old cron's actual next trigger - not unconditionally
+    # "+7 days". date_trunc('week', clock_timestamp()) + '02:00:00' is *this*
+    # week's Monday-02:00; if that's already past (any day other than
+    # Monday-before-02:00), it's pushed a further week out. Running the
+    # migration on a Monday before 02:00 would otherwise record
+    # next_delivery a full week later than the delivery the old cron was
+    # about to fire that same day.
+    # clock_timestamp(), not now(): now() is frozen to this transaction's
+    # start for every statement inside it, not just this one - if the
+    # transaction started before Monday 02:00 but wall-clock time crosses
+    # 02:00 before this UPDATE actually runs, now() still reports "before
+    # 02:00", so this would pick this week's Monday-02:00 even though that
+    # moment has already passed by the time the row is written - the exact
+    # opposite of "strictly after". clock_timestamp() always reflects the
+    # real current time, regardless of the transaction's own start.
     op.execute(
         sa.text(
             "UPDATE workspace_summary_report SET "
@@ -78,9 +87,9 @@ def upgrade():
             "content_sections = :content_sections, "
             "next_delivery = ("
             "  CASE"
-            "    WHEN date_trunc('week', now()) + interval '02:00:00' > now()"
-            "    THEN date_trunc('week', now()) + interval '02:00:00'"
-            "    ELSE date_trunc('week', now()) + interval '7 days' + interval '02:00:00'"
+            "    WHEN date_trunc('week', clock_timestamp()) + interval '02:00:00' > clock_timestamp()"
+            "    THEN date_trunc('week', clock_timestamp()) + interval '02:00:00'"
+            "    ELSE date_trunc('week', clock_timestamp()) + interval '7 days' + interval '02:00:00'"
             "  END"
             ")"
         ).bindparams(
@@ -131,6 +140,20 @@ def downgrade():
         ")"
     )
 
+    # The upgrade's constraint being dropped below allows one user to have
+    # both a weekly and a biweekly row in the same workspace (they differ by
+    # summary_period_type). The fold-back right after this would turn such a
+    # pair into two identical (workspace_id, user_id, 'weekly') rows - a
+    # duplicate key under that same constraint, if it were still active.
+    # Drop it first: the dedup above already guarantees the constraint being
+    # restored below (creator_id, workspace_id) can't be violated, so nothing
+    # needs it to stick around any longer.
+    op.drop_constraint(
+        'uix_workspace_summary_report_workspace_user_period',
+        'workspace_summary_report',
+        type_='unique',
+    )
+
     # A surviving row may still be 'biweekly' - the dedup above only picks
     # one row per (creator_id, workspace_id), it doesn't care about its
     # period type. The old model being downgraded to doesn't know that enum
@@ -144,11 +167,6 @@ def downgrade():
         "WHERE summary_period_type = 'biweekly'"
     )
 
-    op.drop_constraint(
-        'uix_workspace_summary_report_workspace_user_period',
-        'workspace_summary_report',
-        type_='unique',
-    )
     op.create_unique_constraint(
         'uix_workspace_summary_report_creator_workspace',
         'workspace_summary_report',

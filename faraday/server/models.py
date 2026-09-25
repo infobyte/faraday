@@ -1556,8 +1556,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         nullable=True,
         default=None,
     )
-    is_automatic = Column(Boolean, nullable=True, default=None)
-    group_title = BlankColumn(Text, nullable=True)
 
     @hybrid_property
     def group_count(self):

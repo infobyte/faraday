@@ -45,6 +45,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
+    Command,
     CommandObject,
     File,
     Host,
@@ -207,6 +208,16 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
             return {"data": objects}
 
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
+
+    def test_bulk_update_sets_command_creator_id(self, test_client, session, logged_user):
+        vuln = self.objects[0]
+        data = {'ids': [vuln.id], 'name': 'renamed by bulk update'}
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+
+        command = Command.query.filter_by(workspace_id=self.workspace.id).order_by(Command.id.desc()).first()
+        assert command is not None
+        assert command.creator_id == logged_user.id
 
     def test_bulk_update_custom_attributes(self, test_client, second_workspace, session):
 
@@ -915,6 +926,35 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         assert res.status_code == 200
         assert new_attach.filename in res.json
         assert 'image/png' in res.json[new_attach.filename]['content_type']
+
+    def test_tools_history_by_vuln(self, test_client, session, workspace):
+        vuln = self.objects[0]
+        command = EmptyCommandFactory.create(workspace=workspace)
+        CommandObjectFactory.create(
+            command=command,
+            object_type='vulnerability',
+            object_id=vuln.id,
+            workspace=workspace,
+        )
+        session.commit()
+        res = test_client.get(join(self.url(vuln.id), 'tools_history'))
+        assert res.status_code == 200
+        assert len(res.json['tools']) == 1
+        assert res.json['tools'][0]['command'] == command.tool
+        assert res.json['tools'][0]['user'] == command.user
+        assert res.json['tools'][0]['params'] == command.params
+        assert res.json['tools'][0]['command_id'] == command.id
+
+    def test_tools_history_by_vuln_empty(self, test_client, session, workspace):
+        vuln = self.objects[0]
+        session.commit()
+        res = test_client.get(join(self.url(vuln.id), 'tools_history'))
+        assert res.status_code == 200
+        assert res.json['tools'] == []
+
+    def test_tools_history_by_vuln_not_found(self, test_client):
+        res = test_client.get(join(self.url(999999), 'tools_history'))
+        assert res.status_code == 404
 
     def _create_put_data(self,
                          name, desc, status, parent, parent_type,

@@ -94,7 +94,7 @@ class HostSchema(AutoSchema):
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
     creator_command_id = fields.Integer(dump_only=True, allow_none=True)
-    creator_command_tool = fields.String(dump_only=True, allow_none=True)
+    creator_command_tool = fields.Method('get_creator_command_tool', dump_only=True, allow_none=True)
     creator_command_params = fields.String(dump_only=True, allow_none=True)
     vulns = fields.Function(get_total_count, dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
@@ -102,6 +102,10 @@ class HostSchema(AutoSchema):
     class Meta:
         model = Host
         fields = SCHEMA_FIELDS
+
+    @staticmethod
+    def get_creator_command_tool(obj):
+        return obj.creator_command_tool or 'Web UI'
 
     @staticmethod
     def get_service_summaries(obj):

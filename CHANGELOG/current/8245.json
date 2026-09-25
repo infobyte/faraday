@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Vulnerability templates created via file import (CSV or Status Report) now set the creator field. #8245"
+}

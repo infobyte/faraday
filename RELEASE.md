@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+5.24.2 [September 17th, 2026]:
+---
+ * [FIX] `/vulns/count`/`/vulns/filter` support multiple statuses (Not Closed); Pro/Corp also excludes grouped vulns from stats. #8517
+
+
 5.24.0 [Sep 3rd, 2026]:
 ---
  * [FIX] Fixed TypeError during docker-compose up -- @BekTim. #8369

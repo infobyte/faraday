@@ -33,6 +33,7 @@ from faraday.server.debouncer import (
 from faraday.server.models import (
     Host,
     Service,
+    User,
     Workspace,
     db,
 )
@@ -155,6 +156,15 @@ class ServiceView(
     get_joinedloads = [Service.update_user]
     filterset_class = ServiceFilterSet
 
+    def _filter_eagerload_options(self):
+        return [
+            joinedload(Service.creator).load_only(User.username),
+            joinedload(Service.update_user),
+            joinedload(Service.host).load_only(Host.ip),
+            joinedload(Service.workspace).load_only(Workspace.name),
+            undefer(Service.vulnerability_count),
+        ]
+
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []
         for service in objects:
@@ -201,10 +211,7 @@ class ServiceView(
         filter_query = (self._apply_filter_context(filter_query).
                         filter(Service.workspace.has(active=True)))  # only services from active workspaces
         if 'group_by' not in filters:
-            filter_query = filter_query.options(
-                joinedload(Service.update_user),
-                undefer(Service.vulnerability_count),
-            )
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         return filter_query
 
 

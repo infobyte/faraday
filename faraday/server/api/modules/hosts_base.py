@@ -94,7 +94,7 @@ class HostSchema(AutoSchema):
     severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
     creator_command_id = fields.Integer(dump_only=True, allow_none=True)
-    creator_command_tool = fields.String(dump_only=True, allow_none=True)
+    creator_command_tool = fields.Method('get_creator_command_tool', dump_only=True, allow_none=True)
     creator_command_params = fields.String(dump_only=True, allow_none=True)
     vulns = fields.Function(get_total_count, dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
@@ -102,6 +102,10 @@ class HostSchema(AutoSchema):
     class Meta:
         model = Host
         fields = SCHEMA_FIELDS
+
+    @staticmethod
+    def get_creator_command_tool(obj):
+        return obj.creator_command_tool or 'Web UI'
 
     @staticmethod
     def get_service_summaries(obj):
@@ -186,6 +190,14 @@ class HostView(
                    ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
+    def _filter_eagerload_options(self):
+        return [
+            joinedload(Host.creator).load_only(User.username),
+            joinedload(Host.workspace).load_only(Workspace.name),
+            *[joinedload(relationship) for relationship in self.get_joinedloads],
+            *[undefer(column) for column in self.get_undefer],
+        ]
+
     def _get_eagerloaded_query(self, *args, **kwargs):
         """
         Overrides _get_eagerloaded_query of GenericView
@@ -246,6 +258,8 @@ class HostView(
 
         filter_query = search(db.session, self.model_class, filters)
 
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         if severity_count and 'group_by' not in filters:
             filter_query = filter_query.options(
                 undefer(self.model_class.vulnerability_critical_generic_count),

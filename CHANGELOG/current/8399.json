@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Periodic maintenance tasks now run via Celery Beat instead of a self-rescheduling ETA chain, preventing task-storm redelivery. #8399"
-}

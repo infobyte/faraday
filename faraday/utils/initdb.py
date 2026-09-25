@@ -23,7 +23,6 @@ from faraday.server.utils.permissions import (
     UNIT_ADMIN,
     UNIT_AGENTS,
     UNIT_AGENTS_SCHEDULE,
-    UNIT_AGENTS_TOKENS,
     UNIT_ANALYTICS,
     UNIT_BASE,
     UNIT_CLOUD_AGENTS,
@@ -93,7 +92,9 @@ def _exec_initdb(_exec):
             "(1, 'admin', 10, false, 'Full control over Faraday including user management, workspaces, vulnerabilities, reports, automation and system settings.'), "
             "(2, 'asset_owner', 20, false, 'Can access assigned workspaces, review vulnerabilities, update their status, and add comments & tags.'), "
             "(3, 'pentester', 30, false, 'Can access assigned workspaces, create/edit vulnerabilities, execute agents, and generate executive reports.'), "
-            "(4, 'client', 40, false, 'Read-only access to permitted workspaces; cannot make any modifications.');"
+            "(4, 'client', 40, false, 'Read-only access to permitted workspaces; cannot make any modifications.'), "
+            "(5, 'workspace_admin', 15, false, 'Full control over assigned workspaces, including their creation and deletion; "
+            "cannot manage users or instance settings.');"
         )
 
         # Insert rows into the 'permissions_group' table
@@ -109,7 +110,7 @@ def _exec_initdb(_exec):
             f"(3, '{UNIT_TOKENS}', 2), (4, '{UNIT_WHOAMI}', 2), (5, '{UNIT_SWAGGER}', 2), (6, '{UNIT_EXPLOITS}', 2), (7, '{UNIT_NOTIFICATIONS}', 2), (8, '{UNIT_INFO}', 2), "  # nosec B608
             f"(9, '{UNIT_PREFERENCES}', 2), (10, '{UNIT_SEARCH_FILTERS}', 2), (11, '{UNIT_TAGS}', 2), (12, '{UNIT_SESSIONS}', 2), (13, '{UNIT_COMMANDS}', 2), (42, '{UNIT_2FA}', 2), (43, '{UNIT_FORGOT_PASSWORD}', 2), "  # nosec B608
             f"(14, '{UNIT_GITLAB}', 3), (15, '{UNIT_JIRA}', 3), (16, '{UNIT_SERVICE_DESK}', 3), (17, '{UNIT_SERVICE_NOW}', 3), (18, '{UNIT_WEB_HELP_DESK}', 3), (19, '{UNIT_ACTIVE_INTEGRATIONS}', 3), "  # nosec B608
-            f"(20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), (24, '{UNIT_AGENTS_TOKENS}', 4), "  # nosec B608
+            f"(20, '{UNIT_AGENTS}', 4), (21, '{UNIT_AGENTS_SCHEDULE}', 4), (22, '{UNIT_CLOUD_AGENTS}', 4), (23, '{UNIT_CLOUD_AGENTS_SCHEDULE}', 4), "  # nosec B608
             f"(25, '{UNIT_ANALYTICS}', 5), (26, '{UNIT_VULNERABILITIES}', 6), (28, '{UNIT_CUSTOM_FIELDS}', 6), (29, '{UNIT_VULNERABILITY_TEMPLATES}', 6), "  # nosec B608
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
             f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 2), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
@@ -131,7 +132,7 @@ def _exec_initdb(_exec):
             f"(34, '{CREATE}', 16), (35, '{READ}', 16), (36, '{UPDATE}', 16), (37, '{DELETE}', 16), "  # nosec B608
             f"(38, '{CREATE}', 17), (39, '{READ}', 17), (40, '{UPDATE}', 17), (41, '{DELETE}', 17), "  # nosec B608
             f"(42, '{CREATE}', 18), (43, '{READ}', 18), (44, '{UPDATE}', 18), (45, '{DELETE}', 18), "  # nosec B608
-            f"(46, '{READ}', 19), (47, '{READ}', 24), (49, '{CREATE}', 31), "  # nosec B608
+            f"(46, '{READ}', 19), (49, '{CREATE}', 31), "  # nosec B608
             f"(50, '{CREATE}', 20), (51, '{READ}', 20), (52, '{UPDATE}', 20), (53, '{DELETE}', 20), "  # nosec B608
             f"(54, '{CREATE}', 21), (55, '{READ}', 21), (56, '{UPDATE}', 21), (57, '{DELETE}', 21), "  # nosec B608
             f"(58, '{CREATE}', 22), (59, '{READ}', 22), (60, '{UPDATE}', 22), (61, '{DELETE}', 22), "  # nosec B608
@@ -178,7 +179,7 @@ def _exec_initdb(_exec):
             "(33, 33, 1, true), (34, 34, 1, true), (35, 35, 1, true), (36, 36, 1, true), "
             "(37, 37, 1, true), (38, 38, 1, true), (39, 39, 1, true), (40, 40, 1, true), "
             "(41, 41, 1, true), (42, 42, 1, true), (43, 43, 1, true), (44, 44, 1, true), "
-            "(45, 45, 1, true), (46, 46, 1, true), (47, 47, 1, true), "
+            "(45, 45, 1, true), (46, 46, 1, true), "
             "(49, 49, 1, true), (50, 50, 1, true), (51, 51, 1, true), (52, 52, 1, true), "
             "(53, 53, 1, true), (54, 54, 1, true), (55, 55, 1, true), (56, 56, 1, true), "
             "(57, 57, 1, true), (58, 58, 1, true), (59, 59, 1, true), (60, 60, 1, true), "
@@ -225,7 +226,7 @@ def _exec_initdb(_exec):
             "(155, 33, 2, false), (156, 34, 2, false), (157, 35, 2, false), (158, 36, 2, false), "
             "(159, 37, 2, false), (160, 38, 2, false), (161, 39, 2, false), (162, 40, 2, false), "
             "(163, 41, 2, false), (164, 42, 2, false), (165, 43, 2, false), (166, 44, 2, false), "
-            "(167, 45, 2, false), (168, 46, 2, false), (169, 47, 2, false), "
+            "(167, 45, 2, false), (168, 46, 2, false), "
             "(171, 49, 2, true), (172, 50, 2, false), (173, 51, 2, false), (174, 52, 2, false), "
             "(175, 53, 2, false), (176, 54, 2, false), (177, 55, 2, false), (178, 56, 2, false), "
             "(179, 57, 2, false), (180, 58, 2, false), (181, 59, 2, false), (182, 60, 2, false), "
@@ -272,7 +273,7 @@ def _exec_initdb(_exec):
             "(277, 33, 3, false), (278, 34, 3, true), (279, 35, 3, true), (280, 36, 3, true), "
             "(281, 37, 3, false), (282, 38, 3, true), (283, 39, 3, true), (284, 40, 3, true), "
             "(285, 41, 3, false), (286, 42, 3, true), (287, 43, 3, true), (288, 44, 3, true), "
-            "(289, 45, 3, false), (290, 46, 3, true), (291, 47, 3, false), "
+            "(289, 45, 3, false), (290, 46, 3, true), "
             "(293, 49, 3, true), (294, 50, 3, true), (295, 51, 3, true), (296, 52, 3, true), "
             "(297, 53, 3, false), (298, 54, 3, false), (299, 55, 3, false), (300, 56, 3, false), "
             "(301, 57, 3, false), (302, 58, 3, true), (303, 59, 3, true), (304, 60, 3, true), "
@@ -319,7 +320,7 @@ def _exec_initdb(_exec):
             "(399, 33, 4, false), (400, 34, 4, false), (401, 35, 4, false), (402, 36, 4, false), "
             "(403, 37, 4, false), (404, 38, 4, false), (405, 39, 4, false), (406, 40, 4, false), "
             "(407, 41, 4, false), (408, 42, 4, false), (409, 43, 4, false), (410, 44, 4, false), "
-            "(411, 45, 4, false), (412, 46, 4, false), (413, 47, 4, false), "
+            "(411, 45, 4, false), (412, 46, 4, false), "
             "(415, 49, 4, true), (416, 50, 4, false), (417, 51, 4, false), (418, 52, 4, false), "
             "(419, 53, 4, false), (420, 54, 4, false), (421, 55, 4, false), (422, 56, 4, false), "
             "(423, 57, 4, false), (424, 58, 4, false), (425, 59, 4, false), (426, 60, 4, false), "
@@ -354,6 +355,28 @@ def _exec_initdb(_exec):
 
         _exec(
             "SELECT setval('role_permission_id_seq', (SELECT MAX(id) FROM role_permission));"
+        )
+
+        # Insert rows into the 'role_permission' table for the WORKSPACE ADMIN role (id 5).
+        # It mirrors the pentester role (id 3) over every permission unit, so it has full
+        # access to workspace contents (vulnerabilities, hosts, services, comments,
+        # credentials, agents, reports, ...), and additionally gets full CRUD on
+        # UNIT_WORKSPACES so it can create/delete/edit/activate/lock/group workspaces.
+        # The generic per-assignee check keeps all of this scoped to the workspaces where
+        # the user is an allowed_user. pentester already withholds user management and
+        # instance settings, so those stay denied.
+        # Runs after the setval above so generated ids don't collide with the explicit ones.
+        _exec(
+            f"INSERT INTO role_permission (unit_action_id, role_id, allowed) "  # nosec B608
+            f"SELECT pua.id, 5, "  # nosec B608
+            f"CASE "  # nosec B608
+            f"WHEN pu.name = '{UNIT_WORKSPACES}' THEN true "  # nosec B608
+            f"ELSE COALESCE(pentester_rp.allowed, false) "  # nosec B608
+            f"END "  # nosec B608
+            f"FROM permissions_unit_action pua "  # nosec B608
+            f"JOIN permissions_unit pu ON pua.permissions_unit_id = pu.id "  # nosec B608
+            f"LEFT JOIN role_permission pentester_rp "  # nosec B608
+            f"ON pentester_rp.unit_action_id = pua.id AND pentester_rp.role_id = 3;"  # nosec B608
         )
 
         _exec(

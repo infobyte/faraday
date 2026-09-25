@@ -220,6 +220,166 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
             assert res.status_code == 200
             assert res.json.get("count", 0) == agent_names[filter_name]
 
+    def test_filter_agents_paginates_active_before_inactive(self, test_client, session):
+        inactive_1 = AgentFactory.create(active=False, name="ZZZ_inactive")
+        active_1 = AgentFactory.create(active=True, name="AAA_active")
+        inactive_2 = AgentFactory.create(active=False, name="YYY_inactive")
+        active_2 = AgentFactory.create(active=True, name="BBB_active")
+        session.commit()
+
+        agent_ids = {inactive_1.id, active_1.id, inactive_2.id, active_2.id}
+        query = (
+            '/v3/agents/filter?q={"filters":[],"limit":10,"offset":0}'
+        )
+        res = test_client.get(query)
+        assert res.status_code == 200
+
+        rows = [row for row in res.json["rows"] if row["id"] in agent_ids]
+        actives = [active_1.id, active_2.id]
+        inactives = [inactive_1.id, inactive_2.id]
+        active_positions = [i for i, row in enumerate(rows) if row["id"] in actives]
+        inactive_positions = [i for i, row in enumerate(rows) if row["id"] in inactives]
+
+        assert active_positions, "expected at least one active agent in the page"
+        assert inactive_positions, "expected at least one inactive agent in the page"
+        assert max(active_positions) < min(inactive_positions)
+
+    def test_filter_agents_pagination_no_skip_or_duplicate_with_sid_ties(self, test_client, session):
+        # Regression test: several active-but-offline agents (sid=None) tie on every
+        # ordering criterion except id. Without an id tiebreaker, paging through them
+        # while an unrelated column changes between requests can skip or duplicate rows.
+        tied_agents = [
+            AgentFactory.create(active=True, sid=None, name=f"tied_agent_{i}")
+            for i in range(6)
+        ]
+        session.commit()
+
+        def fetch_page(offset):
+            q = json.dumps({
+                "filters": [{"name": "name", "op": "contains", "val": "tied_agent_"}],
+                "limit": 2,
+                "offset": offset,
+            })
+            res = test_client.get(f'/v3/agents/filter?q={urllib.parse.quote(q)}')
+            assert res.status_code == 200
+            return [row["id"] for row in res.json["rows"]]
+
+        page1 = fetch_page(0)
+        # Mutate an unrelated column on an already-seen agent between page requests,
+        # simulating the concurrent update from the reported regression.
+        tied_agents[0].name = "tied_agent_0_renamed"
+        session.commit()
+        page2 = fetch_page(2)
+        page3 = fetch_page(4)
+
+        all_ids = page1 + page2 + page3
+        assert len(all_ids) == len(set(all_ids)), "pagination duplicated a runner"
+        assert set(all_ids) == {a.id for a in tied_agents}, "pagination skipped a runner"
+
+    def test_filter_agents_respects_client_order_by(self, test_client, session):
+        # Regression test: a client-provided order_by must not be silently overridden
+        # by the internal "active first, online first" defaults.
+        agent_c = AgentFactory.create(active=True, sid="sid_3", name="orderby_test_CCC")
+        agent_b = AgentFactory.create(active=False, sid=None, name="orderby_test_BBB")
+        agent_a = AgentFactory.create(active=True, sid="sid_1", name="orderby_test_AAA")
+        session.commit()
+
+        q = json.dumps({
+            "filters": [{"name": "name", "op": "contains", "val": "orderby_test_"}],
+            "order_by": [{"field": "name", "direction": "asc"}],
+            "limit": 10,
+            "offset": 0,
+        })
+        res = test_client.get(f'/v3/agents/filter?q={urllib.parse.quote(q)}')
+        assert res.status_code == 200
+        ids = [row["id"] for row in res.json["rows"]]
+        # agent_b is inactive but sorts second by name — active is not forced to the front
+        # when the client asks for an explicit order.
+        assert ids == [agent_a.id, agent_b.id, agent_c.id]
+
+    def test_filter_agents_active_and_sid_break_ties_in_client_order_by(self, test_client, session):
+        # active/sid are appended as tiebreakers after the client's requested field,
+        # so ties on that field still resolve active-first, online-first.
+        inactive_tied = AgentFactory.create(active=False, sid=None, name="tied_orderby_name")
+        offline_active_tied = AgentFactory.create(active=True, sid=None, name="tied_orderby_name")
+        online_active_tied = AgentFactory.create(active=True, sid="tied_session", name="tied_orderby_name")
+        session.commit()
+
+        q = json.dumps({
+            "filters": [{"name": "name", "op": "contains", "val": "tied_orderby_name"}],
+            "order_by": [{"field": "name", "direction": "asc"}],
+            "limit": 10,
+            "offset": 0,
+        })
+        res = test_client.get(f'/v3/agents/filter?q={urllib.parse.quote(q)}')
+        assert res.status_code == 200
+        ids = [row["id"] for row in res.json["rows"]]
+        assert ids == [online_active_tied.id, offline_active_tied.id, inactive_tied.id]
+
+    def test_filter_agents_pagination_limit_two_is_disjoint_and_active_first(self, test_client, session):
+        actives = [
+            AgentFactory.create(active=True, sid=None, name=f"page_active_{i}")
+            for i in range(4)
+        ]
+        inactives = [
+            AgentFactory.create(active=False, name=f"page_inactive_{i}")
+            for i in range(2)
+        ]
+        session.commit()
+
+        created_ids = {a.id for a in actives} | {a.id for a in inactives}
+
+        def fetch_page(offset):
+            q = json.dumps({
+                "filters": [{"name": "name", "op": "contains", "val": "page_"}],
+                "limit": 2,
+                "offset": offset,
+            })
+            res = test_client.get(f'/v3/agents/filter?q={urllib.parse.quote(q)}')
+            assert res.status_code == 200
+            return [row["id"] for row in res.json["rows"]]
+
+        pages = [fetch_page(offset) for offset in (0, 2, 4)]
+        all_ids = [agent_id for page in pages for agent_id in page]
+
+        assert len(all_ids) == len(set(all_ids)), "pagination duplicated a runner"
+        assert set(all_ids) == created_ids, "pagination skipped a runner"
+
+        active_ids = {a.id for a in actives}
+        inactive_ids = {a.id for a in inactives}
+        active_positions = [i for i, agent_id in enumerate(all_ids) if agent_id in active_ids]
+        inactive_positions = [i for i, agent_id in enumerate(all_ids) if agent_id in inactive_ids]
+        assert active_positions and inactive_positions
+        assert max(active_positions) < min(inactive_positions)
+
+    def test_filter_agents_paginates_online_before_offline_within_active(self, test_client, session):
+        offline_active = AgentFactory.create(active=True, sid=None, name="online_test_wordpress-runner-06")
+        online_active_1 = AgentFactory.create(active=True, sid="session_a", name="online_test_AAA_online")
+        online_active_2 = AgentFactory.create(active=True, sid="session_b", name="online_test_ZZZ_online")
+        inactive = AgentFactory.create(active=False, name="online_test_inactive_agent")
+        session.commit()
+
+        q = json.dumps({
+            "filters": [{"name": "name", "op": "contains", "val": "online_test_"}],
+            "limit": 10,
+            "offset": 0,
+        })
+        res = test_client.get(f'/v3/agents/filter?q={urllib.parse.quote(q)}')
+        assert res.status_code == 200
+
+        rows = res.json["rows"]
+        online_ids = [online_active_1.id, online_active_2.id]
+        offline_active_ids = [offline_active.id]
+        inactive_ids = [inactive.id]
+
+        online_positions = [i for i, row in enumerate(rows) if row["id"] in online_ids]
+        offline_active_positions = [i for i, row in enumerate(rows) if row["id"] in offline_active_ids]
+        inactive_positions = [i for i, row in enumerate(rows) if row["id"] in inactive_ids]
+
+        assert online_positions and offline_active_positions and inactive_positions
+        assert max(online_positions) < min(offline_active_positions)
+        assert max(offline_active_positions) < min(inactive_positions)
+
     def test_delete_agent(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
         agent = AgentFactory.create()

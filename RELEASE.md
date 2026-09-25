@@ -1,10 +1,19 @@
 New features in the latest update
 =====================================
 
+5.24.2 [September 17th, 2026]:
+---
+ * [FIX] `/vulns/count`/`/vulns/filter` support multiple statuses (Not Closed); Pro/Corp also excludes grouped vulns from stats. #8517
+
+
+5.24.0 [Sep 3rd, 2026]:
+---
+ * [FIX] Fixed TypeError during docker-compose up -- @BekTim. #8369
+
 5.23.2 [August 19th, 2026]:
 ---
  * [FIX] Periodic maintenance tasks now run via Celery Beat instead of a self-rescheduling ETA chain, preventing task-storm redelivery. #8399
- * [FIX] Fix `faraday-manage` failing on a clean installation after the SQLAlchemy 2 upgrade, which left `initdb` unable to create the database. #8465
+ * [FIX] Fixed `faraday-manage` failing on a clean installation after the SQLAlchemy 2 upgrade, which left `initdb` unable to create the database. #8465
 
 
 5.23.0 [July 23rd, 2026]:
@@ -12,7 +21,7 @@ New features in the latest update
  * [ADD] Runners table now supports filtering by Status, Tools, Last Execution Date, Last Execution Tool, and Category. #8279
  * [MOD] Upgrade SQLAlchemy to 2.0 and Flask-SQLAlchemy to 3.x. #8308
  * [MOD] Invalidate the current session after a successful password change so users must re-authenticate. #8379
- * [FIX] Fix 500 error when filtering user tokens by the `expired` column. #8395
+ * [FIX] Fixed 500 error when filtering user tokens by the `expired` column. #8395
  * [FIX] Reject out-of-range cron expressions on agent schedules so an invalid crontab can no longer break the schedule list or the scheduler. #8355
 
 

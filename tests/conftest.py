@@ -166,7 +166,8 @@ def database(app, request):
         conn.execute(text(
             "INSERT INTO faraday_role(name, weight, custom) "
             "VALUES ('admin', 10, false),('asset_owner', 20, false),"
-            "('pentester', 30, false),('client', 40, false);"
+            "('pentester', 30, false),('client', 40, false),"
+            "('workspace_admin', 15, false);"
         ))
 
     request.addfinalizer(teardown)

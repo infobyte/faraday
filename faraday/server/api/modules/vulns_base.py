@@ -28,6 +28,7 @@ from flask_classful import route
 from flask_login import current_user
 from marshmallow import Schema, ValidationError, fields, post_load
 from marshmallow.validate import OneOf
+from pytz import utc
 from sqlalchemy import desc, func
 from sqlalchemy.exc import DataError
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -64,6 +65,8 @@ from faraday.server.config import faraday_server
 from faraday.server.debouncer import debounce_workspace_update
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
+    Command,
+    CommandObject,
     CustomFieldsSchema,
     File,
     Host,
@@ -152,6 +155,18 @@ class CustomMetadataSchema(MetadataSchema):
             return obj.tool
         else:
             return obj.creator_command_tool or 'Web UI'
+
+
+class VulnToolsHistorySchema(Schema):
+    command = fields.String(attribute='tool', dump_only=True)
+    user = fields.String(dump_only=True)
+    params = fields.String(dump_only=True)
+    command_id = fields.Integer(attribute='id', dump_only=True)
+    create_date = fields.Function(lambda obj: obj.create_date.replace(tzinfo=utc).isoformat())
+
+
+class VulnToolsHistoryResponseSchema(Schema):
+    tools = fields.List(fields.Nested(VulnToolsHistorySchema), dump_only=True)
 
 
 class CVESchema(AutoSchema):
@@ -603,10 +618,18 @@ class VulnerabilityFilterSet(FilterSet):
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
     status_code = StatusCodeFilter(fields.Int())
-    status = Filter(fields.Function(
-        deserialize=lambda val: 'open' if val == 'opened' else val,
-        validate=OneOf(Vulnerability.STATUSES + ['opened'])
-    ))
+    # Accepts one or more repeated `status` query params
+    # (e.g. status=open&status=re-opened) and filters with SQL IN.
+    # A single value keeps working identically to a plain `==` filter
+    # (col.in_(['x']) is equivalent to col == 'x'), so this is backwards
+    # compatible with existing single-value usages of `status`.
+    status = Filter(
+        fields.List(fields.Function(
+            deserialize=lambda val: 'open' if val == 'opened' else val,
+            validate=OneOf(Vulnerability.STATUSES + ['opened'])
+        )),
+        operator=operators.In,
+    )
     hostnames = HostnamesFilter(fields.Str())
     confirmed = Filter(fields.Boolean())
 
@@ -769,6 +792,10 @@ class VulnerabilityView(
             joinedload(VulnerabilityGeneric.owasp),
             joinedload(Vulnerability.owasp),
             joinedload(VulnerabilityWeb.owasp),
+            joinedload(VulnerabilityGeneric.workspace).load_only(Workspace.name),
+            selectinload(VulnerabilityGeneric.cve_instances),
+            selectinload(VulnerabilityGeneric.refs),
+            selectinload(VulnerabilityGeneric.policy_violation_instances),
         ]
 
         if request.args.get('get_evidence'):
@@ -865,6 +892,36 @@ class VulnerabilityView(
         res = {"total_count": vuln_count}
 
         return res
+
+    @route('/<int:vuln_id>/tools_history')
+    def tools_history(self, vuln_id, **kwargs):
+        """
+        ---
+        get:
+          tags: ["Vulnerability", "Command"]
+          summary: "Get the commands that touched a vulnerability"
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: VulnToolsHistoryResponseSchema
+        """
+        vuln_permission_check = self._apply_filter_context(
+            db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.id == vuln_id)
+        ).first()
+
+        if not vuln_permission_check:
+            abort(HTTP_NOT_FOUND, "Vulnerability not found")
+
+        commands = db.session.query(Command).join(
+            CommandObject, Command.id == CommandObject.command_id
+        ).filter(
+            CommandObject.object_type == 'vulnerability',
+            CommandObject.object_id == vuln_id,
+        ).order_by(desc(CommandObject.create_date)).all()
+
+        return {'tools': VulnToolsHistorySchema(many=True).dump(commands)}
 
     @route('/<int:vuln_id>/attachment', methods=['POST'])
     def post_attachment(self, vuln_id, **kwargs):
@@ -1144,10 +1201,14 @@ class VulnerabilityView(
                 selectinload(VulnerabilityGeneric.cwe),
                 selectinload(VulnerabilityGeneric.tags),
                 joinedload(VulnerabilityGeneric.host).selectinload(Host.hostnames),
-                joinedload(VulnerabilityGeneric.service).joinedload(Service.host).selectinload(Host.hostnames),
+                # service is declared on each subclass, so the relationship on
+                # VulnerabilityGeneric is not the one the loaded instances use.
+                joinedload(Vulnerability.service).joinedload(Service.host).selectinload(Host.hostnames),
+                joinedload(VulnerabilityWeb.service).joinedload(Service.host).selectinload(Host.hostnames),
                 joinedload(VulnerabilityGeneric.creator),
                 joinedload(VulnerabilityGeneric.update_user),
                 joinedload(VulnerabilityGeneric.group),
+                joinedload(VulnerabilityGeneric.workspace).load_only(Workspace.name),
                 undefer(VulnerabilityGeneric.target),
                 undefer(VulnerabilityGeneric.target_host_os),
                 undefer(VulnerabilityGeneric.target_host_ip),

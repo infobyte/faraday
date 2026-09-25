@@ -216,6 +216,7 @@ def generate_histogram(days_before):
     histogram_dict = {}
 
     workspaces_histograms = SeveritiesHistogram.query \
+        .options(joinedload(SeveritiesHistogram.workspace).load_only(Workspace.name)) \
         .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()
 
     # group dates by workspace
@@ -399,13 +400,12 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
 
     def _generate_filter_query(self, filters, severity_count=None):
         filter_query = super()._generate_filter_query(filters)
-        filter_query.options(
-                    with_expression(
-                     Workspace.credential_count,
-                     _make_generic_count_property('workspace', 'credential', use_column_property=False)
-                    ),
-                    joinedload(Workspace.scope),
-                    joinedload(Workspace.allowed_users),
+        filter_query = filter_query.options(
+            with_expression(
+                Workspace.credential_count,
+                _make_generic_count_property('workspace', 'credential', use_column_property=False)
+            ),
+            joinedload(Workspace.scope),
         )
         return filter_query
 

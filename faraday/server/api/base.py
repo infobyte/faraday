@@ -552,6 +552,15 @@ class ListMixin:
     #: query by default
     order_field = None
 
+    def _filter_eagerload_options(self):
+        """Loader options for the /filter endpoints.
+
+        Filter endpoints build their query from scratch instead of going
+        through _get_eagerloaded_query, so each view returns here whatever
+        its schema reads, to avoid a lazy load per dumped row (n+1).
+        """
+        return []
+
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
         rendered.
@@ -776,6 +785,8 @@ class FilterWorkspacedMixin(ListMixin):
                               filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         if severity_count and 'group_by' not in filters:
             filter_query = filter_query.options(
                 undefer(self.model_class.vulnerability_critical_generic_count),
@@ -995,6 +1006,8 @@ class FilterMixin(ListMixin):
         filter_query = search(db.session,
                               self.model_class,
                               filters)
+        if 'group_by' not in filters:
+            filter_query = filter_query.options(*self._filter_eagerload_options())
         return filter_query
 
     def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,

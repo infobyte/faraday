@@ -12,7 +12,7 @@ import sys
 import socket
 import argparse
 import logging
-import subprocess  # nosec B404
+import signal
 
 import psycopg2
 from alembic.runtime.migration import MigrationContext
@@ -27,6 +27,11 @@ from faraday.server.app import get_app, create_app
 from faraday.server.extensions import socketio
 from faraday.server.models import db, Workspace
 from faraday.server.utils import daemonize
+from faraday.server.utils.celery import (
+    build_celery_commands,
+    spawn_celery_processes,
+    terminate_celery_processes,
+)
 from faraday.server.config import faraday_server as server_config
 from faraday.server.utils.ping import stop_ping_event
 from faraday.server.tasks import update_failed_command_stats
@@ -51,10 +56,15 @@ def is_server_running(port):
         return False
 
 
+def _raise_keyboard_interrupt(signum, frame):
+    raise KeyboardInterrupt
+
+
 def run_server(args):
     logger.debug("Starting Faraday Server")
     app = create_app(register_extensions_flag=True, remove_sids=True, start_scheduler=True)
     daemonize.create_pid_file(args.port)
+    celery_processes = []
     try:
         if args.with_workers or args.with_workers_gevent or args.with_beat:
             if not server_config.celery_enabled:
@@ -66,31 +76,18 @@ def run_server(args):
                     "(cleanup_stuck_pipelines, update_failed_command_stats) will not run. "
                     "Start `faraday-beat` on exactly one node of the deployment, or pass --with-beat."
                 )
-        if args.with_workers:
-            worker_cmd = ['faraday-worker']
-            if args.workers_queue:
-                worker_cmd += ['--queue', args.workers_queue]
-
-            if args.workers_concurrency:
-                worker_cmd += ['--concurrency', args.workers_concurrency]
-
-            if args.workers_loglevel:
-                worker_cmd += ['--loglevel', args.workers_loglevel]
-
-            subprocess.Popen(worker_cmd)  # nosec B603
-
-        elif args.with_workers_gevent:
-            worker_cmd = ['faraday-worker-gevent']
-            if args.workers_concurrency:
-                worker_cmd += ['--concurrency', args.workers_concurrency]
-
-            subprocess.Popen(worker_cmd)  # nosec B603
-
-        if args.with_beat:
-            beat_cmd = ['faraday-beat']
-            if args.workers_loglevel:
-                beat_cmd += ['--loglevel', args.workers_loglevel]
-            subprocess.Popen(beat_cmd)  # nosec B603
+        celery_processes = spawn_celery_processes(
+            build_celery_commands(with_workers=args.with_workers,
+                                  with_workers_gevent=args.with_workers_gevent,
+                                  with_beat=args.with_beat,
+                                  queue=args.workers_queue,
+                                  concurrency=args.workers_concurrency,
+                                  loglevel=args.workers_loglevel)
+        )
+        if celery_processes:
+            # A SIGTERM would kill the server without running the shutdown below,
+            # leaving the processes it started behind.
+            signal.signal(signal.SIGTERM, _raise_keyboard_interrupt)
 
         socketio.run(app=app,
                      port=server_config.port,
@@ -100,6 +97,8 @@ def run_server(args):
         stop_ping_event.set()
         stop_reports_event.set()
         print("Faraday server stopped")
+    finally:
+        terminate_celery_processes(celery_processes)
 
 
 def check_postgresql():

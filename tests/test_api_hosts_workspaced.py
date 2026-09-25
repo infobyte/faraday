@@ -823,7 +823,7 @@ class TestHostAPI:
             'service_summaries': [],
             'services_status': [],
             'creator_command_id': None,
-            'creator_command_tool': None,
+            'creator_command_tool': 'Web UI',
             'creator_command_params': None,
             'vulns': 0,
             "versions": [],
@@ -1153,12 +1153,12 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin, BulkUpdateTest
         assert res.json['creator_command_tool'] == 'nmap'
         assert res.json['creator_command_params'] == '-sV 127.0.0.1'
 
-    def test_host_without_command_has_null_command_fields(self, test_client, session):
+    def test_host_without_command_defaults_creator_command_tool_to_web_ui(self, test_client, session):
         session.commit()
         res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
         assert res.json['creator_command_id'] is None
-        assert res.json['creator_command_tool'] is None
+        assert res.json['creator_command_tool'] == 'Web UI'
         assert res.json['creator_command_params'] is None
 
     def test_host_services_status(self, test_client, session, service_factory):

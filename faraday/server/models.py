@@ -1146,7 +1146,10 @@ class Command(Metadata):
         # gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
         'agent',
-        'cloud_agent'
+        'cloud_agent',
+        # Not used in this edition - kept for schema/enum parity with black, which creates
+        # Command rows with this value to track risk score profile reassignment progress.
+        'system',
     ]
 
     __tablename__ = 'command'

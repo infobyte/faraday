@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Re-importing an open or re-opened vulnerability now refreshes `last_detected` and `update_date`. #8518"
+}

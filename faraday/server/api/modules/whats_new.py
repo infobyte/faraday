@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Related third party imports
-from flask import Blueprint, send_file
+from flask import abort, Blueprint, send_file
 from marshmallow import Schema
 
 # Local application imports
@@ -33,6 +33,8 @@ class WhatsNewView(GenericView):
             200:
               description: Ok
         """
+        if not WHATS_NEW_FILE.exists():
+            abort(404, 'whats_new.json not found')
         return send_file(WHATS_NEW_FILE)
 
 

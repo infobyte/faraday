@@ -1,7 +1,7 @@
 """report subscriptions
 
 Revision ID: f3a8c1d0b9e2
-Revises: 82a05afc9c2f
+Revises: 375b8764002c
 Create Date: 2026-09-14 00:00:00.000000+00:00
 
 """
@@ -12,7 +12,7 @@ from faraday.server.fields import JSONType
 
 # revision identifiers, used by Alembic.
 revision = 'f3a8c1d0b9e2'
-down_revision = '82a05afc9c2f'
+down_revision = '375b8764002c'
 branch_labels = None
 depends_on = None
 

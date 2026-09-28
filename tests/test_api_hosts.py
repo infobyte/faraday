@@ -785,6 +785,27 @@ class TestHostAPIGeneric(ReadOnlyAPITests, PaginationTestsMixin, BulkUpdateTests
         assert res.json['tools'][0]['command'] == command.tool
         assert res.json['tools'][0]['user'] == command.user
 
+    def test_creator_command_tool_defaults_to_web_ui_without_command_object(self, test_client, session):
+        host = self.objects[1]
+        res = test_client.get(self.url(host.id))
+        assert res.status_code == 200
+        assert res.json['creator_command_tool'] == 'Web UI'
+
+    def test_creator_command_tool_returns_tool_with_command_object(self, test_client, session):
+        from tests.factories import EmptyCommandFactory, CommandObjectFactory
+        host = self.objects[2]
+        command = EmptyCommandFactory.create(workspace=self.workspace)
+        CommandObjectFactory.create(
+            command=command,
+            object_type='host',
+            object_id=host.id,
+            workspace=command.workspace
+        )
+        session.commit()
+        res = test_client.get(self.url(host.id))
+        assert res.status_code == 200
+        assert res.json['creator_command_tool'] == command.tool
+
     @pytest.mark.usefixtures("mock_envelope_list")
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_sort_by_description(self, test_client, session):

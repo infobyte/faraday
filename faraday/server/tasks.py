@@ -450,7 +450,7 @@ def create_bulk_update_commands_task(
     for workspace_id in workspace_ids:
         command = Command()
         command.workspace_id = workspace_id
-        command.user_id = user_id
+        command.creator_id = user_id
         command.start_date = start_date
         command.tool = 'web_ui'
         command.command = 'bulk_update'

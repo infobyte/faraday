@@ -12,7 +12,7 @@ MAX_RISK, MULTIPLIER_CAP and RISK_SEVERITY_THRESHOLDS are intentionally not
 part of this table: they remain hardcoded invariants regardless of profile.
 
 Revision ID: 73198eab4b2a
-Revises: 82a05afc9c2f
+Revises: f3a8c1d0b9e2
 Create Date: 2026-09-08 18:29:23.004679+00:00
 
 """
@@ -21,7 +21,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '73198eab4b2a'
-down_revision = '82a05afc9c2f'
+down_revision = 'f3a8c1d0b9e2'
 branch_labels = None
 depends_on = None
 

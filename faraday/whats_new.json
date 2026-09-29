@@ -1,0 +1,161 @@
+{
+  "changelogUrl": "https://docs.faradaysec.com/RELEASE",
+  "versions": [
+    {
+      "id": "5.24",
+      "label": "5.24",
+      "releaseDate": "2026-09-02",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Work Faster with Keyboard Shortcuts",
+          "description": "Navigate faster with a new platform-wide keyboard shortcuts system; save, cancel, and switch tabs without leaving the keyboard. Press ⌘/ (Ctrl+/) anytime to see the shortcuts available in your current context.",
+          "license": null,
+          "link": {
+            "type": "doc",
+            "label": "See documentation",
+            "url": "https://docs.faradaysec.com/Shortcuts/"
+          }
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "New role: Workspace Administrator",
+          "description": "A new built-in role, alongside Administrator, Asset Owner, Pentester, and Client, lets users manage workspaces (create, edit, archive, block, assign users) without full instance-wide admin permissions. Access is scoped only to workspaces where they're an assignee.",
+          "license": "professional",
+          "link": null
+        },
+        {
+          "id": "2",
+          "type": "improvement",
+          "title": "Weekly Reports, Now in Executive Reports",
+          "description": "Manage your weekly workspace report subscriptions from the Executive Reports section; toggle subscriptions for any workspace in one click. Plus, the last 10 generated reports are now saved and downloadable directly from this view, so you're covered even if an email gets lost or your address isn't configured.",
+          "license": "corporate",
+          "link": null
+        }
+      ]
+    },
+    {
+      "id": "5.23",
+      "label": "5.23",
+      "releaseDate": "2026-07-23",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Executive Reports (HTML).",
+          "description": "Create fully customized reports combining vulnerabilities, charts, assets, and free-form text into a single branded document, using a visual section-based editor. Replaces the previous generator (independent PDF/DOCX outputs) with a unified HTML → PDF flow.",
+          "license": "professional",
+          "link": {
+            "type": "tour",
+            "label": "Take a Tour",
+            "url": "/report"
+          }
+        },
+        {
+          "id": "2",
+          "type": "new",
+          "title": "New General Dashboard",
+          "description": "Replacing the previous default workspace dashboard, with five widgets: Remediation , By Severity, Workspace Risk, Latest Findings, and Activity Feed. Widgets can be added, removed, resized, and rearranged, and the layout persists per user",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "Drag-and-Drop Vulnerability Import",
+          "description": "Drop vulnerability report files directly onto the Dashboard or Manage sections to import them, with visual feedback as you drag.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "4",
+          "type": "new",
+          "title": "Runners & Scanners: New Search Bar",
+          "description": "Search and filter runners by status, last execution date, tool, category, and more with a placeholder that adapts to the active tab.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "5",
+          "type": "improvement",
+          "title": "Navbar & Sidebar Reorganization",
+          "description": "The user avatar moved from the navbar to the sidebar, and the theme toggle moved from the menu to the navbar. Clicking the avatar still opens the same dropdown, with the same options and behavior as before.",
+          "license": null,
+          "link": null
+        }
+      ]
+    },
+    {
+      "id": "5.22",
+      "label": "5.22",
+      "releaseDate": "2026-06-19",
+      "items": [
+        {
+          "id": "2",
+          "type": "new",
+          "title": "Smarter Risk Scoring",
+          "description": "Workspace risk scores now use a multiplicative, severity-weighted model a meaningful change if you rely on workspace-level risk dashboards.",
+          "license": "professional",
+          "link": {
+            "type": "doc",
+            "label": "See documentation",
+            "url": "https://docs.faradaysec.com/Update/#recalculate-risk-scores-v52"
+          }
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "Float type Custom Attributes",
+          "description": "Custom Attributes now support a Float type. Users can create, edit, and delete Float CAs, set and update their values in vulnerability details, filter them in search bar, use them as targets in Jobs, add them as columns in the vulnerability table, and include them in Save/Apply Templates.",
+          "license": null,
+          "link": {
+            "type": "doc",
+            "label": "See documentation",
+            "url": "https://docs.faradaysec.com/Custom-Attributes/"
+          }
+        },
+        {
+          "id": "1",
+          "type": "improvement",
+          "title": "Instance link in email notifications",
+          "description": "Email notifications now include a link to the Faraday instance they were generated from.",
+          "license": "professional",
+          "link": null
+        }
+      ]
+    },
+    {
+      "id": "5.21",
+      "label": "5.21",
+      "releaseDate": "2026-05-14",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Create credentials in bulk",
+          "description": "A credentials field can be included when creating vulnerabilities. This enables security tools to import credential data atomically alongside other findings, without requiring separate API calls.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "2",
+          "type": "new",
+          "title": "Advanced notification messages",
+          "description": "Now include the workspace name in the message, and notifications are grouped per workspace.",
+          "license": "professional",
+          "link": null
+        },
+        {
+          "id": "3",
+          "type": "improvement",
+          "title": "Normalized vulnerability fields across the UI",
+          "description": "All relevant attributes are now consistently available in the vulnerability table's column selector, the vulnerability detail view, and the search bar filters. New additions include CVSS4, Data, Description, Request, Resolution, Response, Last Detected, Risk Score, Impact, and Issue Tracker",
+          "license": null,
+          "link": null
+        }
+      ]
+    }
+  ]
+}

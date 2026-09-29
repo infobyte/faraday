@@ -1566,3 +1566,73 @@ class TestBulkCreateAPI:
 
         assert 'last_detected' in vuln
         assert vuln['last_detected'] is None
+
+
+# --- A repeated detection refreshes last_detected and update_date (#8518).
+
+OLD_DETECTION = datetime(2026, 9, 6)
+
+
+def _import_detection(workspace, **vuln_overrides):
+    vuln = {'name': 'kernel vuln', 'desc': 'test', 'severity': 'high', 'type': 'Vulnerability'}
+    vuln.update(vuln_overrides)
+    data = host_data.copy()
+    data['vulnerabilities'] = [bc.VulnerabilitySchema().load(vuln)]
+    command = new_empty_command(workspace)
+    bc._create_host(workspace, data, {'id': command.id, 'tool': command.tool, 'user': command.user})
+
+
+def _age_detected_vuln(workspace, status):
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    vuln.status = status
+    vuln.last_detected = OLD_DETECTION
+    vuln.update_date = OLD_DETECTION
+    db.session.commit()
+    return vuln.id
+
+
+def _reload_vuln(vuln_id):
+    db.session.expire_all()
+    return db.session.get(Vulnerability, vuln_id)
+
+
+def test_new_vuln_sets_last_detected(session, workspace):
+    _import_detection(workspace)
+    assert Vulnerability.query.filter(Vulnerability.workspace == workspace).one().last_detected is not None
+
+
+@pytest.mark.parametrize('existing_status', ['open', 're-opened'])
+def test_repeated_detection_refreshes_last_detected_and_update_date(session, workspace, existing_status):
+    _import_detection(workspace)
+    vuln_id = _age_detected_vuln(workspace, existing_status)
+
+    _import_detection(workspace, status='open')
+
+    vuln = _reload_vuln(vuln_id)
+    assert vuln.status == existing_status
+    assert vuln.last_detected > OLD_DETECTION
+    assert vuln.update_date > OLD_DETECTION
+
+
+def test_detecting_a_closed_vuln_reopens_it_and_refreshes_telemetry(session, workspace):
+    _import_detection(workspace)
+    vuln_id = _age_detected_vuln(workspace, 'closed')
+
+    _import_detection(workspace, status='open')
+
+    vuln = _reload_vuln(vuln_id)
+    assert vuln.status == 're-opened'
+    assert vuln.last_detected > OLD_DETECTION
+    assert vuln.update_date > OLD_DETECTION
+
+
+def test_importing_a_closed_vuln_keeps_last_detected(session, workspace):
+    _import_detection(workspace)
+    vuln_id = _age_detected_vuln(workspace, 'open')
+
+    _import_detection(workspace, status='closed')
+
+    vuln = _reload_vuln(vuln_id)
+    assert vuln.status == 'closed'
+    assert vuln.last_detected == OLD_DETECTION
+    assert vuln.update_date == OLD_DETECTION

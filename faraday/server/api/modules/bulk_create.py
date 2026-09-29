@@ -431,6 +431,10 @@ def _create_host(ws, host_data, command: dict):
 
 def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None):
     stmt = insert(Vulnerability).values(host_vulns_created)
+    # A repeated detection (incoming open or re-opened) refreshes last_detected
+    # and update_date, whether or not the status changes.
+    import_time = datetime.utcnow()
+    detected = stmt.excluded.status.in_(['open', 're-opened'])
     on_update_stmt = stmt.on_conflict_do_update(
         index_elements=[func.md5(text('name')),
                         func.md5(text('description')),
@@ -454,20 +458,15 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
                 ), 'closed'),
                 # If incoming vuln exists and is open and the current status is closed, reopen it
                 (and_(
-                    stmt.excluded.status.in_(['open', 're-opened']),
+                    detected,
                     Vulnerability.status == 'closed'
                 ), 're-opened'),
                 # Keep existing status as default
                 else_=Vulnerability.status
             ),
-            "last_detected": case(
-                (and_(
-                    stmt.excluded.status.in_(['open', 're-opened']),
-                    Vulnerability.status == 'closed'
-                ), datetime.utcnow()),
-                else_=Vulnerability.last_detected
-            ),
-            "custom_fields": stmt.excluded.custom_fields
+            "last_detected": case((detected, import_time), else_=Vulnerability.last_detected),
+            "custom_fields": stmt.excluded.custom_fields,
+            "update_date": case((detected, import_time), else_=Vulnerability.update_date),
         }
     ).returning(Vulnerability.id, Vulnerability._tmp_id)
     result = db.session.execute(on_update_stmt)

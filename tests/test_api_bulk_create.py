@@ -1635,3 +1635,4 @@ def test_importing_a_closed_vuln_keeps_last_detected(session, workspace):
     vuln = _reload_vuln(vuln_id)
     assert vuln.status == 'closed'
     assert vuln.last_detected == OLD_DETECTION
+    assert vuln.update_date == OLD_DETECTION

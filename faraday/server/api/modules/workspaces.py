@@ -22,6 +22,7 @@ from sqlalchemy.orm.exc import NoResultFound
 # Local application imports
 from faraday.server.models import (
     db,
+    RiskScoreProfile,
     Workspace,
     SeveritiesHistogram,
     Vulnerability,
@@ -478,6 +479,15 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
                 abort(make_response(jsonify(message="Workspace start date can't be greater than the end date"), 400))
 
         scope = data.pop('scope', [])
+        # There's no UI/API in this edition to choose a risk score profile - every workspace
+        # gets the Faraday-shipped default (seeded by InitDB._create_default_risk_score_profile).
+        if 'risk_score_profile_id' not in data:
+            default_profile = RiskScoreProfile.query.filter_by(is_system_default=True).first()
+            if default_profile is None:
+                abort(make_response(
+                    {'message': 'No default risk score profile configured for this instance'}, 500
+                ))
+            data['risk_score_profile_id'] = default_profile.id
         workspace = super()._perform_create(data, **kwargs)
         workspace.set_scope(scope)
 

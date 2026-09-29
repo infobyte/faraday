@@ -34,6 +34,7 @@ from faraday.server.models import (
     License,
     PolicyViolation,
     Reference,
+    RiskScoreProfile,
     Service,
     SourceCode,
     Tag,
@@ -140,6 +141,12 @@ class WorkspaceFactory(FaradayFactory):
     name = FuzzyText(chars=string.ascii_lowercase + string.digits)
     description = FuzzyText()
     creator = factory.SubFactory(UserFactory)
+    # No API/UI to choose a profile in this edition (see WorkspaceView._perform_create) -
+    # every workspace, in tests as in production, gets the Faraday-shipped default, seeded
+    # for tests by the `database` fixture in conftest.py.
+    risk_score_profile_id = factory.LazyFunction(
+        lambda: RiskScoreProfile.query.filter_by(is_system_default=True).one().id
+    )
 
     class Meta:
         model = Workspace

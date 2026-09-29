@@ -17,7 +17,6 @@ from faraday.server.utils.permissions import (
     GROUP_PIPELINES,
     GROUP_PLANNERS,
     GROUP_VULNERABILITIES,
-    GROUP_WS_SUM_REPORTS,
     UNIT_2FA,
     UNIT_ACTIVE_INTEGRATIONS,
     UNIT_ADMIN,
@@ -46,6 +45,7 @@ from faraday.server.utils.permissions import (
     UNIT_PIPELINES,
     UNIT_PLANNERS,
     UNIT_PREFERENCES,
+    UNIT_RISK_SCORE_PROFILES,
     UNIT_ROLES,
     UNIT_SEARCH_FILTERS,
     UNIT_SERVICE_DESK,
@@ -101,7 +101,7 @@ def _exec_initdb(_exec):
         _exec(
             f"INSERT INTO permissions_group (id, name) VALUES (1, '{GROUP_ADMIN}'), (2, '{GROUP_ALL}'), (3, '{GROUP_INTEGRATIONS}'), (4, '{GROUP_AGENTS}'), (5, '{GROUP_ANALYTICS}'), "  # nosec B608
             f"(6, '{GROUP_VULNERABILITIES}'), (7, '{GROUP_COMMENTS}'), (8, '{GROUP_ASSETS}'), (9, '{GROUP_PLANNERS}'), (10, '{GROUP_EXECUTIVE_REPORTS}'), "  # nosec B608
-            f"(13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}'), (17, '{GROUP_WS_SUM_REPORTS}');"  # nosec B608
+            f"(13, '{GROUP_PIPELINES}'), (15, '{GROUP_CREDENTIALS}');"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit' table
@@ -115,7 +115,7 @@ def _exec_initdb(_exec):
             f"(30, '{UNIT_COMMENTS}', 7), (31, '{UNIT_UNIQUE_COMMENT}', 7), (32, '{UNIT_HOSTS}', 8), (33, '{UNIT_SERVICES}', 8), (34, '{UNIT_PLANNERS}', 9), (35, '{UNIT_EXECUTIVE_REPORTS}', 10), "  # nosec B608
             f"(36, '{UNIT_SETTINGS}', 1), (37, '{UNIT_USER_TOKENS}', 2), (38, '{UNIT_PIPELINES}', 13), (39, '{UNIT_JOBS}', 13), (40, '{UNIT_WORKSPACES}', 1), (41, '{UNIT_INTEGRATIONS_AUTH}', 3), "  # nosec B608
             f"(44, '{UNIT_CREDENTIALS}', 15), (45, '{UNIT_CONFIG}', 2), (46, '{UNIT_WEBSOCKETS}', 2), (48, '{UNIT_BASE}', 1), (49, '{UNIT_ADMIN}', 1), (50, '{UNIT_ROLES}', 1), (51, '{UNIT_TASKS}', 9), "  # nosec B608
-            f"(52, '{UNIT_WS_SUM_REPORTS}', 17);"  # nosec B608
+            f"(52, '{UNIT_WS_SUM_REPORTS}', 2), (53, '{UNIT_RISK_SCORE_PROFILES}', 1);"  # nosec B608
         )
 
         # Insert rows into the 'permissions_unit_action' table
@@ -162,7 +162,8 @@ def _exec_initdb(_exec):
             f"(158, '{UPDATE}', 50), (159, '{DELETE}', 50), (160, '{TAG}', 40), (161, '{TAG}', 32), "  # nosec B608
             f"(162, '{TAG}', 33), (163, '{TAG}', 26), (164, '{CREATE}', 51), (165, '{READ}', 51), "  # nosec B608
             f"(166, '{UPDATE}', 51), (167, '{DELETE}', 51), (168, '{CREATE}', 52), (169, '{READ}', 52), "  # nosec B608
-            f"(170, '{UPDATE}', 52), (171, '{DELETE}', 52);"  # nosec B608
+            f"(170, '{UPDATE}', 52), (171, '{DELETE}', 52), (172, '{CREATE}', 53), (173, '{READ}', 53), "  # nosec B608
+            f"(174, '{UPDATE}', 53), (175, '{DELETE}', 53);"  # nosec B608
         )
 
         # Insert rows into the 'role_permission' table for the ADMIN role
@@ -209,7 +210,8 @@ def _exec_initdb(_exec):
             "(622, 157, 1, true), (623, 158, 1, true), (624, 159, 1, true), (637, 160, 1, true), "
             "(638, 161, 1, true), (639, 162, 1, true), (640, 163, 1, true), (653, 164, 1, true), "
             "(654, 165, 1, true), (655, 166, 1, true), (656, 167, 1, true), (669, 168, 1, true), "
-            "(670, 169, 1, true), (671, 170, 1, true), (672, 171, 1, true);"
+            "(670, 169, 1, true), (671, 170, 1, true), (672, 171, 1, true), "
+            "(685, 172, 1, true), (686, 173, 1, true), (687, 174, 1, true), (688, 175, 1, true);"
         )
 
         # Insert rows into the 'role_permission' table for the ASSET OWNER role
@@ -256,7 +258,8 @@ def _exec_initdb(_exec):
             "(626, 157, 2, false), (627, 158, 2, false), (628, 159, 2, false), (641, 160, 2, true), "
             "(642, 161, 2, true), (643, 162, 2, true), (644, 163, 2, true), (657, 164, 2, false), "
             "(658, 165, 2, true), (659, 166, 2, true), (660, 167, 2, false), (673, 168, 2, true), "
-            "(674, 169, 2, true), (675, 170, 2, true), (676, 171, 2, true);"
+            "(674, 169, 2, true), (675, 170, 2, true), (676, 171, 2, true), "
+            "(689, 172, 2, false), (690, 173, 2, false), (691, 174, 2, false), (692, 175, 2, false);"
         )
 
         # Insert rows into the 'role_permission' table for the PENTESTER role
@@ -303,7 +306,8 @@ def _exec_initdb(_exec):
             "(630, 157, 3, false), (631, 158, 3, false), (632, 159, 3, false), (645, 160, 3, true), "
             "(646, 161, 3, true), (647, 162, 3, true), (648, 163, 3, true), (661, 164, 3, false), "
             "(662, 165, 3, true), (663, 166, 3, true), (664, 167, 3, false), (677, 168, 3, true), "
-            "(678, 169, 3, true), (679, 170, 3, true), (680, 171, 3, true);"
+            "(678, 169, 3, true), (679, 170, 3, true), (680, 171, 3, true), "
+            "(693, 172, 3, false), (694, 173, 3, false), (695, 174, 3, false), (696, 175, 3, false);"
         )
 
         # Insert rows into the 'role_permission' table for the CLIENT role
@@ -350,7 +354,8 @@ def _exec_initdb(_exec):
             "(634, 157, 4, false), (635, 158, 4, false), (636, 159, 4, false), (649, 160, 4, false), "
             "(650, 161, 4, false), (651, 162, 4, false), (652, 163, 4, false), (665, 164, 4, false), "
             "(666, 165, 4, true), (667, 166, 4, true), (668, 167, 4, false), (681, 168, 4, true), "
-            "(682, 169, 4, true), (683, 170, 4, true), (684, 171, 4, true);"
+            "(682, 169, 4, true), (683, 170, 4, true), (684, 171, 4, true), "
+            "(697, 172, 4, false), (698, 173, 4, false), (699, 174, 4, false), (700, 175, 4, false);"
         )
 
         _exec(
@@ -365,12 +370,12 @@ def _exec_initdb(_exec):
         # The generic per-assignee check keeps all of this scoped to the workspaces where
         # the user is an allowed_user. pentester already withholds user management and
         # instance settings, so those stay denied.
-        # Runs after the setval above so generated ids don't collide with the explicit ones.
+        # Runs after the setvals above so generated ids don't collide with the explicit ones.
         _exec(
             f"INSERT INTO role_permission (unit_action_id, role_id, allowed) "  # nosec B608
             f"SELECT pua.id, 5, "  # nosec B608
             f"CASE "  # nosec B608
-            f"WHEN pu.name = '{UNIT_WORKSPACES}' THEN true "  # nosec B608
+            f"WHEN pu.name IN ('{UNIT_WORKSPACES}', '{UNIT_RISK_SCORE_PROFILES}') THEN true "  # nosec B608
             f"ELSE COALESCE(pentester_rp.allowed, false) "  # nosec B608
             f"END "  # nosec B608
             f"FROM permissions_unit_action pua "  # nosec B608

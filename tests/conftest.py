@@ -169,6 +169,21 @@ def database(app, request):
             "('pentester', 30, false),('client', 40, false),"
             "('workspace_admin', 15, false);"
         ))
+        # db.create_all() doesn't run InitDB._create_default_risk_score_profile() (that's
+        # only wired into the faraday-manage initdb CLI path) - seed it here so every
+        # workspace created in a test has a non-null risk_score_profile_id to fall back to.
+        conn.execute(text(
+            "INSERT INTO risk_score_profile ("
+            "name, description, is_system_default, "
+            "severity_base_critical, severity_base_high, severity_base_medium, "
+            "severity_base_low, severity_base_informational, "
+            "confirmed_multiplier, cisa_multiplier, exploit_multiplier, trending_multiplier, "
+            "internet_facing_multiplier, attack_vector_multiplier, important_host_multiplier"
+            ") VALUES ("
+            "'Faraday Default', "
+            "'Default risk score profile shipped by Faraday. Immutable: cannot be edited or deleted.', "
+            "true, 93, 76, 42, 12, 2, 1.15, 1.25, 1.15, 1.07, 1.20, 1.15, 1.10);"
+        ))
 
     request.addfinalizer(teardown)
     return db

@@ -141,6 +141,7 @@ VALID_FILTER_VULN_COLUMNS = [
     'host_os',
     'impact',
     'update_date',
+    'last_detected',
     'type',
     'workspace_name',
     'data',

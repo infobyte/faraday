@@ -73,6 +73,7 @@ class ServiceSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Service', dump_only=True)
     summary = fields.String(dump_only=True)
     command_id = fields.Int(required=False, load_only=True)
+    creator_command_id = fields.Integer(dump_only=True, allow_none=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
 
     class Meta:
@@ -152,7 +153,7 @@ class ServiceView(
     model_class = Service
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
-    get_undefer = [Service.vulnerability_count]
+    get_undefer = [Service.vulnerability_count, Service.creator_command_id]
     get_joinedloads = [Service.update_user]
     filterset_class = ServiceFilterSet
 

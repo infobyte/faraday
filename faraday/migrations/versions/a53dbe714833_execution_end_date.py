@@ -24,7 +24,8 @@ TABLES = ('agent_execution', 'cloud_agent_execution')
 def upgrade():
     for table in TABLES:
         op.add_column(table, sa.Column('end_date', sa.DateTime(), nullable=True))
-        op.execute(f"UPDATE {table} SET end_date = update_date WHERE running IS FALSE")
+    op.execute("UPDATE agent_execution SET end_date = update_date WHERE running IS FALSE")
+    op.execute("UPDATE cloud_agent_execution SET end_date = update_date WHERE running IS FALSE")
 
 
 def downgrade():

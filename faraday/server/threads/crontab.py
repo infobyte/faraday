@@ -350,12 +350,16 @@ class AgentsCronItem(CronItem):
                 logger.warning("Agent %s with id %s is offline.",
                                schedule.executor.agent.name,
                                schedule.executor.agent.id)
-                # Never dispatched: close the executions instead of leaving them as if they were pending
+                # Never dispatched: close the executions and their commands instead of leaving them as if
+                # they were in progress
+                end_date = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
                 for agent_execution in agent_executions:
                     agent_execution.running = False
                     agent_execution.successful = False
                     agent_execution.message = "The agent went offline before the run could be dispatched."
-                    agent_execution.end_date = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+                    agent_execution.end_date = end_date
+                for command in commands:
+                    command.end_date = end_date
                 db.session.commit()
                 return False
             socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')

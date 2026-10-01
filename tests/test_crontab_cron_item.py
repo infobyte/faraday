@@ -271,6 +271,7 @@ class TestAgentOfflineBeforeDispatch:
         assert result is False
         assert (execution.running, execution.successful) == (False, False)
         assert execution.end_date is not None
+        assert execution.command.end_date is not None
 
 
 class TestCronItemUpdate:

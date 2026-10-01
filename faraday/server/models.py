@@ -3721,6 +3721,8 @@ class AgentExecution(Metadata):
     running = Column(Boolean, nullable=True)
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
+    # Naive UTC. Set when the run is over (finished, failed or the agent disconnected)
+    end_date = Column(DateTime, nullable=True)
     executor_id = Column(Integer, ForeignKey('executor.id', ondelete='CASCADE'), index=True, nullable=False)
     executor = relationship('Executor', foreign_keys=[executor_id],
                             backref=backref('executions', cascade="all, delete-orphan"))
@@ -3787,6 +3789,8 @@ class CloudAgentExecution(Metadata):
     running = Column(Boolean, nullable=True)
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
+    # Naive UTC. Set when the run is over (finished or failed)
+    end_date = Column(DateTime, nullable=True)
 
     cloud_agent_id = Column(Integer, ForeignKey('cloud_agent.id', ondelete='CASCADE'), index=True, nullable=False)
     cloud_agent = relationship(

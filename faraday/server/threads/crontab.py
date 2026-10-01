@@ -179,6 +179,22 @@ class CronItem:
                 schedule.active = False
                 db.session.commit()
 
+    def _deactivate_fired_once(self, fired_run_at):
+        """Turns a 'once' schedule off after it fired, unless it was rescheduled while running."""
+        self.active = False
+        if self.app is None:
+            return
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            if not schedule:
+                return
+            if schedule.schedule_type != SCHEDULE_TYPE_ONCE or schedule.run_at != fired_run_at:
+                # The next refresh picks up the new frequency (and active flag) from the database
+                logger.info(f"Schedule {self.schedule_id} was changed while running, not deactivating it")
+                return
+            schedule.active = False
+            db.session.commit()
+
     def _stored_last_run(self):
         if self.app is None:
             return None
@@ -268,7 +284,7 @@ class CronItem:
             self._save_last_run(previous_last_run)
             raise
         if result:
-            self.deactivate()
+            self._deactivate_fired_once(self.run_at)
         else:
             # Not dispatched (e.g. agent offline): retried on the next ticks, within the grace period
             self._save_last_run(previous_last_run)

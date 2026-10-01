@@ -247,6 +247,33 @@ class TestOnceRunsAtMostOnce:
 
         assert stored().active is False
 
+    def test_rescheduled_while_running_is_not_deactivated(self, app, session, once_schedule, stored):
+        new_run_at = naive_utc(utc_now() + datetime.timedelta(days=1))
+
+        def run_rescheduled_by_user():
+            stored().run_at = new_run_at
+            session.commit()
+            return once_schedule.id
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = run_rescheduled_by_user
+
+        self.run_once(cron_item)
+
+        assert (stored().active, stored().run_at) == (True, new_run_at)
+
+    def test_switched_to_cron_while_running_is_not_deactivated(self, app, session, once_schedule, stored):
+        def run_switched_by_user():
+            schedule = stored()
+            schedule.schedule_type, schedule.crontab, schedule.run_at = 'cron', '0 4 * * *', None
+            session.commit()
+            return once_schedule.id
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = run_switched_by_user
+
+        self.run_once(cron_item)
+
+        assert stored().active is True
+
     def test_compares_run_at_with_seconds(self):
         minute = utc_now() + datetime.timedelta(minutes=1)
         cron_item = CronItem(make_schedule(schedule_type='once', crontab=None,

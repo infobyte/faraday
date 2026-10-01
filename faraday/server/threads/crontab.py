@@ -170,20 +170,29 @@ class CronItem:
 
     def deactivate(self):
         """Turns the schedule off, in memory and in the database."""
-        self._set_active(False)
-
-    def reactivate(self):
-        """Turns the schedule back on, in memory and in the database."""
-        self._set_active(True)
-
-    def _set_active(self, active):
-        self.active = active
+        self.active = False
         if self.app is None:
             return
         with self.app.app_context():
             schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
             if schedule:
-                schedule.active = active
+                schedule.active = False
+                db.session.commit()
+
+    def _stored_last_run(self):
+        if self.app is None:
+            return None
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            return schedule.last_run if schedule else None
+
+    def _save_last_run(self, last_run):
+        if self.app is None:
+            return
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            if schedule:
+                schedule.last_run = last_run
                 db.session.commit()
 
     def run(self):
@@ -243,14 +252,26 @@ class CronItem:
                            f"(more than {ONCE_GRACE_PERIOD} late), deactivating it")
             self.deactivate()
             return False
+        # last_run is what marks it as fired (`active` stays the user's choice). It's saved
+        # before running, so if the process dies mid-run it's not run again after a restart.
+        previous_last_run = self._stored_last_run()
+        if previous_last_run is not None and previous_last_run >= self.run_at:
+            logger.info(f"Job {self.schedule_id} already ran at {previous_last_run}, deactivating it")
+            self.deactivate()
+            return False
         logger.info(f"Running Job {self.schedule_id} [once at {run_at}]")
-        # Turned off before running, so it fires at most once: if the process dies mid-run,
-        # it's not run again after a restart
-        self.deactivate()
-        result = self.run()
-        if not result:
+        self._save_last_run(datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+        try:
+            result = self.run()
+        except Exception:
+            # Failed before dispatching: retried on the next ticks, within the grace period
+            self._save_last_run(previous_last_run)
+            raise
+        if result:
+            self.deactivate()
+        else:
             # Not dispatched (e.g. agent offline): retried on the next ticks, within the grace period
-            self.reactivate()
+            self._save_last_run(previous_last_run)
         return result
 
 

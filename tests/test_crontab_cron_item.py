@@ -176,34 +176,76 @@ class TestOnceRunsAtMostOnce:
 
     @pytest.fixture
     def once_schedule(self, session):
-        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=True,
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=True, last_run=None,
                                                run_at=naive_utc(utc_now() - datetime.timedelta(minutes=1)),
                                                workspaces=[WorkspaceFactory.create()])
         session.commit()
         return schedule
 
-    def test_is_deactivated_in_the_database_before_running(self, app, session, once_schedule):
-        active_while_running = []
+    @pytest.fixture
+    def stored(self, session, once_schedule):
+        def _stored():
+            session.expire_all()
+            return session.get(AgentsSchedule, once_schedule.id)
+        return _stored
+
+    def run_once(self, cron_item):
+        return cron_item.run_pending(now=datetime.datetime.now(datetime.timezone.utc))
+
+    def test_is_marked_as_fired_before_running(self, app, once_schedule, stored):
+        last_run_while_running = []
 
         def run():
-            session.expire_all()
-            active_while_running.append(session.get(AgentsSchedule, once_schedule.id).active)
+            last_run_while_running.append(stored().last_run)
             return once_schedule.id
         cron_item = CronItem(once_schedule, app=app)
         cron_item.run = run
 
-        cron_item.run_pending(now=datetime.datetime.now(datetime.timezone.utc))
+        self.run_once(cron_item)
 
-        assert active_while_running == [False]
+        assert last_run_while_running[0] is not None
+        assert stored().active is False
 
-    def test_not_dispatched_is_reactivated_in_the_database(self, app, session, once_schedule):
+    def test_already_fired_is_not_run_again(self, app, session, once_schedule, stored):
+        # e.g. the process died mid-run and the scheduler restarted
+        once_schedule.last_run = datetime.datetime.utcnow()
+        session.commit()
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = mock.Mock(return_value=once_schedule.id)
+
+        self.run_once(cron_item)
+
+        cron_item.run.assert_not_called()
+        assert stored().active is False
+
+    def test_not_dispatched_is_retried(self, app, once_schedule, stored):
         cron_item = CronItem(once_schedule, app=app)
         cron_item.run = mock.Mock(return_value=False)
 
-        cron_item.run_pending(now=datetime.datetime.now(datetime.timezone.utc))
+        self.run_once(cron_item)
 
-        session.expire_all()
-        assert session.get(AgentsSchedule, once_schedule.id).active is True
+        assert (stored().active, stored().last_run) == (True, None)
+
+    def test_failure_before_dispatch_is_retried(self, app, once_schedule, stored):
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = mock.Mock(side_effect=RuntimeError('boom'))
+
+        with pytest.raises(RuntimeError):
+            self.run_once(cron_item)
+
+        assert (stored().active, stored().last_run) == (True, None)
+
+    def test_retry_does_not_override_a_pause(self, app, session, once_schedule, stored):
+        def run_paused_by_admin():
+            stored().active = False
+            session.commit()
+            return False
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = run_paused_by_admin
+
+        self.run_once(cron_item)
+
+        assert stored().active is False
 
     def test_compares_run_at_with_seconds(self):
         minute = utc_now() + datetime.timedelta(minutes=1)

@@ -32,7 +32,7 @@ from typing import Callable
 import cvss
 import dateutil
 import jwt
-from croniter import croniter, CroniterError
+from croniter import CroniterError
 from depot.fields.sqlalchemy import UploadedFileField
 from flask import (
     current_app as app,
@@ -96,6 +96,13 @@ from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
     is_unique_constraint_violation,
+)
+from faraday.server.utils.schedules import (
+    SCHEDULE_TYPE_CRON,
+    SCHEDULE_TYPE_ONCE,
+    SCHEDULE_TYPES,
+    next_cron_run,
+    to_aware,
 )
 
 logger = logging.getLogger(__name__)
@@ -3559,10 +3566,16 @@ class SchedulerGeneric(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
     description = NonBlankColumn(Text, nullable=False)
-    crontab = NonBlankColumn(Text, nullable=False)
+    # Only used by 'cron' schedules
+    crontab = Column(Text, nullable=True, info={'allow_blank': False})
     timezone = NonBlankColumn(Text, nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
+    schedule_type = Column(Enum(*SCHEDULE_TYPES, name='schedule_frequency_types'), nullable=False,
+                           default=SCHEDULE_TYPE_CRON, server_default=SCHEDULE_TYPE_CRON)
+    # Naive UTC. 'cron' never fires before start_date; 'once' fires at run_at.
+    start_date = Column(DateTime, nullable=True)
+    run_at = Column(DateTime, nullable=True)
     ignore_info = Column(Boolean, default=False)
     resolve_hostname = Column(Boolean, default=True)
     vuln_tag = Column(String, default="")
@@ -3589,13 +3602,17 @@ class SchedulerGeneric(Metadata):
 
     @property
     def next_run(self):
+        # Same fallback as the crontab thread, so this matches when it actually fires
+        tz = dateutil.tz.gettz(self.timezone) or dateutil.tz.tzlocal()
+        now = datetime.now(tz=tz)
+        if self.schedule_type == SCHEDULE_TYPE_ONCE:
+            run_at = to_aware(self.run_at, tz)
+            if not self.active or run_at is None or run_at <= now:
+                return None
+            return run_at
         try:
-            return croniter(
-                self.crontab,
-                datetime.now(tz=dateutil.tz.gettz(self.timezone)),
-                ret_type=datetime
-            ).get_next(datetime)
-        except (CroniterError, ValueError):
+            return next_cron_run(self.crontab, tz, now, start_date=self.start_date)
+        except (CroniterError, ValueError, TypeError):
             # An unparseable crontab must not break serialization of the list
             return None
 

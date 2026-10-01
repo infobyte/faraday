@@ -1,4 +1,5 @@
 # Standard library imports
+from datetime import datetime, timezone as dt_timezone
 import dateutil
 import json
 import logging
@@ -15,8 +16,10 @@ from marshmallow import (
     ValidationError,
     fields,
     pre_dump,
+    pre_load,
     post_load,
     validate,
+    validates_schema,
 )
 
 # Local application imports
@@ -36,6 +39,13 @@ from faraday.server.schemas import (
     MetadataSchema,
     PrimaryKeyRelatedField,
     SelfNestedField,
+)
+from faraday.server.utils.schedules import (
+    SCHEDULE_TYPE_CRON,
+    SCHEDULE_TYPE_ONCE,
+    SCHEDULE_TYPES,
+    to_aware,
+    to_naive_utc,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,20 +67,54 @@ def check_crontab(value):
         raise ValidationError('Invalid format, Please use basic crontab format, Example: 10 * 10 * *')
 
 
+# Fields that don't apply to each schedule_type, cleared when a schedule switches to it
+_UNUSED_FIELDS_BY_SCHEDULE_TYPE = {
+    SCHEDULE_TYPE_CRON: ('run_at',),
+    SCHEDULE_TYPE_ONCE: ('crontab', 'start_date'),
+}
+
+
+class ScheduleDateTimeField(fields.AwareDateTime):
+    """
+    ISO 8601 datetime that must include a UTC offset (naive values are rejected,
+    they would be ambiguous). Loads as naive UTC, the storage format; dumps with
+    offset, in the schedule timezone.
+    """
+    default_error_messages = {
+        'invalid_awareness': 'Must include a UTC offset, e.g. 2026-10-14T04:00:00-03:00.',
+    }
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        return to_naive_utc(super()._deserialize(value, attr, data, **kwargs))
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        return to_aware(value, dateutil.tz.gettz(obj.timezone) or dt_timezone.utc).isoformat()
+
+
 class SchedulerSchema(AutoSchema):
     id = fields.Integer(dump_only=True)
     description = fields.String(required=True)
-    crontab = fields.String(required=True,
+    # Required only for 'cron' schedules (see validate_schedule_type)
+    crontab = fields.String(required=False,
+                            allow_none=True,
                             metadata={"example": "10 * 10 * *"},
                             validate=[validate.Regexp(
                                 r"^(((([1-5]?\d(-([1-5]?\d))?|\*)(\/(\d+))?),?)+)\ (((((2[0-3]|1?\d)(-(2["
                                 r"0-3]|1?\d))?|\*)(\/(\d+))?),?)+)\ (((((3[01]|[12]?\d)(-(3[01]|[12]?\d))?|\*)(\/("
                                 r"\d+))?),?)+)\ (((((1[0-2]|\d)(-(1[0-2]|\d))?|\*)(\/(\d+))?),?)+)\ (((([0-6](-(["
-                                r"0-6]))?|\*)(\/(\d+))?),?)+)$",
+                                r"0-6]))?(#[1-5])?|\*)(\/(\d+))?),?)+)$",
                                 0,
                                 error='Invalid format, Please use basic crontab format, Example: 10 * 10 * *'),
                                 check_crontab])
     timezone = fields.String(required=True, validate=check_timezone)
+    schedule_type = fields.String(required=False, validate=validate.OneOf(SCHEDULE_TYPES),
+                                  metadata={"example": SCHEDULE_TYPE_CRON})
+    start_date = ScheduleDateTimeField(required=False, allow_none=True,
+                                       metadata={"example": "2026-10-14T04:00:00-03:00"})
+    run_at = ScheduleDateTimeField(required=False, allow_none=True,
+                                   metadata={"example": "2026-10-14T04:00:00-03:00"})
     active = fields.Boolean(default=False)
     next_run = fields.String(dump_only=True)
     parameters = fields.Method(
@@ -103,6 +147,9 @@ class SchedulerSchema(AutoSchema):
             'executor_id',
             'description',
             'crontab',
+            'schedule_type',
+            'start_date',
+            'run_at',
             'timezone',
             'active',
             'owner',
@@ -120,6 +167,48 @@ class SchedulerSchema(AutoSchema):
             'min_severity',
             'max_severity',
         )
+
+    @pre_load
+    def blank_crontab_as_none(self, data, **kwargs):
+        # A 'once' schedule has no crontab; clients may send it empty instead of null
+        if isinstance(data, dict) and data.get('crontab') == '':
+            data = {**data, 'crontab': None}
+        return data
+
+    def _resulting_value(self, data, key, default=None):
+        """Value of key once data is applied over the schedule being updated (if any)."""
+        if key in data:
+            return data[key]
+        schedule = self.context.get('object')
+        if schedule is not None:
+            return getattr(schedule, key, default)
+        return default
+
+    @validates_schema
+    def validate_schedule_type(self, data, **kwargs):
+        schedule_type = self._resulting_value(data, 'schedule_type') or SCHEDULE_TYPE_CRON
+        if schedule_type == SCHEDULE_TYPE_CRON:
+            if not self._resulting_value(data, 'crontab'):
+                raise ValidationError('Missing data for required field.', field_name='crontab')
+            return
+
+        run_at = self._resulting_value(data, 'run_at')
+        if run_at is None:
+            raise ValidationError('Missing data for required field.', field_name='run_at')
+        # Only an active schedule that is being (re)scheduled has to point to the future: editing
+        # e.g. the description of a 'once' schedule that already ran must still be possible.
+        creating = self.context.get('object') is None
+        rescheduling = any(key in data for key in ('run_at', 'active', 'schedule_type'))
+        active = self._resulting_value(data, 'active', True)
+        if active and (creating or rescheduling) and run_at <= datetime.utcnow():
+            raise ValidationError('Must be in the future.', field_name='run_at')
+
+    @post_load
+    def clear_unused_fields(self, data, **kwargs):
+        if 'schedule_type' in data:
+            for key in _UNUSED_FIELDS_BY_SCHEDULE_TYPE[data['schedule_type']]:
+                data[key] = None
+        return data
 
     @staticmethod
     def load_parameters(value):
@@ -189,7 +278,7 @@ class SchedulerView(PaginatedMixin, ReadWriteView, FilterMixin):
     def _perform_create(self, data):
         self._check_schedules_limit()
         created = super()._perform_create(data)
-        schedule_message = f"Schedule created [Workspaces: {data['workspaces']} - description: {data['description']} crontab: {data['crontab']}]"
+        schedule_message = f"Schedule created [Workspaces: {data['workspaces']} - description: {data['description']} crontab: {data.get('crontab')}]"
         logger.info(schedule_message)
         return created
 

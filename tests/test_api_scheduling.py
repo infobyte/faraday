@@ -4,6 +4,7 @@ Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import datetime
 from unittest import mock
 
 import pytest
@@ -350,3 +351,136 @@ class TestGenericSchedulerView:
 
         assert res.status_code == 200
         assert schedule.id in {row['id'] for row in res.json['rows']}
+
+
+BUENOS_AIRES_OFFSET = datetime.timezone(datetime.timedelta(hours=-3))
+
+
+def _iso_in(days=0, minutes=0):
+    """ISO 8601 datetime relative to now, with the offset of the schedules' timezone."""
+    moment = datetime.datetime.now(BUENOS_AIRES_OFFSET) + datetime.timedelta(days=days, minutes=minutes)
+    return moment.replace(microsecond=0).isoformat()
+
+
+@pytest.fixture
+def schedule_payload():
+    def _payload(**overrides):
+        payload = AgentScheduleFactory.build_dict(workspace=[WorkspaceFactory.create()],
+                                                  executor=ExecutorFactory.create())
+        payload['timezone'] = 'America/Argentina/Buenos_Aires'
+        payload.update(overrides)
+        return payload
+    return _payload
+
+
+@pytest.mark.usefixtures('logged_user')
+@mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
+class TestScheduleTypes:
+    url = '/v3/agents_schedule'
+
+    def test_cron_is_the_default(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload())
+
+        assert res.status_code == 201
+        assert res.json['schedule_type'] == 'cron'
+
+    def test_cron_requires_crontab(self, test_client, schedule_payload):
+        payload = schedule_payload()
+        del payload['crontab']
+
+        res = test_client.post(self.url, data=payload)
+
+        assert res.status_code == 400
+        assert 'crontab' in res.json['messages']['json']
+
+    def test_crontab_accepts_nth_weekday_of_month(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(crontab='0 4 * * 3#2'))
+
+        assert res.status_code == 201
+
+    def test_start_date_is_stored_as_utc_and_dumped_in_the_schedule_timezone(self, test_client, session,
+                                                                             schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(start_date='2030-10-14T07:00:00Z'))
+
+        assert res.status_code == 201
+        assert res.json['start_date'] == '2030-10-14T04:00:00-03:00'
+        stored = session.get(AgentsSchedule, res.json['id'])
+        assert stored.start_date == datetime.datetime(2030, 10, 14, 7, 0)
+
+    def test_next_run_is_not_before_start_date(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(crontab='0 4 * * *',
+                                                               start_date='2030-10-14T04:00:00-03:00'))
+
+        assert res.json['next_run'] == '2030-10-14 04:00:00-03:00'
+
+    def test_date_without_offset_is_rejected(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(start_date='2030-10-14T04:00:00'))
+
+        assert res.status_code == 400
+        assert 'start_date' in res.json['messages']['json']
+
+    def test_once_requires_run_at(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(schedule_type='once', crontab=None))
+
+        assert res.status_code == 400
+        assert 'run_at' in res.json['messages']['json']
+
+    def test_once_in_the_past_is_rejected(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(schedule_type='once', crontab=None,
+                                                               run_at=_iso_in(minutes=-5)))
+
+        assert res.status_code == 400
+        assert 'run_at' in res.json['messages']['json']
+
+    def test_create_once(self, test_client, schedule_payload):
+        run_at = _iso_in(days=1)
+
+        res = test_client.post(self.url, data=schedule_payload(schedule_type='once', crontab='', run_at=run_at))
+
+        assert res.status_code == 201
+        assert res.json['run_at'] == run_at
+        assert res.json['crontab'] is None
+        assert res.json['next_run'] is not None
+
+    def test_switching_to_once_clears_cron_fields(self, test_client, session):
+        schedule = AgentScheduleFactory.create(start_date=datetime.datetime(2030, 1, 1),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'{self.url}/{schedule.id}',
+                                data={'schedule_type': 'once', 'run_at': _iso_in(days=1)})
+
+        assert res.status_code == 200
+        assert res.json['crontab'] is None
+        assert res.json['start_date'] is None
+
+    def test_once_that_already_ran_can_still_be_edited(self, test_client, session):
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=False,
+                                               run_at=datetime.datetime(2020, 1, 1),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'{self.url}/{schedule.id}', data={'description': 'renamed'})
+
+        assert res.status_code == 200
+        assert res.json['next_run'] is None
+
+    def test_reactivating_a_past_once_is_rejected(self, test_client, session):
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=False,
+                                               run_at=datetime.datetime(2020, 1, 1),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'{self.url}/{schedule.id}', data={'active': True})
+
+        assert res.status_code == 400
+        assert 'run_at' in res.json['messages']['json']
+
+
+def test_next_run_of_once_with_unknown_timezone_does_not_raise(session):
+    schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, timezone='Not/AZone',
+                                           run_at=datetime.datetime(2030, 1, 1),
+                                           workspaces=[WorkspaceFactory.create()])
+    session.commit()
+
+    assert schedule.next_run is not None

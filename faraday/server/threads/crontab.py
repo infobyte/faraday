@@ -17,10 +17,20 @@ import dateutil
 
 # Local application imports
 from faraday.server.extensions import socketio
-from faraday.server.models import AgentsSchedule, db
+from faraday.server.models import AgentsSchedule, SchedulerGeneric, db
 from faraday.server.utils.agents import get_command_and_agent_execution
+from faraday.server.utils.schedules import (
+    ONCE_GRACE_PERIOD,
+    SCHEDULE_TYPE_CRON,
+    SCHEDULE_TYPE_ONCE,
+    next_cron_run,
+    to_aware,
+)
 
 logger = logging.getLogger(__name__)
+
+# Wait before the next tick when one fails (e.g. the database is unreachable)
+TICK_ERROR_BACKOFF_SECONDS = 60
 
 
 class FaradayCronTab(threading.Thread):
@@ -40,8 +50,13 @@ class FaradayCronTab(threading.Thread):
 
     def run_pending(self, **kwargs):
         logger.debug("Look for scheduled jobs..")
-        for job in self.jobs.values():
-            ret = job.run_pending(**kwargs)
+        for job in list(self.jobs.values()):
+            # One broken job must not stop the others, nor kill the thread
+            try:
+                ret = job.run_pending(**kwargs)
+            except Exception:
+                logger.exception(f"Scheduled job {job.schedule_id} failed")
+                continue
             if ret:
                 yield ret
 
@@ -52,7 +67,11 @@ class FaradayCronTab(threading.Thread):
     def run(self):
         logger.info("Crontab Thread [Start]")
         while not self.__event.is_set():
-            self.tick()
+            try:
+                self.tick()
+            except Exception:
+                logger.exception("Crontab Thread tick failed")
+                self.__event.wait(TICK_ERROR_BACKOFF_SECONDS)
         logger.info("Crontab Thread [Stop]")
 
     def tick(self):
@@ -88,7 +107,8 @@ class CronTab(FaradayCronTab):
                     try:
                         job = AgentsCronItem(schedule, app=self.app)
                         if job.valid:
-                            logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} [{schedule.crontab}]')
+                            logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} '
+                                        f'[{schedule.crontab or schedule.run_at}]')
                             self.jobs[schedule.id] = job
                     except Exception as e:
                         # A single bad schedule (e.g. unparseable crontab) must never crash
@@ -102,17 +122,37 @@ class CronTab(FaradayCronTab):
         time.sleep(sleep_time)
 
 
+def _frequency_of(schedule):
+    """Everything that decides when a schedule fires, as stored."""
+    # getattr: not every scheduled item is a SchedulerGeneric row
+    return (
+        schedule.crontab,
+        schedule.timezone,
+        getattr(schedule, 'schedule_type', None) or SCHEDULE_TYPE_CRON,
+        getattr(schedule, 'start_date', None),
+        getattr(schedule, 'run_at', None),
+    )
+
+
 class CronItem:
 
     def __init__(self, schedule, app=None):
         self.app = app
-        self.valid = True
         self.active = schedule.active
-        self.crontab = schedule.crontab
         self.schedule_id = schedule.id
-        self.timezone = dateutil.tz.gettz(schedule.timezone)
+        self._load_frequency(schedule)
+
+    def _load_frequency(self, schedule):
+        self._frequency = _frequency_of(schedule)
+        self.crontab, timezone, self.schedule_type, self.start_date, self.run_at = self._frequency
+        self.valid = True
+        self.timezone = dateutil.tz.gettz(timezone)
         if not self.timezone:
             self.timezone = dateutil.tz.tzlocal()
+        if self.schedule_type == SCHEDULE_TYPE_ONCE:
+            # 'once' fires at run_at, it doesn't need an anchor
+            self.last_run = None
+            return
         try:
             self.last_run = self.schedule().get_prev(datetime.datetime)
         except CroniterBadCronError:
@@ -121,10 +161,23 @@ class CronItem:
             self.last_run = datetime.datetime.now()
 
     def update(self, schedule):
-        if self.crontab != schedule.crontab:
-            self.crontab = schedule.crontab
-            logger.info(f"Update Scheduler: {self.schedule_id} crontab: [{self.crontab}]")
+        if _frequency_of(schedule) != self._frequency:
+            # Re-anchored at now, so a change never triggers runs that were due before it
+            self._load_frequency(schedule)
+            logger.info(f"Update Scheduler: {self.schedule_id} [{self.schedule_type}] "
+                        f"crontab: [{self.crontab}] run_at: [{self.run_at}]")
         self.active = schedule.active
+
+    def deactivate(self):
+        """Turns the schedule off, in memory and in the database."""
+        self.active = False
+        if self.app is None:
+            return
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            if schedule:
+                schedule.active = False
+                db.session.commit()
 
     def run(self):
         # TODO: Raise implementing
@@ -148,11 +201,18 @@ class CronItem:
             else:
                 now = now.astimezone(self.timezone)
         now = now.replace(second=0, microsecond=0)
+        if not self.valid:
+            return False
+        if self.active and self.schedule_type == SCHEDULE_TYPE_ONCE:
+            return self._run_pending_once(now)
         if self.active:
             next_time = self.schedule(self.last_run).get_next(datetime.datetime)
             if not next_time.tzinfo:
                 logger.warning(f"Timezone not set for schedule {self.schedule_id}. This will be deprecated soon.")
                 next_time = next_time.replace(tzinfo=self.timezone)
+            start = to_aware(self.start_date, self.timezone)
+            if start is not None and next_time < start:
+                next_time = next_cron_run(self.crontab, self.timezone, next_time, start_date=self.start_date)
             logger.debug(f"Next run for {self.schedule_id}: {next_time}")
             logger.debug(f"Now: {now}")
             if next_time <= now:
@@ -164,6 +224,22 @@ class CronItem:
         else:
             logger.warning(f"Try to run inactive job: {self.schedule_id}")
         return False
+
+    def _run_pending_once(self, now):
+        run_at = to_aware(self.run_at, self.timezone)
+        if run_at is None or run_at > now:
+            return False
+        if now - run_at > ONCE_GRACE_PERIOD:
+            logger.warning(f"Job {self.schedule_id} missed its run at {run_at} "
+                           f"(more than {ONCE_GRACE_PERIOD} late), deactivating it")
+            self.deactivate()
+            return False
+        logger.info(f"Running Job {self.schedule_id} [once at {run_at}]")
+        result = self.run()
+        # Not run (e.g. agent offline): it's retried on the next ticks, within the grace period
+        if result:
+            self.deactivate()
+        return result
 
 
 class AgentsCronItem(CronItem):
@@ -181,7 +257,7 @@ class AgentsCronItem(CronItem):
                             f' active flag: {schedule.executor.agent.active}')
                 return False
 
-            schedule.last_run = datetime.datetime.now()
+            schedule.last_run = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
             db.session.add(schedule)
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             agent_executions = []

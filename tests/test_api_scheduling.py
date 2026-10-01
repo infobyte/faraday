@@ -60,7 +60,7 @@ def test_both_schedule_and_manual_agents(session):
 SCHEDULES_LIMIT = 999
 
 
-@mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
+@mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
 class TestAgentScheduleView(ReadWriteAPITests):
     model = AgentsSchedule
     factory = AgentScheduleFactory
@@ -168,7 +168,7 @@ class TestAgentScheduleView(ReadWriteAPITests):
         assert schedule.id not in crontab_thread.jobs
 
     def test_create_until_limit(self, test_client, session):
-        with mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', 7):
+        with mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', 7):
             for i in range(2):
                 workspaces = [WorkspaceFactory.create()]
                 agent = AgentFactory.create()
@@ -327,3 +327,26 @@ class TestAgentScheduleView(ReadWriteAPITests):
 
         # Assert that only agent schedulers are counted
         assert counts['agent_schedulers'] == 2
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestGenericSchedulerView:
+
+    def test_delete_removes_the_schedule(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+        schedule_id = schedule.id
+
+        res = test_client.delete(f'/v3/scheduler/{schedule_id}')
+
+        assert res.status_code == 204
+        assert session.get(AgentsSchedule, schedule_id) is None
+
+    def test_list_includes_agent_schedules(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.get('/v3/scheduler')
+
+        assert res.status_code == 200
+        assert schedule.id in {row['id'] for row in res.json['rows']}

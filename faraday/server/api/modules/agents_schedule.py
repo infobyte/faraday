@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class AgentsScheduleSchema(SchedulerSchema):
+    type = fields.String(dump_only=True)
     executor = fields.Nested(ExecutorSchema(), dump_only=True)
     agent = fields.Method('get_agent', dump_only=True)
 

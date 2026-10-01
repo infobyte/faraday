@@ -10,10 +10,10 @@ from unittest import mock
 import dateutil.tz
 import pytest
 
-from faraday.server.models import AgentsSchedule
-from faraday.server.threads.crontab import CronItem, FaradayCronTab
+from faraday.server.models import Agent, AgentExecution, AgentsSchedule
+from faraday.server.threads.crontab import AgentsCronItem, CronItem, FaradayCronTab
 from faraday.server.utils.schedules import ONCE_GRACE_PERIOD
-from tests.factories import AgentScheduleFactory, WorkspaceFactory
+from tests.factories import AgentFactory, AgentScheduleFactory, ExecutorFactory, WorkspaceFactory
 
 # Unusual offset (+05:45) so it never matches the timezone of the machine running the tests
 SCHEDULE_TIMEZONE = 'Asia/Kathmandu'
@@ -170,6 +170,65 @@ class TestOnceSchedule:
 
         session.expire_all()
         assert session.get(AgentsSchedule, schedule.id).active is False
+
+
+class TestOnceRunsAtMostOnce:
+
+    @pytest.fixture
+    def once_schedule(self, session):
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=True,
+                                               run_at=naive_utc(utc_now() - datetime.timedelta(minutes=1)),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+        return schedule
+
+    def test_is_deactivated_in_the_database_before_running(self, app, session, once_schedule):
+        active_while_running = []
+
+        def run():
+            session.expire_all()
+            active_while_running.append(session.get(AgentsSchedule, once_schedule.id).active)
+            return once_schedule.id
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = run
+
+        cron_item.run_pending(now=datetime.datetime.now(datetime.timezone.utc))
+
+        assert active_while_running == [False]
+
+    def test_not_dispatched_is_reactivated_in_the_database(self, app, session, once_schedule):
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = mock.Mock(return_value=False)
+
+        cron_item.run_pending(now=datetime.datetime.now(datetime.timezone.utc))
+
+        session.expire_all()
+        assert session.get(AgentsSchedule, once_schedule.id).active is True
+
+    def test_compares_run_at_with_seconds(self):
+        minute = utc_now() + datetime.timedelta(minutes=1)
+        cron_item = CronItem(make_schedule(schedule_type='once', crontab=None,
+                                           run_at=naive_utc(minute + datetime.timedelta(seconds=30))))
+        cron_item.run = mock.Mock(return_value=1)
+
+        assert cron_item.run_pending(now=minute + datetime.timedelta(seconds=45)) == 1
+
+
+class TestAgentOfflineBeforeDispatch:
+
+    def test_executions_are_closed_and_the_run_reported_as_not_done(self, app, session):
+        agent = AgentFactory.create(active=True)
+        schedule = AgentScheduleFactory.create(executor=ExecutorFactory.create(agent=agent),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+        # Online at the first check, offline right before dispatching
+        with mock.patch.object(Agent, 'is_offline', new_callable=mock.PropertyMock, side_effect=[False, True]):
+            result = AgentsCronItem(schedule, app=app).run()
+
+        execution = AgentExecution.query.filter_by(executor_id=schedule.executor_id).one()
+        assert result is False
+        assert (execution.running, execution.successful) == (False, False)
+        assert execution.end_date is not None
 
 
 class TestCronItemUpdate:

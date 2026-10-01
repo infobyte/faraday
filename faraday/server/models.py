@@ -98,6 +98,7 @@ from faraday.server.utils.database import (
     is_unique_constraint_violation,
 )
 from faraday.server.utils.schedules import (
+    ONCE_GRACE_PERIOD,
     SCHEDULE_TYPE_CRON,
     SCHEDULE_TYPE_ONCE,
     SCHEDULE_TYPES,
@@ -3607,7 +3608,8 @@ class SchedulerGeneric(Metadata):
         now = datetime.now(tz=tz)
         if self.schedule_type == SCHEDULE_TYPE_ONCE:
             run_at = to_aware(self.run_at, tz)
-            if not self.active or run_at is None or run_at <= now:
+            # Past run_at it's still pending during the grace period (e.g. the agent was offline)
+            if not self.active or run_at is None or now - run_at > ONCE_GRACE_PERIOD:
                 return None
             return run_at
         try:

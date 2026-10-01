@@ -11,14 +11,15 @@ import pytest
 from sqlalchemy import text
 
 from faraday.server.api.modules.agents_schedule import AgentsScheduleView
-from faraday.server.models import AgentsSchedule
+from faraday.server.models import AgentsSchedule, CloudAgentsSchedule
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests.factories import (
     AgentScheduleFactory,
     AgentFactory,
     WorkspaceFactory,
     ExecutorFactory,
-    AgentExecutionFactory
+    AgentExecutionFactory,
+    CloudAgentFactory,
 )
 from posixpath import join
 
@@ -484,3 +485,74 @@ def test_next_run_of_once_with_unknown_timezone_does_not_raise(session):
     session.commit()
 
     assert schedule.next_run is not None
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestScheduleTypeField:
+
+    def test_agent_schedule_type_is_not_writable(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'/v3/agents_schedule/{schedule.id}', data={'type': 'cloud_agent'})
+
+        assert res.status_code == 200
+        assert res.json['type'] == 'agent'
+
+    def test_generic_schedule_type_can_not_be_changed(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'/v3/scheduler/{schedule.id}', data={'type': 'cloud_agent'})
+
+        assert res.status_code == 400
+        assert 'type' in res.json['messages']['json']
+
+    @mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
+    def test_generic_schedule_creation_requires_type(self, test_client, schedule_payload):
+        payload = schedule_payload()
+        payload.pop('type', None)
+
+        res = test_client.post('/v3/scheduler', data=payload)
+
+        assert res.status_code == 400
+        assert 'type' in res.json['messages']['json']
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_schedules_limit_counts_only_agent_schedules(test_client, session, schedule_payload):
+    session.add(CloudAgentsSchedule(description='cloud', crontab='0 4 * * *', timezone='UTC', parameters={},
+                                    cloud_agent=CloudAgentFactory.create()))
+    session.commit()
+
+    with mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', 1):
+        res = test_client.post('/v3/agents_schedule', data=schedule_payload())
+
+    assert res.status_code == 201
+
+
+class TestOnceNextRun:
+
+    @pytest.fixture
+    def make_once(self, session):
+        def _make(run_at, active=True):
+            schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=active, run_at=run_at,
+                                                   workspaces=[WorkspaceFactory.create()])
+            session.commit()
+            return schedule
+        return _make
+
+    def test_still_pending_within_the_grace_period(self, make_once):
+        run_at = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+
+        assert make_once(run_at).next_run is not None
+
+    def test_none_once_the_grace_period_is_over(self, make_once):
+        run_at = datetime.datetime.utcnow() - datetime.timedelta(hours=2)
+
+        assert make_once(run_at).next_run is None
+
+    def test_none_when_inactive(self, make_once):
+        run_at = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+
+        assert make_once(run_at, active=False).next_run is None

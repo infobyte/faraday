@@ -170,13 +170,20 @@ class CronItem:
 
     def deactivate(self):
         """Turns the schedule off, in memory and in the database."""
-        self.active = False
+        self._set_active(False)
+
+    def reactivate(self):
+        """Turns the schedule back on, in memory and in the database."""
+        self._set_active(True)
+
+    def _set_active(self, active):
+        self.active = active
         if self.app is None:
             return
         with self.app.app_context():
             schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
             if schedule:
-                schedule.active = False
+                schedule.active = active
                 db.session.commit()
 
     def run(self):
@@ -200,11 +207,13 @@ class CronItem:
                 now = now.replace(tzinfo=self.timezone)
             else:
                 now = now.astimezone(self.timezone)
+        # 'once' compares against the exact time: run_at may have seconds
+        exact_now = now
         now = now.replace(second=0, microsecond=0)
         if not self.valid:
             return False
         if self.active and self.schedule_type == SCHEDULE_TYPE_ONCE:
-            return self._run_pending_once(now)
+            return self._run_pending_once(exact_now)
         if self.active:
             next_time = self.schedule(self.last_run).get_next(datetime.datetime)
             if not next_time.tzinfo:
@@ -235,10 +244,13 @@ class CronItem:
             self.deactivate()
             return False
         logger.info(f"Running Job {self.schedule_id} [once at {run_at}]")
+        # Turned off before running, so it fires at most once: if the process dies mid-run,
+        # it's not run again after a restart
+        self.deactivate()
         result = self.run()
-        # Not run (e.g. agent offline): it's retried on the next ticks, within the grace period
-        if result:
-            self.deactivate()
+        if not result:
+            # Not dispatched (e.g. agent offline): retried on the next ticks, within the grace period
+            self.reactivate()
         return result
 
 
@@ -317,7 +329,14 @@ class AgentsCronItem(CronItem):
                 logger.warning("Agent %s with id %s is offline.",
                                schedule.executor.agent.name,
                                schedule.executor.agent.id)
-                return self.schedule_id
+                # Never dispatched: close the executions instead of leaving them as if they were pending
+                for agent_execution in agent_executions:
+                    agent_execution.running = False
+                    agent_execution.successful = False
+                    agent_execution.message = "The agent went offline before the run could be dispatched."
+                    agent_execution.end_date = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+                db.session.commit()
+                return False
             socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             return self.schedule_id

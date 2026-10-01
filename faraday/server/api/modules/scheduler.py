@@ -32,6 +32,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import (
+    AgentsSchedule,
     SchedulerGeneric,
     db,
 )
@@ -133,8 +134,8 @@ class SchedulerSchema(AutoSchema):
     min_severity = fields.String(required=False, allow_none=True, validate=validate.OneOf(SchedulerGeneric.SEVERITIES))
     max_severity = fields.String(required=False, allow_none=True, validate=validate.OneOf(SchedulerGeneric.SEVERITIES))
 
-    # Not required: the polymorphic identity of each subclass already sets it
-    type = fields.String(required=False, validate=validate.OneOf(SchedulerGeneric.SCHEDULER_TYPES))
+    # Subclass schemas make it dump only: their polymorphic identity sets it
+    type = fields.String(required=True, validate=validate.OneOf(SchedulerGeneric.SCHEDULER_TYPES))
 
     # Conditionally required fields
     executor_id = fields.Int(required=False, allow_none=True)
@@ -183,6 +184,13 @@ class SchedulerSchema(AutoSchema):
         if schedule is not None:
             return getattr(schedule, key, default)
         return default
+
+    @validates_schema
+    def validate_type_is_not_changed(self, data, **kwargs):
+        # Changing it would turn e.g. an agent schedule into a cloud agent one without a cloud agent
+        schedule = self.context.get('object')
+        if schedule is not None and 'type' in data and data['type'] != schedule.type:
+            raise ValidationError("Can't be changed.", field_name='type')
 
     @validates_schema
     def validate_schedule_type(self, data, **kwargs):
@@ -269,7 +277,7 @@ class SchedulerView(PaginatedMixin, ReadWriteView, FilterMixin):
         }
 
     def _check_schedules_limit(self):
-        schedules_in_use = db.session.query(SchedulerGeneric).count()
+        schedules_in_use = db.session.query(AgentsSchedule).count()
         if schedules_in_use >= SCHEDULES_LIMIT:
             message = "Agent schedules limit reached. Can't create new Schedules"
             logger.error(message)

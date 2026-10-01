@@ -164,6 +164,7 @@ class ServiceView(
             joinedload(Service.host).load_only(Host.ip),
             joinedload(Service.workspace).load_only(Workspace.name),
             undefer(Service.vulnerability_count),
+            undefer(Service.creator_command_id),
         ]
 
     def _envelope_list(self, objects, pagination_metadata=None):

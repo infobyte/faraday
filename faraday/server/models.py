@@ -3766,6 +3766,8 @@ class CloudAgent(Metadata):
     description = BlankColumn(Text)
     tools_count = Column(Integer, nullable=False, default=1)
     website = Column(Text, nullable=True)
+    # A blocked (inactive) cloud agent can't be run, neither manually nor by its schedules
+    active = Column(Boolean, nullable=False, default=True, server_default=text('true'))
 
     @property
     def last_run(self):

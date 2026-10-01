@@ -293,6 +293,19 @@ class CronItem:
 
 class AgentsCronItem(CronItem):
 
+    @staticmethod
+    def _close_undispatched(agent_executions, commands, message):
+        """Closes the executions (as failed) and commands of a run that was never dispatched."""
+        end_date = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        for agent_execution in agent_executions:
+            agent_execution.running = False
+            agent_execution.successful = False
+            agent_execution.message = message
+            agent_execution.end_date = end_date
+        for command in commands:
+            command.end_date = end_date
+        db.session.commit()
+
     def run(self):
         with self.app.app_context():
             schedule: AgentsSchedule = db.session.query(AgentsSchedule).\
@@ -366,18 +379,17 @@ class AgentsCronItem(CronItem):
                 logger.warning("Agent %s with id %s is offline.",
                                schedule.executor.agent.name,
                                schedule.executor.agent.id)
-                # Never dispatched: close the executions and their commands instead of leaving them as if
-                # they were in progress
-                end_date = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-                for agent_execution in agent_executions:
-                    agent_execution.running = False
-                    agent_execution.successful = False
-                    agent_execution.message = "The agent went offline before the run could be dispatched."
-                    agent_execution.end_date = end_date
-                for command in commands:
-                    command.end_date = end_date
-                db.session.commit()
+                self._close_undispatched(agent_executions, commands,
+                                         "The agent went offline before the run could be dispatched.")
                 return False
-            socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
+            # A failed dispatch is reported as not run instead of raising: the executions are already
+            # committed, so they're closed here, and an exception must only mean nothing was created yet
+            try:
+                socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
+            except Exception as e:
+                logger.exception(f"Schedule {self.schedule_id} could not be dispatched to the agent")
+                self._close_undispatched(agent_executions, commands,
+                                         f"The run could not be dispatched to the agent: {e}")
+                return False
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             return self.schedule_id

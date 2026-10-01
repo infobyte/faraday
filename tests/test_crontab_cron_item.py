@@ -301,6 +301,23 @@ class TestAgentOfflineBeforeDispatch:
         assert execution.command.end_date is not None
 
 
+class TestDispatchFailure:
+
+    @mock.patch('faraday.server.threads.crontab.socketio.emit', mock.Mock(side_effect=RuntimeError('queue down')))
+    def test_executions_are_closed_and_the_run_reported_as_not_done(self, app, session):
+        agent = AgentFactory.create(active=True)
+        schedule = AgentScheduleFactory.create(executor=ExecutorFactory.create(agent=agent),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+        with mock.patch.object(Agent, 'is_offline', new_callable=mock.PropertyMock, return_value=False):
+            result = AgentsCronItem(schedule, app=app).run()
+
+        execution = AgentExecution.query.filter_by(executor_id=schedule.executor_id).one()
+        assert result is False
+        assert (execution.running, execution.successful) == (False, False)
+        assert execution.command.end_date is not None
+
+
 class TestCronItemUpdate:
 
     def test_unchanged_schedule_keeps_the_anchor(self):

@@ -12,7 +12,7 @@ from time import sleep
 from uuid import uuid4
 
 # Related third party imports
-from croniter import croniter
+from croniter import croniter, CroniterBadCronError
 import dateutil
 
 # Local application imports
@@ -86,8 +86,10 @@ class CronTab(FaradayCronTab):
                     self.jobs[schedule.id].update(schedule)
                 else:
                     try:
-                        self.jobs[schedule.id] = AgentsCronItem(schedule, app=self.app)
-                        logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} [{schedule.crontab}]')
+                        job = AgentsCronItem(schedule, app=self.app)
+                        if job.valid:
+                            logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} [{schedule.crontab}]')
+                            self.jobs[schedule.id] = job
                     except Exception as e:
                         # A single bad schedule (e.g. unparseable crontab) must never crash
                         # the scheduler thread or app startup; log it and skip.
@@ -107,11 +109,16 @@ class CronItem:
         self.valid = True
         self.active = schedule.active
         self.crontab = schedule.crontab
-        self.last_run = self.schedule().get_prev(datetime.datetime)
         self.schedule_id = schedule.id
         self.timezone = dateutil.tz.gettz(schedule.timezone)
         if not self.timezone:
             self.timezone = dateutil.tz.tzlocal()
+        try:
+            self.last_run = self.schedule().get_prev(datetime.datetime)
+        except CroniterBadCronError:
+            logger.warning(f"Invalid crontab expression for schedule {schedule.id}: '{schedule.crontab}'. Skipping.")
+            self.valid = False
+            self.last_run = datetime.datetime.now()
 
     def update(self, schedule):
         if self.crontab != schedule.crontab:

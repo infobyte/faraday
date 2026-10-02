@@ -3818,6 +3818,12 @@ class CloudAgentExecution(Metadata):
     triggered_by = Column(String, nullable=True)
     run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
     tasks_completed = Column(Integer, nullable=False, default=0)
+    # The run's stages as the Cloud Agent Manager last reported them, whole
+    # (name, status, times...); null for a run that never reported any.
+    # stages_version is that report's own version, so an older one that
+    # arrives late doesn't replace a newer one.
+    stages = Column(JSONType, nullable=True)
+    stages_version = Column(Integer, nullable=False, default=0)
 
     @property
     def parent(self):

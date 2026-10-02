@@ -2,14 +2,57 @@
   "changelogUrl": "https://docs.faradaysec.com/RELEASE",
   "versions": [
     {
-      "id": "5.24",
-      "label": "5.24",
-      "releaseDate": "2026-09-02",
+      "id": "5.25",
+      "label": "5.25",
+      "releaseDate": "2026-09-30",
       "items": [
         {
           "id": "1",
           "type": "new",
-          "title": "Work Faster with Keyboard Shortcuts",
+          "title": "Take Control of Risk Scoring",
+          "description": "Stop settling for one-size-fits-all risk scores. Build named profiles with your own severity weights and multipliers, assign a different one to each workspace, and set a personal default so every workspace you create starts exactly how you like it.",
+          "license": "corporate",
+          "link": {
+            "type": "tour",
+            "label": "Take a Tour",
+            "url": "/workspaces?tour=risk-profiles"
+          }
+        },
+        {
+          "id": "2",
+          "type": "new",
+          "title": "Reports on Your Schedule, Delivered Your Way",
+          "description": "Weekly Reports is now Report Subscriptions. Choose weekly, biweekly, or monthly delivery, pick the sections that matter to you, and receive reports by email, keep them in Faraday, or both.",
+          "license": "professional",
+          "link": {
+            "type": "tour",
+            "label": "Take a tour",
+            "url": "/report-subscriptions?tour=subscriptions"
+          }
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "Capture Findings Without Leaving the Page",
+          "description": "Meet Capture to Faraday, our new Chrome extension. Log manual pentest findings right from the page you're testing, with a screenshot attached automatically, and run any online agent against the current target from the same popup. Your data goes straight to your Faraday instance and nowhere else.",
+          "license": null,
+          "link": {
+            "type": "doc",
+            "label": "Install from here",
+            "url": "https://chromewebstore.google.com/detail/capture-to-faraday/blhnijfpcfadfighpakklaiegajkhdic?pli=1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "5.24",
+      "label": "5.24",
+      "releaseDate": "2026-09-03",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Work Faster with Keyboard Shortcuts\"",
           "description": "Navigate faster with a new platform-wide keyboard shortcuts system; save, cancel, and switch tabs without leaving the keyboard. Press ⌘/ (Ctrl+/) anytime to see the shortcuts available in your current context.",
           "license": null,
           "link": {
@@ -19,19 +62,19 @@
           }
         },
         {
-          "id": "3",
+          "id": "2",
           "type": "new",
           "title": "New role: Workspace Administrator",
           "description": "A new built-in role, alongside Administrator, Asset Owner, Pentester, and Client, lets users manage workspaces (create, edit, archive, block, assign users) without full instance-wide admin permissions. Access is scoped only to workspaces where they're an assignee.",
-          "license": "professional",
+          "license": "corporate",
           "link": null
         },
         {
-          "id": "2",
+          "id": "3",
           "type": "improvement",
           "title": "Weekly Reports, Now in Executive Reports",
           "description": "Manage your weekly workspace report subscriptions from the Executive Reports section; toggle subscriptions for any workspace in one click. Plus, the last 10 generated reports are now saved and downloadable directly from this view, so you're covered even if an email gets lost or your address isn't configured.",
-          "license": "corporate",
+          "license": "professional",
           "link": null
         }
       ]
@@ -44,13 +87,13 @@
         {
           "id": "1",
           "type": "new",
-          "title": "Executive Reports (HTML).",
+          "title": "Executive Reports (HTML)",
           "description": "Create fully customized reports combining vulnerabilities, charts, assets, and free-form text into a single branded document, using a visual section-based editor. Replaces the previous generator (independent PDF/DOCX outputs) with a unified HTML → PDF flow.",
           "license": "professional",
           "link": {
             "type": "tour",
             "label": "Take a Tour",
-            "url": "/report"
+            "url": "/report?tour=reports"
           }
         },
         {
@@ -82,76 +125,6 @@
           "type": "improvement",
           "title": "Navbar & Sidebar Reorganization",
           "description": "The user avatar moved from the navbar to the sidebar, and the theme toggle moved from the menu to the navbar. Clicking the avatar still opens the same dropdown, with the same options and behavior as before.",
-          "license": null,
-          "link": null
-        }
-      ]
-    },
-    {
-      "id": "5.22",
-      "label": "5.22",
-      "releaseDate": "2026-06-19",
-      "items": [
-        {
-          "id": "2",
-          "type": "new",
-          "title": "Smarter Risk Scoring",
-          "description": "Workspace risk scores now use a multiplicative, severity-weighted model a meaningful change if you rely on workspace-level risk dashboards.",
-          "license": "professional",
-          "link": {
-            "type": "doc",
-            "label": "See documentation",
-            "url": "https://docs.faradaysec.com/Update/#recalculate-risk-scores-v52"
-          }
-        },
-        {
-          "id": "3",
-          "type": "new",
-          "title": "Float type Custom Attributes",
-          "description": "Custom Attributes now support a Float type. Users can create, edit, and delete Float CAs, set and update their values in vulnerability details, filter them in search bar, use them as targets in Jobs, add them as columns in the vulnerability table, and include them in Save/Apply Templates.",
-          "license": null,
-          "link": {
-            "type": "doc",
-            "label": "See documentation",
-            "url": "https://docs.faradaysec.com/Custom-Attributes/"
-          }
-        },
-        {
-          "id": "1",
-          "type": "improvement",
-          "title": "Instance link in email notifications",
-          "description": "Email notifications now include a link to the Faraday instance they were generated from.",
-          "license": "professional",
-          "link": null
-        }
-      ]
-    },
-    {
-      "id": "5.21",
-      "label": "5.21",
-      "releaseDate": "2026-05-14",
-      "items": [
-        {
-          "id": "1",
-          "type": "new",
-          "title": "Create credentials in bulk",
-          "description": "A credentials field can be included when creating vulnerabilities. This enables security tools to import credential data atomically alongside other findings, without requiring separate API calls.",
-          "license": null,
-          "link": null
-        },
-        {
-          "id": "2",
-          "type": "new",
-          "title": "Advanced notification messages",
-          "description": "Now include the workspace name in the message, and notifications are grouped per workspace.",
-          "license": "professional",
-          "link": null
-        },
-        {
-          "id": "3",
-          "type": "improvement",
-          "title": "Normalized vulnerability fields across the UI",
-          "description": "All relevant attributes are now consistently available in the vulnerability table's column selector, the vulnerability detail view, and the search bar filters. New additions include CVSS4, Data, Description, Request, Resolution, Response, Last Detected, Risk Score, Impact, and Issue Tracker",
           "license": null,
           "link": null
         }

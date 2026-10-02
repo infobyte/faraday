@@ -217,6 +217,8 @@ order_regex = re.compile(r"^$|^\d+(-\d+)*$")
 
 WORKFLOW_LIMIT = 2
 
+_warned_invalid_choice_fields = set()
+
 
 def _get_rules_attributes():
     rules = deepcopy(rules_attributes)
@@ -252,7 +254,9 @@ def _get_rules_attributes():
             try:
                 value_dict["valid"] = json.loads(field.field_metadata)
             except (TypeError, ValueError):
-                logger.warning(f"Invalid choices for custom field {field.field_name}: {field.field_metadata!r}")
+                if field.field_name not in _warned_invalid_choice_fields:
+                    _warned_invalid_choice_fields.add(field.field_name)
+                    logger.warning(f"Invalid choices for custom field {field.field_name}")
 
         # add value_dict to the vulnerability rules if it's not already there
         if value_dict not in rules["vulnerability"]:

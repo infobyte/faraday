@@ -248,8 +248,11 @@ def _get_rules_attributes():
                       "type": c_type,
                       "operators": c_operators}
 
-        if field.field_type == "choice":
-            value_dict["valid"] = json.loads(field.field_metadata)
+        if field.field_type == "choice" and field.field_metadata:
+            try:
+                value_dict["valid"] = json.loads(field.field_metadata)
+            except (TypeError, ValueError):
+                logger.warning(f"Invalid choices for custom field {field.field_name}: {field.field_metadata!r}")
 
         # add value_dict to the vulnerability rules if it's not already there
         if value_dict not in rules["vulnerability"]:

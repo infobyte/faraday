@@ -700,6 +700,24 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.description == "ActionExecuted"
 
+    @pytest.mark.parametrize("field_metadata", [None, "", "a,b"])
+    def test_conditions_with_invalid_choice_custom_field_metadata(self, test_client, field_metadata):
+        factories.CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name="test_choice",
+            field_type="choice",
+            field_metadata=field_metadata,
+            field_order=1,
+            field_display_name="test_choice",
+        )
+        db.session.commit()
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability")
+        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
+        db.session.add(vuln)
+        db.session.commit()
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
+        assert vuln.description == "ActionExecuted"
+
     def test_conditions_contains_CVE(self, test_client):
         cond = [
             {

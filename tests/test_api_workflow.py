@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import datetime, timedelta
 from unittest import mock
@@ -5,7 +6,9 @@ from unittest import mock
 import pytest
 import sqlalchemy
 
-from faraday.server.api.modules.workflow import JobView, TaskView, PipelineView, PipelineSchema, fields_lookup
+from faraday.server.api.modules.workflow import (
+    JobView, TaskView, PipelineView, PipelineSchema, fields_lookup, _get_rules_attributes,
+)
 from faraday.server.models import Workflow, Action, db, Pipeline, Host, VulnerabilityGeneric
 from faraday.server.utils.workflows import (
     _process_entry, _run_pipeline_chunked, _iter_id_chunks,
@@ -699,6 +702,41 @@ class TestWorkflowMixinsView(ReadWriteAPITests):
         db.session.commit()
         _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
         assert vuln.description == "ActionExecuted"
+
+    @pytest.mark.parametrize("field_metadata", [None, "", "a,b"])
+    def test_conditions_with_invalid_choice_custom_field_metadata(self, test_client, field_metadata):
+        factories.CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name="test_choice",
+            field_type="choice",
+            field_metadata=field_metadata,
+            field_order=1,
+            field_display_name="test_choice",
+        )
+        db.session.commit()
+        ws, action, workflow, pipeline = create_pipeline(test_client, model="vulnerability")
+        vuln = VulnerabilityFactory.create(description="testing", workspace=ws)
+        db.session.add(vuln)
+        db.session.commit()
+        _process_entry(vuln.__class__.__name__, [vuln.id], vuln.workspace.id)
+        assert vuln.description == "ActionExecuted"
+
+    def test_invalid_choice_custom_field_metadata_warns_once(self, test_client, caplog):
+        factories.CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name="test_choice_warn",
+            field_type="choice",
+            field_metadata="not json " * 100,
+            field_order=1,
+            field_display_name="test_choice_warn",
+        )
+        db.session.commit()
+        for _ in range(3):
+            _get_rules_attributes()
+        warnings = [r.getMessage() for r in caplog.records
+                    if r.levelno == logging.WARNING and "test_choice_warn" in r.getMessage()]
+        assert len(warnings) == 1
+        assert "not json" not in warnings[0]
 
     def test_conditions_contains_CVE(self, test_client):
         cond = [

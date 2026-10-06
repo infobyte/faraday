@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.24.2 API",
+        "title": "Faraday 5.25.0 API",
         "version": "v3"
     },
     "security": [
@@ -3232,6 +3232,37 @@
                 }
             }
         },
+        "/_api/v3/vulns/{vuln_id}/tools_history": {
+            "get": {
+                "tags": [
+                    "Vulnerability",
+                    "Command"
+                ],
+                "summary": "Get the commands that touched a vulnerability",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VulnToolsHistoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "vuln_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
         "/_api/v3/vulns/top_users": {
             "get": {
                 "tags": [
@@ -3370,6 +3401,26 @@
                         "description": "Field to group vulnerabilities by (e.g. severity, confirmed, status).",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "required": false,
+                        "description": "Filter by one or more vulnerability statuses (repeat the parameter for multiple values, e.g. status=open&status=re-opened). Accepted values: open, re-opened, closed, risk-accepted.\n",
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "open",
+                                    "re-opened",
+                                    "closed",
+                                    "risk-accepted"
+                                ]
+                            }
                         }
                     }
                 ],
@@ -3850,6 +3901,45 @@
                     }
                 }
             }
+        },
+        "/_api/v3/ws/{workspace_name}/vulns/{vuln_id}/tools_history": {
+            "get": {
+                "tags": [
+                    "Vulnerability",
+                    "Command"
+                ],
+                "summary": "Get the commands that touched a vulnerability",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VulnToolsHistoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "workspace_name",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "vuln_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/ws/{workspace_name}/vulns/top_users": {
             "get": {
@@ -7673,6 +7763,19 @@
                     "required": true
                 }
             ]
+        },
+        "/_api/v3/whats_new": {
+            "get": {
+                "tags": [
+                    "Informational"
+                ],
+                "summary": "Get the What's New changelog.",
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    }
+                }
+            }
         }
     },
     "openapi": "3.0.2",
@@ -7731,6 +7834,7 @@
                             "shell",
                             "agent",
                             "cloud_agent",
+                            "system",
                             null
                         ],
                         "nullable": true
@@ -7794,6 +7898,7 @@
                             "shell",
                             "agent",
                             "cloud_agent",
+                            "system",
                             null
                         ],
                         "maxLength": 11,
@@ -7913,7 +8018,6 @@
                         "nullable": true
                     },
                     "creator_command_tool": {
-                        "type": "string",
                         "readOnly": true,
                         "nullable": true
                     },
@@ -8429,6 +8533,44 @@
                         "type": "string"
                     }
                 }
+            },
+            "VulnToolsHistory": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "user": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "params": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "command_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "create_date": {
+                        "readOnly": true
+                    }
+                },
+                "additionalProperties": false
+            },
+            "VulnToolsHistoryResponse": {
+                "type": "object",
+                "properties": {
+                    "tools": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "$ref": "#/components/schemas/VulnToolsHistory"
+                        }
+                    }
+                },
+                "additionalProperties": false
             },
             "VulnerabilityTemplate": {
                 "type": "object",
@@ -9221,7 +9363,6 @@
                         "nullable": true
                     },
                     "creator_command_tool": {
-                        "type": "string",
                         "readOnly": true,
                         "nullable": true
                     },
@@ -9359,6 +9500,7 @@
                             "shell",
                             "agent",
                             "cloud_agent",
+                            "system",
                             null
                         ],
                         "nullable": true

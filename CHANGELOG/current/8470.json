@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[ADD] New `GET /vulns/<id>/tools_history` endpoint and a `\"Web UI\"` fallback for asset creator tool; also fixes command creator not being set on bulk vulnerability updates. #8470"
-}

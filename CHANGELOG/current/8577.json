@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Fixed pipeline conditions never matching when a choice custom attribute has no valid choices. #8577"
-}

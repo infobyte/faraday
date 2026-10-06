@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="10px" height="16px" viewBox="0 0 10 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon_drag</title>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon_drag" fill="#BEC8D2" fill-rule="nonzero">
+            <g id="Shape">
+                <path d="M4,14 C4,15.1 3.1,16 2,16 C0.9,16 0,15.1 0,14 C0,12.9 0.9,12 2,12 C3.1,12 4,12.9 4,14 Z M2,6 C0.9,6 0,6.9 0,8 C0,9.1 0.9,10 2,10 C3.1,10 4,9.1 4,8 C4,6.9 3.1,6 2,6 Z M2,0 C0.9,0 0,0.9 0,2 C0,3.1 0.9,4 2,4 C3.1,4 4,3.1 4,2 C4,0.9 3.1,0 2,0 Z M8,4 C9.1,4 10,3.1 10,2 C10,0.9 9.1,0 8,0 C6.9,0 6,0.9 6,2 C6,3.1 6.9,4 8,4 Z M8,6 C6.9,6 6,6.9 6,8 C6,9.1 6.9,10 8,10 C9.1,10 10,9.1 10,8 C10,6.9 9.1,6 8,6 Z M8,12 C6.9,12 6,12.9 6,14 C6,15.1 6.9,16 8,16 C9.1,16 10,15.1 10,14 C10,12.9 9.1,12 8,12 Z"></path>
+            </g>
+        </g>
+    </g>
+</svg>

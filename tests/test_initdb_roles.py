@@ -14,6 +14,7 @@ from faraday.server.models import PermissionsUnitAction, User
 from faraday.server.utils.permissions import (
     UNIT_COMMENTS,
     UNIT_HOSTS,
+    UNIT_RISK_SCORE_PROFILES,
     UNIT_SERVICES,
     UNIT_SETTINGS,
     UNIT_USERS,
@@ -112,7 +113,7 @@ class TestInitdbWorkspaceAdmin:
         for r in rows:
             # workspace_admin has a row for every unit_action (complete profile)
             assert r.wsa_allowed is not None, ('missing row', r.unit, r.action)
-            if r.unit == UNIT_WORKSPACES:
+            if r.unit in (UNIT_WORKSPACES, UNIT_RISK_SCORE_PROFILES):
                 assert r.wsa_allowed is True, (r.unit, r.action)
             else:
                 expected = r.pent_allowed if r.pent_allowed is not None else False

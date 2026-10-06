@@ -1064,3 +1064,29 @@ class TestVulnerabilitySearch:
         assert len(rows) == 1
         assert csv_reader.fieldnames == VALID_FILTER_VULN_COLUMNS
         assert rows[0]['description'] == 'some description'
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_export_csv_limited_with_last_detected_column(self, test_client, session, workspace):
+        host = HostFactory.create(workspace=workspace)
+        last_detected = datetime.datetime(2026, 5, 4, 3, 2, 1)
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            host=host,
+            service=None,
+            last_detected=last_detected,
+        )
+        session.add(vuln)
+        session.commit()
+
+        query_filter = {"columns": ["name", "severity", "last_detected"], "filters": []}
+        response = test_client.get(
+            f'/v3/ws/{workspace.name}/vulns/filter?export_csv_limited=true&q={json.dumps(query_filter)}'
+        )
+        assert response.status_code == 200
+        csv_content = StringIO(response.data.decode('utf-8'))
+        csv_reader = csv.DictReader(csv_content)
+        rows = list(csv_reader)
+        assert csv_reader.fieldnames == ["name", "severity", "last_detected"]
+        assert len(rows) == 1
+        assert rows[0]['last_detected'].startswith('2026-05-04T03:02:01')

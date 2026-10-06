@@ -37,6 +37,7 @@ if not FARADAY_SERVER_SESSIONS_DIR.exists():
 FARADAY_SERVER_PID_FILE = CONST_FARADAY_HOME_PATH / \
                           'faraday-server-port-{0}.pid'
 REQUIREMENTS_FILE = FARADAY_BASE / 'requirements.txt'
+WHATS_NEW_FILE = FARADAY_BASE / 'whats_new.json'
 DEFAULT_CONFIG_FILE = FARADAY_BASE / 'server' / 'default.ini'
 REPORTS_VIEWS_DIR = FARADAY_BASE / 'views' / 'reports'
 LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config' / 'server.ini'

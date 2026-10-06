@@ -54,6 +54,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Table,
     Date,
+    Time,
     and_,
     case as alchemy_case,
     event,
@@ -1146,7 +1147,10 @@ class Command(Metadata):
         # gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
         'agent',
-        'cloud_agent'
+        'cloud_agent',
+        # Not used in this edition - kept for schema/enum parity with black, which creates
+        # Command rows with this value to track risk score profile reassignment progress.
+        'system',
     ]
 
     __tablename__ = 'command'
@@ -1222,6 +1226,10 @@ class Command(Metadata):
     )
 
     tasks = Column(JSONType, nullable=True, default=[])
+
+    # Per-batch import counters, appended atomically by each Celery batch and
+    # collapsed into totals by finalize_report. See utils/bulk_create.sum_import_stats.
+    import_stats = Column(JSONType, nullable=True)
 
     @property
     def parent(self):
@@ -1553,8 +1561,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
         nullable=True,
         default=None,
     )
-    is_automatic = Column(Boolean, nullable=True, default=None)
-    group_title = BlankColumn(Text, nullable=True)
 
     @hybrid_property
     def group_count(self):
@@ -2373,6 +2379,49 @@ def _return_last_30_days() -> list:
     return last_30_days
 
 
+class RiskScoreProfile(Metadata):
+    """A reusable, named set of risk score calculation values, assignable to workspaces.
+
+    ``creator``/``creator_id`` (from ``Metadata``) serve as the profile's "author" for the
+    authoring/edit-lock rules: only an instance admin or the profile's own author (when they
+    hold the workspace_admin role) may edit/delete it, and only while unused by any workspace.
+    MAX_RISK/MULTIPLIER_CAP/RISK_SEVERITY_THRESHOLDS are NOT part of this model: they remain
+    hardcoded invariants in faraday/enrichment/enrichment.py regardless of the active profile.
+    """
+    __tablename__ = 'risk_score_profile'
+
+    id = Column(Integer, primary_key=True)
+    name = NonBlankColumn(Text, unique=True)
+    description = BlankColumn(Text)
+    is_system_default = Column(Boolean, nullable=False, default=False)
+
+    severity_base_critical = Column(Float, nullable=False)
+    severity_base_high = Column(Float, nullable=False)
+    severity_base_medium = Column(Float, nullable=False)
+    severity_base_low = Column(Float, nullable=False)
+    severity_base_informational = Column(Float, nullable=False)
+
+    confirmed_multiplier = Column(Float, nullable=False)
+    cisa_multiplier = Column(Float, nullable=False)
+    exploit_multiplier = Column(Float, nullable=False)
+    trending_multiplier = Column(Float, nullable=False)
+    internet_facing_multiplier = Column(Float, nullable=False)
+    attack_vector_multiplier = Column(Float, nullable=False)
+    important_host_multiplier = Column(Float, nullable=False)
+
+    def severity_base(self) -> dict:
+        return {
+            'critical': self.severity_base_critical,
+            'high': self.severity_base_high,
+            'medium': self.severity_base_medium,
+            'low': self.severity_base_low,
+            'informational': self.severity_base_informational,
+        }
+
+    def __repr__(self):
+        return f"<RiskScoreProfile: {self.name}>"
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
 
@@ -2404,6 +2453,9 @@ class Workspace(Metadata):
     group_by = Column(Enum(*GROUP_BY, name='group_by'), nullable=True)
     group_algorithm = Column(Enum(*GROUP_ALGORITHM, name='group_algorithm'), nullable=True)
     group_threshold = Column(Integer, nullable=True)
+
+    risk_score_profile_id = Column(Integer, ForeignKey('risk_score_profile.id'), index=True, nullable=False)
+    risk_score_profile = relationship('RiskScoreProfile', foreign_keys=[risk_score_profile_id])
 
     # Stats
 
@@ -2788,6 +2840,20 @@ class User(db.Model, UserMixin):
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
     preferences = Column(JSONType, nullable=True, default={})
     fs_uniquifier = Column(String(64), unique=True, nullable=False)  # flask-security
+
+    # Personal default risk score profile (Admin/Workspace Administrator only). Auto-assigned
+    # to workspaces this user creates; falls back to the system default profile when unset.
+    # use_alter=True breaks the circular FK dependency between this table and
+    # risk_score_profile (whose creator_id/update_user_id point back at faraday_user).
+    default_risk_score_profile_id = Column(
+        Integer,
+        ForeignKey(
+            'risk_score_profile.id', ondelete='SET NULL', use_alter=True,
+            name='faraday_user_default_risk_score_profile_id_fkey',
+        ),
+        nullable=True,
+    )
+    default_risk_score_profile = relationship('RiskScoreProfile', foreign_keys=[default_risk_score_profile_id])
 
     roles = db.relationship('Role', secondary=roles_users, backref='users')
     user_type = Column(Enum(*USER_TYPES, name='user_types'), nullable=False, default=LOCAL_TYPE)
@@ -4055,15 +4121,43 @@ class RolePermission(db.Model):
 class WorkspaceSummaryReport(Metadata):
     DAILY_TYPE = 'daily'
     WEEKLY_TYPE = 'weekly'
+    BIWEEKLY_TYPE = 'biweekly'
     MONTHLY_TYPE = 'monthly'
     YEARLY_TYPE = 'yearly'
 
+    # daily/yearly are kept in the DB enum for backwards compatibility (no
+    # rows ever used them) but are not offered by the Report Subscriptions
+    # feature; the API schema restricts input to weekly/biweekly/monthly.
     SUMMARY_PERIOD_TYPES = [
         DAILY_TYPE,
         WEEKLY_TYPE,
+        BIWEEKLY_TYPE,
         MONTHLY_TYPE,
         YEARLY_TYPE,
     ]
+
+    # Cadences actually offered by Report Subscriptions (subset of the
+    # legacy SUMMARY_PERIOD_TYPES DB enum).
+    SUBSCRIPTION_PERIOD_TYPES = [WEEKLY_TYPE, BIWEEKLY_TYPE, MONTHLY_TYPE]
+
+    CUSTOM_PRESET = 'custom'
+
+    # Valid `schedule_day` values for weekly/biweekly: always a weekday
+    # (send on the first occurrence of that weekday).
+    MONDAY = 'monday'
+    TUESDAY = 'tuesday'
+    WEDNESDAY = 'wednesday'
+    THURSDAY = 'thursday'
+    FRIDAY = 'friday'
+    SATURDAY = 'saturday'
+    SUNDAY = 'sunday'
+    WEEKDAYS = [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+
+    FIRST_DAY_OF_MONTH = 'first_day_of_month'
+    LAST_DAY_OF_MONTH = 'last_day_of_month'
+    # Monthly only offers 3 options: first Monday of the month, or the two
+    # calendar-day sentinels - not every weekday like weekly/biweekly does.
+    MONTHLY_SCHEDULE_DAYS = [MONDAY, FIRST_DAY_OF_MONTH, LAST_DAY_OF_MONTH]
 
     __tablename__ = 'workspace_summary_report'
     id = Column(Integer, primary_key=True)
@@ -4090,8 +4184,31 @@ class WorkspaceSummaryReport(Metadata):
     )
     active = Column(Boolean, nullable=False, default=True)
 
+    # Day of week ('monday'..'sunday') for weekly/biweekly, or day of month
+    # for monthly. Kept as a free-form string since the exact set of
+    # monthly options (wireframe 02B) isn't validated at the DB layer.
+    schedule_day = Column(String, nullable=True)
+    schedule_time = Column(Time, nullable=True)
+
+    # Next scheduled run, kept up to date by the scheduler (see
+    # faraday/ws_sum_reports/ws_sum_reports.py); drives the "Next delivery"
+    # column in the UI.
+    next_delivery = Column(DateTime, nullable=True, index=True)
+
+    # CUSTOM_PRESET or a preset key (see faraday/ws_sum_reports/sections.py).
+    content_preset = Column(String, nullable=False, default=CUSTOM_PRESET)
+    # Section keys selected when content_preset == CUSTOM_PRESET.
+    content_sections = Column(JSONType, nullable=False, default=[])
+
+    # Delivery methods, combinable and independent.
+    send_by_email = Column(Boolean, nullable=False, default=True)
+    save_in_faraday = Column(Boolean, nullable=False, default=True)
+
     __table_args__ = (
-        UniqueConstraint('creator_id', 'workspace_id', name='uix_workspace_summary_report_creator_workspace'),
+        UniqueConstraint(
+            'workspace_id', 'user_id', 'summary_period_type',
+            name='uix_workspace_summary_report_workspace_user_period',
+        ),
     )
 
 

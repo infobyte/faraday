@@ -1,0 +1,134 @@
+{
+  "changelogUrl": "https://docs.faradaysec.com/RELEASE",
+  "versions": [
+    {
+      "id": "5.25",
+      "label": "5.25",
+      "releaseDate": "2026-09-30",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Take Control of Risk Scoring",
+          "description": "Stop settling for one-size-fits-all risk scores. Build named profiles with your own severity weights and multipliers, assign a different one to each workspace, and set a personal default so every workspace you create starts exactly how you like it.",
+          "license": "corporate",
+          "link": {
+            "type": "tour",
+            "label": "Take a Tour",
+            "url": "/workspaces?tour=risk-profiles"
+          }
+        },
+        {
+          "id": "2",
+          "type": "new",
+          "title": "Reports on Your Schedule, Delivered Your Way",
+          "description": "Weekly Reports is now Report Subscriptions. Choose weekly, biweekly, or monthly delivery, pick the sections that matter to you, and receive reports by email, keep them in Faraday, or both.",
+          "license": "professional",
+          "link": {
+            "type": "tour",
+            "label": "Take a tour",
+            "url": "/report-subscriptions?tour=subscriptions"
+          }
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "Capture Findings Without Leaving the Page",
+          "description": "Meet Capture to Faraday, our new Chrome extension. Log manual pentest findings right from the page you're testing, with a screenshot attached automatically, and run any online agent against the current target from the same popup. Your data goes straight to your Faraday instance and nowhere else.",
+          "license": null,
+          "link": {
+            "type": "doc",
+            "label": "Install from here",
+            "url": "https://chromewebstore.google.com/detail/capture-to-faraday/blhnijfpcfadfighpakklaiegajkhdic?pli=1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "5.24",
+      "label": "5.24",
+      "releaseDate": "2026-09-03",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Work Faster with Keyboard Shortcuts\"",
+          "description": "Navigate faster with a new platform-wide keyboard shortcuts system; save, cancel, and switch tabs without leaving the keyboard. Press ⌘/ (Ctrl+/) anytime to see the shortcuts available in your current context.",
+          "license": null,
+          "link": {
+            "type": "doc",
+            "label": "See documentation",
+            "url": "https://docs.faradaysec.com/Shortcuts/"
+          }
+        },
+        {
+          "id": "2",
+          "type": "new",
+          "title": "New role: Workspace Administrator",
+          "description": "A new built-in role, alongside Administrator, Asset Owner, Pentester, and Client, lets users manage workspaces (create, edit, archive, block, assign users) without full instance-wide admin permissions. Access is scoped only to workspaces where they're an assignee.",
+          "license": "corporate",
+          "link": null
+        },
+        {
+          "id": "3",
+          "type": "improvement",
+          "title": "Weekly Reports, Now in Executive Reports",
+          "description": "Manage your weekly workspace report subscriptions from the Executive Reports section; toggle subscriptions for any workspace in one click. Plus, the last 10 generated reports are now saved and downloadable directly from this view, so you're covered even if an email gets lost or your address isn't configured.",
+          "license": "professional",
+          "link": null
+        }
+      ]
+    },
+    {
+      "id": "5.23",
+      "label": "5.23",
+      "releaseDate": "2026-07-23",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Executive Reports (HTML)",
+          "description": "Create fully customized reports combining vulnerabilities, charts, assets, and free-form text into a single branded document, using a visual section-based editor. Replaces the previous generator (independent PDF/DOCX outputs) with a unified HTML → PDF flow.",
+          "license": "professional",
+          "link": {
+            "type": "tour",
+            "label": "Take a Tour",
+            "url": "/report?tour=reports"
+          }
+        },
+        {
+          "id": "2",
+          "type": "new",
+          "title": "New General Dashboard",
+          "description": "Replacing the previous default workspace dashboard, with five widgets: Remediation , By Severity, Workspace Risk, Latest Findings, and Activity Feed. Widgets can be added, removed, resized, and rearranged, and the layout persists per user",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "Drag-and-Drop Vulnerability Import",
+          "description": "Drop vulnerability report files directly onto the Dashboard or Manage sections to import them, with visual feedback as you drag.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "4",
+          "type": "new",
+          "title": "Runners & Scanners: New Search Bar",
+          "description": "Search and filter runners by status, last execution date, tool, category, and more with a placeholder that adapts to the active tab.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "5",
+          "type": "improvement",
+          "title": "Navbar & Sidebar Reorganization",
+          "description": "The user avatar moved from the navbar to the sidebar, and the theme toggle moved from the menu to the navbar. Clicking the avatar still opens the same dropdown, with the same options and behavior as before.",
+          "license": null,
+          "link": null
+        }
+      ]
+    }
+  ]
+}

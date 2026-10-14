@@ -19,12 +19,13 @@ depends_on = None
 def upgrade():
     with op.get_context().autocommit_block():
         # A failed CONCURRENTLY build leaves an invalid index that IF NOT EXISTS would skip
-        invalid = op.get_bind().execute(sa.text(
-            "SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid "
-            "WHERE c.relname = 'ix_user_notification_user_id_id' AND NOT i.indisvalid"
-        )).scalar()
-        if invalid:
-            op.execute("DROP INDEX CONCURRENTLY IF EXISTS ix_user_notification_user_id_id")
+        if not op.get_context().as_sql:
+            invalid = op.get_bind().execute(sa.text(
+                "SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid "
+                "WHERE c.relname = 'ix_user_notification_user_id_id' AND NOT i.indisvalid"
+            )).scalar()
+            if invalid:
+                op.execute("DROP INDEX CONCURRENTLY IF EXISTS ix_user_notification_user_id_id")
         op.execute(
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_user_notification_user_id_id "
             "ON user_notification (user_id, id)"

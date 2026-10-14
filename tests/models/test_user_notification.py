@@ -6,6 +6,7 @@ from tests.factories import UserFactory
 
 def test_latest_notifications_query_uses_user_id_id_index(session):
     users = UserFactory.create_batch(200)
+    empty_user = UserFactory.create()
     session.commit()
     user_ids = [user.id for user in users]
     session.execute(
@@ -17,12 +18,13 @@ def test_latest_notifications_query_uses_user_id_id_index(session):
     session.execute(text('ANALYZE user_notification'))
     session.execute(text('SET LOCAL enable_seqscan = off'))
 
-    query = UserNotification.query.filter(
-        UserNotification.user_id == user_ids[0]
-    ).order_by(UserNotification.id.desc()).limit(4)
-    compiled = query.statement.compile(dialect=session.get_bind().dialect,
-                                       compile_kwargs={'literal_binds': True})
-    plan = '\n'.join(row[0] for row in session.execute(text(f'EXPLAIN {compiled}')))
+    for user_id in (user_ids[0], empty_user.id):
+        query = UserNotification.query.filter(
+            UserNotification.user_id == user_id
+        ).order_by(UserNotification.id.desc()).limit(4)
+        compiled = query.statement.compile(dialect=session.get_bind().dialect,
+                                           compile_kwargs={'literal_binds': True})
+        plan = '\n'.join(row[0] for row in session.execute(text(f'EXPLAIN {compiled}')))
 
-    assert 'Index Scan Backward using ix_user_notification_user_id_id' in plan
-    assert 'Filter' not in plan
+        assert 'Index Scan Backward using ix_user_notification_user_id_id' in plan
+        assert 'Filter' not in plan

@@ -66,9 +66,6 @@ def _register_nplusone(app):
     app.after_request_funcs[None].insert(0, app.after_request_funcs[None].pop())
 
 
-# pytest_plugins = ("celery.contrib.pytest", )
-
-
 pytest_plugins = ("celery.contrib.pytest", )
 
 TEST_DATA_PATH = Path(__file__).parent / 'data'

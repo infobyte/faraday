@@ -4,7 +4,7 @@ Adds schedule_type, start_date and run_at to agent_schedule, and makes crontab
 nullable (only 'cron' schedules use it).
 
 Revision ID: 120c7b0c8b12
-Revises: 6ed6d0c4a21c
+Revises: bb0860337f41
 Create Date: 2026-10-01 00:00:00.000000+00:00
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '120c7b0c8b12'
-down_revision = '6ed6d0c4a21c'
+down_revision = 'bb0860337f41'
 branch_labels = None
 depends_on = None
 

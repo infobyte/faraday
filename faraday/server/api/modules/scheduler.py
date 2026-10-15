@@ -86,7 +86,9 @@ class ScheduleDateTimeField(fields.AwareDateTime):
     }
 
     def _deserialize(self, value, attr, data, **kwargs):
-        return to_naive_utc(super()._deserialize(value, attr, data, **kwargs))
+        # Sub-second precision is meaningless for a schedule (cron resolves minutes), and
+        # next_cron_run's one second margin before start_date assumes whole seconds.
+        return to_naive_utc(super()._deserialize(value, attr, data, **kwargs)).replace(microsecond=0)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value is None:

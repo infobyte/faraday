@@ -414,6 +414,15 @@ class TestScheduleTypes:
 
         assert res.json['next_run'] == '2030-10-14 04:00:00-03:00'
 
+    def test_sub_second_precision_is_truncated(self, test_client, session, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(crontab='0 4 * * *',
+                                                               start_date='2030-10-14T04:00:00.500000-03:00'))
+
+        assert res.status_code == 201, res.json
+        assert res.json['start_date'] == '2030-10-14T04:00:00-03:00'
+        assert res.json['next_run'] == '2030-10-14 04:00:00-03:00'
+        assert session.get(AgentsSchedule, res.json['id']).start_date == datetime.datetime(2030, 10, 14, 7, 0)
+
     def test_date_without_offset_is_rejected(self, test_client, schedule_payload):
         res = test_client.post(self.url, data=schedule_payload(start_date='2030-10-14T04:00:00'))
 

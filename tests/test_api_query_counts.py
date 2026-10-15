@@ -281,3 +281,47 @@ class TestOtherListingsQueryCounts:
         many, _ = _count_queries(test_client, session, url)
 
         assert many <= few, f"{url} scales with rows: {few} -> {many}"
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestBulkUpdateQueryCounts:
+
+    @staticmethod
+    def _bulk_update_queries(test_client, session, workspace, vulns):
+        ids = [vuln.id for vuln in vulns]  # before expiring, or each id reloads its vuln
+        session.expire_all()
+        test_client.get('/v3/info')
+        g._sqlalchemy_queries = []
+        res = test_client.patch(f'/v3/ws/{workspace.name}/vulns', data={
+            'ids': ids,
+            'cvss3': {'vector_string': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'},
+        })
+        assert res.status_code == 200, res.json
+        return len(get_recorded_queries())
+
+    def test_bulk_update_of_orm_setter_fields_does_not_scale_with_vulns(self, test_client, session, workspace):
+        """cvss and the like go through the ORM one vuln at a time: what the risk
+        calculation, the history comment and the workspace consistency check
+        read of each vuln must come with the batch, not a query per vuln."""
+        host = factories.HostFactory.create(workspace=workspace)
+        service = factories.ServiceFactory.create(workspace=workspace, host=host)
+        session.commit()
+
+        def make_vulns(amount):
+            vulns = []
+            for i in range(amount):
+                if i % 3 == 0:
+                    vulns.append(factories.VulnerabilityFactory.create(workspace=workspace, host=host, service=None))
+                elif i % 3 == 1:
+                    vulns.append(factories.VulnerabilityFactory.create(workspace=workspace, service=service,
+                                                                       host=None))
+                else:
+                    vulns.append(factories.VulnerabilityWebFactory.create(workspace=workspace, service=service))
+            session.commit()
+            return vulns
+
+        few = self._bulk_update_queries(test_client, session, workspace, make_vulns(3))
+        many = self._bulk_update_queries(test_client, session, workspace, make_vulns(12))
+
+        # every vuln still needs its own UPDATE
+        assert many - few <= 12 - 3, f"bulk update scales with vulns: {few} -> {many}"

@@ -411,6 +411,22 @@ class TestPipelineMixinsView(ReadWriteAPITests):
 
         assert seen == sorted(h.id for h in hosts)
 
+    def test_iter_id_chunks_skips_objects_created_while_iterating(self, test_client):
+        """An import adding objects while the pipeline runs must not keep it going."""
+        ws = factories.WorkspaceFactory.create()
+        hosts = [HostFactory.create(workspace=ws) for _ in range(4)]
+        db.session.commit()
+
+        seen = []
+        for chunk_number, chunk in enumerate(_iter_id_chunks(ws.id, Host, chunk_size=2)):
+            # without a cap it never ends: every chunk adds a full chunk more
+            assert chunk_number < 5, "the iteration keeps picking up the hosts created meanwhile"
+            seen.extend(chunk)
+            HostFactory.create_batch(2, workspace=ws)
+            db.session.commit()
+
+        assert seen == sorted(h.id for h in hosts)
+
     def test_iter_id_chunks_empty_workspace(self, test_client):
         ws = factories.WorkspaceFactory.create()
         db.session.commit()

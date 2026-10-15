@@ -556,7 +556,7 @@ class SeveritiesHistogram(db.Model):
         foreign_keys=[workspace_id],
         backref=backref('severities_histogram', cascade="all, delete-orphan")
     )
-    date = Column(Date, default=date.today(), nullable=False)
+    date = Column(Date, default=date.today, nullable=False)
     medium = Column(Integer, nullable=False)
     high = Column(Integer, nullable=False)
     critical = Column(Integer, nullable=False)
@@ -577,7 +577,7 @@ class VulnerabilityHitCount(db.Model):
         foreign_keys=[workspace_id],
         backref=backref('vulnerability_hit_counts', cascade="all, delete-orphan")
     )
-    date = Column(Date, nullable=False, default=datetime.utcnow())
+    date = Column(Date, nullable=False, default=datetime.utcnow)
 
     # Low
     low_open_unconfirmed = Column(Integer, nullable=False, default=0)
@@ -2379,6 +2379,10 @@ def _return_last_30_days() -> list:
     return last_30_days
 
 
+def _empty_risk_history() -> list:
+    return [{"date": day, "risk": 0} for day in _return_last_30_days()]
+
+
 class RiskScoreProfile(Metadata):
     """A reusable, named set of risk score calculation values, assignable to workspaces.
 
@@ -2442,8 +2446,8 @@ class Workspace(Metadata):
     name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
-    risk_history_total = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
-    risk_history_avg = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
+    risk_history_total = Column(JSONType(), nullable=False, default=_empty_risk_history)
+    risk_history_avg = Column(JSONType(), nullable=False, default=_empty_risk_history)
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     last_run_agent_date = query_expression()
@@ -3859,7 +3863,7 @@ class UserNotification(Metadata):
                         backref=backref('user_notifications', cascade="all, delete-orphan"),
                         foreign_keys=[user_id])
     links_to = Column(JSONType, nullable=True)
-    event_date = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    event_date = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
         Index(

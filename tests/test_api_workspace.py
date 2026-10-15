@@ -12,7 +12,7 @@ import pytest
 from posixpath import join
 
 from faraday.server.models import Workspace, Scope, SeveritiesHistogram, VulnerabilityGeneric
-from faraday.server.api.modules.workspaces import WorkspaceView
+from faraday.server.api.modules.workspaces import WorkspaceView, generate_histogram
 from tests.test_api_non_workspaced_base import ReadWriteAPITests, BulkDeleteTestsMixin
 from tests import factories
 from faraday.server.debouncer import debounce_workspace_update
@@ -1401,3 +1401,107 @@ class TestWorkspaceAPI(ReadWriteAPITests, BulkDeleteTestsMixin):
         assert returned_date.year == cloud_date.year
         assert returned_date.month == cloud_date.month
         assert returned_date.day == cloud_date.day
+
+
+def _legacy_histogram(days_before, rows):
+    """Algorithm generate_histogram had before scoping it to the requested
+    workspaces, kept as the reference its output must still match.
+    rows: (workspace_name, date, medium, high, critical, confirmed)"""
+    histogram_dict = {}
+    by_ws = {}
+    for ws_name, row_date, medium, high, critical, confirmed in sorted(rows, key=lambda r: (r[0], r[1])):
+        by_ws.setdefault(ws_name, {})[row_date.strftime("%Y-%m-%d")] = {
+            'medium': medium, 'high': high, 'critical': critical, 'confirmed': confirmed}
+    for ws_name, ws_dates in by_ws.items():
+        first_date = datetime.strptime(min(ws_dates), "%Y-%m-%d").date()
+        if (date.today() - first_date).days < days_before:
+            first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
+        histogram_dict[ws_name] = [{'date': (first_date + timedelta(days=x)).strftime("%Y-%m-%d"),
+                                    'medium': 0, 'high': 0, 'critical': 0, 'confirmed': 0}
+                                   for x in range((date.today() - first_date).days + 1)]
+        confirmed = high = medium = critical = 0
+        for counters in histogram_dict[ws_name]:
+            if counters['date'] in ws_dates:
+                medium += ws_dates[counters['date']]['medium']
+                high += ws_dates[counters['date']]['high']
+                critical += ws_dates[counters['date']]['critical']
+                confirmed += ws_dates[counters['date']]['confirmed']
+            counters.update(medium=medium, high=high, critical=critical, confirmed=confirmed)
+        histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
+    return histogram_dict
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestWorkspaceHistogram:
+
+    @staticmethod
+    def _add_rows(session, workspace, days_ago_and_counters):
+        rows = []
+        for days_ago, (medium, high, critical, confirmed) in days_ago_and_counters:
+            row_date = date.today() - timedelta(days=days_ago)
+            session.add(SeveritiesHistogram(workspace=workspace, date=row_date, medium=medium,
+                                            high=high, critical=critical, confirmed=confirmed))
+            rows.append((workspace.name, row_date, medium, high, critical, confirmed))
+        return rows
+
+    @pytest.mark.parametrize('days_before', [1, 5, 20, 365, 800])
+    def test_matches_legacy_algorithm(self, session, workspace_factory, days_before):
+        session.query(SeveritiesHistogram).delete()
+        long_history, recent, old_only, future = workspace_factory.create_batch(4)
+        session.commit()
+        rows = self._add_rows(session, long_history, [
+            (700, (5, 1, 0, 2)), (400, (1, 0, 3, 0)), (30, (2, 2, 2, 2)),
+            (19, (0, 4, 0, 1)), (3, (1, 0, 0, 0)), (0, (2, 3, 1, 1))])
+        rows += self._add_rows(session, recent, [(2, (1, 1, 1, 1)), (0, (3, 0, 0, 1))])
+        rows += self._add_rows(session, old_only, [(100, (4, 2, 1, 3))])
+        rows += self._add_rows(session, future, [(-3, (9, 9, 9, 9)), (1, (1, 0, 0, 0))])
+        session.commit()
+
+        histogram = generate_histogram(days_before, [long_history.id, recent.id, old_only.id, future.id])
+
+        assert histogram == _legacy_histogram(days_before, rows)
+
+    def test_only_includes_requested_workspaces(self, session, workspace_factory):
+        session.query(SeveritiesHistogram).delete()
+        requested, not_requested, without_rows = workspace_factory.create_batch(3)
+        session.commit()
+        self._add_rows(session, requested, [(1, (1, 1, 1, 1))])
+        self._add_rows(session, not_requested, [(1, (2, 2, 2, 2))])
+        session.commit()
+
+        histogram = generate_histogram(5, [requested.id, without_rows.id])
+
+        assert set(histogram) == {requested.name}
+        assert histogram[requested.name][-1] == {'date': date.today().strftime("%Y-%m-%d"),
+                                                 'medium': 1, 'high': 1, 'critical': 1, 'confirmed': 1}
+        assert generate_histogram(5, []) == {}
+
+    def test_filter_page_gets_its_histograms(self, session, test_client, workspace_factory):
+        session.query(SeveritiesHistogram).delete()
+        Workspace.query.delete()
+        with_rows, without_rows = workspace_factory.create_batch(2, active=True)
+        session.commit()
+        self._add_rows(session, with_rows, [(50, (1, 0, 0, 0)), (1, (0, 2, 0, 1))])
+        session.commit()
+
+        res = test_client.get('/v3/ws/filter?q={"filters":[]}&histogram=true&histogram_days=3')
+
+        assert res.status_code == 200
+        histograms = {row['name']: row['histogram'] for row in res.json['rows']}
+        assert [day['medium'] for day in histograms[with_rows.name]] == [1, 1, 1]
+        assert [day['high'] for day in histograms[with_rows.name]] == [0, 2, 2]
+        assert len(histograms[without_rows.name]) == 3
+        assert all(day['medium'] == day['high'] == 0 for day in histograms[without_rows.name])
+
+    def test_page_without_histogram_rows_still_gets_empty_histograms(self, session, test_client,
+                                                                      workspace_factory):
+        session.query(SeveritiesHistogram).delete()
+        Workspace.query.delete()
+        workspace_factory.create_batch(2, active=True)
+        session.commit()
+
+        for url in ('/v3/ws/filter?q={"filters":[]}&histogram=true', '/v3/ws?histogram=true'):
+            res = test_client.get(url)
+            assert res.status_code == 200
+            assert all(len(row['histogram']) == SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                       for row in res.json['rows'])

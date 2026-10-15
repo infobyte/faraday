@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Improved workspaces list loading time with histograms on instances with many workspaces, computing them only for the requested workspaces. #8595"
+}

@@ -3685,14 +3685,9 @@ class Agent(Metadata):
 
     @property
     def last_run(self):
-        execs = db.session.query(Executor).filter_by(agent_id=self.id)
-        if execs:
-            _last_run = None
-            for exe in execs:
-                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
-                    _last_run = exe.last_run
-            return _last_run
-        return None
+        # Through the relationship, which the agents views eager load, instead of a query per agent
+        return max((executor.last_run for executor in self.executors if executor.last_run is not None),
+                   default=None)
 
     def __repr__(self):
         return f"Agent {self.name}"
@@ -3747,17 +3742,6 @@ class CloudAgent(Metadata):
     description = BlankColumn(Text)
     tools_count = Column(Integer, nullable=False, default=1)
     website = Column(Text, nullable=True)
-
-    @property
-    def last_run(self):
-        execs = db.session.query(CloudAgentExecution).filter_by(cloud_agent_id=self.id)
-        if execs:
-            _last_run = None
-            for exe in execs:
-                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
-                    _last_run = exe.last_run
-            return _last_run
-        return None
 
     @property
     def parent(self):
@@ -4285,6 +4269,16 @@ event.listen(
     VulnerabilityGeneric.__table__,
     'after_create',
     vulnerability_uniqueness_sqlite.execute_if(dialect='sqlite')
+)
+
+# Latest run among the cloud agent executions. Deferred: the views that dump it
+# undefer it, so it comes in the same query instead of one query per cloud agent.
+CloudAgent.last_run = column_property(
+    select(func.max(CloudAgentExecution.last_run))
+    .where(CloudAgentExecution.cloud_agent_id == CloudAgent.id)
+    .correlate_except(CloudAgentExecution)
+    .scalar_subquery(),
+    deferred=True,
 )
 
 # Column properties on VulnerabilityGeneric that reference other tables via

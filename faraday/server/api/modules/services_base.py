@@ -165,6 +165,13 @@ class ServiceView(
             undefer(Service.vulnerability_count),
         ]
 
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        # parent_name and workspace_name are dumped for every service
+        return super()._get_eagerloaded_query(*args, **kwargs).options(
+            joinedload(Service.host).load_only(Host.ip),
+            joinedload(Service.workspace).load_only(Workspace.name),
+        )
+
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []
         for service in objects:

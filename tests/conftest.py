@@ -4,6 +4,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+# nplusone monkeypatches SQLAlchemy globally on import (Query.__iter__,
+# attribute access, row population), so it's only imported by the tests and
+# never by the server. It must be imported before any faraday module:
+# faraday.server.models configures the mappers on import, and lazy loaders
+# configured before the patch are never wrapped, so lazy loads (the actual
+# N+1s) would go undetected.
+from nplusone.ext.flask_sqlalchemy import NPlusOne
+
 import os
 from tempfile import NamedTemporaryFile
 from time import time
@@ -25,12 +33,6 @@ from psycopg2.sql import SQL
 from sqlalchemy.orm import Query
 
 from faraday.server.app import get_app
-# nplusone monkeypatches SQLAlchemy globally on import (Query.__iter__,
-# attribute access, row population), so it's only imported by the tests and
-# never by the server. Importing it after the models keeps detection as it was
-# when it lived in app.py: mappers are already configured by then, so lazy
-# loads aren't wrapped.
-from nplusone.ext.flask_sqlalchemy import NPlusOne
 from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
 from tests import factories
 

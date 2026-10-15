@@ -25,6 +25,7 @@ from marshmallow import (
     validate,
     ValidationError
 )
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.exc import NoResultFound
 import dateutil
 from croniter import croniter
@@ -53,6 +54,8 @@ from faraday.server.models import (
     db,
     Executor,
     SchedulerGeneric,
+    User,
+    Workspace,
 )
 agents_schedule_api = Blueprint('agents_schedule_api', __name__)
 logger = logging.getLogger(__name__)
@@ -177,14 +180,11 @@ class AgentsScheduleSchema(AutoSchema):
 
     @staticmethod
     def get_agent(obj):
-        agent_id = obj.executor.agent_id
-        try:
-            agent = db.session.query(Agent).\
-                filter(Agent.id == agent_id).one()
-        except NoResultFound as e:
-            raise InvalidUsage(f'Agent id not found: {agent_id}') from e
-        ret = AgentSchema().dump(agent)
-        return ret
+        # executor.agent comes eager loaded by the view, a query here would run once per schedule
+        agent = obj.executor.agent
+        if agent is None:
+            raise InvalidUsage(f'Agent id not found: {obj.executor.agent_id}')
+        return AgentSchema().dump(agent)
 
 
 class AgentsScheduleView(
@@ -195,6 +195,20 @@ class AgentsScheduleView(
     model_class = AgentsSchedule
     order_field = AgentsSchedule.id.asc()
     schema_class = AgentsScheduleSchema
+
+    def _eagerload_options(self):
+        # the workspaces, the executor and its agent (with all its executors)
+        # are dumped for every schedule, and every executor dumps its schedules
+        return super()._eagerload_options() + [
+            selectinload(AgentsSchedule.workspaces).load_only(Workspace.name),
+            joinedload(AgentsSchedule.executor).options(
+                selectinload(Executor.schedules),
+                joinedload(Executor.agent).options(
+                    joinedload(Agent.creator).load_only(User.username),
+                    selectinload(Agent.executors).selectinload(Executor.schedules),
+                ),
+            ),
+        ]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         agents_schedule = []

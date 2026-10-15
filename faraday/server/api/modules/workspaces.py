@@ -414,6 +414,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
 
+    def _filter_eagerload_options(self):
+        # _generate_filter_query sets the loader options /filter needs
+        return []
+
     def _generate_filter_query(self, filters, severity_count=None):
         filter_query = super()._generate_filter_query(filters)
         filter_query = filter_query.options(

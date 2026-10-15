@@ -153,6 +153,10 @@ class TestQueryCounts:
         '/v3/ws/qcv0/hosts/filter?q={page}',
         '/v3/services/filter?q={page}',
         '/v3/ws/qcv0/services/filter?q={page}',
+        '/v3/hosts',
+        '/v3/ws/qcv0/hosts',
+        '/v3/services',
+        '/v3/ws/qcv0/services',
     ])
     def test_listing_query_count_is_constant(self, test_client, session, url):
         url = url.format(page=PAGE)
@@ -241,3 +245,39 @@ class TestQueryCounts:
             assert row['hostnames'] == ['qchost.example.com']
             assert row['owner'] == host.creator.username
             assert any('qcsvc' in summary for summary in row['service_summaries'])
+
+
+def _make_agent(session):
+    agent = factories.AgentFactory.create(creator=factories.UserFactory.create())
+    factories.AgentScheduleFactory.create(executor=factories.ExecutorFactory.create(agent=agent))
+
+
+#: Listing url -> how to add one more row whose related objects (creator,
+#: executor, agent, tasks...) differ from the other rows' ones, so a lazy
+#: load per row shows up as more queries.
+OTHER_LISTINGS = {
+    '/v3/agents': _make_agent,
+    '/v3/agents/filter?q={page}': _make_agent,
+    '/v3/agent_executions': lambda session: factories.AgentExecutionFactory.create(),
+    '/v3/agents_schedule': lambda session: factories.AgentScheduleFactory.create(),
+}
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestOtherListingsQueryCounts:
+
+    @pytest.mark.parametrize('url', list(OTHER_LISTINGS))
+    def test_listing_query_count_is_constant(self, test_client, session, url):
+        make_row = OTHER_LISTINGS[url]
+        url = url.format(page=PAGE)
+        for _ in range(2):
+            make_row(session)
+        session.commit()
+        few, _ = _count_queries(test_client, session, url)
+
+        for _ in range(6):
+            make_row(session)
+        session.commit()
+        many, _ = _count_queries(test_client, session, url)
+
+        assert many <= few, f"{url} scales with rows: {few} -> {many}"

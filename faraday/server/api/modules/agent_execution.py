@@ -4,6 +4,7 @@ import logging
 from flask import Blueprint, abort
 from marshmallow import fields
 from sqlalchemy import and_, func
+from sqlalchemy.orm import joinedload
 
 from faraday.server.api.base import ReadOnlyView, PaginatedMixin, AutoSchema, FilterMixin, BulkDeleteMixin
 from faraday.server.models import Agent, AgentExecution, Executor, Workspace, db
@@ -54,6 +55,10 @@ class AgentExecutionView(BulkDeleteMixin, PaginatedMixin, ReadOnlyView, FilterMi
     model_class = AgentExecution
     schema_class = AgentExecutionSchema
     order_field = AgentExecution.id.desc()
+
+    def _eagerload_options(self):
+        # agent_name, agent_id, tool, category and executor read the executor and its agent
+        return super()._eagerload_options() + [joinedload(AgentExecution.executor).joinedload(Executor.agent)]
 
     def _translate_filters(self, filters):
         """

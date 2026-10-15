@@ -252,6 +252,18 @@ def _make_agent(session):
     factories.AgentScheduleFactory.create(executor=factories.ExecutorFactory.create(agent=agent))
 
 
+def _make_agent_schedule(session):
+    factories.AgentScheduleFactory.create(creator=factories.UserFactory.create(),
+                                          update_user=factories.UserFactory.create())
+
+
+def _make_credential(session):
+    workspace = factories.WorkspaceFactory._meta.model.query.filter_by(name='qccred').first() \
+        or factories.WorkspaceFactory.create(name='qccred')
+    factories.CredentialFactory.create(workspace=workspace, creator=factories.UserFactory.create(),
+                                       update_user=factories.UserFactory.create())
+
+
 #: Listing url -> how to add one more row whose related objects (creator,
 #: executor, agent, tasks...) differ from the other rows' ones, so a lazy
 #: load per row shows up as more queries.
@@ -259,7 +271,8 @@ OTHER_LISTINGS = {
     '/v3/agents': _make_agent,
     '/v3/agents/filter?q={page}': _make_agent,
     '/v3/agent_executions': lambda session: factories.AgentExecutionFactory.create(),
-    '/v3/agents_schedule': lambda session: factories.AgentScheduleFactory.create(),
+    '/v3/agents_schedule': _make_agent_schedule,
+    '/v3/ws/qccred/credential': _make_credential,
 }
 
 

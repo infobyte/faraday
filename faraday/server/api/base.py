@@ -346,11 +346,13 @@ class GenericView(FlaskView):
             user_relationships.append('creator')
         if dumps_metadata:
             user_relationships.append('update_user')
+        # MetadataSchema dumps update_user with str(), and User.__repr__ also reads user_type
+        user_columns = {'creator': (User.username,), 'update_user': (User.username, User.user_type)}
         for name in user_relationships:
             relationship = getattr(self.model_class, name, None)
             # identity check: == on instrumented attributes builds SQL expressions
             if relationship is not None and not any(relationship is loaded for loaded in self.get_joinedloads):
-                options.append(joinedload(relationship).load_only(User.username))
+                options.append(joinedload(relationship).load_only(*user_columns[name]))
         options += [joinedload(relationship)
                     for relationship in self.get_joinedloads]
         options += [undefer(column) for column in self.get_undefer]

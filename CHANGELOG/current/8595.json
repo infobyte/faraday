@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[FIX] Improved workspaces list loading time with histograms on instances with many workspaces, computing them only for the requested workspaces. #8595"
+  "md": "[FIX] Improved workspaces list loading time with histograms on instances with many workspaces, computing them only for the requested workspaces, and removed a test-only library from the server runtime that slowed down every database query. #8595"
 }

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Made the database connection pool size configurable in `server.ini` so shared databases do not run out of connections. #8547"
+}

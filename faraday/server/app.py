@@ -423,6 +423,17 @@ def get_prefixed_url(app, url):
     return url
 
 
+def get_engine_options():
+    return {
+        'pool_pre_ping': True,
+        'poolclass': QueuePool,
+        'pool_size': faraday.server.config.database.pool_size,
+        'max_overflow': faraday.server.config.database.max_overflow,
+        'pool_timeout': faraday.server.config.database.pool_timeout,
+        'pool_recycle': faraday.server.config.database.pool_recycle,
+    }
+
+
 def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, start_scheduler=False, remove_sids=False):
     logger.debug("Creating new faraday app instance")
 
@@ -591,13 +602,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
                 'depot.storage_path': storage_path
             })
     app.config['SQLALCHEMY_ECHO'] = 'FARADAY_LOG_QUERY' in os.environ
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_pre_ping': True,
-        'poolclass': QueuePool,
-        'pool_size': 20,
-        'max_overflow': 20,
-        'pool_timeout': 60,
-    }
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = get_engine_options()
     check_testing_configuration(testing, app)
 
     _db_configured = False

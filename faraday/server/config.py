@@ -131,6 +131,11 @@ class ConfigSection:
 class DatabaseConfigObject(ConfigSection):
     def __init__(self):
         self.connection_string = None
+        # SQLAlchemy pool settings, applied per process (web and Celery workers)
+        self.pool_size = 20
+        self.max_overflow = 20
+        self.pool_timeout = 60
+        self.pool_recycle = 1800
 
 
 class LimiterConfigObject(ConfigSection):

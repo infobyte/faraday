@@ -79,3 +79,33 @@ def isPEP440(arg):
 
 def test_exists_and_content():
     assert isPEP440(__version__)
+
+
+def test_database_pool_defaults_keep_previous_behaviour():
+    from faraday.server.config import DatabaseConfigObject
+    section = DatabaseConfigObject()
+    assert section.pool_size == 20
+    assert section.max_overflow == 20
+    assert section.pool_timeout == 60
+    assert section.pool_recycle == 1800
+
+
+def test_database_pool_options_are_read_from_ini():
+    from faraday.server.config import DatabaseConfigObject
+    section = DatabaseConfigObject()
+    section.parse({'pool_size': '3', 'max_overflow': '5', 'pool_timeout': '10', 'pool_recycle': '300'})
+    assert (section.pool_size, section.max_overflow, section.pool_timeout, section.pool_recycle) == (3, 5, 10, 300)
+
+
+def test_engine_options_use_database_pool_config():
+    from faraday.server.app import get_engine_options
+    with mock.patch('faraday.server.config.database.pool_size', 2), \
+            mock.patch('faraday.server.config.database.max_overflow', 4), \
+            mock.patch('faraday.server.config.database.pool_timeout', 15), \
+            mock.patch('faraday.server.config.database.pool_recycle', 120):
+        options = get_engine_options()
+    assert options['pool_size'] == 2
+    assert options['max_overflow'] == 4
+    assert options['pool_timeout'] == 15
+    assert options['pool_recycle'] == 120
+    assert options['pool_pre_ping'] is True

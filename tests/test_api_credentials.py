@@ -325,6 +325,31 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
             field[2] = False
         assert res.json['rows'][0]['value'][field[0]] == field[2]
 
+    @pytest.mark.parametrize('direction', ['asc', 'desc'])
+    def test_credential_filter_order_by_password(self, test_client, workspace, session, direction):
+        session.query(Credential).delete()
+        session.commit()
+        passwords = ['bbb', 'aaa', 'ccc']
+        for i, password in enumerate(passwords):
+            session.add(CredentialFactory.create(workspace=workspace, username=f'user{i}', password=password))
+        session.commit()
+
+        res = test_client.get(
+            self.url(workspace=workspace)
+            + f'/filter?q={{"offset":0,"limit":50,"order_by":[{{"field":"password","direction":"{direction}"}}]}}'
+        )
+        assert res.status_code == 200
+        assert [row['value']['password'] for row in res.json['rows']] == sorted(passwords, reverse=direction == 'desc')
+
+    def test_credential_filter_group_by_password_is_rejected(self, test_client, workspace):
+        res = test_client.get(self.url(workspace=workspace) + '/filter?q={"group_by":[{"field":"password"}]}')
+        assert res.status_code == 400
+
+    @pytest.mark.parametrize('field', ['workspace__password', 'vulnerabilities__password'])
+    def test_credential_filter_order_by_relationship_password_is_rejected(self, test_client, workspace, field):
+        res = test_client.get(self.url(workspace=workspace) + f'/filter?q={{"order_by":[{{"field":"{field}"}}]}}')
+        assert res.status_code == 400
+
     def test_credential_filter_export_csv(self, test_client, workspace, session):
         # Create some credentials
         credential1 = CredentialFactory.create(workspace=workspace, username='testuser1', password='testpass', endpoint='test.example.com')

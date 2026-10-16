@@ -182,6 +182,11 @@ class GenericView(FlaskView):
     #: data provided by the user
     schema_class = None
 
+    #: Columns of model_class listed in SENSITIVE_FILTER_FIELDS that the
+    #: /filter endpoint may still order by. Only for fields the view already
+    #: returns (e.g. Credential.password); never relationship paths.
+    sensitive_order_fields_allowed = frozenset()
+
     # Default attributes
 
     #: The prefix where the endpoint should be registered.
@@ -807,7 +812,9 @@ class FilterWorkspacedMixin(ListMixin):
     def _filter(self, filters, workspace_name, severity_count=False):
         marshmallow_params = {'many': True, 'context': {}}
         try:
-            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
+            filters = FlaskRestlessSchema(
+                allowed_sensitive_order_fields=self.sensitive_order_fields_allowed
+            ).load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")
@@ -905,7 +912,9 @@ class FilterObjects:
         self.schema_class = self.schema_class or self._get_schema_class()
 
         try:
-            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
+            filters = FlaskRestlessSchema(
+                allowed_sensitive_order_fields=self.sensitive_order_fields_allowed
+            ).load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")
@@ -1014,7 +1023,9 @@ class FilterMixin(ListMixin):
                 exclude=[], return_objects=False, severity_count=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
-            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
+            filters = FlaskRestlessSchema(
+                allowed_sensitive_order_fields=self.sensitive_order_fields_allowed
+            ).load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")

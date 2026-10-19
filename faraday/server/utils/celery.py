@@ -131,3 +131,16 @@ def require_celery_enabled(process_name: str) -> None:
         print(f"In order to run faraday {process_name} you must set "
               f"`celery_enabled=True` in your server.ini")
         sys.exit(1)
+
+
+def release_db_connections(app) -> None:
+    """Close the database connections opened while the app was being created.
+
+    Beat never queries the database again, so they would stay idle for the
+    whole life of the process (pool_recycle and pool_pre_ping only act on
+    checkout), and a prefork worker would hand the same sockets to every child
+    it forks. Workers open their own connections lazily on the first task.
+    """
+    from faraday.server.models import db  # pylint: disable=import-outside-toplevel
+    with app.app_context():
+        db.engine.dispose()

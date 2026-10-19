@@ -12,11 +12,14 @@ import time
 from datetime import datetime, timedelta
 
 import pytest
+from sqlalchemy import text
 
 from faraday.server.config import faraday_server
+from faraday.server.models import db
 from faraday.server.utils.celery import (
     _die_with_parent,
     build_celery_commands,
+    release_db_connections,
     require_celery_enabled,
     spawn_celery_processes,
     terminate_celery_processes,
@@ -37,6 +40,48 @@ class TestRequireCeleryEnabled:
     def test_returns_when_celery_is_enabled(self, monkeypatch):
         monkeypatch.setattr(faraday_server, 'celery_enabled', True)
         require_celery_enabled('beat')
+
+
+class TestReleaseDbConnections:
+    """Beat and the worker parents open connections while creating the app and
+    never check them out again, so they must be closed before celery starts."""
+
+    def test_closes_the_connections_left_idle_in_the_pool(self, app):
+        with db.engine.connect() as connection:
+            connection.execute(text('SELECT 1'))
+        assert db.engine.pool.checkedin() > 0
+
+        release_db_connections(app)
+
+        assert db.engine.pool.checkedin() == 0
+
+    def test_beat_releases_them_before_starting(self, monkeypatch):
+        import faraday.server.celery_beat as celery_beat  # pylint: disable=import-outside-toplevel
+        calls = []
+        monkeypatch.setattr(sys, 'argv', ['faraday-beat'])
+        monkeypatch.setattr(celery_beat, 'require_celery_enabled', lambda name: None)
+        monkeypatch.setattr(celery_beat, 'get_app', lambda: 'app')
+        monkeypatch.setattr(celery_beat, 'setup_celery_logging', lambda: None)
+        monkeypatch.setattr(celery_beat, 'release_db_connections', lambda app: calls.append(('release', app)))
+        monkeypatch.setattr(celery_beat.celery, 'start', lambda argv: calls.append(('start', argv[0])))
+
+        celery_beat.main()
+
+        assert calls == [('release', 'app'), ('start', 'beat')]
+
+    def test_prefork_worker_releases_them_before_forking(self, monkeypatch):
+        import faraday.server.celery_worker as celery_worker  # pylint: disable=import-outside-toplevel
+        calls = []
+        monkeypatch.setattr(sys, 'argv', ['faraday-worker', '--concurrency', '2'])
+        monkeypatch.setattr(celery_worker, 'require_celery_enabled', lambda name: None)
+        monkeypatch.setattr(celery_worker, 'get_app', lambda: 'app')
+        monkeypatch.setattr(celery_worker, 'setup_celery_logging', lambda: None)
+        monkeypatch.setattr(celery_worker, 'release_db_connections', lambda app: calls.append(('release', app)))
+        monkeypatch.setattr(celery_worker.celery, 'worker_main', lambda argv: calls.append(('start', argv[0])))
+
+        celery_worker.main()
+
+        assert calls == [('release', 'app'), ('start', 'worker')]
 
 
 class TestBuildCeleryCommands:

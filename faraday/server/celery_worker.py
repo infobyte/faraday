@@ -4,7 +4,7 @@ import os
 
 import faraday.server.config
 from faraday.server.app import celery, get_app  # noqa
-from faraday.server.utils.celery import require_celery_enabled
+from faraday.server.utils.celery import release_db_connections, require_celery_enabled
 from faraday.server.utils.logger import setup_celery_logging
 
 
@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
 
     require_celery_enabled('workers')
-    get_app()
+    release_db_connections(get_app())
     print("Starting celery %s", args)
 
     queue = 'celery'

@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[FIX] Lowered the default database connection pool size and made it configurable in `server.ini` so shared databases do not run out of connections, and identified each process by `application_name` in PostgreSQL. #8547"
+  "md": "[FIX] Lowered the default database connection pool size and made it configurable in `server.ini` so shared databases do not run out of connections, closed the connections that Celery beat and workers kept open from startup, and identified each process by `application_name` in PostgreSQL. #8547"
 }

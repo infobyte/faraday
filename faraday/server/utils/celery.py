@@ -133,6 +133,20 @@ def require_celery_enabled(process_name: str) -> None:
         sys.exit(1)
 
 
+def get_worker_concurrency(requested: Optional[str] = None):
+    """Concurrency of a prefork worker.
+
+    The --concurrency flag wins. Otherwise one process per spare core, capped
+    by celery_max_worker_concurrency: os.cpu_count() reports the node's cores,
+    not the container's CPU limit, and every process opens its own database
+    connection.
+    """
+    if requested:
+        return requested
+    spare_cores = (os.cpu_count() or 1) - 1
+    return min(max(spare_cores, 1), faraday_server.celery_max_worker_concurrency)
+
+
 def release_db_connections(app) -> None:
     """Close the database connections opened while the app was being created.
 

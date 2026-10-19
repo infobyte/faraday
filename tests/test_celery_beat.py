@@ -19,6 +19,7 @@ from faraday.server.models import db
 from faraday.server.utils.celery import (
     _die_with_parent,
     build_celery_commands,
+    get_worker_concurrency,
     release_db_connections,
     require_celery_enabled,
     spawn_celery_processes,
@@ -82,6 +83,58 @@ class TestReleaseDbConnections:
         celery_worker.main()
 
         assert calls == [('release', 'app'), ('start', 'worker')]
+
+
+class TestWorkerConcurrency:
+    """os.cpu_count() reports the node's cores, not the container's CPU limit,
+    and each prefork process opens its own database connection, so the
+    automatic concurrency is capped by celery_max_worker_concurrency."""
+
+    @pytest.fixture(autouse=True)
+    def default_cap(self, monkeypatch):
+        monkeypatch.setattr(faraday_server, 'celery_max_worker_concurrency', 2)
+
+    def test_default_cap_is_two(self):
+        from faraday.server.config import FaradayServerConfigObject  # pylint: disable=import-outside-toplevel
+        assert FaradayServerConfigObject().celery_max_worker_concurrency == 2
+
+    def test_explicit_flag_wins_over_the_cap(self, monkeypatch):
+        monkeypatch.setattr(os, 'cpu_count', lambda: 16)
+        assert get_worker_concurrency('8') == '8'
+
+    def test_spare_cores_are_capped(self, monkeypatch):
+        monkeypatch.setattr(os, 'cpu_count', lambda: 16)
+        assert get_worker_concurrency() == 2
+
+    def test_cap_is_read_from_config(self, monkeypatch):
+        monkeypatch.setattr(os, 'cpu_count', lambda: 16)
+        monkeypatch.setattr(faraday_server, 'celery_max_worker_concurrency', 4)
+        assert get_worker_concurrency() == 4
+
+    def test_fewer_spare_cores_than_the_cap(self, monkeypatch):
+        monkeypatch.setattr(os, 'cpu_count', lambda: 2)
+        assert get_worker_concurrency() == 1
+
+    @pytest.mark.parametrize('cores', [1, None])
+    def test_never_below_one_process(self, monkeypatch, cores):
+        monkeypatch.setattr(os, 'cpu_count', lambda: cores)
+        assert get_worker_concurrency() == 1
+
+    def test_prefork_worker_uses_it_when_no_flag_is_given(self, monkeypatch):
+        import faraday.server.celery_worker as celery_worker  # pylint: disable=import-outside-toplevel
+        started = []
+        monkeypatch.setattr(os, 'cpu_count', lambda: 16)
+        monkeypatch.setattr(sys, 'argv', ['faraday-worker'])
+        monkeypatch.setattr(celery_worker, 'require_celery_enabled', lambda name: None)
+        monkeypatch.setattr(celery_worker, 'get_app', lambda: 'app')
+        monkeypatch.setattr(celery_worker, 'release_db_connections', lambda app: None)
+        monkeypatch.setattr(celery_worker, 'setup_celery_logging', lambda: None)
+        monkeypatch.setattr(celery_worker.celery, 'worker_main', started.append)
+
+        celery_worker.main()
+
+        argv = started[0]
+        assert argv[argv.index('--concurrency') + 1] == 2
 
 
 class TestBuildCeleryCommands:

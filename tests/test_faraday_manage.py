@@ -5,6 +5,11 @@ import subprocess
 from configparser import SafeConfigParser, DuplicateSectionError
 from pathlib import Path
 
+from click.testing import CliRunner
+from sqlalchemy.exc import OperationalError
+
+from faraday import manage
+
 
 @pytest.mark.skip(reason="Temporal para que pase nix")
 def test_manage_migrate():
@@ -44,3 +49,16 @@ def test_manage_migrate():
         print(std)
         print(err)
         assert subproc.returncode == 0, ('manage migrate failed!', std, err)
+
+
+def test_manage_migrate_exits_with_error_on_operational_error(app, monkeypatch):
+    def failing_upgrade(config, revision):
+        raise OperationalError('CREATE INDEX CONCURRENTLY', {}, Exception('deadlock detected'))
+
+    monkeypatch.setattr(manage, 'get_app', lambda **kwargs: app)
+    monkeypatch.setattr(manage.alembic.command, 'upgrade', failing_upgrade)
+    monkeypatch.chdir(os.getcwd())
+
+    result = CliRunner().invoke(manage.migrate, [])
+
+    assert result.exit_code == 1

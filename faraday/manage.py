@@ -249,7 +249,9 @@ def migrate(downgrade, revision):
             logger = logging.getLogger(__name__)
             logger.error("Migration Error: %s", e)
             logger.exception(e)
-            print('Please verify your configuration on server.ini or the hba configuration!')
+            print('Migration failed! If the database is unreachable, verify your configuration on server.ini '
+                  'or the hba configuration.')
+            sys.exit(1)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("Migration Error: %s", e)

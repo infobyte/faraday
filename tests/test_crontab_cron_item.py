@@ -11,7 +11,7 @@ import dateutil.tz
 import pytest
 
 from faraday.server.models import Agent, AgentExecution, AgentsSchedule
-from faraday.server.threads.crontab import AgentsCronItem, CronItem, FaradayCronTab
+from faraday.server.threads.crontab import RUN_FAILED, AgentsCronItem, CronItem, FaradayCronTab
 from faraday.server.utils.schedules import ONCE_GRACE_PERIOD
 from tests.factories import AgentFactory, AgentScheduleFactory, ExecutorFactory, WorkspaceFactory
 
@@ -160,13 +160,13 @@ class TestOnceSchedule:
         assert cron_item.active is True
 
     def test_deactivation_is_persisted(self, app, session):
-        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=True,
-                                               run_at=naive_utc(utc_now() + datetime.timedelta(days=1)),
+        run_at = naive_utc(utc_now() + datetime.timedelta(days=1))
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=True, run_at=run_at,
                                                workspaces=[WorkspaceFactory.create()])
         session.commit()
         cron_item = CronItem(schedule, app=app)
 
-        cron_item.deactivate()
+        cron_item._deactivate_once(run_at)
 
         session.expire_all()
         assert session.get(AgentsSchedule, schedule.id).active is False
@@ -226,6 +226,28 @@ class TestOnceRunsAtMostOnce:
 
         assert (stored().active, stored().last_run) == (True, None)
 
+    def test_failed_after_creating_the_run_is_not_retried(self, app, once_schedule, stored):
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = mock.Mock(return_value=RUN_FAILED)
+
+        assert self.run_once(cron_item) is False
+        assert stored().active is False
+        assert stored().last_run is not None
+
+    def test_failed_after_creating_the_run_respects_a_reschedule(self, app, session, once_schedule, stored):
+        new_run_at = naive_utc(utc_now() + datetime.timedelta(days=1))
+
+        def run_failed_after_reschedule():
+            stored().run_at = new_run_at
+            session.commit()
+            return RUN_FAILED
+        cron_item = CronItem(once_schedule, app=app)
+        cron_item.run = run_failed_after_reschedule
+
+        self.run_once(cron_item)
+
+        assert (stored().active, stored().run_at) == (True, new_run_at)
+
     def test_failure_before_dispatch_is_retried(self, app, once_schedule, stored):
         cron_item = CronItem(once_schedule, app=app)
         cron_item.run = mock.Mock(side_effect=RuntimeError('boom'))
@@ -274,6 +296,30 @@ class TestOnceRunsAtMostOnce:
 
         assert stored().active is True
 
+    def test_missed_is_not_deactivated_if_rescheduled_since_loaded(self, app, session, once_schedule, stored):
+        once_schedule.run_at = naive_utc(utc_now() - ONCE_GRACE_PERIOD - datetime.timedelta(minutes=1))
+        session.commit()
+        cron_item = CronItem(once_schedule, app=app)
+        new_run_at = naive_utc(utc_now() + datetime.timedelta(days=1))
+        stored().run_at = new_run_at
+        session.commit()
+
+        self.run_once(cron_item)
+
+        assert (stored().active, stored().run_at) == (True, new_run_at)
+
+    def test_already_ran_is_not_deactivated_if_rescheduled_since_loaded(self, app, session, once_schedule, stored):
+        once_schedule.last_run = datetime.datetime.utcnow()
+        session.commit()
+        cron_item = CronItem(once_schedule, app=app)
+        new_run_at = naive_utc(utc_now() + datetime.timedelta(days=1))
+        stored().run_at = new_run_at
+        session.commit()
+
+        self.run_once(cron_item)
+
+        assert (stored().active, stored().run_at) == (True, new_run_at)
+
     def test_compares_run_at_with_seconds(self):
         minute = utc_now() + datetime.timedelta(minutes=1)
         cron_item = CronItem(make_schedule(schedule_type='once', crontab=None,
@@ -283,9 +329,18 @@ class TestOnceRunsAtMostOnce:
         assert cron_item.run_pending(now=minute + datetime.timedelta(seconds=45)) == 1
 
 
+class TestFailedCronRun:
+
+    def test_is_not_reported_as_run(self):
+        cron_item = CronItem(make_schedule(crontab='* * * * *'))
+        cron_item.run = mock.Mock(return_value=RUN_FAILED)
+
+        assert cron_item.run_pending(now=next_tick()) is False
+
+
 class TestAgentOfflineBeforeDispatch:
 
-    def test_executions_are_closed_and_the_run_reported_as_not_done(self, app, session):
+    def test_executions_are_closed_and_the_run_reported_as_failed(self, app, session):
         agent = AgentFactory.create(active=True)
         schedule = AgentScheduleFactory.create(executor=ExecutorFactory.create(agent=agent),
                                                workspaces=[WorkspaceFactory.create()])
@@ -295,7 +350,7 @@ class TestAgentOfflineBeforeDispatch:
             result = AgentsCronItem(schedule, app=app).run()
 
         execution = AgentExecution.query.filter_by(executor_id=schedule.executor_id).one()
-        assert result is False
+        assert result == RUN_FAILED
         assert (execution.running, execution.successful) == (False, False)
         assert execution.end_date is not None
         assert execution.command.end_date is not None
@@ -304,7 +359,7 @@ class TestAgentOfflineBeforeDispatch:
 class TestDispatchFailure:
 
     @mock.patch('faraday.server.threads.crontab.socketio.emit', mock.Mock(side_effect=RuntimeError('queue down')))
-    def test_executions_are_closed_and_the_run_reported_as_not_done(self, app, session):
+    def test_executions_are_closed_and_the_run_reported_as_failed(self, app, session):
         agent = AgentFactory.create(active=True)
         schedule = AgentScheduleFactory.create(executor=ExecutorFactory.create(agent=agent),
                                                workspaces=[WorkspaceFactory.create()])
@@ -313,7 +368,7 @@ class TestDispatchFailure:
             result = AgentsCronItem(schedule, app=app).run()
 
         execution = AgentExecution.query.filter_by(executor_id=schedule.executor_id).one()
-        assert result is False
+        assert result == RUN_FAILED
         assert (execution.running, execution.successful) == (False, False)
         assert execution.command.end_date is not None
 

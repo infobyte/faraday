@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 # Wait before the next tick when one fails (e.g. the database is unreachable)
 TICK_ERROR_BACKOFF_SECONDS = 60
 
+# Returned by run() when the run was created but couldn't be dispatched. Unlike False (nothing
+# was created), its executions are already closed as failed, so a 'once' schedule is not retried:
+# every retry would leave another failed run in the history.
+RUN_FAILED = 'failed'
+
 
 class FaradayCronTab(threading.Thread):
 
@@ -168,19 +173,8 @@ class CronItem:
                         f"crontab: [{self.crontab}] run_at: [{self.run_at}]")
         self.active = schedule.active
 
-    def deactivate(self):
-        """Turns the schedule off, in memory and in the database."""
-        self.active = False
-        if self.app is None:
-            return
-        with self.app.app_context():
-            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
-            if schedule:
-                schedule.active = False
-                db.session.commit()
-
-    def _deactivate_fired_once(self, fired_run_at):
-        """Turns a 'once' schedule off after it fired, unless it was rescheduled while running."""
+    def _deactivate_once(self, loaded_run_at):
+        """Turns a 'once' schedule off, unless it was changed since it was loaded."""
         self.active = False
         if self.app is None:
             return
@@ -188,9 +182,9 @@ class CronItem:
             schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
             if not schedule:
                 return
-            if schedule.schedule_type != SCHEDULE_TYPE_ONCE or schedule.run_at != fired_run_at:
+            if schedule.schedule_type != SCHEDULE_TYPE_ONCE or schedule.run_at != loaded_run_at:
                 # The next refresh picks up the new frequency (and active flag) from the database
-                logger.info(f"Schedule {self.schedule_id} was changed while running, not deactivating it")
+                logger.info(f"Schedule {self.schedule_id} was changed since it was loaded, not deactivating it")
                 return
             schedule.active = False
             db.session.commit()
@@ -252,7 +246,8 @@ class CronItem:
             if next_time <= now:
                 logger.info(f"Running Job {self.schedule_id} [{self.crontab}]")
                 self.last_run = next_time
-                return self.run()
+                result = self.run()
+                return False if result == RUN_FAILED else result
             else:
                 logger.debug(f"Job {self.schedule_id} will run in {next_time}")
         else:
@@ -266,14 +261,14 @@ class CronItem:
         if now - run_at > ONCE_GRACE_PERIOD:
             logger.warning(f"Job {self.schedule_id} missed its run at {run_at} "
                            f"(more than {ONCE_GRACE_PERIOD} late), deactivating it")
-            self.deactivate()
+            self._deactivate_once(self.run_at)
             return False
         # last_run is what marks it as fired (`active` stays the user's choice). It's saved
         # before running, so if the process dies mid-run it's not run again after a restart.
         previous_last_run = self._stored_last_run()
         if previous_last_run is not None and previous_last_run >= self.run_at:
             logger.info(f"Job {self.schedule_id} already ran at {previous_last_run}, deactivating it")
-            self.deactivate()
+            self._deactivate_once(self.run_at)
             return False
         logger.info(f"Running Job {self.schedule_id} [once at {run_at}]")
         self._save_last_run(datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
@@ -283,10 +278,14 @@ class CronItem:
             # Failed before dispatching: retried on the next ticks, within the grace period
             self._save_last_run(previous_last_run)
             raise
+        if result == RUN_FAILED:
+            logger.warning(f"Job {self.schedule_id} could not be dispatched, not retrying it")
+            self._deactivate_once(self.run_at)
+            return False
         if result:
-            self._deactivate_fired_once(self.run_at)
+            self._deactivate_once(self.run_at)
         else:
-            # Not dispatched (e.g. agent offline): retried on the next ticks, within the grace period
+            # Nothing was created (e.g. agent offline): retried on the next ticks, within the grace period
             self._save_last_run(previous_last_run)
         return result
 
@@ -381,8 +380,8 @@ class AgentsCronItem(CronItem):
                                schedule.executor.agent.id)
                 self._close_undispatched(agent_executions, commands,
                                          "The agent went offline before the run could be dispatched.")
-                return False
-            # A failed dispatch is reported as not run instead of raising: the executions are already
+                return RUN_FAILED
+            # A failed dispatch is reported as RUN_FAILED instead of raising: the executions are already
             # committed, so they're closed here, and an exception must only mean nothing was created yet
             try:
                 socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
@@ -390,6 +389,6 @@ class AgentsCronItem(CronItem):
                 logger.exception(f"Schedule {self.schedule_id} could not be dispatched to the agent")
                 self._close_undispatched(agent_executions, commands,
                                          f"The run could not be dispatched to the agent: {e}")
-                return False
+                return RUN_FAILED
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             return self.schedule_id

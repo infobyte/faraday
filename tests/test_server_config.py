@@ -81,11 +81,11 @@ def test_exists_and_content():
     assert isPEP440(__version__)
 
 
-def test_database_pool_defaults_keep_previous_behaviour():
+def test_database_pool_defaults():
     from faraday.server.config import DatabaseConfigObject
     section = DatabaseConfigObject()
-    assert section.pool_size == 20
-    assert section.max_overflow == 20
+    assert section.pool_size == 5
+    assert section.max_overflow == 15
     assert section.pool_timeout == 60
     assert section.pool_recycle == 1800
 
@@ -109,3 +109,32 @@ def test_engine_options_use_database_pool_config():
     assert options['pool_timeout'] == 15
     assert options['pool_recycle'] == 120
     assert options['pool_pre_ping'] is True
+
+
+def test_postgresql_engine_options_set_application_name_from_executable(monkeypatch):
+    from faraday.server.app import get_engine_options
+    monkeypatch.delenv('PGAPPNAME', raising=False)
+    monkeypatch.setattr('sys.argv', ['/usr/local/bin/faraday-worker', '--queue', 'celery'])
+    options = get_engine_options('postgresql+psycopg2://user:pass@localhost/faraday')
+    assert options['connect_args'] == {'application_name': 'faraday-worker'}
+
+
+def test_pgappname_takes_precedence_over_executable(monkeypatch):
+    from faraday.server.app import get_engine_options
+    monkeypatch.setenv('PGAPPNAME', 'faraday-cloud-web')
+    monkeypatch.setattr('sys.argv', ['/usr/local/bin/faraday-server'])
+    options = get_engine_options('postgresql+psycopg2://user:pass@localhost/faraday')
+    assert options['connect_args'] == {'application_name': 'faraday-cloud-web'}
+
+
+def test_application_name_is_truncated_to_postgresql_limit(monkeypatch):
+    from faraday.server.app import get_engine_options
+    monkeypatch.setenv('PGAPPNAME', 'x' * 100)
+    options = get_engine_options('postgresql+psycopg2://user:pass@localhost/faraday')
+    assert options['connect_args']['application_name'] == 'x' * 63
+
+
+def test_sqlite_engine_options_have_no_application_name():
+    from faraday.server.app import get_engine_options
+    options = get_engine_options('sqlite:////tmp/faraday.db')
+    assert 'connect_args' not in options

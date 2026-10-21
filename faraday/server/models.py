@@ -3914,6 +3914,7 @@ class UserNotification(Metadata):
             'user_id',
             postgresql_where=text('read = false'),
         ),
+        Index('ix_user_notification_user_id_id', 'user_id', 'id'),
     )
 
     def mark_as_read(self):

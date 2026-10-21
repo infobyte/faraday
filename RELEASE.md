@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.25.1 [Oct 21st, 2026]:
+---
+ * [ADD] Schedules can now run once at a fixed date (`schedule_type: once`) or start from a given date (`start_date`), crons accept the nth weekday of the month (e.g. `0 4 * * 3#2`), and agent executions expose when they ended (`end_date`). Corporate only: Security Scanners can be blocked, so they can't be run manually and their schedules are skipped until they're unblocked. Also fixes schedules firing in the server timezone instead of the schedule's own timezone. #8556
+
 5.25.0 [Oct 6th, 2026]:
 ---
  * [ADD] Added `What's New` section. #8492

@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 import http
 import logging
 from datetime import datetime
-import json
 from uuid import uuid4
 
 # Related third party imports
@@ -18,168 +17,54 @@ from flask import (
 )
 import flask_login
 from flask_classful import route
-from marshmallow import (
-    fields,
-    pre_dump,
-    post_load,
-    validate,
-    ValidationError
-)
+from marshmallow import fields, post_load
 from sqlalchemy.orm.exc import NoResultFound
-import dateutil
-from croniter import croniter
 
 # Local application imports
-from faraday.server.api.base import (
-    AutoSchema,
-    FilterMixin,
-    InvalidUsage,
-    PaginatedMixin,
-    ReadWriteView,
-    get_workspace
-)
+from faraday.server.api.base import InvalidUsage
 from faraday.server.api.modules.agent import AgentSchema, ExecutorSchema
-from faraday.server.api.modules.workspaces import WorkspaceSchema
+from faraday.server.api.modules.scheduler import SchedulerView, SchedulerSchema
 from faraday.server.extensions import socketio
-from faraday.server.schemas import (
-    PrimaryKeyRelatedField,
-    SelfNestedField,
-    MetadataSchema,
-)
-from faraday.server.utils.agents import get_command_and_agent_execution
 from faraday.server.models import (
     Agent,
     AgentsSchedule,
-    db,
     Executor,
-    SchedulerGeneric,
+    db,
 )
+from faraday.server.utils.agents import get_command_and_agent_execution
+
 agents_schedule_api = Blueprint('agents_schedule_api', __name__)
 logger = logging.getLogger(__name__)
 
-SCHEDULES_LIMIT = 2
 
-
-def check_timezone(tz: str):
-    if not dateutil.tz.gettz(tz):
-        raise ValidationError("Invalid timezone")
-
-
-def check_crontab(value):
-    # The regex above only checks the shape; croniter validates field ranges
-    # (e.g. minute 60, hour 24, step 0) that would otherwise raise at run time.
-    if not croniter.is_valid(value):
-        raise ValidationError('Invalid format, Please use basic crontab format, Example: 10 * 10 * *')
-
-
-class AgentsScheduleSchema(AutoSchema):
-    id = fields.Integer(dump_only=True)
-    description = fields.String(required=True)
-    crontab = fields.String(required=True,
-                            metadata={"example": "10 * 10 * *"},
-                            validate=[validate.Regexp(
-                                r"^(((([1-5]?\d(-([1-5]?\d))?|\*)(\/(\d+))?),?)+)\ (((((2[0-3]|1?\d)(-(2["
-                                r"0-3]|1?\d))?|\*)(\/(\d+))?),?)+)\ (((((3[01]|[12]?\d)(-(3[01]|[12]?\d))?|\*)(\/("
-                                r"\d+))?),?)+)\ (((((1[0-2]|\d)(-(1[0-2]|\d))?|\*)(\/(\d+))?),?)+)\ (((([0-6](-(["
-                                r"0-6]))?|\*)(\/(\d+))?),?)+)$",
-                                0,
-                                error='Invalid format, Please use basic crontab format, Example: 10 * 10 * *'),
-                                check_crontab])
-    timezone = fields.String(required=True,
-                             validate=check_timezone
-                             )
-    active = fields.Boolean(default=False)
-    owner = PrimaryKeyRelatedField('username', dump_only=True,
-                                   attribute='owner')
-    executor_id = fields.Integer(dump_only=False)
+class AgentsScheduleSchema(SchedulerSchema):
+    type = fields.String(dump_only=True)
     executor = fields.Nested(ExecutorSchema(), dump_only=True)
     agent = fields.Method('get_agent', dump_only=True)
-    next_run = fields.String(dump_only=True)
-    parameters = fields.Method(deserialize='load_parameters', serialize='send_parameters')
-    metadata = SelfNestedField(MetadataSchema())
-    workspaces_names = fields.List(fields.String, required=True)
-    workspaces = fields.List(fields.Pluck(WorkspaceSchema, 'name'))
-    ignore_info = fields.Boolean(required=False, default=False)
-    resolve_hostname = fields.Boolean(required=False, default=True)
-    vuln_tag = fields.List(fields.String, required=False)
-    service_tag = fields.List(fields.String, required=False)
-    host_tag = fields.List(fields.String, required=False)
-    min_severity = fields.String(required=False, allow_none=True,
-                                 validate=validate.OneOf(SchedulerGeneric.SEVERITIES))
-    max_severity = fields.String(required=False, allow_none=True,
-                                 validate=validate.OneOf(SchedulerGeneric.SEVERITIES))
 
-    class Meta:
+    class Meta(SchedulerSchema.Meta):
         model = AgentsSchedule
-        fields = (
-            'id',
-            'description',
-            'crontab',
-            'timezone',
-            'active',
-            'owner',
-            'executor_id',
+        fields = SchedulerSchema.Meta.fields + (
             'executor',
             'agent',
-            'parameters',
-            'next_run',
-            'metadata',
-            'workspaces_names',
-            'workspaces',
-            "ignore_info",
-            "resolve_hostname",
-            "vuln_tag",
-            "service_tag",
-            "host_tag",
-            "min_severity",
-            "max_severity",
         )
-
-    @staticmethod
-    def load_parameters(value):
-        return json.loads(value)
-
-    @staticmethod
-    def send_parameters(value):
-        return value.parameters
 
     @post_load
     def post_load_executor(self, data, **kwargs):
-        if 'partial' not in kwargs or not kwargs['partial']:
-            if 'executor_id' in data:
-                executor_id = data.pop('executor_id')
-                try:
-                    executor = db.session.query(Executor).filter(Executor.id == executor_id).one()
-                except NoResultFound as e:
-                    raise InvalidUsage(f'Executor id not found: {executor_id}') from e
+        if 'executor_id' in data:
+            executor_id = data.pop('executor_id')
+            try:
+                executor = db.session.query(Executor).filter_by(id=executor_id).one()
                 data['executor'] = executor
-        if "workspaces_names" in data:
-            workspaces = [get_workspace(workspace_name=workspace_name) for workspace_name
-                          in data.pop("workspaces_names")]
-            data['workspaces'] = workspaces
-        if "vuln_tag" in data:
-            data['vuln_tag'] = ",".join(data['vuln_tag'])
-        if "host_tag" in data:
-            data['host_tag'] = ",".join(data['host_tag'])
-        if "service_tag" in data:
-            data['service_tag'] = ",".join(data['service_tag'])
-        return data
-
-    @pre_dump
-    def pre_dump_executor(self, data, **kwargs):
-        if data.vuln_tag:
-            data.vuln_tag = data.vuln_tag.split(',')
-        if data.host_tag:
-            data.host_tag = data.host_tag.split(',')
-        if data.service_tag:
-            data.service_tag = data.service_tag.split(',')
+            except NoResultFound as e:
+                raise InvalidUsage(f'Executor id not found: {executor_id}') from e
         return data
 
     @staticmethod
     def get_agent(obj):
         agent_id = obj.executor.agent_id
         try:
-            agent = db.session.query(Agent).\
+            agent = db.session.query(Agent). \
                 filter(Agent.id == agent_id).one()
         except NoResultFound as e:
             raise InvalidUsage(f'Agent id not found: {agent_id}') from e
@@ -187,43 +72,11 @@ class AgentsScheduleSchema(AutoSchema):
         return ret
 
 
-class AgentsScheduleView(
-        PaginatedMixin,
-        ReadWriteView,
-        FilterMixin,):
+class AgentsScheduleView(SchedulerView):
     route_base = 'agents_schedule'
     model_class = AgentsSchedule
     order_field = AgentsSchedule.id.asc()
     schema_class = AgentsScheduleSchema
-
-    def _envelope_list(self, objects, pagination_metadata=None):
-        agents_schedule = []
-        objects = objects if objects is not None else []
-        for schedule in objects:
-            agents_schedule.append({
-                'id': schedule['id'],
-                'key': schedule['id'],
-                'value': schedule
-            })
-        return {
-            'rows': agents_schedule,
-            'total_rows': (pagination_metadata and pagination_metadata.total
-                           or len(agents_schedule)),
-        }
-
-    def _perform_create(self, data):
-        schedules_in_use = db.session.query(AgentsSchedule).count()
-        schedules_limit = SCHEDULES_LIMIT
-        if schedules_in_use >= schedules_limit:
-            message = "Agent schedules limit reached. Can't create new Schedules"
-            logger.error(message)
-            return flask.abort(403, message)
-
-        created = super()._perform_create(data)
-        schedule_message = f"Schedule created [Workspaces: {data['workspaces']} - description: {data['description']} " \
-                           f"- executor: {data['executor']} - crontab: {data['crontab']}]"
-        logger.info(schedule_message)
-        return created
 
     @route('/<int:schedule_id>/run', methods=['POST'])
     def run_schedule(self, schedule_id):
@@ -313,43 +166,6 @@ class AgentsScheduleView(
         return flask.jsonify({
             'commands_id': [command.id for command in commands],
         })
-
-    @route('/count_schedulers', methods=['GET'])
-    def count_schedulers(self):
-        """
-        ---
-        get:
-          tags: ["Scheduler"]
-          summary: Counts schedulers by type
-          responses:
-            200:
-              description: Counts of schedulers by type
-              content:
-                application/json:
-                  schema:
-                    type: object
-                    properties:
-                      agent_schedulers:
-                        type: integer
-                        description: Count of Agent Schedulers
-        """
-        #  ONLY FOR COMMUNITY
-        counts = db.session.query(
-            AgentsSchedule.type,
-            db.func.count(AgentsSchedule.id).label('count')
-        ).group_by(AgentsSchedule.type).all()
-
-        result = {
-            'agent_schedulers': 0,
-        }
-
-        for scheduler_type, count in counts:
-            if scheduler_type == 'cloud_agent':
-                continue
-            if scheduler_type == 'agent':
-                result['agent_schedulers'] = count
-
-        return flask.jsonify(result)
 
 
 AgentsScheduleView.register(agents_schedule_api)

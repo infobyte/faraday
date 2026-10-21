@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Schedules can now run once at a fixed date (`schedule_type: once`) or start from a given date (`start_date`), crons accept the nth weekday of the month (e.g. `0 4 * * 3#2`), and agent executions expose when they ended (`end_date`). Corporate only: Security Scanners can be blocked, so they can't be run manually and their schedules are skipped until they're unblocked. Also fixes schedules firing in the server timezone instead of the schedule's own timezone. #8556"
+}

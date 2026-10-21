@@ -32,7 +32,7 @@ from typing import Callable
 import cvss
 import dateutil
 import jwt
-from croniter import croniter, CroniterError
+from croniter import CroniterError
 from depot.fields.sqlalchemy import UploadedFileField
 from flask import (
     current_app as app,
@@ -96,6 +96,14 @@ from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
     is_unique_constraint_violation,
+)
+from faraday.server.utils.schedules import (
+    ONCE_GRACE_PERIOD,
+    SCHEDULE_TYPE_CRON,
+    SCHEDULE_TYPE_ONCE,
+    SCHEDULE_TYPES,
+    next_cron_run,
+    to_aware,
 )
 
 logger = logging.getLogger(__name__)
@@ -3559,10 +3567,16 @@ class SchedulerGeneric(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
     description = NonBlankColumn(Text, nullable=False)
-    crontab = NonBlankColumn(Text, nullable=False)
+    # Only used by 'cron' schedules
+    crontab = Column(Text, nullable=True, info={'allow_blank': False})
     timezone = NonBlankColumn(Text, nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     last_run = Column(DateTime)
+    schedule_type = Column(Enum(*SCHEDULE_TYPES, name='schedule_frequency_types'), nullable=False,
+                           default=SCHEDULE_TYPE_CRON, server_default=SCHEDULE_TYPE_CRON)
+    # Naive UTC. 'cron' never fires before start_date; 'once' fires at run_at.
+    start_date = Column(DateTime, nullable=True)
+    run_at = Column(DateTime, nullable=True)
     ignore_info = Column(Boolean, default=False)
     resolve_hostname = Column(Boolean, default=True)
     vuln_tag = Column(String, default="")
@@ -3589,13 +3603,18 @@ class SchedulerGeneric(Metadata):
 
     @property
     def next_run(self):
+        # Same fallback as the crontab thread, so this matches when it actually fires
+        tz = dateutil.tz.gettz(self.timezone) or dateutil.tz.tzlocal()
+        now = datetime.now(tz=tz)
+        if self.schedule_type == SCHEDULE_TYPE_ONCE:
+            run_at = to_aware(self.run_at, tz)
+            # Past run_at it's still pending during the grace period (e.g. the agent was offline)
+            if not self.active or run_at is None or now - run_at > ONCE_GRACE_PERIOD:
+                return None
+            return run_at
         try:
-            return croniter(
-                self.crontab,
-                datetime.now(tz=dateutil.tz.gettz(self.timezone)),
-                ret_type=datetime
-            ).get_next(datetime)
-        except (CroniterError, ValueError):
+            return next_cron_run(self.crontab, tz, now, start_date=self.start_date)
+        except (CroniterError, ValueError, TypeError):
             # An unparseable crontab must not break serialization of the list
             return None
 
@@ -3704,6 +3723,8 @@ class AgentExecution(Metadata):
     running = Column(Boolean, nullable=True)
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
+    # Naive UTC. Set when the run is over (finished, failed or the agent disconnected)
+    end_date = Column(DateTime, nullable=True)
     executor_id = Column(Integer, ForeignKey('executor.id', ondelete='CASCADE'), index=True, nullable=False)
     executor = relationship('Executor', foreign_keys=[executor_id],
                             backref=backref('executions', cascade="all, delete-orphan"))
@@ -3747,6 +3768,8 @@ class CloudAgent(Metadata):
     description = BlankColumn(Text)
     tools_count = Column(Integer, nullable=False, default=1)
     website = Column(Text, nullable=True)
+    # A blocked (inactive) cloud agent can't be run, neither manually nor by its schedules
+    active = Column(Boolean, nullable=False, default=True, server_default=text('true'))
 
     @property
     def last_run(self):
@@ -3770,6 +3793,8 @@ class CloudAgentExecution(Metadata):
     running = Column(Boolean, nullable=True)
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)
+    # Naive UTC. Set when the run is over (finished or failed)
+    end_date = Column(DateTime, nullable=True)
 
     cloud_agent_id = Column(Integer, ForeignKey('cloud_agent.id', ondelete='CASCADE'), index=True, nullable=False)
     cloud_agent = relationship(
@@ -3793,6 +3818,12 @@ class CloudAgentExecution(Metadata):
     triggered_by = Column(String, nullable=True)
     run_uuid = Column(UUID(as_uuid=True), nullable=True, index=True)
     tasks_completed = Column(Integer, nullable=False, default=0)
+    # The run's stages as the Cloud Agent Manager last reported them, whole
+    # (name, status, times...); null for a run that never reported any.
+    # stages_version is that report's own version, so an older one that
+    # arrives late doesn't replace a newer one.
+    stages = Column(JSONType, nullable=True)
+    stages_version = Column(Integer, nullable=False, default=0)
 
     @property
     def parent(self):

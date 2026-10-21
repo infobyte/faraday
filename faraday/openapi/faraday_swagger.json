@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.25.0 API",
+        "title": "Faraday 5.25.1 API",
         "version": "v3"
     },
     "security": [
@@ -6123,6 +6123,285 @@
                 }
             ]
         },
+        "/_api/v3/scheduler/count_schedulers": {
+            "get": {
+                "tags": [
+                    "Scheduler"
+                ],
+                "summary": "Counts schedulers by type",
+                "responses": {
+                    "200": {
+                        "description": "Counts of schedulers by type",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "cloud_agent_schedulers": {
+                                            "type": "integer",
+                                            "description": "Count of Cloud Agent Schedulers"
+                                        },
+                                        "agent_schedulers": {
+                                            "type": "integer",
+                                            "description": "Count of Agent Schedulers"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/scheduler/{object_id}": {
+            "delete": {
+                "tags": [
+                    "SchedulerGeneric"
+                ],
+                "summary": "Deletes SchedulerGeneric",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The resource was deleted successfully"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "object_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ],
+            "get": {
+                "tags": [
+                    "SchedulerGeneric"
+                ],
+                "summary": "Retrieves SchedulerGeneric",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "SchedulerGeneric"
+                ],
+                "summary": "Updates SchedulerGeneric",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Scheduler"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "SchedulerGeneric"
+                ],
+                "summary": "Updates SchedulerGeneric",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "object_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Scheduler"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/_api/v3/scheduler/filter": {
+            "get": {
+                "tags": [
+                    "Filter",
+                    "SchedulerGeneric"
+                ],
+                "description": "Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "description": "Recursive json with filters that supports operators. The json could also contain sort and group.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns filtered, sorted and grouped results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlaskRestless"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid q was sent to the server"
+                    }
+                }
+            }
+        },
+        "/_api/v3/scheduler": {
+            "get": {
+                "tags": [
+                    "SchedulerGeneric"
+                ],
+                "summary": "Get a list of SchedulerGeneric.",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "SchedulerGeneric"
+                ],
+                "summary": "Creates SchedulerGeneric",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Scheduler"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicated key found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Scheduler"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/_api/v3/agents_schedule/count_schedulers": {
             "get": {
                 "tags": [
@@ -6137,6 +6416,10 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
+                                        "cloud_agent_schedulers": {
+                                            "type": "integer",
+                                            "description": "Count of Cloud Agent Schedulers"
+                                        },
                                         "agent_schedulers": {
                                             "type": "integer",
                                             "description": "Count of Agent Schedulers"
@@ -9577,20 +9860,49 @@
                 },
                 "additionalProperties": false
             },
-            "AgentsSchedule": {
+            "Scheduler": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "integer",
                         "readOnly": true
                     },
+                    "cloud_agent_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "executor_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
                     "description": {
                         "type": "string"
                     },
                     "crontab": {
                         "type": "string",
-                        "pattern": "^(((([1-5]?\\d(-([1-5]?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((2[0-3]|1?\\d)(-(2[0-3]|1?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((3[01]|[12]?\\d)(-(3[01]|[12]?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((1[0-2]|\\d)(-(1[0-2]|\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((([0-6](-([0-6]))?|\\*)(\\/(\\d+))?),?)+)$",
-                        "example": "10 * 10 * *"
+                        "pattern": "^(((([1-5]?\\d(-([1-5]?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((2[0-3]|1?\\d)(-(2[0-3]|1?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((3[01]|[12]?\\d)(-(3[01]|[12]?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((1[0-2]|\\d)(-(1[0-2]|\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((([0-6](-([0-6]))?(#[1-5])?|\\*)(\\/(\\d+))?),?)+)$",
+                        "example": "10 * 10 * *",
+                        "nullable": true
+                    },
+                    "schedule_type": {
+                        "type": "string",
+                        "enum": [
+                            "cron",
+                            "once"
+                        ],
+                        "example": "cron"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-10-14T04:00:00-03:00",
+                        "nullable": true
+                    },
+                    "run_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-10-14T04:00:00-03:00",
+                        "nullable": true
                     },
                     "timezone": {
                         "type": "string"
@@ -9599,25 +9911,6 @@
                         "type": "boolean"
                     },
                     "owner": {
-                        "readOnly": true
-                    },
-                    "executor_id": {
-                        "type": "integer"
-                    },
-                    "executor": {
-                        "readOnly": true,
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/Executor"
-                            }
-                        ]
-                    },
-                    "agent": {
-                        "readOnly": true
-                    },
-                    "parameters": {},
-                    "next_run": {
-                        "type": "string",
                         "readOnly": true
                     },
                     "metadata": {},
@@ -9657,6 +9950,18 @@
                             "type": "string"
                         }
                     },
+                    "parameters": {},
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "cloud_agent",
+                            "agent"
+                        ]
+                    },
+                    "next_run": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "min_severity": {
                         "type": "string",
                         "enum": [
@@ -9685,7 +9990,150 @@
                     }
                 },
                 "required": [
-                    "crontab",
+                    "description",
+                    "timezone",
+                    "type",
+                    "workspaces_names"
+                ]
+            },
+            "AgentsSchedule": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "cloud_agent_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "executor_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "crontab": {
+                        "type": "string",
+                        "pattern": "^(((([1-5]?\\d(-([1-5]?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((2[0-3]|1?\\d)(-(2[0-3]|1?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((3[01]|[12]?\\d)(-(3[01]|[12]?\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((((1[0-2]|\\d)(-(1[0-2]|\\d))?|\\*)(\\/(\\d+))?),?)+)\\ (((([0-6](-([0-6]))?(#[1-5])?|\\*)(\\/(\\d+))?),?)+)$",
+                        "example": "10 * 10 * *",
+                        "nullable": true
+                    },
+                    "schedule_type": {
+                        "type": "string",
+                        "enum": [
+                            "cron",
+                            "once"
+                        ],
+                        "example": "cron"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-10-14T04:00:00-03:00",
+                        "nullable": true
+                    },
+                    "run_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-10-14T04:00:00-03:00",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "owner": {
+                        "readOnly": true
+                    },
+                    "metadata": {},
+                    "workspaces_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "workspaces": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "ignore_info": {
+                        "type": "boolean"
+                    },
+                    "resolve_hostname": {
+                        "type": "boolean"
+                    },
+                    "vuln_tag": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "service_tag": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "host_tag": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "parameters": {},
+                    "type": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "next_run": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "min_severity": {
+                        "type": "string",
+                        "enum": [
+                            "UNCLASSIFIED",
+                            "INFO",
+                            "LOW",
+                            "MED",
+                            "HIGH",
+                            "CRITICAL",
+                            null
+                        ],
+                        "nullable": true
+                    },
+                    "max_severity": {
+                        "type": "string",
+                        "enum": [
+                            "UNCLASSIFIED",
+                            "INFO",
+                            "LOW",
+                            "MED",
+                            "HIGH",
+                            "CRITICAL",
+                            null
+                        ],
+                        "nullable": true
+                    },
+                    "executor": {
+                        "readOnly": true,
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Executor"
+                            }
+                        ]
+                    },
+                    "agent": {
+                        "readOnly": true
+                    }
+                },
+                "required": [
                     "description",
                     "timezone",
                     "workspaces_names"
@@ -10224,6 +10672,11 @@
                         "type": "string",
                         "format": "date-time",
                         "readOnly": true
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
                     }
                 }
             }
@@ -10294,6 +10747,9 @@
         },
         {
             "name": "Scheduler"
+        },
+        {
+            "name": "SchedulerGeneric"
         },
         {
             "name": "SearchFilter"

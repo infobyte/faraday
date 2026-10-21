@@ -12,15 +12,30 @@ from time import sleep
 from uuid import uuid4
 
 # Related third party imports
-from croniter import croniter
+from croniter import croniter, CroniterBadCronError
 import dateutil
 
 # Local application imports
 from faraday.server.extensions import socketio
-from faraday.server.models import AgentsSchedule, db
+from faraday.server.models import AgentsSchedule, SchedulerGeneric, db
 from faraday.server.utils.agents import get_command_and_agent_execution
+from faraday.server.utils.schedules import (
+    ONCE_GRACE_PERIOD,
+    SCHEDULE_TYPE_CRON,
+    SCHEDULE_TYPE_ONCE,
+    next_cron_run,
+    to_aware,
+)
 
 logger = logging.getLogger(__name__)
+
+# Wait before the next tick when one fails (e.g. the database is unreachable)
+TICK_ERROR_BACKOFF_SECONDS = 60
+
+# Returned by run() when the run was created but couldn't be dispatched. Unlike False (nothing
+# was created), its executions are already closed as failed, so a 'once' schedule is not retried:
+# every retry would leave another failed run in the history.
+RUN_FAILED = 'failed'
 
 
 class FaradayCronTab(threading.Thread):
@@ -40,8 +55,13 @@ class FaradayCronTab(threading.Thread):
 
     def run_pending(self, **kwargs):
         logger.debug("Look for scheduled jobs..")
-        for job in self.jobs.values():
-            ret = job.run_pending(**kwargs)
+        for job in list(self.jobs.values()):
+            # One broken job must not stop the others, nor kill the thread
+            try:
+                ret = job.run_pending(**kwargs)
+            except Exception:
+                logger.exception(f"Scheduled job {job.schedule_id} failed")
+                continue
             if ret:
                 yield ret
 
@@ -52,7 +72,11 @@ class FaradayCronTab(threading.Thread):
     def run(self):
         logger.info("Crontab Thread [Start]")
         while not self.__event.is_set():
-            self.tick()
+            try:
+                self.tick()
+            except Exception:
+                logger.exception("Crontab Thread tick failed")
+                self.__event.wait(TICK_ERROR_BACKOFF_SECONDS)
         logger.info("Crontab Thread [Stop]")
 
     def tick(self):
@@ -86,8 +110,11 @@ class CronTab(FaradayCronTab):
                     self.jobs[schedule.id].update(schedule)
                 else:
                     try:
-                        self.jobs[schedule.id] = AgentsCronItem(schedule, app=self.app)
-                        logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} [{schedule.crontab}]')
+                        job = AgentsCronItem(schedule, app=self.app)
+                        if job.valid:
+                            logger.info(f'Loaded schedule for agent {schedule.executor.agent.id} '
+                                        f'[{schedule.crontab or schedule.run_at}]')
+                            self.jobs[schedule.id] = job
                     except Exception as e:
                         # A single bad schedule (e.g. unparseable crontab) must never crash
                         # the scheduler thread or app startup; log it and skip.
@@ -100,24 +127,83 @@ class CronTab(FaradayCronTab):
         time.sleep(sleep_time)
 
 
+def _frequency_of(schedule):
+    """Everything that decides when a schedule fires, as stored."""
+    # getattr: not every scheduled item is a SchedulerGeneric row
+    return (
+        schedule.crontab,
+        schedule.timezone,
+        getattr(schedule, 'schedule_type', None) or SCHEDULE_TYPE_CRON,
+        getattr(schedule, 'start_date', None),
+        getattr(schedule, 'run_at', None),
+    )
+
+
 class CronItem:
 
     def __init__(self, schedule, app=None):
         self.app = app
-        self.valid = True
         self.active = schedule.active
-        self.crontab = schedule.crontab
-        self.last_run = self.schedule().get_prev(datetime.datetime)
         self.schedule_id = schedule.id
-        self.timezone = dateutil.tz.gettz(schedule.timezone)
+        self._load_frequency(schedule)
+
+    def _load_frequency(self, schedule):
+        self._frequency = _frequency_of(schedule)
+        self.crontab, timezone, self.schedule_type, self.start_date, self.run_at = self._frequency
+        self.valid = True
+        self.timezone = dateutil.tz.gettz(timezone)
         if not self.timezone:
             self.timezone = dateutil.tz.tzlocal()
+        if self.schedule_type == SCHEDULE_TYPE_ONCE:
+            # 'once' fires at run_at, it doesn't need an anchor
+            self.last_run = None
+            return
+        try:
+            self.last_run = self.schedule().get_prev(datetime.datetime)
+        except CroniterBadCronError:
+            logger.warning(f"Invalid crontab expression for schedule {schedule.id}: '{schedule.crontab}'. Skipping.")
+            self.valid = False
+            self.last_run = datetime.datetime.now()
 
     def update(self, schedule):
-        if self.crontab != schedule.crontab:
-            self.crontab = schedule.crontab
-            logger.info(f"Update Scheduler: {self.schedule_id} crontab: [{self.crontab}]")
+        if _frequency_of(schedule) != self._frequency:
+            # Re-anchored at now, so a change never triggers runs that were due before it
+            self._load_frequency(schedule)
+            logger.info(f"Update Scheduler: {self.schedule_id} [{self.schedule_type}] "
+                        f"crontab: [{self.crontab}] run_at: [{self.run_at}]")
         self.active = schedule.active
+
+    def _deactivate_once(self, loaded_run_at):
+        """Turns a 'once' schedule off, unless it was changed since it was loaded."""
+        self.active = False
+        if self.app is None:
+            return
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            if not schedule:
+                return
+            if schedule.schedule_type != SCHEDULE_TYPE_ONCE or schedule.run_at != loaded_run_at:
+                # The next refresh picks up the new frequency (and active flag) from the database
+                logger.info(f"Schedule {self.schedule_id} was changed since it was loaded, not deactivating it")
+                return
+            schedule.active = False
+            db.session.commit()
+
+    def _stored_last_run(self):
+        if self.app is None:
+            return None
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            return schedule.last_run if schedule else None
+
+    def _save_last_run(self, last_run):
+        if self.app is None:
+            return
+        with self.app.app_context():
+            schedule = db.session.query(SchedulerGeneric).filter_by(id=self.schedule_id).first()
+            if schedule:
+                schedule.last_run = last_run
+                db.session.commit()
 
     def run(self):
         # TODO: Raise implementing
@@ -140,26 +226,84 @@ class CronItem:
                 now = now.replace(tzinfo=self.timezone)
             else:
                 now = now.astimezone(self.timezone)
+        # 'once' compares against the exact time: run_at may have seconds
+        exact_now = now
         now = now.replace(second=0, microsecond=0)
+        if not self.valid:
+            return False
+        if self.active and self.schedule_type == SCHEDULE_TYPE_ONCE:
+            return self._run_pending_once(exact_now)
         if self.active:
             next_time = self.schedule(self.last_run).get_next(datetime.datetime)
             if not next_time.tzinfo:
                 logger.warning(f"Timezone not set for schedule {self.schedule_id}. This will be deprecated soon.")
                 next_time = next_time.replace(tzinfo=self.timezone)
+            start = to_aware(self.start_date, self.timezone)
+            if start is not None and next_time < start:
+                next_time = next_cron_run(self.crontab, self.timezone, next_time, start_date=self.start_date)
             logger.debug(f"Next run for {self.schedule_id}: {next_time}")
             logger.debug(f"Now: {now}")
             if next_time <= now:
                 logger.info(f"Running Job {self.schedule_id} [{self.crontab}]")
                 self.last_run = next_time
-                return self.run()
+                result = self.run()
+                return False if result == RUN_FAILED else result
             else:
                 logger.debug(f"Job {self.schedule_id} will run in {next_time}")
         else:
             logger.warning(f"Try to run inactive job: {self.schedule_id}")
         return False
 
+    def _run_pending_once(self, now):
+        run_at = to_aware(self.run_at, self.timezone)
+        if run_at is None or run_at > now:
+            return False
+        if now - run_at > ONCE_GRACE_PERIOD:
+            logger.warning(f"Job {self.schedule_id} missed its run at {run_at} "
+                           f"(more than {ONCE_GRACE_PERIOD} late), deactivating it")
+            self._deactivate_once(self.run_at)
+            return False
+        # last_run is what marks it as fired (`active` stays the user's choice). It's saved
+        # before running, so if the process dies mid-run it's not run again after a restart.
+        previous_last_run = self._stored_last_run()
+        if previous_last_run is not None and previous_last_run >= self.run_at:
+            logger.info(f"Job {self.schedule_id} already ran at {previous_last_run}, deactivating it")
+            self._deactivate_once(self.run_at)
+            return False
+        logger.info(f"Running Job {self.schedule_id} [once at {run_at}]")
+        self._save_last_run(datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+        try:
+            result = self.run()
+        except Exception:
+            # Failed before dispatching: retried on the next ticks, within the grace period
+            self._save_last_run(previous_last_run)
+            raise
+        if result == RUN_FAILED:
+            logger.warning(f"Job {self.schedule_id} could not be dispatched, not retrying it")
+            self._deactivate_once(self.run_at)
+            return False
+        if result:
+            self._deactivate_once(self.run_at)
+        else:
+            # Nothing was created (e.g. agent offline): retried on the next ticks, within the grace period
+            self._save_last_run(previous_last_run)
+        return result
+
 
 class AgentsCronItem(CronItem):
+
+    @staticmethod
+    def _close_undispatched(agent_executions, commands, message):
+        """Closes the executions (as failed) and commands of a run that was never dispatched."""
+        end_date = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        for agent_execution in agent_executions:
+            agent_execution.running = False
+            agent_execution.successful = False
+            agent_execution.message = message
+            agent_execution.end_date = end_date
+        for command in commands:
+            command.end_date = end_date
+        db.session.commit()
 
     def run(self):
         with self.app.app_context():
@@ -174,7 +318,7 @@ class AgentsCronItem(CronItem):
                             f' active flag: {schedule.executor.agent.active}')
                 return False
 
-            schedule.last_run = datetime.datetime.now()
+            schedule.last_run = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
             db.session.add(schedule)
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             agent_executions = []
@@ -234,7 +378,17 @@ class AgentsCronItem(CronItem):
                 logger.warning("Agent %s with id %s is offline.",
                                schedule.executor.agent.name,
                                schedule.executor.agent.id)
-                return self.schedule_id
-            socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
+                self._close_undispatched(agent_executions, commands,
+                                         "The agent went offline before the run could be dispatched.")
+                return RUN_FAILED
+            # A failed dispatch is reported as RUN_FAILED instead of raising: the executions are already
+            # committed, so they're closed here, and an exception must only mean nothing was created yet
+            try:
+                socketio.emit("run", message, to=schedule.executor.agent.sid, namespace='/dispatcher')
+            except Exception as e:
+                logger.exception(f"Schedule {self.schedule_id} could not be dispatched to the agent")
+                self._close_undispatched(agent_executions, commands,
+                                         f"The run could not be dispatched to the agent: {e}")
+                return RUN_FAILED
             logger.info(f"Agent {schedule.executor.agent.name} executed with executor {schedule.executor.name}")
             return self.schedule_id

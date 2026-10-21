@@ -4,20 +4,22 @@ Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import datetime
 from unittest import mock
 
 import pytest
 from sqlalchemy import text
 
 from faraday.server.api.modules.agents_schedule import AgentsScheduleView
-from faraday.server.models import AgentsSchedule
+from faraday.server.models import AgentsSchedule, CloudAgentsSchedule
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests.factories import (
     AgentScheduleFactory,
     AgentFactory,
     WorkspaceFactory,
     ExecutorFactory,
-    AgentExecutionFactory
+    AgentExecutionFactory,
+    CloudAgentFactory,
 )
 from posixpath import join
 
@@ -60,7 +62,7 @@ def test_both_schedule_and_manual_agents(session):
 SCHEDULES_LIMIT = 999
 
 
-@mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
+@mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
 class TestAgentScheduleView(ReadWriteAPITests):
     model = AgentsSchedule
     factory = AgentScheduleFactory
@@ -168,7 +170,7 @@ class TestAgentScheduleView(ReadWriteAPITests):
         assert schedule.id not in crontab_thread.jobs
 
     def test_create_until_limit(self, test_client, session):
-        with mock.patch('faraday.server.api.modules.agents_schedule.SCHEDULES_LIMIT', 7):
+        with mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', 7):
             for i in range(2):
                 workspaces = [WorkspaceFactory.create()]
                 agent = AgentFactory.create()
@@ -327,3 +329,239 @@ class TestAgentScheduleView(ReadWriteAPITests):
 
         # Assert that only agent schedulers are counted
         assert counts['agent_schedulers'] == 2
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestGenericSchedulerView:
+
+    def test_delete_removes_the_schedule(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+        schedule_id = schedule.id
+
+        res = test_client.delete(f'/v3/scheduler/{schedule_id}')
+
+        assert res.status_code == 204
+        assert session.get(AgentsSchedule, schedule_id) is None
+
+    def test_list_includes_agent_schedules(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.get('/v3/scheduler')
+
+        assert res.status_code == 200
+        assert schedule.id in {row['id'] for row in res.json['rows']}
+
+
+BUENOS_AIRES_OFFSET = datetime.timezone(datetime.timedelta(hours=-3))
+
+
+def _iso_in(days=0, minutes=0):
+    """ISO 8601 datetime relative to now, with the offset of the schedules' timezone."""
+    moment = datetime.datetime.now(BUENOS_AIRES_OFFSET) + datetime.timedelta(days=days, minutes=minutes)
+    return moment.replace(microsecond=0).isoformat()
+
+
+@pytest.fixture
+def schedule_payload():
+    def _payload(**overrides):
+        payload = AgentScheduleFactory.build_dict(workspace=[WorkspaceFactory.create()],
+                                                  executor=ExecutorFactory.create())
+        payload['timezone'] = 'America/Argentina/Buenos_Aires'
+        payload.update(overrides)
+        return payload
+    return _payload
+
+
+@pytest.mark.usefixtures('logged_user')
+@mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
+class TestScheduleTypes:
+    url = '/v3/agents_schedule'
+
+    def test_cron_is_the_default(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload())
+
+        assert res.status_code == 201
+        assert res.json['schedule_type'] == 'cron'
+
+    def test_cron_requires_crontab(self, test_client, schedule_payload):
+        payload = schedule_payload()
+        del payload['crontab']
+
+        res = test_client.post(self.url, data=payload)
+
+        assert res.status_code == 400
+        assert 'crontab' in res.json['messages']['json']
+
+    def test_crontab_accepts_nth_weekday_of_month(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(crontab='0 4 * * 3#2'))
+
+        assert res.status_code == 201
+
+    def test_start_date_is_stored_as_utc_and_dumped_in_the_schedule_timezone(self, test_client, session,
+                                                                             schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(start_date='2030-10-14T07:00:00Z'))
+
+        assert res.status_code == 201
+        assert res.json['start_date'] == '2030-10-14T04:00:00-03:00'
+        stored = session.get(AgentsSchedule, res.json['id'])
+        assert stored.start_date == datetime.datetime(2030, 10, 14, 7, 0)
+
+    def test_next_run_is_not_before_start_date(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(crontab='0 4 * * *',
+                                                               start_date='2030-10-14T04:00:00-03:00'))
+
+        assert res.json['next_run'] == '2030-10-14 04:00:00-03:00'
+
+    def test_sub_second_precision_is_truncated(self, test_client, session, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(crontab='0 4 * * *',
+                                                               start_date='2030-10-14T04:00:00.500000-03:00'))
+
+        assert res.status_code == 201, res.json
+        assert res.json['start_date'] == '2030-10-14T04:00:00-03:00'
+        assert res.json['next_run'] == '2030-10-14 04:00:00-03:00'
+        assert session.get(AgentsSchedule, res.json['id']).start_date == datetime.datetime(2030, 10, 14, 7, 0)
+
+    def test_date_without_offset_is_rejected(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(start_date='2030-10-14T04:00:00'))
+
+        assert res.status_code == 400
+        assert 'start_date' in res.json['messages']['json']
+
+    def test_once_requires_run_at(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(schedule_type='once', crontab=None))
+
+        assert res.status_code == 400
+        assert 'run_at' in res.json['messages']['json']
+
+    def test_once_in_the_past_is_rejected(self, test_client, schedule_payload):
+        res = test_client.post(self.url, data=schedule_payload(schedule_type='once', crontab=None,
+                                                               run_at=_iso_in(minutes=-5)))
+
+        assert res.status_code == 400
+        assert 'run_at' in res.json['messages']['json']
+
+    def test_create_once(self, test_client, schedule_payload):
+        run_at = _iso_in(days=1)
+
+        res = test_client.post(self.url, data=schedule_payload(schedule_type='once', crontab='', run_at=run_at))
+
+        assert res.status_code == 201
+        assert res.json['run_at'] == run_at
+        assert res.json['crontab'] is None
+        assert res.json['next_run'] is not None
+
+    def test_switching_to_once_clears_cron_fields(self, test_client, session):
+        schedule = AgentScheduleFactory.create(start_date=datetime.datetime(2030, 1, 1),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'{self.url}/{schedule.id}',
+                                data={'schedule_type': 'once', 'run_at': _iso_in(days=1)})
+
+        assert res.status_code == 200
+        assert res.json['crontab'] is None
+        assert res.json['start_date'] is None
+
+    def test_once_that_already_ran_can_still_be_edited(self, test_client, session):
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=False,
+                                               run_at=datetime.datetime(2020, 1, 1),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'{self.url}/{schedule.id}', data={'description': 'renamed'})
+
+        assert res.status_code == 200
+        assert res.json['next_run'] is None
+
+    def test_reactivating_a_past_once_is_rejected(self, test_client, session):
+        schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=False,
+                                               run_at=datetime.datetime(2020, 1, 1),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'{self.url}/{schedule.id}', data={'active': True})
+
+        assert res.status_code == 400
+        assert 'run_at' in res.json['messages']['json']
+
+
+def test_next_run_of_once_with_unknown_timezone_does_not_raise(session):
+    schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, timezone='Not/AZone',
+                                           run_at=datetime.datetime(2030, 1, 1),
+                                           workspaces=[WorkspaceFactory.create()])
+    session.commit()
+
+    assert schedule.next_run is not None
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestScheduleTypeField:
+
+    def test_agent_schedule_type_is_not_writable(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'/v3/agents_schedule/{schedule.id}', data={'type': 'cloud_agent'})
+
+        assert res.status_code == 200
+        assert res.json['type'] == 'agent'
+
+    def test_generic_schedule_type_can_not_be_changed(self, test_client, session):
+        schedule = AgentScheduleFactory.create(workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(f'/v3/scheduler/{schedule.id}', data={'type': 'cloud_agent'})
+
+        assert res.status_code == 400
+        assert 'type' in res.json['messages']['json']
+
+    @mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', SCHEDULES_LIMIT)
+    def test_generic_schedule_creation_requires_type(self, test_client, schedule_payload):
+        payload = schedule_payload()
+        payload.pop('type', None)
+
+        res = test_client.post('/v3/scheduler', data=payload)
+
+        assert res.status_code == 400
+        assert 'type' in res.json['messages']['json']
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_schedules_limit_counts_only_agent_schedules(test_client, session, schedule_payload):
+    session.add(CloudAgentsSchedule(description='cloud', crontab='0 4 * * *', timezone='UTC', parameters={},
+                                    cloud_agent=CloudAgentFactory.create()))
+    session.commit()
+
+    with mock.patch('faraday.server.api.modules.scheduler.SCHEDULES_LIMIT', 1):
+        res = test_client.post('/v3/agents_schedule', data=schedule_payload())
+
+    assert res.status_code == 201
+
+
+class TestOnceNextRun:
+
+    @pytest.fixture
+    def make_once(self, session):
+        def _make(run_at, active=True):
+            schedule = AgentScheduleFactory.create(schedule_type='once', crontab=None, active=active, run_at=run_at,
+                                                   workspaces=[WorkspaceFactory.create()])
+            session.commit()
+            return schedule
+        return _make
+
+    def test_still_pending_within_the_grace_period(self, make_once):
+        run_at = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+
+        assert make_once(run_at).next_run is not None
+
+    def test_none_once_the_grace_period_is_over(self, make_once):
+        run_at = datetime.datetime.utcnow() - datetime.timedelta(hours=2)
+
+        assert make_once(run_at).next_run is None
+
+    def test_none_when_inactive(self, make_once):
+        run_at = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+
+        assert make_once(run_at, active=False).next_run is None

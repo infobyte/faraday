@@ -158,6 +158,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.custom_fields import \
         custom_fields_schema_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agents_schedule import agents_schedule_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.scheduler import schedule_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agent_auth_token import \
         agent_auth_token_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.agent import agent_api  # pylint:disable=import-outside-toplevel
@@ -206,6 +207,7 @@ def register_blueprints(app):
     app.register_blueprint(searchfilter_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(preferences_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(export_data_api, url_prefix=app.config['APPLICATION_PREFIX'])
+    app.register_blueprint(schedule_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(agents_schedule_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(workflow_api, url_prefix=app.config['APPLICATION_PREFIX'])
     app.register_blueprint(reports_settings_api, url_prefix=app.config['APPLICATION_PREFIX'])

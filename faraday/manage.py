@@ -38,6 +38,7 @@ from faraday.server.commands import manage_settings
 from faraday.server.models import db, User, LOCAL_TYPE
 from faraday_plugins.plugins.manager import PluginsManager
 from faraday.server.commands.move_references import _move_references
+from faraday.server.commands.optimize_indices import optimize_indices as _optimize_indices
 
 
 CONTEXT_SETTINGS = {'help_option_names': ['-h', '--help']}
@@ -364,6 +365,17 @@ def sync_hosts_stats(async_mode):
         _sync_hosts_stats(async_mode)
 
 
+@click.command(help="Create missing performance indices. May take a long time on large databases")
+@click.confirmation_option(prompt="WARNING: Building indices on large databases may take a long time "
+                                  "(minutes to hours). Faraday keeps working meanwhile, but the database "
+                                  "will be under extra load. Do you want to continue?")
+def optimize_indices():
+    app = get_app(register_extensions_flag=False)
+    with app.app_context():
+        _optimize_indices(db.engine, echo=click.echo)
+        click.echo(click.style('Indices optimized successfully!', fg='green', bold=True))
+
+
 cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(database_schema)
@@ -383,6 +395,7 @@ cli.add_command(settings)
 cli.add_command(move_references)
 cli.add_command(sync_hosts_stats)
 cli.add_command(ingest)
+cli.add_command(optimize_indices)
 
 
 if __name__ == '__main__':

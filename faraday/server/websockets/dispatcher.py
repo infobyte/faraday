@@ -7,11 +7,13 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 import logging
 import json
+from datetime import datetime, timezone
 
 # Related third party imports
 import itsdangerous
 from flask import current_app, request
 from flask_socketio import Namespace
+from sqlalchemy import func
 
 # Local imports
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
@@ -54,6 +56,10 @@ def update_executors(agent, executors):
     return True
 
 
+def _utc_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def remove_sid():
     try:
         agents = Agent.query.filter(Agent.sid!=None).all()  # noqa E711
@@ -86,7 +92,8 @@ class DispatcherNamespace(Namespace):
             {
                 "running": False,
                 "successful": False,
-                "message": "Execution terminated due to agent disconnection."
+                "message": "Execution terminated due to agent disconnection.",
+                "end_date": _utc_now(),
             },
             synchronize_session=False
         )
@@ -116,6 +123,10 @@ class DispatcherNamespace(Namespace):
         if not update_values:
             logger.warning("No valid fields to update for execution IDs: %s", execution_ids)
             return
+
+        if update_values.get("running") is False:
+            # The run is over. Keep the first end reported if the agent sends it more than once.
+            update_values["end_date"] = func.coalesce(AgentExecution.end_date, _utc_now())
 
         # Update AgentExecution in bulk
         db.session.query(AgentExecution).filter(AgentExecution.id.in_(execution_ids)).update(

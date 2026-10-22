@@ -31,7 +31,6 @@ from faraday.server.models import (
     AgentsSchedule,
     Executor,
     User,
-    Workspace,
     db,
 )
 from faraday.server.utils.agents import get_command_and_agent_execution
@@ -79,10 +78,9 @@ class AgentsScheduleView(SchedulerView):
     schema_class = AgentsScheduleSchema
 
     def _eagerload_options(self):
-        # the workspaces, the executor and its agent (with all its executors)
-        # are dumped for every schedule, and every executor dumps its schedules
+        # the executor and its agent (with all its executors) are dumped for every
+        # schedule, and every executor dumps its schedules
         return super()._eagerload_options() + [
-            selectinload(AgentsSchedule.workspaces).load_only(Workspace.name),
             joinedload(AgentsSchedule.executor).options(
                 selectinload(Executor.schedules),
                 joinedload(Executor.agent).options(
@@ -91,35 +89,6 @@ class AgentsScheduleView(SchedulerView):
                 ),
             ),
         ]
-
-    def _envelope_list(self, objects, pagination_metadata=None):
-        agents_schedule = []
-        objects = objects if objects is not None else []
-        for schedule in objects:
-            agents_schedule.append({
-                'id': schedule['id'],
-                'key': schedule['id'],
-                'value': schedule
-            })
-        return {
-            'rows': agents_schedule,
-            'total_rows': (pagination_metadata and pagination_metadata.total
-                           or len(agents_schedule)),
-        }
-
-    def _perform_create(self, data):
-        schedules_in_use = db.session.query(AgentsSchedule).count()
-        schedules_limit = SCHEDULES_LIMIT
-        if schedules_in_use >= schedules_limit:
-            message = "Agent schedules limit reached. Can't create new Schedules"
-            logger.error(message)
-            return flask.abort(403, message)
-
-        created = super()._perform_create(data)
-        schedule_message = f"Schedule created [Workspaces: {data['workspaces']} - description: {data['description']} " \
-                           f"- executor: {data['executor']} - crontab: {data['crontab']}]"
-        logger.info(schedule_message)
-        return created
 
     @route('/<int:schedule_id>/run', methods=['POST'])
     def run_schedule(self, schedule_id):

@@ -339,9 +339,23 @@ class HostView(
         """
         workspace_name = kwargs.get('workspace_name')
         if workspace_name:
-            services = self._get_object(host_id, workspace_name).services
+            host = self._get_object(host_id, workspace_name)
         else:
-            services = self._get_object(host_id).services
+            host = self._get_object(host_id)
+        # Query instead of host.services so what ServiceSchema dumps loads
+        # with the services, not one query per service
+        services = (
+            Service.query
+            .filter(Service.host_id == host.id)
+            .options(
+                joinedload(Service.creator).load_only(User.username),
+                joinedload(Service.update_user),
+                undefer(Service.vulnerability_count),
+                undefer(Service.creator_command_id),
+            )
+            .order_by(Service.protocol, Service.port)
+            .all()
+        )
         return ServiceSchema(many=True).dump(services)
 
     @route('/countVulns')

@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from posixpath import join as urljoin
+
 """Tests for many API endpoints that do not depend on workspace_name"""
 try:
     from urllib import urlencode
@@ -356,3 +358,48 @@ class TestListServiceView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
 
         assert res.status_code == 200
         assert res.json['deleted'] == 3
+
+    def test_service_exposes_creator_command_id(self, test_client, session):
+        command = EmptyCommandFactory.create(workspace=self.workspace, tool='nmap')
+        session.flush()
+        factories.CommandObjectFactory.create(
+            object_type='service',
+            object_id=self.first_object.id,
+            command=command,
+            workspace=self.workspace,
+        )
+        session.commit()
+
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        assert res.json['creator_command_id'] == command.id
+
+    def test_service_without_command_has_no_creator_command_id(self, test_client, session):
+        session.commit()
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        assert res.json['creator_command_id'] is None
+
+    def test_filter_by_creator_command_id(self, test_client, session):
+        command = EmptyCommandFactory.create(workspace=self.workspace, tool='nmap')
+        services = self.factory.create_batch(5, workspace=self.workspace)
+        self.factory.create_batch(3, workspace=self.workspace)
+        self.factory.create_batch(2, workspace=factories.WorkspaceFactory.create())
+        session.flush()
+        for service in services:
+            factories.CommandObjectFactory.create(
+                object_type='service',
+                object_id=service.id,
+                command=command,
+                workspace=self.workspace,
+            )
+        session.commit()
+
+        query_filter = {
+            "filters": [{"name": "creator_command_id", "op": "==", "val": command.id}],
+        }
+        res = test_client.get(urljoin(self.url(), f'filter?q={json.dumps(query_filter)}'))
+        assert res.status_code == 200
+        assert res.json['count'] == len(services)
+        assert {service['id'] for service in res.json['services']} == {service.id for service in services}
+        assert all(service['value']['creator_command_id'] == command.id for service in res.json['services'])

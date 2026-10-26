@@ -246,6 +246,40 @@ class TestQueryCounts:
             assert row['owner'] == host.creator.username
             assert any('qcsvc' in summary for summary in row['service_summaries'])
 
+    @pytest.mark.parametrize('workspaced', [False, True])
+    def test_host_services_query_count_is_constant(self, test_client, session, workspace, workspaced):
+        """service_list dumps ServiceSchema, whose deferred columns
+        (vulns, creator_command_id) lazy-load per service unless undeferred."""
+        host = factories.HostFactory.create(workspace=workspace)
+        session.add(host)
+        session.flush()
+        command = factories.EmptyCommandFactory.create(workspace=workspace)
+        session.flush()
+
+        def add_services(ports):
+            for port in ports:
+                service = factories.ServiceFactory.create(
+                    workspace=workspace, host=host, port=port, protocol='tcp')
+                session.add(service)
+                session.flush()
+                session.add(factories.CommandObjectFactory.create(
+                    object_type='service', object_id=service.id, command=command, workspace=workspace))
+            session.commit()
+
+        prefix = f'/v3/ws/{workspace.name}' if workspaced else '/v3'
+        url = f'{prefix}/hosts/{host.id}/services'
+
+        add_services([20, 10])
+        few, _ = _count_queries(test_client, session, url)
+
+        add_services(range(100, 110))
+        many, res = _count_queries(test_client, session, url)
+
+        assert many <= few, f"{url} scales with rows: {few} -> {many}"
+        assert len(res.json) == 12
+        assert [service['port'] for service in res.json] == sorted(service['port'] for service in res.json)
+        assert all(service['creator_command_id'] == command.id for service in res.json)
+
 
 def _make_agent(session):
     agent = factories.AgentFactory.create(creator=factories.UserFactory.create())

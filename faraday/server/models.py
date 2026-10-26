@@ -1460,6 +1460,17 @@ class Service(Metadata):
     vulnerability_count = _make_generic_count_property('service',
                                                        'vulnerability')
 
+    creator_command_id = column_property(
+        select(CommandObject.command_id)
+        .where(CommandObject.object_type == 'service')
+        .where(text('command_object.object_id = service.id'))
+        .where(CommandObject.workspace_id == workspace_id)
+        .order_by(asc(CommandObject.create_date))
+        .limit(1)
+        .scalar_subquery(),
+        deferred=True,
+    )
+
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
     )

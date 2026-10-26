@@ -3,6 +3,7 @@ SCHEMA_FIELDS = (
     "_id",
     "_rev",
     "command_id",
+    "creator_command_id",
     "description",
     "host_id",
     "id",

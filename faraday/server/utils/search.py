@@ -32,7 +32,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import ColumnProperty, RelationshipProperty
+from sqlalchemy.orm import ColumnProperty, RelationshipProperty, aliased
 from sqlalchemy.orm.interfaces import MANYTOMANY
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.elements import BinaryExpression
@@ -49,6 +49,11 @@ from faraday.server.models import (
 )
 
 VULNERABILITY_MODELS = (Vulnerability, VulnerabilityWeb, VulnerabilityGeneric)
+
+# User relationships other than `creator`. The plain User join in
+# QueryBuilder.create_query is bound to creator_id, so these are filtered with
+# EXISTS and grouped/ordered through their own alias of User.
+ALIASED_USER_RELATIONS = ('triaged_by',)
 
 logger = logging.getLogger(__name__)
 
@@ -506,6 +511,15 @@ def apply_json_order(query, model, field_name, field_name_in_relation, direction
     )
 
 
+def join_user_relation(query, model, relation_name, user_aliases):
+    """Join the User of `relation_name` (one of ALIASED_USER_RELATIONS) once, through an alias."""
+    if relation_name not in user_aliases:
+        user_alias = aliased(User, name=f'{relation_name}_user')
+        query = query.join(getattr(model, relation_name).of_type(user_alias), isouter=True)
+        user_aliases[relation_name] = user_alias
+    return query, user_aliases[relation_name]
+
+
 def apply_join(query, model, relation, joined_models):
     relation_model = relation.mapper.class_
 
@@ -677,6 +691,10 @@ class QueryBuilder:
                        'operators.')
                 raise TypeError(msg)
             if numargs == 2:
+                if (relation or fieldname) in ALIASED_USER_RELATIONS:
+                    # triaged_by == 'name' or triaged_by__username == 'name'
+                    user_field = getattr(User, fieldname if relation else 'username')
+                    return field.has(opfunc(user_field, argument))
                 map_attr = {
                     'creator': 'username',
                 }
@@ -777,13 +795,18 @@ class QueryBuilder:
         """
         # TODO: Can't this be done with group by below?
         joined_models = set()
+        user_aliases = {}
         query = session.query(model)
 
         if search_params.group_by:
             select_fields = [func.count()]
             for group_by in search_params.group_by:
                 field_name = group_by.field
-                if '__' in field_name:
+                if '__' in field_name and field_name.split('__')[0] in ALIASED_USER_RELATIONS:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    query, user_alias = join_user_relation(query, model, field_name, user_aliases)
+                    select_fields.append(getattr(user_alias, field_name_in_relation))
+                elif '__' in field_name:
                     field_name, field_name_in_relation = field_name.split('__')
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_
@@ -831,7 +854,11 @@ class QueryBuilder:
             if search_params.order_by:
                 for val in search_params.order_by:
                     field_name = val.field
-                    if '__' in field_name:
+                    if '__' in field_name and field_name.split('__')[0] in ALIASED_USER_RELATIONS:
+                        field_name, field_name_in_relation = field_name.split('__')
+                        query, user_alias = join_user_relation(query, model, field_name, user_aliases)
+                        query = apply_order(query, getattr(user_alias, field_name_in_relation), val.direction)
+                    elif '__' in field_name:
                         field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
                         # Check if this is a plain column (e.g. JSONType) vs a relationship
@@ -863,7 +890,10 @@ class QueryBuilder:
         if search_params.group_by:
             for group_by in search_params.group_by:
                 field_name = group_by.field
-                if '__' in field_name:
+                if '__' in field_name and field_name.split('__')[0] in user_aliases:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    field = getattr(user_aliases[field_name], field_name_in_relation)
+                elif '__' in field_name:
                     field_name, field_name_in_relation = field_name.split('__')
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_

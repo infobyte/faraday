@@ -31,6 +31,7 @@ from sqlalchemy import (
     func,
     select,
     text,
+    true,
 )
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
@@ -88,6 +89,7 @@ from faraday.server.utils.database import (
     get_object_type_for,
     is_unique_constraint_violation,
 )
+from faraday.server.utils.triage import imported_vuln_triaged
 from faraday.server.utils.vulns import (
     create_cve_obj,
     create_policy_violation_obj,
@@ -435,6 +437,7 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
     # and update_date, whether or not the status changes.
     import_time = datetime.utcnow()
     detected = stmt.excluded.status.in_(['open', 're-opened'])
+    status_closing = and_(stmt.excluded.status == 'closed', Vulnerability.status.in_(['open', 're-opened']))
     on_update_stmt = stmt.on_conflict_do_update(
         index_elements=[func.md5(text('name')),
                         func.md5(text('description')),
@@ -452,18 +455,22 @@ def insert_vulnerabilities(host_vulns_created, processed_data, workspace_id=None
             "_tmp_id": stmt.excluded.id,
             "status": case(
                 # If the incoming status is closed and existing is open/reopened, close it
-                (and_(
-                    stmt.excluded.status == 'closed',
-                    Vulnerability.status.in_(['open', 're-opened'])
-                ), 'closed'),
-                # If incoming vuln exists and is open and the current status is closed, reopen it
+                (status_closing, 'closed'),
+                # If incoming vuln exists and is open and the current status is closed, reopen it,
+                # unless it's a false positive: it stays closed (its last_detected is still bumped)
                 (and_(
                     detected,
-                    Vulnerability.status == 'closed'
+                    Vulnerability.status == 'closed',
+                    Vulnerability.false_positive.is_(False),
                 ), 're-opened'),
                 # Keep existing status as default
                 else_=Vulnerability.status
             ),
+            # Closing it is a triage by the importer, the same as a user closing it by hand.
+            # Reopening it doesn't change triaged. (apply_triage_rules with source=SOURCE_IMPORT)
+            "triaged": case((status_closing, true()), else_=Vulnerability.triaged),
+            "triaged_by_id": case((status_closing, stmt.excluded.creator_id), else_=Vulnerability.triaged_by_id),
+            "triaged_at": case((status_closing, import_time), else_=Vulnerability.triaged_at),
             "last_detected": case((detected, import_time), else_=Vulnerability.last_detected),
             "custom_fields": stmt.excluded.custom_fields,
             "update_date": case((detected, import_time), else_=Vulnerability.update_date),
@@ -803,6 +810,12 @@ def _create_vuln(ws, vuln_data, command: dict, **kwargs):
     # All rows must have the same fields in insert statement
     if 'confirmed' not in vuln_data:
         vuln_data['confirmed'] = False
+    # Imports don't mark false positives. A plugin that reports the vuln closed or
+    # confirmed triages it, on behalf of the user who uploaded the report.
+    vuln_data['false_positive'] = False
+    vuln_data['triaged'] = imported_vuln_triaged(vuln_data['confirmed'], vuln_data.get('status'))
+    vuln_data['triaged_by_id'] = vuln_data.get('creator_id') if vuln_data['triaged'] else None
+    vuln_data['triaged_at'] = datetime.utcnow() if vuln_data['triaged'] else None
     if 'status_code' not in vuln_data:
         vuln_data['status_code'] = None
     if 'external_id' not in vuln_data:

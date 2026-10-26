@@ -5,11 +5,13 @@ See the file 'doc/LICENSE' for the license information
 """
 
 # Standard library imports
+from datetime import datetime
 from http.client import BAD_REQUEST as HTTP_BAD_REQUEST
 from logging import getLogger
 
 # Related third party imports
 from flask import Blueprint, abort, request
+from flask_login import current_user
 from sqlalchemy.orm import (
     joinedload,
     selectinload,
@@ -32,6 +34,12 @@ from faraday.server.models import (
 from faraday.server.utils.command import set_command_id
 from faraday.server.utils.cwe import create_cwe
 from faraday.server.utils.reference import create_reference
+from faraday.server.utils.triage import (
+    TRIAGE_INPUT_FIELDS,
+    TriageState,
+    TriageValidationError,
+    apply_triage_rules,
+)
 from faraday.server.utils.vulns import (
     WORKSPACED_SCHEMA_EXCLUDE_FIELDS,
     parse_cve_references_and_policyviolations,
@@ -40,6 +48,26 @@ from faraday.server.utils.vulns import (
 
 vulns_workspaced_api = Blueprint('vulns_workspaced_api', __name__)
 logger = getLogger(__name__)
+
+
+BOOLEAN_GROUP_BY_FIELDS = ('confirmed', 'false_positive', 'triaged')
+
+
+def _current_user_id():
+    try:
+        if hasattr(current_user, 'id'):
+            return current_user.id
+    except AttributeError as e:
+        logger.debug("Current user not found", exc_info=e)
+    return None
+
+
+def _apply_triage(current, changes, user_id, now):
+    try:
+        return apply_triage_rules(current, changes, user_id=user_id, now=now)
+    except TriageValidationError as e:
+        abort(HTTP_BAD_REQUEST, str(e))
+        raise  # unreachable, abort raises
 
 
 class VulnerabilityWorkspacedFilterSet(VulnerabilityFilterSet):
@@ -130,6 +158,19 @@ class VulnerabilityWorkspacedView(
         cwe_list = data.pop('cwe', [])
         command_id = data.pop('command_id', None)
 
+        # A vuln created by hand comes confirmed unless the request says otherwise. The
+        # triage rules run as if the request changed a new, untriaged, open vuln.
+        if not data.get('false_positive'):
+            data.setdefault('confirmed', True)
+        new_vuln_state = TriageState(confirmed=False, false_positive=False, triaged=False,
+                                     status=VulnerabilityGeneric.STATUS_OPEN)
+        triage = _apply_triage(new_vuln_state, {name: data.get(name) for name in TRIAGE_INPUT_FIELDS},
+                               _current_user_id(), datetime.utcnow())
+        data.update(triage.values)
+        if 'triaged_at' in data:
+            # Triaged when created
+            data['create_date'] = data['triaged_at']
+
         try:
             obj = super()._perform_create(data, **kwargs)
         except TypeError:
@@ -196,6 +237,12 @@ class VulnerabilityWorkspacedView(
 
         if 'cvss4_vector_string' in data:
             obj.cvss4_vector_string = data.pop('cvss4_vector_string')
+
+        # confirmed, false_positive and status go through the triage rules
+        triage_changes = {name: data.pop(name) for name in TRIAGE_INPUT_FIELDS if name in data}
+        triage = _apply_triage(TriageState.from_vuln(obj), triage_changes, _current_user_id(), datetime.utcnow())
+        for name, value in triage.values.items():
+            setattr(obj, name, value)
 
         return super()._update_object(obj, data)
 
@@ -279,22 +326,23 @@ class VulnerabilityWorkspacedView(
                 severity = group[type]
                 group['severity'] = group['name'] = severity_map.get(
                     severity, severity)
-            elif type == "confirmed":
-                confirmed_map = {
+            elif type in BOOLEAN_GROUP_BY_FIELDS:
+                boolean_map = {
                     1: "True",
                     0: "False"
                 }
-                confirmed = group[type]
-                group[type] = group['name'] = confirmed_map.get(
-                    confirmed, confirmed)
+                value = group[type]
+                group[type] = group['name'] = boolean_map.get(
+                    value, value)
             else:
                 group['name'] = group[type]
             return group
 
         if request.args.get('group_by') == 'severity':
             res['groups'] = [convert_group(group, 'severity') for group in res['groups']]
-        if request.args.get('group_by') == 'confirmed':
-            res['groups'] = [convert_group(group, 'confirmed') for group in res['groups']]
+        if request.args.get('group_by') in BOOLEAN_GROUP_BY_FIELDS:
+            group_by = request.args.get('group_by')
+            res['groups'] = [convert_group(group, group_by) for group in res['groups']]
         return res
 
     def put(self, object_id, workspace_name=None, **kwargs):

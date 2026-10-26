@@ -31,7 +31,8 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "cvss3_vector_string", "cvss3_base_score", 'cvss4_vector_string', 'cvss4_base_score',
         "cwe", "policyviolations", "external_id",
         "impact_confidentiality", "impact_integrity", "impact_availability",
-        "impact_accountability", "update_date"
+        "impact_accountability", "update_date",
+        "false_positive", "triaged", "triaged_by", "triaged_at",
     ]
 
     if custom_fields_columns is None:
@@ -274,6 +275,10 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
         "impact_availability": vuln["impact"]["availability"],
         "impact_accountability": vuln["impact"]["accountability"],
         "update_date": vuln['metadata'].get('update_time', None),
+        "false_positive": vuln.get('false_positive', None),
+        "triaged": vuln.get('triaged', None),
+        "triaged_by": vuln.get('triaged_by', None),
+        "triaged_at": vuln.get('triaged_at', None),
     }
     if vuln['custom_fields']:
         for field_name, value in vuln['custom_fields'].items():

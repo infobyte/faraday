@@ -79,6 +79,10 @@ SCHEMA_FIELDS = BASE_FIELDS + (
     "type",
     "workspace_name",
     "update_date",
+    "false_positive",
+    "triaged",
+    "triaged_by",
+    "triaged_at",
 )
 
 # Meta fields exclusive for VulnerabilityWebSchema
@@ -97,10 +101,15 @@ FILTER_SET_FIELDS = BASE_FIELDS + WEB_BASE_FIELDS + (
     "parameters",
     "query_string",
     "service_id",
+    "false_positive",
+    "triaged",
+    "triaged_by",
 )
 
 FILTER_SET_STRICT_FIELDS = (
     "confirmed",
+    "false_positive",
+    "triaged",
     "ease_of_resolution",
     "method",
     "service_id",
@@ -149,6 +158,10 @@ VALID_FILTER_VULN_COLUMNS = [
     'request',
     'resolution',
     'response',
+    'false_positive',
+    'triaged',
+    'triaged_by',
+    'triaged_at',
 ]
 
 LARGE_VULN_FIELDS = frozenset({'data', 'description', 'request', 'resolution', 'response'})

@@ -443,11 +443,11 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         from faraday.server.utils import workflows as wf_module
         original_run_workflow = wf_module._run_workflow
 
-        def failing_first_call(wf, objs):
+        def failing_first_call(wf, objs, **kwargs):
             call_count['n'] += 1
             if call_count['n'] == 1:
                 raise RuntimeError("Simulated chunk failure")
-            return original_run_workflow(wf, objs)
+            return original_run_workflow(wf, objs, **kwargs)
 
         with mock.patch('faraday.server.utils.workflows._iter_id_chunks',
                         wraps=lambda ws_id, obj_model, chunk_size=3: _iter_id_chunks(ws_id, obj_model, chunk_size=3)), \

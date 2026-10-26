@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.25.2 [Oct 26h, 2026]:
+---
+ * [FIX] Reduced database connection usage so shared databases do not run out of connections: the connection pool is now configurable in `server.ini` with a lower default, Celery beat and workers close the connections they kept open from startup, `faraday-worker` without `--concurrency` now starts at most `celery_max_worker_concurrency` processes (default 2, previously one per CPU core), and each process is identified by `application_name` in PostgreSQL. #8547
+
 5.25.1 [Oct 21st, 2026]:
 ---
  * [ADD] Schedules can now run once at a fixed date (`schedule_type: once`) or start from a given date (`start_date`), crons accept the nth weekday of the month (e.g. `0 4 * * 3#2`), and agent executions expose when they ended (`end_date`). Corporate only: Security Scanners can be blocked, so they can't be run manually and their schedules are skipped until they're unblocked. Also fixes schedules firing in the server timezone instead of the schedule's own timezone. #8556

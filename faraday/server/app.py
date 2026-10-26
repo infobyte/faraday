@@ -425,6 +425,26 @@ def get_prefixed_url(app, url):
     return url
 
 
+def get_db_application_name():
+    # Identifies the process (faraday-server, faraday-worker, faraday-beat...) in pg_stat_activity.
+    # PostgreSQL truncates application_name to 63 characters.
+    return (os.environ.get('PGAPPNAME') or os.path.basename(sys.argv[0]))[:63]
+
+
+def get_engine_options(connection_string=None):
+    options = {
+        'pool_pre_ping': True,
+        'poolclass': QueuePool,
+        'pool_size': faraday.server.config.database.pool_size,
+        'max_overflow': faraday.server.config.database.max_overflow,
+        'pool_timeout': faraday.server.config.database.pool_timeout,
+        'pool_recycle': faraday.server.config.database.pool_recycle,
+    }
+    if connection_string and connection_string.startswith('postgresql'):
+        options['connect_args'] = {'application_name': get_db_application_name()}
+    return options
+
+
 def create_app(db_connection_string=None, testing=None, register_extensions_flag=True, start_scheduler=False, remove_sids=False):
     logger.debug("Creating new faraday app instance")
 
@@ -593,13 +613,6 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
                 'depot.storage_path': storage_path
             })
     app.config['SQLALCHEMY_ECHO'] = 'FARADAY_LOG_QUERY' in os.environ
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_pre_ping': True,
-        'poolclass': QueuePool,
-        'pool_size': 20,
-        'max_overflow': 20,
-        'pool_timeout': 60,
-    }
     check_testing_configuration(testing, app)
 
     _db_configured = False
@@ -613,6 +626,7 @@ def create_app(db_connection_string=None, testing=None, register_extensions_flag
     except NoOptionError:
         logger.info('Missing connection_string on [database] section on server.ini. '
                     'Please configure the database before running the server.')
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = get_engine_options(app.config.get('SQLALCHEMY_DATABASE_URI'))
 
     from faraday.server.models import db, register_sqlite_isolation_events  # pylint:disable=import-outside-toplevel
     db.init_app(app)

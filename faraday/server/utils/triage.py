@@ -72,6 +72,25 @@ class TriageResult:
         return bool(self.values)
 
 
+# Columns the rules read and write. They're read with the row locked: two concurrent
+# actions on the same vuln would otherwise both decide from the same state and each
+# save only the fields it changed (e.g. one confirmed and the other false positive).
+TRIAGE_STATE_COLUMNS = ('confirmed', 'false_positive', 'triaged', 'status', 'triaged_by_id', 'triaged_at')
+
+
+def lock_triage_state(vuln):
+    """Refresh `vuln`'s triage columns from the database, locking its row until the
+    transaction ends, and return its TriageState.
+
+    A concurrent action on the same vuln waits for this transaction, and this one
+    decides from what the previous one saved. Refreshing (instead of only reading)
+    also keeps the ORM from skipping a column it believes unchanged.
+    """
+    with db.session.no_autoflush:
+        db.session.refresh(vuln, attribute_names=TRIAGE_STATE_COLUMNS, with_for_update=True)
+    return TriageState.from_vuln(vuln)
+
+
 def validate_triage_changes(changes):
     if changes.get('confirmed') is True and changes.get('false_positive') is True:
         raise TriageValidationError("A vulnerability can't be confirmed and a false positive at the same time")
@@ -229,8 +248,8 @@ def bulk_apply_triage(ids, changes, user_id=None, now=None, source=SOURCE_MANUAL
     """Apply the triage rules to many vulns with as few UPDATEs as possible.
 
     Reads the current state of `ids` (narrowed by `extra_filters`, e.g. the
-    permitted workspaces), computes each vuln's result and issues one UPDATE per
-    distinct result. Doesn't commit.
+    permitted workspaces) locking their rows, computes each vuln's result and
+    issues one UPDATE per distinct result. Doesn't commit.
     """
     changes = {name: changes[name] for name in TRIAGE_INPUT_FIELDS if changes.get(name) is not None}
     result = BulkTriageResult()
@@ -248,7 +267,10 @@ def bulk_apply_triage(ids, changes, user_id=None, now=None, source=SOURCE_MANUAL
     ).filter(
         _id_any(ids, '_triage_ids'),
         *extra_filters,
-    )
+    ).order_by(
+        # The same lock order for every action, so two of them on overlapping vulns don't deadlock
+        VulnerabilityGeneric.id,
+    ).with_for_update()
 
     ids_by_values = defaultdict(list)
     for vuln_id, confirmed, false_positive, triaged, status in query:

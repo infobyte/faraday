@@ -39,6 +39,7 @@ from faraday.server.utils.triage import (
     TriageState,
     TriageValidationError,
     apply_triage_rules,
+    lock_triage_state,
 )
 from faraday.server.utils.vulns import (
     WORKSPACED_SCHEMA_EXCLUDE_FIELDS,
@@ -240,7 +241,8 @@ class VulnerabilityWorkspacedView(
 
         # confirmed, false_positive and status go through the triage rules
         triage_changes = {name: data.pop(name) for name in TRIAGE_INPUT_FIELDS if name in data}
-        triage = _apply_triage(TriageState.from_vuln(obj), triage_changes, _current_user_id(), datetime.utcnow())
+        current = lock_triage_state(obj) if triage_changes else TriageState.from_vuln(obj)
+        triage = _apply_triage(current, triage_changes, _current_user_id(), datetime.utcnow())
         for name, value in triage.values.items():
             setattr(obj, name, value)
 

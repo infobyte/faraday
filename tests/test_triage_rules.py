@@ -1,9 +1,11 @@
 import json
+from contextlib import contextmanager
 from datetime import datetime
 
 import pytest
+from sqlalchemy import event, update
 
-from faraday.server.models import VulnerabilityGeneric
+from faraday.server.models import VulnerabilityGeneric, db
 from faraday.server.utils.triage import (
     SOURCE_IMPORT,
     TriageState,
@@ -12,6 +14,7 @@ from faraday.server.utils.triage import (
     build_history_rows,
     bulk_apply_triage,
     group_events,
+    lock_triage_state,
     ungroup_events,
 )
 
@@ -254,3 +257,53 @@ class TestBulkApplyTriage:
         result = bulk_apply_triage([vulns['pending'].id], {'severity': 'high'})
 
         assert result.updated_ids == []
+
+
+@contextmanager
+def capture_sql():
+    statements = []
+
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        statements.append(statement)
+
+    event.listen(db.engine, 'before_cursor_execute', before_cursor_execute)
+    try:
+        yield statements
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', before_cursor_execute)
+
+
+class TestConcurrentTriage:
+    """Two actions on the same vuln must not both decide from the same state."""
+
+    def test_bulk_locks_the_rows_it_reads(self, session, vulnerability_factory):
+        vuln = vulnerability_factory.create(status='open')
+        session.commit()
+        vuln_id = vuln.id
+
+        with capture_sql() as statements:
+            bulk_apply_triage([vuln_id], {'confirmed': True})
+
+        select = next(statement for statement in statements if statement.lstrip().upper().startswith('SELECT'))
+        assert 'FOR UPDATE' in select
+        assert 'ORDER BY' in select
+
+    def test_single_vuln_decides_from_the_saved_state(self, session, vulnerability_factory):
+        vuln = vulnerability_factory.create(status='open')
+        session.commit()
+        assert vuln.confirmed is False
+        # Another request confirms it after this one loaded the vuln
+        session.execute(update(VulnerabilityGeneric).where(VulnerabilityGeneric.id == vuln.id)
+                        .values(confirmed=True, triaged=True),
+                        execution_options={'synchronize_session': False})
+        assert vuln.confirmed is False  # stale
+
+        with capture_sql() as statements:
+            current = lock_triage_state(vuln)
+
+        assert (current.confirmed, current.triaged) == (True, True)
+        assert vuln.confirmed is True
+        assert any('FOR UPDATE' in statement for statement in statements)
+        # Marking it as false positive now also unconfirms it
+        assert apply_triage_rules(current, {'false_positive': True}).values['confirmed'] is False
+

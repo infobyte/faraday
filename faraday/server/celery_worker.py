@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import argparse
-import os
 
 import faraday.server.config
 from faraday.server.app import celery, get_app  # noqa
-from faraday.server.utils.celery import require_celery_enabled
+from faraday.server.utils.celery import get_worker_concurrency, release_db_connections, require_celery_enabled
 from faraday.server.utils.logger import setup_celery_logging
 
 
@@ -16,19 +15,14 @@ def main():
     args = parser.parse_args()
 
     require_celery_enabled('workers')
-    get_app()
+    release_db_connections(get_app())
     print("Starting celery %s", args)
 
     queue = 'celery'
     if args.queue:
         queue = args.queue
 
-    concurrency = 1
-    if os.cpu_count():
-        concurrency = os.cpu_count() - 1
-
-    if args.concurrency:
-        concurrency = args.concurrency
+    concurrency = get_worker_concurrency(args.concurrency)
 
     loglevel = 'WARNING'
     if faraday.server.config.faraday_server.debug:

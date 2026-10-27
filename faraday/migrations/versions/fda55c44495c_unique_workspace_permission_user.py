@@ -27,12 +27,12 @@ def upgrade():
           AND a.id > b.id
         """
     )
-    op.create_unique_constraint(
-        CONSTRAINT_NAME,
-        'workspace_permission_association',
-        ['workspace_id', 'user_id'],
+    op.execute(f'ALTER TABLE workspace_permission_association DROP CONSTRAINT IF EXISTS {CONSTRAINT_NAME}')
+    op.execute(
+        f'ALTER TABLE workspace_permission_association '
+        f'ADD CONSTRAINT {CONSTRAINT_NAME} UNIQUE (workspace_id, user_id)'
     )
 
 
 def downgrade():
-    op.drop_constraint(CONSTRAINT_NAME, 'workspace_permission_association', type_='unique')
+    op.execute(f'ALTER TABLE workspace_permission_association DROP CONSTRAINT IF EXISTS {CONSTRAINT_NAME}')

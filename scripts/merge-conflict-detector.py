@@ -12,18 +12,19 @@ the code of Faraday Professional or Faraday Corporate
 
 import os
 import sys
-import json
 import subprocess
 import logging
 import argparse
 from contextlib import contextmanager
-from urllib.parse import quote
-from urllib.request import Request, urlopen
 from tempfile import mkdtemp
 from shutil import rmtree
 
 VERSIONS = ['white', 'black']
-BRANCH_FORMAT = 'origin/{}/dev'
+BRANCH_FORMAT = 'origin/{}/{}'
+# Base branch of the pipeline's branch: .gitlab-ci.yml sets FOLDER to dev,
+# staging or master on each base branch, and ticket branches inherit it, so a
+# hotfix branched off staging checks against staging, not dev
+BASE = os.environ.get('FOLDER') or 'dev'
 
 
 @contextmanager
@@ -91,34 +92,6 @@ def branch_exists(branch_name):
     return exit_code == 0
 
 
-def _read_secret(value):
-    """GitLab Vault secrets are files by default: the env var holds their path"""
-    if value and os.path.isfile(value):
-        with open(value, encoding='utf-8') as secret_file:
-            return secret_file.read().strip()
-    return value.strip() if value else value
-
-
-def merge_request_target(branch):
-    """Target branch of the open merge request of `branch`, or None when there
-    isn't one or it can't be looked up (no token, not in CI, API error)"""
-    token = _read_secret(os.environ.get('GITLAB_REVIEW_TOKEN', ''))
-    api_url = os.environ.get('CI_API_V4_URL', '').rstrip('/')
-    project_id = os.environ.get('CI_PROJECT_ID', '')
-    if not (token and api_url and project_id):
-        return None
-    source_branch = branch[len('origin/'):] if branch.startswith('origin/') else branch
-    url = (f'{api_url}/projects/{project_id}/merge_requests'
-           f'?state=opened&source_branch={quote(source_branch, safe="")}&order_by=created_at&sort=desc&per_page=1')
-    try:
-        with urlopen(Request(url, headers={'PRIVATE-TOKEN': token}), timeout=30) as response:
-            merge_requests = json.load(response)
-    except Exception as error:  # pylint: disable=broad-except
-        logging.warning('Could not look up the merge request of %s: %s', source_branch, error)
-        return None
-    return merge_requests[0]['target_branch'] if merge_requests else None
-
-
 def version_of_branch(branch_name):
     """
     >>> version_of_branch('tkt_white_this_is_not_a_ee_branch')
@@ -149,14 +122,9 @@ def main(branch):
     logger.info(f'versions to test: {versions_to_test}')
     for target_version in versions_to_test:
         if target_version == version:
-            target = merge_request_target(branch)
-            if target is not None and branch_exists(f'origin/{target}'):
-                logger.info(f'Merge request targets {target}')
-                branches_to_test.append(f'origin/{target}')
-            else:
-                fallback = BRANCH_FORMAT.format(target_version)
-                branch_exists(fallback)  # fetches it
-                branches_to_test.append(fallback)
+            base_branch = BRANCH_FORMAT.format(target_version, BASE)
+            branch_exists(base_branch)  # fetches it
+            branches_to_test.append(base_branch)
             continue
 
         counterpart_branch = branch.replace(f"tkt_{version}", f"tkt_{target_version}")
@@ -165,7 +133,7 @@ def main(branch):
             logger.info(f'Found counterpart branch {counterpart_branch}')
             branches_to_test.append(counterpart_branch)
         else:
-            fallback = BRANCH_FORMAT.format(target_version)
+            fallback = BRANCH_FORMAT.format(target_version, BASE)
             logger.info(f'Branch {counterpart_branch} not found, falling back to {fallback}')
             branch_exists(fallback)  # fetches it
             branches_to_test.append(fallback)

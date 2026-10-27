@@ -1,8 +1,13 @@
 merge_conflict_check:
     tags:
         - faradaytests
+    extends:
+        - .get-secrets
     image: python:3.11
     stage: pre_testing
+    variables:
+        # the test merges need the whole history to find the merge base
+        GIT_DEPTH: 0
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"

@@ -12,10 +12,13 @@ the code of Faraday Professional or Faraday Corporate
 
 import os
 import sys
+import json
 import subprocess
 import logging
 import argparse
 from contextlib import contextmanager
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 from tempfile import mkdtemp
 from shutil import rmtree
 
@@ -75,10 +78,45 @@ def get_current_branch():
 
 
 def branch_exists(branch_name):
+    """Fetch origin/<name> branches first: the CI clone only has the branch
+    of the pipeline, and whatever other refs a previous job left, maybe stale"""
+    if branch_name.startswith('origin/'):
+        name = branch_name[len('origin/'):]
+        subprocess.call(
+            ['git', 'fetch', 'origin', f'+refs/heads/{name}:refs/remotes/origin/{name}'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     exit_code = subprocess.call(
         ['git', 'rev-parse', '--verify', branch_name],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return exit_code == 0
+
+
+def _read_secret(value):
+    """GitLab Vault secrets are files by default: the env var holds their path"""
+    if value and os.path.isfile(value):
+        with open(value, encoding='utf-8') as secret_file:
+            return secret_file.read().strip()
+    return value.strip() if value else value
+
+
+def merge_request_target(branch):
+    """Target branch of the open merge request of `branch`, or None when there
+    isn't one or it can't be looked up (no token, not in CI, API error)"""
+    token = _read_secret(os.environ.get('GITLAB_REVIEW_TOKEN', ''))
+    api_url = os.environ.get('CI_API_V4_URL', '').rstrip('/')
+    project_id = os.environ.get('CI_PROJECT_ID', '')
+    if not (token and api_url and project_id):
+        return None
+    source_branch = branch[len('origin/'):] if branch.startswith('origin/') else branch
+    url = (f'{api_url}/projects/{project_id}/merge_requests'
+           f'?state=opened&source_branch={quote(source_branch, safe="")}&order_by=created_at&sort=desc&per_page=1')
+    try:
+        with urlopen(Request(url, headers={'PRIVATE-TOKEN': token}), timeout=30) as response:
+            merge_requests = json.load(response)
+    except Exception as error:  # pylint: disable=broad-except
+        logging.warning('Could not look up the merge request of %s: %s', source_branch, error)
+        return None
+    return merge_requests[0]['target_branch'] if merge_requests else None
 
 
 def version_of_branch(branch_name):
@@ -111,7 +149,14 @@ def main(branch):
     logger.info(f'versions to test: {versions_to_test}')
     for target_version in versions_to_test:
         if target_version == version:
-            branches_to_test.append(BRANCH_FORMAT.format(target_version))
+            target = merge_request_target(branch)
+            if target is not None and branch_exists(f'origin/{target}'):
+                logger.info(f'Merge request targets {target}')
+                branches_to_test.append(f'origin/{target}')
+            else:
+                fallback = BRANCH_FORMAT.format(target_version)
+                branch_exists(fallback)  # fetches it
+                branches_to_test.append(fallback)
             continue
 
         counterpart_branch = branch.replace(f"tkt_{version}", f"tkt_{target_version}")
@@ -122,6 +167,7 @@ def main(branch):
         else:
             fallback = BRANCH_FORMAT.format(target_version)
             logger.info(f'Branch {counterpart_branch} not found, falling back to {fallback}')
+            branch_exists(fallback)  # fetches it
             branches_to_test.append(fallback)
     logger.info(f'BRANCHES TO TEST: {branches_to_test}')
 

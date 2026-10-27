@@ -159,8 +159,9 @@ class VulnerabilityWorkspacedView(
         cwe_list = data.pop('cwe', [])
         command_id = data.pop('command_id', None)
 
-        # A vuln created by hand comes confirmed unless the request says otherwise. The
-        # triage rules run as if the request changed a new, untriaged, open vuln.
+        # A vuln created by hand comes confirmed unless the request says otherwise (documented
+        # on VulnerabilitySchema.confirmed). The triage rules run as if the request changed a
+        # new, untriaged, open vuln.
         if not data.get('false_positive'):
             data.setdefault('confirmed', True)
         new_vuln_state = TriageState(confirmed=False, false_positive=False, triaged=False,

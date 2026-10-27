@@ -119,6 +119,10 @@ def apply_triage_rules(current, changes, user_id=None, now=None, source=SOURCE_M
     req_confirmed = requested('confirmed')
     req_false_positive = requested('false_positive')
     req_status = requested('status')
+    # Validated after dropping the current values on purpose, not the raw `changes`: a
+    # full-body PUT that marks a confirmed vuln as false positive sends confirmed=true
+    # (its current value) with false_positive=true, which is a valid request. Bulk
+    # bodies only carry the fields to change, so bulk_apply_triage also checks them raw.
     validate_triage_changes({'confirmed': req_confirmed, 'false_positive': req_false_positive, 'status': req_status})
 
     confirmed = current.confirmed

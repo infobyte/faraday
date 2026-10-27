@@ -114,6 +114,20 @@ class TestSingleVulnTriage:
         assert res.status_code == 200, res.json
         assert (res.json['confirmed'], res.json['false_positive'], res.json['triaged'], res.json['status']) == expected
 
+    def test_put_full_body_marks_confirmed_vuln_as_false_positive(self, test_client, session, workspace):
+        # The body still carries confirmed=true, the vuln's current value: not a contradiction
+        vuln = VulnerabilityFactory.create(workspace=workspace, status='open', confirmed=True, triaged=True)
+        session.commit()
+        data = test_client.get(vuln_url(workspace, vuln)).json
+        # The dumped issuetracker can't be loaded back on this edition, unrelated to triage
+        data.pop('issuetracker', None)
+        data['false_positive'] = True
+
+        res = test_client.put(vuln_url(workspace, vuln), json=data)
+
+        assert res.status_code == 200, res.json
+        assert (res.json['confirmed'], res.json['false_positive'], res.json['status']) == (False, True, 'closed')
+
     @pytest.mark.parametrize('data', [
         {'confirmed': True, 'false_positive': True},
         {'false_positive': True, 'status': 're-opened'},

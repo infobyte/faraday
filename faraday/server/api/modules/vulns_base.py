@@ -357,6 +357,12 @@ class VulnerabilitySchema(AutoSchema):
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
     last_detected = fields.DateTime(dump_only=True)
+    # No load_default: the bulk_create schema inherits this field and imports default to false
+    confirmed = fields.Boolean(metadata={
+        'description': 'Someone validated the finding. A vulnerability created by hand '
+                       '(POST /ws/{workspace_name}/vulns) is confirmed unless the request sends '
+                       'confirmed: false or false_positive: true; imported ones default to false.'
+    })
     false_positive = fields.Boolean()
     # Derived by the triage rules (faraday.server.utils.triage), never set directly
     triaged = fields.Boolean(dump_only=True)

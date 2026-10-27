@@ -8611,7 +8611,8 @@
                         "writeOnly": true
                     },
                     "confirmed": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Someone validated the finding. A vulnerability created by hand (POST /ws/{workspace_name}/vulns) is confirmed unless the request sends confirmed: false or false_positive: true; imported ones default to false."
                     },
                     "data": {
                         "type": "string",
@@ -9475,7 +9476,8 @@
                         "writeOnly": true
                     },
                     "confirmed": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Someone validated the finding. A vulnerability created by hand (POST /ws/{workspace_name}/vulns) is confirmed unless the request sends confirmed: false or false_positive: true; imported ones default to false."
                     },
                     "data": {
                         "type": "string",

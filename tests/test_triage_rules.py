@@ -106,6 +106,10 @@ CASES = {
         FALSE_POSITIVE, {'confirmed': False, 'false_positive': True, 'status': 'risk-accepted'},
         state(True, False, True, 'risk-accepted'), True,
         [('confirmed', True), ('false_positive', False), ('status', 'risk-accepted')]),
+    'full body: mark a confirmed vuln as false positive': (
+        CONFIRMED, {'confirmed': True, 'false_positive': True, 'status': 'open'},
+        state(False, True, True, 'closed'), True,
+        [('confirmed', False), ('false_positive', True), ('status', 'closed')]),
     'full body: mark an open vuln as false positive': (
         PENDING, {'confirmed': False, 'false_positive': True, 'status': 'open'},
         state(False, True, True, 'closed'), True,

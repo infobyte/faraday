@@ -2381,8 +2381,9 @@ executive_report_workspace_table = Table(
 
 
 def _return_last_30_days() -> list:
+    """The last 30 days as ISO dates, oldest first: the order the risk history job appends in."""
     today = date.today()
-    last_30_days = [today - timedelta(days=i) for i in range(30)]
+    last_30_days = [today - timedelta(days=i) for i in range(29, -1, -1)]
     last_30_days = [day.isoformat() for day in last_30_days]
     return last_30_days
 

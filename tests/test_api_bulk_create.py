@@ -1,4 +1,5 @@
 import calendar
+import json
 import time
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -25,7 +26,8 @@ from faraday.server.models import (
     CWE,
 )
 from faraday.server.api.modules import bulk_create as bc
-from faraday.server.utils.reports_processor import send_report_data
+from faraday.server.config import faraday_server
+from faraday.server.utils.reports_processor import REPORTS_QUEUE, send_report_data
 from tests.factories import CustomFieldsSchemaFactory
 from faraday.server.utils.agents import get_command_and_agent_execution
 
@@ -1331,10 +1333,19 @@ class TestBulkCreateAPI:
         assert res.status_code == 403
         assert count(Host, workspace) == 0
 
+    @staticmethod
+    def _process_reports_queue(discard=False):
+        while not REPORTS_QUEUE.empty():
+            workspace_name, command_id, file_path, _, user_id = REPORTS_QUEUE.get_nowait()[:5]
+            if not discard:
+                send_report_data(workspace_name, command_id, json.loads(file_path.read_text()), user_id, True)
+
     def test_bulk_create_agent_execution_command_is_built_server_side(self, session, test_client, workspace,
-                                                                      agent_execution_factory):
+                                                                      agent_execution_factory, monkeypatch):
+        monkeypatch.setattr(faraday_server, 'celery_enabled', False)
         agent_execution = agent_execution_factory.create(workspace=workspace)
         session.commit()
+        self._process_reports_queue(discard=True)
         agent = agent_execution.executor.agent
         command_id = agent_execution.command.id
         start_date = datetime.utcnow().replace(microsecond=0)
@@ -1347,8 +1358,10 @@ class TestBulkCreateAPI:
                                              duration=1200)
             assert res.status_code == 201
             assert res.json['command_id'] == command_id
+        self._process_reports_queue()
 
         session.expire_all()
+        assert count(Host, workspace) == 1
         command = Command.query.get(command_id)
         params = ', '.join([f'{key}={value}' for (key, value) in agent_execution.parameters_data.items()])
         assert command.tool == agent.name

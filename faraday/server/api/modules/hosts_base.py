@@ -215,6 +215,8 @@ class HostView(
             options.append(joinedload(
                 getattr(self.model_class, 'creator')).load_only(User.username))
         query = self._get_base_query(*args, **kwargs)
+        # workspace_name is dumped for every host
+        options.append(joinedload(Host.workspace).load_only(Workspace.name))
         options += [joinedload(relationship)
                     for relationship in self.get_joinedloads]
         if show_stats:

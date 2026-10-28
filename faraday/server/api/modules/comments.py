@@ -69,7 +69,7 @@ class CommentView(CommentCreateMixing, ReadWriteWorkspacedView, BulkDeleteWorksp
     route_base = 'comment'
     model_class = Comment
     schema_class = CommentSchema
-    order_field = 'create_date'
+    order_field = Comment.create_date.asc()
 
 
 class UniqueCommentView(GenericWorkspacedView,

@@ -20,7 +20,11 @@ from tempfile import mkdtemp
 from shutil import rmtree
 
 VERSIONS = ['white', 'black']
-BRANCH_FORMAT = 'origin/{}/dev'
+BRANCH_FORMAT = 'origin/{}/{}'
+# Base branch of the pipeline's branch: .gitlab-ci.yml sets FOLDER to dev,
+# staging or master on each base branch, and ticket branches inherit it, so a
+# hotfix branched off staging checks against staging, not dev
+BASE = os.environ.get('FOLDER') or 'dev'
 
 
 @contextmanager
@@ -75,6 +79,13 @@ def get_current_branch():
 
 
 def branch_exists(branch_name):
+    """Fetch origin/<name> branches first: the CI clone only has the branch
+    of the pipeline, and whatever other refs a previous job left, maybe stale"""
+    if branch_name.startswith('origin/'):
+        name = branch_name[len('origin/'):]
+        subprocess.call(
+            ['git', 'fetch', 'origin', f'+refs/heads/{name}:refs/remotes/origin/{name}'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     exit_code = subprocess.call(
         ['git', 'rev-parse', '--verify', branch_name],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -111,7 +122,9 @@ def main(branch):
     logger.info(f'versions to test: {versions_to_test}')
     for target_version in versions_to_test:
         if target_version == version:
-            branches_to_test.append(BRANCH_FORMAT.format(target_version))
+            base_branch = BRANCH_FORMAT.format(target_version, BASE)
+            branch_exists(base_branch)  # fetches it
+            branches_to_test.append(base_branch)
             continue
 
         counterpart_branch = branch.replace(f"tkt_{version}", f"tkt_{target_version}")
@@ -120,8 +133,9 @@ def main(branch):
             logger.info(f'Found counterpart branch {counterpart_branch}')
             branches_to_test.append(counterpart_branch)
         else:
-            fallback = BRANCH_FORMAT.format(target_version)
+            fallback = BRANCH_FORMAT.format(target_version, BASE)
             logger.info(f'Branch {counterpart_branch} not found, falling back to {fallback}')
+            branch_exists(fallback)  # fetches it
             branches_to_test.append(fallback)
     logger.info(f'BRANCHES TO TEST: {branches_to_test}')
 

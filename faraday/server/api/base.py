@@ -52,7 +52,7 @@ from faraday.server.models import (
     WorkspacePermission,
     db,
 )
-from faraday.server.schemas import NullToBlankString
+from faraday.server.schemas import MetadataSchema, NullToBlankString, SelfNestedField
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -323,22 +323,40 @@ class GenericView(FlaskView):
         In really complex cases where good performance is required,
         like in the vulns API endpoint, you will have to overwrite this.
         """
+        return self._get_base_query(*args, **kwargs).options(*self._eagerload_options())
+
+    def _eagerload_options(self):
+        """Loader options for what the schema dumps of each object: the
+        creator's and update user's usernames, get_joinedloads and get_undefer."""
         options = []
         try:
-            has_creator = 'owner' in self._get_schema_class().opts.fields
+            schema_class = self._get_schema_class()
+            dumped_fields = schema_class.opts.fields or schema_class._declared_fields
+            metadata_field = schema_class._declared_fields.get('metadata')
+            dumps_metadata = 'metadata' in dumped_fields and isinstance(metadata_field, SelfNestedField) \
+                and isinstance(metadata_field.target_schema, MetadataSchema)
+            has_creator = 'owner' in dumped_fields or dumps_metadata
         except AttributeError:
-            has_creator = False
+            dumps_metadata = has_creator = False
+        # APIs for objects with metadata always return the creator's (and
+        # update user's) username. Do a joinedload to prevent doing one
+        # query per object (n+1) problem
+        user_relationships = []
         if has_creator:
-            # APIs for objects with metadata always return the creator's
-            # username. Do a joinedload to prevent doing one query per object
-            # (n+1) problem
-            options.append(joinedload(
-                getattr(self.model_class, 'creator')).load_only(User.username))
-        query = self._get_base_query(*args, **kwargs)
+            user_relationships.append('creator')
+        if dumps_metadata:
+            user_relationships.append('update_user')
+        # MetadataSchema dumps update_user with str(), and User.__repr__ also reads user_type
+        user_columns = {'creator': (User.username,), 'update_user': (User.username, User.user_type)}
+        for name in user_relationships:
+            relationship = getattr(self.model_class, name, None)
+            # identity check: == on instrumented attributes builds SQL expressions
+            if relationship is not None and not any(relationship is loaded for loaded in self.get_joinedloads):
+                options.append(joinedload(relationship).load_only(*user_columns[name]))
         options += [joinedload(relationship)
                     for relationship in self.get_joinedloads]
         options += [undefer(column) for column in self.get_undefer]
-        return query.options(*options)
+        return options
 
     def _filter_query(self, query):
         """Return a new SQLAlchemy query with some filters applied.
@@ -556,10 +574,11 @@ class ListMixin:
         """Loader options for the /filter endpoints.
 
         Filter endpoints build their query from scratch instead of going
-        through _get_eagerloaded_query, so each view returns here whatever
-        its schema reads, to avoid a lazy load per dumped row (n+1).
+        through _get_eagerloaded_query, so by default they get the same
+        options as the list. Views whose schema reads more override this,
+        to avoid a lazy load per dumped row (n+1).
         """
-        return []
+        return self._eagerload_options()
 
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is

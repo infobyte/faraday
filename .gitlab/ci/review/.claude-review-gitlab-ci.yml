@@ -1,8 +1,16 @@
 claude_review:
   tags:
     - faradaytests
-  extends:
-    - .get-secrets
+  # Own secrets instead of extending .get-secrets: a missing review secret
+  # must not break every other job that uses the shared template.
+  id_tokens:
+    VAULT_ID_TOKEN:
+      aud: https://gitlab.com
+  secrets:
+    ANTHROPIC_API_KEY:
+      vault: gitlab/faraday/$FOLDER/ANTHROPIC_API_KEY@secrets
+    GITLAB_REVIEW_TOKEN:
+      vault: gitlab/faraday/$FOLDER/GITLAB_REVIEW_TOKEN@secrets
   image: python:3.11-slim-bookworm
   stage: claude_review
   allow_failure: true

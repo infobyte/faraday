@@ -1651,7 +1651,14 @@ class VulnerabilityView(
             # remaining fields (cvss*, cwe) require ORM setters — process in chunks
             if extracted_data:
                 CHUNK_SIZE = 500
-                queryset = self._bulk_update_query(ids, **kwargs)
+                # The after_update workspace check reads each vuln's workspace and parent
+                queryset = self._bulk_update_query(ids, **kwargs).options(
+                    selectin_polymorphic(VulnerabilityGeneric, [Vulnerability, VulnerabilityWeb]),
+                    joinedload(VulnerabilityGeneric.workspace),
+                    joinedload(Vulnerability.host),
+                    joinedload(Vulnerability.service),
+                    joinedload(VulnerabilityWeb.service),
+                )
                 for obj in queryset.yield_per(CHUNK_SIZE):
                     for (key, value) in extracted_data.items():
                         setattr(obj, key, value)

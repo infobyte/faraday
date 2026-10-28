@@ -18,6 +18,7 @@ from flask import (
 import flask_login
 from flask_classful import route
 from marshmallow import fields, post_load
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
@@ -29,6 +30,7 @@ from faraday.server.models import (
     Agent,
     AgentsSchedule,
     Executor,
+    User,
     db,
 )
 from faraday.server.utils.agents import get_command_and_agent_execution
@@ -62,14 +64,11 @@ class AgentsScheduleSchema(SchedulerSchema):
 
     @staticmethod
     def get_agent(obj):
-        agent_id = obj.executor.agent_id
-        try:
-            agent = db.session.query(Agent). \
-                filter(Agent.id == agent_id).one()
-        except NoResultFound as e:
-            raise InvalidUsage(f'Agent id not found: {agent_id}') from e
-        ret = AgentSchema().dump(agent)
-        return ret
+        # executor.agent comes eager loaded by the view, a query here would run once per schedule
+        agent = obj.executor.agent
+        if agent is None:
+            raise InvalidUsage(f'Agent id not found: {obj.executor.agent_id}')
+        return AgentSchema().dump(agent)
 
 
 class AgentsScheduleView(SchedulerView):
@@ -77,6 +76,19 @@ class AgentsScheduleView(SchedulerView):
     model_class = AgentsSchedule
     order_field = AgentsSchedule.id.asc()
     schema_class = AgentsScheduleSchema
+
+    def _eagerload_options(self):
+        # the executor and its agent (with all its executors) are dumped for every
+        # schedule, and every executor dumps its schedules
+        return super()._eagerload_options() + [
+            joinedload(AgentsSchedule.executor).options(
+                selectinload(Executor.schedules),
+                joinedload(Executor.agent).options(
+                    joinedload(Agent.creator).load_only(User.username),
+                    selectinload(Agent.executors).selectinload(Executor.schedules),
+                ),
+            ),
+        ]
 
     @route('/<int:schedule_id>/run', methods=['POST'])
     def run_schedule(self, schedule_id):

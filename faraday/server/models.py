@@ -564,7 +564,7 @@ class SeveritiesHistogram(db.Model):
         foreign_keys=[workspace_id],
         backref=backref('severities_histogram', cascade="all, delete-orphan")
     )
-    date = Column(Date, default=date.today(), nullable=False)
+    date = Column(Date, default=date.today, nullable=False)
     medium = Column(Integer, nullable=False)
     high = Column(Integer, nullable=False)
     critical = Column(Integer, nullable=False)
@@ -585,7 +585,7 @@ class VulnerabilityHitCount(db.Model):
         foreign_keys=[workspace_id],
         backref=backref('vulnerability_hit_counts', cascade="all, delete-orphan")
     )
-    date = Column(Date, nullable=False, default=datetime.utcnow())
+    date = Column(Date, nullable=False, default=datetime.utcnow)
 
     # Low
     low_open_unconfirmed = Column(Integer, nullable=False, default=0)
@@ -2381,10 +2381,15 @@ executive_report_workspace_table = Table(
 
 
 def _return_last_30_days() -> list:
+    """The last 30 days as ISO dates, oldest first: the order the risk history job appends in."""
     today = date.today()
-    last_30_days = [today - timedelta(days=i) for i in range(30)]
+    last_30_days = [today - timedelta(days=i) for i in range(29, -1, -1)]
     last_30_days = [day.isoformat() for day in last_30_days]
     return last_30_days
+
+
+def _empty_risk_history() -> list:
+    return [{"date": day, "risk": 0} for day in _return_last_30_days()]
 
 
 class RiskScoreProfile(Metadata):
@@ -2450,8 +2455,8 @@ class Workspace(Metadata):
     name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
-    risk_history_total = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
-    risk_history_avg = Column(JSONType(), nullable=False, default=[{"date": day, "risk": 0} for day in _return_last_30_days()])
+    risk_history_total = Column(JSONType(), nullable=False, default=_empty_risk_history)
+    risk_history_avg = Column(JSONType(), nullable=False, default=_empty_risk_history)
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     last_run_agent_date = query_expression()
@@ -3704,14 +3709,9 @@ class Agent(Metadata):
 
     @property
     def last_run(self):
-        execs = db.session.query(Executor).filter_by(agent_id=self.id)
-        if execs:
-            _last_run = None
-            for exe in execs:
-                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
-                    _last_run = exe.last_run
-            return _last_run
-        return None
+        # Through the relationship, which the agents views eager load, instead of a query per agent
+        return max((executor.last_run for executor in self.executors if executor.last_run is not None),
+                   default=None)
 
     def __repr__(self):
         return f"Agent {self.name}"
@@ -3770,17 +3770,6 @@ class CloudAgent(Metadata):
     website = Column(Text, nullable=True)
     # A blocked (inactive) cloud agent can't be run, neither manually nor by its schedules
     active = Column(Boolean, nullable=False, default=True, server_default=text('true'))
-
-    @property
-    def last_run(self):
-        execs = db.session.query(CloudAgentExecution).filter_by(cloud_agent_id=self.id)
-        if execs:
-            _last_run = None
-            for exe in execs:
-                if _last_run is None or (exe.last_run is not None and _last_run - exe.last_run <= timedelta()):
-                    _last_run = exe.last_run
-            return _last_run
-        return None
 
     @property
     def parent(self):
@@ -3906,7 +3895,7 @@ class UserNotification(Metadata):
                         backref=backref('user_notifications', cascade="all, delete-orphan"),
                         foreign_keys=[user_id])
     links_to = Column(JSONType, nullable=True)
-    event_date = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    event_date = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
         Index(
@@ -4317,6 +4306,16 @@ event.listen(
     VulnerabilityGeneric.__table__,
     'after_create',
     vulnerability_uniqueness_sqlite.execute_if(dialect='sqlite')
+)
+
+# Latest run among the cloud agent executions. Deferred: the views that dump it
+# undefer it, so it comes in the same query instead of one query per cloud agent.
+CloudAgent.last_run = column_property(
+    select(func.max(CloudAgentExecution.last_run))
+    .where(CloudAgentExecution.cloud_agent_id == CloudAgent.id)
+    .correlate_except(CloudAgentExecution)
+    .scalar_subquery(),
+    deferred=True,
 )
 
 # Column properties on VulnerabilityGeneric that reference other tables via

@@ -45,7 +45,6 @@ from flask_security.utils import (
 from flask_sqlalchemy.record_queries import get_recorded_queries as get_debug_queries
 from simplekv.decorator import PrefixDecorator
 from simplekv.fs import FilesystemStore
-from sqlalchemy.orm import Query as _SAQuery
 from sqlalchemy.pool import QueuePool
 from wtforms import StringField, ValidationError
 from wtforms.validators import DataRequired
@@ -76,26 +75,6 @@ from faraday.settings import load_settings
 from faraday.server.extensions import celery
 from faraday.server.debouncer import Debouncer
 
-# Don't move this import from here
-from nplusone.ext.flask_sqlalchemy import NPlusOne
-
-
-def _patch_nplusone_for_sqlalchemy_14():
-    """Restore Query._offset / _limit attributes that nplusone reads;
-    SQLAlchemy 1.4 replaced them with _offset_clause / _limit_clause."""
-    if not hasattr(_SAQuery, "_offset"):
-        def _offset(self):
-            clause = getattr(self, "_offset_clause", None)
-            return clause.value if clause is not None else None
-
-        def _limit(self):
-            clause = getattr(self, "_limit_clause", None)
-            return clause.value if clause is not None else None
-        _SAQuery._offset = property(_offset)
-        _SAQuery._limit = property(_limit)
-
-
-_patch_nplusone_for_sqlalchemy_14()
 
 logger = logging.getLogger(__name__)
 
@@ -223,10 +202,6 @@ def check_testing_configuration(testing, app):
     if testing:
         app.config['SQLALCHEMY_ECHO'] = False
         app.config['TESTING'] = testing
-        app.config['NPLUSONE_LOGGER'] = logging.getLogger('faraday.nplusone')
-        app.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR
-        app.config['NPLUSONE_RAISE'] = True
-        NPlusOne(app)
 
 
 def register_handlers(app):

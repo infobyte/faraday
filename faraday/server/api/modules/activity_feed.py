@@ -11,6 +11,7 @@ from datetime import datetime
 import pytz
 from flask import Blueprint
 from marshmallow import fields
+from sqlalchemy.orm import joinedload
 
 # Local application imports
 from faraday.server.api.base import (
@@ -18,7 +19,7 @@ from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
 )
-from faraday.server.models import Command
+from faraday.server.models import Command, User
 from faraday.server.schemas import PrimaryKeyRelatedField
 
 activityfeed_api = Blueprint('activityfeed_api', __name__)
@@ -77,6 +78,11 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
     schema_class = ActivityFeedSchema
     get_joinedloads = [Command.workspace]
     order_field = Command.start_date.desc()
+
+
+    def _eagerload_options(self):
+        # creator is dumped for every command
+        return super()._eagerload_options() + [joinedload(Command.creator).load_only(User.username)]
 
     def _get_base_query(self, *args, **kwargs):
         return Command.with_severity_counts(super()._get_base_query(*args, **kwargs))

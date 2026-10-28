@@ -2403,6 +2403,20 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         assert res.status_code == 200
         assert res.json['updated'] == 0
 
+    def test_bulk_update_orm_setter_field_updates_every_vulnerability(self, test_client, session,
+                                                                      second_workspace):
+        vulns = VulnerabilityFactory.create_batch(2, workspace=self.workspace)
+        vulns += VulnerabilityFactory.create_batch(2, workspace=second_workspace)
+        session.commit()
+        vector = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'
+
+        res = test_client.patch(self.url(), data={'ids': [v.id for v in vulns], 'cvss3': {'vector_string': vector}})
+
+        assert res.status_code == 200
+        for vuln in vulns:
+            session.refresh(vuln)
+            assert vuln.cvss3_vector_string == vector
+
     def test_export_csv_from_filters_endpoint(self, test_client, session, workspace):
         vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)

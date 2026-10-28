@@ -1272,6 +1272,94 @@ class TestBulkCreateAPI:
         assert command.id == command_id
         assert command.id == new_agent_execution.command.id
 
+    def _post_agent_execution(self, test_client, workspace_name, execution_id, token=None, **command_fields):
+        command = command_data.copy()
+        command.update({'import_source': 'agent', **command_fields})
+        headers = [("authorization", f"agent {token}")] if token else []
+        return test_client.post(
+            f'/v3/ws/{workspace_name}/bulk_create',
+            data=dict(hosts=[host_data.copy()], execution_id=execution_id, command=command),
+            headers=headers
+        )
+
+    def test_bulk_create_agent_token_with_other_agents_execution(self, session, test_client, workspace,
+                                                                agent_execution_factory, agent_factory):
+        agent_execution = agent_execution_factory.create(workspace=workspace)
+        other_agent = agent_factory.create()
+        session.commit()
+        command_id = agent_execution.command.id
+        original_tool = agent_execution.command.tool
+
+        res = self._post_agent_execution(test_client, workspace.name, agent_execution.id, other_agent.token,
+                                         tool='spoofed-tool', params='spoofed-params')
+        assert res.status_code == 400
+        assert b"Can not find an agent execution with that id" in res.data
+        session.expire_all()
+        assert Command.query.get(command_id).tool == original_tool
+        assert count(Host, workspace) == 0
+
+    def test_bulk_create_agent_token_with_execution_from_other_workspace(self, session, test_client, workspace,
+                                                                        workspace_factory,
+                                                                        agent_execution_factory):
+        agent_execution = agent_execution_factory.create(workspace=workspace_factory.create())
+        session.commit()
+        agent = agent_execution.executor.agent
+
+        res_wrong_ws = self._post_agent_execution(test_client, workspace.name, agent_execution.id, agent.token)
+        res_missing = self._post_agent_execution(test_client, workspace.name, agent_execution.id + 1000,
+                                                 agent.token)
+        assert res_wrong_ws.status_code == res_missing.status_code == 400
+        assert res_wrong_ws.data == res_missing.data
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_bulk_create_user_with_execution_from_other_workspace(self, session, test_client, workspace,
+                                                                 workspace_factory, agent_execution_factory):
+        agent_execution = agent_execution_factory.create(workspace=workspace_factory.create())
+        session.commit()
+
+        res = self._post_agent_execution(test_client, workspace.name, agent_execution.id)
+        assert res.status_code == 400
+        assert count(Host, workspace) == 0
+
+    def test_bulk_create_inactive_agent(self, session, test_client, workspace, agent_execution_factory):
+        agent_execution = agent_execution_factory.create(workspace=workspace)
+        agent_execution.executor.agent.active = False
+        session.commit()
+
+        res = self._post_agent_execution(test_client, workspace.name, agent_execution.id,
+                                         agent_execution.executor.agent.token)
+        assert res.status_code == 403
+        assert count(Host, workspace) == 0
+
+    def test_bulk_create_agent_execution_command_is_built_server_side(self, session, test_client, workspace,
+                                                                      agent_execution_factory):
+        agent_execution = agent_execution_factory.create(workspace=workspace)
+        session.commit()
+        agent = agent_execution.executor.agent
+        command_id = agent_execution.command.id
+        start_date = datetime.utcnow().replace(microsecond=0)
+
+        for _ in range(2):
+            res = self._post_agent_execution(test_client, workspace.name, agent_execution.id, agent.token,
+                                             tool='spoofed-tool', command='spoofed-command',
+                                             params='spoofed-params', user='spoofed-user',
+                                             hostname='spoofed-hostname', start_date=start_date.isoformat(),
+                                             duration=1200)
+            assert res.status_code == 201
+            assert res.json['command_id'] == command_id
+
+        session.expire_all()
+        command = Command.query.get(command_id)
+        params = ', '.join([f'{key}={value}' for (key, value) in agent_execution.parameters_data.items()])
+        assert command.tool == agent.name
+        assert command.command == agent_execution.executor.name
+        assert command.params == params
+        assert command.user == ''
+        assert command.hostname == ''
+        assert command.import_source == 'agent'
+        assert command.start_date == start_date
+        assert command.end_date == start_date + timedelta(microseconds=1200)
+
     @pytest.mark.skip(reason="Must think a new way to test this with async bulk_create")
     @pytest.mark.parametrize('start_date', [None, datetime.utcnow()])
     @pytest.mark.parametrize('duration', [None, 1200])

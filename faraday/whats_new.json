@@ -4,7 +4,7 @@
     {
       "id": "5.25 (Hotfixes)",
       "label": "5.25 (Hotfixes)",
-      "releaseDate": "2026-10-27",
+      "releaseDate": "2026-10-28",
       "items": [
         {
           "id": "1",
@@ -20,6 +20,14 @@
         },
         {
           "id": "2",
+          "type": "improvement",
+          "title": "(5.25.2) Lighter on your database ",
+          "description": "Faraday now opens fewer PostgreSQL connections, with a configurable pool, smarter worker defaults and clearly labeled connections, making it a better fit for shared databases.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "3",
           "type": "improvement",
           "title": "(5.25.3) Faster performance on large instances",
           "description": "We’ve made several improvements to how Faraday handles data behind the scenes. If your instance has many workspaces with large amounts of data, you’ll notice faster load times and a smoother experience as you navigate the platform.",

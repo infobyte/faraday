@@ -8,7 +8,7 @@ import pytest
 
 from faraday.server.utils.vulns import VALID_FILTER_VULN_COLUMNS
 from tests.factories import WorkspaceFactory, HostFactory, HostnameFactory, VulnerabilityFactory, ServiceFactory, \
-    VulnerabilityWebFactory
+    VulnerabilityWebFactory, CustomFieldsSchemaFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -741,6 +741,76 @@ class TestVulnerabilitySearch:
         expected_order = ['low', 'med', 'high', 'critical']
 
         assert expected_order == [vuln['value']['severity'] for vuln in res.json['vulnerabilities']]
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    @pytest.mark.parametrize("direction", ["asc", "desc"])
+    @pytest.mark.parametrize("field_type, sorted_values, invalid_value", [
+        ('str', ['alpha', 'beta', 'gamma'], None),
+        ('int', [-10, -5, 9, 10, 100], 'n/a'),
+        ('float', [-2.5, 2.5, 10.0, 10.25], 'n/a'),
+        ('date', ['2023-12-31', '2024-01-05', '2024-11-20'], 'not a date'),
+    ])
+    def test_filter_order_by_custom_field(self, field_type, sorted_values, invalid_value, direction,
+                                          test_client, session, workspace):
+        CustomFieldsSchemaFactory.create(
+            field_name='cf_sort',
+            field_type=field_type,
+            field_display_name='CF Sort',
+            table_name='vulnerability',
+        )
+        # Created in reverse to avoid matching the insertion order by chance
+        for index, value in reversed(list(enumerate(sorted_values))):
+            VulnerabilityFactory.create(name=f'value_{index}', workspace=workspace,
+                                        custom_fields={'cf_sort': value})
+        null_names = {'missing'}
+        VulnerabilityFactory.create(name='missing', workspace=workspace, custom_fields={})
+        if invalid_value is not None:
+            # Legacy value that can not be cast to the field type, sorted as NULL
+            null_names.add('invalid')
+            VulnerabilityFactory.create(name='invalid', workspace=workspace,
+                                        custom_fields={'cf_sort': invalid_value})
+        session.commit()
+        query_filter = {
+            "order_by": [{"field": "custom_fields__cf_sort", "direction": direction}],
+            "limit": 20,
+            "offset": 0
+        }
+
+        res = test_client.get(join(self.url(), f'filter?q={json.dumps(query_filter)}'))
+
+        assert res.status_code == 200
+        names = [vuln['value']['name'] for vuln in res.json['vulnerabilities']]
+        value_names = [f'value_{index}' for index in range(len(sorted_values))]
+        if direction == 'asc':
+            assert set(names[:len(null_names)]) == null_names
+            assert names[len(null_names):] == value_names
+        else:
+            assert names[:len(value_names)] == value_names[::-1]
+            assert set(names[len(value_names):]) == null_names
+
+    @pytest.mark.skip_sql_dialect('sqlite')
+    def test_filter_order_by_multiple_custom_fields(self, test_client, session, workspace):
+        CustomFieldsSchemaFactory.create(field_name='cf_group', field_type='str',
+                                         field_display_name='CF Group', table_name='vulnerability')
+        CustomFieldsSchemaFactory.create(field_name='cf_score', field_type='int',
+                                         field_display_name='CF Score', table_name='vulnerability')
+        VulnerabilityFactory.create(name='b_9', workspace=workspace, custom_fields={'cf_group': 'b', 'cf_score': 9})
+        VulnerabilityFactory.create(name='a_9', workspace=workspace, custom_fields={'cf_group': 'a', 'cf_score': 9})
+        VulnerabilityFactory.create(name='a_10', workspace=workspace, custom_fields={'cf_group': 'a', 'cf_score': 10})
+        session.commit()
+        query_filter = {
+            "order_by": [
+                {"field": "custom_fields__cf_group", "direction": "asc"},
+                {"field": "custom_fields__cf_score", "direction": "desc"},
+            ],
+            "limit": 10,
+            "offset": 0
+        }
+
+        res = test_client.get(join(self.url(), f'filter?q={json.dumps(query_filter)}'))
+
+        assert res.status_code == 200
+        assert [vuln['value']['name'] for vuln in res.json['vulnerabilities']] == ['a_10', 'a_9', 'b_9']
 
     def test_filter_by_creator_command_id(self,
                                           test_client,

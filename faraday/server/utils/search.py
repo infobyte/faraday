@@ -498,12 +498,28 @@ def apply_order(query, field, direction):
     return query.order_by(nulls(order))
 
 
+NUMERIC_PATTERN = r'^-?\d+(\.\d+)?([eE][-+]?\d+)?$'
+DATE_PATTERN = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
+
+# Custom field types sorted by their typed value instead of as text.
+# Values not matching the pattern (legacy data) are sorted as NULL.
+JSON_ORDER_CASTS = {
+    'int': (NUMERIC_PATTERN, sqlalchemy.Numeric),
+    'float': (NUMERIC_PATTERN, sqlalchemy.Numeric),
+    'date': (DATE_PATTERN, sqlalchemy.Date),
+}
+
+
 def apply_json_order(query, model, field_name, field_name_in_relation, direction):
-    table_name = model.__tablename__
-    ordering = "DESC NULLS LAST" if direction == "desc" else "ASC NULLS FIRST"
-    return query.order_by(
-        text(f"{table_name}.{field_name} ->> :json_key {ordering}").bindparams(json_key=field_name_in_relation)
-    )
+    json_key = sqlalchemy.literal(field_name_in_relation, sqlalchemy.Text)
+    order_field = getattr(model, field_name).op('->>', return_type=sqlalchemy.Text)(json_key)
+    custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == field_name_in_relation).first()
+    if custom_field and custom_field.field_type in JSON_ORDER_CASTS:
+        pattern, cast_type = JSON_ORDER_CASTS[custom_field.field_type]
+        order_field = sqlalchemy.case(
+            (order_field.op('~')(pattern), sqlalchemy.cast(order_field, cast_type)),
+        )
+    return apply_order(query, order_field, direction)
 
 
 def apply_join(query, model, relation, joined_models):

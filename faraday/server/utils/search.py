@@ -499,7 +499,8 @@ def apply_order(query, field, direction):
 
 
 NUMERIC_PATTERN = r'^-?\d+(\.\d+)?([eE][-+]?\d+)?$'
-DATE_PATTERN = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
+# Month and day may be unpadded (e.g. 2024-1-5), as accepted by FaradayCustomField
+DATE_PATTERN = r'^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$'
 
 # Custom field types sorted by their typed value instead of as text.
 # Values not matching the pattern (legacy data) are sorted as NULL.

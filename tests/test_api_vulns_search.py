@@ -749,6 +749,7 @@ class TestVulnerabilitySearch:
         ('int', [-10, -5, 9, 10, 100], 'n/a'),
         ('float', [-2.5, 2.5, 10.0, 10.25], 'n/a'),
         ('date', ['2023-12-31', '2024-01-05', '2024-11-20'], 'not a date'),
+        ('date', ['2023-12-31', '2024-1-5', '2024-01-20', '2024-2-3', '2024-11-2'], 'not a date'),
     ])
     def test_filter_order_by_custom_field(self, field_type, sorted_values, invalid_value, direction,
                                           test_client, session, workspace):

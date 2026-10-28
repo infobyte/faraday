@@ -2,6 +2,33 @@
   "changelogUrl": "https://docs.faradaysec.com/RELEASE",
   "versions": [
     {
+      "id": "5.25 (Hotfixes)",
+      "label": "5.25 (Hotfixes)",
+      "releaseDate": "2026-10-27",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "(5.25.1) Security Scanners catalog",
+          "description": "You can now run security scanners directly from Faraday. The new **Security Scanners** section brings together the scanner catalog included in your license, so you can launch scans and get results straight into your workspace, without any external setup. From this section you can:\n\n- Run scans on demand from the scanners available for your plan.\n- Schedule recurring runs with their own schedule, so scans keep running - without manual work.\n- Review your run history to check past runs and their status.\n\nThe available scanners and the number of runs depend on your license type. Both manual and scheduled runs count toward the same allowance.",
+          "license": null,
+          "link": {
+            "type": "",
+            "label": "Take a look",
+            "url": "/automation/security-scanners"
+          }
+        },
+        {
+          "id": "2",
+          "type": "improvement",
+          "title": "(5.25.3) Faster performance on large instances",
+          "description": "We’ve made several improvements to how Faraday handles data behind the scenes. If your instance has many workspaces with large amounts of data, you’ll notice faster load times and a smoother experience as you navigate the platform.",
+          "license": null,
+          "link": null
+        }
+      ]
+    },
+    {
       "id": "5.25",
       "label": "5.25",
       "releaseDate": "2026-09-30",

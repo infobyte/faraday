@@ -744,14 +744,14 @@ class TestVulnerabilitySearch:
 
     @pytest.mark.skip_sql_dialect('sqlite')
     @pytest.mark.parametrize("direction", ["asc", "desc"])
-    @pytest.mark.parametrize("field_type, sorted_values, invalid_value", [
-        ('str', ['alpha', 'beta', 'gamma'], None),
-        ('int', [-10, -5, 9, 10, 100], 'n/a'),
-        ('float', [-2.5, 2.5, 10.0, 10.25], 'n/a'),
-        ('date', ['2023-12-31', '2024-01-05', '2024-11-20'], 'not a date'),
-        ('date', ['2023-12-31', '2024-1-5', '2024-01-20', '2024-2-3', '2024-11-2'], 'not a date'),
+    @pytest.mark.parametrize("field_type, sorted_values, invalid_values", [
+        ('str', ['alpha', 'beta', 'gamma'], []),
+        ('int', [-10, -5, 9, 10, 100], ['n/a']),
+        ('float', [-2.5, 2.5, 10.0, 10.25], ['n/a']),
+        ('date', ['2023-12-31', '2024-01-05', '2024-11-20'], ['not a date', '2024-02-30', '2023-02-29', '0000-01-01']),
+        ('date', ['2023-12-31', '2024-1-5', '2024-01-20', '2024-2-29', '2024-11-2'], ['not a date']),
     ])
-    def test_filter_order_by_custom_field(self, field_type, sorted_values, invalid_value, direction,
+    def test_filter_order_by_custom_field(self, field_type, sorted_values, invalid_values, direction,
                                           test_client, session, workspace):
         CustomFieldsSchemaFactory.create(
             field_name='cf_sort',
@@ -765,10 +765,10 @@ class TestVulnerabilitySearch:
                                         custom_fields={'cf_sort': value})
         null_names = {'missing'}
         VulnerabilityFactory.create(name='missing', workspace=workspace, custom_fields={})
-        if invalid_value is not None:
-            # Legacy value that can not be cast to the field type, sorted as NULL
-            null_names.add('invalid')
-            VulnerabilityFactory.create(name='invalid', workspace=workspace,
+        # Legacy values that can not be converted to the field type, sorted as NULL
+        for index, invalid_value in enumerate(invalid_values):
+            null_names.add(f'invalid_{index}')
+            VulnerabilityFactory.create(name=f'invalid_{index}', workspace=workspace,
                                         custom_fields={'cf_sort': invalid_value})
         session.commit()
         query_filter = {

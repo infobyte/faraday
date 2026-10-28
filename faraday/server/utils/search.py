@@ -499,15 +499,39 @@ def apply_order(query, field, direction):
 
 
 NUMERIC_PATTERN = r'^-?\d+(\.\d+)?([eE][-+]?\d+)?$'
-# Month and day may be unpadded (e.g. 2024-1-5), as accepted by FaradayCustomField
-DATE_PATTERN = r'^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$'
+# Month and day may be unpadded (e.g. 2024-1-5), as accepted by FaradayCustomField.
+# Year 0000 does not exist in PostgreSQL.
+DATE_PATTERN = r'^(?!0000)\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$'
+
+
+def _numeric_order_value(value):
+    return sqlalchemy.case(
+        (value.op('~')(NUMERIC_PATTERN), sqlalchemy.cast(value, sqlalchemy.Numeric)),
+    )
+
+
+def _date_order_value(value):
+    # DATE_PATTERN still accepts days past the end of the month (e.g. 2024-02-30),
+    # so the day is checked against the month length before casting. Nested CASEs
+    # guarantee that order, since PostgreSQL may evaluate AND operands in any order.
+    def date_part(position):
+        return sqlalchemy.cast(func.split_part(value, '-', position), sqlalchemy.Integer)
+
+    month_start = func.make_date(date_part(1), date_part(2), 1)
+    month_days = sqlalchemy.extract('day', month_start + sqlalchemy.literal_column("interval '1 month - 1 day'"))
+    return sqlalchemy.case(
+        (value.op('~')(DATE_PATTERN), sqlalchemy.case(
+            (date_part(3) <= month_days, sqlalchemy.cast(value, sqlalchemy.Date)),
+        )),
+    )
+
 
 # Custom field types sorted by their typed value instead of as text.
-# Values not matching the pattern (legacy data) are sorted as NULL.
-JSON_ORDER_CASTS = {
-    'int': (NUMERIC_PATTERN, sqlalchemy.Numeric),
-    'float': (NUMERIC_PATTERN, sqlalchemy.Numeric),
-    'date': (DATE_PATTERN, sqlalchemy.Date),
+# Values that can not be converted (legacy data) are sorted as NULL.
+JSON_ORDER_VALUES = {
+    'int': _numeric_order_value,
+    'float': _numeric_order_value,
+    'date': _date_order_value,
 }
 
 
@@ -515,11 +539,8 @@ def apply_json_order(query, model, field_name, field_name_in_relation, direction
     json_key = sqlalchemy.literal(field_name_in_relation, sqlalchemy.Text)
     order_field = getattr(model, field_name).op('->>', return_type=sqlalchemy.Text)(json_key)
     custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == field_name_in_relation).first()
-    if custom_field and custom_field.field_type in JSON_ORDER_CASTS:
-        pattern, cast_type = JSON_ORDER_CASTS[custom_field.field_type]
-        order_field = sqlalchemy.case(
-            (order_field.op('~')(pattern), sqlalchemy.cast(order_field, cast_type)),
-        )
+    if custom_field and custom_field.field_type in JSON_ORDER_VALUES:
+        order_field = JSON_ORDER_VALUES[custom_field.field_type](order_field)
     return apply_order(query, order_field, direction)
 
 

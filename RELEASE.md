@@ -1,6 +1,10 @@
 New features in the latest update
 =====================================
 
+5.25.3 [Oct 28h, 2026]:
+---
+ * [MOD] Improved performance of the workspaces list and other API endpoints by reducing database queries. #8595
+
 5.25.2 [Oct 26h, 2026]:
 ---
  * [FIX] Reduced database connection usage so shared databases do not run out of connections: the connection pool is now configurable in `server.ini` with a lower default, Celery beat and workers close the connections they kept open from startup, `faraday-worker` without `--concurrency` now starts at most `celery_max_worker_concurrency` processes (default 2, previously one per CPU core), and each process is identified by `application_name` in PostgreSQL. #8547

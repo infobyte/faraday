@@ -4,6 +4,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+# nplusone monkeypatches SQLAlchemy globally on import (Query.__iter__,
+# attribute access, row population), so it's only imported by the tests and
+# never by the server. It must be imported before any faraday module:
+# faraday.server.models configures the mappers on import, and lazy loaders
+# configured before the patch are never wrapped, so lazy loads (the actual
+# N+1s) would go undetected.
+from nplusone.ext.flask_sqlalchemy import NPlusOne
+
 import os
 from tempfile import NamedTemporaryFile
 from time import time
@@ -19,12 +27,43 @@ from pathlib import Path
 from pytest_factoryboy import register
 from sqlalchemy import text
 
+import logging
 import psycopg2
 from psycopg2.sql import SQL
+from sqlalchemy.orm import Query
 
 from faraday.server.app import get_app
 from faraday.server.models import db, LOCAL_TYPE, LDAP_TYPE
 from tests import factories
+
+
+def _patch_nplusone_for_sqlalchemy_14():
+    """Restore Query._offset / _limit attributes that nplusone reads;
+    SQLAlchemy 1.4 replaced them with _offset_clause / _limit_clause."""
+    if not hasattr(Query, "_offset"):
+        def _offset(self):
+            clause = getattr(self, "_offset_clause", None)
+            return clause.value if clause is not None else None
+
+        def _limit(self):
+            clause = getattr(self, "_limit_clause", None)
+            return clause.value if clause is not None else None
+        Query._offset = property(_offset)
+        Query._limit = property(_limit)
+
+
+_patch_nplusone_for_sqlalchemy_14()
+
+
+def _register_nplusone(app):
+    app.config['NPLUSONE_LOGGER'] = logging.getLogger('faraday.nplusone')
+    app.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR
+    NPlusOne(app)
+    # Same hook order as when create_app registered it: its listeners connect
+    # before any other before_request handler and disconnect after every
+    # after_request one (those run in reverse registration order).
+    app.before_request_funcs[None].insert(0, app.before_request_funcs[None].pop())
+    app.after_request_funcs[None].insert(0, app.after_request_funcs[None].pop())
 
 
 pytest_plugins = ("celery.contrib.pytest", )
@@ -121,6 +160,7 @@ def app(request):
 
     app = get_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
+    _register_nplusone(app)
 
     # Establish an application context before running the tests.
     ctx = app.app_context()

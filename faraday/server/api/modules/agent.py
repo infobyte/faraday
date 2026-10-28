@@ -18,6 +18,7 @@ from marshmallow import fields, Schema, EXCLUDE
 from marshmallow.validate import OneOf
 from sqlalchemy import and_, exists, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.exc import NoResultFound
 from faraday_agent_parameters_types.utils import type_validate, get_manifests
 from faraday.server.utils.search import OPERATORS
@@ -287,7 +288,11 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
-    get_joinedloads = [Agent.creator, Agent.executors]
+    get_joinedloads = [Agent.creator]
+
+    def _eagerload_options(self):
+        # every agent dumps its executors, each with its schedules
+        return super()._eagerload_options() + [selectinload(Agent.executors).selectinload(Executor.schedules)]
 
     def post(self, **kwargs):
         self.schema_class = AgentCreationSchema

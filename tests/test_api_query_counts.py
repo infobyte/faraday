@@ -153,6 +153,10 @@ class TestQueryCounts:
         '/v3/ws/qcv0/hosts/filter?q={page}',
         '/v3/services/filter?q={page}',
         '/v3/ws/qcv0/services/filter?q={page}',
+        '/v3/hosts',
+        '/v3/ws/qcv0/hosts',
+        '/v3/services',
+        '/v3/ws/qcv0/services',
     ])
     def test_listing_query_count_is_constant(self, test_client, session, url):
         url = url.format(page=PAGE)
@@ -241,3 +245,96 @@ class TestQueryCounts:
             assert row['hostnames'] == ['qchost.example.com']
             assert row['owner'] == host.creator.username
             assert any('qcsvc' in summary for summary in row['service_summaries'])
+
+
+def _make_agent(session):
+    agent = factories.AgentFactory.create(creator=factories.UserFactory.create())
+    factories.AgentScheduleFactory.create(executor=factories.ExecutorFactory.create(agent=agent))
+
+
+def _make_agent_schedule(session):
+    factories.AgentScheduleFactory.create(creator=factories.UserFactory.create(),
+                                          update_user=factories.UserFactory.create())
+
+
+def _make_credential(session):
+    workspace = factories.WorkspaceFactory._meta.model.query.filter_by(name='qccred').first() \
+        or factories.WorkspaceFactory.create(name='qccred')
+    factories.CredentialFactory.create(workspace=workspace, creator=factories.UserFactory.create(),
+                                       update_user=factories.UserFactory.create())
+
+
+#: Listing url -> how to add one more row whose related objects (creator,
+#: executor, agent, tasks...) differ from the other rows' ones, so a lazy
+#: load per row shows up as more queries.
+OTHER_LISTINGS = {
+    '/v3/agents': _make_agent,
+    '/v3/agents/filter?q={page}': _make_agent,
+    '/v3/agent_executions': lambda session: factories.AgentExecutionFactory.create(),
+    '/v3/agents_schedule': _make_agent_schedule,
+    '/v3/ws/qccred/credential': _make_credential,
+}
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestOtherListingsQueryCounts:
+
+    @pytest.mark.parametrize('url', list(OTHER_LISTINGS))
+    def test_listing_query_count_is_constant(self, test_client, session, url):
+        make_row = OTHER_LISTINGS[url]
+        url = url.format(page=PAGE)
+        for _ in range(2):
+            make_row(session)
+        session.commit()
+        few, _ = _count_queries(test_client, session, url)
+
+        for _ in range(6):
+            make_row(session)
+        session.commit()
+        many, _ = _count_queries(test_client, session, url)
+
+        assert many <= few, f"{url} scales with rows: {few} -> {many}"
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestBulkUpdateQueryCounts:
+
+    @staticmethod
+    def _bulk_update_queries(test_client, session, workspace, vulns):
+        ids = [vuln.id for vuln in vulns]  # before expiring, or each id reloads its vuln
+        session.expire_all()
+        test_client.get('/v3/info')
+        g._sqlalchemy_queries = []
+        res = test_client.patch(f'/v3/ws/{workspace.name}/vulns', data={
+            'ids': ids,
+            'cvss3': {'vector_string': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'},
+        })
+        assert res.status_code == 200, res.json
+        return len(get_recorded_queries())
+
+    def test_bulk_update_of_orm_setter_fields_does_not_scale_with_vulns(self, test_client, session, workspace):
+        """cvss and the like go through the ORM one vuln at a time: what the risk
+        calculation, the history comment and the workspace consistency check
+        read of each vuln must come with the batch, not a query per vuln."""
+        host = factories.HostFactory.create(workspace=workspace)
+        service = factories.ServiceFactory.create(workspace=workspace, host=host)
+        session.commit()
+
+        def make_vulns(amount):
+            vulns = []
+            for i in range(amount):
+                if i % 3 == 0:
+                    vulns.append(factories.VulnerabilityFactory.create(workspace=workspace, host=host, service=None))
+                elif i % 3 == 1:
+                    vulns.append(factories.VulnerabilityFactory.create(workspace=workspace, service=service,
+                                                                       host=None))
+                else:
+                    vulns.append(factories.VulnerabilityWebFactory.create(workspace=workspace, service=service))
+            session.commit()
+            return vulns
+
+        few = self._bulk_update_queries(test_client, session, workspace, make_vulns(3))
+        many = self._bulk_update_queries(test_client, session, workspace, make_vulns(12))
+
+        # every vuln still needs its own UPDATE
+        assert many - few <= 12 - 3, f"bulk update scales with vulns: {few} -> {many}"

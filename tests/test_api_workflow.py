@@ -388,6 +388,45 @@ class TestPipelineMixinsView(ReadWriteAPITests):
         all_ids = [i for c in chunks for i in c]
         assert set(all_ids) == {h.id for h in hosts}
 
+    def test_iter_id_chunks_exact_multiple_and_other_workspaces(self, test_client):
+        ws, other_ws = factories.WorkspaceFactory.create_batch(2)
+        hosts = [HostFactory.create(workspace=ws) for _ in range(6)]
+        HostFactory.create_batch(2, workspace=other_ws)
+        db.session.commit()
+
+        chunks = list(_iter_id_chunks(ws.id, Host, chunk_size=3))
+
+        assert chunks == [sorted(h.id for h in hosts)[:3], sorted(h.id for h in hosts)[3:]]
+
+    def test_iter_id_chunks_survives_commit_between_chunks(self, test_client):
+        """The pipeline commits after each chunk, the iteration must go on."""
+        ws = factories.WorkspaceFactory.create()
+        hosts = [HostFactory.create(workspace=ws) for _ in range(5)]
+        db.session.commit()
+
+        seen = []
+        for chunk in _iter_id_chunks(ws.id, Host, chunk_size=2):
+            seen.extend(chunk)
+            db.session.commit()
+
+        assert seen == sorted(h.id for h in hosts)
+
+    def test_iter_id_chunks_skips_objects_created_while_iterating(self, test_client):
+        """An import adding objects while the pipeline runs must not keep it going."""
+        ws = factories.WorkspaceFactory.create()
+        hosts = [HostFactory.create(workspace=ws) for _ in range(4)]
+        db.session.commit()
+
+        seen = []
+        for chunk_number, chunk in enumerate(_iter_id_chunks(ws.id, Host, chunk_size=2)):
+            # without a cap it never ends: every chunk adds a full chunk more
+            assert chunk_number < 5, "the iteration keeps picking up the hosts created meanwhile"
+            seen.extend(chunk)
+            HostFactory.create_batch(2, workspace=ws)
+            db.session.commit()
+
+        assert seen == sorted(h.id for h in hosts)
+
     def test_iter_id_chunks_empty_workspace(self, test_client):
         ws = factories.WorkspaceFactory.create()
         db.session.commit()

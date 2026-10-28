@@ -21,6 +21,7 @@ from marshmallow import (
     validate,
     validates_schema,
 )
+from sqlalchemy.orm import selectinload
 
 # Local application imports
 from faraday.server.api.base import (
@@ -34,6 +35,7 @@ from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import (
     AgentsSchedule,
     SchedulerGeneric,
+    Workspace,
     db,
 )
 from faraday.server.schemas import (
@@ -261,6 +263,10 @@ class SchedulerView(PaginatedMixin, ReadWriteView, FilterMixin):
     schema_class = SchedulerSchema
     model_class = SchedulerGeneric
     order_field = SchedulerGeneric.id.asc()
+
+    def _eagerload_options(self):
+        # workspaces are dumped for every schedule
+        return super()._eagerload_options() + [selectinload(self.model_class.workspaces).load_only(Workspace.name)]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         """Sends pagination data and rows"""

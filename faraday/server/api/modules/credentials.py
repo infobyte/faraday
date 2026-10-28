@@ -14,6 +14,7 @@ from logging import getLogger
 from flask import Blueprint, request, make_response, abort, send_file
 from werkzeug.exceptions import HTTPException
 from marshmallow import fields, ValidationError
+from sqlalchemy.orm import joinedload
 
 # Local application imports
 from faraday.server.api.base import (
@@ -26,7 +27,7 @@ from faraday.server.api.base import (
     route,
     PaginatedMixin,
 )
-from faraday.server.models import Credential, db, VulnerabilityGeneric
+from faraday.server.models import Credential, db, VulnerabilityGeneric, Workspace
 from faraday.server.api.modules.vulns_base import VulnerabilitySchema
 from faraday.server.schemas import SelfNestedField, MetadataSchema
 from faraday.server.utils.export import export_credentials_to_csv
@@ -77,6 +78,11 @@ class CredentialView(ReadWriteWorkspacedView,
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
+
+
+    def _eagerload_options(self):
+        # workspace_name is dumped for every credential
+        return super()._eagerload_options() + [joinedload(Credential.workspace).load_only(Workspace.name)]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         credentials = []
@@ -338,7 +344,6 @@ class CredentialView(ReadWriteWorkspacedView,
         return self._envelope_list(filtered_creds, pagination_metadata)
 
     def _get_base_query(self, workspace_name):
-        from sqlalchemy.orm import joinedload  # pylint:disable=import-outside-toplevel
         base_query = super()._get_base_query(workspace_name)
         return base_query.options(joinedload(Credential.vulnerabilities))
 

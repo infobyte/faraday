@@ -1,6 +1,11 @@
 New features in the latest update
 =====================================
 
+5.25.4 [Oct 28h, 2026]:
+---
+ * [MOD] Added Markdown support on the description of the What's New items. #3152
+
+
 5.25.3 [Oct 28h, 2026]:
 ---
  * [MOD] Improved performance of the workspaces list and other API endpoints by reducing database queries. #8595

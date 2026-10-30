@@ -1,6 +1,8 @@
 import json
 
-from faraday.server.models import Executor, Agent
+import pytest
+
+from faraday.server.models import Executor, Agent, AgentManifest
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
 from tests.factories import AgentFactory, ExecutorFactory
@@ -212,6 +214,75 @@ class TestAgentCapabilities:
         session.expire_all()
 
         assert Agent.query.get(agent.id).capabilities == []
+
+
+class TestAgentManifests:
+    DIGEST = "digest-1"
+
+    def chunk(self, part, parts, manifests, digest=DIGEST):
+        return {"version": 1, "manifests_digest": digest, "part": part, "parts": parts, "manifests": manifests}
+
+    @pytest.fixture
+    def client(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        client.emit("agent_capabilities", {"executors": [], "manifests_digest": self.DIGEST, "manifests_count": 3},
+                    namespace='/dispatcher')
+        return client
+
+    def send(self, client, session, chunk):
+        client.emit("agent_manifests", chunk, namespace='/dispatcher')
+        session.expire_all()
+        return {row.name: row.manifest for row in AgentManifest.query.filter_by(manifests_digest=chunk["manifests_digest"])}
+
+    def test_chunks_are_stored_as_they_arrive(self, client, session):
+        stored = self.send(client, session, self.chunk(1, 2, {"nmap": {"a": 1}, "zap": {"b": 2}}))
+        assert stored == {"nmap": {"a": 1}, "zap": {"b": 2}}
+
+        stored = self.send(client, session, self.chunk(2, 2, {"burp": {"c": 3}}))
+        assert stored == {"nmap": {"a": 1}, "zap": {"b": 2}, "burp": {"c": 3}}
+
+    def test_repeated_chunk_does_not_duplicate_rows(self, client, session):
+        self.send(client, session, self.chunk(1, 2, {"nmap": {"a": 1}}))
+
+        self.send(client, session, self.chunk(1, 2, {"nmap": {"a": 1}}))
+
+        assert AgentManifest.query.count() == 1
+
+    def test_incomplete_set_is_resumed_and_updated(self, client, session):
+        self.send(client, session, self.chunk(1, 2, {"nmap": {"a": 1}}))
+
+        stored = self.send(client, session, self.chunk(1, 2, {"nmap": {"a": 2}, "zap": {"b": 2}}))
+
+        assert stored == {"nmap": {"a": 2}, "zap": {"b": 2}}
+
+    def test_complete_digest_is_skipped(self, client, session):
+        self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}, "zap": {"b": 2}, "burp": {"c": 3}}))
+
+        stored = self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 99}, "other": {}}))
+
+        assert stored == {"nmap": {"a": 1}, "zap": {"b": 2}, "burp": {"c": 3}}
+
+    def test_digest_not_announced_by_the_agent_is_ignored(self, client, session):
+        stored = self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}}, digest="other-digest"))
+
+        assert stored == {}
+
+    def test_invalid_manifests_are_dropped(self, client, session):
+        stored = self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}, "zap": "not a manifest", "burp": ["list"]}))
+
+        assert stored == {"nmap": {"a": 1}}
+
+    def test_malformed_chunk_is_ignored(self, client, session):
+        stored = self.send(client, session, {"manifests_digest": self.DIGEST, "manifests": ["nmap"]})
+
+        assert stored == {}
+
+    def test_chunk_from_an_unknown_sid_is_ignored(self, app, session):
+        client = socketio.test_client(app, namespace='/dispatcher')
+
+        client.emit("agent_manifests", self.chunk(1, 1, {"nmap": {"a": 1}}), namespace='/dispatcher')
+
+        assert AgentManifest.query.count() == 0
 
 
 class TestCheckExecutors:

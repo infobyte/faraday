@@ -10,9 +10,31 @@ from typing import Tuple
 from uuid import UUID
 
 # Local application imports
-from faraday.server.models import Command, AgentExecution, Executor, Workspace
+from sqlalchemy import func
+
+from faraday.server.models import Agent, AgentManifest, Command, AgentExecution, Executor, Workspace, db
 
 logger = logging.getLogger(__name__)
+
+
+def get_bundled_manifests() -> dict:
+    """Manifests announced by the agents, for the digests that were received completely."""
+    announced = db.session.query(Agent.manifests_digest, Agent.manifests_count).filter(
+        Agent.manifests_digest.isnot(None), Agent.manifests_count > 0
+    ).distinct().subquery()
+    stored = db.session.query(AgentManifest.manifests_digest, func.count().label('stored')).group_by(
+        AgentManifest.manifests_digest
+    ).subquery()
+    complete = db.session.query(announced.c.manifests_digest).join(
+        stored, stored.c.manifests_digest == announced.c.manifests_digest
+    ).filter(stored.c.stored >= announced.c.manifests_count)
+    rows = AgentManifest.query.filter(AgentManifest.manifests_digest.in_(complete)).order_by(
+        AgentManifest.manifests_digest, AgentManifest.name
+    )
+    manifests = {}
+    for row in rows:
+        manifests.setdefault(row.name, row.manifest)
+    return manifests
 
 
 def get_command_and_agent_execution(

@@ -3707,6 +3707,7 @@ class Agent(Metadata):
     capabilities = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
     # Digest of the bundled manifests the agent announced, not of the ones stored here
     manifests_digest = Column(Text, nullable=True)
+    manifests_count = Column(Integer, nullable=True)
 
     @property
     def parent(self):
@@ -3739,6 +3740,19 @@ class Agent(Metadata):
 
     def __repr__(self):
         return f"Agent {self.name}"
+
+
+class AgentManifest(db.Model):
+    """Manifests bundled in the agents, cached by the digest of the whole set the agent announced."""
+    __tablename__ = 'agent_manifest'
+    id = Column(Integer, primary_key=True)
+    manifests_digest = Column(Text, nullable=False)
+    name = Column(Text, nullable=False)
+    manifest = Column(JSONType, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('manifests_digest', 'name', name='uix_agent_manifest_digest_name'),
+    )
 
 
 class AgentExecution(Metadata):

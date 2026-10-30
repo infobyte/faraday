@@ -39,7 +39,7 @@ from faraday.server.models import (
 )
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
-from faraday.server.utils.agents import get_command_and_agent_execution
+from faraday.server.utils.agents import get_bundled_manifests, get_command_and_agent_execution
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
@@ -483,7 +483,8 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
               description: Ok
         """
         try:
-            manifest = get_manifests(request.args.get("agent_version")).copy()
+            # The published manifests take priority over the ones bundled in the agents
+            manifest = {**get_bundled_manifests(), **get_manifests(request.args.get("agent_version"))}
             if "BURP_API_PULL_INTERVAL" in manifest.get("burp", {}).get("environment_variables", ""):
                 manifest["burp"]["optional_environment_variables"] = [
                     manifest["burp"].get("environment_variables").pop(

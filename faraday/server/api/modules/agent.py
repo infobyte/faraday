@@ -130,6 +130,7 @@ class AgentSchema(AutoSchema):
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
+    remote_config = fields.Boolean(dump_only=True)
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
     last_run = fields.DateTime(dump_only=True)
     description = fields.String(dump_only=True)
@@ -146,6 +147,7 @@ class AgentSchema(AutoSchema):
             'update_date',
             'creator',
             'is_online',
+            'remote_config',
             'active',
             'executors',
             'last_run'

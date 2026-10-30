@@ -619,6 +619,14 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         assert (executors['disabled']['enabled'], executors['disabled']['varenvs_set']) == (False, ['API_KEY'])
         assert (executors['default']['enabled'], executors['default']['varenvs_set']) == (True, [])
 
+    def test_remote_config_is_exposed(self, session, test_client):
+        with_remote_config = AgentFactory.create(features=['remote_config'])
+        without_remote_config = AgentFactory.create()
+        session.commit()
+
+        assert test_client.get(self.url(with_remote_config)).json['remote_config'] is True
+        assert test_client.get(self.url(without_remote_config)).json['remote_config'] is False
+
     def test_run_disabled_executor_fails(self, session, test_client):
         agent = AgentFactory.create(sid='this_is_a_sid')
         executor = ExecutorFactory.create(agent=agent, enabled=False)

@@ -3701,10 +3701,16 @@ class Agent(Metadata):
     description = BlankColumn(Text)
     active = Column(Boolean, default=True)
     sid = Column(Text)  # socketio sid
+    # Features announced by the agent on join_agent, e.g. "remote_config"
+    features = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
 
     @property
     def parent(self):
         return
+
+    @property
+    def remote_config(self):
+        return 'remote_config' in self.features
 
     @property
     def is_online(self):

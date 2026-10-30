@@ -61,6 +61,13 @@ def update_executors(agent, executors):
     return True
 
 
+def parse_features(raw_features):
+    # Dispatchers without feature announcements do not send the field
+    if not isinstance(raw_features, list):
+        return []
+    return [feature for feature in raw_features if isinstance(feature, str)]
+
+
 def _utc_now():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -148,6 +155,7 @@ class DispatcherNamespace(Namespace):
             try:
                 agent = decode_agent_websocket_token(message['token'])
                 agent.sid = request.sid
+                agent.features = parse_features(message.get('features'))
                 db.session.commit()
                 update_executors(agent, message['executors'])
                 logger.info("Agent joined correctly")

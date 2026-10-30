@@ -101,6 +101,48 @@ class TestSockets:
         assert not agent.is_online
 
 
+class TestAgentFeatures:
+    def join(self, app, test_client, session, workspace, **extra):
+        agent = AgentFactory.create(token='pepito')
+        session.add(agent)
+        session.commit()
+        headers = {"Authorization": f"Agent {agent.token}"}
+        token = test_client.post('/v3/agent_websocket_token', headers=headers).json['token']
+        client = socketio.test_client(app, namespace='/dispatcher')
+        message = {"action": "JOIN_AGENT", "workspace": workspace.name, "token": token, "executors": [], **extra}
+        client.emit("join_agent", message, namespace='/dispatcher')
+        session.expire_all()
+        return client, Agent.query.one()
+
+    def test_features_are_stored_on_join(self, app, test_client, session, workspace):
+        _, agent = self.join(app, test_client, session, workspace, features=['remote_config'])
+
+        assert agent.features == ['remote_config']
+        assert agent.remote_config is True
+
+    def test_agent_without_features_has_no_remote_config(self, app, test_client, session, workspace):
+        _, agent = self.join(app, test_client, session, workspace)
+
+        assert agent.features == []
+        assert agent.remote_config is False
+
+    def test_features_are_replaced_on_rejoin(self, app, test_client, session, workspace):
+        client, agent = self.join(app, test_client, session, workspace, features=['remote_config'])
+        token = test_client.post('/v3/agent_websocket_token',
+                                 headers={"Authorization": f"Agent {agent.token}"}).json['token']
+
+        client.emit("join_agent", {"token": token, "executors": []}, namespace='/dispatcher')
+        session.expire_all()
+
+        assert Agent.query.one().remote_config is False
+
+    def test_invalid_features_are_ignored(self, app, test_client, session, workspace):
+        _, agent = self.join(app, test_client, session, workspace, features='remote_config')
+
+        assert agent.features == []
+        assert agent.is_online
+
+
 class TestCheckExecutors:
     def test_new_executors_not_in_database(self, session):
         agent = AgentFactory.create()

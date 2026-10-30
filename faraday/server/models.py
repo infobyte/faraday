@@ -3715,6 +3715,10 @@ class Agent(Metadata):
         return 'remote_config' in self.features
 
     @property
+    def remote_config_read(self):
+        return 'remote_config_read' in self.features
+
+    @property
     def is_online(self):
         return self.sid is not None
 

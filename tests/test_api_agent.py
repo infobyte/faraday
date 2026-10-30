@@ -682,7 +682,8 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
 
         redis_client = get_redis_client()
         key = redis_key(remote_agent.id, request_id)
-        assert json.loads(redis_client.get(key)) == {'status': 'pending', 'agent_id': remote_agent.id}
+        assert json.loads(redis_client.get(key)) == {'status': 'pending', 'agent_id': remote_agent.id,
+                                                     'action': 'create'}
         assert 'secret' not in redis_client.get(key)
         assert 0 < redis_client.ttl(key) <= EXECUTOR_CONFIG_TTL
 
@@ -760,8 +761,94 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 400
         emit.assert_not_called()
 
+    @pytest.fixture
+    def readable_agent(self, session):
+        agent = AgentFactory.create(sid='this_is_a_sid', features=['remote_config', 'remote_config_read'])
+        session.commit()
+        return agent
+
+    def test_executor_config_read_is_sent_to_the_agent(self, test_client, readable_agent, config_requests):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, readable_agent, {'action': 'read', 'name': 'my_burp'})
+
+        assert res.status_code == 202
+        request_id = res.json['request_id']
+        config_requests.append((readable_agent.id, request_id))
+        emit.assert_called_once_with('executor_config', {'request_id': request_id, 'action': 'read', 'name': 'my_burp'},
+                                     to='this_is_a_sid', namespace='/dispatcher')
+        assert get_request(readable_agent.id, request_id)['action'] == 'read'
+
+    def test_executor_config_read_needs_an_agent_that_supports_it(self, test_client, remote_agent):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, {'action': 'read', 'name': 'my_burp'})
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    @pytest.mark.parametrize('extra', [{'varenvs': {'A': 'b'}}, {'enabled': True}, {'repo_name': 'burp'}])
+    def test_executor_config_read_takes_only_the_name(self, test_client, readable_agent, extra):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, readable_agent, {'action': 'read', 'name': 'my_burp', **extra})
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    def test_executor_config_status_returns_the_values_of_a_read(self, test_client, readable_agent, config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+        get_redis_client().set(redis_key(readable_agent.id, request_id), json.dumps(
+            {'status': 'ok', 'agent_id': readable_agent.id, 'message': '', 'varenvs': {'BURP_HOST': 'https://b.io'}}))
+
+        res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id))
+
+        assert res.json == {'status': 'ok', 'message': '', 'varenvs': {'BURP_HOST': 'https://b.io'}}
+
+    def test_executor_config_status_waits_for_the_agent(self, test_client, readable_agent, config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+        key = redis_key(readable_agent.id, request_id)
+
+        def agent_replies(_seconds):
+            get_redis_client().set(key, json.dumps({'status': 'ok', 'agent_id': readable_agent.id, 'message': '',
+                                                    'varenvs': {'A': 'b'}}))
+
+        with mock.patch('faraday.server.api.modules.agent.time') as fake_time:
+            fake_time.monotonic.return_value = 0
+            fake_time.sleep.side_effect = agent_replies
+            res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id) + '?wait=5')
+
+        assert res.json == {'status': 'ok', 'message': '', 'varenvs': {'A': 'b'}}
+
+    def test_executor_config_status_wait_times_out_as_pending(self, test_client, readable_agent, config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+
+        with mock.patch('faraday.server.api.modules.agent.time') as fake_time:
+            fake_time.monotonic.side_effect = [0, 1, 2, 3, 4, 5, 6]
+            res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id) + '?wait=2')
+
+        assert (res.status_code, res.json) == (200, {'status': 'pending'})
+
+    @pytest.mark.parametrize('wait', ['abc', '-1', '1.5'])
+    def test_executor_config_status_invalid_wait_is_rejected(self, test_client, readable_agent, wait,
+                                                             config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+
+        res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id) + f'?wait={wait}')
+
+        assert res.status_code == 400
+
+    def test_remote_config_read_is_exposed(self, session, test_client):
+        readable = AgentFactory.create(features=['remote_config', 'remote_config_read'])
+        not_readable = AgentFactory.create(features=['remote_config'])
+        session.commit()
+
+        assert test_client.get(self.url(readable)).json['remote_config_read'] is True
+        assert test_client.get(self.url(not_readable)).json['remote_config_read'] is False
+
     def test_executor_config_status_follows_the_request(self, test_client, remote_agent, config_requests):
-        request_id = create_request(remote_agent.id)
+        request_id = create_request(remote_agent.id, 'create')
         config_requests.append((remote_agent.id, request_id))
         url = join(self.url(remote_agent), 'executor_config', request_id)
 
@@ -774,7 +861,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         assert (res.status_code, res.json) == (200, {'status': 'error', 'message': 'boom'})
 
     def test_executor_config_status_ok(self, test_client, remote_agent, config_requests):
-        request_id = create_request(remote_agent.id)
+        request_id = create_request(remote_agent.id, 'create')
         config_requests.append((remote_agent.id, request_id))
         get_redis_client().set(redis_key(remote_agent.id, request_id),
                                json.dumps({'status': 'ok', 'agent_id': remote_agent.id, 'message': 'done'}))
@@ -797,13 +884,14 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
                                                                   config_requests):
         other_agent = AgentFactory.create(features=['remote_config'])
         session.commit()
-        request_id = create_request(other_agent.id)
+        request_id = create_request(other_agent.id, 'create')
         config_requests.append((other_agent.id, request_id))
 
         res = test_client.get(join(self.url(remote_agent), 'executor_config', request_id))
 
         assert res.status_code == 404
-        assert get_request(other_agent.id, request_id) == {'status': 'pending', 'agent_id': other_agent.id}
+        assert get_request(other_agent.id, request_id) == {'status': 'pending', 'agent_id': other_agent.id,
+                                                           'action': 'create'}
 
     def test_run_disabled_executor_fails(self, session, test_client):
         agent = AgentFactory.create(sid='this_is_a_sid')

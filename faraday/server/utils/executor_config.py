@@ -30,12 +30,20 @@ def redis_key(agent_id: int, request_id: str) -> str:
     return ':'.join(part for part in (prefix, 'agent_config', str(agent_id), request_id) if part)
 
 
-def create_request(agent_id: int) -> str:
+def create_request(agent_id: int, action: str) -> str:
     request_id = str(uuid4())
     get_redis_client().set(redis_key(agent_id, request_id),
-                           json.dumps({'status': 'pending', 'agent_id': agent_id}),
+                           json.dumps({'status': 'pending', 'agent_id': agent_id, 'action': action}),
                            ex=EXECUTOR_CONFIG_TTL)
     return request_id
+
+
+def parse_read_varenvs(raw_varenvs) -> Optional[dict]:
+    """The variables an agent returns for a read: only names with a plain value (str, number or bool)."""
+    if not isinstance(raw_varenvs, dict):
+        return None
+    return {name: value for name, value in raw_varenvs.items()
+            if isinstance(name, str) and name and isinstance(value, (str, int, float, bool))}
 
 
 def delete_request(agent_id: int, request_id: str) -> None:
@@ -49,8 +57,13 @@ def get_request(agent_id: int, request_id: str) -> Optional[dict]:
     return json.loads(raw) if raw else None
 
 
-def finish_request(agent_id: int, request_id: str, successful: bool, message: str) -> bool:
-    """Stores the result of a pending request, keeping its TTL. Only the status and the message are stored.
+def finish_request(agent_id: int, request_id: str, successful: bool, message: str,
+                   varenvs: Optional[dict] = None) -> bool:
+    """Stores the result of a pending request, keeping its TTL.
+
+    Only the status and the message are stored, plus the values the agent returned when the request is a
+    successful read: those are the variables its manifest declares as non-sensitive, and they only live as long
+    as the TTL of the request.
 
     The check of the pending status and the write are one transaction: if the key changes in between (e.g. an
     overlapping reply), nothing is written.
@@ -58,7 +71,7 @@ def finish_request(agent_id: int, request_id: str, successful: bool, message: st
     if not valid_request_id(request_id):
         return False
     key = redis_key(agent_id, request_id)
-    result = json.dumps({'status': 'ok' if successful else 'error', 'agent_id': agent_id, 'message': message})
+    result = {'status': 'ok' if successful else 'error', 'agent_id': agent_id, 'message': message}
     with get_redis_client().pipeline() as pipe:
         try:
             pipe.watch(key)
@@ -66,8 +79,10 @@ def finish_request(agent_id: int, request_id: str, successful: bool, message: st
             current = json.loads(raw) if raw else None
             if current is None or current.get('agent_id') != agent_id or current.get('status') != 'pending':
                 return False
+            if successful and varenvs is not None and current.get('action') == 'read':
+                result['varenvs'] = varenvs
             pipe.multi()
-            pipe.set(key, result, keepttl=True)
+            pipe.set(key, json.dumps(result), keepttl=True)
             pipe.execute()
         except redis.WatchError:
             return False

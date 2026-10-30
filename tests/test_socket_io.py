@@ -247,9 +247,9 @@ class TestExecutorConfigStatus:
         for agent_id, request_id in created:
             get_redis_client().delete(redis_key(agent_id, request_id))
 
-    def request(self, agent_client, agent_id=None):
+    def request(self, agent_client, agent_id=None, action='create'):
         _, agent, created = agent_client
-        request_id = create_request(agent_id or agent.id)
+        request_id = create_request(agent_id or agent.id, action)
         created.append((agent_id or agent.id, request_id))
         return request_id
 
@@ -330,6 +330,51 @@ class TestExecutorConfigStatus:
 
         assert get_request(agent_client[1].id, request_id)["status"] == "pending"
 
+    def test_the_values_of_a_read_are_stored(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+        varenvs = {"BURP_HOST": "https://burp.acme.com", "PULL_INTERVAL": 60, "RATIO": 0.5, "VERIFY": True}
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "", "varenvs": varenvs})
+
+        agent_id = agent_client[1].id
+        assert get_request(agent_id, request_id) == {"status": "ok", "agent_id": agent_id, "message": "",
+                                                     "varenvs": varenvs}
+
+    def test_values_are_ignored_unless_the_request_is_a_read(self, agent_client):
+        request_id = self.request(agent_client, action='update')
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "updated",
+                                   "varenvs": {"API_KEY": "secret"}})
+
+        stored = get_redis_client().get(redis_key(agent_client[1].id, request_id))
+        assert 'secret' not in stored
+        assert 'varenvs' not in get_request(agent_client[1].id, request_id)
+
+    def test_values_of_a_failed_read_are_ignored(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+
+        self.report(agent_client, {"request_id": request_id, "successful": False, "message": "no such executor",
+                                   "varenvs": {"BURP_HOST": "https://burp.acme.com"}})
+
+        assert 'varenvs' not in get_request(agent_client[1].id, request_id)
+
+    def test_invalid_values_of_a_read_are_dropped(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+        varenvs = {"OK": "value", "NULL": None, "LIST": ["a"], "DICT": {"a": 1}, "": "x"}
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "", "varenvs": varenvs})
+
+        assert get_request(agent_client[1].id, request_id)["varenvs"] == {"OK": "value"}
+
+    def test_values_that_are_not_an_object_are_ignored(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "", "varenvs": ["a"]})
+
+        stored = get_request(agent_client[1].id, request_id)
+        assert stored["status"] == "ok"
+        assert "varenvs" not in stored
+
     def test_a_reply_that_overlaps_another_one_does_not_replace_it(self, agent_client):
         agent_id = agent_client[1].id
         request_id = self.request(agent_client)
@@ -351,7 +396,7 @@ class TestExecutorConfigStatus:
     def test_status_from_an_unknown_sid_is_ignored(self, app, session):
         agent = AgentFactory.create(sid=None)
         session.commit()
-        request_id = create_request(agent.id)
+        request_id = create_request(agent.id, 'create')
         client = socketio.test_client(app, namespace='/dispatcher')
 
         client.emit("executor_config_status", {"request_id": request_id, "successful": True, "message": "created"},

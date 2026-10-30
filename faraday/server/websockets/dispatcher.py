@@ -19,7 +19,7 @@ from sqlalchemy import func
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution
 from faraday.server.utils.database import get_or_create
-from faraday.server.utils.executor_config import finish_request, valid_request_id
+from faraday.server.utils.executor_config import finish_request, parse_read_varenvs, valid_request_id
 
 logger = logging.getLogger(__name__)
 
@@ -187,14 +187,16 @@ class DispatcherNamespace(Namespace):
             logger.warning("Executor config status received from an unknown agent. SID %s", request.sid)
             return
         data = _load_payload(data)
-        # Only these fields are read, so varenvs can never reach Redis
+        # Only these fields are read. The values (varenvs) are only kept for a successful read request
         request_id = data.get('request_id') if data else None
         successful = data.get('successful') if data else None
         if not valid_request_id(request_id) or not isinstance(successful, bool):
             logger.warning("Invalid executor config status from agent %s", agent.id)
             return
         message = data.get('message')
-        if not finish_request(agent.id, request_id, successful, message if isinstance(message, str) else ''):
+        varenvs = parse_read_varenvs(data.get('varenvs'))
+        if not finish_request(agent.id, request_id, successful, message if isinstance(message, str) else '',
+                              varenvs):
             logger.warning("Executor config status for an unknown request from agent %s", agent.id)
 
     def on_join_agent(self, message):

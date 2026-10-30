@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 import http
 import json
 import logging
+import time
 from datetime import datetime
 from uuid import uuid4
 
@@ -49,6 +50,9 @@ from faraday.server.utils.executor_config import (
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
+
+EXECUTOR_CONFIG_MAX_WAIT = 10
+EXECUTOR_CONFIG_POLL_INTERVAL = 0.25
 
 
 def validate_type(base, type_, value):
@@ -136,6 +140,7 @@ class AgentSchema(AutoSchema):
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
     remote_config = fields.Boolean(dump_only=True)
+    remote_config_read = fields.Boolean(dump_only=True)
     agent_capabilities = fields.List(fields.Dict(), dump_only=True, attribute='capabilities')
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
     last_run = fields.DateTime(dump_only=True)
@@ -154,6 +159,7 @@ class AgentSchema(AutoSchema):
             'creator',
             'is_online',
             'remote_config',
+            'remote_config_read',
             'agent_capabilities',
             'active',
             'executors',
@@ -182,7 +188,7 @@ class ExecutorDataSchema(Schema):
 
 
 class ExecutorConfigSchema(Schema):
-    action = fields.String(required=True, validate=OneOf(['create', 'update', 'delete']))
+    action = fields.String(required=True, validate=OneOf(['create', 'update', 'delete', 'read']))
     name = fields.String(required=True, validate=Length(min=1))
     repo_name = fields.String(required=False)
     # A null value removes the variable, which only makes sense when updating
@@ -194,11 +200,11 @@ class ExecutorConfigSchema(Schema):
     def validate_action_fields(self, data, **kwargs):
         if not data['name'].strip():
             raise ValidationError('Must not be blank.', field_name='name')
-        if data['action'] == 'delete':
-            for field in ('varenvs', 'enabled'):
-                if field in data:
-                    raise ValidationError('Not allowed when deleting an executor.', field_name=field)
-        elif data['action'] == 'create' and any(value is None for value in data.get('varenvs', {}).values()):
+        not_allowed = {'delete': ('varenvs', 'enabled'), 'read': ('varenvs', 'enabled', 'repo_name')}
+        for field in not_allowed.get(data['action'], ()):
+            if field in data:
+                raise ValidationError(f"Not allowed when the action is {data['action']}.", field_name=field)
+        if data['action'] == 'create' and any(value is None for value in data.get('varenvs', {}).values()):
             raise ValidationError('Variables can only be removed when updating.', field_name='varenvs')
 
 
@@ -495,7 +501,7 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         ---
           tags: ["Agent"]
-          description: Asks the agent to create, update or delete one of its executors
+          description: Asks the agent to create, update, delete or read one of its executors (a read returns the values of the variables the agent declares as non-sensitive)
           requestBody:
             required: true
             content:
@@ -515,9 +521,11 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         agent = self._get_object(agent_id)
         if not agent.remote_config:
             abort(http.HTTPStatus.BAD_REQUEST, "Agent does not support remote configuration")
+        if data['action'] == 'read' and not agent.remote_config_read:
+            abort(http.HTTPStatus.BAD_REQUEST, "Agent does not support reading the configuration of its executors")
         if agent.is_offline:
             abort(http.HTTPStatus.GONE, "Agent is offline")
-        request_id = create_executor_config_request(agent.id)
+        request_id = create_executor_config_request(agent.id, data['action'])
         try:
             # The values of varenvs only travel through the socket, they are never stored or logged
             socketio.emit('executor_config', {'request_id': request_id, **data}, to=agent.sid,
@@ -532,7 +540,10 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         ---
           tags: ["Agent"]
-          description: Result of a request to configure an executor of the agent
+          description: |
+            Result of a request to configure an executor of the agent. With `wait` (seconds, at most 10) the
+            answer is held until the request is no longer pending or the time is over. A successful `read`
+            also returns the `varenvs` that the agent declares as non-sensitive.
           responses:
             200:
               description: pending, ok or error, with the message of the agent
@@ -540,12 +551,21 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
               description: Unknown or expired request
         """
         agent = self._get_object(agent_id)
+        wait = request.args.get('wait', '0')
+        if not wait.isdigit():
+            abort(http.HTTPStatus.BAD_REQUEST, "wait must be a number of seconds")
+        deadline = time.monotonic() + min(int(wait), EXECUTOR_CONFIG_MAX_WAIT)
         stored = get_executor_config_request(agent.id, request_id)
+        while stored is not None and stored['status'] == 'pending' and time.monotonic() < deadline:
+            time.sleep(EXECUTOR_CONFIG_POLL_INTERVAL)
+            stored = get_executor_config_request(agent.id, request_id)
         if stored is None:
             abort(http.HTTPStatus.NOT_FOUND, "Unknown or expired request")
         response = {'status': stored['status']}
         if stored['status'] != 'pending':
             response['message'] = stored.get('message', '')
+            if 'varenvs' in stored:
+                response['varenvs'] = stored['varenvs']
         return flask.jsonify(response)
 
     @route('/get_manifests', methods=['GET'])

@@ -687,7 +687,9 @@ def register_extensions(app):
     from faraday.server.websockets.dispatcher import DispatcherNamespace  # pylint: disable=import-outside-toplevel
     socketio.init_app(app, ping_interval=faraday_server.socketio_ping_interval,
                       ping_timeout=faraday_server.socketio_ping_timeout,
-                      logger=faraday_server.socketio_logger)
+                      logger=faraday_server.socketio_logger,
+                      # Engine.IO logs the payload of every packet, secrets included
+                      engineio_logger=faraday_server.socketio_logger)
     socketio.on_namespace(DispatcherNamespace("/dispatcher"))
 
     if faraday.server.config.faraday_server.celery_enabled:

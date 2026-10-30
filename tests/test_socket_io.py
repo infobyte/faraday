@@ -3,12 +3,19 @@ from uuid import uuid4
 
 import pytest
 
+from faraday.server.config import faraday_server
 from faraday.server.debouncer import get_redis_client
 from faraday.server.utils.executor_config import EXECUTOR_CONFIG_TTL, create_request, get_request, redis_key
 from faraday.server.models import Executor, Agent
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
 from tests.factories import AgentFactory, ExecutorFactory
+
+
+def test_engineio_packet_logging_follows_the_socketio_logger_setting(app):
+    # Engine.IO logs the payload of every packet: executor secrets and agent tokens travel in them
+    assert faraday_server.socketio_logger is False
+    assert socketio.server_options['engineio_logger'] is faraday_server.socketio_logger
 
 
 class TestSockets:

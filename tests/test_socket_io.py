@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 import redis
 
+from faraday.server.app import register_extensions
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import get_redis_client
 from faraday.server.utils.executor_config import (
@@ -20,10 +21,17 @@ from faraday.server.websockets.dispatcher import update_executors
 from tests.factories import AgentFactory, ExecutorFactory
 
 
-def test_engineio_packet_logging_follows_the_socketio_logger_setting(app):
+@pytest.mark.parametrize('testing', [True, False])
+def test_engineio_packet_logging_is_off_even_with_the_socketio_logger(app, testing):
     # Engine.IO logs the payload of every packet: executor secrets and agent tokens travel in them
-    assert faraday_server.socketio_logger is False
-    assert socketio.server_options['engineio_logger'] is faraday_server.socketio_logger
+    with mock.patch('faraday.server.app.socketio') as socketio_mock, \
+            mock.patch('faraday.server.app.celery'), \
+            mock.patch.dict(app.config, {'TESTING': testing}), \
+            mock.patch.object(faraday_server, 'socketio_logger', True):
+        register_extensions(app)
+
+    assert socketio_mock.init_app.call_args.kwargs['logger'] is True
+    assert socketio_mock.init_app.call_args.kwargs['engineio_logger'] is False
 
 
 class TestSockets:

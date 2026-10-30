@@ -14,11 +14,10 @@ import itsdangerous
 from flask import current_app, request
 from flask_socketio import Namespace
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 # Local imports
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
-from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution, AgentManifest
+from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.executor_config import finish_request, valid_request_id
 
@@ -80,13 +79,6 @@ def parse_capabilities(raw_executors):
         and isinstance(executor.get('repo_name'), str)
         and isinstance(executor.get('available'), bool)
     ]
-
-
-def parse_manifests(raw_manifests):
-    if not isinstance(raw_manifests, dict):
-        return None
-    return {name: manifest for name, manifest in raw_manifests.items()
-            if isinstance(name, str) and isinstance(manifest, dict)}
 
 
 def _load_payload(data):
@@ -187,38 +179,6 @@ class DispatcherNamespace(Namespace):
             logger.warning("Invalid capabilities message from agent %s", agent.id)
             return
         agent.capabilities = capabilities
-        manifests_digest = data.get('manifests_digest')
-        manifests_count = data.get('manifests_count')
-        agent.manifests_digest = manifests_digest if isinstance(manifests_digest, str) else None
-        agent.manifests_count = manifests_count if type(manifests_count) is int else None  # noqa: E721 (bool is an int)
-        db.session.commit()
-
-    def on_agent_manifests(self, data):
-        agent = Agent.query.filter(Agent.sid == request.sid).first()
-        if not agent:
-            logger.warning("Manifests received from an unknown agent. SID %s", request.sid)
-            return
-        data = _load_payload(data)
-        manifests = parse_manifests(data.get('manifests')) if data else None
-        digest = data.get('manifests_digest') if data else None
-        if not manifests or not isinstance(digest, str) or not digest:
-            logger.warning("Invalid manifests message from agent %s", agent.id)
-            return
-        # The handlers of agent_capabilities and agent_manifests can run concurrently, so the digest
-        # announced by the agent may not be stored yet. A digest is only used once its manifests add up
-        # to the manifests_count announced by an agent (see get_bundled_manifests).
-        if agent.manifests_digest == digest and agent.manifests_count is not None:
-            stored = AgentManifest.query.filter_by(manifests_digest=digest).count()
-            if stored >= agent.manifests_count:
-                # Agents resend the whole set on every connection
-                return
-        statement = pg_insert(AgentManifest).values(
-            [{'manifests_digest': digest, 'name': name, 'manifest': manifest} for name, manifest in manifests.items()]
-        )
-        db.session.execute(statement.on_conflict_do_update(
-            constraint='uix_agent_manifest_digest_name',
-            set_={'manifest': statement.excluded.manifest},
-        ))
         db.session.commit()
 
     def on_executor_config_status(self, data):

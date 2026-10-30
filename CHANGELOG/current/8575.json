@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[ADD] Agents can now create, update, enable, disable and delete their executors remotely from Faraday, through the new `executor_config` endpoints. Executors expose `enabled` and `varenvs_set`, agents expose `remote_config` and `agent_capabilities`, and `get_manifests` includes the manifests bundled in the agents. #8575"
+  "md": "[ADD] Agents can now create, update, enable, disable and delete their executors remotely from Faraday, through the new `executor_config` endpoints. Executors expose `enabled` and `varenvs_set`, and agents expose `remote_config` and `agent_capabilities`. #8575"
 }

@@ -17,7 +17,7 @@ import pyotp
 import pytest
 
 from faraday.server.api.modules.agent import AgentView
-from faraday.server.models import Agent, AgentExecution, AgentManifest, Command, Executor, db
+from faraday.server.models import Agent, AgentExecution, Command, Executor, db
 from tests.factories import (
     AgentFactory,
     AgentExecutionFactory,
@@ -641,46 +641,6 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         session.commit()
 
         assert test_client.get(self.url(agent)).json['agent_capabilities'] == capabilities
-
-    def bundled(self, session, digest, manifests, count=None):
-        agent = AgentFactory.create(manifests_digest=digest, manifests_count=len(manifests) if count is None else count)
-        for name, manifest in manifests.items():
-            session.add(AgentManifest(manifests_digest=digest, name=name, manifest=manifest))
-        session.commit()
-        return agent
-
-    def test_get_manifests_includes_the_bundled_ones_of_a_complete_digest(self, session, test_client):
-        self.bundled(session, 'digest-1', {'bundled_tool': {'repo_name': 'bundled_tool'}})
-
-        res = test_client.get(join(self.url(), 'get_manifests'))
-
-        assert res.status_code == 200
-        assert res.json['bundled_tool'] == {'repo_name': 'bundled_tool'}
-        assert 'burp' in res.json
-
-    def test_get_manifests_skips_an_incomplete_digest(self, session, test_client):
-        self.bundled(session, 'digest-1', {'bundled_tool': {}}, count=2)
-
-        res = test_client.get(join(self.url(), 'get_manifests'))
-
-        assert 'bundled_tool' not in res.json
-
-    def test_get_manifests_prefers_the_published_manifest(self, session, test_client):
-        self.bundled(session, 'digest-1', {'burp': {'repo_name': 'fake'}})
-
-        res = test_client.get(join(self.url(), 'get_manifests'))
-
-        assert res.json['burp'].get('repo_name') != 'fake'
-        assert "BURP_API_PULL_INTERVAL" in res.json['burp']['optional_environment_variables']
-
-    def test_get_manifests_does_not_duplicate_work_for_agents_sharing_a_digest(self, session, test_client):
-        self.bundled(session, 'digest-1', {'bundled_tool': {'a': 1}})
-        AgentFactory.create(manifests_digest='digest-1', manifests_count=1)
-        session.commit()
-
-        res = test_client.get(join(self.url(), 'get_manifests'))
-
-        assert res.json['bundled_tool'] == {'a': 1}
 
     @pytest.fixture
     def config_requests(self):

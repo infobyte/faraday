@@ -1,0 +1,1 @@
+ * [MOD] Improved performance of the workspaces list and other API endpoints by reducing database queries. #8595

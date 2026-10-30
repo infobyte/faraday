@@ -36,8 +36,10 @@ def test_new_workspace_risk_history_ends_today(session, workspace_factory):
     workspace = workspace_factory.create()
     session.commit()
 
-    assert workspace.risk_history_total[0]['date'] == date.today().isoformat()
-    assert len(workspace.risk_history_total) == 30
+    dates = [entry['date'] for entry in workspace.risk_history_total]
+    assert dates[-1] == date.today().isoformat()
+    assert dates == sorted(dates)  # oldest first, the order the risk history job appends in
+    assert len(dates) == 30
 
 
 def test_vulnerability_histogram_row_is_dated_today(session, vulnerability_factory):

@@ -131,6 +131,11 @@ class ConfigSection:
 class DatabaseConfigObject(ConfigSection):
     def __init__(self):
         self.connection_string = None
+        # SQLAlchemy pool settings, applied per process (web and Celery workers)
+        self.pool_size = 5
+        self.max_overflow = 15
+        self.pool_timeout = 60
+        self.pool_recycle = 1800
 
 
 class LimiterConfigObject(ConfigSection):
@@ -153,6 +158,8 @@ class FaradayServerConfigObject(ConfigSection):
         self.celery_enabled = True
         self.celery_broker_url = "redis://127.0.0.1:6379/0"
         self.celery_backend_url = "redis://127.0.0.1:6379/0"
+        # Cap for the prefork worker concurrency when --concurrency is not given
+        self.celery_max_worker_concurrency = 2
         self.max_task_message_size = DEFAULT_MAX_QUEUE_MESSAGE_SIZE
         self.socketio_ping_interval = 60
         self.socketio_ping_timeout = 220

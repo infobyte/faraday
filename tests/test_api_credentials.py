@@ -1,3 +1,4 @@
+import csv
 import datetime
 import io
 from faraday.server.models import Credential
@@ -363,9 +364,24 @@ class TestCredentialAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTests
         assert res.headers['Content-Type'] == 'text/csv; charset=utf-8'
         _decoded_data = res.data.decode('utf-8')
         assert f'attachment; filename=Faraday-{workspace.name}-Credentials.csv' in res.headers['Content-Disposition']
-        assert 'username,password,endpoint,leak_date' in _decoded_data
-        assert 'testuser1,testpass,test.example.com' in _decoded_data
+        assert '"username","password","endpoint","leak_date"' in _decoded_data
+        assert '"testuser1","testpass","test.example.com"' in _decoded_data
         assert 'testuser2' not in _decoded_data
+
+    @pytest.mark.parametrize('payload', ['=1+1', '+1', '-1+1', '@SUM(1)', '\t=1', '\r=1', ' =1', '＝1'])
+    def test_credential_filter_export_csv_escapes_formulas(self, test_client, workspace, session, payload):
+        credential = CredentialFactory.create(workspace=workspace, username=payload, password=payload,
+                                              endpoint=payload)
+        session.add(credential)
+        session.commit()
+
+        res = test_client.get(self.url(workspace=workspace) + '/filter?export_csv=true')
+
+        assert res.status_code == 200
+        rows = list(csv.DictReader(io.StringIO(res.data.decode('utf-8'))))
+        row = next(row for row in rows if row['username'] == "'" + payload)
+        assert row['password'] == "'" + payload
+        assert row['endpoint'] == "'" + payload
 
     def test_bulk_create_credentials_from_csv(self, test_client, workspace, session, csrf_token):
         # Get the CSV file path

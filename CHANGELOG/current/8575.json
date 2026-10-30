@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Executors now have an `enabled` flag and the list of variables set (`varenvs_set`), read from the agent announcement. #8575"
+}

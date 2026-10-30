@@ -216,3 +216,61 @@ class TestCheckExecutors:
         assert count_executors == 1
         from_db_executor = Executor.query.filter_by(id=another_executor.id, agent=agent).first()
         assert from_db_executor.name == 'executor 2'
+
+    def test_new_executor_is_enabled_by_default(self, session):
+        agent = AgentFactory.create()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is True
+        assert executor.varenvs_set == []
+
+    def test_enabled_and_varenvs_set_are_read_from_announcement(self, session):
+        agent = AgentFactory.create()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}, 'enabled': False, 'varenvs_set': ['API_KEY']}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is False
+        assert executor.varenvs_set == ['API_KEY']
+
+    def test_executor_can_be_enabled_again(self, session):
+        agent = AgentFactory.create()
+        ExecutorFactory.create(name='executor 1', agent=agent, enabled=False, varenvs_set=['API_KEY'])
+        session.commit()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}, 'enabled': True, 'varenvs_set': []}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is True
+        assert executor.varenvs_set == []
+
+    def test_announcement_without_enabled_keeps_current_value(self, session):
+        # Dispatchers without remote_config do not send these fields
+        agent = AgentFactory.create()
+        ExecutorFactory.create(name='executor 1', agent=agent, enabled=False)
+        session.commit()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is False
+
+    def test_disabled_executor_is_not_deleted_when_announced(self, session):
+        agent = AgentFactory.create()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}, 'enabled': False}
+        ]
+
+        assert update_executors(agent, executors)
+        assert update_executors(agent, executors)
+        assert Executor.query.filter_by(agent=agent).count() == 1

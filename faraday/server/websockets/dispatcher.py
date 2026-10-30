@@ -43,6 +43,11 @@ def update_executors(agent, executors):
             executor.category = category
         if raw_executor.get("tool"):
             executor.tool = raw_executor["tool"]
+        # Dispatchers without remote_config do not announce these fields
+        if 'enabled' in raw_executor:
+            executor.enabled = bool(raw_executor['enabled'])
+        if 'varenvs_set' in raw_executor:
+            executor.varenvs_set = list(raw_executor['varenvs_set'])
         db.session.add(executor)
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])

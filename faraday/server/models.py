@@ -3559,6 +3559,9 @@ class Executor(Metadata):
     category = Column(JSONType, nullable=True)
     tool = Column(String(50), nullable=True)
     website = Column(Text, nullable=True)
+    enabled = Column(Boolean, nullable=False, default=True, server_default=text('true'))
+    # Names only: the agent never sends varenv values back
+    varenvs_set = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 

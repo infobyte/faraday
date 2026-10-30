@@ -1,7 +1,10 @@
 import json
+from uuid import uuid4
 
 import pytest
 
+from faraday.server.debouncer import get_redis_client
+from faraday.server.utils.executor_config import EXECUTOR_CONFIG_TTL, create_request, get_request, redis_key
 from faraday.server.models import Executor, Agent, AgentManifest
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
@@ -283,6 +286,112 @@ class TestAgentManifests:
         client.emit("agent_manifests", self.chunk(1, 1, {"nmap": {"a": 1}}), namespace='/dispatcher')
 
         assert AgentManifest.query.count() == 0
+
+
+class TestExecutorConfigStatus:
+
+    @pytest.fixture
+    def agent_client(self, app, test_client, session, workspace):
+        client, agent = join_agent(app, test_client, session, workspace, features=['remote_config'])
+        created = []
+        yield client, agent, created
+        for agent_id, request_id in created:
+            get_redis_client().delete(redis_key(agent_id, request_id))
+
+    def request(self, agent_client, agent_id=None):
+        _, agent, created = agent_client
+        request_id = create_request(agent_id or agent.id)
+        created.append((agent_id or agent.id, request_id))
+        return request_id
+
+    def report(self, agent_client, payload):
+        client, _, _ = agent_client
+        client.emit("executor_config_status", payload, namespace='/dispatcher')
+
+    def test_successful_status_is_stored(self, agent_client):
+        request_id = self.request(agent_client)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        agent_id = agent_client[1].id
+        assert get_request(agent_id, request_id) == {"status": "ok", "agent_id": agent_id, "message": "created"}
+
+    def test_failed_status_is_stored(self, agent_client):
+        request_id = self.request(agent_client)
+
+        self.report(agent_client, {"request_id": request_id, "successful": False, "message": "boom"})
+
+        agent_id = agent_client[1].id
+        assert get_request(agent_id, request_id) == {"status": "error", "agent_id": agent_id, "message": "boom"}
+
+    def test_the_ttl_is_kept(self, agent_client):
+        request_id = self.request(agent_client)
+        key = redis_key(agent_client[1].id, request_id)
+        get_redis_client().expire(key, 100)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        assert 0 < get_redis_client().ttl(key) <= 100
+        assert 100 < EXECUTOR_CONFIG_TTL
+
+    def test_varenvs_are_never_stored(self, agent_client):
+        request_id = self.request(agent_client)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created",
+                                   "varenvs": {"API_KEY": "secret"}})
+
+        assert 'secret' not in get_redis_client().get(redis_key(agent_client[1].id, request_id))
+
+    def test_unknown_request_is_ignored(self, agent_client):
+        request_id = str(uuid4())
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        assert get_request(agent_client[1].id, request_id) is None
+
+    def test_request_of_another_agent_is_ignored(self, agent_client, session):
+        other_agent = AgentFactory.create(features=['remote_config'])
+        session.commit()
+        request_id = self.request(agent_client, agent_id=other_agent.id)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        assert get_request(other_agent.id, request_id)["status"] == "pending"
+
+    def test_a_finished_request_is_not_overwritten(self, agent_client):
+        request_id = self.request(agent_client)
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        self.report(agent_client, {"request_id": request_id, "successful": False, "message": "later"})
+
+        assert get_request(agent_client[1].id, request_id)["status"] == "ok"
+
+    @pytest.mark.parametrize("payload", [
+        {"successful": True, "message": "created"},
+        {"request_id": "*", "successful": True, "message": "created"},
+        {"request_id": "REQUEST", "successful": "yes", "message": "created"},
+        "not json",
+    ])
+    def test_invalid_status_is_ignored(self, agent_client, payload):
+        request_id = self.request(agent_client)
+        if isinstance(payload, dict) and payload.get("request_id") == "REQUEST":
+            payload = {**payload, "request_id": request_id}
+
+        self.report(agent_client, payload)
+
+        assert get_request(agent_client[1].id, request_id)["status"] == "pending"
+
+    def test_status_from_an_unknown_sid_is_ignored(self, app, session):
+        agent = AgentFactory.create(sid=None)
+        session.commit()
+        request_id = create_request(agent.id)
+        client = socketio.test_client(app, namespace='/dispatcher')
+
+        client.emit("executor_config_status", {"request_id": request_id, "successful": True, "message": "created"},
+                    namespace='/dispatcher')
+
+        assert get_request(agent.id, request_id)["status"] == "pending"
+        get_redis_client().delete(redis_key(agent.id, request_id))
 
 
 class TestCheckExecutors:

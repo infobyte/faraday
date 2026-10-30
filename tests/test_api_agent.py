@@ -8,6 +8,7 @@ import json
 import urllib.parse
 from datetime import datetime, timedelta
 from unittest import mock
+from uuid import uuid4
 
 from posixpath import join
 from urllib.parse import urljoin
@@ -25,6 +26,13 @@ from tests.factories import (
 )
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests import factories
+from faraday.server.utils.executor_config import (
+    EXECUTOR_CONFIG_TTL,
+    create_request,
+    get_request,
+    redis_key,
+)
+from faraday.server.debouncer import get_redis_client
 from tests.test_api_workspaced_base import API_PREFIX
 
 
@@ -673,6 +681,169 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         res = test_client.get(join(self.url(), 'get_manifests'))
 
         assert res.json['bundled_tool'] == {'a': 1}
+
+    @pytest.fixture
+    def config_requests(self):
+        """Request ids created by a test, removed from Redis afterwards."""
+        created = []
+        yield created
+        for agent_id, request_id in created:
+            get_redis_client().delete(redis_key(agent_id, request_id))
+
+    @pytest.fixture
+    def remote_agent(self, session):
+        agent = AgentFactory.create(sid='this_is_a_sid', features=['remote_config'])
+        session.commit()
+        return agent
+
+    def post_config(self, test_client, agent, payload):
+        return test_client.post(join(self.url(agent), 'executor_config'), json=payload)
+
+    def test_executor_config_is_sent_to_the_agent(self, test_client, remote_agent, config_requests):
+        payload = {'action': 'create', 'name': 'my_nmap', 'repo_name': 'nmap', 'varenvs': {'API_KEY': 'secret'},
+                   'enabled': True}
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, payload)
+
+        assert res.status_code == 202
+        request_id = res.json['request_id']
+        config_requests.append((remote_agent.id, request_id))
+        emit.assert_called_once_with('executor_config', {'request_id': request_id, **payload},
+                                     to='this_is_a_sid', namespace='/dispatcher')
+
+    def test_executor_config_is_pending_in_redis_without_the_varenvs(self, test_client, remote_agent,
+                                                                     config_requests):
+        payload = {'action': 'create', 'name': 'my_nmap', 'varenvs': {'API_KEY': 'secret'}}
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit'):
+            request_id = self.post_config(test_client, remote_agent, payload).json['request_id']
+        config_requests.append((remote_agent.id, request_id))
+
+        redis_client = get_redis_client()
+        key = redis_key(remote_agent.id, request_id)
+        assert json.loads(redis_client.get(key)) == {'status': 'pending', 'agent_id': remote_agent.id}
+        assert 'secret' not in redis_client.get(key)
+        assert 0 < redis_client.ttl(key) <= EXECUTOR_CONFIG_TTL
+
+    def test_executor_config_only_sends_the_given_fields(self, test_client, remote_agent, config_requests):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, {'action': 'delete', 'name': 'my_nmap'})
+        config_requests.append((remote_agent.id, res.json['request_id']))
+
+        assert emit.call_args.args[1] == {'request_id': res.json['request_id'], 'action': 'delete',
+                                          'name': 'my_nmap'}
+
+    def test_executor_config_update_can_remove_a_variable(self, test_client, remote_agent, config_requests):
+        payload = {'action': 'update', 'name': 'my_nmap', 'varenvs': {'API_KEY': None, 'OTHER': 'value'}}
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, payload)
+        config_requests.append((remote_agent.id, res.json['request_id']))
+
+        assert res.status_code == 202
+        assert emit.call_args.args[1]['varenvs'] == {'API_KEY': None, 'OTHER': 'value'}
+
+    def test_executor_config_update_can_disable(self, test_client, remote_agent, config_requests):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent,
+                                   {'action': 'update', 'name': 'my_nmap', 'enabled': False})
+        config_requests.append((remote_agent.id, res.json['request_id']))
+
+        assert res.status_code == 202
+        assert emit.call_args.args[1]['enabled'] is False
+
+    def test_executor_config_offline_agent_is_gone(self, session, test_client):
+        agent = AgentFactory.create(sid=None, features=['remote_config'])
+        session.commit()
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, agent, {'action': 'delete', 'name': 'my_nmap'})
+
+        assert res.status_code == 410
+        emit.assert_not_called()
+
+    def test_executor_config_agent_without_remote_config_is_rejected(self, session, test_client):
+        agent = AgentFactory.create(sid='this_is_a_sid')
+        session.commit()
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, agent, {'action': 'delete', 'name': 'my_nmap'})
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    def test_executor_config_unknown_agent_is_not_found(self, test_client):
+        res = test_client.post(join(self.url(), '999999', 'executor_config'),
+                               json={'action': 'delete', 'name': 'my_nmap'})
+
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('payload', [
+        {'name': 'my_nmap'},
+        {'action': 'restart', 'name': 'my_nmap'},
+        {'action': 'create'},
+        {'action': 'create', 'name': '  '},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': ['API_KEY']},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': {'API_KEY': 1}},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': {'API_KEY': None}},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': {'': 'value'}},
+        {'action': 'create', 'name': 'my_nmap', 'enabled': 'yes'},
+        {'action': 'create', 'name': 'my_nmap', 'repo_name': 3},
+        {'action': 'delete', 'name': 'my_nmap', 'varenvs': {'API_KEY': 'value'}},
+        {'action': 'delete', 'name': 'my_nmap', 'enabled': True},
+    ])
+    def test_executor_config_invalid_body_is_rejected(self, test_client, remote_agent, payload):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, payload)
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    def test_executor_config_status_follows_the_request(self, test_client, remote_agent, config_requests):
+        request_id = create_request(remote_agent.id)
+        config_requests.append((remote_agent.id, request_id))
+        url = join(self.url(remote_agent), 'executor_config', request_id)
+
+        res = test_client.get(url)
+        assert (res.status_code, res.json) == (200, {'status': 'pending'})
+
+        get_redis_client().set(redis_key(remote_agent.id, request_id),
+                               json.dumps({'status': 'error', 'agent_id': remote_agent.id, 'message': 'boom'}))
+        res = test_client.get(url)
+        assert (res.status_code, res.json) == (200, {'status': 'error', 'message': 'boom'})
+
+    def test_executor_config_status_ok(self, test_client, remote_agent, config_requests):
+        request_id = create_request(remote_agent.id)
+        config_requests.append((remote_agent.id, request_id))
+        get_redis_client().set(redis_key(remote_agent.id, request_id),
+                               json.dumps({'status': 'ok', 'agent_id': remote_agent.id, 'message': 'done'}))
+
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', request_id))
+
+        assert res.json == {'status': 'ok', 'message': 'done'}
+
+    def test_executor_config_status_of_an_expired_request_is_not_found(self, test_client, remote_agent):
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', str(uuid4())))
+
+        assert res.status_code == 404
+
+    def test_executor_config_status_with_an_invalid_request_id_is_not_found(self, test_client, remote_agent):
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', '*'))
+
+        assert res.status_code == 404
+
+    def test_executor_config_status_of_another_agent_is_not_found(self, session, test_client, remote_agent,
+                                                                  config_requests):
+        other_agent = AgentFactory.create(features=['remote_config'])
+        session.commit()
+        request_id = create_request(other_agent.id)
+        config_requests.append((other_agent.id, request_id))
+
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', request_id))
+
+        assert res.status_code == 404
+        assert get_request(other_agent.id, request_id) == {'status': 'pending', 'agent_id': other_agent.id}
 
     def test_run_disabled_executor_fails(self, session, test_client):
         agent = AgentFactory.create(sid='this_is_a_sid')

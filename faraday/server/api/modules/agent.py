@@ -14,8 +14,8 @@ import flask
 from flask import Blueprint, abort, request, jsonify
 import flask_login
 from flask_classful import route
-from marshmallow import fields, Schema, EXCLUDE
-from marshmallow.validate import OneOf
+from marshmallow import fields, Schema, EXCLUDE, ValidationError, validates_schema
+from marshmallow.validate import Length, OneOf
 from sqlalchemy import and_, exists, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import selectinload
@@ -40,6 +40,11 @@ from faraday.server.models import (
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.utils.agents import get_bundled_manifests, get_command_and_agent_execution
+from faraday.server.utils.executor_config import (
+    create_request as create_executor_config_request,
+    delete_request as delete_executor_config_request,
+    get_request as get_executor_config_request,
+)
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
@@ -174,6 +179,27 @@ class AgentCreationSchema(Schema):
 class ExecutorDataSchema(Schema):
     executor = fields.String(default=None)
     args = fields.Dict(default=None)
+
+
+class ExecutorConfigSchema(Schema):
+    action = fields.String(required=True, validate=OneOf(['create', 'update', 'delete']))
+    name = fields.String(required=True, validate=Length(min=1))
+    repo_name = fields.String(required=False)
+    # A null value removes the variable, which only makes sense when updating
+    varenvs = fields.Dict(keys=fields.String(validate=Length(min=1)), values=fields.String(allow_none=True),
+                          required=False)
+    enabled = fields.Boolean(required=False, truthy={True}, falsy={False})
+
+    @validates_schema
+    def validate_action_fields(self, data, **kwargs):
+        if not data['name'].strip():
+            raise ValidationError('Must not be blank.', field_name='name')
+        if data['action'] == 'delete':
+            for field in ('varenvs', 'enabled'):
+                if field in data:
+                    raise ValidationError('Not allowed when deleting an executor.', field_name=field)
+        elif data['action'] == 'create' and any(value is None for value in data.get('varenvs', {}).values()):
+            raise ValidationError('Variables can only be removed when updating.', field_name='varenvs')
 
 
 class AgentRunSchema(Schema):
@@ -463,6 +489,64 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             return self._envelope_list(self._dump(objects, kwargs, many=True))
         except ValueError as e:
             flask.abort(400, e)
+
+    @route('/<int:agent_id>/executor_config', methods=['POST'])
+    def executor_config(self, agent_id):
+        """
+        ---
+          tags: ["Agent"]
+          description: Asks the agent to create, update or delete one of its executors
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: ExecutorConfigSchema
+          responses:
+            202:
+              description: The request was sent to the agent, ask for its result with the request_id
+            400:
+              description: Bad request
+            410:
+              description: The agent is offline
+        """
+        if flask.request.content_type != 'application/json':
+            abort(400, "Only application/json is a valid content-type")
+        data = self._parse_data(ExecutorConfigSchema(unknown=EXCLUDE), request)
+        agent = self._get_object(agent_id)
+        if not agent.remote_config:
+            abort(http.HTTPStatus.BAD_REQUEST, "Agent does not support remote configuration")
+        if agent.is_offline:
+            abort(http.HTTPStatus.GONE, "Agent is offline")
+        request_id = create_executor_config_request(agent.id)
+        try:
+            # The values of varenvs only travel through the socket, they are never stored or logged
+            socketio.emit('executor_config', {'request_id': request_id, **data}, to=agent.sid,
+                          namespace='/dispatcher')
+        except Exception:
+            delete_executor_config_request(agent.id, request_id)
+            raise
+        return flask.jsonify({'request_id': request_id}), http.HTTPStatus.ACCEPTED
+
+    @route('/<int:agent_id>/executor_config/<request_id>', methods=['GET'])
+    def executor_config_status(self, agent_id, request_id):
+        """
+        ---
+          tags: ["Agent"]
+          description: Result of a request to configure an executor of the agent
+          responses:
+            200:
+              description: pending, ok or error, with the message of the agent
+            404:
+              description: Unknown or expired request
+        """
+        agent = self._get_object(agent_id)
+        stored = get_executor_config_request(agent.id, request_id)
+        if stored is None:
+            abort(http.HTTPStatus.NOT_FOUND, "Unknown or expired request")
+        response = {'status': stored['status']}
+        if stored['status'] != 'pending':
+            response['message'] = stored.get('message', '')
+        return flask.jsonify(response)
 
     @route('/get_manifests', methods=['GET'])
     def manifests_get(self):

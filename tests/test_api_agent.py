@@ -607,6 +607,35 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         )
         assert res.status_code == 400
 
+    def test_executors_expose_enabled_and_varenvs_set(self, session, test_client):
+        agent = AgentFactory.create()
+        ExecutorFactory.create(agent=agent, name='disabled', enabled=False, varenvs_set=['API_KEY'])
+        ExecutorFactory.create(agent=agent, name='default')
+        session.commit()
+
+        res = test_client.get(self.url(agent))
+
+        executors = {executor['name']: executor for executor in res.json['executors']}
+        assert (executors['disabled']['enabled'], executors['disabled']['varenvs_set']) == (False, ['API_KEY'])
+        assert (executors['default']['enabled'], executors['default']['varenvs_set']) == (True, [])
+
+    def test_run_disabled_executor_fails(self, session, test_client):
+        agent = AgentFactory.create(sid='this_is_a_sid')
+        executor = ExecutorFactory.create(agent=agent, enabled=False)
+        workspace = WorkspaceFactory.create()
+        session.commit()
+        payload = {
+            'executor_data': {"args": {}, "executor": executor.name},
+            "workspaces_names": [workspace.name]
+        }
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = test_client.post(join(self.url(agent), 'run'), json=payload)
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+        assert AgentExecution.query.filter_by(executor_id=executor.id).count() == 0
+
     def test_get_manifests(self, session, csrf_token, test_client):
         agent = AgentFactory.create()
         session.add(agent)

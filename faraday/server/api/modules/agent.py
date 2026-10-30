@@ -102,6 +102,8 @@ class ExecutorSchema(AutoSchema):
     schedules = fields.Nested(ExecutorScheduleStubSchema(), dump_only=True, many=True)
     tool = fields.String(dump_only=True)
     category = fields.List(fields.String(), dump_only=True)
+    enabled = fields.Boolean(dump_only=True)
+    varenvs_set = fields.List(fields.String(), dump_only=True)
 
     class Meta:
         model = Executor
@@ -115,6 +117,8 @@ class ExecutorSchema(AutoSchema):
             'schedules',
             'tool',
             'category',
+            'enabled',
+            'varenvs_set',
         )
 
 
@@ -358,6 +362,8 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                              Executor.agent_id == agent.id).one()
+            if not executor.enabled:
+                abort(400, f'Executor {executor.name} is disabled')
 
             # VALIDATE
             errors = {}

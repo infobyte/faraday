@@ -1,3 +1,5 @@
+import json
+
 from faraday.server.models import Executor, Agent
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
@@ -101,18 +103,21 @@ class TestSockets:
         assert not agent.is_online
 
 
+def join_agent(app, test_client, session, workspace, **extra):
+    agent = AgentFactory.create(token='pepito')
+    session.add(agent)
+    session.commit()
+    headers = {"Authorization": f"Agent {agent.token}"}
+    token = test_client.post('/v3/agent_websocket_token', headers=headers).json['token']
+    client = socketio.test_client(app, namespace='/dispatcher')
+    message = {"action": "JOIN_AGENT", "workspace": workspace.name, "token": token, "executors": [], **extra}
+    client.emit("join_agent", message, namespace='/dispatcher')
+    session.expire_all()
+    return client, Agent.query.one()
+
+
 class TestAgentFeatures:
-    def join(self, app, test_client, session, workspace, **extra):
-        agent = AgentFactory.create(token='pepito')
-        session.add(agent)
-        session.commit()
-        headers = {"Authorization": f"Agent {agent.token}"}
-        token = test_client.post('/v3/agent_websocket_token', headers=headers).json['token']
-        client = socketio.test_client(app, namespace='/dispatcher')
-        message = {"action": "JOIN_AGENT", "workspace": workspace.name, "token": token, "executors": [], **extra}
-        client.emit("join_agent", message, namespace='/dispatcher')
-        session.expire_all()
-        return client, Agent.query.one()
+    join = staticmethod(join_agent)
 
     def test_features_are_stored_on_join(self, app, test_client, session, workspace):
         _, agent = self.join(app, test_client, session, workspace, features=['remote_config'])
@@ -141,6 +146,72 @@ class TestAgentFeatures:
 
         assert agent.features == []
         assert agent.is_online
+
+
+class TestAgentCapabilities:
+    PAYLOAD = {
+        "version": 1,
+        "executors": [{"repo_name": "nmap", "available": True}, {"repo_name": "burp", "available": False}],
+        "manifests_digest": "abc123",
+        "manifests_count": 177,
+    }
+
+    def announce(self, client, session, payload):
+        client.emit("agent_capabilities", payload, namespace='/dispatcher')
+        session.expire_all()
+        return Agent.query.one()
+
+    def test_capabilities_are_stored(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+
+        agent = self.announce(client, session, self.PAYLOAD)
+
+        assert agent.capabilities == self.PAYLOAD["executors"]
+        assert agent.manifests_digest == "abc123"
+
+    def test_capabilities_are_replaced_on_a_new_announcement(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        self.announce(client, session, self.PAYLOAD)
+
+        agent = self.announce(client, session, {**self.PAYLOAD, "executors": [{"repo_name": "zap", "available": True}],
+                                                "manifests_digest": "def456"})
+
+        assert agent.capabilities == [{"repo_name": "zap", "available": True}]
+        assert agent.manifests_digest == "def456"
+
+    def test_json_string_payload_is_accepted(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+
+        agent = self.announce(client, session, json.dumps(self.PAYLOAD))
+
+        assert agent.capabilities == self.PAYLOAD["executors"]
+
+    def test_invalid_entries_are_dropped(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        executors = [{"repo_name": "nmap", "available": True}, {"available": True}, {"repo_name": "zap"},
+                     {"repo_name": 3, "available": True}, "burp", {"repo_name": "burp", "available": "yes"}]
+
+        agent = self.announce(client, session, {**self.PAYLOAD, "executors": executors})
+
+        assert agent.capabilities == [{"repo_name": "nmap", "available": True}]
+
+    def test_malformed_payload_keeps_what_was_stored(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        self.announce(client, session, self.PAYLOAD)
+
+        agent = self.announce(client, session, {"executors": "nmap"})
+
+        assert agent.capabilities == self.PAYLOAD["executors"]
+
+    def test_announcement_from_an_unknown_sid_is_ignored(self, app, session):
+        agent = AgentFactory.create(sid=None)
+        session.commit()
+        client = socketio.test_client(app, namespace='/dispatcher')
+
+        client.emit("agent_capabilities", self.PAYLOAD, namespace='/dispatcher')
+        session.expire_all()
+
+        assert Agent.query.get(agent.id).capabilities == []
 
 
 class TestCheckExecutors:

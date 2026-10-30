@@ -627,6 +627,13 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
         assert test_client.get(self.url(with_remote_config)).json['remote_config'] is True
         assert test_client.get(self.url(without_remote_config)).json['remote_config'] is False
 
+    def test_agent_capabilities_are_exposed(self, session, test_client):
+        capabilities = [{"repo_name": "nmap", "available": True}, {"repo_name": "burp", "available": False}]
+        agent = AgentFactory.create(capabilities=capabilities)
+        session.commit()
+
+        assert test_client.get(self.url(agent)).json['agent_capabilities'] == capabilities
+
     def test_run_disabled_executor_fails(self, session, test_client):
         agent = AgentFactory.create(sid='this_is_a_sid')
         executor = ExecutorFactory.create(agent=agent, enabled=False)

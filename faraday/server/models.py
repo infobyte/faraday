@@ -3703,6 +3703,10 @@ class Agent(Metadata):
     sid = Column(Text)  # socketio sid
     # Features announced by the agent on join_agent, e.g. "remote_config"
     features = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
+    # [{"repo_name": ..., "available": ...}] for every tool the agent knows, announced on connection
+    capabilities = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
+    # Digest of the bundled manifests the agent announced, not of the ones stored here
+    manifests_digest = Column(Text, nullable=True)
 
     @property
     def parent(self):

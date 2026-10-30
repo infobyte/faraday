@@ -68,6 +68,18 @@ def parse_features(raw_features):
     return [feature for feature in raw_features if isinstance(feature, str)]
 
 
+def parse_capabilities(raw_executors):
+    if not isinstance(raw_executors, list):
+        return None
+    return [
+        {'repo_name': executor['repo_name'], 'available': executor['available']}
+        for executor in raw_executors
+        if isinstance(executor, dict)
+        and isinstance(executor.get('repo_name'), str)
+        and isinstance(executor.get('available'), bool)
+    ]
+
+
 def _utc_now():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -144,6 +156,26 @@ class DispatcherNamespace(Namespace):
         db.session.query(AgentExecution).filter(AgentExecution.id.in_(execution_ids)).update(
             update_values, synchronize_session=False
         )
+        db.session.commit()
+
+    def on_agent_capabilities(self, data):
+        agent = Agent.query.filter(Agent.sid == request.sid).first()
+        if not agent:
+            logger.warning("Capabilities received from an unknown agent. SID %s", request.sid)
+            return
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except ValueError:
+                logger.warning("Invalid capabilities message from agent %s", agent.id)
+                return
+        capabilities = parse_capabilities(data.get('executors')) if isinstance(data, dict) else None
+        if capabilities is None:
+            logger.warning("Invalid capabilities message from agent %s", agent.id)
+            return
+        agent.capabilities = capabilities
+        manifests_digest = data.get('manifests_digest')
+        agent.manifests_digest = manifests_digest if isinstance(manifests_digest, str) else None
         db.session.commit()
 
     def on_join_agent(self, message):

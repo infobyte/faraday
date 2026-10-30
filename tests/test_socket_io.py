@@ -1,11 +1,19 @@
 import json
+from unittest import mock
 from uuid import uuid4
 
 import pytest
+import redis
 
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import get_redis_client
-from faraday.server.utils.executor_config import EXECUTOR_CONFIG_TTL, create_request, get_request, redis_key
+from faraday.server.utils.executor_config import (
+    EXECUTOR_CONFIG_TTL,
+    create_request,
+    finish_request,
+    get_request,
+    redis_key,
+)
 from faraday.server.models import Executor, Agent
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
@@ -313,6 +321,24 @@ class TestExecutorConfigStatus:
         self.report(agent_client, payload)
 
         assert get_request(agent_client[1].id, request_id)["status"] == "pending"
+
+    def test_a_reply_that_overlaps_another_one_does_not_replace_it(self, agent_client):
+        agent_id = agent_client[1].id
+        request_id = self.request(agent_client)
+        key = redis_key(agent_id, request_id)
+        original_multi = redis.client.Pipeline.multi
+
+        def multi_after_a_competing_reply(pipe):
+            # Another reply is stored after this one saw the request pending and before it is written
+            get_redis_client().set(key, json.dumps({"status": "error", "agent_id": agent_id, "message": "other"}),
+                                   keepttl=True)
+            return original_multi(pipe)
+
+        with mock.patch.object(redis.client.Pipeline, 'multi', multi_after_a_competing_reply):
+            finished = finish_request(agent_id, request_id, True, "created")
+
+        assert finished is False
+        assert get_request(agent_id, request_id) == {"status": "error", "agent_id": agent_id, "message": "other"}
 
     def test_status_from_an_unknown_sid_is_ignored(self, app, session):
         agent = AgentFactory.create(sid=None)

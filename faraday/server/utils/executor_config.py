@@ -8,6 +8,9 @@ import json
 from typing import Optional
 from uuid import UUID, uuid4
 
+# Related third party imports
+import redis
+
 # Local application imports
 from faraday.server.config import faraday_server
 from faraday.server.debouncer import get_redis_client
@@ -47,9 +50,25 @@ def get_request(agent_id: int, request_id: str) -> Optional[dict]:
 
 
 def finish_request(agent_id: int, request_id: str, successful: bool, message: str) -> bool:
-    """Stores the result of a pending request, keeping its TTL. Only the status and the message are stored."""
-    current = get_request(agent_id, request_id)
-    if current is None or current.get('agent_id') != agent_id or current.get('status') != 'pending':
+    """Stores the result of a pending request, keeping its TTL. Only the status and the message are stored.
+
+    The check of the pending status and the write are one transaction: if the key changes in between (e.g. an
+    overlapping reply), nothing is written.
+    """
+    if not valid_request_id(request_id):
         return False
-    result = {'status': 'ok' if successful else 'error', 'agent_id': agent_id, 'message': message}
-    return bool(get_redis_client().set(redis_key(agent_id, request_id), json.dumps(result), keepttl=True, xx=True))
+    key = redis_key(agent_id, request_id)
+    result = json.dumps({'status': 'ok' if successful else 'error', 'agent_id': agent_id, 'message': message})
+    with get_redis_client().pipeline() as pipe:
+        try:
+            pipe.watch(key)
+            raw = pipe.get(key)
+            current = json.loads(raw) if raw else None
+            if current is None or current.get('agent_id') != agent_id or current.get('status') != 'pending':
+                return False
+            pipe.multi()
+            pipe.set(key, result, keepttl=True)
+            pipe.execute()
+        except redis.WatchError:
+            return False
+    return True

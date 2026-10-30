@@ -200,15 +200,18 @@ class DispatcherNamespace(Namespace):
             return
         data = _load_payload(data)
         manifests = parse_manifests(data.get('manifests')) if data else None
-        # Only the set announced in agent_capabilities is accepted
-        if not manifests or not agent.manifests_digest or data.get('manifests_digest') != agent.manifests_digest:
+        digest = data.get('manifests_digest') if data else None
+        if not manifests or not isinstance(digest, str) or not digest:
             logger.warning("Invalid manifests message from agent %s", agent.id)
             return
-        digest = agent.manifests_digest
-        stored = AgentManifest.query.filter_by(manifests_digest=digest).count()
-        if agent.manifests_count is not None and stored >= agent.manifests_count:
-            # Agents resend the whole set on every connection
-            return
+        # The handlers of agent_capabilities and agent_manifests can run concurrently, so the digest
+        # announced by the agent may not be stored yet. A digest is only used once its manifests add up
+        # to the manifests_count announced by an agent (see get_bundled_manifests).
+        if agent.manifests_digest == digest and agent.manifests_count is not None:
+            stored = AgentManifest.query.filter_by(manifests_digest=digest).count()
+            if stored >= agent.manifests_count:
+                # Agents resend the whole set on every connection
+                return
         statement = pg_insert(AgentManifest).values(
             [{'manifests_digest': digest, 'name': name, 'manifest': manifest} for name, manifest in manifests.items()]
         )

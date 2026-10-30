@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 
 from faraday.server.debouncer import get_redis_client
+from faraday.server.utils.agents import get_bundled_manifests
 from faraday.server.utils.executor_config import EXECUTOR_CONFIG_TTL, create_request, get_request, redis_key
 from faraday.server.models import Executor, Agent, AgentManifest
 from faraday.server.extensions import socketio
@@ -265,10 +266,35 @@ class TestAgentManifests:
 
         assert stored == {"nmap": {"a": 1}, "zap": {"b": 2}, "burp": {"c": 3}}
 
-    def test_digest_not_announced_by_the_agent_is_ignored(self, client, session):
-        stored = self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}}, digest="other-digest"))
+    def test_chunks_arriving_before_the_capabilities_are_stored(self, app, test_client, session, workspace):
+        # The handlers can run concurrently, so the announcement may not be stored yet
+        client, _ = join_agent(app, test_client, session, workspace)
 
-        assert stored == {}
+        stored = self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}, "zap": {"b": 2}}))
+
+        assert stored == {"nmap": {"a": 1}, "zap": {"b": 2}}
+
+    def test_manifests_received_before_the_capabilities_are_used_once_announced(self, app, test_client, session,
+                                                                                workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}, "zap": {"b": 2}}))
+        assert get_bundled_manifests() == {}
+
+        client.emit("agent_capabilities", {"executors": [], "manifests_digest": self.DIGEST, "manifests_count": 2},
+                    namespace='/dispatcher')
+        session.expire_all()
+
+        assert get_bundled_manifests() == {"nmap": {"a": 1}, "zap": {"b": 2}}
+
+    def test_digest_announced_by_no_agent_is_not_used(self, client, session):
+        self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}}, digest="other-digest"))
+
+        assert get_bundled_manifests() == {}
+
+    def test_chunk_without_digest_is_ignored(self, client, session):
+        client.emit("agent_manifests", {"manifests": {"nmap": {"a": 1}}}, namespace='/dispatcher')
+
+        assert AgentManifest.query.count() == 0
 
     def test_invalid_manifests_are_dropped(self, client, session):
         stored = self.send(client, session, self.chunk(1, 1, {"nmap": {"a": 1}, "zap": "not a manifest", "burp": ["list"]}))

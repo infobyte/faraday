@@ -8,6 +8,7 @@ import datetime
 import logging
 import numbers
 import typing
+from contextvars import ContextVar
 from distutils.util import strtobool
 
 # Related third party imports
@@ -40,6 +41,13 @@ logger = logging.getLogger(__name__)
 
 SENSITIVE_FILTER_FIELDS = frozenset({'password', 'token', '_otp_secret', 'fs_uniquifier', 'session_id', 'access_token'})
 
+# Sensitive columns of the view's own model that order_by may still use (e.g.
+# Credential.password, which the credential view already returns). Set by
+# FlaskRestlessSchema.load for the duration of a single load.
+_allowed_sensitive_order_fields: ContextVar[frozenset] = ContextVar(
+    'allowed_sensitive_order_fields', default=frozenset()
+)
+
 
 def _is_sensitive_field_name(name: str) -> bool:
     if name in SENSITIVE_FILTER_FIELDS:
@@ -62,6 +70,14 @@ def _reject_sensitive_field_name(name: str):
     """
     if _is_sensitive_field_name(name):
         raise ValidationError('Grouping or ordering by a sensitive field is not allowed')
+
+
+def _reject_sensitive_order_field_name(name: str):
+    """Like _reject_sensitive_field_name, but lets through the bare column
+    names the view allowed. Relationship paths (``a__b``) never match them."""
+    if name in _allowed_sensitive_order_fields.get():
+        return
+    _reject_sensitive_field_name(name)
 
 
 def _reject_sensitive_filter(val):
@@ -437,7 +453,7 @@ class FlaskRestlessGroupFieldSchema(Schema):
 
 
 class FlaskRestlessOrderFieldSchema(Schema):
-    field = fields.String(required=True, validate=_reject_sensitive_field_name)
+    field = fields.String(required=True, validate=_reject_sensitive_order_field_name)
     direction = fields.String(validate=validate.OneOf(["asc", "desc"]), required=False)
 
 
@@ -481,6 +497,10 @@ class FlaskRestlessSchema(Schema):
         FlaskRestlessCredentialFilterSchema,
     ]
 
+    def __init__(self, *args, allowed_sensitive_order_fields: frozenset = frozenset(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allowed_sensitive_order_fields = frozenset(allowed_sensitive_order_fields)
+
     def load(
         self,
         data: typing.Union[
@@ -495,9 +515,13 @@ class FlaskRestlessSchema(Schema):
         many = False
         if isinstance(data, list):
             many = True
-        for schema in self.valid_schemas:
-            try:
-                return schema(many=many).load(data)
-            except ValidationError:
-                continue
+        token = _allowed_sensitive_order_fields.set(self.allowed_sensitive_order_fields)
+        try:
+            for schema in self.valid_schemas:
+                try:
+                    return schema(many=many).load(data)
+                except ValidationError:
+                    continue
+        finally:
+            _allowed_sensitive_order_fields.reset(token)
         raise ValidationError(f'No valid schema found. data {data}')

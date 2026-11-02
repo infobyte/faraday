@@ -544,6 +544,19 @@ class TestCheckExecutors:
         assert executor.enabled is False
         assert executor.varenvs_set == ['API_KEY']
 
+    @pytest.mark.parametrize('raw, expected', [
+        (['API_KEY', 1, {'a': 'b'}, None, 'URL'], ['API_KEY', 'URL']),
+        ('API_KEY', []),
+        ({'API_KEY': True}, []),
+    ])
+    def test_varenvs_set_keeps_only_names(self, session, raw, expected):
+        agent = AgentFactory.create()
+        executors = [{'executor_name': 'executor 1', 'args': {}, 'varenvs_set': raw}]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.varenvs_set == expected
+
     def test_executor_can_be_enabled_again(self, session):
         agent = AgentFactory.create()
         ExecutorFactory.create(name='executor 1', agent=agent, enabled=False, varenvs_set=['API_KEY'])

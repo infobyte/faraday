@@ -604,7 +604,8 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         """
         agent = self._get_object(agent_id)
         wait = request.args.get('wait', '0')
-        if not wait.isdigit():
+        # isdecimal only accepts 0-9, isdigit also accepts characters int() cannot parse
+        if not wait.isdecimal():
             abort(http.HTTPStatus.BAD_REQUEST, "wait must be a number of seconds")
         deadline = time.monotonic() + min(int(wait), EXECUTOR_CONFIG_MAX_WAIT)
         stored = get_executor_config_request(agent.id, request_id)

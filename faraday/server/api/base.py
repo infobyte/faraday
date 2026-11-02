@@ -1520,7 +1520,8 @@ class BulkUpdateMixin(FilterObjects):
         # Try to get ids
         _json = request.get_json(silent=True)
         if _json and 'ids' in _json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
+            raw_ids = _json['ids'] if isinstance(_json['ids'], list) else [_json['ids']]
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, raw_ids))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
@@ -1778,7 +1779,8 @@ class BulkDeleteMixin(FilterObjects):
         # Try to get ids
         _json = request.get_json(silent=True)
         if _json and 'ids' in _json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
+            raw_ids = _json['ids'] if isinstance(_json['ids'], list) else [_json['ids']]
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, raw_ids))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:

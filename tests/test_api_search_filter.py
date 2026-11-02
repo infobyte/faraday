@@ -81,6 +81,11 @@ class TestSearchFilterAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
         assert res.status_code == 200
         assert res.json['updated'] == 1
 
+    def test_bulk_update_single_id_not_in_list(self, test_client, session, logged_user):
+        self.first_object.creator_id = logged_user.id
+        session.commit()
+        super().test_bulk_update_single_id_not_in_list(test_client)
+
     def test_list_retrieves_all_items_from(self, test_client, logged_user):
         for searchfilter in SearchFilter.query.all():
             searchfilter.creator = logged_user
@@ -177,3 +182,9 @@ class TestSearchFilterAPI(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDeleteTes
         for obj in self.model.query.all():
             obj.creator = logged_user
         super().test_bulk_delete(test_client)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete_single_id_not_in_list(self, test_client, session, logged_user):
+        self.first_object.creator_id = logged_user.id
+        session.commit()
+        super().test_bulk_delete_single_id_not_in_list(test_client)

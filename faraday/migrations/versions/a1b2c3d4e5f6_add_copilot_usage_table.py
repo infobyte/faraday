@@ -30,6 +30,15 @@ def upgrade():
     op.execute('CREATE INDEX IF NOT EXISTS ix_copilot_message_log_user_id ON copilot_message_log (user_id)')
     op.execute('CREATE INDEX IF NOT EXISTS ix_copilot_message_log_created_at ON copilot_message_log (created_at)')
     op.execute('ALTER TABLE faraday_user ADD COLUMN IF NOT EXISTS copilot_enabled BOOLEAN NOT NULL DEFAULT false')
+    # Admins get the copilot by default, as new and promoted admins do.
+    op.execute("""
+        UPDATE faraday_user SET copilot_enabled = true
+        WHERE id IN (
+            SELECT roles_users.user_id FROM roles_users
+            JOIN faraday_role ON faraday_role.id = roles_users.role_id
+            WHERE faraday_role.name = 'admin'
+        )
+    """)
 
 
 def downgrade():

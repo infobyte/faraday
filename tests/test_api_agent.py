@@ -829,7 +829,7 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
 
         assert (res.status_code, res.json) == (200, {'status': 'pending'})
 
-    @pytest.mark.parametrize('wait', ['abc', '-1', '1.5'])
+    @pytest.mark.parametrize('wait', ['abc', '-1', '1.5', '²'])
     def test_executor_config_status_invalid_wait_is_rejected(self, test_client, readable_agent, wait,
                                                              config_requests):
         request_id = create_request(readable_agent.id, 'read')

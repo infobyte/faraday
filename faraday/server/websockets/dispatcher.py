@@ -48,7 +48,7 @@ def update_executors(agent, executors):
         if 'enabled' in raw_executor:
             executor.enabled = bool(raw_executor['enabled'])
         if 'varenvs_set' in raw_executor:
-            executor.varenvs_set = list(raw_executor['varenvs_set'])
+            executor.varenvs_set = parse_varenvs_set(raw_executor['varenvs_set'])
         db.session.add(executor)
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])
@@ -67,6 +67,13 @@ def parse_features(raw_features):
     if not isinstance(raw_features, list):
         return []
     return [feature for feature in raw_features if isinstance(feature, str)]
+
+
+def parse_varenvs_set(raw_varenvs_set):
+    # Only names are stored, anything else the agent sends is ignored
+    if not isinstance(raw_varenvs_set, list):
+        return []
+    return [name for name in raw_varenvs_set if isinstance(name, str)]
 
 
 def parse_capabilities(raw_executors):

@@ -231,6 +231,7 @@ def build_history_rows(events_by_vuln, user_id, change_date):
 
 @dataclass
 class BulkTriageResult:
+    # Only filled with bulk_apply_triage(track_events=True):
     # vuln id -> [(field, value), ...]
     events_by_vuln: dict = field(default_factory=dict)
     # vuln id -> new status, for the vulns whose status changed
@@ -248,12 +249,17 @@ def _id_any(ids, param_name):
     return VulnerabilityGeneric.id == func.any(bindparam(param_name, value=list(ids), type_=ARRAY(Integer)))
 
 
-def bulk_apply_triage(ids, changes, user_id=None, now=None, source=SOURCE_MANUAL, extra_filters=()):
+def bulk_apply_triage(ids, changes, user_id=None, now=None, source=SOURCE_MANUAL, extra_filters=(),
+                      track_events=False):
     """Apply the triage rules to many vulns with as few UPDATEs as possible.
 
     Reads the current state of `ids` (narrowed by `extra_filters`, e.g. the
     permitted workspaces) locking their rows, computes each vuln's result and
     issues one UPDATE per distinct result. Doesn't commit.
+
+    `track_events` also keeps, per changed vuln, its events, new status and previous
+    status (see BulkTriageResult), for callers that record the history, recalculate
+    risk or notify integrations. Off by default: on a large bulk they take memory.
     """
     changes = {name: changes[name] for name in TRIAGE_INPUT_FIELDS if changes.get(name) is not None}
     result = BulkTriageResult()
@@ -284,11 +290,12 @@ def bulk_apply_triage(ids, changes, user_id=None, now=None, source=SOURCE_MANUAL
         if not vuln_result.changed:
             continue
         ids_by_values[tuple(sorted(vuln_result.values.items()))].append(vuln_id)
-        result.events_by_vuln[vuln_id] = vuln_result.events
         result.updated_ids.append(vuln_id)
-        if 'status' in vuln_result.values:
-            result.status_changes[vuln_id] = vuln_result.values['status']
-            result.previous_status[vuln_id] = status
+        if track_events:
+            result.events_by_vuln[vuln_id] = vuln_result.events
+            if 'status' in vuln_result.values:
+                result.status_changes[vuln_id] = vuln_result.values['status']
+                result.previous_status[vuln_id] = status
 
     for values, group_ids in ids_by_values.items():
         stmt = update(VulnerabilityGeneric).where(_id_any(group_ids, '_triage_group_ids')).values(dict(values))

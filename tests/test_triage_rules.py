@@ -223,7 +223,7 @@ class TestBulkApplyTriage:
         session.commit()
         ids = [vuln.id for vuln in vulns.values()]
 
-        result = bulk_apply_triage(ids, {'confirmed': True}, user_id=user.id, now=NOW)
+        result = bulk_apply_triage(ids, {'confirmed': True}, user_id=user.id, now=NOW, track_events=True)
         session.commit()
 
         pending, confirmed, false_positive = (VulnerabilityGeneric.query.get(vulns[name].id)
@@ -240,6 +240,16 @@ class TestBulkApplyTriage:
         assert result.previous_status == {false_positive.id: 'closed'}
         assert result.events_by_vuln[false_positive.id] == [
             ('confirmed', True), ('false_positive', False), ('status', 're-opened')]
+
+    def test_events_are_only_kept_on_request(self, session, vulns):
+        ids = [vuln.id for vuln in vulns.values()]
+
+        result = bulk_apply_triage(ids, {'confirmed': True}, now=NOW)
+        session.commit()
+
+        assert sorted(result.updated_ids) == sorted([vulns['pending'].id, vulns['false_positive'].id])
+        assert VulnerabilityGeneric.query.get(vulns['false_positive'].id).status == 're-opened'
+        assert (result.events_by_vuln, result.status_changes, result.previous_status) == ({}, {}, {})
 
     def test_extra_filters_narrow_the_vulns(self, session, vulns, second_workspace, vulnerability_factory):
         other = vulnerability_factory.create(workspace=second_workspace, status='open')

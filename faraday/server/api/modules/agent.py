@@ -16,7 +16,7 @@ from flask import Blueprint, abort, request, jsonify
 import flask_login
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE, ValidationError, validates_schema
-from marshmallow.validate import Length, OneOf
+from marshmallow.validate import Length, OneOf, Regexp
 from sqlalchemy import and_, exists, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import selectinload
@@ -37,10 +37,11 @@ from faraday.server.models import (
     Executor,
     SchedulerGeneric,
     db,
+    generate_dispatcher_id,
 )
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
-from faraday.server.utils.agents import get_command_and_agent_execution
+from faraday.server.utils.agents import claim_pending_agent, get_command_and_agent_execution
 from faraday.server.utils.executor_config import (
     create_request as create_executor_config_request,
     delete_request as delete_executor_config_request,
@@ -139,6 +140,7 @@ class AgentSchema(AutoSchema):
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
+    pending_registration = fields.Boolean(dump_only=True)
     remote_config = fields.Boolean(dump_only=True)
     remote_config_read = fields.Boolean(dump_only=True)
     agent_capabilities = fields.List(fields.Dict(), dump_only=True, attribute='capabilities')
@@ -158,6 +160,7 @@ class AgentSchema(AutoSchema):
             'update_date',
             'creator',
             'is_online',
+            'pending_registration',
             'remote_config',
             'remote_config_read',
             'agent_capabilities',
@@ -172,6 +175,8 @@ class AgentCreationSchema(Schema):
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
     description = fields.String(required=False)
+    # Pairs the registration with an agent created in advance from the UI
+    dispatcher_id = fields.String(required=False, load_only=True, validate=Regexp(r'^[A-Za-z0-9_-]{22}$'))
 
     class Meta:
         fields = (
@@ -179,7 +184,18 @@ class AgentCreationSchema(Schema):
             'name',
             'token',
             'description',
+            'dispatcher_id',
         )
+
+
+class PendingAgentSchema(Schema):
+    name = fields.String(required=True, validate=Length(min=1))
+    description = fields.String(required=False)
+
+    @validates_schema
+    def validate_name(self, data, **kwargs):
+        if not data['name'].strip():
+            raise ValidationError('Must not be blank.', field_name='name')
 
 
 class ExecutorDataSchema(Schema):
@@ -349,8 +365,44 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                           interval=int(faraday_server.agent_token_expiration)
                           ).verify(token, valid_window=1):
             abort(401, "Invalid Token")
+        dispatcher_id = data.pop('dispatcher_id', None)
+        if dispatcher_id is not None:
+            agent = claim_pending_agent(dispatcher_id)
+            if agent is None:
+                response = jsonify({'message': 'Unknown or already used dispatcher id',
+                                    'code': 'unknown_dispatcher_id'})
+                response.status_code = http.HTTPStatus.BAD_REQUEST
+                abort(response)
+            return agent
         agent = super()._perform_create(data, **kwargs)
         return agent
+
+    @route('/pending', methods=['POST'])
+    def create_pending(self):
+        """
+        ---
+          tags: ["Agent"]
+          description: |
+            Creates an agent that waits for its dispatcher. The dispatcher claims it when it registers with the
+            returned `dispatcher_id`. The token of the agent is never returned.
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: PendingAgentSchema
+          responses:
+            201:
+              description: The pending agent, with the id that its dispatcher has to use
+            400:
+              description: Bad request
+        """
+        data = self._parse_data(PendingAgentSchema(unknown=EXCLUDE), request)
+        agent = Agent(name=data['name'], description=data.get('description', ''),
+                      dispatcher_id=generate_dispatcher_id(), creator=flask_login.current_user)
+        db.session.add(agent)
+        db.session.commit()
+        return flask.jsonify({'id': agent.id, 'name': agent.name, 'description': agent.description,
+                              'dispatcher_id': agent.dispatcher_id}), http.HTTPStatus.CREATED
 
     @route('/<int:agent_id>/run', methods=['POST'])
     def run_agent(self, agent_id):

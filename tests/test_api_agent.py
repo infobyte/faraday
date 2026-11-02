@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 
 import json
+import re
 import urllib.parse
 from datetime import datetime, timedelta
 from unittest import mock
@@ -155,6 +156,166 @@ class TestAgentCreationAPI:
         raw_data = {"PEPE": 'INVALID'}
         res = test_client.post('/v3/agents', data=raw_data)
         assert res.status_code == 400
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestPendingAgentAPI:
+
+    def create_pending(self, test_client, **payload):
+        return test_client.post('/v3/agents/pending', json={'name': 'my agent', 'description': 'a description',
+                                                            **payload})
+
+    def test_create_pending_agent(self, test_client, session):
+        res = self.create_pending(test_client)
+
+        assert res.status_code == 201
+        assert set(res.json) == {'id', 'name', 'description', 'dispatcher_id'}
+        assert re.fullmatch(r'[A-Za-z0-9_-]{22}', res.json['dispatcher_id'])
+        agent = session.get(Agent, res.json['id'])
+        assert (agent.name, agent.description, agent.dispatcher_id) == ('my agent', 'a description',
+                                                                         res.json['dispatcher_id'])
+
+    def test_each_pending_agent_has_its_own_id(self, test_client):
+        first = self.create_pending(test_client).json['dispatcher_id']
+        second = self.create_pending(test_client).json['dispatcher_id']
+
+        assert first != second
+
+    def test_the_description_is_optional(self, test_client):
+        res = test_client.post('/v3/agents/pending', json={'name': 'my agent'})
+
+        assert res.status_code == 201
+
+    @pytest.mark.parametrize('payload', [{}, {'name': ''}, {'name': '   '}, {'description': 'only a description'}])
+    def test_create_pending_agent_needs_a_name(self, test_client, payload):
+        res = test_client.post('/v3/agents/pending', json=payload)
+
+        assert res.status_code == 400
+
+    def test_create_pending_agent_requires_a_login(self, test_client):
+        logout(test_client, [302])
+
+        res = self.create_pending(test_client)
+
+        assert res.status_code == 401
+
+    def test_the_pending_agent_is_marked_in_the_api_without_exposing_the_id(self, test_client):
+        created = self.create_pending(test_client).json
+
+        res = test_client.get(f"/v3/agents/{created['id']}")
+
+        assert res.json['pending_registration'] is True
+        assert 'dispatcher_id' not in res.json
+        assert 'token' not in res.json
+
+    def test_an_agent_is_not_pending_by_default(self, test_client, session):
+        agent = AgentFactory.create()
+        session.commit()
+
+        assert test_client.get(f'/v3/agents/{agent.id}').json['pending_registration'] is False
+
+
+class TestAgentRegistrationWithDispatcherId:
+    DISPATCHER_ID = 'Xk3mP9qR2sT7vW1yZ4bC6d'
+
+    @pytest.fixture
+    def secret(self):
+        with mock.patch('faraday.server.api.modules.agent.faraday_server') as faraday_server_config:
+            faraday_server_config.agent_registration_secret = pyotp.random_base32()
+            faraday_server_config.agent_token_expiration = 60
+            yield faraday_server_config.agent_registration_secret
+
+    @pytest.fixture
+    def pending_agent(self, session):
+        agent = AgentFactory.create(name='ui name', description='ui description', dispatcher_id=self.DISPATCHER_ID)
+        session.commit()
+        return agent
+
+    def register(self, test_client, secret, token=None, **payload):
+        logout(test_client, [302])
+        data = {'name': 'hostname', 'description': 'local description',
+                'token': token or pyotp.TOTP(secret, interval=60).now(), **payload}
+        return test_client.post('/v3/agents', json=data)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_the_pending_agent_is_claimed(self, test_client, session, secret, pending_agent):
+        agents_before = session.query(Agent).count()
+        old_token = pending_agent.token
+
+        res = self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID)
+
+        assert res.status_code == 201, res.json
+        assert res.json['id'] == pending_agent.id
+        assert (res.json['name'], res.json['description']) == ('ui name', 'ui description')
+        assert res.json['token'] != old_token
+        assert len(res.json['token']) == 64
+        assert session.query(Agent).count() == agents_before
+        session.refresh(pending_agent)
+        assert pending_agent.dispatcher_id is None
+        assert pending_agent.token == res.json['token']
+        assert pending_agent.pending_registration is False
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_the_token_that_could_be_seen_before_the_claim_stops_working(self, test_client, session, secret,
+                                                                          pending_agent):
+        old_token = pending_agent.token
+
+        new_token = self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID).json['token']
+
+        old = test_client.post('/v3/agent_websocket_token', headers=[('Authorization', f'Agent {old_token}')])
+        new = test_client.post('/v3/agent_websocket_token', headers=[('Authorization', f'Agent {new_token}')])
+        assert (old.status_code, new.status_code) == (403, 200)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_the_id_can_only_be_used_once(self, test_client, session, secret, pending_agent):
+        self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID)
+        agents_before = session.query(Agent).count()
+
+        res = self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID)
+
+        assert res.status_code == 400
+        assert res.json == {'message': 'Unknown or already used dispatcher id', 'code': 'unknown_dispatcher_id'}
+        assert session.query(Agent).count() == agents_before
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_an_unknown_id_is_rejected_without_creating_an_agent(self, test_client, session, secret, pending_agent):
+        agents_before = session.query(Agent).count()
+
+        res = self.register(test_client, secret, dispatcher_id='UnknownUnknownUnknown1')
+
+        assert res.status_code == 400
+        assert res.json == {'message': 'Unknown or already used dispatcher id', 'code': 'unknown_dispatcher_id'}
+        assert session.query(Agent).count() == agents_before
+        session.refresh(pending_agent)
+        assert pending_agent.pending_registration is True
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_an_invalid_totp_is_checked_first_and_keeps_the_agent_pending(self, test_client, session, secret,
+                                                                          pending_agent):
+        res = self.register(test_client, secret, token='000000', dispatcher_id=self.DISPATCHER_ID)
+
+        assert res.status_code == 401
+        session.refresh(pending_agent)
+        assert pending_agent.dispatcher_id == self.DISPATCHER_ID
+
+    @pytest.mark.parametrize('dispatcher_id', ['short', 'x' * 23, 'has spaces in it!!!!!!!', ''])
+    def test_an_id_with_an_invalid_format_is_rejected(self, test_client, secret, pending_agent, dispatcher_id):
+        res = self.register(test_client, secret, dispatcher_id=dispatcher_id)
+
+        assert res.status_code == 400
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_registration_without_id_creates_a_new_agent_and_leaves_the_pending_ones(self, test_client, session,
+                                                                                     secret, pending_agent):
+        agents_before = session.query(Agent).count()
+
+        res = self.register(test_client, secret)
+
+        assert res.status_code == 201
+        assert res.json['name'] == 'hostname'
+        assert session.query(Agent).count() == agents_before + 1
+        session.refresh(pending_agent)
+        assert pending_agent.pending_registration is True
 
 
 class TestAgentAPIGeneric(ReadWriteAPITests):

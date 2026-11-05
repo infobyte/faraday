@@ -279,8 +279,6 @@ class HostView(
                 undefer(self.model_class.creator_command_id),
                 undefer(self.model_class.creator_command_tool),
                 undefer(self.model_class.creator_command_params),
-                selectinload(self.model_class.hostnames),
-                selectinload(self.model_class.services),
                 joinedload(self.model_class.update_user),
                 joinedload(getattr(self.model_class, 'creator')).load_only(User.username),
             )

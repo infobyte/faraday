@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import operator
+import re
 from io import BytesIO
 from unittest import mock
 from posixpath import join
@@ -489,8 +490,8 @@ class TestHostAPI:
         fetched_rows = []
 
         def count_rows(conn, cursor, statement, parameters, context, executemany):
-            # The main query is the only one that selects the host table's own columns
-            if statement.lstrip().startswith('SELECT') and 'host.ip AS host_ip' in statement:
+            # The main query is the only one that reads from the host table itself, apart from the total count
+            if re.search(r'\bFROM host\b', statement) and not statement.lstrip().startswith('SELECT count(host.id)'):
                 fetched_rows.append(cursor.rowcount)
 
         event.listen(Engine, 'after_cursor_execute', count_rows)

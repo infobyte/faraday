@@ -2906,11 +2906,13 @@ class User(db.Model, UserMixin):
             "roles": self.roles_list,
         }
 
-    def get_token(self):
+    def get_token(self, expires_in=None):
+        """Login token. ``expires_in`` (seconds) overrides api_token_expiration for
+        tokens handed to a service for a short task."""
         user_id = self.fs_uniquifier
         hashed_data = hash_data(self.password) if self.password else None
         iat = int(time.time())
-        exp = iat + int(faraday_server.api_token_expiration)
+        exp = iat + int(faraday_server.api_token_expiration if expires_in is None else expires_in)
         jwt_data = {'user_id': user_id, "validation_check": hashed_data, 'iat': iat, 'exp': exp}
 
         return jwt.encode(jwt_data, app.config['SECRET_KEY'], algorithm="HS512")

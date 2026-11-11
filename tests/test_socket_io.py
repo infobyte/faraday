@@ -1,3 +1,5 @@
+import pytest
+
 from faraday.server.models import Executor, Agent
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
@@ -52,6 +54,35 @@ class TestSockets:
         client.emit("join_agent", message, namespace='/dispatcher')
         received = client.get_received(namespace='/dispatcher')
         assert received[-1]['args'][0]['reason'] == 'Invalid join agent message'
+
+    @pytest.mark.parametrize('event, message', [
+        ('join_agent', {}),
+        ('join_agent', {'token': 'invalid', 'executors': []}),
+        ('join_workspace', {'action': 'JOIN_WORKSPACE'}),
+        ('join_workspace', {'workspace': 'pepito', 'token': 'invalid'}),
+    ])
+    def test_a_rejected_join_only_disconnects_its_sender(self, app, session, event, message):
+        agent = socketio.test_client(app, namespace='/dispatcher')
+        sender = socketio.test_client(app, namespace='/dispatcher')
+        agent.get_received('/dispatcher')
+        sender.get_received('/dispatcher')
+
+        sender.emit(event, message, namespace='/dispatcher')
+
+        assert [e['name'] for e in sender.get_received('/dispatcher')] == ['disconnect']
+        assert agent.get_received('/dispatcher') == []
+
+    def test_the_replies_to_a_connection_only_reach_that_client(self, app, test_client, session):
+        token = self.join_agent(test_client, session)
+        agent = socketio.test_client(app, namespace='/dispatcher')
+        agent.get_received('/dispatcher')
+
+        other = socketio.test_client(app, namespace='/dispatcher')
+        other.emit('join_agent', {'token': token, 'executors': []}, namespace='/dispatcher')
+
+        assert [e['args'] for e in other.get_received('/dispatcher')] == [
+            'Connected to faraday websocket', 'Agent joined correctly to dispatcher namespace']
+        assert agent.get_received('/dispatcher') == []
 
     def test_leave_agent_happy_path(self, app, session, workspace, test_client):
         token = self.join_agent(test_client, session)

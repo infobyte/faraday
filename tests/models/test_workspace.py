@@ -4,11 +4,15 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from faraday.server.models import db, Workspace
+import pytest
+from sqlalchemy.exc import IntegrityError
+
+from faraday.server.models import db, Workspace, WorkspacePermission
 from tests.factories import (
     HostFactory,
     ServiceFactory,
     SourceCodeFactory,
+    UserFactory,
     VulnerabilityFactory,
     VulnerabilityCodeFactory,
     VulnerabilityWebFactory,
@@ -117,3 +121,15 @@ def test_vuln_no_count(workspace, second_workspace, database):
     assert workspace.vulnerability_code_count == 0
     assert workspace.vulnerability_standard_count == 0
     assert workspace.vulnerability_total_count == 0
+
+
+def test_workspace_permission_is_unique_per_user(session, workspace):
+    user = UserFactory.create()
+    session.commit()
+    session.add(WorkspacePermission(workspace_id=workspace.id, user_id=user.id))
+    session.commit()
+
+    session.add(WorkspacePermission(workspace_id=workspace.id, user_id=user.id))
+    with pytest.raises(IntegrityError):
+        session.commit()
+    session.rollback()

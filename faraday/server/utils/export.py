@@ -18,6 +18,9 @@ from faraday.server.models import (
 
 logger = logging.getLogger(__name__)
 
+# Characters that make spreadsheet applications evaluate a cell as a formula
+CSV_FORMULA_PREFIXES = ('=', '+', '-', '@', '\t', '\r', '\n', '\uff1d', '\uff0b', '\uff0d', '\uff20')
+
 
 def export_vulns_to_csv(vulns, custom_fields_columns=None):
     buffer = StringIO()
@@ -50,7 +53,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "service_creator_id", "service_date", "service_update_date", "service_parent_id"
     ]
 
-    writer = csv.DictWriter(buffer, fieldnames=headers)
+    writer = SafeDictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
     comments_dict = {}
@@ -109,7 +112,7 @@ def export_credentials_to_csv(credentials):
         "username", "password", "endpoint", "leak_date",
     ]
 
-    writer = csv.DictWriter(buffer, fieldnames=headers)
+    writer = SafeDictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
     for credential in credentials:
@@ -153,12 +156,11 @@ def export_vulns_to_csv_limited(vulns, selected_columns=None):
         fieldnames = [f for f in essential_fields if f in first_vuln_keys]
         fieldnames += [f for f in first_vuln_keys if f not in essential_fields and f not in large_fields]
 
-    writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction='ignore')
+    writer = SafeDictWriter(buffer, fieldnames=fieldnames, extrasaction='ignore')
     writer.writeheader()
 
     for vuln in vulns:
         filtered_row = {field: vuln.get(field, '') for field in fieldnames}
-        filtered_row = csv_escape(filtered_row)
         writer.writerow(filtered_row)
 
     memory_file = BytesIO()
@@ -286,16 +288,29 @@ def _build_vuln_data(vuln, custom_fields_columns, comments_dict):
             if field_name in custom_fields_columns:
                 vuln_data.update({field_name: value})
 
-    vuln_data = csv_escape(vuln_data)
     return vuln_data
 
 
-# Patch possible formula injection attacks
-def csv_escape(vuln_dict):
-    for key, value in vuln_dict.items():
-        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') \
-                or str(value).startswith('@'):
-            # Convert value to str just in case is has another type (like a list or
-            # dict). This would be done anyway by the csv writer.
-            vuln_dict[key] = "'" + str(value)
-    return vuln_dict
+def sanitize_csv_value(value):
+    """Neutralize values that a spreadsheet would evaluate as a formula (CSV injection)."""
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    text = value if isinstance(value, str) else str(value)
+    if text.startswith(CSV_FORMULA_PREFIXES) or text.lstrip().startswith(CSV_FORMULA_PREFIXES):
+        return "'" + text
+    return value
+
+
+class SafeDictWriter(csv.DictWriter):
+    """DictWriter that quotes every cell and neutralizes formulas in headers and values."""
+
+    def __init__(self, f, fieldnames, *args, **kwargs):
+        kwargs.setdefault('quoting', csv.QUOTE_ALL)
+        super().__init__(f, fieldnames, *args, **kwargs)
+
+    def writerow(self, rowdict):
+        return super().writerow({key: sanitize_csv_value(value) for key, value in rowdict.items()})
+
+    def writerows(self, rowdicts):
+        for rowdict in rowdicts:
+            self.writerow(rowdict)

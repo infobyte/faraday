@@ -78,6 +78,7 @@ class CredentialView(ReadWriteWorkspacedView,
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
+    sensitive_order_fields_allowed = frozenset({'password'})
 
 
     def _eagerload_options(self):

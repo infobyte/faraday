@@ -1,5 +1,7 @@
+import csv
 import json
 from datetime import datetime
+from io import StringIO
 
 import pytest
 
@@ -388,8 +390,7 @@ class TestConfirmedQueryParam:
         res = test_client.get(f'{vuln_url(workspace)}/export_csv{param}')
 
         assert res.status_code == 200
-        rows = res.data.decode('utf-8').splitlines()[1:]
-        names = {row.split(',')[3] for row in rows}
+        names = {row['name'] for row in csv.DictReader(StringIO(res.data.decode('utf-8')))}
         assert names == expected
 
     def test_invalid_value_is_rejected(self, test_client, workspace, vulns):

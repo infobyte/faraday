@@ -7,7 +7,7 @@ never stored. vulnerability_status_history gets field/value so the trace can
 record confirmed and false_positive changes besides status ones.
 
 Revision ID: c4e1f8a2b7d9
-Revises: a0b302b596ac
+Revises: fda55c44495c
 Create Date: 2026-10-23 00:00:00.000000+00:00
 
 """
@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'c4e1f8a2b7d9'
-down_revision = 'a0b302b596ac'
+down_revision = 'fda55c44495c'
 branch_labels = None
 depends_on = None
 

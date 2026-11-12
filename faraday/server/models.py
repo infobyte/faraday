@@ -124,8 +124,14 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task',
+    'project_task',
+    'user',
+    'executivereport',
+    'agent',
+    'agentexecution',
+    'command',
     'report_logo',
+    'task',
     'report_template',
     'template_logo',
     'ws_sum_report',
@@ -2385,7 +2391,8 @@ association_workspace_and_users_table = Table(
     'workspace_permission_association',
     db.Model.metadata,
     Column('workspace_id', Integer, ForeignKey('workspace.id', ondelete='CASCADE')),
-    Column('user_id', Integer, ForeignKey('faraday_user.id'))
+    Column('user_id', Integer, ForeignKey('faraday_user.id')),
+    UniqueConstraint('workspace_id', 'user_id', name='uix_workspace_permission_workspace_user'),
 )
 
 

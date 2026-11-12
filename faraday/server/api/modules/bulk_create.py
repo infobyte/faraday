@@ -2,7 +2,12 @@
 import json
 from copy import deepcopy
 from datetime import date, datetime, timedelta
-from http.client import BAD_REQUEST as HTTP_BAD_REQUEST, CREATED as HTTP_CREATED, NOT_FOUND as HTTP_NOT_FOUND
+from http.client import (
+    BAD_REQUEST as HTTP_BAD_REQUEST,
+    CREATED as HTTP_CREATED,
+    FORBIDDEN as HTTP_FORBIDDEN,
+    NOT_FOUND as HTTP_NOT_FOUND,
+)
 from json import dump as json_dump
 from logging import getLogger
 from random import choice
@@ -35,7 +40,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 
 # Local application imports
 from faraday.server.api.base import (
@@ -343,6 +347,21 @@ def bulk_create(ws: Workspace,
         command.end_date = datetime.utcnow() if command.end_date is None else command.end_date
         update_workspace_vulns_count(workspace_id=workspace_id)
         db.session.commit()
+
+
+def _agent_execution_command(agent_execution: AgentExecution, command_json: dict) -> dict:
+    command = {
+        'tool': agent_execution.executor.agent.name,
+        'command': agent_execution.executor.name,
+        'user': '',
+        'hostname': '',
+        'params': ', '.join(f'{key}={value}' for key, value in agent_execution.parameters_data.items()),
+        'import_source': 'agent',
+        'start_date': command_json.get('start_date') or agent_execution.command.start_date.isoformat(),
+    }
+    if command_json.get('duration') is not None:
+        command['duration'] = command_json['duration']
+    return command
 
 
 def _update_command(command_id: int, command_data: dict):
@@ -1190,6 +1209,8 @@ class BulkCreateView(GenericWorkspacedView):
 
         if current_user.is_anonymous:
             agent = require_agent_token()
+            if not agent.active:
+                abort(HTTP_FORBIDDEN, "Agent is not active")
         data = self._parse_data(self._get_schema_instance({}), request)
         json_data = request.json
         workspace = get_workspace(workspace_name)
@@ -1204,25 +1225,21 @@ class BulkCreateView(GenericWorkspacedView):
                 AgentExecution.id == execution_id
             ).one_or_none()
 
-            if agent_execution is None:
-                logger.exception(
-                    NoResultFound(
-                        f"No row was found for agent executor id {execution_id}")
-                )
+            # Same response for every case so execution ids can't be probed across workspaces or agents
+            if (agent_execution is None
+                    or agent_execution.workspace_id != workspace.id
+                    or (agent is not None and agent_execution.executor.agent_id != agent.id)):
+                logger.warning("Rejected bulk_create for agent execution %s in workspace %s",
+                               execution_id, workspace_name)
                 abort(HTTP_BAD_REQUEST, "Can not find an agent execution with that id")
 
-            if workspace_name != agent_execution.workspace.name:
-                logger.exception(
-                    ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
-                               f"to workspace {agent_execution.workspace.name}")
-                )
-                abort(HTTP_BAD_REQUEST, "Trying to write to the incorrect workspace")
-            command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
+            command = agent_execution.command
             if command is None:
-                logger.exception(
-                    ValueError(f"There is no command with {agent_execution.command.id}")
-                )
+                logger.error("Agent execution %s has no command", execution_id)
                 abort(HTTP_BAD_REQUEST, "Trying to update a not existent command")
+
+            json_data['command'] = _agent_execution_command(agent_execution, json_data['command'])
+            data['command'] = BulkCommandSchema().load(json_data['command'])
             db.session.flush()
         else:
             if current_user.is_anonymous:

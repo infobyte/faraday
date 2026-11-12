@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[FIX] Sorting credentials by `password` no longer fails with `Invalid filters`. #8593"
+}

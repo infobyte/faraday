@@ -221,8 +221,8 @@ class FlaskRestlessFilterSchema(Schema):
 
         if not getattr(column, 'type', None) and filter_['op'].lower():
             if filter_['op'].lower() in ['eq', '==']:
-                if filter_['name'] in ['creator', 'hostnames']:
-                    # make sure that creator and hostname are compared against a string
+                if filter_['name'] in ['creator', 'hostnames', 'triaged_by']:
+                    # make sure that creator, hostname and triaged_by are compared against a string
                     if not isinstance(filter_['val'], str):
                         raise ValidationError('Relationship attribute to compare to must be a string')
                     return [filter_]
@@ -255,6 +255,9 @@ class FlaskRestlessFilterSchema(Schema):
 
         # Dates
         if isinstance(field, (fields.Date, fields.DateTime)):
+            if filter_['op'].lower() in ['is_null', 'is_not_null']:
+                # e.g. triaged_at is null: triaged before it was recorded
+                return [filter_]
             try:
                 if filter_['op'].lower() in ['range']:
                     # range operator must be used with two values separated by a comma
@@ -336,7 +339,8 @@ class FlaskRestlessVulnerabilityFilterSchema(FlaskRestlessFilterSchema):
         'host': Host,
         'services': Service,
         'workspace': Workspace,
-        'creator': User
+        'creator': User,
+        'triaged_by': User,
     }
 
     def _model_class(self):

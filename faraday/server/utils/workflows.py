@@ -20,6 +20,7 @@ from faraday.server.api.modules.workflow import (
     service_datatypes,
     host_datatypes,
 )
+from faraday.server.debouncer import debounce_workspace_vulns_count_update
 from faraday.server.extensions import socketio
 from faraday.server.models import (
     db,
@@ -32,6 +33,7 @@ from faraday.server.models import (
     CustomFieldsSchema,
 )
 from faraday.server.utils.reference import create_reference
+from faraday.server.utils.triage import TRIAGE_INPUT_FIELDS, bulk_apply_triage
 
 logger = logging.getLogger(__name__)
 
@@ -532,7 +534,20 @@ def _calculate_or_execute_action(objs, action, workflow):
     return all_actions, host_ids
 
 
-def _perform_bulk_actions(actions: dict):
+def _perform_triage_action(obj_ids, field, value, user_id):
+    """confirmed, false_positive and status actions go through the triage rules, like the API."""
+    result = bulk_apply_triage(obj_ids, {field: value}, user_id=user_id)
+    db.session.commit()
+    if result.updated_ids:
+        # Confirmed, false positive and triage counters of the dashboard
+        workspace_ids = db.session.query(VulnerabilityGeneric.workspace_id) \
+            .filter(VulnerabilityGeneric.id.in_(result.updated_ids)).distinct()
+        for (workspace_id,) in workspace_ids:
+            debounce_workspace_vulns_count_update(workspace_id=workspace_id)
+
+
+def _perform_bulk_actions(actions: dict, user_id=None):
+    """`user_id` is who the changes are attributed to: the creator of the pipeline."""
     for action, obj_ids in actions.items():
         action = dict(action)
 
@@ -547,12 +562,15 @@ def _perform_bulk_actions(actions: dict):
             model = obj_table[action.get("model")]
             field = action.get("field")
             value = action.get("value")
-            smtp = sqlalchemy.update(model).where(model.id.in_(obj_ids)).values({field: value})
-            db.session.execute(smtp)
-            db.session.commit()
+            if model == VulnerabilityGeneric and field in TRIAGE_INPUT_FIELDS:
+                _perform_triage_action(obj_ids, field, value, user_id)
+            else:
+                smtp = sqlalchemy.update(model).where(model.id.in_(obj_ids)).values({field: value})
+                db.session.execute(smtp)
+                db.session.commit()
 
 
-def _run_workflow(workflow, objs):
+def _run_workflow(workflow, objs, user_id=None):
     if workflow.root_condition is None:
         raise ValueError("No root condition, Invalid condition tree")
     logger.debug(f"Running conditions of Workflow id: {workflow.id}, Root condition id: {workflow.root_condition}")
@@ -584,7 +602,7 @@ def _run_workflow(workflow, objs):
         # Perform actions
         try:
             if actions_to_perform:
-                _perform_bulk_actions(actions_to_perform)
+                _perform_bulk_actions(actions_to_perform, user_id=user_id)
         except IntegrityError as e:
             db.session.rollback()
             logger.error(f"Failed to execute. - {e}")
@@ -664,7 +682,7 @@ def _check_workflows(objs, obj_type, ws, fields=None, pipeline=None):
                     continue
 
             try:
-                result, log, host_to_update = _run_workflow(workflow, objs)
+                result, log, host_to_update = _run_workflow(workflow, objs, user_id=pipeline.creator_id)
                 if host_to_update:
                     hosts_to_update += host_to_update
                 workflows_results.append(result)
@@ -830,7 +848,7 @@ def _run_pipeline_chunked(ws_id, pipeline_id):
                 continue
 
             try:
-                result, log, host_to_update = _run_workflow(workflow, objs)
+                result, log, host_to_update = _run_workflow(workflow, objs, user_id=pipeline.creator_id)
                 if host_to_update:
                     update_host_stats += host_to_update
             except Exception as e:

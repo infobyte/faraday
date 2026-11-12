@@ -5,7 +5,7 @@ from contextlib import nullcontext
 from datetime import datetime
 
 import redis
-from sqlalchemy import func, text
+from sqlalchemy import and_, func, text
 from sqlalchemy.sql.functions import coalesce
 
 from faraday.server.config import faraday_server
@@ -133,6 +133,29 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
     from faraday.server.app import get_app, logger
     start_time = datetime.utcnow()
 
+    def filter_false_positive(query, false_positive=None):
+        if false_positive is not None:
+            query = query.filter(VulnerabilityGeneric.false_positive.is_(bool(false_positive)))
+        return query
+
+    def count_triage_stats():
+        """False positive counters (total, by type and by severity) and the triage backlog, in one scan."""
+        false_positive = VulnerabilityGeneric.false_positive.is_(True)
+        conditions = {
+            Workspace.vulnerability_false_positive_count: false_positive,
+            Workspace.vulnerability_triage_pending_count: VulnerabilityGeneric.triaged.is_(False),
+        }
+        for type_, column in (('vulnerability_web', Workspace.vulnerability_web_false_positive_count),
+                              ('vulnerability_code', Workspace.vulnerability_code_false_positive_count),
+                              ('vulnerability', Workspace.vulnerability_standard_false_positive_count)):
+            conditions[column] = and_(false_positive, VulnerabilityGeneric.type == type_)
+        for severity in ('critical', 'high', 'medium', 'low', 'informational', 'unclassified'):
+            column = getattr(Workspace, f'vulnerability_{severity}_false_positive_count')
+            conditions[column] = and_(false_positive, VulnerabilityGeneric.severity == severity)
+        counts = db.session.query(*(func.count().filter(condition) for condition in conditions.values())) \
+            .filter(VulnerabilityGeneric.workspace_id == workspace_id).one()
+        return dict(zip(conditions, counts))
+
     def count_vulnerabilities(extra_query=None, type_=None, confirmed=None):
         query = db.session.query(func.count(VulnerabilityGeneric.id)).filter(
             VulnerabilityGeneric.workspace_id == workspace_id
@@ -148,7 +171,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
             query = query.filter(text(extra_query))
         return query.scalar()
 
-    def count_hosts(workspace_id, confirmed=None, not_closed=None):
+    def count_hosts(workspace_id, confirmed=None, not_closed=None, false_positive=None):
         query_vuln_hosts = db.session.query(
             VulnerabilityGeneric.host_id.label('host_id')
         ).filter(
@@ -165,6 +188,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
 
         if not_closed:
             query_vuln_hosts = query_vuln_hosts.filter(VulnerabilityGeneric.status.in_(['open', 're-opened']))
+        query_vuln_hosts = filter_false_positive(query_vuln_hosts, false_positive=false_positive)
 
         query_service_hosts = db.session.query(
             Service.host_id.label('host_id')
@@ -185,6 +209,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
 
         if not_closed:
             query_service_hosts = query_service_hosts.filter(VulnerabilityGeneric.status.in_(['open', 're-opened']))
+        query_service_hosts = filter_false_positive(query_service_hosts, false_positive=false_positive)
 
         # Combine both queries
         combined_query = query_vuln_hosts.union_all(query_service_hosts).subquery()
@@ -194,7 +219,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
 
         return distinct_hosts_count
 
-    def count_services(workspace_id, confirmed=None, not_closed=None):
+    def count_services(workspace_id, confirmed=None, not_closed=None, false_positive=None):
         # Define the base query for services
         query_services = db.session.query(func.count(func.distinct(VulnerabilityGeneric.service_id))).filter(
             VulnerabilityGeneric.workspace_id == workspace_id,
@@ -210,6 +235,7 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
 
         if not_closed is not None:
             query_services = query_services.filter(VulnerabilityGeneric.status.in_(['open', 're-opened']))
+        query_services = filter_false_positive(query_services, false_positive=false_positive)
 
         return query_services.scalar()
 
@@ -320,6 +346,12 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
         host_notclosed_confirmed_count = count_hosts(workspace_id, confirmed=True, not_closed=True)
         service_notclosed_confirmed_count = count_services(workspace_id, confirmed=True, not_closed=True)
 
+        #  False positives (total, by type, by severity, hosts and services) and triage backlog
+
+        triage_stats = count_triage_stats()
+        host_false_positive_count = count_hosts(workspace_id, false_positive=True)
+        service_false_positive_count = count_services(workspace_id, false_positive=True)
+
         end = time.time()
 
         logger.debug(f"Count execution time in update workspace vulns count = {end - start}")
@@ -374,7 +406,10 @@ def update_workspace_vulns_count(workspace_name=None, workspace_id=None):
                 Workspace.host_confirmed_count: host_confirmed_count,
                 Workspace.service_confirmed_count: service_confirmed_count,
                 Workspace.host_notclosed_confirmed_count: host_notclosed_confirmed_count,
-                Workspace.service_notclosed_confirmed_count: service_notclosed_confirmed_count
+                Workspace.service_notclosed_confirmed_count: service_notclosed_confirmed_count,
+                Workspace.host_false_positive_count: host_false_positive_count,
+                Workspace.service_false_positive_count: service_false_positive_count,
+                **triage_stats,
             },
             synchronize_session=False
         )

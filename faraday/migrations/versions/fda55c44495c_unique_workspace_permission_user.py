@@ -1,7 +1,7 @@
 """unique (workspace_id, user_id) on workspace_permission_association
 
 Revision ID: fda55c44495c
-Revises: a0b302b596ac
+Revises: d8bcf5cf64ee
 Create Date: 2026-10-27 00:00:00.000000+00:00
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'fda55c44495c'
-down_revision = 'a0b302b596ac'
+down_revision = 'd8bcf5cf64ee'
 branch_labels = None
 depends_on = None
 

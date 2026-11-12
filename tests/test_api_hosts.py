@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import operator
+import re
 from io import BytesIO
 from unittest import mock
 from posixpath import join
@@ -15,6 +16,8 @@ from random import choice
 from hypothesis import given, strategies as st
 
 import pytest
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 from tests import factories
 from tests.test_api_workspaced_base import PaginationTestsMixin
@@ -472,6 +475,37 @@ class TestHostAPI:
         assert severities['low'] == 1
         assert severities['unclassified'] == 0
         assert severities['total'] == 5
+
+    def test_filter_does_not_multiply_host_rows_by_services_and_hostnames(
+            self, test_client, session, workspace, host_factory, service_factory, hostname_factory
+    ):
+        """Loading services and hostnames in the same JOIN returns services x hostnames rows per host."""
+        hosts_count, services_per_host, hostnames_per_host = 3, 4, 3
+        for _ in range(hosts_count):
+            host = host_factory.create(workspace=workspace)
+            service_factory.create_batch(services_per_host, host=host, workspace=workspace)
+            hostname_factory.create_batch(hostnames_per_host, host=host, workspace=workspace)
+        session.commit()
+
+        fetched_rows = []
+
+        def count_rows(conn, cursor, statement, parameters, context, executemany):
+            # The main query is the only one that reads from the host table itself, apart from the total count
+            if re.search(r'\bFROM host\b', statement) and not statement.lstrip().startswith('SELECT count(host.id)'):
+                fetched_rows.append(cursor.rowcount)
+
+        event.listen(Engine, 'after_cursor_execute', count_rows)
+        try:
+            res = test_client.get(join(self.url(), 'filter?q={"filters":[]}'))
+        finally:
+            event.remove(Engine, 'after_cursor_execute', count_rows)
+
+        assert res.status_code == 200
+        returned_hosts = len(res.json['rows'])
+        assert returned_hosts >= hosts_count
+        assert fetched_rows
+        # One row per host, no matter how many services and hostnames each one has
+        assert max(fetched_rows) == returned_hosts
 
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
                                             service_factory, host_factory):

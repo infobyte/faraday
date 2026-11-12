@@ -9,13 +9,13 @@ import re
 import json
 import logging
 from datetime import timedelta, date
-from itertools import groupby
 
 # Related third party imports
 import flask
 from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
+from sqlalchemy import case, func
 from sqlalchemy.orm import with_expression, joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -213,67 +213,73 @@ def init_date_range(days):
     return date_list
 
 
-def generate_histogram(days_before):
+def generate_histogram(days_before, workspace_ids):
+    """Cumulative severities histogram of the last `days_before` days (oldest
+    first) for each of `workspace_ids` that has histogram rows, keyed by name.
+
+    severities_histogram stores daily deltas, so each day is the running sum
+    of every row up to that date. Everything older than the window is summed
+    by the database into a single base row per workspace, so only the
+    windowed days reach Python no matter how long the history is.
+    """
+    if not workspace_ids:
+        return {}
+
+    today = date.today()
+    window_start = today - timedelta(days=days_before - 1)
+    # NULL day = the base row with everything before the window
+    day = case((SeveritiesHistogram.date < window_start, None), else_=SeveritiesHistogram.date)
+    rows = db.session.query(
+        Workspace.name,
+        day,
+        func.sum(SeveritiesHistogram.medium),
+        func.sum(SeveritiesHistogram.high),
+        func.sum(SeveritiesHistogram.critical),
+        func.sum(SeveritiesHistogram.confirmed),
+    ).join(Workspace, Workspace.id == SeveritiesHistogram.workspace_id) \
+        .filter(SeveritiesHistogram.workspace_id.in_(workspace_ids)) \
+        .group_by(Workspace.name, day) \
+        .all()
+
+    base_by_ws = {}
+    days_by_ws = {}
+    for ws_name, row_day, medium, high, critical, confirmed in rows:
+        counters = (medium, high, critical, confirmed)
+        days_by_ws.setdefault(ws_name, {})
+        if row_day is None:
+            base_by_ws[ws_name] = counters
+        elif row_day <= today:
+            # Future dated rows don't count, but the workspace still gets a histogram
+            days_by_ws[ws_name][row_day] = counters
+
     histogram_dict = {}
-
-    workspaces_histograms = SeveritiesHistogram.query \
-        .options(joinedload(SeveritiesHistogram.workspace).load_only(Workspace.name)) \
-        .order_by(SeveritiesHistogram.workspace_id.asc(), SeveritiesHistogram.date.asc()).all()
-
-    # group dates by workspace
-    grouped_histograms_by_ws = groupby(workspaces_histograms, lambda x: x.workspace.name)
-
-    ws_histogram = {}
-    for ws_name, dates in grouped_histograms_by_ws:
-        first_date = None
-        ws_histogram[ws_name] = {}
-        # Convert to dict
-        for d in dates:
-            if first_date is None:
-                first_date = d.date
-            ws_histogram[ws_name][d.date.strftime("%Y-%m-%d")] = {Vulnerability.SEVERITY_MEDIUM: d.medium,
-                                                                  Vulnerability.SEVERITY_HIGH: d.high,
-                                                                  Vulnerability.SEVERITY_CRITICAL: d.critical,
-                                                                  'confirmed': d.confirmed}
-
-        # fix histogram gaps
-        if (date.today() - first_date).days < days_before:
-            # move first_date to diff between first day and days required
-            first_date = first_date - timedelta(days=(days_before - (date.today() - first_date).days))
-        histogram_dict[ws_name] = [{'date': (first_date + timedelta(days=x)).strftime("%Y-%m-%d"),
-                                    Vulnerability.SEVERITY_MEDIUM: 0,
-                                    Vulnerability.SEVERITY_HIGH: 0,
-                                    Vulnerability.SEVERITY_CRITICAL: 0,
-                                    'confirmed': 0}
-                                   for x in range((date.today() - first_date).days + 1)]
-
-        # merge counters with days required
-        confirmed = high = medium = critical = 0
-        for current_workspace_histogram_counters in histogram_dict[ws_name]:
-            current_date = current_workspace_histogram_counters['date']
-            if current_date in ws_histogram[ws_name]:
-                medium += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_MEDIUM]
-                high += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_HIGH]
-                critical += ws_histogram[ws_name][current_date][Vulnerability.SEVERITY_CRITICAL]
-                confirmed += ws_histogram[ws_name][current_date]['confirmed']
-            current_workspace_histogram_counters[Vulnerability.SEVERITY_MEDIUM] = medium
-            current_workspace_histogram_counters[Vulnerability.SEVERITY_HIGH] = high
-            current_workspace_histogram_counters[Vulnerability.SEVERITY_CRITICAL] = critical
-            current_workspace_histogram_counters['confirmed'] = confirmed
-        histogram_dict[ws_name] = histogram_dict[ws_name][-days_before:]
+    for ws_name, ws_days in days_by_ws.items():
+        medium, high, critical, confirmed = base_by_ws.get(ws_name, (0, 0, 0, 0))
+        histogram_dict[ws_name] = []
+        for offset in range(days_before):
+            current_date = window_start + timedelta(days=offset)
+            if current_date in ws_days:
+                day_medium, day_high, day_critical, day_confirmed = ws_days[current_date]
+                medium += day_medium
+                high += day_high
+                critical += day_critical
+                confirmed += day_confirmed
+            histogram_dict[ws_name].append({'date': current_date.strftime("%Y-%m-%d"),
+                                            Vulnerability.SEVERITY_MEDIUM: medium,
+                                            Vulnerability.SEVERITY_HIGH: high,
+                                            Vulnerability.SEVERITY_CRITICAL: critical,
+                                            'confirmed': confirmed})
 
     return histogram_dict
 
 
-def request_histogram():
-    histogram_days = flask.request.args.get('histogram_days',
-                                            type=lambda x: int(x)
-                                            if x.isnumeric() and int(x) > 0
-                                            else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
-                                            default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
-                                            )
-    histogram_dict = generate_histogram(histogram_days)
-    return histogram_days, histogram_dict
+def request_histogram_days():
+    return flask.request.args.get('histogram_days',
+                                  type=lambda x: int(x)
+                                  if x.isnumeric() and int(x) > 0
+                                  else SeveritiesHistogram.DEFAULT_DAYS_BEFORE,
+                                  default=SeveritiesHistogram.DEFAULT_DAYS_BEFORE
+                                  )
 
 
 class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin, BulkUpdateMixin):
@@ -310,14 +316,18 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
                   schema: WorkspaceSchema
         """
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
+
+        workspace_stats = list(self._get_base_query())
+
         histogram_days, histogram_dict = None, None
         if histogram:
-            histogram_days, histogram_dict = request_histogram()
-
-        query = self._get_base_query()
+            histogram_days = request_histogram_days()
+            histogram_dict = generate_histogram(
+                histogram_days, [workspace_stat['workspace_id'] for workspace_stat in workspace_stats]
+            )
 
         objects = []
-        for workspace_stat in query:
+        for workspace_stat in workspace_stats:
             workspace_stat_dict = dict(workspace_stat)
             for key, _ in list(workspace_stat_dict.items()):
                 if key.startswith('workspace_'):
@@ -329,7 +339,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
                 for scope in workspace_stat_dict['scope_raw']:
                     workspace_stat_dict['scope'].append({'name': scope})
 
-            if histogram_dict:
+            if histogram_dict is not None:
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
@@ -366,11 +376,16 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         histogram = flask.request.args.get('histogram', type=lambda v: v.lower() == 'true')
         if exclude_stats:
             exclude = ['stats']
-        histogram_days, histogram_dict = None, None
-        if histogram:
-            histogram_days, histogram_dict = request_histogram()
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, exclude=exclude)
+
+        histogram_days, histogram_dict = None, None
+        if histogram:
+            histogram_days = request_histogram_days()
+            # Only the returned page: group_by rows have no id and get no histogram rows
+            histogram_dict = generate_histogram(
+                histogram_days, [workspace_stat['id'] for workspace_stat in filtered_objs if 'id' in workspace_stat]
+            )
         objects = []
 
         for workspace_stat in filtered_objs:
@@ -384,7 +399,7 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
                 for scope in workspace_stat["scope"]:
                     workspace_stat_dict['scope'].append({'name': scope})
 
-            if histogram_dict:
+            if histogram_dict is not None:
                 if workspace_stat_dict['name'] in histogram_dict:
                     workspace_stat_dict['histogram'] = histogram_dict[workspace_stat_dict['name']]
                 else:
@@ -398,6 +413,10 @@ class WorkspaceView(ReadWriteView, FilterMixin, BulkDeleteMixin, PaginatedMixin,
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(objects, pagination_metadata)
+
+    def _filter_eagerload_options(self):
+        # _generate_filter_query sets the loader options /filter needs
+        return []
 
     def _generate_filter_query(self, filters, severity_count=None):
         filter_query = super()._generate_filter_query(filters)

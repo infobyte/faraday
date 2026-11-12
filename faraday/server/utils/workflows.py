@@ -694,21 +694,28 @@ def _change_pipeline_running_status(id, status):
 def _iter_id_chunks(ws_id, obj_model, chunk_size=PIPELINE_CHUNK_SIZE):
     """Yield lists of object IDs from the workspace in chunks.
 
-    Uses yield_per to stream IDs without loading all at once.
+    Each chunk is its own keyset query (id > last id seen) instead of a
+    yield_per stream: the caller commits between chunks, and a commit
+    invalidates the server side cursor yield_per keeps open. The ids are
+    capped at the highest one when the iteration starts, so objects created
+    meanwhile (e.g. by an import) can't keep the job running.
     """
-    query = (db.session.query(obj_model.id)
-             .filter(obj_model.workspace_id == ws_id)
-             .order_by(obj_model.id)
-             .yield_per(chunk_size))
-
-    chunk = []
-    for (obj_id,) in query:
-        chunk.append(obj_id)
-        if len(chunk) >= chunk_size:
-            yield chunk
-            chunk = []
-    if chunk:
+    max_id = db.session.query(sqlalchemy.func.max(obj_model.id)) \
+        .filter(obj_model.workspace_id == ws_id).scalar()
+    if max_id is None:
+        return
+    last_id = 0
+    while True:
+        chunk = [obj_id for (obj_id,) in db.session.query(obj_model.id)
+                 .filter(obj_model.workspace_id == ws_id, obj_model.id > last_id, obj_model.id <= max_id)
+                 .order_by(obj_model.id)
+                 .limit(chunk_size)]
+        if not chunk:
+            return
         yield chunk
+        if len(chunk) < chunk_size:
+            return
+        last_id = chunk[-1]
 
 
 def _get_query_options_for_job(workflow, obj_key):

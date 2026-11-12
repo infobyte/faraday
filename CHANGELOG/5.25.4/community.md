@@ -1,0 +1,1 @@
+ * [MOD] Added Markdown support on the description of the What's New items. #3152

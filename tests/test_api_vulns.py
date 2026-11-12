@@ -2156,7 +2156,7 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
             "service_creator_id", "service_date", "service_update_date", "service_parent_id"
         ]
         assert res.status_code == 200
-        assert expected_headers == res.data.decode('utf-8').strip('\r\n').split(',')
+        assert expected_headers == next(csv.reader(StringIO(res.data.decode('utf-8'))))
 
     def test_export_vuln_csv_filters_confirmed_using_filters_query(self, test_client, session):
         workspace = WorkspaceFactory.create()
@@ -2283,6 +2283,55 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         res = test_client.get(join(self.url(), 'export_csv'))
         assert self._verify_csv(res.data)
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.parametrize('endpoint', ['filter?export_csv=true', 'export_csv'])
+    @pytest.mark.parametrize('payload', ['=1+1', '+1', '-1+1', '@SUM(1)', '\t=1', '\r=1', ' =1', '＝1'])
+    def test_export_csv_escapes_host_and_service_formulas(self, test_client, session, endpoint, payload):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace, description=payload, mac=payload)
+        service = ServiceFactory.create(workspace=workspace, host=host, name=payload, description=payload,
+                                        protocol=payload, version=payload)
+        host_vuln = VulnerabilityFactory.create(workspace=workspace, host=host, service=None, name=payload)
+        service_vuln = VulnerabilityFactory.create(workspace=workspace, host=None, service=service, name=payload)
+        session.add_all([host_vuln, service_vuln])
+        session.commit()
+
+        res = test_client.get(join(self.url(), endpoint))
+
+        assert res.status_code == 200
+        raw_csv = res.data.decode('utf-8')
+        assert raw_csv.startswith('"confirmed","id",')
+        rows = {row['id']: row for row in csv.DictReader(StringIO(raw_csv))}
+        escaped = "'" + payload
+        host_row = rows[str(host_vuln.id)]
+        service_row = rows[str(service_vuln.id)]
+        for row in (host_row, service_row):
+            assert row['name'] == escaped
+            assert row['host_description'] == escaped
+            assert row['mac'] == escaped
+        for column in ('service_name', 'service_description', 'protocol', 'version'):
+            assert service_row[column] == escaped
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_export_csv_escapes_custom_fields_once(self, test_client, session):
+        custom_field_schema = CustomFieldsSchemaFactory(
+            field_name='formula',
+            field_type='str',
+            field_display_name='Formula',
+            table_name='vulnerability'
+        )
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityFactory.create(workspace=workspace, name='-2+3', custom_fields={'formula': '=cmd'})
+        session.add_all([custom_field_schema, vuln])
+        session.commit()
+
+        res = test_client.get(join(self.url(), 'filter?export_csv=true'))
+
+        assert res.status_code == 200
+        rows = {row['id']: row for row in csv.DictReader(StringIO(res.data.decode('utf-8')))}
+        assert rows[str(vuln.id)]['name'] == "'-2+3"
+        assert rows[str(vuln.id)]['cf_formula'] == "'=cmd"
+
     def _verify_csv(self, raw_csv_data, confirmed=False, severity=None):
         custom_fields = [custom_field.field_name for custom_field in CustomFieldsSchema.query.all()]
         vuln_headers = [
@@ -2403,6 +2452,20 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
         assert res.status_code == 200
         assert res.json['updated'] == 0
 
+    def test_bulk_update_orm_setter_field_updates_every_vulnerability(self, test_client, session,
+                                                                      second_workspace):
+        vulns = VulnerabilityFactory.create_batch(2, workspace=self.workspace)
+        vulns += VulnerabilityFactory.create_batch(2, workspace=second_workspace)
+        session.commit()
+        vector = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'
+
+        res = test_client.patch(self.url(), data={'ids': [v.id for v in vulns], 'cvss3': {'vector_string': vector}})
+
+        assert res.status_code == 200
+        for vuln in vulns:
+            session.refresh(vuln)
+            assert vuln.cvss3_vector_string == vector
+
     def test_export_csv_from_filters_endpoint(self, test_client, session, workspace):
         vuln = VulnerabilityFactory.create(workspace=workspace)
         session.add(vuln)
@@ -2470,7 +2533,7 @@ class TestListVulnerabilityContextView(ReadOnlyAPITests, BulkUpdateTestsMixin, B
             "service_creator_id", "service_date", "service_update_date", "service_parent_id"
         ]
         assert res.status_code == 200
-        assert expected_headers == res.data.decode('utf-8').strip('\r\n').split(',')
+        assert expected_headers == next(csv.reader(StringIO(res.data.decode('utf-8'))))
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_export_csv_unicode_bug(self, test_client, session):

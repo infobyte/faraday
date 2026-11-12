@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 import logging
 import operator
+import secrets
 import string
 import time
 import warnings
@@ -3691,16 +3692,26 @@ class CloudAgentsSchedule(SchedulerGeneric):
     }
 
 
+def generate_agent_token():
+    return "".join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
+
+
+def generate_dispatcher_id():
+    return secrets.token_urlsafe(16)
+
+
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    token = Column(Text, unique=True, nullable=False, default=lambda: "".
-                   join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
+    token = Column(Text, unique=True, nullable=False, default=lambda: generate_agent_token())
 
     name = NonBlankColumn(Text)
     description = BlankColumn(Text)
     active = Column(Boolean, default=True)
     sid = Column(Text)  # socketio sid
+    # Pairs the dispatcher that registers with an agent created in advance from the UI. It is cleared when the
+    # agent is claimed, so an agent that still has it is waiting for its dispatcher.
+    dispatcher_id = Column(String(22), nullable=True, unique=True)
     # Features announced by the agent on join_agent, e.g. "remote_config"
     features = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
     # [{"repo_name": ..., "available": ...}] for every tool the agent knows, announced on connection
@@ -3709,6 +3720,10 @@ class Agent(Metadata):
     @property
     def parent(self):
         return
+
+    @property
+    def pending_registration(self):
+        return self.dispatcher_id is not None
 
     @property
     def remote_config(self):

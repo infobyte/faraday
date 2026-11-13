@@ -1,9 +1,10 @@
+import itsdangerous
 import pytest
 
 from faraday.server.models import Executor, Agent
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
-from tests.factories import AgentFactory, ExecutorFactory
+from tests.factories import AgentFactory, ExecutorFactory, WorkspaceFactory
 
 
 class TestSockets:
@@ -68,6 +69,21 @@ class TestSockets:
         sender.get_received('/dispatcher')
 
         sender.emit(event, message, namespace='/dispatcher')
+
+        assert [e['name'] for e in sender.get_received('/dispatcher')] == ['disconnect']
+        assert agent.get_received('/dispatcher') == []
+
+    def test_joining_with_the_token_of_another_workspace_only_disconnects_its_sender(self, app, session):
+        token_workspace, other_workspace = WorkspaceFactory.create_batch(2)
+        session.commit()
+        signer = itsdangerous.TimestampSigner(app.config['SECRET_KEY'], salt='websocket')
+        token = signer.sign(str(token_workspace.id)).decode()
+        agent = socketio.test_client(app, namespace='/dispatcher')
+        sender = socketio.test_client(app, namespace='/dispatcher')
+        agent.get_received('/dispatcher')
+        sender.get_received('/dispatcher')
+
+        sender.emit('join_workspace', {'workspace': other_workspace.name, 'token': token}, namespace='/dispatcher')
 
         assert [e['name'] for e in sender.get_received('/dispatcher')] == ['disconnect']
         assert agent.get_received('/dispatcher') == []

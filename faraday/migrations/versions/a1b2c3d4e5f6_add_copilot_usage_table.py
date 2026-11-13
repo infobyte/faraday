@@ -1,13 +1,13 @@
 """Add copilot_message_log table and user copilot_enabled
 
 Revision ID: a1b2c3d4e5f6
-Revises: a0b302b596ac
+Revises: d7a3e9b1c5f2
 Create Date: 2026-09-01
 """
 from alembic import op
 
 revision = 'a1b2c3d4e5f6'
-down_revision = 'a0b302b596ac'
+down_revision = 'd7a3e9b1c5f2'
 
 
 def upgrade():

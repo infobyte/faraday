@@ -59,8 +59,12 @@ If you are having issues with plugins, please attach relevant files if possible.
 
 Provide information on your operating system. Example:
 
-$ cat /etc/lsb-release
-DISTRIB_ID=Ubuntu
-DISTRIB_RELEASE=16.10
-DISTRIB_CODENAME=yakkety
-DISTRIB_DESCRIPTION="Ubuntu 16.10"
+```
+$ cat /etc/os-release
+NAME="Ubuntu"
+VERSION="12.04.2 LTS, Precise Pangolin"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu precise (12.04.2 LTS)"
+VERSION_ID="12.04"
+```

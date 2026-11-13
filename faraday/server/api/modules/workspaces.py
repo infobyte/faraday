@@ -142,6 +142,26 @@ class WorkspaceSummarySchema(Schema):
     unclassified_vulns_notclosed_confirmed = fields.Integer(dump_only=True,
                                                             attribute='vulnerability_unclassified_notclosed_confirmed_count')
 
+    #  False positives
+    host_false_positive = fields.Integer(dump_only=True, attribute='host_false_positive_count')
+    service_false_positive = fields.Integer(dump_only=True, attribute='service_false_positive_count')
+    false_positive_vulns = fields.Integer(dump_only=True, attribute='vulnerability_false_positive_count')
+    web_vulns_false_positive = fields.Integer(dump_only=True, attribute='vulnerability_web_false_positive_count')
+    code_vulns_false_positive = fields.Integer(dump_only=True, attribute='vulnerability_code_false_positive_count')
+    std_vulns_false_positive = fields.Integer(dump_only=True, attribute='vulnerability_standard_false_positive_count')
+    critical_vulns_false_positive = fields.Integer(dump_only=True,
+                                                   attribute='vulnerability_critical_false_positive_count')
+    high_vulns_false_positive = fields.Integer(dump_only=True, attribute='vulnerability_high_false_positive_count')
+    medium_vulns_false_positive = fields.Integer(dump_only=True, attribute='vulnerability_medium_false_positive_count')
+    low_vulns_false_positive = fields.Integer(dump_only=True, attribute='vulnerability_low_false_positive_count')
+    info_vulns_false_positive = fields.Integer(dump_only=True,
+                                               attribute='vulnerability_informational_false_positive_count')
+    unclassified_vulns_false_positive = fields.Integer(dump_only=True,
+                                                       attribute='vulnerability_unclassified_false_positive_count')
+
+    #  Triage backlog
+    triage_pending_vulns = fields.Integer(dump_only=True, attribute='vulnerability_triage_pending_count')
+
 
 class HistogramSchema(Schema):
     date = fields.String(dump_only=True, attribute='date')

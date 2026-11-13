@@ -13,9 +13,42 @@ See the file 'doc/LICENSE' for the license information
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 
 import os
+import tempfile
 from tempfile import NamedTemporaryFile
 from time import time
 import random
+
+# Must be set before any faraday imports so that faraday.server.config picks up
+# the correct FARADAY_HOME at module-load time. Each xdist worker gets its own
+# isolated directory, preventing concurrent writes to the same server.ini.
+_xdist_worker = os.environ.get('PYTEST_XDIST_WORKER', '')
+if _xdist_worker:
+    import shutil
+    _worker_home = os.path.join(tempfile.gettempdir(), f'faraday_test_{_xdist_worker}')
+    os.makedirs(_worker_home, exist_ok=True)
+    # Copy read-only content (license files) from the original .faraday dir so
+    # feature-flag checks that depend on the license continue to work.
+    _original_home = os.environ.get('FARADAY_HOME') or (
+        '/home/faraday' if os.path.exists('/home/faraday/.faraday') else os.path.expanduser('~')
+    )
+    _original_faraday_dir = os.path.join(_original_home, '.faraday')
+    _worker_faraday_dir = os.path.join(_worker_home, '.faraday')
+    if os.path.isdir(_original_faraday_dir) and not os.path.isdir(_worker_faraday_dir):
+        shutil.copytree(
+            _original_faraday_dir,
+            _worker_faraday_dir,
+            ignore=shutil.ignore_patterns('config', 'session'),
+            dirs_exist_ok=True,
+        )
+    # Each worker gets its own server.ini from the test template so that
+    # concurrent writes don't race and celery_enabled=false is honoured.
+    _worker_config_dir = os.path.join(_worker_faraday_dir, 'config')
+    _worker_server_ini = os.path.join(_worker_config_dir, 'server.ini')
+    if not os.path.exists(_worker_server_ini):
+        os.makedirs(_worker_config_dir, exist_ok=True)
+        _test_server_ini = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'server.ini')
+        shutil.copyfile(_test_server_ini, _worker_server_ini)
+    os.environ['FARADAY_HOME'] = _worker_home
 
 import json
 import inspect

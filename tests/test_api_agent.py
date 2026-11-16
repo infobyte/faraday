@@ -199,14 +199,32 @@ class TestPendingAgentAPI:
 
         assert res.status_code == 401
 
-    def test_the_pending_agent_is_marked_in_the_api_without_exposing_the_id(self, test_client):
+    def test_the_pending_agent_exposes_its_dispatcher_id_in_the_detail(self, test_client):
         created = self.create_pending(test_client).json
 
         res = test_client.get(f"/v3/agents/{created['id']}")
 
         assert res.json['pending_registration'] is True
-        assert 'dispatcher_id' not in res.json
+        assert res.json['dispatcher_id'] == created['dispatcher_id']
         assert 'token' not in res.json
+
+    def test_the_pending_agent_exposes_its_dispatcher_id_in_the_list(self, test_client):
+        created = self.create_pending(test_client).json
+
+        res = test_client.get('/v3/agents')
+
+        listed = next(agent for agent in res.json if agent['id'] == created['id'])
+        assert listed['dispatcher_id'] == created['dispatcher_id']
+
+    def test_a_claimed_agent_does_not_expose_a_dispatcher_id(self, test_client, session):
+        agent = AgentFactory.create(dispatcher_id=None)
+        session.commit()
+
+        detail = test_client.get(f'/v3/agents/{agent.id}').json
+        listed = next(item for item in test_client.get('/v3/agents').json if item['id'] == agent.id)
+
+        assert detail['dispatcher_id'] is None
+        assert listed['dispatcher_id'] is None
 
     def test_an_agent_is_not_pending_by_default(self, test_client, session):
         agent = AgentFactory.create()

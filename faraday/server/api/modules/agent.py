@@ -141,6 +141,8 @@ class AgentSchema(AutoSchema):
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
     pending_registration = fields.Boolean(dump_only=True)
+    # Only set while the agent waits for its dispatcher: the model clears it when the agent is claimed
+    dispatcher_id = fields.String(dump_only=True)
     remote_config = fields.Boolean(dump_only=True)
     remote_config_read = fields.Boolean(dump_only=True)
     agent_capabilities = fields.List(fields.Dict(), dump_only=True, attribute='capabilities')
@@ -161,6 +163,7 @@ class AgentSchema(AutoSchema):
             'creator',
             'is_online',
             'pending_registration',
+            'dispatcher_id',
             'remote_config',
             'remote_config_read',
             'agent_capabilities',

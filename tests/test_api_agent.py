@@ -25,6 +25,7 @@ from tests.factories import (
     WorkspaceFactory,
     ExecutorFactory,
 )
+from tests.conftest import create_user, login_as
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests import factories
 from faraday.server.utils.executor_config import (
@@ -214,6 +215,29 @@ class TestPendingAgentAPI:
         res = test_client.get('/v3/agents')
 
         listed = next(agent for agent in res.json if agent['id'] == created['id'])
+        assert listed['dispatcher_id'] == created['dispatcher_id']
+
+    def test_the_dispatcher_id_is_hidden_from_other_users(self, test_client, session, app):
+        created = self.create_pending(test_client).json
+        other = create_user(app, session, 'other', 'other@test.com', 'password', role='pentester')
+        login_as(test_client, other)
+
+        detail = test_client.get(f"/v3/agents/{created['id']}").json
+        listed = next(item for item in test_client.get('/v3/agents').json if item['id'] == created['id'])
+
+        assert detail['pending_registration'] is True
+        assert detail['dispatcher_id'] is None
+        assert listed['dispatcher_id'] is None
+
+    def test_the_dispatcher_id_is_visible_to_an_admin(self, test_client, session, app):
+        created = self.create_pending(test_client).json
+        admin = create_user(app, session, 'admin2', 'admin2@test.com', 'password', role='admin')
+        login_as(test_client, admin)
+
+        detail = test_client.get(f"/v3/agents/{created['id']}").json
+        listed = next(item for item in test_client.get('/v3/agents').json if item['id'] == created['id'])
+
+        assert detail['dispatcher_id'] == created['dispatcher_id']
         assert listed['dispatcher_id'] == created['dispatcher_id']
 
     def test_a_claimed_agent_does_not_expose_a_dispatcher_id(self, test_client, session):

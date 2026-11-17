@@ -15,7 +15,7 @@ import flask
 from flask import Blueprint, abort, request, jsonify
 import flask_login
 from flask_classful import route
-from marshmallow import fields, Schema, EXCLUDE, ValidationError, validates_schema
+from marshmallow import fields, Schema, EXCLUDE, ValidationError, validates_schema, post_dump
 from marshmallow.validate import Length, OneOf, Regexp
 from sqlalchemy import and_, exists, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
@@ -36,6 +36,7 @@ from faraday.server.models import (
     Agent,
     Executor,
     SchedulerGeneric,
+    User,
     db,
     generate_dispatcher_id,
 )
@@ -149,6 +150,18 @@ class AgentSchema(AutoSchema):
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
     last_run = fields.DateTime(dump_only=True)
     description = fields.String(dump_only=True)
+
+    @post_dump(pass_original=True)
+    def hide_dispatcher_id(self, data, original, **kwargs):
+        # The dispatcher id (with the registration TOTP) lets whoever has it take over the pending agent, so
+        # only its creator and the admins see it
+        if data.get('dispatcher_id') is None:
+            return data
+        user = flask_login.current_user
+        if original.creator_id == user.id or User.ADMIN_ROLE in user.roles_list:
+            return data
+        data['dispatcher_id'] = None
+        return data
 
     class Meta:
         model = Agent

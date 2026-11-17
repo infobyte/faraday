@@ -1,4 +1,4 @@
 {
   "level": "community",
-  "md": "[FIX] The dispatcher namespace only answers the client that sent a message, instead of every connected agent, so an invalid join no longer disconnects the other agents. #8557"
+  "md": "[FIX] The dispatcher namespace only answers the client that sent a message, instead of every connected agent, so an invalid join no longer disconnects the other agents. #8651"
 }

@@ -125,8 +125,14 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task',
+    'project_task',
+    'user',
+    'executivereport',
+    'agent',
+    'agentexecution',
+    'command',
     'report_logo',
+    'task',
     'report_template',
     'template_logo',
     'ws_sum_report',
@@ -1556,6 +1562,12 @@ class VulnerabilityGeneric(VulnerabilityABC):
     id = Column(Integer, primary_key=True)
     _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
+    # Triage state. `triaged` is derived by faraday.server.utils.triage, never set directly.
+    false_positive = Column(Boolean, nullable=False, default=False, server_default=text('false'))
+    triaged = Column(Boolean, nullable=False, default=False, server_default=text('false'))
+    triaged_at = Column(DateTime, nullable=True)
+    triaged_by_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
+    triaged_by = relationship('User', foreign_keys=[triaged_by_id])
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
     issuetracker = BlankColumn(Text)
@@ -2380,7 +2392,8 @@ association_workspace_and_users_table = Table(
     'workspace_permission_association',
     db.Model.metadata,
     Column('workspace_id', Integer, ForeignKey('workspace.id', ondelete='CASCADE')),
-    Column('user_id', Integer, ForeignKey('faraday_user.id'))
+    Column('user_id', Integer, ForeignKey('faraday_user.id')),
+    UniqueConstraint('workspace_id', 'user_id', name='uix_workspace_permission_workspace_user'),
 )
 
 
@@ -2574,6 +2587,25 @@ class Workspace(Metadata):
     vulnerability_low_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
     vulnerability_informational_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
     vulnerability_unclassified_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    # False positives. They are always closed, so there are no "not closed" or by status variants.
+
+    host_false_positive_count = Column(Integer, nullable=False, default=0)
+    service_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_web_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_high_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_false_positive_count = Column(Integer, nullable=False, default=0)
+
+    # Triage backlog: vulns nobody reviewed yet
+
+    vulnerability_triage_pending_count = Column(Integer, nullable=False, default=0)
 
     importance = Column(Integer, default=0)
 
@@ -4094,9 +4126,18 @@ class SlackNotification(db.Model):
 
 class VulnerabilityStatusHistory(db.Model):
 
+    FIELD_STATUS = 'status'
+    FIELD_CONFIRMED = 'confirmed'
+    FIELD_FALSE_POSITIVE = 'false_positive'
+    FIELDS = [FIELD_STATUS, FIELD_CONFIRMED, FIELD_FALSE_POSITIVE]
+
     __tablename__ = 'vulnerability_status_history'
     id = Column(Integer, primary_key=True)
-    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    # Which field changed. Status rows carry `status`; confirmed/false_positive rows carry `value`.
+    field = Column(Enum(*FIELDS, name='vulnerability_status_history_fields'), nullable=False,
+                   default=FIELD_STATUS, server_default=FIELD_STATUS)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=True)
+    value = Column(Boolean, nullable=True)
     change_date = Column(DateTime, default=datetime.utcnow)
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
 

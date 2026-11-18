@@ -420,6 +420,33 @@ class TestSensitiveGroupByAndOrderBy:
         with pytest.raises(ValidationError):
             FlaskRestlessSchema().load({"filters": [], "order_by": [{"field": field}]})
 
+    @pytest.mark.parametrize("direction", ["asc", "desc"])
+    def test_order_by_allowed_sensitive_field_is_accepted(self, direction):
+        res = FlaskRestlessSchema(allowed_sensitive_order_fields={"password"}).load(
+            {"filters": [], "order_by": [{"field": "password", "direction": direction}]}
+        )
+        assert res["order_by"] == [{"field": "password", "direction": direction}]
+
+    @pytest.mark.parametrize("field", ["token", "creator__password", "workspace__password"])
+    def test_order_by_allowlist_does_not_cover_other_fields(self, field):
+        with pytest.raises(ValidationError):
+            FlaskRestlessSchema(allowed_sensitive_order_fields={"password"}).load(
+                {"filters": [], "order_by": [{"field": field}]}
+            )
+
+    def test_group_by_ignores_order_by_allowlist(self):
+        with pytest.raises(ValidationError):
+            FlaskRestlessSchema(allowed_sensitive_order_fields={"password"}).load(
+                {"filters": [], "group_by": [{"field": "password"}]}
+            )
+
+    def test_order_by_allowlist_does_not_leak_to_next_load(self):
+        FlaskRestlessSchema(allowed_sensitive_order_fields={"password"}).load(
+            {"filters": [], "order_by": [{"field": "password"}]}
+        )
+        with pytest.raises(ValidationError):
+            FlaskRestlessSchema().load({"filters": [], "order_by": [{"field": "password"}]})
+
     @pytest.mark.parametrize("field", ["name", "severity", "creator__username", "confirmed"])
     def test_group_by_regular_field_is_allowed(self, field):
         res = FlaskRestlessSchema().load({"filters": [], "group_by": [{"field": field}]})

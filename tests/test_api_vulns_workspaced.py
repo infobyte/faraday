@@ -3719,14 +3719,34 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             "params", "pname", "query", "cve", 'cvss2_vector_string', 'cvss2_base_score',
             'cvss3_vector_string', 'cvss3_base_score', 'cvss4_vector_string', 'cvss4_base_score', 'cwe', "policyviolations", "external_id",
             "impact_confidentiality", "impact_integrity", "impact_availability", "impact_accountability",
-            "update_date", "host_id", "host_description", "mac",
+            "update_date", "false_positive", "triaged", "triaged_by", "triaged_at",
+            "host_id", "host_description", "mac",
             "host_owned", "host_creator_id", "host_date", "host_update_date",
             "service_id", "service_name", "service_description", "service_owned",
             "port", "protocol", "summary", "version", "service_status",
             "service_creator_id", "service_date", "service_update_date", "service_parent_id"
         ]
         assert res.status_code == 200
-        assert expected_headers == res.data.decode('utf-8').strip('\r\n').split(',')
+        assert expected_headers == next(csv.reader(StringIO(res.data.decode('utf-8'))))
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.parametrize('endpoint', ['filter?export_csv=true', 'export_csv'])
+    def test_export_csv_escapes_host_and_service_formulas(self, test_client, session, endpoint):
+        payload = '=HYPERLINK("http://evil.example","x")'
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace, description=payload, mac=payload)
+        service = ServiceFactory.create(workspace=workspace, host=host, name=payload, description=payload,
+                                        protocol=payload, version=payload)
+        vuln = VulnerabilityFactory.create(workspace=workspace, host=None, service=service)
+        session.add(vuln)
+        session.commit()
+
+        res = test_client.get(join(self.url(workspace=workspace), endpoint))
+
+        assert res.status_code == 200
+        [row] = list(csv.DictReader(StringIO(res.data.decode('utf-8'))))
+        for column in ('host_description', 'mac', 'service_name', 'service_description', 'protocol', 'version'):
+            assert row[column] == "'" + payload
 
     def test_export_vuln_csv_filters_confirmed_using_filters_query(self, test_client, session):
         workspace = WorkspaceFactory.create()
@@ -4017,14 +4037,15 @@ class TestListVulnerabilityView(ReadWriteAPITests, BulkUpdateTestsMixin, BulkDel
             'cvss3_vector_string', 'cvss3_base_score', 'cvss4_vector_string', 'cvss4_base_score',
             'cwe', "policyviolations", "external_id",
             "impact_confidentiality", "impact_integrity", "impact_availability", "impact_accountability",
-            "update_date", "host_id", "host_description", "mac",
+            "update_date", "false_positive", "triaged", "triaged_by", "triaged_at",
+            "host_id", "host_description", "mac",
             "host_owned", "host_creator_id", "host_date", "host_update_date",
             "service_id", "service_name", "service_description", "service_owned",
             "port", "protocol", "summary", "version", "service_status",
             "service_creator_id", "service_date", "service_update_date", "service_parent_id"
         ]
         assert res.status_code == 200
-        assert expected_headers == res.data.decode('utf-8').strip('\r\n').split(',')
+        assert expected_headers == next(csv.reader(StringIO(res.data.decode('utf-8'))))
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_export_csv_unicode_bug(self, test_client, session):

@@ -34,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 vuln_lookup = {
         "confirmed": {"type": "bool", "replace": True, "append": False},
+        # Marking it closes the vuln and unconfirms it (see faraday.server.utils.triage)
+        "false_positive": {"type": "bool", "replace": True, "append": False},
         "data": {"type": "string", "replace": True, "append": False},
         "description": {"type": "string", "replace": True, "append": False},
         "ease_of_resolution": {"type": "string", "replace": True, "append": False,
@@ -164,6 +166,9 @@ rules_attributes = {
     "vulnerability": [
         {"name": "name", "display_name": "Name", "type": "string", "operators": string_operators},
         {"name": "confirmed", "display_name": "Confirmed", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
+        {"name": "false_positive", "display_name": "False Positive", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
+        {"name": "triaged", "display_name": "Triaged", "type": "bool", "operators": bool_operators, "valid": ("true", "false")},
+        {"name": "triaged_at", "display_name": "Triaged Date", "type": "datetime", "operators": numeric_operators},
         {"name": "description", "display_name": "Description", "type": "string", "operators": string_operators},
         {"name": "data", "display_name": "Data", "type": "string", "operators": string_operators},
         {"name": "cwe", "display_name": "CWE", "type": "cwe", "operators": in_not_in},

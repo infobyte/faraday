@@ -1,7 +1,7 @@
 """add remote executor config columns to executor and agent
 
 Revision ID: c7e41d9a2b58
-Revises: a0b302b596ac
+Revises: d7a3e9b1c5f2
 Create Date: 2026-10-30 00:00:00.000000+00:00
 
 """
@@ -12,7 +12,7 @@ from faraday.server.fields import JSONType
 
 # revision identifiers, used by Alembic.
 revision = 'c7e41d9a2b58'
-down_revision = 'a0b302b596ac'
+down_revision = 'd7a3e9b1c5f2'
 branch_labels = None
 depends_on = None
 

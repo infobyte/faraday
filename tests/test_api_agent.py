@@ -5,9 +5,11 @@ See the file 'doc/LICENSE' for the license information
 """
 
 import json
+import re
 import urllib.parse
 from datetime import datetime, timedelta
 from unittest import mock
+from uuid import uuid4
 
 from posixpath import join
 from urllib.parse import urljoin
@@ -23,8 +25,16 @@ from tests.factories import (
     WorkspaceFactory,
     ExecutorFactory,
 )
+from tests.conftest import create_user, login_as
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests import factories
+from faraday.server.utils.executor_config import (
+    EXECUTOR_CONFIG_TTL,
+    create_request,
+    get_request,
+    redis_key,
+)
+from faraday.server.debouncer import get_redis_client
 from tests.test_api_workspaced_base import API_PREFIX
 
 
@@ -147,6 +157,207 @@ class TestAgentCreationAPI:
         raw_data = {"PEPE": 'INVALID'}
         res = test_client.post('/v3/agents', data=raw_data)
         assert res.status_code == 400
+
+
+@pytest.mark.usefixtures('logged_user')
+class TestPendingAgentAPI:
+
+    def create_pending(self, test_client, **payload):
+        return test_client.post('/v3/agents/pending', json={'name': 'my agent', 'description': 'a description',
+                                                            **payload})
+
+    def test_create_pending_agent(self, test_client, session):
+        res = self.create_pending(test_client)
+
+        assert res.status_code == 201
+        assert set(res.json) == {'id', 'name', 'description', 'dispatcher_id'}
+        assert re.fullmatch(r'[A-Za-z0-9_-]{22}', res.json['dispatcher_id'])
+        agent = session.get(Agent, res.json['id'])
+        assert (agent.name, agent.description, agent.dispatcher_id) == ('my agent', 'a description',
+                                                                         res.json['dispatcher_id'])
+
+    def test_each_pending_agent_has_its_own_id(self, test_client):
+        first = self.create_pending(test_client).json['dispatcher_id']
+        second = self.create_pending(test_client).json['dispatcher_id']
+
+        assert first != second
+
+    def test_the_description_is_optional(self, test_client):
+        res = test_client.post('/v3/agents/pending', json={'name': 'my agent'})
+
+        assert res.status_code == 201
+
+    @pytest.mark.parametrize('payload', [{}, {'name': ''}, {'name': '   '}, {'description': 'only a description'}])
+    def test_create_pending_agent_needs_a_name(self, test_client, payload):
+        res = test_client.post('/v3/agents/pending', json=payload)
+
+        assert res.status_code == 400
+
+    def test_create_pending_agent_requires_a_login(self, test_client):
+        logout(test_client, [302])
+
+        res = self.create_pending(test_client)
+
+        assert res.status_code == 401
+
+    def test_the_pending_agent_exposes_its_dispatcher_id_in_the_detail(self, test_client):
+        created = self.create_pending(test_client).json
+
+        res = test_client.get(f"/v3/agents/{created['id']}")
+
+        assert res.json['pending_registration'] is True
+        assert res.json['dispatcher_id'] == created['dispatcher_id']
+        assert 'token' not in res.json
+
+    def test_the_pending_agent_exposes_its_dispatcher_id_in_the_list(self, test_client):
+        created = self.create_pending(test_client).json
+
+        res = test_client.get('/v3/agents')
+
+        listed = next(agent for agent in res.json if agent['id'] == created['id'])
+        assert listed['dispatcher_id'] == created['dispatcher_id']
+
+    def test_the_dispatcher_id_is_hidden_from_other_users(self, test_client, session, app):
+        created = self.create_pending(test_client).json
+        other = create_user(app, session, 'other', 'other@test.com', 'password', role='pentester')
+        login_as(test_client, other)
+
+        detail = test_client.get(f"/v3/agents/{created['id']}").json
+        listed = next(item for item in test_client.get('/v3/agents').json if item['id'] == created['id'])
+
+        assert detail['pending_registration'] is True
+        assert detail['dispatcher_id'] is None
+        assert listed['dispatcher_id'] is None
+
+    def test_the_dispatcher_id_is_visible_to_an_admin(self, test_client, session, app):
+        created = self.create_pending(test_client).json
+        admin = create_user(app, session, 'admin2', 'admin2@test.com', 'password', role='admin')
+        login_as(test_client, admin)
+
+        detail = test_client.get(f"/v3/agents/{created['id']}").json
+        listed = next(item for item in test_client.get('/v3/agents').json if item['id'] == created['id'])
+
+        assert detail['dispatcher_id'] == created['dispatcher_id']
+        assert listed['dispatcher_id'] == created['dispatcher_id']
+
+    def test_a_claimed_agent_does_not_expose_a_dispatcher_id(self, test_client, session):
+        agent = AgentFactory.create(dispatcher_id=None)
+        session.commit()
+
+        detail = test_client.get(f'/v3/agents/{agent.id}').json
+        listed = next(item for item in test_client.get('/v3/agents').json if item['id'] == agent.id)
+
+        assert detail['dispatcher_id'] is None
+        assert listed['dispatcher_id'] is None
+
+    def test_an_agent_is_not_pending_by_default(self, test_client, session):
+        agent = AgentFactory.create()
+        session.commit()
+
+        assert test_client.get(f'/v3/agents/{agent.id}').json['pending_registration'] is False
+
+
+class TestAgentRegistrationWithDispatcherId:
+    DISPATCHER_ID = 'Xk3mP9qR2sT7vW1yZ4bC6d'
+
+    @pytest.fixture
+    def secret(self):
+        with mock.patch('faraday.server.api.modules.agent.faraday_server') as faraday_server_config:
+            faraday_server_config.agent_registration_secret = pyotp.random_base32()
+            faraday_server_config.agent_token_expiration = 60
+            yield faraday_server_config.agent_registration_secret
+
+    @pytest.fixture
+    def pending_agent(self, session):
+        agent = AgentFactory.create(name='ui name', description='ui description', dispatcher_id=self.DISPATCHER_ID)
+        session.commit()
+        return agent
+
+    def register(self, test_client, secret, token=None, **payload):
+        logout(test_client, [302])
+        data = {'name': 'hostname', 'description': 'local description',
+                'token': token or pyotp.TOTP(secret, interval=60).now(), **payload}
+        return test_client.post('/v3/agents', json=data)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_the_pending_agent_is_claimed(self, test_client, session, secret, pending_agent):
+        agents_before = session.query(Agent).count()
+        old_token = pending_agent.token
+
+        res = self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID)
+
+        assert res.status_code == 201, res.json
+        assert res.json['id'] == pending_agent.id
+        assert (res.json['name'], res.json['description']) == ('ui name', 'ui description')
+        assert res.json['token'] != old_token
+        assert len(res.json['token']) == 64
+        assert session.query(Agent).count() == agents_before
+        session.refresh(pending_agent)
+        assert pending_agent.dispatcher_id is None
+        assert pending_agent.token == res.json['token']
+        assert pending_agent.pending_registration is False
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_the_token_that_could_be_seen_before_the_claim_stops_working(self, test_client, session, secret,
+                                                                          pending_agent):
+        old_token = pending_agent.token
+
+        new_token = self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID).json['token']
+
+        old = test_client.post('/v3/agent_websocket_token', headers=[('Authorization', f'Agent {old_token}')])
+        new = test_client.post('/v3/agent_websocket_token', headers=[('Authorization', f'Agent {new_token}')])
+        assert (old.status_code, new.status_code) == (403, 200)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_the_id_can_only_be_used_once(self, test_client, session, secret, pending_agent):
+        self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID)
+        agents_before = session.query(Agent).count()
+
+        res = self.register(test_client, secret, dispatcher_id=self.DISPATCHER_ID)
+
+        assert res.status_code == 400
+        assert res.json == {'message': 'Unknown or already used dispatcher id', 'code': 'unknown_dispatcher_id'}
+        assert session.query(Agent).count() == agents_before
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_an_unknown_id_is_rejected_without_creating_an_agent(self, test_client, session, secret, pending_agent):
+        agents_before = session.query(Agent).count()
+
+        res = self.register(test_client, secret, dispatcher_id='UnknownUnknownUnknown1')
+
+        assert res.status_code == 400
+        assert res.json == {'message': 'Unknown or already used dispatcher id', 'code': 'unknown_dispatcher_id'}
+        assert session.query(Agent).count() == agents_before
+        session.refresh(pending_agent)
+        assert pending_agent.pending_registration is True
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_an_invalid_totp_is_checked_first_and_keeps_the_agent_pending(self, test_client, session, secret,
+                                                                          pending_agent):
+        res = self.register(test_client, secret, token='000000', dispatcher_id=self.DISPATCHER_ID)
+
+        assert res.status_code == 401
+        session.refresh(pending_agent)
+        assert pending_agent.dispatcher_id == self.DISPATCHER_ID
+
+    @pytest.mark.parametrize('dispatcher_id', ['short', 'x' * 23, 'has spaces in it!!!!!!!', ''])
+    def test_an_id_with_an_invalid_format_is_rejected(self, test_client, secret, pending_agent, dispatcher_id):
+        res = self.register(test_client, secret, dispatcher_id=dispatcher_id)
+
+        assert res.status_code == 400
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_registration_without_id_creates_a_new_agent_and_leaves_the_pending_ones(self, test_client, session,
+                                                                                     secret, pending_agent):
+        agents_before = session.query(Agent).count()
+
+        res = self.register(test_client, secret)
+
+        assert res.status_code == 201
+        assert res.json['name'] == 'hostname'
+        assert session.query(Agent).count() == agents_before + 1
+        session.refresh(pending_agent)
+        assert pending_agent.pending_registration is True
 
 
 class TestAgentAPIGeneric(ReadWriteAPITests):
@@ -606,6 +817,301 @@ class TestAgentAPIGeneric(ReadWriteAPITests):
             json=payload
         )
         assert res.status_code == 400
+
+    def test_executors_expose_enabled_and_varenvs_set(self, session, test_client):
+        agent = AgentFactory.create()
+        ExecutorFactory.create(agent=agent, name='disabled', enabled=False, varenvs_set=['API_KEY'])
+        ExecutorFactory.create(agent=agent, name='default')
+        session.commit()
+
+        res = test_client.get(self.url(agent))
+
+        executors = {executor['name']: executor for executor in res.json['executors']}
+        assert (executors['disabled']['enabled'], executors['disabled']['varenvs_set']) == (False, ['API_KEY'])
+        assert (executors['default']['enabled'], executors['default']['varenvs_set']) == (True, [])
+
+    def test_remote_config_is_exposed(self, session, test_client):
+        with_remote_config = AgentFactory.create(features=['remote_config'])
+        without_remote_config = AgentFactory.create()
+        session.commit()
+
+        assert test_client.get(self.url(with_remote_config)).json['remote_config'] is True
+        assert test_client.get(self.url(without_remote_config)).json['remote_config'] is False
+
+    def test_agent_capabilities_are_exposed(self, session, test_client):
+        capabilities = [{"repo_name": "nmap", "available": True}, {"repo_name": "burp", "available": False}]
+        agent = AgentFactory.create(capabilities=capabilities)
+        session.commit()
+
+        assert test_client.get(self.url(agent)).json['agent_capabilities'] == capabilities
+
+    @pytest.fixture
+    def config_requests(self):
+        """Request ids created by a test, removed from Redis afterwards."""
+        created = []
+        yield created
+        for agent_id, request_id in created:
+            get_redis_client().delete(redis_key(agent_id, request_id))
+
+    @pytest.fixture
+    def remote_agent(self, session):
+        agent = AgentFactory.create(sid='this_is_a_sid', features=['remote_config'])
+        session.commit()
+        return agent
+
+    def post_config(self, test_client, agent, payload):
+        return test_client.post(join(self.url(agent), 'executor_config'), json=payload)
+
+    def test_executor_config_is_sent_to_the_agent(self, test_client, remote_agent, config_requests):
+        payload = {'action': 'create', 'name': 'my_nmap', 'repo_name': 'nmap', 'varenvs': {'API_KEY': 'secret'},
+                   'enabled': True}
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, payload)
+
+        assert res.status_code == 202
+        request_id = res.json['request_id']
+        config_requests.append((remote_agent.id, request_id))
+        emit.assert_called_once_with('executor_config', {'request_id': request_id, **payload},
+                                     to='this_is_a_sid', namespace='/dispatcher')
+
+    def test_executor_config_is_pending_in_redis_without_the_varenvs(self, test_client, remote_agent,
+                                                                     config_requests):
+        payload = {'action': 'create', 'name': 'my_nmap', 'varenvs': {'API_KEY': 'secret'}}
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit'):
+            request_id = self.post_config(test_client, remote_agent, payload).json['request_id']
+        config_requests.append((remote_agent.id, request_id))
+
+        redis_client = get_redis_client()
+        key = redis_key(remote_agent.id, request_id)
+        assert json.loads(redis_client.get(key)) == {'status': 'pending', 'agent_id': remote_agent.id,
+                                                     'action': 'create'}
+        assert 'secret' not in redis_client.get(key)
+        assert 0 < redis_client.ttl(key) <= EXECUTOR_CONFIG_TTL
+
+    def test_executor_config_only_sends_the_given_fields(self, test_client, remote_agent, config_requests):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, {'action': 'delete', 'name': 'my_nmap'})
+        config_requests.append((remote_agent.id, res.json['request_id']))
+
+        assert emit.call_args.args[1] == {'request_id': res.json['request_id'], 'action': 'delete',
+                                          'name': 'my_nmap'}
+
+    def test_executor_config_update_can_remove_a_variable(self, test_client, remote_agent, config_requests):
+        payload = {'action': 'update', 'name': 'my_nmap', 'varenvs': {'API_KEY': None, 'OTHER': 'value'}}
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, payload)
+        config_requests.append((remote_agent.id, res.json['request_id']))
+
+        assert res.status_code == 202
+        assert emit.call_args.args[1]['varenvs'] == {'API_KEY': None, 'OTHER': 'value'}
+
+    def test_executor_config_update_can_disable(self, test_client, remote_agent, config_requests):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent,
+                                   {'action': 'update', 'name': 'my_nmap', 'enabled': False})
+        config_requests.append((remote_agent.id, res.json['request_id']))
+
+        assert res.status_code == 202
+        assert emit.call_args.args[1]['enabled'] is False
+
+    def test_executor_config_offline_agent_is_gone(self, session, test_client):
+        agent = AgentFactory.create(sid=None, features=['remote_config'])
+        session.commit()
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, agent, {'action': 'delete', 'name': 'my_nmap'})
+
+        assert res.status_code == 410
+        emit.assert_not_called()
+
+    def test_executor_config_agent_without_remote_config_is_rejected(self, session, test_client):
+        agent = AgentFactory.create(sid='this_is_a_sid')
+        session.commit()
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, agent, {'action': 'delete', 'name': 'my_nmap'})
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    def test_executor_config_unknown_agent_is_not_found(self, test_client):
+        res = test_client.post(join(self.url(), '999999', 'executor_config'),
+                               json={'action': 'delete', 'name': 'my_nmap'})
+
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('payload', [
+        {'name': 'my_nmap'},
+        {'action': 'restart', 'name': 'my_nmap'},
+        {'action': 'create'},
+        {'action': 'create', 'name': '  '},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': ['API_KEY']},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': {'API_KEY': 1}},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': {'API_KEY': None}},
+        {'action': 'create', 'name': 'my_nmap', 'varenvs': {'': 'value'}},
+        {'action': 'create', 'name': 'my_nmap', 'enabled': 'yes'},
+        {'action': 'create', 'name': 'my_nmap', 'repo_name': 3},
+        {'action': 'delete', 'name': 'my_nmap', 'varenvs': {'API_KEY': 'value'}},
+        {'action': 'delete', 'name': 'my_nmap', 'enabled': True},
+    ])
+    def test_executor_config_invalid_body_is_rejected(self, test_client, remote_agent, payload):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, payload)
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    @pytest.fixture
+    def readable_agent(self, session):
+        agent = AgentFactory.create(sid='this_is_a_sid', features=['remote_config', 'remote_config_read'])
+        session.commit()
+        return agent
+
+    def test_executor_config_read_is_sent_to_the_agent(self, test_client, readable_agent, config_requests):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, readable_agent, {'action': 'read', 'name': 'my_burp'})
+
+        assert res.status_code == 202
+        request_id = res.json['request_id']
+        config_requests.append((readable_agent.id, request_id))
+        emit.assert_called_once_with('executor_config', {'request_id': request_id, 'action': 'read', 'name': 'my_burp'},
+                                     to='this_is_a_sid', namespace='/dispatcher')
+        assert get_request(readable_agent.id, request_id)['action'] == 'read'
+
+    def test_executor_config_read_needs_an_agent_that_supports_it(self, test_client, remote_agent):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, remote_agent, {'action': 'read', 'name': 'my_burp'})
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    @pytest.mark.parametrize('extra', [{'varenvs': {'A': 'b'}}, {'enabled': True}, {'repo_name': 'burp'}])
+    def test_executor_config_read_takes_only_the_name(self, test_client, readable_agent, extra):
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = self.post_config(test_client, readable_agent, {'action': 'read', 'name': 'my_burp', **extra})
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+
+    def test_executor_config_status_returns_the_values_of_a_read(self, test_client, readable_agent, config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+        get_redis_client().set(redis_key(readable_agent.id, request_id), json.dumps(
+            {'status': 'ok', 'agent_id': readable_agent.id, 'message': '', 'varenvs': {'BURP_HOST': 'https://b.io'}}))
+
+        res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id))
+
+        assert res.json == {'status': 'ok', 'message': '', 'varenvs': {'BURP_HOST': 'https://b.io'}}
+
+    def test_executor_config_status_waits_for_the_agent(self, test_client, readable_agent, config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+        key = redis_key(readable_agent.id, request_id)
+
+        def agent_replies(_seconds):
+            get_redis_client().set(key, json.dumps({'status': 'ok', 'agent_id': readable_agent.id, 'message': '',
+                                                    'varenvs': {'A': 'b'}}))
+
+        with mock.patch('faraday.server.api.modules.agent.time') as fake_time:
+            fake_time.monotonic.return_value = 0
+            fake_time.sleep.side_effect = agent_replies
+            res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id) + '?wait=5')
+
+        assert res.json == {'status': 'ok', 'message': '', 'varenvs': {'A': 'b'}}
+
+    def test_executor_config_status_wait_times_out_as_pending(self, test_client, readable_agent, config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+
+        with mock.patch('faraday.server.api.modules.agent.time') as fake_time:
+            fake_time.monotonic.side_effect = [0, 1, 2, 3, 4, 5, 6]
+            res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id) + '?wait=2')
+
+        assert (res.status_code, res.json) == (200, {'status': 'pending'})
+
+    @pytest.mark.parametrize('wait', ['abc', '-1', '1.5', '²'])
+    def test_executor_config_status_invalid_wait_is_rejected(self, test_client, readable_agent, wait,
+                                                             config_requests):
+        request_id = create_request(readable_agent.id, 'read')
+        config_requests.append((readable_agent.id, request_id))
+
+        res = test_client.get(join(self.url(readable_agent), 'executor_config', request_id) + f'?wait={wait}')
+
+        assert res.status_code == 400
+
+    def test_remote_config_read_is_exposed(self, session, test_client):
+        readable = AgentFactory.create(features=['remote_config', 'remote_config_read'])
+        not_readable = AgentFactory.create(features=['remote_config'])
+        session.commit()
+
+        assert test_client.get(self.url(readable)).json['remote_config_read'] is True
+        assert test_client.get(self.url(not_readable)).json['remote_config_read'] is False
+
+    def test_executor_config_status_follows_the_request(self, test_client, remote_agent, config_requests):
+        request_id = create_request(remote_agent.id, 'create')
+        config_requests.append((remote_agent.id, request_id))
+        url = join(self.url(remote_agent), 'executor_config', request_id)
+
+        res = test_client.get(url)
+        assert (res.status_code, res.json) == (200, {'status': 'pending'})
+
+        get_redis_client().set(redis_key(remote_agent.id, request_id),
+                               json.dumps({'status': 'error', 'agent_id': remote_agent.id, 'message': 'boom'}))
+        res = test_client.get(url)
+        assert (res.status_code, res.json) == (200, {'status': 'error', 'message': 'boom'})
+
+    def test_executor_config_status_ok(self, test_client, remote_agent, config_requests):
+        request_id = create_request(remote_agent.id, 'create')
+        config_requests.append((remote_agent.id, request_id))
+        get_redis_client().set(redis_key(remote_agent.id, request_id),
+                               json.dumps({'status': 'ok', 'agent_id': remote_agent.id, 'message': 'done'}))
+
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', request_id))
+
+        assert res.json == {'status': 'ok', 'message': 'done'}
+
+    def test_executor_config_status_of_an_expired_request_is_not_found(self, test_client, remote_agent):
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', str(uuid4())))
+
+        assert res.status_code == 404
+
+    def test_executor_config_status_with_an_invalid_request_id_is_not_found(self, test_client, remote_agent):
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', '*'))
+
+        assert res.status_code == 404
+
+    def test_executor_config_status_of_another_agent_is_not_found(self, session, test_client, remote_agent,
+                                                                  config_requests):
+        other_agent = AgentFactory.create(features=['remote_config'])
+        session.commit()
+        request_id = create_request(other_agent.id, 'create')
+        config_requests.append((other_agent.id, request_id))
+
+        res = test_client.get(join(self.url(remote_agent), 'executor_config', request_id))
+
+        assert res.status_code == 404
+        assert get_request(other_agent.id, request_id) == {'status': 'pending', 'agent_id': other_agent.id,
+                                                           'action': 'create'}
+
+    def test_run_disabled_executor_fails(self, session, test_client):
+        agent = AgentFactory.create(sid='this_is_a_sid')
+        executor = ExecutorFactory.create(agent=agent, enabled=False)
+        workspace = WorkspaceFactory.create()
+        session.commit()
+        payload = {
+            'executor_data': {"args": {}, "executor": executor.name},
+            "workspaces_names": [workspace.name]
+        }
+
+        with mock.patch('faraday.server.api.modules.agent.socketio.emit') as emit:
+            res = test_client.post(join(self.url(agent), 'run'), json=payload)
+
+        assert res.status_code == 400
+        emit.assert_not_called()
+        assert AgentExecution.query.filter_by(executor_id=executor.id).count() == 0
 
     def test_get_manifests(self, session, csrf_token, test_client):
         agent = AgentFactory.create()

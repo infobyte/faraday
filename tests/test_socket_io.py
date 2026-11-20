@@ -1,7 +1,37 @@
+import json
+from unittest import mock
+from uuid import uuid4
+
+import pytest
+import redis
+
+from faraday.server.app import register_extensions
+from faraday.server.config import faraday_server
+from faraday.server.debouncer import get_redis_client
+from faraday.server.utils.executor_config import (
+    EXECUTOR_CONFIG_TTL,
+    create_request,
+    finish_request,
+    get_request,
+    redis_key,
+)
 from faraday.server.models import Executor, Agent
 from faraday.server.extensions import socketio
 from faraday.server.websockets.dispatcher import update_executors
 from tests.factories import AgentFactory, ExecutorFactory
+
+
+@pytest.mark.parametrize('testing', [True, False])
+def test_engineio_packet_logging_is_off_even_with_the_socketio_logger(app, testing):
+    # Engine.IO logs the payload of every packet: executor secrets and agent tokens travel in them
+    with mock.patch('faraday.server.app.socketio') as socketio_mock, \
+            mock.patch('faraday.server.app.celery'), \
+            mock.patch.dict(app.config, {'TESTING': testing}), \
+            mock.patch.object(faraday_server, 'socketio_logger', True):
+        register_extensions(app)
+
+    assert socketio_mock.init_app.call_args.kwargs['logger'] is True
+    assert socketio_mock.init_app.call_args.kwargs['engineio_logger'] is False
 
 
 class TestSockets:
@@ -99,6 +129,281 @@ class TestSockets:
         session.expire_all()
         agent = Agent.query.one()
         assert not agent.is_online
+
+
+def join_agent(app, test_client, session, workspace, **extra):
+    agent = AgentFactory.create(token='pepito')
+    session.add(agent)
+    session.commit()
+    headers = {"Authorization": f"Agent {agent.token}"}
+    token = test_client.post('/v3/agent_websocket_token', headers=headers).json['token']
+    client = socketio.test_client(app, namespace='/dispatcher')
+    message = {"action": "JOIN_AGENT", "workspace": workspace.name, "token": token, "executors": [], **extra}
+    client.emit("join_agent", message, namespace='/dispatcher')
+    session.expire_all()
+    return client, Agent.query.one()
+
+
+class TestAgentFeatures:
+    join = staticmethod(join_agent)
+
+    def test_features_are_stored_on_join(self, app, test_client, session, workspace):
+        _, agent = self.join(app, test_client, session, workspace, features=['remote_config'])
+
+        assert agent.features == ['remote_config']
+        assert agent.remote_config is True
+
+    def test_agent_without_features_has_no_remote_config(self, app, test_client, session, workspace):
+        _, agent = self.join(app, test_client, session, workspace)
+
+        assert agent.features == []
+        assert agent.remote_config is False
+
+    def test_features_are_replaced_on_rejoin(self, app, test_client, session, workspace):
+        client, agent = self.join(app, test_client, session, workspace, features=['remote_config'])
+        token = test_client.post('/v3/agent_websocket_token',
+                                 headers={"Authorization": f"Agent {agent.token}"}).json['token']
+
+        client.emit("join_agent", {"token": token, "executors": []}, namespace='/dispatcher')
+        session.expire_all()
+
+        assert Agent.query.one().remote_config is False
+
+    def test_invalid_features_are_ignored(self, app, test_client, session, workspace):
+        _, agent = self.join(app, test_client, session, workspace, features='remote_config')
+
+        assert agent.features == []
+        assert agent.is_online
+
+
+class TestAgentCapabilities:
+    PAYLOAD = {
+        "version": 1,
+        "executors": [{"repo_name": "nmap", "available": True}, {"repo_name": "burp", "available": False}],
+    }
+
+    def announce(self, client, session, payload):
+        client.emit("agent_capabilities", payload, namespace='/dispatcher')
+        session.expire_all()
+        return Agent.query.one()
+
+    def test_capabilities_are_stored(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+
+        agent = self.announce(client, session, self.PAYLOAD)
+
+        assert agent.capabilities == self.PAYLOAD["executors"]
+
+    def test_capabilities_are_replaced_on_a_new_announcement(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        self.announce(client, session, self.PAYLOAD)
+
+        agent = self.announce(client, session, {**self.PAYLOAD, "executors": [{"repo_name": "zap", "available": True}]})
+
+        assert agent.capabilities == [{"repo_name": "zap", "available": True}]
+
+    def test_json_string_payload_is_accepted(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+
+        agent = self.announce(client, session, json.dumps(self.PAYLOAD))
+
+        assert agent.capabilities == self.PAYLOAD["executors"]
+
+    def test_invalid_entries_are_dropped(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        executors = [{"repo_name": "nmap", "available": True}, {"available": True}, {"repo_name": "zap"},
+                     {"repo_name": 3, "available": True}, "burp", {"repo_name": "burp", "available": "yes"}]
+
+        agent = self.announce(client, session, {**self.PAYLOAD, "executors": executors})
+
+        assert agent.capabilities == [{"repo_name": "nmap", "available": True}]
+
+    def test_malformed_payload_keeps_what_was_stored(self, app, test_client, session, workspace):
+        client, _ = join_agent(app, test_client, session, workspace)
+        self.announce(client, session, self.PAYLOAD)
+
+        agent = self.announce(client, session, {"executors": "nmap"})
+
+        assert agent.capabilities == self.PAYLOAD["executors"]
+
+    def test_announcement_from_an_unknown_sid_is_ignored(self, app, session):
+        agent = AgentFactory.create(sid=None)
+        session.commit()
+        client = socketio.test_client(app, namespace='/dispatcher')
+
+        client.emit("agent_capabilities", self.PAYLOAD, namespace='/dispatcher')
+        session.expire_all()
+
+        assert Agent.query.get(agent.id).capabilities == []
+
+
+class TestExecutorConfigStatus:
+
+    @pytest.fixture
+    def agent_client(self, app, test_client, session, workspace):
+        client, agent = join_agent(app, test_client, session, workspace, features=['remote_config'])
+        created = []
+        yield client, agent, created
+        for agent_id, request_id in created:
+            get_redis_client().delete(redis_key(agent_id, request_id))
+
+    def request(self, agent_client, agent_id=None, action='create'):
+        _, agent, created = agent_client
+        request_id = create_request(agent_id or agent.id, action)
+        created.append((agent_id or agent.id, request_id))
+        return request_id
+
+    def report(self, agent_client, payload):
+        client, _, _ = agent_client
+        client.emit("executor_config_status", payload, namespace='/dispatcher')
+
+    def test_successful_status_is_stored(self, agent_client):
+        request_id = self.request(agent_client)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        agent_id = agent_client[1].id
+        assert get_request(agent_id, request_id) == {"status": "ok", "agent_id": agent_id, "message": "created"}
+
+    def test_failed_status_is_stored(self, agent_client):
+        request_id = self.request(agent_client)
+
+        self.report(agent_client, {"request_id": request_id, "successful": False, "message": "boom"})
+
+        agent_id = agent_client[1].id
+        assert get_request(agent_id, request_id) == {"status": "error", "agent_id": agent_id, "message": "boom"}
+
+    def test_the_ttl_is_kept(self, agent_client):
+        request_id = self.request(agent_client)
+        key = redis_key(agent_client[1].id, request_id)
+        get_redis_client().expire(key, 100)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        assert 0 < get_redis_client().ttl(key) <= 100
+        assert 100 < EXECUTOR_CONFIG_TTL
+
+    def test_varenvs_are_never_stored(self, agent_client):
+        request_id = self.request(agent_client)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created",
+                                   "varenvs": {"API_KEY": "secret"}})
+
+        assert 'secret' not in get_redis_client().get(redis_key(agent_client[1].id, request_id))
+
+    def test_unknown_request_is_ignored(self, agent_client):
+        request_id = str(uuid4())
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        assert get_request(agent_client[1].id, request_id) is None
+
+    def test_request_of_another_agent_is_ignored(self, agent_client, session):
+        other_agent = AgentFactory.create(features=['remote_config'])
+        session.commit()
+        request_id = self.request(agent_client, agent_id=other_agent.id)
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        assert get_request(other_agent.id, request_id)["status"] == "pending"
+
+    def test_a_finished_request_is_not_overwritten(self, agent_client):
+        request_id = self.request(agent_client)
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "created"})
+
+        self.report(agent_client, {"request_id": request_id, "successful": False, "message": "later"})
+
+        assert get_request(agent_client[1].id, request_id)["status"] == "ok"
+
+    @pytest.mark.parametrize("payload", [
+        {"successful": True, "message": "created"},
+        {"request_id": "*", "successful": True, "message": "created"},
+        {"request_id": "REQUEST", "successful": "yes", "message": "created"},
+        "not json",
+    ])
+    def test_invalid_status_is_ignored(self, agent_client, payload):
+        request_id = self.request(agent_client)
+        if isinstance(payload, dict) and payload.get("request_id") == "REQUEST":
+            payload = {**payload, "request_id": request_id}
+
+        self.report(agent_client, payload)
+
+        assert get_request(agent_client[1].id, request_id)["status"] == "pending"
+
+    def test_the_values_of_a_read_are_stored(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+        varenvs = {"BURP_HOST": "https://burp.acme.com", "PULL_INTERVAL": 60, "RATIO": 0.5, "VERIFY": True}
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "", "varenvs": varenvs})
+
+        agent_id = agent_client[1].id
+        assert get_request(agent_id, request_id) == {"status": "ok", "agent_id": agent_id, "message": "",
+                                                     "varenvs": varenvs}
+
+    def test_values_are_ignored_unless_the_request_is_a_read(self, agent_client):
+        request_id = self.request(agent_client, action='update')
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "updated",
+                                   "varenvs": {"API_KEY": "secret"}})
+
+        stored = get_redis_client().get(redis_key(agent_client[1].id, request_id))
+        assert 'secret' not in stored
+        assert 'varenvs' not in get_request(agent_client[1].id, request_id)
+
+    def test_values_of_a_failed_read_are_ignored(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+
+        self.report(agent_client, {"request_id": request_id, "successful": False, "message": "no such executor",
+                                   "varenvs": {"BURP_HOST": "https://burp.acme.com"}})
+
+        assert 'varenvs' not in get_request(agent_client[1].id, request_id)
+
+    def test_invalid_values_of_a_read_are_dropped(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+        varenvs = {"OK": "value", "NULL": None, "LIST": ["a"], "DICT": {"a": 1}, "": "x"}
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "", "varenvs": varenvs})
+
+        assert get_request(agent_client[1].id, request_id)["varenvs"] == {"OK": "value"}
+
+    def test_values_that_are_not_an_object_are_ignored(self, agent_client):
+        request_id = self.request(agent_client, action='read')
+
+        self.report(agent_client, {"request_id": request_id, "successful": True, "message": "", "varenvs": ["a"]})
+
+        stored = get_request(agent_client[1].id, request_id)
+        assert stored["status"] == "ok"
+        assert "varenvs" not in stored
+
+    def test_a_reply_that_overlaps_another_one_does_not_replace_it(self, agent_client):
+        agent_id = agent_client[1].id
+        request_id = self.request(agent_client)
+        key = redis_key(agent_id, request_id)
+        original_multi = redis.client.Pipeline.multi
+
+        def multi_after_a_competing_reply(pipe):
+            # Another reply is stored after this one saw the request pending and before it is written
+            get_redis_client().set(key, json.dumps({"status": "error", "agent_id": agent_id, "message": "other"}),
+                                   keepttl=True)
+            return original_multi(pipe)
+
+        with mock.patch.object(redis.client.Pipeline, 'multi', multi_after_a_competing_reply):
+            finished = finish_request(agent_id, request_id, True, "created")
+
+        assert finished is False
+        assert get_request(agent_id, request_id) == {"status": "error", "agent_id": agent_id, "message": "other"}
+
+    def test_status_from_an_unknown_sid_is_ignored(self, app, session):
+        agent = AgentFactory.create(sid=None)
+        session.commit()
+        request_id = create_request(agent.id, 'create')
+        client = socketio.test_client(app, namespace='/dispatcher')
+
+        client.emit("executor_config_status", {"request_id": request_id, "successful": True, "message": "created"},
+                    namespace='/dispatcher')
+
+        assert get_request(agent.id, request_id)["status"] == "pending"
+        get_redis_client().delete(redis_key(agent.id, request_id))
 
 
 class TestCheckExecutors:
@@ -216,3 +521,74 @@ class TestCheckExecutors:
         assert count_executors == 1
         from_db_executor = Executor.query.filter_by(id=another_executor.id, agent=agent).first()
         assert from_db_executor.name == 'executor 2'
+
+    def test_new_executor_is_enabled_by_default(self, session):
+        agent = AgentFactory.create()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is True
+        assert executor.varenvs_set == []
+
+    def test_enabled_and_varenvs_set_are_read_from_announcement(self, session):
+        agent = AgentFactory.create()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}, 'enabled': False, 'varenvs_set': ['API_KEY']}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is False
+        assert executor.varenvs_set == ['API_KEY']
+
+    @pytest.mark.parametrize('raw, expected', [
+        (['API_KEY', 1, {'a': 'b'}, None, 'URL'], ['API_KEY', 'URL']),
+        ('API_KEY', []),
+        ({'API_KEY': True}, []),
+    ])
+    def test_varenvs_set_keeps_only_names(self, session, raw, expected):
+        agent = AgentFactory.create()
+        executors = [{'executor_name': 'executor 1', 'args': {}, 'varenvs_set': raw}]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.varenvs_set == expected
+
+    def test_executor_can_be_enabled_again(self, session):
+        agent = AgentFactory.create()
+        ExecutorFactory.create(name='executor 1', agent=agent, enabled=False, varenvs_set=['API_KEY'])
+        session.commit()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}, 'enabled': True, 'varenvs_set': []}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is True
+        assert executor.varenvs_set == []
+
+    def test_announcement_without_enabled_keeps_current_value(self, session):
+        # Dispatchers without remote_config do not send these fields
+        agent = AgentFactory.create()
+        ExecutorFactory.create(name='executor 1', agent=agent, enabled=False)
+        session.commit()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}}
+        ]
+
+        assert update_executors(agent, executors)
+        executor = Executor.query.filter_by(agent=agent).one()
+        assert executor.enabled is False
+
+    def test_disabled_executor_is_not_deleted_when_announced(self, session):
+        agent = AgentFactory.create()
+        executors = [
+            {'executor_name': 'executor 1', 'args': {}, 'enabled': False}
+        ]
+
+        assert update_executors(agent, executors)
+        assert update_executors(agent, executors)
+        assert Executor.query.filter_by(agent=agent).count() == 1

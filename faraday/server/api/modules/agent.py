@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 import http
 import json
 import logging
+import time
 from datetime import datetime
 from uuid import uuid4
 
@@ -14,8 +15,8 @@ import flask
 from flask import Blueprint, abort, request, jsonify
 import flask_login
 from flask_classful import route
-from marshmallow import fields, Schema, EXCLUDE
-from marshmallow.validate import OneOf
+from marshmallow import fields, Schema, EXCLUDE, ValidationError, validates_schema, post_dump
+from marshmallow.validate import Length, OneOf, Regexp
 from sqlalchemy import and_, exists, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import selectinload
@@ -35,15 +36,25 @@ from faraday.server.models import (
     Agent,
     Executor,
     SchedulerGeneric,
+    User,
     db,
+    generate_dispatcher_id,
 )
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
-from faraday.server.utils.agents import get_command_and_agent_execution
+from faraday.server.utils.agents import claim_pending_agent, get_command_and_agent_execution
+from faraday.server.utils.executor_config import (
+    create_request as create_executor_config_request,
+    delete_request as delete_executor_config_request,
+    get_request as get_executor_config_request,
+)
 
 agent_api = Blueprint('agent_api', __name__)
 agent_creation_api = Blueprint('agent_creation_api', __name__)
 logger = logging.getLogger(__name__)
+
+EXECUTOR_CONFIG_MAX_WAIT = 10
+EXECUTOR_CONFIG_POLL_INTERVAL = 0.25
 
 
 def validate_type(base, type_, value):
@@ -102,6 +113,8 @@ class ExecutorSchema(AutoSchema):
     schedules = fields.Nested(ExecutorScheduleStubSchema(), dump_only=True, many=True)
     tool = fields.String(dump_only=True)
     category = fields.List(fields.String(), dump_only=True)
+    enabled = fields.Boolean(dump_only=True)
+    varenvs_set = fields.List(fields.String(), dump_only=True)
 
     class Meta:
         model = Executor
@@ -115,6 +128,8 @@ class ExecutorSchema(AutoSchema):
             'schedules',
             'tool',
             'category',
+            'enabled',
+            'varenvs_set',
         )
 
 
@@ -126,9 +141,27 @@ class AgentSchema(AutoSchema):
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
+    pending_registration = fields.Boolean(dump_only=True)
+    # Only set while the agent waits for its dispatcher: the model clears it when the agent is claimed
+    dispatcher_id = fields.String(dump_only=True)
+    remote_config = fields.Boolean(dump_only=True)
+    remote_config_read = fields.Boolean(dump_only=True)
+    agent_capabilities = fields.List(fields.Dict(), dump_only=True, attribute='capabilities')
     executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
     last_run = fields.DateTime(dump_only=True)
     description = fields.String(dump_only=True)
+
+    @post_dump(pass_original=True)
+    def hide_dispatcher_id(self, data, original, **kwargs):
+        # The dispatcher id (with the registration TOTP) lets whoever has it take over the pending agent, so
+        # only its creator and the admins see it
+        if data.get('dispatcher_id') is None:
+            return data
+        user = flask_login.current_user
+        if original.creator_id == user.id or User.ADMIN_ROLE in user.roles_list:
+            return data
+        data['dispatcher_id'] = None
+        return data
 
     class Meta:
         model = Agent
@@ -142,6 +175,11 @@ class AgentSchema(AutoSchema):
             'update_date',
             'creator',
             'is_online',
+            'pending_registration',
+            'dispatcher_id',
+            'remote_config',
+            'remote_config_read',
+            'agent_capabilities',
             'active',
             'executors',
             'last_run'
@@ -153,6 +191,8 @@ class AgentCreationSchema(Schema):
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
     description = fields.String(required=False)
+    # Pairs the registration with an agent created in advance from the UI
+    dispatcher_id = fields.String(required=False, load_only=True, validate=Regexp(r'^[A-Za-z0-9_-]{22}$'))
 
     class Meta:
         fields = (
@@ -160,12 +200,44 @@ class AgentCreationSchema(Schema):
             'name',
             'token',
             'description',
+            'dispatcher_id',
         )
+
+
+class PendingAgentSchema(Schema):
+    name = fields.String(required=True, validate=Length(min=1))
+    description = fields.String(required=False)
+
+    @validates_schema
+    def validate_name(self, data, **kwargs):
+        if not data['name'].strip():
+            raise ValidationError('Must not be blank.', field_name='name')
 
 
 class ExecutorDataSchema(Schema):
     executor = fields.String(default=None)
     args = fields.Dict(default=None)
+
+
+class ExecutorConfigSchema(Schema):
+    action = fields.String(required=True, validate=OneOf(['create', 'update', 'delete', 'read']))
+    name = fields.String(required=True, validate=Length(min=1))
+    repo_name = fields.String(required=False)
+    # A null value removes the variable, which only makes sense when updating
+    varenvs = fields.Dict(keys=fields.String(validate=Length(min=1)), values=fields.String(allow_none=True),
+                          required=False)
+    enabled = fields.Boolean(required=False, truthy={True}, falsy={False})
+
+    @validates_schema
+    def validate_action_fields(self, data, **kwargs):
+        if not data['name'].strip():
+            raise ValidationError('Must not be blank.', field_name='name')
+        not_allowed = {'delete': ('varenvs', 'enabled'), 'read': ('varenvs', 'enabled', 'repo_name')}
+        for field in not_allowed.get(data['action'], ()):
+            if field in data:
+                raise ValidationError(f"Not allowed when the action is {data['action']}.", field_name=field)
+        if data['action'] == 'create' and any(value is None for value in data.get('varenvs', {}).values()):
+            raise ValidationError('Variables can only be removed when updating.', field_name='varenvs')
 
 
 class AgentRunSchema(Schema):
@@ -309,8 +381,44 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
                           interval=int(faraday_server.agent_token_expiration)
                           ).verify(token, valid_window=1):
             abort(401, "Invalid Token")
+        dispatcher_id = data.pop('dispatcher_id', None)
+        if dispatcher_id is not None:
+            agent = claim_pending_agent(dispatcher_id)
+            if agent is None:
+                response = jsonify({'message': 'Unknown or already used dispatcher id',
+                                    'code': 'unknown_dispatcher_id'})
+                response.status_code = http.HTTPStatus.BAD_REQUEST
+                abort(response)
+            return agent
         agent = super()._perform_create(data, **kwargs)
         return agent
+
+    @route('/pending', methods=['POST'])
+    def create_pending(self):
+        """
+        ---
+          tags: ["Agent"]
+          description: |
+            Creates an agent that waits for its dispatcher. The dispatcher claims it when it registers with the
+            returned `dispatcher_id`. The token of the agent is never returned.
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: PendingAgentSchema
+          responses:
+            201:
+              description: The pending agent, with the id that its dispatcher has to use
+            400:
+              description: Bad request
+        """
+        data = self._parse_data(PendingAgentSchema(unknown=EXCLUDE), request)
+        agent = Agent(name=data['name'], description=data.get('description', ''),
+                      dispatcher_id=generate_dispatcher_id(), creator=flask_login.current_user)
+        db.session.add(agent)
+        db.session.commit()
+        return flask.jsonify({'id': agent.id, 'name': agent.name, 'description': agent.description,
+                              'dispatcher_id': agent.dispatcher_id}), http.HTTPStatus.CREATED
 
     @route('/<int:agent_id>/run', methods=['POST'])
     def run_agent(self, agent_id):
@@ -358,6 +466,8 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                              Executor.agent_id == agent.id).one()
+            if not executor.enabled:
+                abort(400, f'Executor {executor.name} is disabled')
 
             # VALIDATE
             errors = {}
@@ -453,6 +563,79 @@ class AgentView(ReadWriteView, FilterMixin, BulkDeleteMixin):
             return self._envelope_list(self._dump(objects, kwargs, many=True))
         except ValueError as e:
             flask.abort(400, e)
+
+    @route('/<int:agent_id>/executor_config', methods=['POST'])
+    def executor_config(self, agent_id):
+        """
+        ---
+          tags: ["Agent"]
+          description: Asks the agent to create, update, delete or read one of its executors (a read returns the values of the variables the agent declares as non-sensitive)
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: ExecutorConfigSchema
+          responses:
+            202:
+              description: The request was sent to the agent, ask for its result with the request_id
+            400:
+              description: Bad request
+            410:
+              description: The agent is offline
+        """
+        if flask.request.content_type != 'application/json':
+            abort(400, "Only application/json is a valid content-type")
+        data = self._parse_data(ExecutorConfigSchema(unknown=EXCLUDE), request)
+        agent = self._get_object(agent_id)
+        if not agent.remote_config:
+            abort(http.HTTPStatus.BAD_REQUEST, "Agent does not support remote configuration")
+        if data['action'] == 'read' and not agent.remote_config_read:
+            abort(http.HTTPStatus.BAD_REQUEST, "Agent does not support reading the configuration of its executors")
+        if agent.is_offline:
+            abort(http.HTTPStatus.GONE, "Agent is offline")
+        request_id = create_executor_config_request(agent.id, data['action'])
+        try:
+            # The values of varenvs only travel through the socket, they are never stored or logged
+            socketio.emit('executor_config', {'request_id': request_id, **data}, to=agent.sid,
+                          namespace='/dispatcher')
+        except Exception:
+            delete_executor_config_request(agent.id, request_id)
+            raise
+        return flask.jsonify({'request_id': request_id}), http.HTTPStatus.ACCEPTED
+
+    @route('/<int:agent_id>/executor_config/<request_id>', methods=['GET'])
+    def executor_config_status(self, agent_id, request_id):
+        """
+        ---
+          tags: ["Agent"]
+          description: |
+            Result of a request to configure an executor of the agent. With `wait` (seconds, at most 10) the
+            answer is held until the request is no longer pending or the time is over. A successful `read`
+            also returns the `varenvs` that the agent declares as non-sensitive.
+          responses:
+            200:
+              description: pending, ok or error, with the message of the agent
+            404:
+              description: Unknown or expired request
+        """
+        agent = self._get_object(agent_id)
+        wait = request.args.get('wait', '0')
+        # isdecimal only accepts 0-9, isdigit also accepts characters int() cannot parse
+        if not wait.isdecimal():
+            abort(http.HTTPStatus.BAD_REQUEST, "wait must be a number of seconds")
+        deadline = time.monotonic() + min(int(wait), EXECUTOR_CONFIG_MAX_WAIT)
+        stored = get_executor_config_request(agent.id, request_id)
+        while stored is not None and stored['status'] == 'pending' and time.monotonic() < deadline:
+            time.sleep(EXECUTOR_CONFIG_POLL_INTERVAL)
+            stored = get_executor_config_request(agent.id, request_id)
+        if stored is None:
+            abort(http.HTTPStatus.NOT_FOUND, "Unknown or expired request")
+        response = {'status': stored['status']}
+        if stored['status'] != 'pending':
+            response['message'] = stored.get('message', '')
+            if 'varenvs' in stored:
+                response['varenvs'] = stored['varenvs']
+        return flask.jsonify(response)
 
     @route('/get_manifests', methods=['GET'])
     def manifests_get(self):

@@ -60,6 +60,8 @@ class AgentsScheduleSchema(SchedulerSchema):
                 data['executor'] = executor
             except NoResultFound as e:
                 raise InvalidUsage(f'Executor id not found: {executor_id}') from e
+            if not executor.enabled:
+                raise InvalidUsage(f'Executor {executor.name} is disabled')
         return data
 
     @staticmethod
@@ -115,6 +117,8 @@ class AgentsScheduleView(SchedulerView):
         if not agents_schedule.executor.agent.active:
             message = f'Agent is paused. active flag: {agents_schedule.executor.agent.active}'
             abort(http.HTTPStatus.GONE, message)
+        if not agents_schedule.executor.enabled:
+            abort(http.HTTPStatus.BAD_REQUEST, f'Executor {agents_schedule.executor.name} is disabled')
         plugin_args = {
             "ignore_info": agents_schedule.ignore_info,
             "resolve_hostname": agents_schedule.resolve_hostname,

@@ -1,0 +1,4 @@
+{
+  "level": "community",
+  "md": "[ADD] Agents can now be created from the UI before their dispatcher exists. The dispatcher claims the pending agent when it registers with the new optional `dispatcher_id`, and the agents API exposes `pending_registration` and, while the agent is pending, its `dispatcher_id`. #8621"
+}

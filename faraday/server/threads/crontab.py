@@ -317,6 +317,9 @@ class AgentsCronItem(CronItem):
                 logger.info(f'Agent is not online or paused. Agent status: {schedule.executor.agent.status},'
                             f' active flag: {schedule.executor.agent.active}')
                 return False
+            if not schedule.executor.enabled:
+                logger.info(f'Executor {schedule.executor.name} is disabled, skipping schedule {schedule.id}')
+                return False
 
             schedule.last_run = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
             db.session.add(schedule)

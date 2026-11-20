@@ -6,13 +6,30 @@ See the file 'doc/LICENSE' for the license information
 # Standard library imports
 import logging
 from datetime import datetime
-from typing import Tuple
+from typing import Optional, Tuple
 from uuid import UUID
 
 # Local application imports
-from faraday.server.models import Command, AgentExecution, Executor, Workspace
+from sqlalchemy import update
+
+from faraday.server.models import Agent, Command, AgentExecution, Executor, Workspace, db, generate_agent_token
 
 logger = logging.getLogger(__name__)
+
+
+def claim_pending_agent(dispatcher_id: str) -> Optional[Agent]:
+    """Claims the agent that waits for the dispatcher with that id.
+
+    It is one conditional UPDATE, so two dispatchers with the same id cannot claim the same agent. The agent gets a
+    new token, so the one it had when it was created in advance stops working.
+    """
+    claimed_id = db.session.execute(
+        update(Agent).where(Agent.dispatcher_id == dispatcher_id).values(
+            dispatcher_id=None, token=generate_agent_token()
+        ).returning(Agent.id)
+    ).scalar()
+    db.session.commit()
+    return db.session.get(Agent, claimed_id) if claimed_id is not None else None
 
 
 def get_command_and_agent_execution(

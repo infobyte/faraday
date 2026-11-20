@@ -115,7 +115,7 @@ def remove_sid():
 
 class DispatcherNamespace(Namespace):
     def on_connect(self):
-        self.send("Connected to faraday websocket")
+        self.send("Connected to faraday websocket", room=request.sid)
 
     def on_disconnect(self):
         agent = Agent.query.filter(Agent.sid == request.sid).first()
@@ -209,7 +209,7 @@ class DispatcherNamespace(Namespace):
     def on_join_agent(self, message):
         if 'token' not in message or 'executors' not in message:
             logger.warning("Invalid agent join message")
-            self.emit("disconnect", {"reason": "Invalid join agent message"})
+            self.emit("disconnect", {"reason": "Invalid join agent message"}, room=request.sid)
             return
         with current_app.app_context():
             try:
@@ -219,10 +219,10 @@ class DispatcherNamespace(Namespace):
                 db.session.commit()
                 update_executors(agent, message['executors'])
                 logger.info("Agent joined correctly")
-                self.send("Agent joined correctly to dispatcher namespace")
+                self.send("Agent joined correctly to dispatcher namespace", room=request.sid)
             except ValueError:
                 logger.warning('Invalid agent token!')
-                self.emit("disconnect", {"reason": "Invalid agent token!"})
+                self.emit("disconnect", {"reason": "Invalid agent token!"}, room=request.sid)
                 return
 
     def on_leave_agent(self):
@@ -231,13 +231,13 @@ class DispatcherNamespace(Namespace):
     def on_join_workspace(self, message):
         if 'workspace' not in message or 'token' not in message:
             logger.warning(f'Invalid join workspace message: {message["action"]}')
-            self.emit("disconnect")
+            self.emit("disconnect", room=request.sid)
             return
         signer = itsdangerous.TimestampSigner(current_app.config['SECRET_KEY'], salt="websocket")
         try:
             workspace_id = signer.unsign(message['token'], max_age=60)
         except itsdangerous.BadData as e:
-            self.emit("disconnect")
+            self.emit("disconnect", room=request.sid)
             logger.warning(f"Invalid websocket token for workspace {message['workspace']}")
             logger.exception(e)
         else:
@@ -247,4 +247,4 @@ class DispatcherNamespace(Namespace):
                 logger.warning(f"Trying to join workspace {message['workspace']} "
                                f"with token of workspace {workspace.name}. "
                                f"Rejecting.")
-                self.emit("disconnect")
+                self.emit("disconnect", room=request.sid)

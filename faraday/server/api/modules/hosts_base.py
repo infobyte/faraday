@@ -11,7 +11,7 @@ from flask_classful import route
 from marshmallow import Schema, fields
 from pytz import utc
 from sqlalchemy import desc
-from sqlalchemy.orm import joinedload, undefer
+from sqlalchemy.orm import joinedload, selectinload, undefer
 
 # Local application imports
 from faraday.server.api.base import (
@@ -189,12 +189,17 @@ class HostView(
                    Host.creator_command_params,
                    ]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+    # One-to-many collections are loaded with a separate IN query instead of a JOIN: joining
+    # hostnames and services at once returns services x hostnames rows per host (a cartesian
+    # product) and the ORM spends seconds in pure Python building them, blocking the event loop.
+    get_selectinloads = [Host.hostnames, Host.services]
 
     def _filter_eagerload_options(self):
         return [
             joinedload(Host.creator).load_only(User.username),
             joinedload(Host.workspace).load_only(Workspace.name),
-            *[joinedload(relationship) for relationship in self.get_joinedloads],
+            joinedload(Host.update_user),
+            *[selectinload(relationship) for relationship in self.get_selectinloads],
             *[undefer(column) for column in self.get_undefer],
         ]
 
@@ -274,8 +279,6 @@ class HostView(
                 undefer(self.model_class.creator_command_id),
                 undefer(self.model_class.creator_command_tool),
                 undefer(self.model_class.creator_command_params),
-                joinedload(self.model_class.hostnames),
-                joinedload(self.model_class.services),
                 joinedload(self.model_class.update_user),
                 joinedload(getattr(self.model_class, 'creator')).load_only(User.username),
             )

@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 import logging
 import operator
+import secrets
 import string
 import time
 import warnings
@@ -124,8 +125,14 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task',
+    'project_task',
+    'user',
+    'executivereport',
+    'agent',
+    'agentexecution',
+    'command',
     'report_logo',
+    'task',
     'report_template',
     'template_logo',
     'ws_sum_report',
@@ -1555,6 +1562,12 @@ class VulnerabilityGeneric(VulnerabilityABC):
     id = Column(Integer, primary_key=True)
     _tmp_id = Column(Integer)
     confirmed = Column(Boolean, nullable=False, default=False)
+    # Triage state. `triaged` is derived by faraday.server.utils.triage, never set directly.
+    false_positive = Column(Boolean, nullable=False, default=False, server_default=text('false'))
+    triaged = Column(Boolean, nullable=False, default=False, server_default=text('false'))
+    triaged_at = Column(DateTime, nullable=True)
+    triaged_by_id = Column(Integer, ForeignKey('faraday_user.id', ondelete="SET NULL"), nullable=True)
+    triaged_by = relationship('User', foreign_keys=[triaged_by_id])
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
     issuetracker = BlankColumn(Text)
@@ -2379,7 +2392,8 @@ association_workspace_and_users_table = Table(
     'workspace_permission_association',
     db.Model.metadata,
     Column('workspace_id', Integer, ForeignKey('workspace.id', ondelete='CASCADE')),
-    Column('user_id', Integer, ForeignKey('faraday_user.id'))
+    Column('user_id', Integer, ForeignKey('faraday_user.id')),
+    UniqueConstraint('workspace_id', 'user_id', name='uix_workspace_permission_workspace_user'),
 )
 
 
@@ -2573,6 +2587,25 @@ class Workspace(Metadata):
     vulnerability_low_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
     vulnerability_informational_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
     vulnerability_unclassified_notclosed_confirmed_count = Column(Integer, nullable=False, default=0)
+
+    # False positives. They are always closed, so there are no "not closed" or by status variants.
+
+    host_false_positive_count = Column(Integer, nullable=False, default=0)
+    service_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_web_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_code_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_standard_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_high_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_critical_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_medium_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_low_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_informational_false_positive_count = Column(Integer, nullable=False, default=0)
+    vulnerability_unclassified_false_positive_count = Column(Integer, nullable=False, default=0)
+
+    # Triage backlog: vulns nobody reviewed yet
+
+    vulnerability_triage_pending_count = Column(Integer, nullable=False, default=0)
 
     importance = Column(Integer, default=0)
 
@@ -3559,6 +3592,9 @@ class Executor(Metadata):
     category = Column(JSONType, nullable=True)
     tool = Column(String(50), nullable=True)
     website = Column(Text, nullable=True)
+    enabled = Column(Boolean, nullable=False, default=True, server_default=text('true'))
+    # Names only: the agent never sends varenv values back
+    varenvs_set = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -3688,20 +3724,46 @@ class CloudAgentsSchedule(SchedulerGeneric):
     }
 
 
+def generate_agent_token():
+    return "".join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
+
+
+def generate_dispatcher_id():
+    return secrets.token_urlsafe(16)
+
+
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    token = Column(Text, unique=True, nullable=False, default=lambda: "".
-                   join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
+    token = Column(Text, unique=True, nullable=False, default=lambda: generate_agent_token())
 
     name = NonBlankColumn(Text)
     description = BlankColumn(Text)
     active = Column(Boolean, default=True)
     sid = Column(Text)  # socketio sid
+    # Pairs the dispatcher that registers with an agent created in advance from the UI. It is cleared when the
+    # agent is claimed, so an agent that still has it is waiting for its dispatcher.
+    dispatcher_id = Column(String(22), nullable=True, unique=True)
+    # Features announced by the agent on join_agent, e.g. "remote_config"
+    features = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
+    # [{"repo_name": ..., "available": ...}] for every tool the agent knows, announced on connection
+    capabilities = Column(JSONType, nullable=False, default=list, server_default=text("'[]'"))
 
     @property
     def parent(self):
         return
+
+    @property
+    def pending_registration(self):
+        return self.dispatcher_id is not None
+
+    @property
+    def remote_config(self):
+        return 'remote_config' in self.features
+
+    @property
+    def remote_config_read(self):
+        return 'remote_config_read' in self.features
 
     @property
     def is_online(self):
@@ -4064,9 +4126,18 @@ class SlackNotification(db.Model):
 
 class VulnerabilityStatusHistory(db.Model):
 
+    FIELD_STATUS = 'status'
+    FIELD_CONFIRMED = 'confirmed'
+    FIELD_FALSE_POSITIVE = 'false_positive'
+    FIELDS = [FIELD_STATUS, FIELD_CONFIRMED, FIELD_FALSE_POSITIVE]
+
     __tablename__ = 'vulnerability_status_history'
     id = Column(Integer, primary_key=True)
-    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=False)
+    # Which field changed. Status rows carry `status`; confirmed/false_positive rows carry `value`.
+    field = Column(Enum(*FIELDS, name='vulnerability_status_history_fields'), nullable=False,
+                   default=FIELD_STATUS, server_default=FIELD_STATUS)
+    status = Column(Enum(*VulnerabilityGeneric.STATUSES, name='vulnerability_status_history_statuses'), nullable=True)
+    value = Column(Boolean, nullable=True)
     change_date = Column(DateTime, default=datetime.utcnow)
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id', ondelete='CASCADE'), nullable=False)
 

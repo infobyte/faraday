@@ -19,6 +19,7 @@ from sqlalchemy import func
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.models import Workspace, db, Executor, Agent, AgentExecution
 from faraday.server.utils.database import get_or_create
+from faraday.server.utils.executor_config import finish_request, parse_read_varenvs, valid_request_id
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,11 @@ def update_executors(agent, executors):
             executor.category = category
         if raw_executor.get("tool"):
             executor.tool = raw_executor["tool"]
+        # Dispatchers without remote_config do not announce these fields
+        if 'enabled' in raw_executor:
+            executor.enabled = bool(raw_executor['enabled'])
+        if 'varenvs_set' in raw_executor:
+            executor.varenvs_set = parse_varenvs_set(raw_executor['varenvs_set'])
         db.session.add(executor)
         db.session.commit()
         incoming_executor_names.add(raw_executor['executor_name'])
@@ -54,6 +60,41 @@ def update_executors(agent, executors):
             db.session.commit()
 
     return True
+
+
+def parse_features(raw_features):
+    # Dispatchers without feature announcements do not send the field
+    if not isinstance(raw_features, list):
+        return []
+    return [feature for feature in raw_features if isinstance(feature, str)]
+
+
+def parse_varenvs_set(raw_varenvs_set):
+    # Only names are stored, anything else the agent sends is ignored
+    if not isinstance(raw_varenvs_set, list):
+        return []
+    return [name for name in raw_varenvs_set if isinstance(name, str)]
+
+
+def parse_capabilities(raw_executors):
+    if not isinstance(raw_executors, list):
+        return None
+    return [
+        {'repo_name': executor['repo_name'], 'available': executor['available']}
+        for executor in raw_executors
+        if isinstance(executor, dict)
+        and isinstance(executor.get('repo_name'), str)
+        and isinstance(executor.get('available'), bool)
+    ]
+
+
+def _load_payload(data):
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except ValueError:
+            return None
+    return data if isinstance(data, dict) else None
 
 
 def _utc_now():
@@ -134,6 +175,37 @@ class DispatcherNamespace(Namespace):
         )
         db.session.commit()
 
+    def on_agent_capabilities(self, data):
+        agent = Agent.query.filter(Agent.sid == request.sid).first()
+        if not agent:
+            logger.warning("Capabilities received from an unknown agent. SID %s", request.sid)
+            return
+        data = _load_payload(data)
+        capabilities = parse_capabilities(data.get('executors')) if data else None
+        if capabilities is None:
+            logger.warning("Invalid capabilities message from agent %s", agent.id)
+            return
+        agent.capabilities = capabilities
+        db.session.commit()
+
+    def on_executor_config_status(self, data):
+        agent = Agent.query.filter(Agent.sid == request.sid).first()
+        if not agent:
+            logger.warning("Executor config status received from an unknown agent. SID %s", request.sid)
+            return
+        data = _load_payload(data)
+        # Only these fields are read. The values (varenvs) are only kept for a successful read request
+        request_id = data.get('request_id') if data else None
+        successful = data.get('successful') if data else None
+        if not valid_request_id(request_id) or not isinstance(successful, bool):
+            logger.warning("Invalid executor config status from agent %s", agent.id)
+            return
+        message = data.get('message')
+        varenvs = parse_read_varenvs(data.get('varenvs'))
+        if not finish_request(agent.id, request_id, successful, message if isinstance(message, str) else '',
+                              varenvs):
+            logger.warning("Executor config status for an unknown request from agent %s", agent.id)
+
     def on_join_agent(self, message):
         if 'token' not in message or 'executors' not in message:
             logger.warning("Invalid agent join message")
@@ -143,6 +215,7 @@ class DispatcherNamespace(Namespace):
             try:
                 agent = decode_agent_websocket_token(message['token'])
                 agent.sid = request.sid
+                agent.features = parse_features(message.get('features'))
                 db.session.commit()
                 update_executors(agent, message['executors'])
                 logger.info("Agent joined correctly")

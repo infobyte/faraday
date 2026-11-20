@@ -32,7 +32,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import ColumnProperty, RelationshipProperty
+from sqlalchemy.orm import ColumnProperty, RelationshipProperty, aliased
 from sqlalchemy.orm.interfaces import MANYTOMANY
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.elements import BinaryExpression
@@ -49,6 +49,11 @@ from faraday.server.models import (
 )
 
 VULNERABILITY_MODELS = (Vulnerability, VulnerabilityWeb, VulnerabilityGeneric)
+
+# User relationships other than `creator`. The plain User join in
+# QueryBuilder.create_query is bound to creator_id, so these are filtered with
+# EXISTS and grouped/ordered through their own alias of User.
+ALIASED_USER_RELATIONS = ('triaged_by',)
 
 logger = logging.getLogger(__name__)
 
@@ -498,12 +503,59 @@ def apply_order(query, field, direction):
     return query.order_by(nulls(order))
 
 
-def apply_json_order(query, model, field_name, field_name_in_relation, direction):
-    table_name = model.__tablename__
-    ordering = "DESC NULLS LAST" if direction == "desc" else "ASC NULLS FIRST"
-    return query.order_by(
-        text(f"{table_name}.{field_name} ->> :json_key {ordering}").bindparams(json_key=field_name_in_relation)
+NUMERIC_PATTERN = r'^-?\d+(\.\d+)?([eE][-+]?\d+)?$'
+# Month and day may be unpadded (e.g. 2024-1-5), as accepted by FaradayCustomField.
+# Year 0000 does not exist in PostgreSQL.
+DATE_PATTERN = r'^(?!0000)\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$'
+
+
+def _numeric_order_value(value):
+    return sqlalchemy.case(
+        (value.op('~')(NUMERIC_PATTERN), sqlalchemy.cast(value, sqlalchemy.Numeric)),
     )
+
+
+def _date_order_value(value):
+    # DATE_PATTERN still accepts days past the end of the month (e.g. 2024-02-30),
+    # so the day is checked against the month length before casting. Nested CASEs
+    # guarantee that order, since PostgreSQL may evaluate AND operands in any order.
+    def date_part(position):
+        return sqlalchemy.cast(func.split_part(value, '-', position), sqlalchemy.Integer)
+
+    month_start = func.make_date(date_part(1), date_part(2), 1)
+    month_days = sqlalchemy.extract('day', month_start + sqlalchemy.literal_column("interval '1 month - 1 day'"))
+    return sqlalchemy.case(
+        (value.op('~')(DATE_PATTERN), sqlalchemy.case(
+            (date_part(3) <= month_days, sqlalchemy.cast(value, sqlalchemy.Date)),
+        )),
+    )
+
+
+# Custom field types sorted by their typed value instead of as text.
+# Values that can not be converted (legacy data) are sorted as NULL.
+JSON_ORDER_VALUES = {
+    'int': _numeric_order_value,
+    'float': _numeric_order_value,
+    'date': _date_order_value,
+}
+
+
+def apply_json_order(query, model, field_name, field_name_in_relation, direction):
+    json_key = sqlalchemy.literal(field_name_in_relation, sqlalchemy.Text)
+    order_field = getattr(model, field_name).op('->>', return_type=sqlalchemy.Text)(json_key)
+    custom_field = CustomFieldsSchema.query.filter(CustomFieldsSchema.field_name == field_name_in_relation).first()
+    if custom_field and custom_field.field_type in JSON_ORDER_VALUES:
+        order_field = JSON_ORDER_VALUES[custom_field.field_type](order_field)
+    return apply_order(query, order_field, direction)
+
+
+def join_user_relation(query, model, relation_name, user_aliases):
+    """Join the User of `relation_name` (one of ALIASED_USER_RELATIONS) once, through an alias."""
+    if relation_name not in user_aliases:
+        user_alias = aliased(User, name=f'{relation_name}_user')
+        query = query.join(getattr(model, relation_name).of_type(user_alias), isouter=True)
+        user_aliases[relation_name] = user_alias
+    return query, user_aliases[relation_name]
 
 
 def apply_join(query, model, relation, joined_models):
@@ -677,6 +729,10 @@ class QueryBuilder:
                        'operators.')
                 raise TypeError(msg)
             if numargs == 2:
+                if (relation or fieldname) in ALIASED_USER_RELATIONS:
+                    # triaged_by == 'name' or triaged_by__username == 'name'
+                    user_field = getattr(User, fieldname if relation else 'username')
+                    return field.has(opfunc(user_field, argument))
                 map_attr = {
                     'creator': 'username',
                 }
@@ -777,13 +833,18 @@ class QueryBuilder:
         """
         # TODO: Can't this be done with group by below?
         joined_models = set()
+        user_aliases = {}
         query = session.query(model)
 
         if search_params.group_by:
             select_fields = [func.count()]
             for group_by in search_params.group_by:
                 field_name = group_by.field
-                if '__' in field_name:
+                if '__' in field_name and field_name.split('__')[0] in ALIASED_USER_RELATIONS:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    query, user_alias = join_user_relation(query, model, field_name, user_aliases)
+                    select_fields.append(getattr(user_alias, field_name_in_relation))
+                elif '__' in field_name:
                     field_name, field_name_in_relation = field_name.split('__')
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_
@@ -831,7 +892,11 @@ class QueryBuilder:
             if search_params.order_by:
                 for val in search_params.order_by:
                     field_name = val.field
-                    if '__' in field_name:
+                    if '__' in field_name and field_name.split('__')[0] in ALIASED_USER_RELATIONS:
+                        field_name, field_name_in_relation = field_name.split('__')
+                        query, user_alias = join_user_relation(query, model, field_name, user_aliases)
+                        query = apply_order(query, getattr(user_alias, field_name_in_relation), val.direction)
+                    elif '__' in field_name:
                         field_name, field_name_in_relation = field_name.split('__')
                         relation = getattr(model, field_name)
                         # Check if this is a plain column (e.g. JSONType) vs a relationship
@@ -863,7 +928,10 @@ class QueryBuilder:
         if search_params.group_by:
             for group_by in search_params.group_by:
                 field_name = group_by.field
-                if '__' in field_name:
+                if '__' in field_name and field_name.split('__')[0] in user_aliases:
+                    field_name, field_name_in_relation = field_name.split('__')
+                    field = getattr(user_aliases[field_name], field_name_in_relation)
+                elif '__' in field_name:
                     field_name, field_name_in_relation = field_name.split('__')
                     relation = getattr(model, field_name)
                     relation_model = relation.mapper.class_

@@ -3088,7 +3088,7 @@
                     {
                         "in": "query",
                         "name": "confirmed",
-                        "description": "If truthy, only export confirmed vulnerabilities.",
+                        "description": "true exports only confirmed vulnerabilities, false only unconfirmed ones. Omit it to export all.",
                         "schema": {
                             "type": "boolean"
                         }
@@ -3770,7 +3770,7 @@
                     {
                         "in": "query",
                         "name": "confirmed",
-                        "description": "If truthy, only export confirmed vulnerabilities.",
+                        "description": "true exports only confirmed vulnerabilities, false only unconfirmed ones. Omit it to export all.",
                         "schema": {
                             "type": "boolean"
                         }
@@ -8611,7 +8611,8 @@
                         "writeOnly": true
                     },
                     "confirmed": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Someone validated the finding. A vulnerability created by hand (POST /ws/{workspace_name}/vulns) is confirmed unless the request sends confirmed: false or false_positive: true; imported ones default to false."
                     },
                     "data": {
                         "type": "string",
@@ -8764,6 +8765,23 @@
                         "type": "string",
                         "format": "date-time",
                         "readOnly": true
+                    },
+                    "false_positive": {
+                        "type": "boolean"
+                    },
+                    "triaged": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "triaged_by": {
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "triaged_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "method": {
                         "type": "string"
@@ -9458,7 +9476,8 @@
                         "writeOnly": true
                     },
                     "confirmed": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Someone validated the finding. A vulnerability created by hand (POST /ws/{workspace_name}/vulns) is confirmed unless the request sends confirmed: false or false_positive: true; imported ones default to false."
                     },
                     "data": {
                         "type": "string",
@@ -9609,6 +9628,23 @@
                         "type": "string",
                         "format": "date-time",
                         "readOnly": true
+                    },
+                    "false_positive": {
+                        "type": "boolean"
+                    },
+                    "triaged": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "triaged_by": {
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "triaged_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "run_date": {},
                     "credentials": {

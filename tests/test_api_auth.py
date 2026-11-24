@@ -7,10 +7,12 @@ See the file 'doc/LICENSE' for the license information
 import base64
 from datetime import datetime, timedelta
 
+import jwt
 import pytest
 from tests import factories
 from flask_security.utils import hash_password
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
+from faraday.server.config import faraday_server
 from faraday.server.models import UserToken, db
 
 
@@ -157,6 +159,29 @@ class TestTokenAuth:
         res = test_client.get('/v3/agents', headers=headers)
         assert res.status_code != 500
         assert res.status_code in (401, 403)
+
+    def _user(self, session):
+        user = factories.UserFactory.create(active=True, password=hash_password('pw'), roles=['admin'])
+        session.commit()
+        return user
+
+    def test_token_lasts_api_token_expiration_by_default(self, app, session):
+        claims = jwt.decode(self._user(session).get_token(), app.config['SECRET_KEY'], algorithms=['HS512'])
+        assert claims['exp'] - claims['iat'] == int(faraday_server.api_token_expiration)
+
+    def test_short_lived_token_authenticates(self, app, test_client, session):
+        token = self._user(session).get_token(expires_in=60)
+        claims = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS512'])
+        assert claims['exp'] - claims['iat'] == 60
+        test_client._cookies.clear()
+        res = test_client.get('/v3/agents', headers=[('Authorization', f'Token {token}')])
+        assert res.status_code == 200
+
+    def test_expired_token_is_refused(self, test_client, session):
+        token = self._user(session).get_token(expires_in=-1)
+        test_client._cookies.clear()
+        res = test_client.get('/v3/agents', headers=[('Authorization', f'Token {token}')])
+        assert res.status_code == 401
 
 
 class TestUserTokenExpiredExpression:

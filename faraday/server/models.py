@@ -2925,6 +2925,7 @@ class User(db.Model, UserMixin):
         back_populates="allowed_users",
     )
 
+    copilot_enabled = Column(Boolean(), default=False, nullable=False, server_default='false')
     session_id = Column(String(64), unique=True)
 
     def __repr__(self):
@@ -2938,11 +2939,13 @@ class User(db.Model, UserMixin):
             "roles": self.roles_list,
         }
 
-    def get_token(self):
+    def get_token(self, expires_in=None):
+        """Login token. ``expires_in`` (seconds) overrides api_token_expiration for
+        tokens handed to a service for a short task."""
         user_id = self.fs_uniquifier
         hashed_data = hash_data(self.password) if self.password else None
         iat = int(time.time())
-        exp = iat + int(faraday_server.api_token_expiration)
+        exp = iat + int(faraday_server.api_token_expiration if expires_in is None else expires_in)
         jwt_data = {'user_id': user_id, "validation_check": hashed_data, 'iat': iat, 'exp': exp}
 
         return jwt.encode(jwt_data, app.config['SECRET_KEY'], algorithm="HS512")
@@ -4472,6 +4475,26 @@ VulnerabilityGeneric.target_host_os = column_property(
     ),
     deferred=True,
 )
+
+
+class CopilotMessageLog(db.Model):
+    __tablename__ = 'copilot_message_log'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False, index=True)
+    workspace_name = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now, index=True)
+    user_message = Column(Text, nullable=False)
+    assistant_reply = Column(Text, nullable=True)
+    tool_calls = Column(JSONType, nullable=True)
+    input_tokens = Column(Integer, nullable=False, default=0)
+    output_tokens = Column(Integer, nullable=False, default=0)
+    cache_read_tokens = Column(Integer, nullable=False, default=0)
+    cache_write_tokens = Column(Integer, nullable=False, default=0)
+    cost_usd = Column(Float, nullable=False, default=0.0)
+    model_id = Column(Text, nullable=True)
+    status = Column(Text, nullable=False, default='success')
+    error_message = Column(Text, nullable=True)
 
 
 # We have to import this after all models are defined

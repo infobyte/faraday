@@ -26,14 +26,16 @@ STATUSES = ('open', 'closed', 're-opened', 'risk-accepted')
 
 
 def upgrade():
-    conn = op.get_bind()
-    current_type = conn.execute(sa.text(
-        "SELECT udt_name FROM information_schema.columns "
-        "WHERE table_schema = current_schema() "
-        "AND table_name = 'vulnerability_status_history' AND column_name = 'status'"
-    )).scalar()
-    if current_type == TYPE_NAME:
-        return
+    # Offline (--sql) there is no database to ask: emit both statements, which are
+    # also correct on databases that already use the model's type.
+    if not op.get_context().as_sql:
+        current_type = op.get_bind().execute(sa.text(
+            "SELECT udt_name FROM information_schema.columns "
+            "WHERE table_schema = current_schema() "
+            "AND table_name = 'vulnerability_status_history' AND column_name = 'status'"
+        )).scalar()
+        if current_type == TYPE_NAME:
+            return
 
     labels = ', '.join(f"'{status}'" for status in STATUSES)
     op.execute(

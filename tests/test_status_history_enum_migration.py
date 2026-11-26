@@ -1,4 +1,5 @@
 import importlib.util
+import io
 from datetime import datetime
 
 from alembic.migration import MigrationContext
@@ -13,12 +14,16 @@ from tests.factories import VulnerabilityFactory
 MIGRATION_PATH = FARADAY_BASE / 'migrations' / 'versions' / '2820045ab99e_fix_status_history_status_enum.py'
 
 
-def run_upgrade(session):
+def load_migration():
     spec = importlib.util.spec_from_file_location('fix_status_history_status_enum', MIGRATION_PATH)
     migration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(migration)
+    return migration
+
+
+def run_upgrade(session):
     with Operations.context(MigrationContext.configure(session.connection())):
-        migration.upgrade()
+        load_migration().upgrade()
 
 
 def status_column_type(session):
@@ -99,3 +104,17 @@ class TestStatusHistoryEnumMigration:
 
         assert status_column_type(session) == 'vulnerability_status_history_statuses'
         assert history_storage(session) == storage
+
+
+def test_offline_upgrade_emits_the_fix():
+    output = io.StringIO()
+    offline = MigrationContext.configure(dialect_name='postgresql',
+                                         opts={'as_sql': True, 'output_buffer': output})
+
+    with Operations.context(offline):
+        load_migration().upgrade()
+
+    sql = output.getvalue()
+    assert 'CREATE TYPE vulnerability_status_history_statuses' in sql
+    assert ('ALTER COLUMN status TYPE vulnerability_status_history_statuses '
+            'USING status::text::vulnerability_status_history_statuses') in sql

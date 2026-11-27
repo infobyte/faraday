@@ -2,6 +2,57 @@
   "changelogUrl": "https://docs.faradaysec.com/RELEASE",
   "versions": [
     {
+      "id": "5.26",
+      "label": "5.26",
+      "releaseDate": "2026-11-26",
+      "items": [
+        {
+          "id": "1",
+          "type": "new",
+          "title": "Ask the AI Agent",
+          "description": "Get answers about your data without building a single filter. Ask about vulnerabilities, workspaces or assets in plain language, and let the agent take action for you, always within what your role allows.",
+          "license": "corporate",
+          "link": null
+        },
+        {
+          "id": "2",
+          "type": "improvement",
+          "title": "Faraday MCP, Now On-Premise and More Capable",
+          "description": "On-premise customers can now install the MCP server locally and connect their AI tools to Faraday without internet access. The MCP also gets new tools to upload reports, run security scanners, manage runners and schedules, generate executive reports, and create, edit or delete data in bulk. You can choose which groups of tools to enable (read, write, delete, export, admin), and responses are faster and use fewer tokens.",
+          "license": null,
+          "link": {
+            "type": "doc",
+            "label": "See documentation",
+            "url": "https://docs.faradaysec.com/Faraday-Copilot-On-Prem"
+          }
+        },
+        {
+          "id": "3",
+          "type": "new",
+          "title": "Triage Findings with Confidence",
+          "description": "Tell apart what nobody has reviewed yet from what’s been confirmed or dismissed. Mark findings as false positives (they’re closed and stay closed on reimport), triage in bulk or one by one with Triage mode and keyboard shortcuts, and track every decision in the new History tab.",
+          "license": "professional",
+          "link": null
+        },
+        {
+          "id": "4",
+          "type": "new",
+          "title": "Set Up Runners Without Leaving Faraday",
+          "description": "Create runners straight from the UI with a new guided wizard that gives you the command to launch the dispatcher and connects it for you. Once it’s running, add, edit, enable, disable or delete its executors remotely, without touching the runner’s host.",
+          "license": null,
+          "link": null
+        },
+        {
+          "id": "5",
+          "type": "improvement",
+          "title": "A Clearer View of Your Workspaces",
+          "description": "Workspace cards now lead with the highest severity present and the workspace risk score, with cleaner severity bars and importance stars moved to the footer. A new summary above the grid gives you the big picture of your whole instance at a glance.",
+          "license": null,
+          "link": null
+        }
+      ]
+    },
+    {
       "id": "5.25 (Hotfixes)",
       "label": "5.25 (Hotfixes)",
       "releaseDate": "2026-10-28",
@@ -110,57 +161,6 @@
           "title": "Weekly Reports, Now in Executive Reports",
           "description": "Manage your weekly workspace report subscriptions from the Executive Reports section; toggle subscriptions for any workspace in one click. Plus, the last 10 generated reports are now saved and downloadable directly from this view, so you're covered even if an email gets lost or your address isn't configured.",
           "license": "professional",
-          "link": null
-        }
-      ]
-    },
-    {
-      "id": "5.23",
-      "label": "5.23",
-      "releaseDate": "2026-07-23",
-      "items": [
-        {
-          "id": "1",
-          "type": "new",
-          "title": "Executive Reports (HTML)",
-          "description": "Create fully customized reports combining vulnerabilities, charts, assets, and free-form text into a single branded document, using a visual section-based editor. Replaces the previous generator (independent PDF/DOCX outputs) with a unified HTML → PDF flow.",
-          "license": "professional",
-          "link": {
-            "type": "tour",
-            "label": "Take a Tour",
-            "url": "/report?tour=reports"
-          }
-        },
-        {
-          "id": "2",
-          "type": "new",
-          "title": "New General Dashboard",
-          "description": "Replacing the previous default workspace dashboard, with five widgets: Remediation , By Severity, Workspace Risk, Latest Findings, and Activity Feed. Widgets can be added, removed, resized, and rearranged, and the layout persists per user",
-          "license": null,
-          "link": null
-        },
-        {
-          "id": "3",
-          "type": "new",
-          "title": "Drag-and-Drop Vulnerability Import",
-          "description": "Drop vulnerability report files directly onto the Dashboard or Manage sections to import them, with visual feedback as you drag.",
-          "license": null,
-          "link": null
-        },
-        {
-          "id": "4",
-          "type": "new",
-          "title": "Runners & Scanners: New Search Bar",
-          "description": "Search and filter runners by status, last execution date, tool, category, and more with a placeholder that adapts to the active tab.",
-          "license": null,
-          "link": null
-        },
-        {
-          "id": "5",
-          "type": "improvement",
-          "title": "Navbar & Sidebar Reorganization",
-          "description": "The user avatar moved from the navbar to the sidebar, and the theme toggle moved from the menu to the navbar. Clicking the avatar still opens the same dropdown, with the same options and behavior as before.",
-          "license": null,
           "link": null
         }
       ]

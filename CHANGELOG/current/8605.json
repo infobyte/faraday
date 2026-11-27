@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Agents can only send bulk_create results to their own executions. #8605"
-}

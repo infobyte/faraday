@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Neutralized spreadsheet formula injection in vulnerability and credential CSV exports. #8607"
-}

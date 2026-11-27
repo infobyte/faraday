@@ -1,7 +1,7 @@
 {
     "info": {
         "description": "The Faraday REST API enables you to interact with [our server](https://github.com/infobyte/faraday).\nUse this API to interact or integrate with Faraday server. This page documents the REST API, with HTTP response codes and example requests and responses.",
-        "title": "Faraday 5.25.3 API",
+        "title": "Faraday 5.26.0 API",
         "version": "v3"
     },
     "security": [
@@ -5437,6 +5437,32 @@
                 }
             }
         },
+        "/_api/v3/agents/pending": {
+            "post": {
+                "tags": [
+                    "Agent"
+                ],
+                "description": "Creates an agent that waits for its dispatcher. The dispatcher claims it when it registers with the\nreturned `dispatcher_id`. The token of the agent is never returned.\n",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PendingAgent"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The pending agent, with the id that its dispatcher has to use"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    }
+                }
+            }
+        },
         "/_api/v3/agents/{object_id}": {
             "delete": {
                 "tags": [
@@ -5593,6 +5619,79 @@
                     }
                 }
             }
+        },
+        "/_api/v3/agents/{agent_id}/executor_config": {
+            "post": {
+                "tags": [
+                    "Agent"
+                ],
+                "description": "Asks the agent to create, update, delete or read one of its executors (a read returns the values of the variables the agent declares as non-sensitive)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExecutorConfig"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "The request was sent to the agent, ask for its result with the request_id"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "410": {
+                        "description": "The agent is offline"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "agent_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                }
+            ]
+        },
+        "/_api/v3/agents/{agent_id}/executor_config/{request_id}": {
+            "get": {
+                "tags": [
+                    "Agent"
+                ],
+                "description": "Result of a request to configure an executor of the agent. With `wait` (seconds, at most 10) the\nanswer is held until the request is no longer pending or the time is over. A successful `read`\nalso returns the `varenvs` that the agent declares as non-sensitive.\n",
+                "responses": {
+                    "200": {
+                        "description": "pending, ok or error, with the message of the agent"
+                    },
+                    "404": {
+                        "description": "Unknown or expired request"
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "agent_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "required": true
+                },
+                {
+                    "name": "request_id",
+                    "in": "path",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "required": true
+                }
+            ]
         },
         "/_api/v3/agents/filter": {
             "get": {
@@ -8436,6 +8535,11 @@
                         "type": "integer",
                         "writeOnly": true
                     },
+                    "creator_command_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
                     "description": {
                         "type": "string",
                         "nullable": true
@@ -9130,6 +9234,58 @@
                     "table_name"
                 ]
             },
+            "PendingAgent": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "additionalProperties": false
+            },
+            "ExecutorConfig": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "create",
+                            "update",
+                            "delete",
+                            "read"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "repo_name": {
+                        "type": "string"
+                    },
+                    "varenvs": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "action",
+                    "name"
+                ],
+                "additionalProperties": false
+            },
             "ExecutorScheduleStub": {
                 "type": "object",
                 "properties": {
@@ -9193,6 +9349,17 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "varenvs_set": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 }
             },
@@ -9235,6 +9402,30 @@
                     "is_online": {
                         "type": "boolean",
                         "readOnly": true
+                    },
+                    "pending_registration": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "dispatcher_id": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "remote_config": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "remote_config_read": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "agent_capabilities": {
+                        "type": "array",
+                        "readOnly": true,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        }
                     },
                     "executors": {
                         "readOnly": true,
@@ -9368,6 +9559,11 @@
                     "command_id": {
                         "type": "integer",
                         "writeOnly": true
+                    },
+                    "creator_command_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "description": {
                         "type": "string",

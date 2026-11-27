@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Loading hosts through the filter endpoint no longer freezes the instance on workspaces with many services and hostnames. #8603"
-}

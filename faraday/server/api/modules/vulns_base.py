@@ -96,6 +96,11 @@ from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv, export_vulns_to_csv_limited
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
+from faraday.server.utils.triage import (
+    TRIAGE_INPUT_FIELDS,
+    TriageValidationError,
+    bulk_apply_triage,
+)
 from faraday.server.utils.vulns import (
     FILTER_SET_FIELDS,
     FILTER_SET_STRICT_FIELDS,
@@ -352,6 +357,17 @@ class VulnerabilitySchema(AutoSchema):
     risk = SelfNestedField(RiskSchema(), dump_only=True)
     workspace_name = fields.String(attribute='workspace.name', dump_only=True)
     last_detected = fields.DateTime(dump_only=True)
+    # No load_default: the bulk_create schema inherits this field and imports default to false
+    confirmed = fields.Boolean(metadata={
+        'description': 'Someone validated the finding. A vulnerability created by hand '
+                       '(POST /ws/{workspace_name}/vulns) is confirmed unless the request sends '
+                       'confirmed: false or false_positive: true; imported ones default to false.'
+    })
+    false_positive = fields.Boolean()
+    # Derived by the triage rules (faraday.server.utils.triage), never set directly
+    triaged = fields.Boolean(dump_only=True)
+    triaged_by = PrimaryKeyRelatedField('username', dump_only=True, attribute='triaged_by', allow_none=True)
+    triaged_at = fields.DateTime(dump_only=True, allow_none=True)
 
     class Meta:
         model = Vulnerability
@@ -529,6 +545,11 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 _strict_filtering = {'default_operator': operators.Equal}
 
 
+class TriagedByFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(VulnerabilityGeneric.triaged_by.has(User.username == value))
+
+
 class IDFilter(Filter):
     def filter(self, query, model, attr, value):
         return query.filter(model.id == value)
@@ -632,6 +653,9 @@ class VulnerabilityFilterSet(FilterSet):
     )
     hostnames = HostnamesFilter(fields.Str())
     confirmed = Filter(fields.Boolean())
+    false_positive = Filter(fields.Boolean())
+    triaged = Filter(fields.Boolean())
+    triaged_by = TriagedByFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.
@@ -665,6 +689,26 @@ class VulnerabilityFilterSet(FilterSet):
             query = query.filter(VulnerabilityGeneric.creator_command_id
                                  == int(command_id))  # TODO migration: handle invalid int()
         return query
+
+
+TRUE_ARG_VALUES = ('true', '1', 'yes', 'on')
+FALSE_ARG_VALUES = ('false', '0', 'no', 'off')
+
+
+def _bool_arg(name, default=False):
+    """Boolean query parameter. bool(request.args.get(name)) would read ?name=false as True.
+
+    An empty value (?name=) counts as not sent.
+    """
+    value = (request.args.get(name) or '').strip().lower()
+    if not value:
+        return default
+    if value in TRUE_ARG_VALUES:
+        return True
+    if value in FALSE_ARG_VALUES:
+        return False
+    abort(HTTP_BAD_REQUEST, f"Invalid value for {name}: {value}")
+    return default  # unreachable, abort raises
 
 
 def _truncate_large_fields(vulns, limit=100):
@@ -761,7 +805,37 @@ class VulnerabilityView(
 
         if (len(data) > 0 and len(ids) > 0) and 'custom_fields' in data.keys():
             return bulk_update_custom_attributes(ids, data)
-        return super()._perform_bulk_update(ids, data, **kwargs)
+
+        # confirmed, false_positive and status go through the triage rules, vuln by vuln
+        triage_changes = {name: data.pop(name) for name in TRIAGE_INPUT_FIELDS if name in data}
+        if not triage_changes or not ids:
+            return super()._perform_bulk_update(ids, data, **kwargs)
+        extra_filters = []
+        if workspace_name:
+            extra_filters.append(VulnerabilityGeneric.workspace.has(Workspace.name == workspace_name))
+        user_id = current_user.id if hasattr(current_user, 'id') else None
+        try:
+            triage_result = bulk_apply_triage(ids, triage_changes, user_id=user_id, extra_filters=extra_filters)
+        except TriageValidationError as e:
+            db.session.rollback()
+            abort(HTTP_BAD_REQUEST, ValidationError({'message': str(e)}))
+        if data:
+            # The rest of the fields, committed together with the triage changes
+            return super()._perform_bulk_update(ids, data, **kwargs)
+
+        # Only triage fields: what the generic bulk update does after its UPDATE
+        # Same columns as returning_rows: _post_bulk_update reads host_id and service_id by position
+        returning = db.session.query(
+            VulnerabilityGeneric.id,
+            VulnerabilityGeneric.name,
+            VulnerabilityGeneric.severity,
+            VulnerabilityGeneric.risk,
+            VulnerabilityGeneric.host_id,
+            VulnerabilityGeneric.service_id,
+        ).filter(VulnerabilityGeneric.id.in_(triage_result.updated_ids)).all()
+        self._post_bulk_update(ids, {}, workspace_name=workspace_name, data=triage_changes, returning=returning)
+        db.session.commit()
+        return jsonify({'updated': triage_result.matched})
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         """
@@ -783,6 +857,7 @@ class VulnerabilityView(
             selectinload(Host.hostnames),
 
             joinedload(VulnerabilityGeneric.update_user),
+            joinedload(VulnerabilityGeneric.triaged_by),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
@@ -1207,6 +1282,7 @@ class VulnerabilityView(
                 joinedload(VulnerabilityWeb.service).joinedload(Service.host).selectinload(Host.hostnames),
                 joinedload(VulnerabilityGeneric.creator),
                 joinedload(VulnerabilityGeneric.update_user),
+                joinedload(VulnerabilityGeneric.triaged_by),
                 joinedload(VulnerabilityGeneric.group),
                 joinedload(VulnerabilityGeneric.workspace).load_only(Workspace.name),
                 undefer(VulnerabilityGeneric.target),
@@ -1457,7 +1533,7 @@ class VulnerabilityView(
           parameters:
           - in: query
             name: confirmed
-            description: "If truthy, only export confirmed vulnerabilities."
+            description: "true exports only confirmed vulnerabilities, false only unconfirmed ones. Omit it to export all."
             schema:
               type: boolean
           - in: query
@@ -1474,20 +1550,20 @@ class VulnerabilityView(
             description: Ok
         """
         workspace_name = kwargs.get('workspace_name')
-        confirmed = bool(request.args.get('confirmed'))
+        confirmed = _bool_arg('confirmed', default=None)
         filters = request.args.get('q', '{}')
         custom_fields_columns = []
 
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
 
-        if confirmed:
+        if confirmed is not None:
             if 'filters' not in filters:
                 filters = {'filters': []}
             filters['filters'].append({
                 "name": "confirmed",
                 "op": "==",
-                "val": "true"
+                "val": "true" if confirmed else "false"
             })
             filters = json_dumps(filters)
 

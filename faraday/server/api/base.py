@@ -182,6 +182,11 @@ class GenericView(FlaskView):
     #: data provided by the user
     schema_class = None
 
+    #: Columns of model_class listed in SENSITIVE_FILTER_FIELDS that the
+    #: /filter endpoint may still order by. Only for fields the view already
+    #: returns (e.g. Credential.password); never relationship paths.
+    sensitive_order_fields_allowed = frozenset()
+
     # Default attributes
 
     #: The prefix where the endpoint should be registered.
@@ -826,7 +831,9 @@ class FilterWorkspacedMixin(ListMixin):
     def _filter(self, filters, workspace_name, severity_count=False):
         marshmallow_params = {'many': True, 'context': {}}
         try:
-            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
+            filters = FlaskRestlessSchema(
+                allowed_sensitive_order_fields=self.sensitive_order_fields_allowed
+            ).load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")
@@ -924,7 +931,9 @@ class FilterObjects:
         self.schema_class = self.schema_class or self._get_schema_class()
 
         try:
-            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
+            filters = FlaskRestlessSchema(
+                allowed_sensitive_order_fields=self.sensitive_order_fields_allowed
+            ).load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")
@@ -1033,7 +1042,9 @@ class FilterMixin(ListMixin):
                 exclude=[], return_objects=False, severity_count=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}, 'exclude': exclude}
         try:
-            filters = FlaskRestlessSchema().load(json_loads(filters)) or {}
+            filters = FlaskRestlessSchema(
+                allowed_sensitive_order_fields=self.sensitive_order_fields_allowed
+            ).load(json_loads(filters)) or {}
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             abort(HTTP_BAD_REQUEST, "Invalid filters")
@@ -1509,7 +1520,8 @@ class BulkUpdateMixin(FilterObjects):
         # Try to get ids
         _json = request.get_json(silent=True)
         if _json and 'ids' in _json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
+            raw_ids = _json['ids'] if isinstance(_json['ids'], list) else [_json['ids']]
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, raw_ids))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:
@@ -1767,7 +1779,8 @@ class BulkDeleteMixin(FilterObjects):
         # Try to get ids
         _json = request.get_json(silent=True)
         if _json and 'ids' in _json:
-            ids = list(filter(lambda x: type(x) is self.lookup_field_type, _json['ids']))
+            raw_ids = _json['ids'] if isinstance(_json['ids'], list) else [_json['ids']]
+            ids = list(filter(lambda x: type(x) is self.lookup_field_type, raw_ids))
 
         # Try filter if no ids
         elif request.args.get('q', None) is not None:

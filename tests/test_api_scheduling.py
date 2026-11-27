@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy import text
 
 from faraday.server.api.modules.agents_schedule import AgentsScheduleView
-from faraday.server.models import AgentsSchedule, CloudAgentsSchedule
+from faraday.server.models import AgentExecution, AgentsSchedule, CloudAgentsSchedule
 from tests.test_api_non_workspaced_base import ReadWriteAPITests
 from tests.factories import (
     AgentScheduleFactory,
@@ -99,6 +99,52 @@ class TestAgentScheduleView(ReadWriteAPITests):
         find_agent_schedule_res = test_client.get(self.url(agent_schedule))
 
         assert find_agent_schedule_res.status_code == 404
+
+    def test_run_schedule_of_a_disabled_executor_fails(self, test_client, session):
+        agent = AgentFactory.create(active=True, sid='this_is_a_sid')
+        schedule = AgentScheduleFactory.create(executor=ExecutorFactory.create(agent=agent, enabled=False),
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.post(join(self.url(schedule), 'run'))
+
+        assert res.status_code == 400
+        assert AgentExecution.query.filter_by(executor_id=schedule.executor_id).count() == 0
+
+    def test_create_schedule_on_a_disabled_executor_fails(self, test_client, session, user):
+        executor = ExecutorFactory.create(agent=AgentFactory.create(), enabled=False)
+        session.commit()
+        agent_schedule = AgentScheduleFactory.build_dict(workspace=[WorkspaceFactory.create()])
+        agent_schedule['crontab'] = '*/5 * * * *'
+        agent_schedule['executor_id'] = executor.id
+        schedules_before = AgentsSchedule.query.count()
+
+        res = test_client.post(self.url(), data=agent_schedule)
+
+        assert res.status_code == 400
+        assert AgentsSchedule.query.count() == schedules_before
+
+    def test_move_schedule_to_a_disabled_executor_fails(self, test_client, session, user):
+        schedule = AgentScheduleFactory.create(crontab='*/5 * * * *', workspaces=[WorkspaceFactory.create()])
+        disabled = ExecutorFactory.create(agent=schedule.executor.agent, enabled=False)
+        session.commit()
+        original_executor_id = schedule.executor_id
+
+        res = test_client.patch(self.url(schedule), data={'executor_id': disabled.id})
+
+        assert res.status_code == 400
+        session.refresh(schedule)
+        assert schedule.executor_id == original_executor_id
+
+    def test_update_schedule_keeps_working_if_its_executor_was_disabled_later(self, test_client, session, user):
+        executor = ExecutorFactory.create(agent=AgentFactory.create(), enabled=False)
+        schedule = AgentScheduleFactory.create(crontab='*/5 * * * *', executor=executor,
+                                               workspaces=[WorkspaceFactory.create()])
+        session.commit()
+
+        res = test_client.patch(self.url(schedule), data={'description': 'renamed'})
+
+        assert res.status_code == 200
 
     def test_create_valid_cron(self, test_client, session, user):
         workspaces = [WorkspaceFactory.create()]

@@ -977,21 +977,21 @@ wheels = [
 
 [[package]]
 name = "faraday-agent-parameters-types"
-version = "1.9.1"
+version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "marshmallow" },
     { name = "packaging" },
     { name = "validators" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/52/57f99a2e21a30a75d188375f36c941dcc08f1c73c3d5db26c1bd872711bc/faraday_agent_parameters_types-1.9.1.tar.gz", hash = "sha256:3d63b8c2e7c71888008b5047a0cffee998ec503078a18dba36c1ce74d6184c97", size = 29219, upload-time = "2025-10-03T13:39:12.111Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/c8/7cf7949a8e523e67a1de111520cf075e5488500b7ddba7e889f14fae31e1/faraday_agent_parameters_types-1.10.0.tar.gz", hash = "sha256:9c6961a9c04fab6859f57efef836f17c815995a464409a71b6cc38052b627d87", size = 30124, upload-time = "2026-11-25T13:26:42.769Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/fe/0d075bd3765885d3299909f5a40a8e80a029b76c4687aab397274281ecc1/faraday_agent_parameters_types-1.9.1-py2.py3-none-any.whl", hash = "sha256:d24f8999b0871b065468552eae1bea5d85c4387f342fa24363f921e70a83cbc1", size = 46830, upload-time = "2025-10-03T13:39:10.935Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/78/28c80cb10fba6f72f6ca7a2c6882cf8a5e0e17161cfe3de6ae1d55182502/faraday_agent_parameters_types-1.10.0-py2.py3-none-any.whl", hash = "sha256:362262f96b4a6de7734062f6f33746eb04eb9b5f528b9c283c60f0c1bb4e3968", size = 48067, upload-time = "2026-11-25T13:26:41.787Z" },
 ]
 
 [[package]]
 name = "faraday-plugins"
-version = "1.31.0"
+version = "1.32.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -1009,9 +1009,9 @@ dependencies = [
     { name = "tabulate" },
     { name = "tldextract" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/08/4e25f13b942207960009b5b09de73ccc46a1e329724aeed2e96ad8ef3905/faraday_plugins-1.31.0.tar.gz", hash = "sha256:14c429b3538b35ad8e08d3e4cb3a8a880758a3beafc7faa2794926d3df14f232", size = 214850, upload-time = "2026-10-06T18:36:02.768Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/1f/d876aff814aad1c9eed0b6f6d92b4e40e74b131cd78702bd306e44be4c2d/faraday_plugins-1.32.0.tar.gz", hash = "sha256:e612ce1c42bb9ffbc424205f7ad5e7f08a3c8c8471c3bc707f9f5be6fcb21333", size = 246524, upload-time = "2026-11-25T13:45:55.069Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/4d/163b7b1e6bbe638230cc0c0b3b7d7e1a932104a173c7624514829939cef5/faraday_plugins-1.31.0-py3-none-any.whl", hash = "sha256:bec13c10f2c652ab15202f05ce2a756a0ab5cfef60603d9fbffeb1f4afaa1cde", size = 310342, upload-time = "2026-10-06T18:36:01.654Z" },
+    { url = "https://files.pythonhosted.org/packages/44/6d/3f6b26caf4bd46d88f33aac96e09f41569f594941cd309cefc5018596da9/faraday_plugins-1.32.0-py3-none-any.whl", hash = "sha256:cb684b515728df85eab8f41a660e028376f67176f3e7f5a6df3b41ec061321c1", size = 336548, upload-time = "2026-11-25T13:45:53.826Z" },
 ]
 
 [[package]]
@@ -1137,8 +1137,8 @@ requires-dist = [
     { name = "distro", specifier = ">=1.4.0" },
     { name = "elasticsearch", specifier = ">=7.16.3,<8" },
     { name = "email-validator", specifier = ">=2.3.0" },
-    { name = "faraday-agent-parameters-types", specifier = ">=1.9.1" },
-    { name = "faraday-plugins", specifier = ">=1.31.0,<2.0.0" },
+    { name = "faraday-agent-parameters-types", specifier = ">=1.10.0" },
+    { name = "faraday-plugins", specifier = ">=1.32.0,<2.0.0" },
     { name = "filedepot", specifier = ">=0.5.0,<0.11.0" },
     { name = "filetype", specifier = ">=1.0.5" },
     { name = "filteralchemy-fork", specifier = ">=0.1.0" },

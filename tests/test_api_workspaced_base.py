@@ -386,6 +386,14 @@ class BulkUpdateTestsMixin:
         assert res.status_code == 200
         assert res.json['updated'] == 1
 
+    def test_bulk_update_single_id_not_in_list(self, test_client):
+        data = self.factory.build_dict(workspace=self.workspace)
+        data = BulkUpdateTestsMixin.control_data(self, data)
+        data['ids'] = self.first_object.__getattribute__(self.view_class.lookup_field)
+        res = test_client.patch(self.url(), data=data)
+        assert res.status_code == 200
+        assert res.json['updated'] == 1
+
     def test_bulk_update_wrong_content_type(self, test_client):
         all_objs = self.model.query.all()
         all_objs_id = [obj.__getattribute__(self.view_class.lookup_field) for obj in all_objs]
@@ -523,6 +531,15 @@ class BulkDeleteTestsMixin:
         assert res.status_code == 200
         assert res.json['deleted'] == 0
         assert self.model.query.count() == count
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete_single_id_not_in_list(self, test_client):
+        count = self.model.query.count()
+        request_data = {'ids': self.first_object.__getattribute__(self.view_class.lookup_field)}
+        res = test_client.delete(self.url(), data=request_data)
+        assert res.status_code == 200
+        assert res.json['deleted'] == 1
+        assert self.model.query.count() == count - 1
 
     def test_bulk_delete_wrong_content_type(self, test_client):
         all_objs = self.model.query.all()

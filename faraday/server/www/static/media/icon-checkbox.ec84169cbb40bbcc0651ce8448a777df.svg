@@ -1,0 +1,13 @@
+<svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" tabIndex="0">
+    <defs>
+        <path id="4crejtzv3a" d="M0 0h30v30H0z"/>
+    </defs>
+   <rect x="1" y="1" rx="2" ry="2" width="28" height="28" style="fill:none;stroke:#006fc9;stroke-width:2;box-shadow: 0 0 4px 0 rgba(0, 111, 201, 0.4);display:none" />
+    <g fill="none" fill-rule="evenodd">
+        <mask id="dldtbei8lb" fill="#fff">
+            <use xlink:href="#4crejtzv3a"/>
+        </mask>
+        <path id="checkbox-not-checked" d="M26.25 24.375a1.875 1.875 0 0 1-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V5.625A1.875 1.875 0 0 1 5.625 3.75h18.75a1.875 1.875 0 0 1 1.875 1.875v18.75zm-1.875-18.75H5.625v18.75h18.75V5.625z" fill="#004980" mask="url(#eyn2he2ozb)"/>
+        <path id="checkbox-checked" d="M21.092 12.212a.937.937 0 0 1-.291.655l-6.867 6.563a.95.95 0 0 1-1.301 0l-3.434-3.282a.938.938 0 1 1 1.29-1.359l2.788 2.66 6.235-5.941a.937.937 0 0 1 1.324.035c.17.18.263.421.256.67zm5.158 12.163a1.875 1.875 0 0 1-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V5.625A1.875 1.875 0 0 1 5.625 3.75h18.75a1.875 1.875 0 0 1 1.875 1.875v18.75zm-1.875-18.75H5.625v18.75h18.75V5.625z" fill="#004980" mask="url(#dldtbei8lb)"/>
+    </g>
+</svg>

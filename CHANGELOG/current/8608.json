@@ -1,4 +1,0 @@
-{
-  "level": "community",
-  "md": "[FIX] Vulnerabilities can now be sorted by string, integer, float and date custom attributes. #8608"
-}

@@ -12,7 +12,7 @@ variables:
   VAULT_SERVER_URL: https://tluav-lb.faradaysec.com
   VAULT_AUTH_ROLE: faraday-env-readonly
   VAULT_AUTH_PATH: jwt
-  FOLDER: staging
+  FOLDER: master
   # UV configuration
   UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
   UV_PROJECT_ENVIRONMENT: "$CI_PROJECT_DIR/.venv"

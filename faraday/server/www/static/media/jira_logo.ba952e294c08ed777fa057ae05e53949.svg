@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="37.932" height="13.5" viewBox="0 0 37.932 13.5">
+    <defs>
+        <linearGradient id="linear-gradient" x1=".918" x2=".283" y1="1.856" y2="1.442" gradientUnits="objectBoundingBox">
+            <stop offset=".18" stop-color="#0052cc"/>
+            <stop offset="1" stop-color="#2684ff"/>
+        </linearGradient>
+        <linearGradient id="linear-gradient-2" x1=".087" x2=".721" y1="-.327" y2=".086" xlink:href="#linear-gradient"/>
+        <style>
+            .cls-1{fill:#253858}
+        </style>
+    </defs>
+    <g id="Layer_2" transform="translate(-22 -282)">
+        <g id="Blue" transform="translate(22 282)">
+            <path id="Trazado_289" d="M119.625 291.2h1.43v7.128c0 1.881-.848 3.193-2.825 3.193a5.4 5.4 0 0 1-1.73-.259V299.9a3.949 3.949 0 0 0 1.483.259c1.218 0 1.642-.708 1.642-1.726z" class="cls-1" transform="translate(-100.141 -289.576)"/>
+            <path id="Trazado_290" d="M152.643 287.989a.885.885 0 0 1 .954.812v.121a.954.954 0 0 1-1.907 0 .879.879 0 0 1 .83-.933zm-.689 3.011h1.377v7.81h-1.377z" class="cls-1" transform="translate(-129.204 -286.93)"/>
+            <path id="Trazado_291" d="M172.7 304.87h1.342v1.413a2.656 2.656 0 0 1 2.825-1.519v1.342c-1.766-.177-2.825.353-2.825 2.048v4.715H172.7z" class="cls-1" transform="translate(-146.606 -300.975)"/>
+            <path id="Trazado_292" d="M205.3 311.21a2.8 2.8 0 0 1-2.7 1.589c-2.119 0-3.2-1.8-3.2-4.15 0-2.26 1.112-4.15 3.355-4.15a2.62 2.62 0 0 1 2.543 1.572v-1.413h1.377v7.981H205.3zm-2.331.318a2.273 2.273 0 0 0 2.331-2.56v-.653c0-1.766-1.007-2.56-2.172-2.56-1.554 0-2.348 1.024-2.348 2.878 0 1.925.759 2.9 2.19 2.9z" class="cls-1" transform="translate(-168.743 -300.765)"/>
+            <path id="Trazado_301" fill="#2684ff" d="M35.12 288.368l-5.92-5.813-.561-.555-4.45 4.373-2.031 2a.538.538 0 0 0 0 .764l4.061 3.991 2.419 2.377 4.45-4.373.071-.069 1.96-1.926a.538.538 0 0 0 .001-.769zm-6.5 2.377l-2.031-2 2.031-2 2.031 2z" transform="translate(-22 -282)"/>
+            <path id="Trazado_302" fill="url(#linear-gradient)" d="M38.667 286.921a3.421 3.421 0 0 1-.018-4.821l-4.45 4.45 2.419 2.419z" transform="translate(-32.046 -282.082)"/>
+            <path id="Trazado_303" fill="url(#linear-gradient-2)" d="M61.531 320.8l-2.031 2.031a3.41 3.41 0 0 1 0 4.838l4.467-4.467z" transform="translate(-53.008 -314.187)"/>
+        </g>
+    </g>
+</svg>
